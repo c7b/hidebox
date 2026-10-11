@@ -1,0 +1,7 @@
+UTXO utxo_01010101010101010… verified true locker no wallet value 2000000
+  NONCE f83253b9282a9ab4d7d595f75a9ee6ae132c7431c8adf62467ee90d336a61f6b ENC afece6e3f3a1953d0761d33834faa3e38bc48603a94128bcb5a5683805662c4c6dc612a80847f2275803e5bda8d45eb0c5cdcbbd85730fbc7b8c104b50788e6ee17286e757eb60f4c2f8b3cf7655f321
+UTXO utxo_01010101010101010… gone (spent since)
+UTXO utxo_01010101010101010… verified true locker value 1000 wallet no
+  memo kind 3 share 9SqKQs7Ahff5oF_cYGeg5Q s matches true
+  view key alone on this kind-3 blob: refused
+UTXO utxo_01010101010101010… verified true locker no wallet no

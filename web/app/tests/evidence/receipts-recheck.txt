@@ -1,0 +1,10 @@
+Re-check of the gate transactions through their committed receipts (2026-10-11, ~11:00 CDMX), from the jarvis box:
+
+$ for tx in 45f03981…6c3d1a 0c735d34…1ec4ff; do for h in a b; do curl -s https://ootle-indexer-$h.tari.com/transaction-receipts/$tx; done; done   # outcome, diff size, fee
+45f03981 indexer-a Commit up 2 down 1 fee 30000
+45f03981 indexer-b Commit up 2 down 1 fee 30000
+0c735d34 indexer-a Commit up 2 down 1 fee 30000
+0c735d34 indexer-b Commit up 2 down 1 fee 30000
+
+$ curl -s https://ootle-indexer-b.tari.com/transactions/45f03981…6c3d1a/result   # the per-transaction result is gone a few hours after commit
+{"error":"Transaction 45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a not found"}

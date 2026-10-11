@@ -1,0 +1,4 @@
+/* SPDX-License-Identifier: MIT */
+body { margin: 0; padding: 16px; background: #fbfaf7; color: #161513; font: 14px/1.5 system-ui, sans-serif; }
+h1 { font-size: 18px; margin: 0 0 8px; }
+pre { white-space: pre-wrap; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }

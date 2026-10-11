@@ -1,0 +1,13 @@
+Gate test sends from walletd's `service` account (2026-10-11, ~07:10 CDMX), via tests/gates/walletd_send.py as lcam on ultron.
+Destinations are the seed-derived wallet and locker addresses of the gate test identity (seed = SHA-256("mutis gate test seed v1")).
+
+service -> WALLET otl_esm_152skud3…ndyafn, 2,000,000 µT, no memo:
+{"tx": "aa1360fedf5de7bda0a5e10bb0a4d1d4212391ee7c59699dffa9b827455c3f40", "status": "Accepted", "final_fee": 30000, "timed_out": false, "utxos": ["utxo_0101…01_6865359256919f8844ccfa5893e4c6cbb5314bf790e125febde0eff0ee6ba768", "utxo_0101…01_b093d27361dbfa7316b16b31ecdb48f4c4ce2f3f131f54c152601cd7755ce943"]}
+
+service -> LOCKER otl_esm_1lj9zka6…dtxt6, 1,000 µT, memo = a kind-3 courier link made in Chromium (201 bytes):
+{"tx": "0c735d349f9941e280a3d1096f66909812cc8338ec2aec6cefafc705351ec4ff", "status": "Accepted", "final_fee": 30000, "timed_out": false, "utxos": ["utxo_0101…01_488a2f5b983e19b5a632cc23bfa768a384778705e4ad5e8a41d6d68f14c78116", "utxo_0101…01_b631979066063cea0e44b10a04865dc69c031845730a8f0306502230d9582036"]}
+
+Browser-built (gate G1) LOCKER-bound transfer from the WALLET output above: tx 45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a
+(see g1-send.txt, g1-check.txt, g1-result-a.json, g1-result-b.json, g1-tx.json).
+
+Total spent on gate tests: 2,001,000 µT sent + 3 × 30,000 µT fees = 2.091 tTARI.

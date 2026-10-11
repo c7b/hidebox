@@ -1,0 +1,156 @@
+/* SPDX-License-Identifier: MIT — the drop widget (spec §3.4.4, §12.3.1; 11-brand §9.2, §10.1, §13):
+   what a first drop needs. Scoped to the widget's root (.md-root) or to app pages (.a-page), which
+   reuse the shared components (a- classes). The rest of the components are in parts.css, which the
+   home page loads when one of them is first shown. Shared tokens only. */
+
+/* --- the root and its size contract ------------------------------------------------------------ */
+.md-root {
+  position: relative; width: 100%; max-width: var(--zone-max); margin-inline: auto;
+  display: grid; gap: var(--s-4); text-align: left; color: var(--fg); font: var(--t-body);
+}
+.md-stage { min-height: 300px; display: grid; min-width: 0; }
+@media (max-width: 640px) { .md-stage { min-height: 280px; } }
+
+/* --- buttons and links-as-buttons (shared) ---------------------------------------------------- */
+:is(.md-root, .a-page) .a-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-5); border: 1px solid var(--line); border-radius: var(--radius);
+  background: transparent; color: var(--fg); font: var(--t-ui); text-decoration: none; cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+:is(.md-root, .a-page) .a-btn:hover { background: var(--bg-sunken); }
+:is(.md-root, .a-page) .a-btn--primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+:is(.md-root, .a-page) .a-btn--primary:hover { background: var(--bg); color: var(--fg); }
+:is(.md-root, .a-page) .a-btn--exit { color: var(--exit-text); border-color: currentColor; }
+:is(.md-root, .a-page) .a-btn--exit:hover { background: var(--exit); color: var(--on-exit); border-color: var(--exit); }
+:is(.md-root, .a-page) .a-btn--pay { background: var(--pay); color: var(--on-pay); border-color: var(--pay); }
+:is(.md-root, .a-page) .a-btn--pay:hover { background: var(--bg); color: var(--pay-text); }
+:is(.md-root, .a-page) .a-btn:disabled { opacity: .5; cursor: not-allowed; }
+:is(.md-root, .a-page) .a-btn svg { width: 18px; height: 18px; flex: none; }
+
+:is(.md-root, .a-page) .a-linkbtn {
+  display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); padding: 0 var(--s-1);
+  background: none; border: 0; color: var(--fg); font: var(--t-ui); cursor: pointer;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .18em;
+}
+:is(.md-root, .a-page) .a-linkbtn--exit { color: var(--exit-text); }
+
+:is(.md-root, .a-page) .a-icon { width: 18px; height: 18px; flex: none; }
+
+/* --- the zone (idle, dragover, composing) ------------------------------------------------------- */
+.md-zone {
+  position: relative; min-height: inherit; display: grid; place-items: center; padding: var(--s-6) var(--s-5);
+  border: 1.5px solid var(--line); background: var(--bg);
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.md-zone.md-drag { border: 2px solid var(--fg); background: var(--bg-sunken); }
+.md-zone.md-drag > * { visibility: hidden; }
+.md-zone.md-drag::after {
+  content: attr(data-drag-text); position: absolute; inset: 0; display: grid; place-items: center;
+  font: var(--t-zone-2); color: var(--fg);
+}
+.md-idle { display: grid; justify-items: center; gap: var(--s-3); text-align: center; }
+.md-hint { font: var(--t-direction); color: var(--fg-2); }
+.md-choose { position: relative; }
+.md-choose:focus-within, .md-choose-alt:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* The file input stays focusable for the keyboard; its label is the visible control. */
+.md-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+@media (pointer: coarse) { .md-idle { width: 100%; } .md-choose { width: 100%; } }
+
+.md-compose { width: 100%; display: grid; gap: var(--s-3); }
+.md-textarea {
+  width: 100%; min-height: 168px; resize: vertical; padding: var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-raised); color: var(--fg); font: var(--t-data);
+}
+.md-textarea::placeholder { color: var(--fg-2); }
+.md-count { font: var(--t-caption); font-family: var(--font-code); color: var(--fg-2); text-align: right; }
+.md-count.md-over { color: var(--exit-text); }
+:is(.md-root, .a-page) .a-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+.md-choose-alt { position: relative; }
+.md-working { align-self: center; justify-self: center; font: var(--t-data); color: var(--fg-2); }
+
+/* --- sealing: file card, the ¡ progress mark, the 1-px progress line ---------------------------- */
+.md-sealing {
+  min-height: inherit; display: grid; justify-items: center; align-content: center; gap: var(--s-3);
+  padding: var(--s-6) var(--s-5); border: 1.5px solid var(--line); text-align: center;
+}
+.md-filecard { display: grid; gap: var(--s-1); max-width: 100%; }
+.md-filename { font: var(--t-h3); overflow-wrap: anywhere; }
+.md-filesize { font: var(--t-data); color: var(--fg-2); }
+.md-mark { width: 40px; height: 40px; color: var(--fg); }
+.md-mark-door { fill: currentColor; }
+.md-mark-bore, .md-mark-slot { fill: var(--bg); }
+.md-mark-slot { clip-path: inset(calc((1 - var(--n, 0)) * 100%) 0 0 0); transition: clip-path var(--dur-1) linear; }
+.md-mark-bore { transition: transform var(--dur-2) var(--ease-in); }
+.md-mark--locked .md-mark-bore { transform: translateY(7px); }
+.md-progress { font: var(--t-zone-2); }
+.md-bar { position: relative; width: min(100%, 360px); height: 1px; background: var(--hair); overflow: hidden; }
+.md-bar-fill { position: absolute; inset: 0; background: var(--fg); transform-origin: left; transform: scaleX(var(--n, 0)); transition: transform var(--dur-1) linear; }
+.md-micro { font: var(--t-caption); font-family: var(--font-code); color: var(--fg-2); }
+
+/* --- chips, the photo chip, the "On the Ootle" chip -------------------------------------------- */
+.md-chip, :is(.md-root, .a-page) .a-chip {
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--line); font: var(--t-caption); color: var(--fg);
+}
+.md-chip .a-linkbtn { min-height: 32px; font: var(--t-caption); }
+.md-chip--note { color: var(--fg-2); }
+:is(.md-root, .a-page) .a-onchain {
+  display: inline-flex; align-items: center; gap: var(--s-2); padding: var(--s-1) var(--s-3); justify-self: start;
+  background: var(--ok); color: var(--on-ok); border: 1px solid var(--line); font: var(--t-ui);
+}
+:is(.md-root, .a-page) .a-onchain svg { width: 18px; height: 18px; }
+
+/* --- the locked card --------------------------------------------------------------------------- */
+.md-card, .md-link-area { display: grid; gap: var(--s-4); min-width: 0; }
+.md-card { padding: var(--s-6) var(--s-5); border: 1.5px solid var(--line); }
+@media (max-width: 480px) { .md-card { padding: var(--s-5) var(--s-4); } }
+.md-card-head { display: grid; gap: var(--s-1); }
+.md-locked { font: var(--t-h2); letter-spacing: -.015em; }
+.md-card-meta { font: var(--t-data); color: var(--fg-2); overflow-wrap: anywhere; }
+.md-card-name { font-family: var(--font-script); }
+.md-strip { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); max-width: 420px; }
+.md-tile { display: grid; gap: var(--s-2); margin: 0; min-width: 0; }
+.md-tile > canvas, .md-own { width: 100%; aspect-ratio: 1; border: 1px solid var(--hair); }
+.md-noise { image-rendering: pixelated; }
+.md-own-img { object-fit: cover; }
+.md-own { margin: 0; padding: var(--s-3); background: var(--bg-raised); overflow: hidden; overflow-wrap: anywhere; }
+.md-own-ext { display: grid; place-items: center; font: var(--t-h2); text-align: center; }
+.md-own-text { font: var(--t-data); white-space: pre-wrap; }
+.md-strip-cap { font: var(--t-scene); color: var(--fg-2); max-width: 56ch; }
+.md-url {
+  padding: var(--s-3) var(--s-4); border: 1px solid var(--line); background: var(--bg-raised);
+  font: var(--t-data); overflow-wrap: anywhere; user-select: all;
+}
+.md-url-key { color: var(--fg-2); }
+.md-keynote { font: var(--t-caption); color: var(--fg-2); max-width: 60ch; }
+.md-keynote strong { color: var(--fg); font-weight: 600; }
+.md-actions { display: flex; }
+.md-copy { min-width: 200px; }
+@media (max-width: 480px) { .md-actions .a-btn, .md-secondary .a-btn { width: 100%; } }
+.md-rule { font: var(--t-ui); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s-3); padding-block: var(--s-1); border-block: 1px solid var(--hair); }
+.md-secondary { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.md-small { display: flex; flex-wrap: wrap; gap: 0 var(--s-4); align-items: center; }
+.md-kept { font: var(--t-direction); }
+.md-stage:has(> .md-summary) { min-height: 0; }
+.md-summary { display: grid; gap: var(--s-1); align-content: center; padding: var(--s-5); border: 1.5px solid var(--line); }
+.md-summary .md-locked { font: var(--t-h3); }
+
+/* The exit collapse (11-brand §13.7): the card shrinks to one small square and drops away. */
+@keyframes md-exit {
+  0% { transform: none; opacity: 1; }
+  70% { transform: scale(.04); opacity: 1; }
+  100% { transform: scale(.04) translateY(600px); opacity: 0; }
+}
+.md-exit { animation: md-exit var(--dur-exit) var(--ease-in) forwards; transform-origin: center; }
+
+/* --- toasts and hidden elements ---------------------------------------------------------------- */
+:is(.md-root, .a-page) .a-toast {
+  position: fixed; left: 50%; bottom: calc(var(--s-6) + env(safe-area-inset-bottom)); z-index: var(--z-toast);
+  transform: translateX(-50%); max-width: min(92vw, 520px); padding: var(--s-3) var(--s-4);
+  background: var(--fg); color: var(--bg); font: var(--t-ui); box-shadow: var(--shadow-float);
+}
+@media (max-width: 640px) { .a-page .a-toast { bottom: calc(76px + env(safe-area-inset-bottom)); } }
+
+/* `hidden` always wins: three attribute selectors outrank every component rule in these files. */
+:is(.md-root, .a-page) [hidden][hidden][hidden] { display: none; }
