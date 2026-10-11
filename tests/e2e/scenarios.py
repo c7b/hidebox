@@ -105,15 +105,15 @@ def e04(t: T) -> None:
 
 @scenario("E-05", "Expiry 60 s: after 65 s the link is expired")
 def e05(t: T) -> None:
+    preset = t.env.config().get("e2e_expiry_s")
+    if not preset:
+        t.skip("this deployment offers no short expiry preset (config e2e_expiry_s = 60, tests/e2e/README.md)")
     a = t.actor()
     flows.home(a, t.origin)
     flows.seal_text(a, "E2E E-05 leaves in a minute")
-    try:
-        url = flows.set_rules(a, when="expires", expiry="60")
-    except flows.Failed:
-        t.skip("this deployment offers no 60-second expiry preset (staging E2E option)")
+    url = flows.set_rules(a, expiry=str(preset))
     t.secret("the link key", flows.fragment(url))
-    time.sleep(65)
+    time.sleep(preset + 5)
     t.check(flows.open_link(t.actor(), url) == "expired", "the link is expired")
     t.check(not t.hygiene(), "no secret in any request (E-03)")
 
@@ -169,9 +169,14 @@ def e08(t: T) -> None:
     a = t.actor()
     make_drop_link(t, a, "E2E E-08")
     a.wait_for("key-save-file", 60)
+    # Brand P-15: the key file is locked with a passphrase by default.
+    passphrase = "E2E orchid lantern " + secrets.token_hex(4)
+    t.secret("the key passphrase", passphrase)
+    a.fill("key-passphrase", passphrase)
     a.click("key-save-file")
     key_text = t.env.remote.as_build(f"cat {t.downloaded(a)}")
     t.secret("the key file", key_text.strip())
+    t.check("Locked key:" in key_text, "the key file is locked with the passphrase")
     if a.exists("key-saved-check"):
         a.click("key-saved-check")
     a.goto(t.origin + "/locker")
@@ -184,6 +189,9 @@ def e08(t: T) -> None:
     b.goto(t.origin + "/locker")
     b.wait_for("restore-text")
     b.fill("restore-text", key_text)
+    b.click("restore-submit")
+    b.wait_for("restore-passphrase", 30)
+    b.fill("restore-passphrase", passphrase)
     b.click("restore-submit")
     b.wait_for("locker-safety", 120)
     t.check(locker_identity(b) == (safety, address), "the restored locker has the same safety code and address")

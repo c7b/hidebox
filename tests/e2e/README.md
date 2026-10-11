@@ -23,6 +23,26 @@ Screenshots (`<id>-NN-<step>.png`, plus `<id>-failure-*.png`) and `report.json` 
 the holding page is live (no drop widget on `/`), browser scenarios report SKIP, and the run says
 "PASS (with skips)"; `--final` turns every skip into a failure.
 
+Against production (there is no staging; 12-integration §7.7):
+
+- **When:** before the go-live database reset (deploy/README.md, "Turning the app on"). Scenarios
+  don't take down their own items (only E-17's reported link and drop); a later run leaves them on
+  the home page's wall until they leave by their rule, unless taken down
+  (`sudo mutis-admin takedown item -- <id>`; a taken-down item leaves the wall at once).
+- **Pace:** every browser runs on ultron, so all actors share one network, and the API allows 5 new
+  lockers and 5 new drops per network an hour. A full `--chain` run makes about a dozen lockers: run
+  it in batches an hour apart (`--only E-01,…`), or a later scenario fails with `rate_limited`.
+- **E-05** needs the short expiry preset: set `e2e_expiry_s = 60` (top level) in
+  `/etc/mutis/mutis.toml`, restart mutis-api, run E-05, then remove the line and restart again. Without
+  it E-05 reports SKIP (so `--final` fails), and production never offers the preset.
+- **E-J in direct mode** (12-integration §7.5, before `send_mode = "direct"` goes public): with
+  `send_mode = "direct"`, `features.direct_send` and `features.sponsor` on, E-J makes a judge pass
+  (`mutis-admin judge-pass new --uses 3`) and gives it to both of its browser contexts, which share
+  ultron's /64 like two judges in one office. It records the **cold start** (from the locker opening
+  to the sponsor grant being spendable in the browser wallet; it must be there by step 5, 3:15 into
+  the judge script) and checks that step 5's payment was built and submitted by the browser itself.
+  The time is in `report.json` (`notes` of E-J).
+
 | File | What |
 |---|---|
 | `cdp.py` | the DevTools client: contexts, device emulation, clicks (pointer or touch), typing, file inputs, downloads, screenshots, screencast recording (the film), the accessibility tree, request and CSP-violation capture |

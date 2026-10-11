@@ -51,10 +51,16 @@ def open_rules(page: Page) -> None:
         page.wait_for("who")
 
 
+def rule_version(page: Page) -> str:
+    """The sealed card's data-rule counter: it changes every time a rule is applied."""
+    return page.eval("document.querySelector('.md-card')?.dataset.rule ?? ''")
+
+
 def set_rules(page: Page, who: str | None = None, when: str | None = None, views: int | None = None,
               expiry: str | None = None, password: str | None = None, password_mode: str | None = None) -> str:
-    """Change the exit rule of the sealed item and return the new link."""
-    before = page.value("sealed-link")
+    """Change the exit rule of the sealed item and return its link: the same link when only the count
+    or the expiry changed (spec §5.4 tightens it in place), a new one for a password."""
+    before = rule_version(page)
     open_rules(page)
     if who:
         page.choose("who", who)
@@ -72,7 +78,8 @@ def set_rules(page: Page, who: str | None = None, when: str | None = None, views
             raise Failed(f"no expiry preset {expiry}")
         page.choose("expiry-preset", expiry)
     page.click("apply-rules")
-    return wait_link(page, before)
+    page.wait(f"(document.querySelector('.md-card')?.dataset.rule ?? '') !== {json.dumps(before)}", 60)
+    return wait_link(page)
 
 
 def open_link(page: Page, url: str, password: str | None = None, open_it: bool = True) -> str:

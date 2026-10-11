@@ -33,6 +33,7 @@ PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><title>driv
 <a data-testid="view-save" href="/file.bin" download="file.bin">Save file</a>
 <p role="status" class="md-live"></p></main></body></html>"""
 SCRIPT = """const root = document.querySelector('[data-testid="view-root"]');
+root.dataset.judge = sessionStorage.getItem('mutis.judge') ?? '';
 document.querySelector('[data-testid="view-open"]').addEventListener('click', () => { root.dataset.state = 'opened'; });
 document.querySelectorAll('[data-testid="who"]').forEach(b => b.addEventListener('click', () => { root.dataset.who = b.value; }));
 document.querySelector('[data-testid="drop-input"]').addEventListener('change', e => {
@@ -90,6 +91,12 @@ def run(env: Env) -> list[tuple[str, bool]]:
         desk.key("Tab")
         results.append(("Tab moves focus to the first control",
                         desk.eval("document.activeElement?.dataset?.testid") == "view-open"))
+        code = "judge-" + "a" * 24
+        judge = t.actor(judge_pass=code)
+        judge.goto(f"http://127.0.0.1:{PORT}/")
+        judge.wait_for("view-open")
+        results.append(("a judge pass is in the tab's sessionStorage before the page's scripts run",
+                        judge.attr("view-root", "data-judge") == code and desk.attr("view-root", "data-judge") == ""))
     finally:
         t.close()
     return results
