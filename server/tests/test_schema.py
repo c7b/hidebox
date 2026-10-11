@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: MIT
 """Schema 2 (migrations/002): a deployed schema-1 database migrates to exactly the schema a fresh
 install gets, and keeps its rows the way the review fixes need them."""
+import os
 import re
 import shutil
 import sqlite3
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -64,6 +66,20 @@ class Migration(unittest.TestCase):
         fresh = self.tmp / "fresh.sqlite3"
         self.assertEqual(db.migrate(fresh), db.SCHEMA_VERSION)
         self.assertEqual(normalized_schema(old), normalized_schema(fresh))
+
+    def test_a_new_database_is_group_writable(self):
+        """Under the services' umask 007, the database and its -wal/-shm files are 0660 (group mutis)."""
+        old = os.umask(0o007)
+        try:
+            path = self.tmp / "new.sqlite3"
+            db.migrate(path)
+            conn = db.connect(path)
+            conn.execute("SELECT COUNT(*) FROM meta").fetchone()
+            modes = {p.name: stat.S_IMODE(p.stat().st_mode) for p in self.tmp.glob("new.sqlite3*")}
+            conn.close()
+        finally:
+            os.umask(old)
+        self.assertEqual(modes, {"new.sqlite3": 0o660, "new.sqlite3-wal": 0o660, "new.sqlite3-shm": 0o660})
 
     def test_rows_after_migration(self):
         path = self.v1_database()
