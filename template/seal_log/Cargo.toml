@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MIT
+[package]
+name = "seal_log"
+version = "2.0.0"
+edition = "2024"
+license = "MIT"
+description = "Tamper-evident storage receipts: an append-only log of Merkle roots over ciphertext hashes that only its creating key can extend and nobody can rewrite, plus a public notarize call. It stores only hashes and counts."
+repository = "https://github.com/c7b/mutis"
+publish = false
+
+[package.metadata.tari-template]
+tags = ["transparency-log", "merkle", "receipts"]
+category = "utility"
+homepage = "https://github.com/c7b/mutis"
+documentation = "https://github.com/c7b/mutis/blob/main/template/seal_log/README.md"
+# seal_log 1.0.0, published on Esmeralda on 2026-10-11 (its log had an owner who could rewrite it).
+supersedes = "b571909e116776fa8cd8b22ddf9890554323a848a36ca9d35efb1a6a859a15bb"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+tari_template_lib = "=0.34.0"
+
+[dev-dependencies]
+tari_template_test_tooling = "=0.45.0"
+# Already in the tree through the test tooling; the tests read and write the JSON vectors with it.
+serde_json = "=1.0.152"
+
+[build-dependencies]
+tari_ootle_template_build = "=0.14.0"
+
+# The flags `tari build` passes, so `cargo build --release` and the test harness
+# produce the same WASM bytes as `tari build`.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# The engine runs WASM through wasmer + cranelift; unoptimised, the tests crawl.
+[profile.dev.package.wasmer]
+opt-level = 2
+
+[profile.dev.package.wasmer-compiler]
+opt-level = 2
+
+[profile.dev.package.wasmer-compiler-cranelift]
+opt-level = 2
+
+[profile.dev.package.cranelift-codegen]
+opt-level = 2
+
+[profile.dev.package.cranelift-frontend]
+opt-level = 2
+
+[profile.dev.package.cranelift-entity]
+opt-level = 2
