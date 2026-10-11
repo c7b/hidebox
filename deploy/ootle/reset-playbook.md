@@ -79,7 +79,7 @@ curl -s https://ootle-indexer-b.tari.com/epoch-manager/stats      # {"current_ep
 u 'sudo editor /etc/mutis/mutis.toml'                             # [ootle] mirror_start_epoch = N
 admin check-config
 u 'sudo systemctl stop mutis-chain'
-echo "import sqlite3; c = sqlite3.connect('/srv/mutis/data/db/mutis.sqlite3'); c.execute(\"DELETE FROM meta WHERE key = 'mirror_cursor'\"); c.commit()" |
+echo "import sqlite3; c = sqlite3.connect('/srv/mutis/data/db/mutis.sqlite3'); c.execute(\"DELETE FROM meta WHERE key = 'mirror_cursors'\"); c.commit()" |
   u "cd /tmp && sudo -u mutis sh -c 'umask 007; exec python3 -I -'"
 u 'sudo systemctl start mutis-chain'
 ```

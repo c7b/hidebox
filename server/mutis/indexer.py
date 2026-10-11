@@ -80,10 +80,11 @@ class Indexers:
         return status, data
 
     def call(self, method: str, path: str, body: bytes | None = None, accept: str = "application/json",
-             cap: int = MAX_JSON) -> tuple[int, bytes, str]:
-        """First upstream that answers (any HTTP status below 500); falls back on errors and 5xx."""
+             cap: int = MAX_JSON, only: int | None = None) -> tuple[int, bytes, str]:
+        """First upstream that answers (any HTTP status below 500); falls back on errors and 5xx. `only`
+        asks the upstream at that position and no other."""
         last = IndexerError(503, "chain_unavailable")
-        for upstream in self.upstreams:
+        for upstream in self.upstreams if only is None else self.upstreams[only:only + 1]:
             try:
                 status, data = self._request(upstream, method, path, body, accept, cap)
             except IndexerError as e:
@@ -108,26 +109,26 @@ class Indexers:
 
     # --- the mirror (gate G3) ---------------------------------------------------------------------
 
-    def stream_utxos(self, cursors: dict[int, int], per_shard_limit: int,
-                     from_epoch: int = 0) -> tuple[list[dict], str]:
+    def stream_utxos(self, cursors: dict[int, int], per_shard_limit: int, from_epoch: int = 0,
+                     only: int | None = None) -> tuple[list[dict], str]:
         """One poll of POST /utxos/stream → ([{shard, version, has_more, unspent: [(tag, nonce_hex)]}], source)."""
         req = {"resource_address": TARI, "shard_state_versions": [[s, cursors.get(s, 0)] for s in SHARDS],
                "per_shard_limit": per_shard_limit}
         if from_epoch:
             req["from_epoch"] = from_epoch
         status, data, source = self.call("POST", "/utxos/stream", json.dumps(req).encode(), "application/json",
-                                         MAX_STREAM)
+                                         MAX_STREAM, only)
         if status != 200:
             raise IndexerError(502, "bad_upstream")
         return parse_stream(data), source
 
-    def fetch_utxos(self, pairs: list[tuple[int, str]]) -> dict[tuple[int, str], dict]:
+    def fetch_utxos(self, pairs: list[tuple[int, str]], only: int | None = None) -> dict[tuple[int, str], dict]:
         """POST /utxos/fetch → {(tag, nonce_hex): parse_fetched(…)}."""
         found = {}
         for i in range(0, len(pairs), FETCH_BATCH):
             batch = [[tag, nonce] for tag, nonce in pairs[i:i + FETCH_BATCH]]
             body = json.dumps({"resource_address": TARI, "tag_and_nonce_pairs": batch}).encode()
-            status, data, _ = self.call("POST", "/utxos/fetch", body)
+            status, data, _ = self.call("POST", "/utxos/fetch", body, only=only)
             if status != 200:
                 raise IndexerError(502, "bad_upstream")
             for entry in json.loads(data).get("utxos", []):

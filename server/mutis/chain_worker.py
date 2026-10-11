@@ -209,23 +209,34 @@ class Worker:
     # --- mirror (spec §10.6, gate G3) -----------------------------------------------------------------
 
     def mirror(self, now: int, max_rounds: int = 20) -> int:
-        """Pull new TARI UTXOs with per-shard cursors; full outputs come from /utxos/fetch.
+        """Pull new TARI UTXOs from every indexer into one mirror (rows are idempotent).
 
-        Shard versions are cursors into one indexer's state, so when the answer comes from another
-        indexer than the cursors did, the mirror starts that indexer from zero (rows are idempotent).
+        Asking each indexer, not just the first that answers, keeps deliveries arriving when one
+        indexer's stream stops advancing while it still answers (indexer-b, 2026-10-11: a canary
+        delivery that indexer-a streamed within minutes never reached indexer-b's stream).
         """
+        added, answered, error = 0, 0, None
+        for position, (_, name, _) in enumerate(self.indexers.upstreams):
+            try:
+                added += self._mirror_from(position, name, now, max_rounds)
+                answered += 1
+            except IndexerError as e:
+                error = e
+        if not answered:
+            raise error
+        self.status["mirror_ok_at"] = now
+        return added
+
+    def _mirror_from(self, position: int, name: str, now: int, max_rounds: int) -> int:
+        """One indexer, with its own per-shard cursors (shard versions are cursors into one indexer's
+        state); full outputs come from the same indexer's /utxos/fetch."""
         added = 0
         for _ in range(max_rounds):
-            cursors = {int(k): v for k, v in db.get_meta_json(self.conn, "mirror_cursor", {}).items()}
-            shards, source = self.indexers.stream_utxos(cursors, STREAM_LIMIT, self.cfg["ootle"]["mirror_start_epoch"])
-            if source != db.get_meta(self.conn, "mirror_source"):
-                with db.tx(self.conn):
-                    db.set_meta(self.conn, "mirror_cursor", {})
-                    db.set_meta(self.conn, "mirror_source", source)
-                if cursors:
-                    continue
+            cursors = {int(k): v for k, v in db.get_meta_json(self.conn, "mirror_cursors", {}).get(name, {}).items()}
+            shards, _ = self.indexers.stream_utxos(cursors, STREAM_LIMIT, self.cfg["ootle"]["mirror_start_epoch"],
+                                                   only=position)
             pairs = [pair for s in shards for pair in s["unspent"]]
-            fetched = self.indexers.fetch_utxos(pairs) if pairs else {}
+            fetched = self.indexers.fetch_utxos(pairs, only=position) if pairs else {}
             epoch = self.epoch()
             with db.tx(self.conn):
                 for s in shards:
@@ -240,10 +251,11 @@ class Worker:
                              out["tag"].to_bytes(4, "big"), epoch, now, out["promise"], out["viewable"],
                              out["auth"])).rowcount
                     cursors[s["shard"]] = s["version"]
-                db.set_meta(self.conn, "mirror_cursor", {str(k): v for k, v in cursors.items()})
+                every = db.get_meta_json(self.conn, "mirror_cursors", {})
+                every[name] = {str(k): v for k, v in cursors.items()}
+                db.set_meta(self.conn, "mirror_cursors", every)
             if not any(s["has_more"] for s in shards):
                 break
-        self.status["mirror_ok_at"] = now
         return added
 
     # --- payments (spec §10.5) -----------------------------------------------------------------------
