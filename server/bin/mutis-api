@@ -1,0 +1,37 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+"""mutis-api: the HTTP API on loopback (spec §8.1). `--dev` runs a self-contained development stack (spec §3.6)."""
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from mutis import api, config, db, dev, logsafe  # noqa: E402
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(prog="mutis-api")
+    p.add_argument("--config", help="path to mutis.toml (default: $MUTIS_CONFIG or /etc/mutis/mutis.toml)")
+    p.add_argument("--dev", action="store_true", help="fakes, small limits, a temporary data directory")
+    p.add_argument("--data", type=Path, default=Path("/tmp/mutis-dev"), help="--dev data directory")
+    p.add_argument("--dist", type=Path, help="--dev: serve this built dist/ directory too")
+    p.add_argument("--port", type=int, default=8787, help="--dev port")
+    p.add_argument("--pow-bits", type=int, help="--dev: a fixed PoW difficulty for every purpose (no escalation)")
+    args = p.parse_args()
+    logsafe.setup()
+    if args.dev:
+        dev.run(args.data, args.dist, args.port, args.pow_bits)
+        return
+    cfg = config.load(args.config)
+    conn = db.connect(cfg.db_path)
+    version = int(db.get_meta(conn, "schema_version", "0"))
+    conn.close()
+    if version < db.SCHEMA_VERSION:
+        sys.exit("database schema is behind; run mutis-admin migrate")
+    host, port = cfg["listen"].rsplit(":", 1)
+    api.serve(api.App(cfg, config.read_secret(cfg)), host, int(port))
+
+
+if __name__ == "__main__":
+    main()

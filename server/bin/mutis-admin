@@ -1,0 +1,12 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+"""mutis-admin: operator commands (spec §15.7). `mutis-admin --help` lists them."""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from mutis import admin  # noqa: E402
+
+if __name__ == "__main__":
+    admin.main()

@@ -1,0 +1,206 @@
+# SPDX-License-Identifier: MIT
+"""Payment verification (spec §10.5): credit only what was proven and is committed on chain.
+
+The 2026-09-29 forged-deposit incident (community.tari.com/t/402) came from a wallet that checked an
+amount proof and then ignored the result. Here a credit needs two separate facts:
+  1. the amount: the official ootle-wasm `unblindOutput` (in the sidecar) opened the output's
+     commitment with the decrypted value, so the value is proven, not reported; and
+  2. existence: a Tari indexer (not walletd) serves a verified `Utxo` substate at exactly that id
+     (the id contains the commitment).
+walletd never decides a credit. In the G4 fallback (`amount_proof = "wallet"`) step 1 comes from
+walletd's own list and the API reports `checks.amount_proven: false` ("Seen by our wallet").
+
+An invoice goes pending → seen → credited; the spec's `proven` step happens inside the crediting
+transaction, so the UI's stepper reads `payments[].checks` instead of waiting for that status.
+"""
+import json
+import re
+import sqlite3
+
+from . import db, logsafe, quota
+from .indexer import IndexerError
+
+INVOICE_TTL_S = 3600
+UNDERPAID_GRACE_DAYS = 7
+INDEXER_FAILOVER_AFTER = 3
+UNKNOWN_ALERT_AFTER = 3          # hourly reconciles that couldn't reach a verdict before the alert is critical
+_INVOICE = re.compile(r"^inv_[a-z2-7]{20}$")
+
+
+def pay_ref(memo) -> str | None:
+    """The invoice id carried by a memo: PayRefAndBytes `[len u8][pay_ref][bytes]`, or a bare Message."""
+    if not isinstance(memo, dict):
+        return None
+    if isinstance(memo.get("PayRefAndBytes"), str):
+        try:
+            raw = bytes.fromhex(memo["PayRefAndBytes"])
+        except ValueError:
+            return None
+        if not raw or raw[0] + 1 > len(raw):
+            return None
+        ref = raw[1:1 + raw[0]].decode("ascii", "replace")
+    elif isinstance(memo.get("Message"), str):
+        ref = memo["Message"]
+    else:
+        return None
+    return ref if _INVOICE.match(ref) else None
+
+
+def record_found(conn: sqlite3.Connection, found: list[dict], proven: bool, now: int, epoch: int | None) -> int:
+    """Store newly found receiver outputs; a UTXO is recorded once, ever (idempotency). Returns new rows."""
+    added = 0
+    with db.tx(conn):
+        for out in found:
+            if conn.execute("SELECT 1 FROM payments WHERE utxo_id = ?", (out["id"],)).fetchone():
+                continue
+            ref = pay_ref(out.get("memo"))
+            invoice = conn.execute("SELECT * FROM invoices WHERE id = ?", (ref,)).fetchone() if ref else None
+            conn.execute("INSERT INTO payments(utxo_id, invoice_id, value_ut, seen_at, epoch, proven, status) "
+                         "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                         (out["id"], invoice["id"] if invoice else None, int(out["value_ut"]), now, epoch,
+                          int(proven), "pending_check" if invoice else "unattributed"))
+            if invoice and invoice["status"] == "pending":
+                conn.execute("UPDATE invoices SET status = 'seen' WHERE id = ?", (invoice["id"],))
+            added += 1
+    return added
+
+
+def committed_on_indexer(indexers, utxo_id: str, position: int) -> str:
+    """One indexer's answer about a UTXO id: `ok`, `missing` or `unknown`.
+
+    ok: HTTP 200, verified == true and a Utxo substate at exactly that id. missing: the indexer says
+    so (404 "not found", or "… is down" for a spent output, or a 200 that isn't a verified Utxo).
+    unknown: anything about the indexer rather than the output (5xx, 429, a CDN page, a timeout).
+    """
+    try:
+        status, data, _ = indexers.call_one(position, "GET", f"/substates/{utxo_id}?include_proof=true")
+    except IndexerError:
+        return "unknown"
+    if status == 404:
+        return "missing"
+    if status != 200:
+        return "unknown"
+    try:
+        obj = json.loads(data)
+    except ValueError:
+        return "unknown"
+    if isinstance(obj, dict) and obj.get("verified") is True and isinstance(obj.get("substate"), dict) \
+            and "Utxo" in obj["substate"]:
+        return "ok"
+    return "missing"
+
+
+def committed_anywhere(indexers, utxo_id: str) -> str:
+    """`ok` when any indexer proves the UTXO, `missing` only when every indexer says it is gone."""
+    answers = [committed_on_indexer(indexers, utxo_id, i) for i in range(len(indexers.upstreams))]
+    if "ok" in answers:
+        return "ok"
+    return "missing" if all(a == "missing" for a in answers) else "unknown"
+
+
+def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int) -> int:
+    """Step 3: confirm each pending payment on indexer-b (indexer-a after 3 failures); credit it."""
+    if db.get_meta(conn, "credit_freeze") == "1":
+        return 0
+    credited = 0
+    for row in conn.execute("SELECT * FROM payments WHERE status = 'pending_check'").fetchall():
+        position = 1 if failures.get(row["utxo_id"], 0) >= INDEXER_FAILOVER_AFTER and len(indexers.upstreams) > 1 \
+            else 0
+        if committed_on_indexer(indexers, row["utxo_id"], position) != "ok":   # never a credit without proof
+            failures[row["utxo_id"]] = failures.get(row["utxo_id"], 0) + 1
+            continue
+        failures.pop(row["utxo_id"], None)
+        credit(conn, row["utxo_id"], now)
+        credited += 1
+    return credited
+
+
+def credit(conn: sqlite3.Connection, utxo_id: str, now: int) -> None:
+    with db.tx(conn):
+        pay = conn.execute("SELECT * FROM payments WHERE utxo_id = ? AND status = 'pending_check'",
+                           (utxo_id,)).fetchone()
+        if pay is None:
+            return
+        conn.execute("UPDATE payments SET committed = 1, status = 'credited' WHERE utxo_id = ?", (utxo_id,))
+        inv = conn.execute("SELECT * FROM invoices WHERE id = ?", (pay["invoice_id"],)).fetchone()
+        if inv is None or inv["status"] == "credited" or now > inv["expires_at"] + UNDERPAID_GRACE_DAYS * 86400:
+            return
+        received = inv["received_ut"] + min(pay["value_ut"], inv["price_ut"])   # one payment credits ≤ the price
+        if received < inv["price_ut"]:
+            status = "seen" if now <= inv["expires_at"] else "underpaid"
+            conn.execute("UPDATE invoices SET received_ut = ?, status = ? WHERE id = ?", (received, status, inv["id"]))
+            return
+        conn.execute("UPDATE invoices SET received_ut = ?, status = 'credited', credited_at = ? WHERE id = ?",
+                     (received, now, inv["id"]))
+        if inv["identity_id"]:
+            grant_pack(conn, inv["identity_id"], inv["pack"], now)
+
+
+def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int) -> None:
+    """Stack bytes and extend paid_until by the pack's days from max(now, paid_until) (spec §9.6)."""
+    pack = quota.PACKS[pack_id]
+    row = conn.execute("SELECT paid_bytes, paid_until FROM identities WHERE id = ?", (identity_id,)).fetchone()
+    if row is None:
+        return
+    active = row["paid_until"] is not None and row["paid_until"] > now
+    paid_bytes = (row["paid_bytes"] if active else 0) + pack["bytes"]
+    paid_until = max(now, row["paid_until"] or 0) + pack["days"] * 86400
+    conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ? WHERE id = ?", (paid_bytes, paid_until,
+                                                                                       identity_id))
+
+
+def reconcile(conn: sqlite3.Connection, rescan, committed, now: int) -> str:
+    """Hourly check independent of walletd: every credited UTXO is still in our mirror, the sidecar
+    still proves the same value for it, and it is still committed.
+
+    `rescan(rows)` returns {utxo_id: value_ut} for the mirror rows it can open with the receiver key;
+    `committed(utxo_id)` → ok | missing | unknown (`committed_anywhere`). A mismatch freezes credits;
+    an indexer that can't answer only skips the round. Returns `ok`, `mismatch` or `unknown`.
+    """
+    credited = conn.execute("SELECT utxo_id, value_ut FROM payments WHERE status = 'credited'").fetchall()
+    ids = [r["utxo_id"] for r in credited]
+    rows = []
+    for i in range(0, len(ids), 500):
+        part = ids[i:i + 500]
+        rows += conn.execute(f"SELECT id, nonce, enc FROM chain_utxos WHERE id IN ({','.join('?' * len(part))})",
+                             part).fetchall()
+    proven = rescan(rows) if rows else {}
+    if len(rows) != len(ids) or any(proven.get(r["utxo_id"]) != r["value_ut"] for r in credited):
+        verdict = "mismatch"
+    else:
+        answers = {committed(r["utxo_id"]) for r in credited}
+        verdict = "mismatch" if "missing" in answers else "unknown" if "unknown" in answers else "ok"
+    _finish_reconcile(conn, verdict, now)
+    return verdict
+
+
+def reconcile_wallet(conn: sqlite3.Connection, wallet_balance_ut: int, now: int) -> str:
+    """G4 fallback reconcile: what we credited can't exceed what the receiving wallet holds."""
+    total = conn.execute("SELECT COALESCE(SUM(value_ut), 0) FROM payments WHERE status = 'credited'").fetchone()[0]
+    verdict = "ok" if total <= wallet_balance_ut else "mismatch"
+    _finish_reconcile(conn, verdict, now)
+    return verdict
+
+
+def _finish_reconcile(conn: sqlite3.Connection, verdict: str, now: int) -> None:
+    with db.tx(conn):
+        unknown = int(db.get_meta(conn, "reconcile_unknown", "0")) + 1 if verdict == "unknown" else 0
+        db.set_meta(conn, "reconcile_unknown", str(unknown))
+        if verdict != "unknown":
+            db.set_meta(conn, "last_reconcile", str(now))
+        if verdict == "mismatch":
+            db.set_meta(conn, "credit_freeze", "1")
+    if verdict == "ok":
+        logsafe.event("chain.reconcile_ok")
+    elif verdict == "mismatch":
+        logsafe.event("chain.credit_freeze", "critical")
+    else:
+        logsafe.event("chain.reconcile_unknown", "critical" if unknown >= UNKNOWN_ALERT_AFTER else "warning")
+
+
+def expire_invoices(conn: sqlite3.Connection, now: int) -> None:
+    """Cleanup step 7: pending/seen invoices past expiry become expired or underpaid."""
+    with db.tx(conn):
+        conn.execute("UPDATE invoices SET status = CASE WHEN received_ut > 0 THEN 'underpaid' ELSE 'expired' END "
+                     "WHERE status IN ('pending','seen') AND expires_at <= ?", (now,))
+

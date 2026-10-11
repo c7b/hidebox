@@ -1,0 +1,178 @@
+{
+ "classify": [
+  {
+   "class": "ootle_testnet",
+   "error": null,
+   "input": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhut",
+   "note": "an Esmeralda locker address"
+  },
+  {
+   "class": "ootle_testnet",
+   "error": null,
+   "input": "OTL_ESM_1QTS33FV8JFR29JXFDXQUM9ZSY8JE37QH58RY5YAYQKRZ0FJYJKU4SCS9RDYQ7LWLA3HLTNP5DAGN4KZ42P5NVPF0JHAHC6C63SHGNTCDSFHUT",
+   "note": "bech32m allows all-uppercase"
+  },
+  {
+   "class": "ootle_testnet",
+   "error": null,
+   "input": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntmfdem97ctzvdjx2en8dp5k56mvd4hx7ur3wfehgju32yx",
+   "note": "an invoice address (pay-ref embedded)"
+  },
+  {
+   "class": "ootle_testnet",
+   "error": null,
+   "input": "  otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhut\n",
+   "note": "surrounding whitespace is ignored"
+  },
+  {
+   "class": "ootle_other",
+   "error": "mainnet_address",
+   "input": "otl_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdf3qeg",
+   "note": "mainnet HRP otl_"
+  },
+  {
+   "class": "ootle_other",
+   "error": "mainnet_address",
+   "input": "otl_loc_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcyst0uz",
+   "note": "another network's HRP"
+  },
+  {
+   "class": "ootle_other",
+   "error": "mainnet_address",
+   "input": "otl_1qqqq",
+   "note": "otl_ prefix, not Esmeralda, not even valid: still the network message"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhuq",
+   "note": "Esmeralda HRP with a bad checksum"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn5y0fwne",
+   "note": "payload shorter than 64 bytes"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "otl_esm_1qts33FV8JFR29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhut",
+   "note": "mixed case"
+  },
+  {
+   "class": "l1_emoji",
+   "error": "l1_address",
+   "input": "🌴🦀🔌📌🚑🌰🎓🌴🐊🐌🔒💡🐜📜👛🍵👛🐽🎂🐻🐢🍓👶🐭🐼🏀🎪💔💵🥑🔋🎒🥊",
+   "note": "the official 33-emoji ID example"
+  },
+  {
+   "class": "l1_emoji",
+   "error": "l1_address",
+   "input": "🐢📟🌈🌊🎯🐋🌙🤔🌕⭐🎋🌰🌴🌵🌲🌸🌹🌻🌽🍀",
+   "note": "20 alphabet emoji"
+  },
+  {
+   "class": "l1_emoji",
+   "error": "l1_address",
+   "input": "🏈 ⚽ 🏠 🏥 🏦 🏭 🏰 🐀 🐉 🐊 🐌 🐍 🦁 🐐 🐑 🐔 🙈 🐗 🐘 🐙 🐚 🐛 🐜 🐝 🐞 🦋 🐣 🐨 🦀 🐪",
+   "note": "emoji separated by spaces"
+  },
+  {
+   "class": "l1_emoji",
+   "error": "l1_address",
+   "input": "⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️",
+   "note": "variation selectors are ignored"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "🐢📟🌈🌊🎯🐋🌙🤔🌕⭐🎋🌰🌴🌵🌲🌸🌹🌻🌽",
+   "note": "only 19 emoji"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+   "note": "emoji outside the Tari alphabet"
+  },
+  {
+   "class": "l1_base58",
+   "error": "l1_address",
+   "input": "86whMsqjWwSDTM45yMzYiMfUuBfZUmQwQQ8A6EuLCodGw13wYMVdh4vVCoyKbFDP86whMsqjWwSDTM45yMzYiMfUuBf",
+   "note": "base-layer address shape (91 base58 chars)"
+  },
+  {
+   "class": "l1_base58",
+   "error": "l1_address",
+   "input": "bjAvzsRt4TBkoCFJrEVY9Chja813PEVoFe7savNw3qGE4PhrnUfwJX99zL8N",
+   "note": "60 base58 chars"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "uHfissBT5CRBXZ2rqeyQA5uSMbPDCUpdvCJLtnAHbzdJxguEJyAR7A5tAKP",
+   "note": "59 chars is too short for an L1 address"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "0nPPZVz612J1QQfD5LSDRRHhS86mJZxmZ3HjLmfvBbCoKdt9oJwvF2mo4p9UfBF38nPPZVz612J1QQfD5",
+   "note": "0 is not a base58 character"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "0xabababababababababababababababababababababababababababababababab",
+   "note": "hex"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "hello",
+   "note": "text"
+  },
+  {
+   "class": "invalid",
+   "error": "bad_address",
+   "input": "",
+   "note": "empty"
+  }
+ ],
+ "hrp": "otl_esm_",
+ "invalid": [
+  {
+   "input": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhuq",
+   "why": "bad checksum"
+  },
+  {
+   "input": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn5y0fwne",
+   "why": "too short"
+  },
+  {
+   "input": "otl_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdf3qeg",
+   "why": "wrong HRP (mainnet)"
+  },
+  {
+   "input": "otl_esm_1qts33FV8JFR29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhut",
+   "why": "mixed case"
+  }
+ ],
+ "layout": "bech32m(hrp, owner_pk[32] || view_pk[32] || pay_ref[0..64]); the HRP carries the network",
+ "network_byte": 38,
+ "pending": "Add the owner's real Tari Universe and L1 address samples (spec §0.6) as classify cases.",
+ "valid": [
+  {
+   "address": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntcdsfhut",
+   "owner_pk": "02e118a5879246a2c8c96981cd945021e598f817a1c64a13a4058627a64495b9",
+   "pay_ref": "",
+   "view_pk": "5862051b480f7ddfec6ff5cc346f513ad855506936052f95fb7c6b1a8c2e89af"
+  },
+  {
+   "address": "otl_esm_1qts33fv8jfr29jxfdxqum9zsy8je37qh58ry5yayqkrz0fjyjku4scs9rdyq7lwla3hltnp5dagn4kz42p5nvpf0jhahc6c63shgntmfdem97ctzvdjx2en8dp5k56mvd4hx7ur3wfehgju32yx",
+   "owner_pk": "02e118a5879246a2c8c96981cd945021e598f817a1c64a13a4058627a64495b9",
+   "pay_ref": "696e765f6162636465666768696a6b6c6d6e6f7071727374",
+   "view_pk": "5862051b480f7ddfec6ff5cc346f513ad855506936052f95fb7c6b1a8c2e89af"
+  }
+ ]
+}
