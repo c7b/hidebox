@@ -47,7 +47,8 @@ MAX_BYTES = 25 * 1024 * 1024
 DROP = "(Drop a file.)"
 NOISE = "(Left: your file. Right: what we store.)"
 ONCE = "(It opens once.)"
-LEAVES = "(Then it leaves. On the record.)"
+LEAVES = "(Then it leaves. On the record.)"     # with SealLog on: every exit gets a receipt (C7)
+LEAVES_UNRECORDED = "(Then it leaves.)"
 SEND = "(Or send it to a Tari address. The key rides inside a stealth payment.)"
 NEVER = "(We never see inside.)"
 END_LINES = (("Every secret leaves on cue.", 52, STAGE_FG), ("Testnet · tTARI has no monetary value", 30, STAGE_FG_2))
@@ -107,7 +108,7 @@ def story(t: T, take: Take) -> None:
         desk.click("copy-link")
         t.check(flows.open_link(phone, link) == "opened", "the phone opens the photo")
         take.hold(1.0)
-    with take.shot(LEAVES, 6):
+    with take.shot(LEAVES if (t.env.config().get("features") or {}).get("seallog") else LEAVES_UNRECORDED, 6):
         phone.reload()
         t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "the reload says it made its exit")
         take.hold(1.5)

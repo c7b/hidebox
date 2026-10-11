@@ -6,8 +6,8 @@
 
 Python standard library only. Deterministic: the same commit and config give byte-identical files
 (the manifest's built_at is the one timestamp), which is what tools/verify-deploy.py relies on.
-Steps: copy; includes; placeholders; SRI; vendored artifact hashes; lint; sitemap; hash manifest.
-Any error stops the build with exit status 1.
+Steps: copy; the deployment's copy variants; includes; placeholders; SRI; vendored artifact hashes;
+lint; sitemap; hash manifest. Any error stops the build with exit status 1.
 """
 import argparse
 import base64
@@ -44,6 +44,11 @@ SRI_TAG = re.compile(r"<(script|link)\b[^>]*integrity=\"\{\{SRI\}\}\"[^>]*>", re
 FILLED_EXT = {".html", ".txt", ".webmanifest", ".xml"}
 SPDX_PARTIAL = re.compile(r"\A<!-- SPDX-License-Identifier: MIT -->\n")
 NOINDEX = re.compile(r"<meta\s+name=\"robots\"\s+content=\"[^\"]*noindex", re.I)
+# Under web/app: test evidence (screenshots show dev links with their keys) and test runners.
+APP_NEVER_SERVED = ("sidecar", "shots", "ui/tests")
+# The config tables the site's copy variants read (web/site/tools/variants.py). The manifest records
+# them, so verify-deploy rebuilds with the values this build used, whatever an admin flips later.
+VARIANT_TABLES = ("gates", "features", "hosting")
 
 
 class BuildError(Exception):
@@ -73,9 +78,12 @@ def source_state(given: list[str] | None = None) -> dict:
             "date": datetime.datetime.fromtimestamp(commit_time, datetime.UTC).strftime("%Y-%m-%d")}
 
 
-def settings(config_path: Path, origin: str | None) -> dict:
+def load_config(config_path: Path) -> dict:
     with open(config_path, "rb") as f:
-        cfg = tomllib.load(f)
+        return tomllib.load(f)
+
+
+def settings(cfg: dict, origin: str | None) -> dict:
     origin = (origin or cfg["public_origin"]).rstrip("/")
     if not re.fullmatch(r"https://[a-z0-9.-]+(:\d+)?|http://127\.0\.0\.1:\d+", origin):
         raise BuildError(f"origin must be https://host (or http://127.0.0.1:port for development): {origin}")
@@ -114,20 +122,39 @@ def page_target(rel: str) -> str:
     return f"{prefix}{name}/index.html"
 
 
+def page_url(rel: str) -> str:
+    """The path a page is served at: index → / and /es/ (a directory), <name> → /<name> and /es/<name>."""
+    return "/" + rel.removesuffix(".html").removesuffix("index")
+
+
 def copy_site(web: Path, dist: Path, with_tests: bool) -> list[str]:
+    """Returns the pages copied, as paths under web/site/pages."""
     copy_tree(web / "shared", dist / "shared", skip=("partials",))
-    copy_tree(web / "app", dist / "app", skip=("sidecar",) if with_tests else ("sidecar", "tests"))
+    copy_tree(web / "app", dist / "app", skip=APP_NEVER_SERVED + (() if with_tests else ("tests",)))
     copy_tree(web / "app" / "vendor", dist / "vendor")
     copy_tree(web / "site" / "static", dist)
     copy_tree(web / "site" / "js", dist / "site" / "js")
     copy_tree(web / "site" / "css", dist / "site" / "css")
     pages = []
     for page in sorted((web / "site" / "pages").rglob("*.html")):
-        target = page_target(page.relative_to(web / "site" / "pages").as_posix())
-        (dist / target).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(page, dist / target)
-        pages.append(target)
+        rel = page.relative_to(web / "site" / "pages").as_posix()
+        (dist / page_target(rel)).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(page, dist / page_target(rel))
+        pages.append(rel)
     return pages
+
+
+def set_variants(web: Path, dist: Path, cfg: dict) -> None:
+    """Give every data-when variant of the site pages its `hidden` attribute from this deployment's
+    config and write llms-full.txt again from the result (the site's tool), so readers without
+    JavaScript and crawlers get the sentences that are true here. Before includes and placeholders."""
+    tools = web / "site" / "tools"
+    if not (tools / "variants.py").is_file():
+        raise BuildError(f"{tools / 'variants.py'} is missing: the site's copy variants can't be set")
+    if str(tools) not in sys.path:
+        sys.path.insert(0, str(tools))
+    import variants
+    variants.apply(dist, cfg)
 
 
 def copy_holding(web: Path, dist: Path) -> list[str]:
@@ -231,21 +258,22 @@ def verify_vendored(web: Path) -> list[str]:
 
 def sitemap(dist: Path, pages: list[str], origin: str) -> None:
     urls = []
-    for target in pages:
+    for rel in pages:
+        target = page_target(rel)
         if target.endswith("404.html") or NOINDEX.search((dist / target).read_text(encoding="utf-8")):
             continue
-        path = "/" + target.removesuffix("index.html").removesuffix("/")
-        urls.append(origin + (path if path != "/" else "/"))
+        urls.append(origin + page_url(rel))
     body = "".join(f"  <url><loc>{u}</loc></url>\n" for u in sorted(urls))
     (dist / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n'
                                       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                                       f"{body}</urlset>\n", encoding="utf-8", newline="\n")
 
 
-def manifest(dist: Path, state: dict) -> dict:
+def manifest(dist: Path, state: dict, variant_config: dict) -> dict:
     files = {p.relative_to(dist).as_posix(): sha256(p) for p in sorted(dist.rglob("*")) if p.is_file()}
     doc = {"version": state["version"], "git_sha": state["sha"],
-           "built_at": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "files": files}
+           "built_at": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "variant_config": variant_config, "files": files}
     out = dist / ".well-known" / "mutis-manifest.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
@@ -258,8 +286,9 @@ def content_id(files: dict) -> str:
     return hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()[:8]
 
 
-def build(web: Path, dist: Path, release: Path, values: dict, state: dict, with_tests: bool = False,
+def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: dict, with_tests: bool = False,
           holding: bool = False) -> dict:
+    """`cfg` is the deployment's mutis.toml; `values` fill the {{PLACEHOLDERS}} (settings())."""
     for out in (dist, release / "sidecar"):
         if out.exists():
             shutil.rmtree(out)
@@ -268,12 +297,17 @@ def build(web: Path, dist: Path, release: Path, values: dict, state: dict, with_
     if problems:
         raise BuildError("lint:\n  " + "\n  ".join(problems))
     vendored = verify_vendored(web)
-    pages = copy_holding(web, dist) if holding else copy_site(web, dist, with_tests)
+    if holding:
+        pages, variant_config = copy_holding(web, dist), {}
+    else:
+        pages = copy_site(web, dist, with_tests)
+        set_variants(web, dist, cfg)
+        variant_config = {t: cfg[t] for t in VARIANT_TABLES if t in cfg}
     copy_sidecar(web, release)
     process_files(dist, web / "shared" / "partials", values | {
         "GIT_SHA": state["sha"], "VERSION": state["version"], "BUILD_DATE": state["date"]})
     sitemap(dist, pages, values["ORIGIN"])
-    doc = manifest(dist, state)
+    doc = manifest(dist, state, variant_config)
     return {"pages": len(pages), "files": len(doc["files"]), "content_id": content_id(doc["files"]),
             "vendored_checked": len(vendored), "holding": holding,
             "version": state["version"], "git_sha": state["sha"], "origin": values["ORIGIN"]}
@@ -292,8 +326,9 @@ def main() -> int:
                    help="the commit an exported tree (git archive, no .git) was made from")
     args = p.parse_args()
     try:
-        summary = build(args.web.resolve(), args.out.resolve(), args.release.resolve(),
-                        settings(args.config, args.origin), source_state(args.source), args.with_tests, args.holding)
+        cfg = load_config(args.config)
+        summary = build(args.web.resolve(), args.out.resolve(), args.release.resolve(), cfg,
+                        settings(cfg, args.origin), source_state(args.source), args.with_tests, args.holding)
     except (BuildError, OSError, KeyError, subprocess.CalledProcessError, tomllib.TOMLDecodeError) as e:
         print(f"build: FAIL: {e}", file=sys.stderr)
         return 1
