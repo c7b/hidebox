@@ -9,6 +9,11 @@
  "delivery_tx": "45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a",
  "revealed": [
   {
+   "n": 789,
+   "sealed_at": 1759917600,
+   "missed": true
+  },
+  {
    "n": 788,
    "sealed_at": 1759914000,
    "raw": "/api/v1/canary/raw?n=788",

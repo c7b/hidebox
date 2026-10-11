@@ -243,3 +243,65 @@ at the end of `REVIEW-devil.md`. Items marked **(review)** came out of the devil
 | `[hidden]` | `[hidden][hidden] { display: none; }` in `site.css` | wins over `.steps li`, `.btn` and the like without `!important` (spec §3.5, review L4) |
 | Screenshots | WebP from Chromium, 112 files, 3.0 MB; hero shots use a test-only stand-in for the widget | the widget doesn't exist yet; the stand-in is never served |
 | Stencil numerals (M-09) | not made | optional per 12-integration; no real use in brand v2's wall |
+
+## 6. Integration pass (2026-10-11)
+
+Every request aimed at `web/site` or `web/shared` in the builders' NOTES, NOTES-ui, the reviews'
+builder responses and 12-integration §7 (including the §7.4 claim-registry ratifications), as the
+owner of this directory. Sections 1 to 5 above are the site builder's record; the rows below say
+what became of them.
+
+### Integration responses
+
+| From | Request | Change |
+|---|---|---|
+| NOTES-ui, site 1 | link the widget's stylesheet with SRI | `<link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}">` after `home.css` in `pages/index.html` and `pages/es/index.html` |
+| NOTES-ui, site 2 | `detail.preview` on `sealed` | already read by `home.js`; a note's empty `name` now keeps "(a note: no name)" instead of an empty cell |
+| NOTES-ui, site 3 (app review L7) | hide line 2 while the card shows | `home.js`: hidden on `mutis:state` `sealed`, shown again on `idle`; `check_interactions` |
+| NOTES-ui, site 4 (app review H4) | `/judges` B6 per amount-proof mode, and a check per mode | B6 shows "Seen on chain → Amount proven" (proven) or "Seen by our wallet → Exists on chain" (wallet), EN and ES. `check_ui_strings` reads `/judges` in each mode through `variants.resolve`, drops hidden variants, and requires a bold arrow sequence with the payment steps to equal the app's `upgrade.step.*` labels for that mode; `check_variants` checks the same sentence in Chromium with `/config` in each mode |
+| NOTES-ui, site 5 (app review M4) | prefill `/abuse` from `#link=` | `abuse.js` reads the fragment, clears it at once with `history.replaceState`, and fills the field through `cleanLink` (our origins, no key); `check_abuse` covers a drop link, a link with a key (stripped) and a foreign origin (refused) |
+| app-core, site 1 | judge pass through `store.js` | already done in the site builder's fix pass (review M14) |
+| app-core site 2, server site 1 (app-core review L8) | show a missed canary reveal | `canary.js` lists every `revealed[]` entry with `missed: true` as "Test file #n: missed (the verifier restarted)." under the reveal box (EN, ES); fixture and `check_reveal` |
+| server §3, site 3.1 (review M15) | `/stats/wall` items are `{size, exit}` | the site already read only those; the wall fixtures now match the server |
+| server §3 | render the tx view as given | the home chain card describes the output that carries the sealed key and shows only when that output reads `amount: "hidden"` and `owner: "one-time key"`; otherwise it stays hidden (it prints "hidden" for both) |
+| server decisions (`/stats`, `/stats/wall`), Integrator 7, review L7, L10 | `/privacy`, `/how` and the glass box | `/privacy` gains "What we publish" (every `/stats` field, the latest upload to the minute, the wall's classes and that someone who knows a file's size and rule may recognise it); backups hold the wrapped key of every link open at backup time; erased rows can sit in the write-ahead log and the backups. `/how`: the live-numbers row (no time-left or state any more), "Sees and stores" (when it left, the first open's time, owner-only), backups. Glass box "Opens": "a count, and the time of the first open". EN and ES |
+| deploy, site 1 (review H4) | remove "Decoy sends today" | gone from `pages/judges.html`, `pages/es/judges.html` and `judges.js`; fixture without `decoys_today` |
+| deploy, site 2 (review M1) | `wasm_sha256` may be `null` | `/judges` shows "not reported yet" / "todavía no reportado" |
+| deploy, site 3 (review L5) | verify-deploy needs Python 3.11 | `/security#verify`: "It needs git and Python 3.11 or newer." (EN, ES) |
+| deploy site 4, review M8, 11-brand P-9 | link `/releases.json` once SealLog is on | `/security#verify`, `seallog=on` only: release hashes notarized through SealLog since it went on, `/releases.json`, and only events signed by the log's writer key count (template review M3); C10's sentence gains "release hashes notarized on the Ootle" in the same variant |
+| deploy site 5, site §1.15 (review L14) | font caching | Caddy caches `/shared/fonts/*` for a day; the names stay as 12-integration fixed them. Closed |
+| template §1.3, §4 (review M1, M3); 12-integration §7.3, §7.4 | SealLog on `/security`, C22 | new `/security#seallog` (`seallog=on`, with its TOC entry): what a proof shows (C22's ratified wording), that the log has no owner and anyone can check `owner_rule: "None"`, that one key writes it, our `service` key, which holds our public tTARI (G5), the template's leak line (steps of 64), and `template/check.sh --onchain`. `/how` gains C22 after C7, and its who-sees-what SealLog row names the writer. SealLog counts on `/` and `/how` now say "in steps of 64" (EN, ES) |
+| 12-integration §7.2 | cadence only from `/config` | no page types it (`checkpoint` variable); the config fixture is 900 s; `check_config_numbers` now also flags a seconds value typed as minutes ("15 minutes"); B7 says each receipt is "not on the record yet" (the app's words) until the next checkpoint, at most `{checkpoint}` away |
+| 12-integration §7.4 | "the server builds every memo" holds for relay sends | `/security` phishing row: "the server writes every memo our relay sends, from its own address" (EN, ES). C9 (direct), C11 (two variants), C13, Lock 1 "(the part we can't read)" and "any link, file or drop" were already on the pages |
+| 12-integration §7.5, §7.6 | relay; `amount_proof = sidecar` | the HTML keeps shipping the server's defaults; the deployment's own variants need `variants.apply` in `build.py` (request below) |
+| 12-integration §7.8 | Spanish ships, zh-CN doesn't | every change above has its Spanish twin; no zh-CN |
+
+Also in this pass: the budget check now measures `/` with the real widget (non-GET requests, the
+widget's anti-bot challenge, are counted as they arrived): 35 requests, 47.8 KB compressed
+HTML+CSS+JS, 94.3 KB in all, 2 font files, 0 third-party, so M-01 passes. With the app's widget in
+the tree, the test-only stand-in (`tests/fixtures/widget-stand-in.js`, `--widget` in `serve.py` and
+`shots.py`) and the browser checks' allowance for a missing widget are gone, and `shots/` was
+rendered again with the real widget.
+
+**Not applied**, deploy site 1's optional line "Decoy sends: on, about one every {decoy_mean_gap}
+min": `/config` has no such field (only `features.decoys`), and typing a gap would break P-20.
+`/security` already names decoy sends among what stops a chain observer.
+
+### Integration requests
+
+**Deploy**
+1. Still open (site §1.6, review H3): `deploy/caddy/Caddyfile` still has `@home path / /index.html`,
+   so `/es/` gets the content CSP and the widget's Tari features fail there. Use
+   `@home path / /index.html /es /es/ /es/index.html`, and add `/es/` to the E2E header test.
+2. Still open (site §1.13, review M11): `tools/build.py` doesn't call `variants.apply` yet. With
+   `amount_proof = "sidecar"` (12-integration §7.6) readers without JavaScript, crawlers and
+   `llms-full.txt` would otherwise get the wallet-mode sentences ("this deployment doesn't prove it
+   with the official Tari library"), which are false for that deployment. Visitors with JavaScript
+   get the right ones from `/config`.
+3. Still open (site §1.5, review M7): the sitemap's Spanish home is `{{ORIGIN}}/es/`.
+
+**Integrator (root, `docs/`)**
+1. Still open (site §4.13): `docs/self-host.md`, `docs/threat-model.md`, `docs/api.md` and
+   `docs/evidence/` are linked from every footer, `/how`, `/judges` and `/security`, and `docs/` is
+   empty.
+2. Owner, Tier 3, unchanged (site §4.15): `/terms`, `/privacy`, the Spanish pages.

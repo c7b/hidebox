@@ -2,147 +2,99 @@
  "lockers": [
   {
    "size": 1,
-   "ttl": 2,
-   "exit": "views",
-   "state": "sealed"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 0,
-   "exit": "views",
-   "state": "gone"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 1,
-   "ttl": 0,
-   "exit": "once",
-   "state": "gone"
+   "exit": "once"
   },
   {
    "size": 2,
-   "ttl": 0,
-   "exit": "once",
-   "state": "gone"
+   "exit": "once"
   },
   {
    "size": 4,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 1,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 2,
-   "ttl": 2,
-   "exit": "views",
-   "state": "opened"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 1,
-   "ttl": 0,
-   "exit": "time",
-   "state": "gone"
+   "exit": "time"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 3,
-   "ttl": 1,
-   "exit": "time",
-   "state": "sealed"
+   "exit": "time"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 4,
-   "ttl": 2,
-   "exit": "views",
-   "state": "sealed"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 3,
-   "exit": "views",
-   "state": "sealed"
+   "exit": "views"
   },
   {
    "size": 1,
-   "ttl": 1,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 1,
-   "ttl": 2,
-   "exit": "views",
-   "state": "sealed"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 0,
-   "exit": "views",
-   "state": "gone"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 0,
-   "exit": "once",
-   "state": "gone"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 0,
-   "exit": "kept",
-   "state": "gone"
+   "exit": "kept"
   },
   {
    "size": 4,
-   "ttl": 0,
-   "exit": "once",
-   "state": "gone"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 1,
-   "exit": "views",
-   "state": "sealed"
+   "exit": "views"
   }
  ],
  "quiet": false,

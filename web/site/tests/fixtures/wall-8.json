@@ -2,51 +2,35 @@
  "lockers": [
   {
    "size": 0,
-   "ttl": 0,
-   "exit": "once",
-   "state": "gone"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 1,
-   "exit": "views",
-   "state": "sealed"
+   "exit": "views"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 4,
-   "exit": "kept",
-   "state": "sealed"
+   "exit": "kept"
   },
   {
    "size": 4,
-   "ttl": 3,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 0,
-   "ttl": 2,
-   "exit": "time",
-   "state": "opened"
+   "exit": "time"
   },
   {
    "size": 2,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   },
   {
    "size": 3,
-   "ttl": 2,
-   "exit": "once",
-   "state": "sealed"
+   "exit": "once"
   }
  ],
  "quiet": false,

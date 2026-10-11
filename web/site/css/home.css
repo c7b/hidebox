@@ -169,6 +169,7 @@
   font: var(--t-data); white-space: pre-wrap; word-break: break-all; background: var(--bg-sunken);
   padding: var(--s-4); max-height: 12em; overflow: auto;
 }
+.missed { margin-top: var(--s-4); }
 .checks-h { margin-top: var(--s-8); }
 .checks { width: 100%; margin-top: var(--s-5); }
 .checks th, .checks td { text-align: left; vertical-align: top; padding: var(--s-4) var(--s-4) var(--s-4) 0; border-top: 1px solid var(--hair); }

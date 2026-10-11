@@ -16,11 +16,10 @@ python3 -I web/site/tests/run.py
 ```
 
 On the server (as `build`) every check runs: 16 file checks (with `llms-full.txt`), `dates.js` under Node 20
-in two time zones, and 11 browser checks in headless Chromium against `tests/serve.py`. Elsewhere,
-checks whose tool is missing print `SKIP`, never `PASS`; `--static` runs only the file checks. One file
-check, "/judges quotes the app's words", prints `SKIP` until the app-ui builder writes
-`web/app/i18n/`. Last run on the server: `28 of 28 checks without failures` (full output in
-`ACCEPTANCE.md`).
+in two time zones, and 11 browser checks in headless Chromium against `tests/serve.py`, which serves
+the app's real widget from `web/app/`. Elsewhere, checks whose tool is missing print `SKIP`, never
+`PASS`; `--static` runs only the file checks. "/judges quotes the app's words" compares `/judges`, in
+each amount-proof mode, with `web/app/i18n/{en,es}.json`. Last run on the server: see `ACCEPTANCE.md`.
 
 ## Layout
 
@@ -36,7 +35,7 @@ check, "/judges quotes the app's words", prints `SKIP` until the app-ui builder 
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how security pricing faq judges terms privacy abuse status 404`, and `es/` |
 | `js/` | `site.js` (every page), `stats.js` (numbers from `/config` and `/stats`), `home.js`, and what it loads as each section comes near: `wall.js` with its words in `wall-en.js` / `wall-es.js`, `noise.js`, `canary.js` (then `reveal.js` on a click), `evidence.js`; `abuse.js`, `judges.js`, `status.js` |
-| `css/` | `site.css` (every page), `home.css` (`/` and `/es/` only), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
+| `css/` | `site.css` (every page), `home.css` (`/` and `/es/` only, which also link the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |
 | `tools/` | `subset-fonts.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
@@ -87,12 +86,8 @@ code arrives. `home.js` loads `js/wall.js` when the wall's top edge comes into v
 | `python3 -I web/site/tools/llms_full.py` | writes `static/llms-full.txt` from `/how` and `/security` as a reader without JavaScript sees them (`--check` is part of the tests) |
 | `python3 -I web/site/tools/variants.py --config mutis.toml dist` | sets a deployment's copy variants into its built pages and writes its `llms-full.txt` (for `tools/build.py`, before includes and placeholders) |
 | `python3 -I web/site/tests/serve.py` | the pages with includes and placeholders expanded, production CSP headers and the API from fixtures (`--api URL` forwards to a real server, `--dist DIR` serves a built tree) |
-| `python3 -I web/site/tests/shots.py --widget web/site/tests/fixtures/widget-stand-in.js` | rewrites `shots/` |
+| `python3 -I web/site/tests/shots.py` | rewrites `shots/` |
 | `node web/site/tests/make-canary.mjs` | re-seals the canary fixtures with the app's real format code |
-
-`tests/fixtures/widget-stand-in.js` is a test fixture only: until `web/app/drop-widget.js` exists, it
-draws the brand's idle drop zone so the hero screenshots aren't an empty box. It is never served by
-the build.
 
 ## Licence notes
 

@@ -7,8 +7,8 @@ import { saveJudgePass, savedJudgePass } from '/app/lib/store.js';
 
 const PASS = /^judge-[0-9a-hjkmnp-tv-z]{24}$/;
 const T = {
-  en: { saved: 'Saved for this tab.', forgot: 'Forgotten.', bad: 'That doesn\'t look like a judge pass: it starts with “judge-” and has 24 more letters and digits.', none: 'none yet', check: 'indexer' },
-  es: { saved: 'Guardado para esta pestaña.', forgot: 'Olvidado.', bad: 'Eso no parece un pase de jurado: empieza con “judge-” y tiene 24 letras y números más.', none: 'ninguno todavía', check: 'indexador' },
+  en: { saved: 'Saved for this tab.', forgot: 'Forgotten.', bad: 'That doesn\'t look like a judge pass: it starts with “judge-” and has 24 more letters and digits.', none: 'none yet', check: 'indexer', unreported: 'not reported yet' },
+  es: { saved: 'Guardado para esta pestaña.', forgot: 'Olvidado.', bad: 'Eso no parece un pase de jurado: empieza con “judge-” y tiene 24 letras y números más.', none: 'ninguno todavía', check: 'indexador', unreported: 'todavía no reportado' },
 }[lang];
 
 const box = document.querySelector('[data-judge-pass]');
@@ -68,8 +68,7 @@ loadEvidence().then((ev) => {
   const set = (name, text) => { evidence.querySelector(`[data-ev="${name}"]`).textContent = text; };
   set('network', `${networkName(ev.network)} testnet`);
   set('version', ev.ootle_version ?? '');
-  set('wasm', ev.wasm_sha256 ?? '');
-  set('decoys', String(ev.decoys_today ?? 0));
+  set('wasm', ev.wasm_sha256 ?? T.unreported); // null until the running verifier reports its hash
   txItems(evidence.querySelector('[data-ev="deliveries"]'), ev.deliveries);
   txItems(evidence.querySelector('[data-ev="payments"]'), ev.payments);
   evidence.hidden = false;

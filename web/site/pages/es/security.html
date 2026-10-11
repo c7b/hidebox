@@ -45,6 +45,7 @@
       <li><a href="#crypto">Criptografía</a></li>
       <li><a href="#addresses">Sellar un archivo a una dirección de Tari</a></li>
       <li><a href="#payments">Cómo se verifican los pagos</a></li>
+      <li data-when="seallog=on" hidden><a href="#seallog">SealLog, nuestro registro público</a></li>
       <li><a href="#logs">Lo que nunca toca un disco</a></li>
       <li><a href="#headers">Cabeceras y política de seguridad de contenido</a></li>
       <li><a href="#verify">Verifica este despliegue</a></li>
@@ -69,7 +70,7 @@
       <tr><th scope="row">Quien adivina contraseñas, con una copia de nuestra base de datos</th><td>adivinar sin conexión los enlaces de solo contraseña</td><td>PBKDF2-SHA256<span data-needs="config" hidden> con <span data-v="pbkdf2_iter"></span> rondas</span>; enlace + contraseña es lo predeterminado, y los enlaces de solo contraseña traen una advertencia</td><td>secretos débiles de solo contraseña</td></tr>
       <tr><th scope="row">Quien observa la cadena</th><td>leer todo el estado público</td><td>salidas stealth, memos cifrados, una comisión y un monto iguales para cada envío del relay, envíos señuelo</td><td>la comisión y el grafo de transacciones son públicos; los envíos del relay se reconocen como nuestros<span data-when="send_mode=direct" hidden>; los envíos desde un navegador gastan el saldo que asigna nuestra cartera patrocinadora y luego su propio cambio, así que se pueden vincular entre sí y con nosotros</span></td></tr>
       <tr><th scope="row">Quien tenga una llave de vista</th><td>leer llegadas, montos y el texto del memo</td><td>los archivos sellados a un casillero también necesitan su llave de dueño</td><td>los archivos enviados con “Quien lo recibe usa otra cartera de Ootle” se abren con la llave de vista (se avisa al enviar)</td></tr>
-      <tr><th scope="row">Phishing a través de nuestro relay</th><td>hacer que nuestra cartera envíe un enlace</td><td>el servidor escribe cada memo desde su propia dirección; un cliente solo entrega un blob sellado de 125 bytes; enviar requiere un casillero; las entregas de buzón solo van a la dirección del propio buzón</td><td>alguien puede enviar entregas de mutis no deseadas a una dirección: topes diarios, buzones que se pueden cerrar, una sección aparte en la bandeja, sin vista previa automática, una advertencia antes de los programas<span data-when="send_mode=direct" hidden>. Los envíos desde navegadores llevan un memo que escribió el navegador, así que un cliente modificado puede poner cualquier texto en la cadena hacia cualquier dirección, con un saldo de patrocinio al día por casillero y por red; las bandejas muestran como texto plano, nunca como enlace, un memo que no sea exactamente un enlace de mutis</span></td></tr>
+      <tr><th scope="row">Phishing a través de nuestro relay</th><td>hacer que nuestra cartera envíe un enlace</td><td>el servidor escribe cada memo que envía nuestro relay, desde su propia dirección; un cliente solo entrega un blob sellado de 125 bytes; enviar requiere un casillero; las entregas de buzón solo van a la dirección del propio buzón</td><td>alguien puede enviar entregas de mutis no deseadas a una dirección: topes diarios, buzones que se pueden cerrar, una sección aparte en la bandeja, sin vista previa automática, una advertencia antes de los programas<span data-when="send_mode=direct" hidden>. Los envíos desde navegadores llevan un memo que escribió el navegador, así que un cliente modificado puede poner cualquier texto en la cadena hacia cualquier dirección, con un saldo de patrocinio al día por casillero y por red; las bandejas muestran como texto plano, nunca como enlace, un memo que no sea exactamente un enlace de mutis</span></td></tr>
       <tr><th scope="row">Quien busca saturarnos</th><td>llenar el almacenamiento, subir la prueba de trabajo, agotar presupuestos diarios, bloquear enlaces</td><td>carriles reservados para archivos pequeños y anónimos, límites por prefijo de red, un primer día limitado para casilleros nuevos, presupuestos públicos y reservados con alertas</td><td>alguien con muchas redes puede agotar la parte pública por un día; la parte reservada mantiene funcionando la demostración guiada</td></tr>
       <tr><th scope="row">Quien aloja abuso</th><td>subir y compartir</td><td>archivos anónimos pequeños y de vida corta, una apertura por defecto, prueba de trabajo, límites de uso, solo descargas, una advertencia antes de los programas, sin listados ni búsqueda, <code>noindex</code>, el <a href="/es/abuse">formulario de reporte</a>, retiro por id</td><td>no podemos revisar contenido cifrado, por diseño</td></tr>
       <tr><th scope="row">Inyección de scripts o una dependencia envenenada</th><td>correr código en nuestro origen</td><td>sin código de terceros; una política de seguridad de contenido estricta con Trusted Types donde existe; sin puntos de inserción de HTML en nuestro código; el único artefacto incluido está fijado por hash; SRI en cada script y hoja de estilos</td><td>extensiones del navegador (fuera de alcance)</td></tr>
@@ -108,6 +109,16 @@
   <p data-when="proof=wallet">Abonamos un pago solo después de que nuestra cartera lo ve y un indexador público operado por Tari confirma que existe en la cadena. El monto es el que lee nuestra cartera; este despliegue no lo prueba con la biblioteca oficial de Tari.</p>
   <p><a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">Lee el código que lo hace<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
 
+  <h2 id="seallog" data-when="seallog=on" hidden>SealLog, nuestro registro público</h2>
+  <p data-when="seallog=on" hidden>SealLog es una plantilla en el Ootle. En cada punto de control<span data-needs="config" hidden>, a lo más cada <span data-v="checkpoint"></span>,</span> agregamos una raíz de Merkle sobre el hash del texto cifrado de cada archivo que guardamos y un registro de cada salida. El registro en uso es el que nombra <a href="/api/v1/config"><code>/api/v1/config</code></a>.</p>
+  <ul data-when="seallog=on" hidden>
+    <li><strong>Lo que muestra una prueba:</strong> que el árbol con el que nos comprometimos en esa época contiene el hash del texto cifrado de tu archivo, o el registro de su salida. No que guardáramos los bytes, ni que los borráramos.</li>
+    <li><strong>Lo que nadie puede cambiar:</strong> el registro no tiene dueño, así que nadie, ni nosotros, puede cambiar sus reglas ni el código detrás. Cualquiera puede comprobar <code>owner_rule: "None"</code> en su cabecera en un indexador. Los puntos de control solo se agregan.</li>
+    <li><strong>Quién lo escribe:</strong> una sola llave, nuestra llave <code>service</code>, la misma que guarda nuestros tTARI públicos. Puede agregar cualquier raíz, dejar de hacerlo o empezar un registro nuevo. Todavía nada prueba que cada punto de control extienda al anterior.</li>
+    <li><strong>Lo que le muestra a todos:</strong> un límite superior aproximado de cuántos registros (archivos guardados más salidas) hemos escrito, en pasos de 64; por cada ventana entre puntos de control, cuántos múltiplos completos de 64 llegaron (casi siempre ninguno); y la llave que escribe.</li>
+    <li><strong>El código que corre:</strong> cualquiera puede comprobar que la plantilla en la cadena es nuestro <code>seal_log.wasm</code> publicado, byte por byte, con <code>template/check.sh --onchain</code> y la dirección de la plantilla.</li>
+  </ul>
+
   <h2 id="logs">Lo que nunca toca un disco</h2>
   <p>Nuestro servidor y nuestro servidor web nunca escriben en disco tu dirección IP, tus enlaces ni los ids de tus archivos.</p>
   <ul>
@@ -124,15 +135,16 @@
   <p>Las páginas solo permiten scripts, estilos, fuentes y peticiones de este mismo origen, y no se permite correr nada en línea. Las páginas de la app añaden WebAssembly para la biblioteca oficial de Tari, Trusted Types donde el navegador los soporta, y los dos indexadores operados por Tari para el botón “Compruébalo en el indexador de Tari”.</p>
 
   <h2 id="verify">Verifica este despliegue</h2>
-  <p>SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: comparar lo que servimos con el código publicado, y correr tu propia copia.</p>
+  <p>SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: comparar lo que servimos con el código publicado<span data-when="seallog=on" hidden>, los hashes de cada versión notarizados en el Ootle</span>, y correr tu propia copia.</p>
   <ol>
     <li>Cada compilación escribe <a href="/.well-known/mutis-manifest.json">un manifiesto</a> con el SHA-256 de cada archivo que sirve este sitio y el commit de git del que salió.</li>
     <li><code>tools/verify-deploy.py</code> recompila el sitio desde una copia limpia de ese commit, descarga cada archivo del manifiesto en vivo e imprime cualquier diferencia.</li>
+    <li data-when="seallog=on" hidden>Desde que SealLog está activo, el hash del manifiesto de cada versión también se notariza con él; <a href="/releases.json">/releases.json</a> las lista con sus transacciones. Cualquiera puede notarizar, así que solo son nuestros los eventos cuyo firmante es la llave que escribe el registro.</li>
   </ol>
   <pre class="terminal" aria-label="Comandos para verificar este despliegue"><span>$ </span>git clone {{REPO_URL}}
 <span>$ </span>cd mutis
 <span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
-  <p>Esto verifica el sitio ahora. Un navegador no puede fijarlo por ti entre visitas.</p>
+  <p>Necesita git y Python 3.11 o más reciente. Esto verifica el sitio ahora. Un navegador no puede fijarlo por ti entre visitas.</p>
 
   <h2 id="devtools">Compruébalo en tus herramientas de desarrollo</h2>
   <p>Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros. Tu navegador contacta un indexador operado por Tari solo cuando presionas “Compruébalo en el indexador de Tari”. Para verlo tú:</p>

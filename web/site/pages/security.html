@@ -45,6 +45,7 @@
       <li><a href="#crypto">Cryptography</a></li>
       <li><a href="#addresses">Sealing a file to a Tari address</a></li>
       <li><a href="#payments">How payments are checked</a></li>
+      <li data-when="seallog=on" hidden><a href="#seallog">SealLog, our public record</a></li>
       <li><a href="#logs">What never touches a disk</a></li>
       <li><a href="#headers">Headers and content security policy</a></li>
       <li><a href="#verify">Verify this deployment</a></li>
@@ -69,7 +70,7 @@
       <tr><th scope="row">Password guesser, with a copy of our database</th><td>guess password-only links offline</td><td>PBKDF2-SHA256<span data-needs="config" hidden> with <span data-v="pbkdf2_iter"></span> rounds</span>; link + password is the default, and password-only links come with a warning</td><td>weak password-only secrets</td></tr>
       <tr><th scope="row">Chain observer</th><td>read all public state</td><td>stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends</td><td>the fee and the transaction graph are public; relay sends are recognisable as ours<span data-when="send_mode=direct" hidden>; sends from a browser spend a grant from our sponsor wallet and then their own change, so they can be linked to each other and to us</span></td></tr>
       <tr><th scope="row">A view-key holder</th><td>read arrivals, amounts and memo text</td><td>files sealed to a locker need its owner key too</td><td>files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)</td></tr>
-      <tr><th scope="row">Phishing through our relay</th><td>make our wallet send a link</td><td>the server writes every memo from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address</td><td>someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs<span data-when="send_mode=direct" hidden>. Sends from browsers carry a memo the browser wrote, so a modified client can put any text on chain to any address, within one sponsor grant a day per locker and per network; inboxes show a memo that isn't exactly a mutis link as plain text, never as a link</span></td></tr>
+      <tr><th scope="row">Phishing through our relay</th><td>make our wallet send a link</td><td>the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address</td><td>someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs<span data-when="send_mode=direct" hidden>. Sends from browsers carry a memo the browser wrote, so a modified client can put any text on chain to any address, within one sponsor grant a day per locker and per network; inboxes show a memo that isn't exactly a mutis link as plain text, never as a link</span></td></tr>
       <tr><th scope="row">Griefer</th><td>fill storage, push proof of work up, drain daily budgets, lock links</td><td>reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts</td><td>someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working</td></tr>
       <tr><th scope="row">Someone hosting abuse</th><td>upload and share</td><td>small and short-lived anonymous files, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, <code>noindex</code>, the <a href="/abuse">report form</a>, removal by id</td><td>we can't scan encrypted content, by design</td></tr>
       <tr><th scope="row">Script injection or a poisoned dependency</th><td>run code in our origin</td><td>no third-party code; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash; SRI on every script and stylesheet</td><td>browser extensions (out of scope)</td></tr>
@@ -108,6 +109,16 @@
   <p data-when="proof=wallet">We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads; this deployment doesn't prove it with the official Tari library.</p>
   <p><a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">Read the code that does it<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
 
+  <h2 id="seallog" data-when="seallog=on" hidden>SealLog, our public record</h2>
+  <p data-when="seallog=on" hidden>SealLog is a template on the Ootle. At each checkpoint<span data-needs="config" hidden>, at most <span data-v="checkpoint"></span> apart,</span> we add one Merkle root over the ciphertext hash of every file we stored and a record of every exit. The log in use is the one <a href="/api/v1/config"><code>/api/v1/config</code></a> names.</p>
+  <ul data-when="seallog=on" hidden>
+    <li><strong>What a proof shows:</strong> that the tree we committed to at that epoch contains your file's ciphertext hash, or the record of its exit. Not that we held the bytes, and not that we deleted them.</li>
+    <li><strong>What nobody can change:</strong> the log has no owner, so nobody, us included, can change its rules or the code behind it. Anyone can check <code>owner_rule: "None"</code> in its header on an indexer. Checkpoints are only ever added.</li>
+    <li><strong>Who writes it:</strong> one key, our <code>service</code> key, the same one that holds our public tTARI. It can add any root, stop, or start a new log. Nothing yet proves that each checkpoint extends the last one.</li>
+    <li><strong>What it shows everyone:</strong> a rough upper bound on how many records (stored files plus exits) we've written, in steps of 64; for each checkpoint window, how many whole multiples of 64 records arrived (usually none); and the writer key.</li>
+    <li><strong>The code it runs:</strong> anyone can check that the template on the chain is our published <code>seal_log.wasm</code>, byte for byte, with <code>template/check.sh --onchain</code> and the template's address.</li>
+  </ul>
+
   <h2 id="logs">What never touches a disk</h2>
   <p>Our server and web server never write your IP address, your links or your files' ids to disk.</p>
   <ul>
@@ -124,15 +135,16 @@
   <p>Pages allow scripts, styles, fonts and requests only from this origin, and nothing inline is allowed to run. The app pages add WebAssembly for the official Tari library, Trusted Types where the browser supports them, and the two Tari-run indexers for the “Check it on Tari's indexer” button.</p>
 
   <h2 id="verify">Verify this deployment</h2>
-  <p>SRI only pins files to this page; it can't protect you from us. What can: comparing what we serve with the published source, and running your own copy.</p>
+  <p>SRI only pins files to this page; it can't protect you from us. What can: comparing what we serve with the published source<span data-when="seallog=on" hidden>, release hashes notarized on the Ootle</span>, and running your own copy.</p>
   <ol>
     <li>Every build writes <a href="/.well-known/mutis-manifest.json">a manifest</a> with the SHA-256 of every file this site serves and the git commit it came from.</li>
     <li><code>tools/verify-deploy.py</code> rebuilds the site from a clean checkout of that commit, downloads every file in the live manifest, and prints any difference.</li>
+    <li data-when="seallog=on" hidden>Since SealLog went on, each release's manifest hash is also notarized through it; <a href="/releases.json">/releases.json</a> lists them with their transactions. Anyone can notarize, so only events whose signer is the log's writer key are ours.</li>
   </ol>
   <pre class="terminal" aria-label="Commands to check this deployment"><span>$ </span>git clone {{REPO_URL}}
 <span>$ </span>cd mutis
 <span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
-  <p>This checks the site now. A browser can't pin it for you between visits.</p>
+  <p>It needs git and Python 3.11 or newer. This checks the site now. A browser can't pin it for you between visits.</p>
 
   <h2 id="devtools">Check it in your devtools</h2>
   <p>No analytics, no trackers, no third-party scripts or fonts. Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”. To see it for yourself:</p>

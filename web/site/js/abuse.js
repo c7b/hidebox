@@ -78,5 +78,16 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
+// The app's "Report this link" and "Report this drop" open /abuse#link=<the link without its key>.
+// The fragment is cleared at once; the field takes the link only as the form would send it.
+const prefill = new URLSearchParams(location.hash.slice(1)).get('link');
+if (prefill !== null) {
+  history.replaceState(null, '', location.pathname + location.search);
+  config.then((c) => {
+    const link = cleanLink(prefill, false, c?.memo_origins ?? null);
+    if (link && !linkInput.value) linkInput.value = link;
+  });
+}
+
 // Only now, with the handler in place, can the form be seen and sent.
 form.hidden = false;

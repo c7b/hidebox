@@ -5,6 +5,7 @@ import gzip
 import json
 import re
 import threading
+import urllib.parse
 import urllib.request
 from contextlib import contextmanager
 
@@ -13,7 +14,6 @@ from cdp import Browser
 
 ALL_PAGES = ["/", "/how", "/security", "/pricing", "/faq", "/judges", "/terms", "/privacy", "/abuse", "/status"]
 ALL_PAGES += ["/es" + ("/" if p == "/" else p) for p in ALL_PAGES] + ["/no-such-page", "/es/no-such-page"]
-WIDGET_MISSING = "/app/drop-widget.js"   # the app builder's file; absent until app-ui lands
 NOTES: list[str] = []
 
 
@@ -29,14 +29,13 @@ def server(*args):
 
 
 def real_errors(page):
-    """Console errors other than the app widget that doesn't exist yet."""
+    """Console errors other than the 404 of the page we asked for on purpose."""
     out = []
     for line in page.console():
         if not line.startswith(("error", "exception")):
             continue
         missing = {r["url"] for r in page.requests() if r["status"] == 404}
-        expected = {u for u in missing if u.endswith(WIDGET_MISSING) or "no-such-page" in u}
-        if "404" in line and missing and missing <= expected:
+        if "404" in line and missing and all("no-such-page" in u for u in missing):
             continue
         out.append(line)
     return out
@@ -87,6 +86,9 @@ def check_budget(browser):
         third = [r["url"] for r in page.requests() if not r["url"].startswith((origin, "data:"))]
         text, other, fonts = 0, 0, 0
         for r in reqs:
+            if r["method"] != "GET":   # the widget's anti-bot challenge request: counted as it arrived
+                other += r["bytes"]
+                continue
             body = _body(r["url"])
             if r["url"].endswith(".woff2"):
                 fonts += 1
@@ -96,7 +98,7 @@ def check_budget(browser):
                 other += len(body)
         NOTES.append(f"budget on /: {len(reqs)} requests, HTML+CSS+JS {text / 1024:.1f} KB gzip, "
                      f"other {other / 1024:.1f} KB, total {(text + other) / 1024:.1f} KB, {fonts} font files, "
-                     f"third-party {len(third)} (drop widget not included: the app builder's)")
+                     f"third-party {len(third)} (with the drop widget's first load)")
         if third:
             problems.append(f"third-party requests: {third}")
         if fonts > 2:
@@ -315,6 +317,10 @@ def check_variants(browser):
             for key in hidden:
                 if page.eval(f"[...document.querySelectorAll('{probes[key]}')].some(e => !e.hasAttribute('hidden'))"):
                     problems.append(f"{args}: a {key} variant is shown")
+            page.goto(origin + "/judges", settle=1.5)
+            steps = "Seen on chain → Amount proven" if "direct" in args else "Seen by our wallet → Exists on chain"
+            if f"Waiting → {steps} → Added" not in page.eval("document.body.innerText"):
+                problems.append(f"{args}: /judges B6 doesn't show the app's payment steps for this mode ({steps})")
             if "direct" in args:   # review H2: the sponsor grant's on-chain linkage is disclosed where sends are explained
                 for path in ("/", "/how", "/security", "/es/", "/es/how", "/es/security"):
                     page.goto(origin + path, settle=1.5)
@@ -381,6 +387,16 @@ def check_abuse(browser):
         leaks = [r["url"] for r in page.requests() if "SECRET" in r["url"] or "%23" in r["url"]]
         if typed or leaks or "SECRET" in page.eval("location.href"):
             problems.append(f"abuse.js not loaded: the form takes input ({typed}) or the key left the page: {leaks}")
+        # The app's "Report this link" opens /abuse#link=<the link without its key>: the field is filled
+        # through cleanLink (our origins only, never a key) and the fragment leaves the address bar.
+        for reported, expected in ((f"{origin}/d/0123456789", f"{origin}/d/0123456789"),
+                                   (f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA#3SECRET", f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA"),
+                                   ("https://elsewhere.example/s/AAAAAAAAAAAAAAAAAAAAAA", "")):
+            page = browser.page()
+            page.goto(origin + "/abuse#link=" + urllib.parse.quote(reported, safe=""), settle=1)
+            field, hash_ = page.eval("[document.getElementById('abuse-link').value, location.hash]")
+            if field != expected or hash_:
+                problems.append(f"prefill {reported!r}: field {field!r}, fragment {hash_!r}")
     return problems
 
 
@@ -393,15 +409,28 @@ def check_reveal(browser):
         page.eval("document.querySelector('[data-reveal-open]').click()")
         ok = page.wait_for("document.querySelector('[data-reveal-out]').textContent.includes('mutis canary #788')", 15)
         out = page.eval("document.querySelector('[data-reveal-out]').textContent").split("\n")[0]
-        NOTES.append(f"canary reveal: {out[:90]}")
-        return [] if ok else [f"reveal shows {out!r}"]
+        missed = page.eval("(e => e.hidden ? '' : e.textContent)(document.querySelector('[data-reveal-missed]'))")
+        NOTES.append(f"canary reveal: {out[:90]}; {missed}")
+        problems = [] if ok else [f"reveal shows {out!r}"]
+        if missed != "Test file #789: missed (the verifier restarted).":
+            problems.append(f"a missed reveal reads {missed!r}")
+        return problems
 
 
 def check_interactions(browser):
     """Lights off persists across a reload; EN · ES points at this page's translation; the judge pass is
-    validated, lower-cased and kept where the app reads it (sessionStorage 'mutis.judge', app-core store.js)."""
+    validated, lower-cased and kept where the app reads it (sessionStorage 'mutis.judge', app-core store.js);
+    the hero's line 2 steps aside while the widget's card shows (NOTES-ui, site 3)."""
     problems = []
     with server() as origin:
+        page = browser.page()
+        page.goto(origin + "/", settle=1)
+        line2 = "document.querySelector('.hero-line2').hidden"
+        page.eval("document.dispatchEvent(new CustomEvent('mutis:state', {detail: {state: 'sealed'}}))")
+        sealed = page.eval(line2)
+        page.eval("document.dispatchEvent(new CustomEvent('mutis:state', {detail: {state: 'idle'}}))")
+        if not sealed or page.eval(line2):
+            problems.append(f"hero line 2: hidden while sealed {sealed}, back on idle {not page.eval(line2)}")
         page = browser.page()
         page.goto(origin + "/how")
         page.eval("document.querySelector('[data-theme-toggle]').click()")

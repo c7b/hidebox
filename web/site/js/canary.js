@@ -2,10 +2,15 @@
 // "Try to read it": our hourly test file, exactly as our disk holds it (spec §6.3, §8.4). Without
 // JavaScript the section still offers the download and the curl line; this adds the noise, its age,
 // the delivery transaction and yesterday's key.
-import { getJson, isTxId, locale, shortTx } from './site.js';
+import { getJson, isTxId, lang, locale, shortTx } from './site.js';
 import { drawNoise } from './noise.js';
 
 const NOISE_BYTES = 96 * 96;
+// An hour whose key the verifier lost when it restarted is listed, never skipped.
+const MISSED = {
+  en: (n) => `Test file #${n}: missed (the verifier restarted).`,
+  es: (n) => `Archivo de prueba #${n}: sin llave publicada (el verificador se reinició).`,
+}[lang];
 
 export async function getBytes(path, range) {
   const res = await fetch(path, { headers: range ? { Range: range } : {}, signal: AbortSignal.timeout(10000), credentials: 'omit' });
@@ -47,8 +52,15 @@ export function showCanary(root, canary) {
     root.querySelector('[data-canary-tx-short]').textContent = shortTx(meta.delivery_tx);
     root.querySelector('[data-canary-tx]').hidden = false;
   }
-  const revealed = meta.revealed?.find((entry) => entry.fk);
-  if (revealed) offerReveal(root.querySelector('[data-reveal]'), revealed);
+  const revealed = meta.revealed ?? [];
+  const opens = revealed.find((entry) => entry.fk);
+  if (opens) offerReveal(root.querySelector('[data-reveal]'), opens);
+  const missed = revealed.filter((entry) => entry.missed);
+  if (missed.length) {
+    const line = root.querySelector('[data-reveal-missed]');
+    line.textContent = missed.map((entry) => MISSED(entry.n)).join(' ');
+    line.hidden = false;
+  }
 }
 
 // The decryption code (reveal.js, then /app/lib) loads only when the visitor presses the button.

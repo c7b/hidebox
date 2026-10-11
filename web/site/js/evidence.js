@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Real transactions only: /evidence.json lists our own test deliveries and payments (never a user's),
 // and /api/v1/chain/tx/<id>/view says what the chain shows for one of them. Nothing here is a mock;
-// if either request fails, the card stays hidden.
+// if either request fails, or the chain doesn't show what the card says, the card stays hidden.
 import { getJson, isTxId, locale, shortTx } from './site.js';
 import { formatTari } from './stats.js';
 
@@ -16,11 +16,13 @@ export async function showChainCard(card, evidence) {
   if (!isTxId(id)) return;
   const view = await getJson(`/api/v1/chain/tx/${id}/view`).catch(() => null);
   if (!view) return;
+  // The card describes the output that carries the sealed key, and says "hidden" only when the chain does.
+  const carrier = view.outputs.reduce((best, o) => ((o.sealed_bytes ?? 0) > (best?.sealed_bytes ?? 0) ? o : best), null);
+  if (carrier?.amount !== 'hidden' || carrier.owner !== 'one-time key') return;
   const set = (name, text) => { card.querySelector(`[data-chain="${name}"]`).textContent = text; };
-  const sealed = Math.max(0, ...view.outputs.map((o) => o.sealed_bytes ?? 0));
   set('tx', shortTx(id));
   set('network', networkName(evidence.network));
-  set('sealed', sealed ? new Intl.NumberFormat(locale).format(sealed) : '—');
+  set('sealed', new Intl.NumberFormat(locale).format(carrier.sealed_bytes));
   set('fee', view.fee_ut ? formatTari(view.fee_ut, locale) : '—');
   card.querySelector('[data-chain="final"]').hidden = view.status !== 'Commit';
   card.querySelector('[data-chain="verify"]').href = `/verify/tx/${id}`;

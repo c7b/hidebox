@@ -3,12 +3,10 @@
 1440×900, 390×844 (iPhone-class) and 412×915 (Android-class), the exit wall frame by frame, the
 reduced-motion grid, dark mode and Spanish. WebP from headless Chromium; run as `build` on the server:
 
-  python3 -I web/site/tests/shots.py [--widget FILE]
+  python3 -I web/site/tests/shots.py
 
---widget serves FILE as /app/drop-widget.js; without it the hero shows the empty mount point that
-the app's drop widget fills.
+The hero shows the app's own drop widget, served from web/app/ like every other app file.
 """
-import argparse
 import shutil
 import sys
 import threading
@@ -59,15 +57,11 @@ def shoot_home(browser, origin, tag, device, lang="", dark=False):
 
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--widget")
-    opts = p.parse_args()
-    widget = ["--widget", opts.widget] if opts.widget else []
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir()
     servers = []
     with Browser() as browser:
-        srv, origin = start(widget)
+        srv, origin = start([])
         servers.append(srv)
         shoot_home(browser, origin, "home-1440", DESKTOP)
         shoot_home(browser, origin, "home-390", IPHONE)
@@ -88,14 +82,14 @@ def main():
                 page.goto(origin + path, settle=1.5)
                 page.screenshot(str(OUT / f"page-es-{path.split('/')[-1]}-{w}.webp"))
         for scenario in ("quiet", "8"):
-            srv, origin = start(widget + ["--wall", scenario])
+            srv, origin = start(["--wall", scenario])
             servers.append(srv)
             page = browser.page(*DESKTOP[:2])
             page.goto(origin + "/", settle=2.5)
             wake_wall(page)
             page.scroll_to(section_top(page, "#exit-wall") + 0.1 * 1800, 0.7)
             page.screenshot(str(OUT / f"wall-{scenario}-1440.webp"))
-        srv, origin = start(widget + ["--mode", "direct", "--seallog"])
+        srv, origin = start(["--mode", "direct", "--seallog"])
         servers.append(srv)
         page = browser.page(*DESKTOP[:2])
         page.goto(origin + "/", settle=2.5)
