@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MIT
+# Content pages are open to every crawler, AI crawlers included. Links, drops and lockers are private.
+User-agent: *
+Allow: /
+Disallow: /s/
+Disallow: /t$
+Disallow: /d/
+Disallow: /api/
+Disallow: /locker
+Disallow: /inbox
+Disallow: /send
+Disallow: /watch
+Disallow: /upgrade
+Disallow: /verify
+
+Sitemap: {{ORIGIN}}/sitemap.xml

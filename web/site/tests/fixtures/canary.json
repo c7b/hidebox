@@ -1,0 +1,21 @@
+{
+ "n": 812,
+ "sealed_at": 1760000400,
+ "size_stored": 4112,
+ "header": "TVRTMQEWAAAAAAABAAAAAIgNYBzJ1T3BZF9kY2OB1p8",
+ "meta_ct": "4VBmzwfwBk5mJwoqr9mNxpP4oNqtio19wEjzDMb4klo0yrx-6L3T-fz5sx4rnJGhUYbdSbTETK2wR37p-YknpkN8_RbGDiT78y_d1ebshe6OeApMhpzzDHwqX8lPHyF3XvkJfPRKujbyH1kuiQh_4iuxx609FsYR5skdVGV4IqKJ-yJjmwaSXDv_3P-xe-WClqTJExpzCPcI4zEbgBFqROSlyr9MFk_H1q9jy2vw73vT-ydPTIw3kbW1bDUUTlvGc5-6k0Zu-DiYm_0J0Uz1FpTtBF21wJDO0J0nGECzmM3TBkuWpuCKxI5Q3iWMOAiYooG8V7Qf2zy80wpMv7djqvD8XWuSCES_h_h7R2m2dhQC7Co6CY8uqUEXJUw",
+ "ct_hash": "yT2HC2mTQfIxOJiAKa3OyYLm8MKAzzaQ5MKWRjKCVEY",
+ "raw": "/api/v1/canary/raw",
+ "delivery_tx": "45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a",
+ "revealed": [
+  {
+   "n": 788,
+   "sealed_at": 1759914000,
+   "raw": "/api/v1/canary/raw?n=788",
+   "fk": "QAIXI2cOaQy---7GRe-31YqdtmfTKZGF2eY-e1I_GJk",
+   "header": "TVRTMQEWAAAAAAABAAAAAMbH1oFxXvLMd0sHg7qj-j8",
+   "meta_ct": "yFveRvWiyl6Lhnc-DY9a1WCYqm-xcRa-YO0OEpKBy0psPPNwLGQ1WjnI11i8FzNcRHXp3828DEj5sj5SIKyzFzTTJL9vfMGVjSeHN4Q1Y1xIyypADW9uVetx_dp8bmAQLSntbzvgUoXz96_VJQqE8tCot4KTJ-uGlgiHoDdvdyGIYHkuk3C17ACOB__4KNQAX2Rhttmy-4c6QTl76c3hdfJ8uWlRYtmOAxOAVk4zs5xEXMB--GQuH4t4DTc_cXvEFLHQ-k1oa8It5OKhX5hIMGOmey6e15wsNB16EzlOoot3BgkB7SDXSzbPEdMz6tZOjhDuLxb6Kj5fLC__-RzOqpBgjc0da6yJamVZOUdcnEAQu2JhUXtEO6N_y94",
+   "size_stored": 4112
+  }
+ ]
+}

@@ -1,0 +1,285 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preguntas frecuentes · mutis</title>
+<meta name="description" content="Respuestas cortas sobre mutis: qué podemos ver, qué pasa cuando se abre un enlace, Tari y tTARI, llaves, llaves de vista, límites y confianza.">
+<link rel="canonical" href="{{ORIGIN}}/es/faq">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/faq">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/faq">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/faq">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="Preguntas frecuentes · mutis">
+<meta property="og:description" content="Respuestas cortas sobre mutis: qué podemos ver, qué pasa cuando se abre un enlace, Tari y tTARI, llaves, llaves de vista, límites y confianza.">
+<meta property="og:url" content="{{ORIGIN}}/es/faq">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "¿Pueden ver mis archivos?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Tu navegador cifra cada archivo con AES-256-GCM antes de subirlo. Guardamos texto cifrado y nunca recibimos la llave."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Qué guardan exactamente?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Un id aleatorio, el texto cifrado, un tamaño con relleno, la hora en que llegó, su regla y su número de aperturas, más algunas columnas técnicas. La página “Lo que sabemos” de cada enlace imprime cada columna, y nuestra página de privacidad lista cada tabla."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Qué pasa cuando se abre un enlace de una sola vez?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Quien lo recibe hace clic en Abrir, su navegador descifra el archivo y nuestro servidor borra el texto cifrado cuando termina la descarga. Al recargar aparece “Este secreto ya hizo mutis.” Si no lo abriste tú, lo abrió alguien más."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Puedo recuperar un archivo borrado?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. No respaldamos archivos, y nunca tuvimos la llave."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿La vista previa de WhatsApp o Slack gasta mi única vista?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Abrir requiere un clic. Pero el servicio de vista previa ya tiene el enlace completo, así que usa Enlace + contraseña o envíalo a una sola dirección de Tari para cualquier cosa delicada."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Necesito cripto o una cartera?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Los enlaces, las contraseñas, la apertura única, las vistas y la caducidad son gratis y no necesitan nada. Las funciones de Tari™ usan tTARI, y damos tTARI de demostración en la testnet."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Qué es Tari, y qué es el Ootle?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Tari es una blockchain de privacidad de código abierto y prueba de trabajo. El Ootle es su capa de aplicaciones, donde los pagos son privados por defecto y pueden llevar mensajes sellados. mutis la usa para entregar llaves y mover dinero."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿mutis es anónimo?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Sin cuenta y sin correo. Eso no es anonimato: nuestro servidor sigue viendo tu IP mientras estás conectado. Mira de qué no podemos protegerte."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Y si pierdo mi llave?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Tu casillero se pierde para siempre. Nadie puede restablecerlo. Es el precio de que nadie pueda quitártelo."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Qué es el código de seguridad?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Tu código de seguridad son 12 emoji (96 bits) que salen de las llaves públicas de tu casillero. Compara los 12 con esa persona, en voz alta o por llamada. Para una dirección de Tari sin más, compara los primeros y los últimos 6 caracteres."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Qué muestra una llave de vista, y debo compartirla?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Llegadas y montos. No puede gastar, y no puede abrir archivos sellados a tu casillero. La excepción: quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”, y esos archivos sí se abren con la llave de vista. Compártela solo con alguien que pueda ver lo que te llega."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Alguien puede enviarme archivos que no pedí?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Cualquiera con tu dirección de Tari o tu enlace de buzón puede. Las entregas nunca se abren solas, los programas traen una advertencia y puedes cerrar un enlace de buzón cuando quieras."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Por qué cambia mi espacio gratuito?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Es una parte justa de un disco real, recalculada cada hora, no una cifra de marketing."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Pueden revisar los archivos en busca de virus?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No podemos ver dentro, así que tampoco podemos revisarlo. Abre solo archivos que esperabas. Los programas traen una advertencia antes de que puedas guardarlos, y quien no tiene casillero no puede enviarlos."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Por qué debería confiar en su JavaScript?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: nuestro script de verificación y correr tu propia copia."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Cookies? ¿Analítica?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros. Tu navegador contacta un indexador operado por Tari solo cuando presionas “Compruébalo en el indexador de Tari”. Tu llave y tus preferencias viven en el almacenamiento de tu propio navegador."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿Puedo usar mutis para compartir cosas ilegales?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Mira los términos y cómo reportar un enlace. Retiramos enlaces reportados por su id, sin necesidad de ver dentro."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "¿mutis es oficial de Tari?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Es un proyecto independiente de código abierto, no afiliado, respaldado ni patrocinado por Tari Labs, el Consejo de Tari ni el proyecto Tari."
+   }
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+<!--#include header-es-->
+<main id="main" class="container">
+<header class="page-head">
+  <p class="scene-heading"><span class="no" aria-hidden="true">1</span>INT. EL VESTÍBULO — INTERMEDIO<span class="no" aria-hidden="true">1</span></p>
+  <h1>Preguntas, respuestas cortas.</h1>
+  <p class="lede">Sobre mutis, construido sobre la testnet de Tari™ Ootle. Las respuestas largas, con cada límite, están en <a class="more" href="/es/how">Cómo funciona<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+</header>
+<dl class="faq page-body">
+  <div class="faq-item" id="see">
+    <dt>¿Pueden ver mis archivos?</dt>
+    <dd><p>No. Tu navegador cifra cada archivo con AES-256-GCM antes de subirlo. Guardamos texto cifrado y nunca recibimos la llave.</p></dd>
+  </div>
+  <div class="faq-item" id="store">
+    <dt>¿Qué guardan exactamente?</dt>
+    <dd><p>Un id aleatorio, el texto cifrado, un tamaño con relleno, la hora en que llegó, su regla y su número de aperturas, más algunas columnas técnicas. La página “Lo que sabemos” de cada enlace imprime cada columna, y <a href="/es/privacy#inventory">nuestra página de privacidad</a> lista cada tabla.</p></dd>
+  </div>
+  <div class="faq-item" id="once">
+    <dt>¿Qué pasa cuando se abre un enlace de una sola vez?</dt>
+    <dd><p>Quien lo recibe hace clic en Abrir, su navegador descifra el archivo y nuestro servidor borra el texto cifrado cuando termina la descarga. Al recargar aparece “Este secreto ya hizo mutis.” Si no lo abriste tú, lo abrió alguien más.</p></dd>
+  </div>
+  <div class="faq-item" id="back">
+    <dt>¿Puedo recuperar un archivo borrado?</dt>
+    <dd><p>No. No respaldamos archivos, y nunca tuvimos la llave.</p><p data-when="snapshots=weekly">Nuestro proveedor también toma instantáneas automáticas de todo el servidor y las guarda unas semanas. Un archivo que existía cuando se tomó una sigue en ella, como texto cifrado, hasta que esa instantánea se descarta.</p></dd>
+  </div>
+  <div class="faq-item" id="preview">
+    <dt>¿La vista previa de WhatsApp o Slack gasta mi única vista?</dt>
+    <dd><p>No. Abrir requiere un clic. Pero el servicio de vista previa ya tiene el enlace completo, así que usa Enlace + contraseña o envíalo a una sola dirección de Tari para cualquier cosa delicada.</p></dd>
+  </div>
+  <div class="faq-item" id="wallet">
+    <dt>¿Necesito cripto o una cartera?</dt>
+    <dd><p>No. Los enlaces, las contraseñas, la apertura única, las vistas y la caducidad son gratis y no necesitan nada. Las funciones de Tari™ usan tTARI, y damos tTARI de demostración en la testnet.</p></dd>
+  </div>
+  <div class="faq-item" id="tari">
+    <dt>¿Qué es Tari, y qué es el Ootle?</dt>
+    <dd><p>Tari es una blockchain de privacidad de código abierto y prueba de trabajo. El Ootle es su capa de aplicaciones, donde los pagos son privados por defecto y pueden llevar mensajes sellados. mutis la usa para entregar llaves y mover dinero.</p></dd>
+  </div>
+  <div class="faq-item" id="money">
+    <dt>¿El tTARI es dinero real?</dt>
+    <dd><p>No. No tiene valor monetario.<span data-needs="config" hidden> La mainnet de Ootle se lanza el <span data-v="mainnet_date"></span>;</span> las funciones de pago se quedan en la testnet hasta que revisen nuestro código.</p></dd>
+  </div>
+  <div class="faq-item" id="anonymous">
+    <dt>¿mutis es anónimo?</dt>
+    <dd><p>Sin cuenta y sin correo. Eso no es anonimato: nuestro servidor sigue viendo tu IP mientras estás conectado. Mira <a href="/es/how#cant-protect">de qué no podemos protegerte</a>.</p></dd>
+  </div>
+  <div class="faq-item" id="receipt" data-when="seallog=on" hidden>
+    <dt>¿Qué es un recibo de salida?</dt>
+    <dd><p>Cada salida queda en el registro público: la agregamos a SealLog en el Ootle en el siguiente punto de control. Prueba que dijimos que la borramos, de forma pública y permanente. No puede probar que no guardamos una copia.</p></dd>
+  </div>
+  <div class="faq-item" id="lost">
+    <dt>¿Y si pierdo mi llave?</dt>
+    <dd><p>Tu casillero se pierde para siempre. Nadie puede restablecerlo. Es el precio de que nadie pueda quitártelo.</p></dd>
+  </div>
+  <div class="faq-item" id="safety">
+    <dt>¿Qué es el código de seguridad?</dt>
+    <dd><p>Tu código de seguridad son 12 emoji (96 bits) que salen de las llaves públicas de tu casillero. Compara los 12 con esa persona, en voz alta o por llamada. Para una dirección de Tari sin más, compara los primeros y los últimos 6 caracteres.</p></dd>
+  </div>
+  <div class="faq-item" id="viewkey">
+    <dt>¿Qué muestra una llave de vista, y debo compartirla?</dt>
+    <dd><p>Llegadas y montos. No puede gastar, y no puede abrir archivos sellados a tu casillero. La excepción: quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”, y esos archivos sí se abren con la llave de vista. Compártela solo con alguien que pueda ver lo que te llega.</p></dd>
+  </div>
+  <div class="faq-item" id="unwanted">
+    <dt>¿Alguien puede enviarme archivos que no pedí?</dt>
+    <dd><p>Cualquiera con tu dirección de Tari o tu enlace de buzón puede. Las entregas nunca se abren solas, los programas traen una advertencia y puedes cerrar un enlace de buzón cuando quieras.</p></dd>
+  </div>
+  <div class="faq-item" id="size">
+    <dt>¿Qué tan grandes pueden ser los archivos?</dt>
+    <dd><p data-needs="config" hidden><span data-v="anon_max_file"></span> sin casillero, <span data-v="key_max_file"></span> con un casillero gratuito, <span data-v="paid_max_file"></span> con espacio rentado.</p><p>Las cifras en vivo están en <a href="/es/pricing#limits">Precios y límites</a>.</p></dd>
+  </div>
+  <div class="faq-item" id="quota">
+    <dt>¿Por qué cambia mi espacio gratuito?</dt>
+    <dd><p>Es una parte justa de un disco real, recalculada cada hora, no una cifra de marketing.</p></dd>
+  </div>
+  <div class="faq-item" id="scan">
+    <dt>¿Pueden revisar los archivos en busca de virus?</dt>
+    <dd><p>No podemos ver dentro, así que tampoco podemos revisarlo. Abre solo archivos que esperabas. Los programas traen una advertencia antes de que puedas guardarlos, y quien no tiene casillero no puede enviarlos.</p></dd>
+  </div>
+  <div class="faq-item" id="trust-js">
+    <dt>¿Por qué debería confiar en su JavaScript?</dt>
+    <dd><p>SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: <a href="/es/security#verify">nuestro script de verificación</a> y correr tu propia copia.</p></dd>
+  </div>
+  <div class="faq-item" id="cookies">
+    <dt>¿Cookies? ¿Analítica?</dt>
+    <dd><p>Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros. Tu navegador contacta un indexador operado por Tari solo cuando presionas “Compruébalo en el indexador de Tari”. Tu llave y tus preferencias viven en el almacenamiento de tu propio navegador.</p></dd>
+  </div>
+  <div class="faq-item" id="illegal">
+    <dt>¿Puedo usar mutis para compartir cosas ilegales?</dt>
+    <dd><p>No. Mira los <a href="/es/terms">términos</a> y <a href="/es/abuse">cómo reportar un enlace</a>. Retiramos enlaces reportados por su id, sin necesidad de ver dentro.</p></dd>
+  </div>
+  <div class="faq-item" id="official">
+    <dt>¿mutis es oficial de Tari?</dt>
+    <dd><p>No. Es un proyecto independiente de código abierto, no afiliado, respaldado ni patrocinado por Tari Labs, el Consejo de Tari ni el proyecto Tari.</p></dd>
+  </div>
+</dl>
+</main>
+<!--#include footer-es-->
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+ "updated_at": 1760000000,
+ "attention": false,
+ "phase": "pre",
+ "checks": {
+  "https": "green",
+  "api": "green",
+  "chain_worker": "green",
+  "walletd": "green",
+  "sponsor_balance": "green",
+  "mirror": "green",
+  "canary": "green",
+  "credits": "green",
+  "disk": "green",
+  "budgets": "amber"
+ }
+}

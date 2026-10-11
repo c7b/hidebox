@@ -1,0 +1,94 @@
+/* SPDX-License-Identifier: MIT — mutis tokens v2: colour = 11-brand §13.2 verbatim; type §13.3;
+   spacing and layout §13.4 + spec §3.4.1; shape §13.5; motion §13.7. Consumers use only these. */
+
+@font-face {
+  font-family: "Mutis Script";
+  src: url("/shared/fonts/MutisScript-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Mutis Script";
+  src: url("/shared/fonts/MutisScript-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Mutis Script Code";
+  src: url("/shared/fonts/MutisScriptCode-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+  --paper: #F3EFE6; --paper-raised: #FBF9F4; --paper-sunken: #E7E2D6; --ink: #16130E;
+  --stage: #0E0D0B; --stage-raised: #1A1814; --stage-sunken: #070605; --stage-fg: #EEE9DE;
+  --tari-purple: #813BF5; --tari-lime: #C9EB00; --lamp: #F4E4C1; --lamp-off: #2B2823;
+  /* the exit wall's lockers: side faces in three shades of the stage, the glow of a lit keyhole;
+     --stage-fg-2 is the stage's secondary text (the dark theme's --fg-2) for always-dark blocks */
+  --locker-side: #121110; --locker-top: #23201B; --locker-bottom: #0B0A08;
+  --lamp-glow: rgb(244 228 193 / .55); --stage-fg-2: #A39C8F;
+
+  /* light = "script" (default) */
+  --bg: var(--paper); --bg-raised: var(--paper-raised); --bg-sunken: var(--paper-sunken);
+  --fg: var(--ink); --fg-2: #5C564B;
+  --line: rgb(22 19 14 / .55);   /* control borders, ≥ 3:1 */
+  --hair: rgb(22 19 14 / .14);   /* decorative separators only */
+  --focus: var(--ink);
+  --pay: var(--tari-purple); --on-pay: #FFFFFF; --pay-text: #6A2EDB;
+  --ok: var(--tari-lime);   --on-ok: var(--ink); --ok-text: #4D5C00;
+  --exit: #B42330;          --on-exit: #FFFFFF; --exit-text: #A3202C;
+  --shadow-float: 0 0 0 1px var(--line), 0 16px 32px -20px rgb(22 19 14 / .45);
+}
+:root[data-theme="dark"], .stage {           /* "stage": chosen, or always for the exit wall */
+  --bg: var(--stage); --bg-raised: var(--stage-raised); --bg-sunken: var(--stage-sunken);
+  --fg: var(--stage-fg); --fg-2: #A39C8F;
+  --line: rgb(238 233 222 / .45); --hair: rgb(238 233 222 / .12); --focus: var(--stage-fg);
+  --pay-text: #A88BFA; --ok-text: var(--tari-lime);
+  --exit: #FF6B6B; --on-exit: var(--ink); --exit-text: #FF6B6B;
+  --shadow-float: 0 0 0 1px var(--line);
+}
+@media (prefers-color-scheme: dark) {        /* follow the OS until the user chooses */
+  :root:not([data-theme="light"]) {
+    --bg: var(--stage); --bg-raised: var(--stage-raised); --bg-sunken: var(--stage-sunken);
+    --fg: var(--stage-fg); --fg-2: #A39C8F;
+    --line: rgb(238 233 222 / .45); --hair: rgb(238 233 222 / .12); --focus: var(--stage-fg);
+    --pay-text: #A88BFA; --ok-text: var(--tari-lime);
+    --exit: #FF6B6B; --on-exit: var(--ink); --exit-text: #FF6B6B;
+    --shadow-float: 0 0 0 1px var(--line);
+  }
+}
+@media (prefers-contrast: more) { :root { --line: var(--fg); --hair: color-mix(in srgb, var(--fg) 40%, transparent); } }
+
+:root {
+  --font-script: "Mutis Script", "Courier Prime", "Courier New", ui-monospace, monospace;
+  --font-code:   "Mutis Script Code", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-ui:     system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --t-display:   700 clamp(40px, 6.4vw, 88px)/1.02 var(--font-script);  /* letter-spacing: -.02em */
+  --t-h2:        700 clamp(30px, 4.2vw, 56px)/1.06 var(--font-script);  /* -.015em */
+  --t-h3:        700 22px/1.25 var(--font-script);
+  --t-zone-2:    400 clamp(18px, 1.7vw, 22px)/1.35 var(--font-script);  /* hero line 2 */
+  --t-direction: 400 17px/1.5 var(--font-script);                        /* (stage directions) */
+  --t-scene:     400 15px/1.4 var(--font-script);                        /* SCENE HEADINGS, caps, 0 tracking */
+  --t-cue:       400 14px/1.3 var(--font-script);                        /* locker labels, ≥ 14px */
+  --t-body:      400 17px/1.55 var(--font-ui);                           /* 16px under 640px */
+  --t-ui:        500 15px/1.3 var(--font-ui);                            /* buttons, chips */
+  --t-caption:   400 13px/1.45 var(--font-ui);
+  --t-data:      400 14px/1.45 var(--font-code);
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px;
+  --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px; --s-10: 128px;
+  --section-pad: clamp(96px, 14svh, 192px);
+
+  --gutter: 16px; --cols: 4; --content-max: 1200px; --zone-max: 720px; --tap: 44px;
+  --radius: 0; --radius-dot: 50%;
+  --z-header: 10; --z-sheet: 50; --z-modal: 100; --z-toast: 200;
+
+  --dur-1: 120ms;    /* hover, press, dragover */
+  --dur-2: 200ms;    /* state change, fade */
+  --dur-3: 320ms;    /* lock morph: zone → locked card (View Transition) */
+  --dur-exit: 240ms; /* a secret leaving: exits are faster than entrances */
+  --ease-out: cubic-bezier(.25, 1, .5, 1);
+  --ease-in:  cubic-bezier(.5, 0, .75, 0);
+}
+@media (max-width: 639.98px) { :root { --t-body: 400 16px/1.55 var(--font-ui); } }
+@media (min-width: 640px)  { :root { --gutter: 24px; --cols: 8; } }
+@media (min-width: 1280px) { :root { --gutter: 32px; } }

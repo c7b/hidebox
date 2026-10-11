@@ -1,0 +1,153 @@
+{
+ "lockers": [
+  {
+   "size": 1,
+   "ttl": 2,
+   "exit": "views",
+   "state": "sealed"
+  },
+  {
+   "size": 0,
+   "ttl": 0,
+   "exit": "views",
+   "state": "gone"
+  },
+  {
+   "size": 0,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 0,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 1,
+   "ttl": 0,
+   "exit": "once",
+   "state": "gone"
+  },
+  {
+   "size": 2,
+   "ttl": 0,
+   "exit": "once",
+   "state": "gone"
+  },
+  {
+   "size": 4,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 1,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 2,
+   "ttl": 2,
+   "exit": "views",
+   "state": "opened"
+  },
+  {
+   "size": 0,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 1,
+   "ttl": 0,
+   "exit": "time",
+   "state": "gone"
+  },
+  {
+   "size": 0,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 3,
+   "ttl": 1,
+   "exit": "time",
+   "state": "sealed"
+  },
+  {
+   "size": 0,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 4,
+   "ttl": 2,
+   "exit": "views",
+   "state": "sealed"
+  },
+  {
+   "size": 0,
+   "ttl": 3,
+   "exit": "views",
+   "state": "sealed"
+  },
+  {
+   "size": 1,
+   "ttl": 1,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 0,
+   "ttl": 2,
+   "exit": "once",
+   "state": "sealed"
+  },
+  {
+   "size": 1,
+   "ttl": 2,
+   "exit": "views",
+   "state": "sealed"
+  },
+  {
+   "size": 0,
+   "ttl": 0,
+   "exit": "views",
+   "state": "gone"
+  },
+  {
+   "size": 0,
+   "ttl": 0,
+   "exit": "once",
+   "state": "gone"
+  },
+  {
+   "size": 0,
+   "ttl": 0,
+   "exit": "kept",
+   "state": "gone"
+  },
+  {
+   "size": 4,
+   "ttl": 0,
+   "exit": "once",
+   "state": "gone"
+  },
+  {
+   "size": 0,
+   "ttl": 1,
+   "exit": "views",
+   "state": "sealed"
+  }
+ ],
+ "quiet": false,
+ "canary": {
+  "sealed_min": 4,
+  "size_stored": 4112
+ }
+}

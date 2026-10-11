@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Precios y límites · mutis</title>
+<meta name="description" content="Espacio gratuito: una parte justa de un disco real, recalculada cada hora. Espacio extra: se renta por mes en tTARI en la testnet. Límites en vivo.">
+<link rel="canonical" href="{{ORIGIN}}/es/pricing">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/pricing">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/pricing">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/pricing">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="Precios y límites · mutis">
+<meta property="og:description" content="Espacio gratuito: una parte justa de un disco real, recalculada cada hora. Espacio extra: se renta por mes en tTARI en la testnet. Límites en vivo.">
+<meta property="og:url" content="{{ORIGIN}}/es/pricing">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+<!--#include header-es-->
+<main id="main" class="container">
+<header class="page-head">
+  <p class="scene-heading"><span class="no" aria-hidden="true">1</span>INT. LA TAQUILLA — DÍA<span class="no" aria-hidden="true">1</span></p>
+  <h1>Gratis, con un límite real.</h1>
+  <p class="lede">mutis corre en un disco real<span data-needs="stats" hidden>, de <span data-v="disk_total"></span>,</span> en un servidor que rentamos. El espacio gratuito es una parte justa de él. El espacio extra se renta por mes en tTARI, en la testnet de Tari™ Ootle. No vendemos nada sobre ti, y de todos modos no podemos leer tus archivos.</p>
+</header>
+
+<div class="prose page-body">
+  <h2 id="free">Gratis</h2>
+  <p class="live-line" data-needs="stats" hidden>Hoy: <span data-v="free_each"></span> por casillero · <span data-v="disk_free"></span> libres de <span data-v="disk_total"></span></p>
+  <p data-needs="config" hidden>Cómo lo decidimos: cada hora tomamos el disco, apartamos lo que necesita el sistema, lo que la gente ha rentado y una parte para subidas sin casillero, y repartimos el resto entre los casilleros usados en los últimos <span data-v="active_days"></span>. Sobrevendemos como una aerolínea (<span data-v="overbook"></span>×): la mayoría usa una fracción de su parte. La cifra se mueve despacio, nunca por debajo de <span data-v="quota_floor"></span> ni por encima de <span data-v="quota_ceiling"></span>.</p>
+  <p>Si el disco de verdad se llena, las subidas nuevas se pausan para todos, y no se pierde nada de lo ya guardado.</p>
+  <p>Cuando la cifra baja, no se borra nada tuyo. Solo no puedes agregar más hasta estar por debajo otra vez.</p>
+  <p>Los archivos sin casillero tienen su propio espacio reservado, y los pequeños<span data-needs="config" hidden> (hasta <span data-v="small_lane_max"></span>)</span> tienen un carril reservado propio, así que un día lleno de subidas grandes no le quita lugar a una nota rápida.</p>
+  <noscript><p>Los límites de abajo vienen en vivo de nuestro servidor; también están en <a href="/api/v1/config">/api/v1/config</a>.</p></noscript>
+
+  <h2 id="limits">Límites</h2>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><td></td><th scope="col">Sin casillero</th><th scope="col">Casillero gratuito</th><th scope="col">Espacio rentado</th></tr></thead>
+    <tbody>
+      <tr data-needs="config" hidden><th scope="row">Archivo más grande</th><td><span data-v="anon_max_file"></span></td><td><span data-v="key_max_file"></span></td><td><span data-v="paid_max_file"></span></td></tr>
+      <tr data-needs="config" hidden><th scope="row">Aperturas por enlace</th><td>de 1 a <span data-v="anon_max_views"></span></td><td>de 1 a <span data-v="key_max_views"></span></td><td>de 1 a <span data-v="paid_max_views"></span></td></tr>
+      <tr data-needs="config" hidden><th scope="row">Vida máxima de un enlace</th><td><span data-v="anon_max_expiry"></span></td><td><span data-v="key_max_expiry"></span></td><td><span data-v="paid_max_expiry"></span></td></tr>
+      <tr data-when="kept=on"><th scope="row">Archivos guardados (solo tú)</th><td>—</td><td>hasta que los borres</td><td>hasta que los borres</td></tr>
+      <tr data-needs="config" hidden><th scope="row">Secretos de texto</th><td><span data-v="text_max"></span> caracteres</td><td><span data-v="text_max"></span> caracteres</td><td><span data-v="text_max"></span> caracteres</td></tr>
+      <tr data-needs="config" hidden><th scope="row">Envíos a una dirección de Tari</th><td>se abre un casillero gratuito para ti</td><td><span data-v="locker_sends"></span> al día</td><td><span data-v="paid_sends"></span> al día</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="prose page-body">
+  <p data-needs="config" hidden><strong>El primer día de un casillero</strong> es más chico, para que una ráfaga de casilleros nuevos no se quede con el disco (y las subidas nuevas se pausan antes de que se llene): archivos de hasta <span data-v="probation_max_file"></span>, <span data-v="probation_quota"></span> en total, enlaces de hasta <span data-v="probation_max_expiry"></span>, <span data-v="probation_sends"></span> envíos a una dirección de Tari. Desde su segundo día activo aplica la parte gratuita.</p>
+  <p data-needs="config" hidden><strong>Los archivos que dejan en un buzón</strong> pueden pesar hasta <span data-v="drop_max_file"></span> y abrirse hasta <span data-v="drop_views"></span> veces en <span data-v="drop_expiry"></span>.</p>
+
+  <h2 id="rent">Más espacio, rentado en tTARI</h2>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th scope="col">Paquete</th><th scope="col">Precio (testnet)</th><th scope="col"></th></tr></thead>
+    <tbody>
+      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_s30_size"></span> por <span data-v="pack_s30_days"></span></th><td><span class="price"><span data-v="pack_s30_price"></span> tTARI</span></td><td>Paga en tTARI, o pruébalo con tTARI de demostración.</td></tr>
+      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_m30_size"></span> por <span data-v="pack_m30_days"></span></th><td><span class="price"><span data-v="pack_m30_price"></span> tTARI</span></td><td>Lo mismo, para quien guarda más.</td></tr>
+      <tr><th scope="row">Agotado</th><td>—</td><td>El disco es finito. Preferimos decir que no a sobrevender espacio rentado. El espacio gratuito sigue funcionando.</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="prose page-body">
+  <p><strong>Cuando termina el espacio rentado:</strong> tu límite vuelve a la parte gratuita. No se borra nada<span data-needs="config" hidden> durante <span data-v="lapse_grace_days"></span></span>. Después, si sigues por encima, se quitan tus archivos guardados más antiguos hasta que quepas.</p>
+  <p data-needs="config" hidden><strong>Casilleros sin uso:</strong> los archivos guardados por un casillero que no ha iniciado sesión en <span data-v="inactive_days"></span> se borran.</p>
+  <p><strong>Cómo funciona el pago:</strong> <span data-when="proof=proven" hidden>Abonamos un pago solo después de que la biblioteca oficial de Tari abre su compromiso al monto exacto y un indexador público operado por Tari muestra que quedó confirmado en la cadena.</span><span data-when="proof=wallet">Abonamos un pago solo después de que nuestra cartera lo ve y un indexador público operado por Tari confirma que existe en la cadena. El monto es el que lee nuestra cartera.</span> Pagas a una dirección de factura hecha para ese único pago; lo asociamos por su referencia. La comisión de red es pública en la cadena. El monto y quién pagó, no. Del espacio que nos rentas vemos el monto, porque somos el vendedor. Nadie más lo ve.</p>
+  <p data-needs="config" hidden><strong>Enviar un archivo a una dirección de Tari:</strong> <span data-v="courier_amount"></span> tTARI más una comisión de red de <span data-v="courier_fee"></span> por envío<span data-when="send_mode=relay">, por nuestra cuenta durante la testnet</span>.</p>
+  <p data-needs="config" hidden><strong>tTARI de demostración:</strong> prueba las funciones de pago con tTARI de demostración de nuestra cartera patrocinadora, <span data-v="demo_pay_daily"></span> pagos al día. Nuestra cartera de demostración paga nuestra propia factura: una transacción stealth real con dinero de juguete. Puedes comprobarla en la cadena.</p>
+  <div class="box-note">
+    <p><strong>Testnet.</strong> El tTARI no tiene valor monetario. Estos precios son lógica real con dinero de juguete.</p>
+    <p><span data-needs="config" hidden>La mainnet de Ootle se lanza el <span data-v="mainnet_date"></span>. </span>Las funciones de pago se quedan en la testnet hasta que revisen nuestro código.</p>
+  </div>
+</div>
+</main>
+<!--#include footer-es-->
+</body>
+</html>
