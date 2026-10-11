@@ -1,0 +1,12 @@
+dist/
+release/
+__pycache__/
+*.pyc
+/tmp/
+*.sqlite3
+*.sqlite3-*
+target/
+.env
+*.key
+*.seed
+secrets/
