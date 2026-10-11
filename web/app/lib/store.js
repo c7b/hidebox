@@ -114,7 +114,8 @@ export function localSet(key, value) {
 
 const RECENT = 'mutis.recent';
 
-// {share_id, item_id, manage_token, expires}: the manage token can delete the item, not open it.
+// {share_id, item_id, manage_token, ct_hash, expires}: the manage token can delete the item, not open
+// it; ct_hash is the ciphertext hash this browser computed, for /verify.
 export function recentDrops(now = Date.now()) {
   return localGet(RECENT, []).filter((d) => d.expires * 1000 > now);
 }

@@ -2,9 +2,29 @@
 # Acceptance: app-core (web/app/lib, sidecar, vendor, tests)
 
 Spec §16.2, for the parts this builder owns. Run on 2026-10-11 on ultron (Debian 13, Node 20.19.2,
-Chromium 154) as `build`, last after the devil's-advocate fix pass. One command reruns all of it:
+Chromium 154) as `build`, last after the integration pass (`NOTES-for-integrator.md` §4), from a fresh
+copy of the whole repository. One command reruns all of it:
 `python3 -I web/app/tests/run_all.py` → `ALL PASS (9 steps)`. Step 9 runs the library against the real
 API (`server/bin/mutis-api --dev --pow-bits 8` from the same checkout), not only against the fake.
+
+```
+PASS  lint (A-08)                                             0.1s  LINT PASS 824/824 checks, 77 files
+PASS  vectors, independent Python cross-check                 0.1s  crosscheck: 80/80 checks passed
+PASS  KATs under Node 20 (A-01)                              17.1s  NODE PASS 118/118 (node v20.19.2)
+PASS  KATs in headless Chromium, app CSP (A-01, A-05)        17.7s  title: TESTS PASS 118/118  (16.8s)
+PASS  no WebAssembly, V8 --jitless (A-09)                    19.7s  title: TESTS PASS 75/75  (18.7s, jitless)
+PASS  sidecar protocol, permissions, G4 (A-12)                5.4s  SIDECAR PASS 16/16
+PASS  18-bit PoW at 6x CPU throttling (A-13)                  6.7s  title: BENCH PASS  (6.0s, 6.0x CPU)
+PASS  in-browser scan, phone emulation at 4x (report)        48.6s  title: BENCH PASS  (47.7s, 4.0x CPU)
+PASS  contract: the library against mutis-api --dev          93.4s  CONTRACT PASS 12/12 (node v20.19.2)
+
+ALL PASS (9 steps)
+```
+
+The integration pass added: SealLog 2.0.0 (`readSealLog` on the template builder's state vector, its
+stored and exit proofs against those roots, and a log with an owner refused), names that hide a
+program extension (`checkRisky` on the saved name), `head` kept across a resumed upload, and
+`courier.unconfirmed`.
 
 | Id | Status | Evidence |
 |---|---|---|
@@ -13,7 +33,7 @@ API (`server/bin/mutis-api --dev --pow-bits 8` from the same checkout), not only
 | A-03 secret hygiene | **PASS** (library level) | `seal-open`, `locker`, `pow-gates`, `wallet`, `scan` suites; E-03 itself is the deploy builder's E2E |
 | A-04 every UI state with its test ids | **WAIVED** here | owned by app-ui (screens); `preview.js` already sets `view-text/-image/-video/-audio` |
 | A-05 no CSP / Trusted Types violations; no cross-origin request without "Check directly" | **PASS** (library side) | every page ran under the production app CSP |
-| A-06 widget payload, lazy ootle-wasm, storage contents | **PASS** (library side: 28,153 B of 40 KB; 12,807 B left for app-ui) | `lint_core.py` import-graph and size check; store.js |
+| A-06 widget payload, lazy ootle-wasm, storage contents | **PASS** (library side: 28,523 B of 40 KB; 12,437 B left for app-ui) | `lint_core.py` import-graph and size check; store.js |
 | A-07 keyboard-only flows | **WAIVED** here | owned by app-ui |
 | A-08 lint clean | **PASS** | `lint_core.py` |
 | A-09 without WebAssembly | **PASS** (library side) | `--jitless` run |
@@ -27,17 +47,18 @@ API (`server/bin/mutis-api --dev --pow-bits 8` from the same checkout), not only
 
 ```
 $ node web/app/tests/node-run.mjs | tail -1
-NODE PASS 114/114 (node v20.19.2)
+NODE PASS 118/118 (node v20.19.2)
 $ python3 -I web/app/tests/headless.py | tail -1
-title: TESTS PASS 114/114  (15.8s)
+title: TESTS PASS 118/118  (17.5s)
 $ python3 -I web/app/tests/vectors/crosscheck.py
 crosscheck: 80/80 checks passed
 ```
 
-The browser page is `/app/tests/run.html` (title `TESTS PASS 114/114`, screenshot
-`tests/evidence/run-html.png`). Node runs every suite that needs no browser: all modules the sidecar
-imports (`format share ootle courier seal crypto b64 api api-locker`) and the other protocol modules;
-a Worker stand-in in `node-run.mjs` runs the proof of work there. §4.15 KATs:
+The browser page is `/app/tests/run.html` (title `TESTS PASS 118/118`; the screenshot
+`tests/evidence/run-html.png` is the build phase's run, 114 tests). Node runs every suite that needs
+no browser: all modules the sidecar imports (`format share ootle courier seal crypto b64 api
+api-locker`) and the other protocol modules; a Worker stand-in in `node-run.mjs` runs the proof of
+work there. §4.15 KATs:
 HKDF RFC 5869 A.1-A.3; PBKDF2 RFC 7914 §11; AES-256-GCM NIST CAVP (4 vectors, 3 with AAD);
 `sha256Sync` vs WebCrypto on 1,000 random inputs (0-200 bytes) and every length 50-130; Padmé table +
 1, 1024, 1025, 2^22, 2^22+1, 2^30; the frozen `format-v1.json` vector (ciphertext, chunk hashes,

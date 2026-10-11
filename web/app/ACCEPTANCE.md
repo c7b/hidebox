@@ -9,11 +9,12 @@ against the real API (`server/bin/mutis-api --dev`, fakes for the chain) serving
 ```
 $ python3 -I web/app/ui/tests/run.py --shots
 …
-UI PASS 221/221
+UI PASS 228/228
 ```
 
-That run (after the devil's-advocate fix pass, `REVIEW-devil.md`) took 9 min 27 s, 20 flows; the
-`states` flow waits 65 s for a real link to expire.
+The last full run was after the integration pass (`NOTES-for-integrator.md` §4), from a fresh copy of
+the whole repository: 21 flows (the new one is `receipts`); the `states` flow waits 65 s for a real
+link to expire. The screenshots below are from the fix pass's `--shots` run.
 
 The other §16.2 ids belong to app-core: A-01, A-02, A-10…A-14 in `ACCEPTANCE-core.md`; A-03 (secret
 hygiene, E-03) is the deploy builder's E2E, with the library-level evidence in `ACCEPTANCE-core.md`
@@ -23,7 +24,7 @@ and the storage checks below.
 |---|---|---|
 | A-04 every state of §12.3 reachable, with the §3.4.9 test ids | **PASS** | static check: all 88 ids of §3.4.9 (plus P-6's `card-change`, `card-send-address`, `noise-canvas`, and `card-sent`, `card-close-link`, `dd-report`, `view-keep`, `kept-row`/`kept-save`/`kept-delete` for the flows below) are in the sources; every state reached in a browser, list below, `expired` from a real 60-second link. `key-copy` is not built: brand P-15 (accepted in 12-integration §2) removes the copy button |
 | A-05 no CSP or Trusted Types violation; no cross-origin request without the explicit click | **PASS** | every flow ends with "no CSP or Trusted Types violation ([])" (production app CSP, `require-trusted-types-for 'script'`); `layout`: no third-party request on 12 app pages × 3 devices; `deaddrop`: no request to Tari's indexer until "Check it on Tari's indexer" is pressed, then only to `ootle-indexer-b.tari.com` |
-| A-06 widget payload ≤ 40 KB compressed; ootle-wasm only where a locker is used; storage contents | **PASS** for a first drop of text: 24,329 B at load, 40,736 B after the drop (≤ 40,960). **WAIVED** for a file or photo: it also loads `lib/filetype.js`, `lib/download.js` and, for a photo, `lib/exif.js` (recipient safety P-14 and metadata removal §4.13), 47,319 B after a photo, asserted against a stated 48 KB ceiling | `budget` (gzip -9 of every `/app/` and `/vendor/` file the page requested): `PASS budget: widget payload compressed: 24329 B at load, 40736 B after a drop (≤ 40 KB)`, `PASS budget: after a photo too: 47319 B (≤ 49152 B; …)`; no `ootle_wasm` request on `/` before a locker action or after an anonymous drop; `home-text`: localStorage holds only `mutis.recent`, without the key or the text; `locker`: no key material in localStorage, IndexedDB stores exactly `identity` and `inbox` |
+| A-06 widget payload ≤ 40 KB compressed; ootle-wasm only where a locker is used; storage contents | **PASS** for a first drop of text: 24,500 B at load, 40,736 B after the drop (≤ 40,960). **WAIVED** for a file or photo: it also loads `lib/filetype.js` and, for a photo, `lib/exif.js` (recipient safety P-14 and metadata removal §4.13), 46,897 B after a photo, asserted against a stated 48 KB ceiling | `budget` (gzip -9 of every `/app/` and `/vendor/` file the page requested): `PASS budget: widget payload compressed: 24500 B at load, 40736 B after a drop (≤ 40 KB)`, `PASS budget: after a photo too: 46897 B (≤ 49152 B; …)`; no `ootle_wasm` request on `/` before a locker action or after an anonymous drop; `home-text`: localStorage holds only `mutis.recent`, without the key or the text; `locker`: no key material in localStorage, IndexedDB stores exactly `identity` and `inbox` |
 | A-07 keyboard-only flows; accessible names from the CDP Accessibility tree | **PASS** | `keyboard`: drop → copy link; open a link; make a drop link (and the key modal: focus inside, Escape closes); leave a file in a drop; send to an address; buy a pack; watch with a view key. The Accessibility tree has no unnamed button, link, textbox, checkbox or radio on home, card, `/locker`, the drop page, `/send`, `/upgrade`, `/watch` |
 | A-08 lint clean (§0.7) | **PASS** | `tools/lint.py --only web/app`: `lint: PASS (0 problems)`; `tools/check-copy.py`: `PASS (0 problems)` (brand §7.4 banned words, no digit outside `{variables}` in either dictionary); no `innerHTML` & co. anywhere: every node comes from `lib/dom.js`'s `h()` |
 | A-09 without WebAssembly, anonymous drop and open work; locker features say `needs_wasm` | **PASS** | `nowasm` (Chromium `--js-flags=--jitless`): a text drop opens; `/locker`, `/d/…`, `/inbox`, `/watch` show `[data-code="needs_wasm"]` (the drop page with the Tor Browser / Lockdown Mode wording of app-core's note M8) |
@@ -43,6 +44,7 @@ and the storage checks below.
 | Send to an address | `send`, `kind4` | the recipient's safety code on the send screen; relay send: Sent, tx id, the relay sentence of C8; the recipient's inbox opens it; L1, mainnet and invalid addresses explained before any request; kind 4: the memo is a `/t#4…` link and a browser without a locker opens it with the view key alone |
 | Watch with a view key | `send` | `/watch#mine` and another browser with the exported view key: ≥ 1 delivery, `data-readable = 0`; a view key of another address is refused (`address_mismatch`) |
 | Upgrade pack with fakes | `upgrade`, `upgrade-wallet` | sidecar mode (the dev default): s30 → invoice address → Pay with demo tTARI → stepper `waiting, seen, proven, added` all done; quota +2 GiB. Production's mode (`amount_proof = "wallet"`, a second dev server through `ui/tests/devserver.py`): the stepper reads Waiting → Seen by our wallet → Exists on chain → Added, the claim is C11's wallet variant, and every step is reached after a demo payment. With the clock on Nov 12 the testnet line says the Ootle mainnet is live, like the footer |
+| SealLog receipts (P1) | `receipts` | a real drop keeps the ciphertext hash this tab computed (equal to our server's); on `/verify`, against the template builder's 2.0.0 state and proofs: the stored and exit proofs verify at the log's checkpoint #1, a hash the file never had doesn't, the log's one writer key is named, and the research component (it has an owner) is refused |
 
 The dev server's fake chain writes outputs in the clear, which the official library in the page
 can't open; `ui/tests/realize.py` (test-only) swaps each fake output addressed to a test locker for a
@@ -68,6 +70,12 @@ deploy builder's `@chain` E2E.
 - **Send:** `send-status` `sealing → waiting → sending → delivered`.
 - **Upgrade:** `invoice-status` `pending → credited`; `pay-step` × 4.
 - **Verify tx:** `tx-root`, `tx-output[data-amount="hidden"]`, `tx-fee`.
+- **Verify receipts** (`receipts`): with `/config` turned to SealLog on and the template builder's
+  2.0.0 component state and proofs as the answers, `/verify` reads "Stored: included at checkpoint #1
+  (epoch 12128)" and "Exit: included at checkpoint #1" for a file whose hash this device kept (the
+  log's own number, not the 9 the answer carried), "doesn't match" for a hash the file never had,
+  names the log's one writer key, and refuses the research component on Esmeralda (it has an
+  owner). The device's kept hash equals our server's for a real drop.
 
 ## Layout, themes, languages
 
@@ -98,11 +106,11 @@ shots are taken at 1.5× and show the sticky bottom bar where the capture caught
 
 - Real iPhone and Android sessions (12-integration §1: headless emulation for now; the owner checks
   real devices after delivery).
-- `/verify` with live SealLog receipts: the dev server runs with `features.seallog = false`, so the
-  page shows "Receipts are off on this deployment"; the inclusion check uses app-core's
-  `lib/seallog.js` (RFC 9162 vectors in `ACCEPTANCE-core.md`).
+- `/verify` against live SealLog receipts: the dev server runs with `features.seallog = false`, so
+  `receipts` answers the chain and proof requests with the template builder's vectors (above); the
+  live log is checked once the integrator turns SealLog on.
 - Direct-mode sends and browser-signed pack payments: production runs `send_mode = "relay"` until
   E-J passes (app-core's note); the UI picks its copy from the mode each send actually used.
 - Cross-directory items this component can't close (NOTES-ui §1): `/judges` B6 in wallet mode
-  (site), the `/abuse` prefill (site), `e2e_expiry_s` in `/config` (server), not serving
-  `web/app/shots` (deploy).
+  (site), the `/abuse` prefill (site), not serving `web/app/shots` (deploy); `/config.seal_log`
+  `template` and `writer` (server, `NOTES-for-integrator.md` §4).

@@ -123,6 +123,8 @@ export const blobRange = (ticket, start, end, signal) => request('GET', `/blobs/
 });
 export const blobDone = (ticket) => request('POST', `/blobs/${enc(ticket)}/done`, { json: {}, expect: 'none' });
 export const exitReceipt = (shareId) => request('GET', `/s/${enc(shareId)}/exit`); // P1 (brand P-8)
+// P1: the ciphertext exactly as stored, with the same proof headers as peek; it uses no view.
+export const storedBytes = (shareId, headers) => request('GET', `/s/${enc(shareId)}/stored`, { headers, expect: 'bytes', timeoutMs: 180000 });
 
 // Canary and abuse
 export const getCanary = () => request('GET', '/canary');

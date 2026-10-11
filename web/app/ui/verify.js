@@ -6,7 +6,7 @@
 import { h } from '../lib/dom.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, unhex } from '../lib/b64.js';
-import { config, exitReceipt, manageShare } from '../lib/api.js';
+import { config, exitReceipt } from '../lib/api.js';
 import { recentDrops } from '../lib/store.js';
 import { icon } from './core.js';
 import { formatTari } from './marks.js';
@@ -75,36 +75,38 @@ export async function renderVerify(main) {
   main.replaceChildren(h('h1', { class: 'a-h1' }, t('verify.h')), h('p', { class: 'a-lede' }, t('verify.lede')), root);
   if (!cfg.features?.seallog || !cfg.seal_log?.component) return root.replaceChildren(h('p', { class: 'a-note' }, t('verify.off')));
   const [{ chainIx, sealProof }, seallog] = await Promise.all([import('../lib/api-locker.js'), import('../lib/seallog.js')]);
-  let checkpoints;
+  let log;
   try {
-    checkpoints = seallog.checkpointsFromComponent(await chainIx('GET', `substates/${cfg.seal_log.component}`));
+    log = seallog.readSealLog(await chainIx('GET', `substates/${cfg.seal_log.component}`));
   } catch (e) {
-    return root.replaceChildren(errorBanner(e));
+    return root.replaceChildren(errorBanner(e, e instanceof TypeError ? { key: 'verify.untrusted' } : {}));
   }
-  // A proof counts only against a root the component holds on the Ootle, with that checkpoint's size.
+  // A proof counts only against a root this component holds on the Ootle, with that checkpoint's size.
   // leaf(): the leaf hash, computed here from what this browser knows about the file.
   async function check(leaf, res) {
     if (res.leaf_index === null) return t('verify.pending', { date: formatDate(res.proof.next_checkpoint_eta * 1000, { timeStyle: 'short' }) });
-    const onChain = checkpoints.find((c) => c.leafCount === res.checkpoint.tree_size && c.epoch === res.checkpoint.epoch);
+    const onChain = res.checkpoint.component === cfg.seal_log.component
+      && log.checkpoints.find((c) => c.leafCount === res.checkpoint.tree_size && c.epoch === res.checkpoint.epoch);
     const ok = onChain && await seallog.verifyInclusion(await leaf(), res.leaf_index, onChain.leafCount, res.proof.map(unhex), onChain.root);
-    return ok ? t('verify.ok', { index: res.checkpoint.index, epoch: onChain.epoch }) : t('verify.bad');
+    return ok ? t('verify.ok', { index: onChain.index, epoch: String(onChain.epoch) }) : t('verify.bad');
   }
   const shareFromHash = /^#([A-Za-z0-9_-]{22})$/.exec(location.hash)?.[1];
   const drops = recentDrops();
   const targets = shareFromHash && !drops.some((d) => d.share_id === shareFromHash) ? [{ share_id: shareFromHash }, ...drops] : drops;
-  if (!targets.length) return root.replaceChildren(h('p', {}, t('verify.none')));
+  const about = h('p', { class: 'a-caption', 'data-testid': 'verify-log' }, t('verify.log', { template: short(log.template), writer: short(log.writer) }));
+  if (!targets.length) return root.replaceChildren(h('p', {}, t('verify.none')), about);
   root.replaceChildren(h('ul', { class: 'a-items' }, targets.map((d) => {
-    const stored = h('p', { class: 'a-caption' }, t('verify.checking'));
-    const exit = h('p', { class: 'a-caption' }, '');
+    const stored = h('p', { class: 'a-caption', 'data-testid': 'verify-stored' }, t('verify.checking'));
+    const exit = h('p', { class: 'a-caption', 'data-testid': 'verify-exit' }, '');
     (async () => {
       const ex = await exitReceipt(d.share_id).catch(() => null);
-      const itemId = ex?.item_id ?? d.item_id;
-      if (ex) exit.textContent = `${t('verify.exit')} ${await check(() => seallog.exitLeaf(b64uDecode(itemId), ex.exit_hour * 3600), ex)}`;
-      if (!d.manage_token) return stored.remove();
-      const { item } = await manageShare(d.share_id, { 'X-Mutis-Manage': d.manage_token });
+      const itemId = d.item_id ?? ex?.item_id; // the id this device locked, when it has one
+      if (ex) exit.textContent = `${t('verify.exit')} ${await check(() => seallog.exitLeaf(b64uDecode(itemId), ex.exit_hour), ex)}`;
+      // The ciphertext hash this browser computed when it locked the file, not one our server reports.
+      if (!d.ct_hash) return stored.remove();
       const res = await sealProof(itemId);
-      stored.textContent = `${t('verify.stored')} ${await check(() => seallog.storedLeaf(b64uDecode(itemId), b64uDecode(item.ct_hash)), res)}`;
+      stored.textContent = `${t('verify.stored')} ${await check(() => seallog.storedLeaf(b64uDecode(itemId), b64uDecode(d.ct_hash)), res)}`;
     })().catch((e) => stored.replaceWith(errorBanner(e)));
-    return h('li', { class: 'a-item' }, h('p', { class: 'mono' }, t('recent.link', { tail: d.share_id.slice(-4) })), stored, exit);
-  })));
+    return h('li', { class: 'a-item', 'data-testid': 'verify-item' }, h('p', { class: 'mono' }, t('recent.link', { tail: d.share_id.slice(-4) })), stored, exit);
+  })), about);
 }

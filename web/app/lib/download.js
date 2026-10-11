@@ -2,17 +2,9 @@
 // Saving decrypted files (§12.3.4): always as application/octet-stream through a download link, so
 // the browser never renders what it saves; the page never navigates to, opens or frames a blob: URL.
 import { h } from './dom.js';
+import { sanitizeFileName } from './filetype.js';
 
-const MAX_NAME = 200;
 export const PHONE_LARGE_BYTES = 512 * 1024 * 1024;
-
-export function sanitizeFileName(name) {
-  const cleaned = Array.from(String(name ?? ''))
-    .filter((c) => !/[\\/:*?"<>|\p{Cc}\p{Cf}]/u.test(c))
-    .join('')
-    .replace(/^[. ]+|[. ]+$/g, '');
-  return Array.from(cleaned).slice(0, MAX_NAME).join('') || 'mutis-file';
-}
 
 export function saveFile(parts, name) {
   const url = URL.createObjectURL(new Blob(parts, { type: 'application/octet-stream' }));

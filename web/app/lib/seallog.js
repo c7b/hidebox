@@ -52,15 +52,31 @@ export async function verifyInclusion(leafHash, index, treeSize, path, root) {
   return r !== null && equal(r, root);
 }
 
-// Checkpoints from the SealLog component substate (a GET substates/component_… response, through our
-// proxy or straight from an indexer): [{epoch, root, leafCount}], oldest first.
-export function checkpointsFromComponent(response) {
-  const entries = (response.substate ?? response)?.Component?.body?.state?.[0];
-  if (!Array.isArray(entries)) throw new TypeError('not a SealLog component');
-  return entries.map(([epoch, root, leafCount]) => {
+// Public-key badges live in resource_01 followed by zeros; the writer is the key whose badge
+// append_root requires.
+const KEY_BADGES = `resource_01${'0'.repeat(62)}`;
+
+// The SealLog component substate (a GET substates/component_… response, through our proxy or straight
+// from an indexer), trusted only when nobody can rewrite it: owner_rule "None" (nobody, us included,
+// can change its rules or the code behind it), every method denied by default, and append_root
+// open only to one public key's badge. The state keeps the newest 64 checkpoints after `first_index`.
+// -> {template, writer (hex public key), checkpoints: [{index (in the whole log), epoch, root,
+//     leafCount}], oldest first}; TypeError for anything else.
+export function readSealLog(response) {
+  const component = (response.substate ?? response)?.Component;
+  const header = component?.header;
+  const writer = header?.access_rules?.method_access?.append_root?.Restricted?.Require?.Require?.NonFungibleAddress;
+  if (header?.owner_rule !== 'None' || header.access_rules?.default !== 'DenyAll'
+    || writer?.resource_address !== KEY_BADGES || !/^[0-9a-f]{64}$/.test(writer.id?.U256 ?? '')) {
+    throw new TypeError('a SealLog that can be rewritten');
+  }
+  const [entries, firstIndex] = component.body?.state ?? [];
+  if (!Array.isArray(entries) || !Number.isSafeInteger(firstIndex)) throw new TypeError('not a SealLog component');
+  const checkpoints = entries.map(([epoch, root, leafCount], i) => {
     if (!Number.isSafeInteger(epoch) || root?.['@cbor'] !== 'bytes' || !/^[0-9a-f]{64}$/.test(root.hex) || !Number.isSafeInteger(leafCount)) {
       throw new TypeError('unexpected SealLog entry');
     }
-    return { epoch, root: unhex(root.hex), leafCount };
+    return { index: firstIndex + i, epoch, root: unhex(root.hex), leafCount };
   });
+  return { template: header.template_address, writer: writer.id.U256, checkpoints };
 }

@@ -6,7 +6,7 @@ import { h } from '../lib/dom.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, b64uEncode, hex } from '../lib/b64.js';
 import { saveFile } from '../lib/download.js';
-import { request } from '../lib/api.js';
+import { storedBytes } from '../lib/api.js';
 import { linkProof, parseFragment, shareKeys } from '../lib/share.js';
 import { errorBanner } from './errors.js';
 
@@ -82,7 +82,7 @@ export function knownPanel({ cfg, load, access = null, kdf = null, toggleTestid 
       h('h3', { id: `${id}-h` }, t('known.title')),
       h('p', { class: 'a-known-sub' }, t('known.sub')),
       ...rows(data, kdf),
-      access ? storedBytes(data.share.id) : null,
+      access ? storedButton(data.share.id) : null,
       h('h4', {}, t('known.never_h')),
       h('ul', { class: 'a-known-never' }, notStored),
       h('div', { class: 'a-known-foot' },
@@ -93,12 +93,12 @@ export function knownPanel({ cfg, load, access = null, kdf = null, toggleTestid 
   }
 
   // P1: the ciphertext exactly as our disk holds it, without using a view.
-  function storedBytes(shareId) {
+  function storedButton(shareId) {
     const after = h('p', { class: 'a-known-after', hidden: true }, t('known.stored_after'));
     const button = h('button', { type: 'button', class: 'a-btn' }, t('known.stored'));
     button.addEventListener('click', async () => {
       try {
-        const bytes = await request('GET', `/s/${shareId}/stored`, { headers: await access(), expect: 'bytes', timeoutMs: 180000 });
+        const bytes = await storedBytes(shareId, await access());
         saveFile([bytes], `mutis-stored-${shareId}.bin`);
         after.hidden = false;
       } catch (e) {

@@ -8,9 +8,9 @@ import { formatBytes, formatDate, formatRelative, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
 import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';
 import { parseFragment } from '../lib/share.js';
-import { SNIFF_BYTES, checkRisky, isArchiveName } from '../lib/filetype.js';
+import { SNIFF_BYTES, checkRisky, isArchiveName, sanitizeFileName } from '../lib/filetype.js';
 import { makePreview } from '../lib/preview.js';
-import { sanitizeFileName, saveFile, warnLargeOnPhone } from '../lib/download.js';
+import { saveFile, warnLargeOnPhone } from '../lib/download.js';
 import { concat } from '../lib/bytes.js';
 import { clearFragment, current } from '../lib/router.js';
 import { copyButton, formatDuration, icon } from './core.js';
@@ -80,7 +80,7 @@ export function viewer(root, opts) {
       exitReceipt(shareId).then((r) => {
         receipt.textContent = r.leaf_index === null
           ? t('gone.receipt_pending', { wait: formatDuration(cfg.seal_log.checkpoint_interval_s) })
-          : t('gone.receipt', { seal_checkpoint: r.checkpoint?.index ?? '' });
+          : r.checkpoint?.index == null ? t('gone.receipt_on') : t('gone.receipt', { seal_checkpoint: r.checkpoint.index });
         if (r.leaf_index !== null) receipt.append(' · ', h('a', { href: `/verify#${shareId}` }, t('verify.link')));
       }, () => receipt.remove());
     }

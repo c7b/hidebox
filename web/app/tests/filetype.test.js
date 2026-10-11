@@ -40,6 +40,14 @@ export default [
     eq(r.reason, 'content');
     eq(checkRisky('holiday.jpg', head([0xff, 0xd8, 0xff])).risky, false);
   }],
+  ['checkRisky reads the name a browser saves: a hidden or refused character can\'t move the extension', () => {
+    for (const [n, ext, kind] of [['invoice.b\u200Bat', 'bat', 'risky'], ['run.p|s1', 'ps1', 'risky'], ['photo\u202Egpj.exe', 'exe', 'risky'], ['page.ht\u200Bml.', 'html', 'active']]) {
+      const r = checkRisky(n, null);
+      ok(r[kind], n);
+      eq(r.ext, ext, n);
+    }
+    ok(isExecutableName('setup.e\u200Bxe') && isArchiveName('a.z\u200Bip') && isActiveDocumentName('x.s\u202Evg'));
+  }],
   ['active documents (web pages, SVG, saved pages, OneNote, macro Office, web queries): a softer class, not programs', () => {
     for (const n of ['invoice.html', 'INVOICE.HTM', 'logo.svg', 'page.mht', 'notes.one', 'budget.xlsm', 'deck.pptm', 'q.iqy', 'sheet.slk', 'a.xhtml']) {
       ok(isActiveDocumentName(n), n);

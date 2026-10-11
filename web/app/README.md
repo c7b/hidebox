@@ -34,10 +34,12 @@ It runs, in order, and exits 1 on any failure:
    confirm), the card's locker actions on a first visit (Send it to a Tari address instead, 7 days, an
    error that stays in the card), kept files, recipient safety (programs, names that hide one, size
    limits, photo metadata), the locker and its key, dead drops, the inbox, sending to an address,
-   `/watch`, kind-4 links, packs paid with demo tTARI in both payment modes, the testnet line after
-   Nov 11, keyboard-only use with the Accessibility tree checked for unnamed controls, no horizontal
-   scroll at 360 px, no third-party request, no CSP or Trusted Types violation, no WebAssembly
-   (`--jitless`), Spanish, dark mode with reduced motion, and the widget's payload (A-06).
+   `/watch`, kind-4 links, packs paid with demo tTARI in both payment modes, `/verify`'s SealLog
+   receipts checked against the template builder's vectors (and a log with an owner refused), the
+   testnet line after Nov 11, keyboard-only use with the Accessibility tree checked for unnamed
+   controls, no horizontal scroll at 360 px, no third-party request, no CSP or Trusted Types
+   violation, no WebAssembly (`--jitless`), Spanish, dark mode with reduced motion, and the widget's
+   payload (A-06).
 
 The dev server's fake chain writes its outputs in the clear, which the official library in the page
 can't open. `ui/tests/realize.py` (test-only) intercepts the page's mirror requests and replaces each

@@ -166,9 +166,13 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
   - `identity session courier drop scan wallet ootle api-locker` when the user picks a locker action,
     so ootle-wasm loads only then. `lint_core.py` fails if any of these becomes a static import of the
     widget path.
-- **Seal (changed):** `sealItem(source, {headers, anonymous, expiresAt, dropId, keepFor, onPhase,
-  signal, resume})` → `{itemId, uploadId, manageToken, expiresAt, uploadExpiresAt, fk, headerHash,
-  sizeStored, chunkCount, headers}`.
+- **Seal (changed):** `sealItem(source, {headers, anonymous, expiresAt, dropId, keepFor, headBytes,
+  onPhase, signal, resume})` → `{itemId, uploadId, manageToken, expiresAt, uploadExpiresAt, fk,
+  headerHash, sizeStored, chunkCount, ctHash, head, headers}`.
+  - `ctHash` (b64u) is the ciphertext hash this tab computed; `sealItem` already refused the upload if
+    the server's differed. Keep it with the link: `/verify` checks this hash, not one the server reports.
+  - `headBytes: n` returns `head`, the first n bytes of chunk 0 exactly as stored (the noise strip);
+    a resumed upload carries it in `resume`, so chunk 0 is never encrypted twice.
   - `expiresAt` (unix seconds) is **required unless the item is kept** (`keepFor`); compute it from
     `/config` limits (anonymous `default_expiry_s` = 24 h, locker 7 days, drops `limits.expiry_s`).
     `item.expiresAt` is the item's expiry, for "Leaves …"; `uploadExpiresAt` is when this upload
@@ -205,7 +209,9 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
   macro-enabled Office file or Excel web query (`html htm xhtml xht shtml svg svgz mht mhtml one onepkg
   docm dotm xlsm xltm xlam pptm potm ppsm ppam sldm iqy slk`): uploads are allowed; the viewer shows a
   softer notice before **Save** (copy request in §3). Also `isExecutableName`, `isActiveDocumentName`,
-  `isArchiveName`, `sniffImage`.
+  `isArchiveName`, `sniffImage`. Every one of them reads the name a browser will save,
+  `filetype.sanitizeFileName(name)` (moved here from `download.js`, which uses it), so
+  `invoice.b\u200Bat` is a `.bat` to every caller.
 - **Text secrets:** at most `TEXT_MAX_CHARS` = 10,000 **code points** (`Array.from(text).length`, the
   same number as `/config.text_max_chars`); the counter should count the same way.
 - **PoW:** call `prefetchPow('upload')` on page load; `solvePow(purpose, {signal, onProgress})` →
@@ -257,7 +263,9 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
 - **Sending to a Tari address (changed):** `wallet.deliver(identity, {address, kind, blob, signal})` →
   `{mode: 'direct', tx_id, …}` or `{mode: 'relay', job_id, not_before}`. It needs a session
   (`ensureSession` first). Pick the copy from `mode` per send (11 §8 claim registry), not from
-  `/config`. For a relay send, follow it with `courier.waitJob(job_id)`.
+  `/config`. For a relay send, follow it with `courier.waitJob(job_id)`; a job that ends with
+  `courier.unconfirmed(job)` true (our wait ran out, or `walletd_timeout`, `timeout`, `interrupted`)
+  may still have paid, so say it couldn't be confirmed, not that it failed.
 - **Direct-mode wallet:** `balance(identity)`, `requestGrant(identity)` (call it in the background right
   after the locker's first session when `/config` says `send_mode: "direct"` and `features.sponsor`;
   ignore `rate_limited`), `send(identity, {to, amountUt, memo, signal})`, `payInvoice(identity,
@@ -275,10 +283,14 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
   drop, courier, chain, payment and P1 endpoints. A network failure or timeout is `code: 'network'`,
   `status: 0` (not in §6.4; map it to "Retry").
 - **P1:** kept files `sealItem(…, {keepFor: identity})`, `api-locker.listMyItems`, `openKept(identity,
-  row)`, `keepWrap(identity, opened)` + `api-locker.claimItem(itemId, wrap, headers)`; receipts
-  `seallog.js` (`storedLeaf`, `exitLeaf`, `verifyInclusion`, `checkpointsFromComponent`),
-  `api-locker.sealProof`, `api.exitReceipt`. The tree size used with a proof must be the on-chain
-  checkpoint's `leaf_count`.
+  row)`; "Keep a copy" of a received file is a new kept seal of its plaintext (the server has no claim
+  endpoint, so `keepWrap`/`claimItem` are gone); "Download the stored bytes" `api.storedBytes(shareId,
+  accessHeaders)`; receipts `seallog.js` (`storedLeaf`, `exitLeaf(itemId16, unixSeconds)`,
+  `verifyInclusion`, `readSealLog`), `api-locker.sealProof`, `api.exitReceipt` (its `exit_hour` is unix
+  seconds). `readSealLog(substate)` → `{template, writer, checkpoints: [{index, epoch, root,
+  leafCount}]}` and throws `TypeError` unless the component has no owner, denies by default and lets
+  only one key's badge call `append_root`; `index` counts from the log's start (`first_index`). The tree
+  size used with a proof must be the on-chain checkpoint's `leaf_count`.
 - **i18n:** flat JSON (`{"viewer.ready.title": "…"}`), plural values `{one, other, …}` chosen by
   `params.count`; `loadLanguage()`, `t(key, params)`, `formatBytes` ("2.4 MB"), `formatRelative`.
 - **DOM:** `h(tag, props, ...children)` refuses `innerHTML`/`srcdoc`/`style`/string handlers and
@@ -358,3 +370,70 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
    vectors pass. L1 and Tari Universe shapes still need the owner's samples (§0.6); today: base58 of
    60-100 characters, or ≥ 20 emoji from the alphabet.
 9. Gate evidence for `docs/evidence/`: `web/app/tests/evidence/`.
+
+## 4. Integration pass (2026-10-11)
+
+The integrator applied every request aimed at `web/app` from the builders' NOTES, the reviews'
+builder responses and 12-integration §7, as the owner of the whole directory. Changes that touch
+the library API are folded into §2 above.
+
+### Integration responses
+
+- **Applied:** `sealItem` returns `head` (`headBytes`) and `ctHash`, and `ui/sealing.js` no longer
+  encrypts chunk 0 a second time (NOTES-ui, app-core 1); `useStrings` stays exported, documented
+  for the widget (app-core 2); `api.storedBytes` wraps `GET /s/{id}/stored` (app-core 3);
+  `sanitizeFileName` lives in `filetype.js` and every name check reads the saved name (app-core 4,
+  review H2); `claimItem` and `keepWrap` are removed (server, App builders 2); SealLog 2.0.0's state
+  layout and header are read by `readSealLog`, and `/verify` shows the log's own checkpoint index
+  (template §3) and counts a proof only when its `checkpoint.component` is `/config`'s (server §7,
+  App builders 1); C9's direct-mode sentence is on the send step whenever a send can leave from this
+  browser, and C22's wording is on `/verify` (12-integration §7.4); a courier job that may still have
+  paid (server, Integrator 6: `walletd_timeout`, `timeout`, `interrupted`) is no longer reported as
+  "didn't go through".
+- **Found and fixed:** `/verify` multiplied the exit receipt's `exit_hour` by 3600, but the server
+  sends unix seconds (`server/mutis/seallog.py` `exit_leaf` divides by 3600), so no exit receipt could
+  ever verify. It now passes `exit_hour` as is, and the new `receipts` UI flow checks a stored and an
+  exit proof end to end against the template's vectors.
+- **`/verify` checks this browser's hash:** the stored-file check used the `ct_hash` our server
+  reported through `/manage`, which would make C22 ("your file's ciphertext hash") a statement about
+  the server's word. Recent drops now keep the hash this tab computed when it locked the file, and
+  `/verify` checks only that one (and the item id this device locked, when it has one).
+- **Not applied, key file name** (app-core §3 Integrator 6; brand §10.4 `mutis-recovery-{id4}.json`):
+  the file is text, not JSON (`Key:` or `Locked key:` lines), and the UI calls it the key file
+  throughout ("locker key", 12-integration §2), so `mutis-key-<6 hex>.txt` stays. Renaming it to
+  `.json` would describe a format it doesn't have.
+- **Partly applied, the SealLog fixture** (template §3, "replace `seallog-component.json`"): the
+  2.0.0 state and the Merkle vectors are read straight from `template/seal_log/tests/vectors/` (one
+  source, nothing to drift; `headless.py` serves them like the server's vectors), and the research
+  component stays in `tests/vectors/` as the case `/verify` must refuse: it is real indexer JSON of a
+  log with an owner.
+- **Template address and writer key** (template §3): `readSealLog` checks `owner_rule: "None"`,
+  `default: "DenyAll"` and a single public-key badge on `append_root`, and returns `template` and
+  `writer`. Nothing the browser trusts names the published 2.0.0 template yet, so `/verify` prints both
+  ("Only the key {writer} can add checkpoints", with the template) for anyone to compare with
+  `/evidence.json`; see the request below.
+- **Notarizations** (template §3, P-9): no app code reads `notarize` events (`/releases.json` is
+  deploy's and the site's), so there is nothing to apply here.
+- **Routes** (deploy, App-ui 8): the app uses exactly Caddy's list (`/d/*`, `/locker`, `/inbox`,
+  `/send`, `/watch`, `/upgrade`, `/verify`, `/verify/tx/*`, `/s/*`, `/t`); there is no `/key`.
+- **E2E selectors** (deploy, App-ui 1-7): all present as built (`key-passphrase`,
+  `restore-passphrase`, "That's not it." in `view-root`, `data-code="needs_wasm"`, `inbox-item`,
+  the `expiry-preset` 60 s option when `/config.e2e_expiry_s` is set, `drop-link`, `t-viewkey`,
+  `t-viewkey-submit`).
+
+### Integration requests
+
+**Server**
+1. `/config.seal_log`: add `template` (the published 2.0.0 template address) and `writer` (the
+   writer's public key, hex) next to `component`, so `/verify` can refuse a component whose header
+   names other ones. Until then it prints both from the chain.
+2. `checkpoint.index` in `/s/{id}/exit` and `/seallog/proof/{id}`: the viewer prints it as
+   "checkpoint #{n}", so it must be the chain's index (the `index` of the `SealLog.root` event, as
+   template §2 asks), not the database row's. The server's integration pass is adding exactly that
+   (`chain_index`, migration 003; null when the worker couldn't read the event, which the viewer now
+   shows as "Exit on the record" without a number); `/verify` computes the chain's own from the
+   component state either way.
+
+**Integrator (docs/api.md)**
+1. `GET /s/{id}/exit` → `exit_hour` is unix seconds floored to the hour (not an hour count); say so
+   where the endpoint is documented.

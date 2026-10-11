@@ -2,7 +2,7 @@
 import { b64uEncode, hex, unhex } from '../lib/b64.js';
 import { randomBytes } from '../lib/crypto.js';
 import { utf8 } from '../lib/bytes.js';
-import { decodeInner, encodeInner, memoFor, memoPlainText, parseMemo } from '../lib/courier.js';
+import { decodeInner, encodeInner, memoFor, memoPlainText, parseMemo, unconfirmed } from '../lib/courier.js';
 import { bytesEq, eq, loadJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
@@ -56,6 +56,14 @@ export default [
     eq(parseMemo({ Message: staging }, ['https://staging.mutis.test:8443']).origin, 'https://staging.mutis.test:8443', 'an origin with a port');
     eq(parseMemo({ Message: staging }, ['https://staging.mutis.test']), null, 'the port is part of the origin');
     eq(parseMemo({ Message: good }, ['https://mutis.sh:99999999']), null, 'a malformed allowed origin is ignored');
+  }],
+  ['unconfirmed: a job whose payment may still go out (walletd took it, or nobody heard back) is not a failure', () => {
+    ok(unconfirmed({ state: 'timeout', error: null }), 'our wait ran out');
+    for (const error of ['walletd_timeout', 'timeout', 'interrupted']) ok(unconfirmed({ state: 'failed', error }), error);
+    for (const error of ['walletd_unreachable', 'walletd_error', 'rejected', 'budget_exhausted', 'invalid_payload', 'sidecar_error', 'internal']) {
+      ok(!unconfirmed({ state: 'failed', error }), error);
+    }
+    ok(!unconfirmed({ state: 'done', error: null }));
   }],
   ['memoPlainText: messages and pay-refs as text; nothing else', () => {
     eq(memoPlainText({ Message: 'thanks for the tip' }), 'thanks for the tip');

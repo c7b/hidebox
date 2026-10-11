@@ -70,6 +70,12 @@ export function memoPlainText(memoObj) {
   return null;
 }
 
+// A job that ended without word from the chain: walletd took the payment but didn't answer, nobody
+// heard back in time, or the worker stopped mid-send. Its payment may still go out, so the person who
+// sent it isn't told it failed.
+const UNCONFIRMED = new Set(['walletd_timeout', 'timeout', 'interrupted']);
+export const unconfirmed = (job) => job.state === 'timeout' || UNCONFIRMED.has(job.error);
+
 // Polls a courier job until it is done or failed; onState sees queued → sending → done|failed.
 export async function waitJob(jobId, { onState, signal, intervalMs = 2000, timeoutMs = 180000 } = {}) {
   const end = Date.now() + timeoutMs;

@@ -257,7 +257,7 @@ export async function applyRule(st, x, expiresAt, lockerContext) {
   const res = await patchShare(st.link.shareId, { max_views: x.maxViews, expires_at: expiresAt }, st.item.headers);
   st.link.maxViews = res.max_views;
   st.link.expiresAt = res.expires_at;
-  addRecentDrop({ share_id: st.link.shareId, item_id: st.item.itemId, manage_token: st.item.manageToken, expires: res.expires_at });
+  addRecentDrop({ share_id: st.link.shareId, item_id: st.item.itemId, manage_token: st.item.manageToken, ct_hash: st.item.ctHash, expires: res.expires_at });
   return t('toast.rule_changed');
 }
 
@@ -280,7 +280,7 @@ async function replaceLink(st, x, expiresAt) {
     throw e;
   }
   st.link = { ...link, mode: x.mode };
-  addRecentDrop({ share_id: link.shareId, item_id: st.item.itemId, manage_token: st.item.manageToken, expires: link.expiresAt ?? st.item.expiresAt });
+  addRecentDrop({ share_id: link.shareId, item_id: st.item.itemId, manage_token: st.item.manageToken, ct_hash: st.item.ctHash, expires: link.expiresAt ?? st.item.expiresAt });
   return t(x.who === 'password' ? 'toast.password_added' : 'toast.new_link');
 }
 
@@ -309,6 +309,6 @@ async function keep(st, x) {
   }
   const link = await createLink(st.item, { mode: x.mode, password: x.password, maxViews: x.maxViews });
   st.link = { ...link, mode: x.mode };
-  addRecentDrop({ share_id: link.shareId, item_id: st.item.itemId, manage_token: st.item.manageToken, expires: link.expiresAt ?? now() + st.cfg.retention.inactive_days * 86400 });
+  addRecentDrop({ share_id: link.shareId, item_id: st.item.itemId, manage_token: st.item.manageToken, ct_hash: st.item.ctHash, expires: link.expiresAt ?? now() + st.cfg.retention.inactive_days * 86400 });
   return t('toast.kept');
 }

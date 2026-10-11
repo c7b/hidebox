@@ -38,7 +38,8 @@ CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'se
        "manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; "
        "require-trusted-types-for 'script'; trusted-types mutis-url")
 MOUNTS = [("/app/", "web/app/"), ("/vendor/", "web/app/vendor/"), ("/shared/", "web/shared/"),
-          ("/server/tests/vectors/", "server/tests/vectors/")]
+          ("/server/tests/vectors/", "server/tests/vectors/"),
+          ("/template/seal_log/tests/vectors/", "template/seal_log/tests/vectors/")]
 TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8",
          ".json": "application/json", ".wasm": "application/wasm", ".css": "text/css", ".jpg": "image/jpeg",
          ".png": "image/png", ".webp": "image/webp", ".bin": "application/octet-stream", ".txt": "text/plain; charset=utf-8"}
