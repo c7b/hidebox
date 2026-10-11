@@ -28,22 +28,37 @@ API_PREFIX = "/api/v1/"
 FEATURE_CACHE_S = 2
 DRAIN_MAX = 8 * 1024 * 1024       # an early error still reads a body this small, so the client sees the answer
 MEMORY_CAP = 200_000              # entries in each in-memory table
+IN_FLIGHT_64 = 32                 # requests in progress per IPv6 /64 or IPv4 address (a browser uses about 6)
+IN_FLIGHT_48 = 128                # per IPv6 /48 or IPv4 /24
 
 
 class InFlight:
-    """Counts requests in progress so SIGTERM can let them finish (up to 20 s)."""
+    """Counts requests in progress, in all (SIGTERM lets them finish, up to 20 s) and per network, so slow
+    downloads from one network can't hold every API thread."""
 
     def __init__(self):
         self._cond = threading.Condition()
         self.count = 0
+        self._per: dict[bytes, int] = {}
 
-    def acquire_slot(self) -> None:
+    def acquire_slot(self, caps: tuple[tuple[bytes, int], ...]) -> bool:
+        """Count a request against each (network key, cap); False, counting nothing, when one is full."""
         with self._cond:
+            if any(self._per.get(key, 0) >= cap for key, cap in caps):
+                return False
             self.count += 1
+            for key, _ in caps:
+                self._per[key] = self._per.get(key, 0) + 1
+            return True
 
-    def release_slot(self) -> None:
+    def release_slot(self, caps: tuple[tuple[bytes, int], ...]) -> None:
         with self._cond:
             self.count -= 1
+            for key, _ in caps:
+                if self._per[key] > 1:
+                    self._per[key] -= 1
+                else:
+                    del self._per[key]
             self._cond.notify_all()
 
     def wait_idle(self, timeout: float) -> None:
@@ -270,8 +285,12 @@ class Handler(BaseHTTPRequestHandler):
         req = Request(self.command, url.path, dict(parse_qsl(url.query)), self.headers, self.rfile,
                       client_ip(self.client_address[0], self.headers.get("X-Real-IP")))
         ctx = Ctx(app, req, app.clock())
-        app.inflight.acquire_slot()
+        caps = ((ctx.ip64, IN_FLIGHT_64), (ctx.ip48, IN_FLIGHT_48))
+        counted = app.inflight.acquire_slot(caps)
         try:
+            if not counted:
+                raise ApiError(429, "rate_limited", "Too many requests at once from your network. Try again shortly.",
+                               retry_after=1)
             if not url.path.startswith(API_PREFIX) and app.static is not None:
                 route_name = "static"
                 resp = app.static.serve(req)
@@ -295,7 +314,8 @@ class Handler(BaseHTTPRequestHandler):
         except OSError:
             logsafe.event("api.connection_error")
         finally:
-            app.inflight.release_slot()
+            if counted:
+                app.inflight.release_slot(caps)
         logsafe.request(route_name, resp.status, int((time.monotonic() - started) * 1000))
 
     def _drain(self, req: Request) -> None:

@@ -2,7 +2,7 @@
 """GET /health, GET /config, POST /pow (spec §6.3 System, brand patch P-3)."""
 import sqlite3
 
-from .. import cleanup, items, payments, pow as pow_mod, quota, seallog
+from .. import cleanup, items, payments, pow as pow_mod, quota
 from ..auth import SESSION_TTL_S
 from ..http_util import get_enum, get_int, json_response
 from .invoices import DEMO_PAY_PER_DAY
@@ -40,6 +40,7 @@ def limits_block() -> dict:
 def build_config(ctx) -> dict:
     cfg, ootle = ctx.cfg, ctx.cfg["ootle"]
     start = ctx.db.execute("SELECT COALESCE(MIN(seq), 1) FROM chain_utxos").fetchone()[0]
+    e2e = {"e2e_expiry_s": cfg["e2e_expiry_s"]} if cfg["e2e_expiry_s"] else {}     # spec §17.1, never in production
     return {
         "origin": cfg.origin, "memo_origins": list(cfg["memo_origins"]),
         "network": cfg["network"], "network_byte": 38, "testnet": True,
@@ -59,7 +60,7 @@ def build_config(ctx) -> dict:
                   "wasm_version": ootle["wasm_version"], "mainnet_date": ootle["mainnet_date"]},
         "security_drop": cfg["security_drop_url"] or None,
         "repo_url": cfg["repo_url"],
-        "seal_log": {"checkpoint_interval_s": seallog.CHECKPOINT_INTERVAL_S,
+        "seal_log": {"checkpoint_interval_s": cfg["seal_log"]["checkpoint_interval_s"],
                      "component": ootle["seallog_component"] or None},
         "retention": {"ticket_s": items.TICKET_S, "tombstone_days": cleanup.TOMBSTONE_DAYS,
                       "db_backup_days": cleanup.DB_BACKUP_DAYS, "inactive_days": cleanup.INACTIVE_DAYS,
@@ -71,6 +72,7 @@ def build_config(ctx) -> dict:
         "invoices": {"underpaid_grace_days": payments.UNDERPAID_GRACE_DAYS, "expires_s": payments.INVOICE_TTL_S},
         "hosting": {"snapshots": cfg["hosting"]["snapshots"]},
         "onion": cfg["onion"] or None,
+        **e2e,
     }
 
 

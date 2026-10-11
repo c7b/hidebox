@@ -6,6 +6,7 @@ is a hash of (value, nonce). This keeps the shapes and failure modes of the real
 (gate G3 framing) so the worker, the API proxy and payment verification can be tested offline.
 """
 import json
+import re
 import secrets
 import struct
 import threading
@@ -56,6 +57,7 @@ class FakeChain:
         self.balances: dict[str, int] = {"sponsor": 8_900_000_000, "service": 20_000_000, "operator": 50_000_000}
         self.addresses = {name: fake_keys()["address"] for name in self.balances}
         self.transfers: list[dict] = []
+        self.seal_logs: dict[str, list[int]] = {}      # component → leaf counts appended
 
     def add_output(self, destination: str, value: int, memo, promise: int = 0) -> str:
         _, view_pk, pay_ref = ootle_addr.parse_testnet(destination)
@@ -87,10 +89,25 @@ class FakeChain:
                                "memo": memo, "outputs": [out, change]})
         return tx_id
 
-    def manifest_call(self) -> str:
+    def manifest_call(self, manifest: str, variables: dict) -> str:
+        """A SealLog call. `append_root` follows template 2.0.0: the count must be a multiple of 64 and
+        grow, and the append emits a `SealLog.root` event with the checkpoint's index."""
         tx_id = secrets.token_hex(32)
-        self.receipts[tx_id] = {"outcome": "Commit", "epoch": self.epoch, "diff_summary": {"upped": [], "downed": []},
-                                "fee_receipt": {"total_fees_paid": 1837}}
+        outcome, events = "Commit", []
+        append = re.search(r'append_root\(hex_bytes!\("([0-9a-f]{64})"\), (\d+)u64\)', manifest)
+        if append:
+            log, root, count = variables["log"], append.group(1), int(append.group(2))
+            with self.lock:
+                counts = self.seal_logs.setdefault(log, [])
+                if count % 64 or count <= (counts[-1] if counts else 0):
+                    outcome = "Reject"
+                else:
+                    counts.append(count)
+                    events.append({"topic": "SealLog.root", "substate_id": log, "template_address": "00" * 32,
+                                   "payload": {"index": str(len(counts) - 1), "root": root, "leaf_count": str(count),
+                                               "epoch": str(self.epoch)}})
+        self.receipts[tx_id] = {"outcome": outcome, "epoch": self.epoch, "diff_summary": {"upped": [], "downed": []},
+                                "fee_receipt": {"total_fees_paid": 1837}, "events": events}
         return tx_id
 
     def stream(self, cursors: dict[int, int], limit: int) -> bytes:

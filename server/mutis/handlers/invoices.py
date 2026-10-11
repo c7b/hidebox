@@ -8,6 +8,12 @@ from .drops import require_testnet_address
 DEMO_PAY_PER_DAY = 2
 
 
+def _unless_judge(ctx, network_rules: tuple) -> tuple:
+    """A valid judge pass lifts the per-network limits, so two judges on one network both get through;
+    the per-locker limit and the pass's own uses still apply. An invalid pass is refused here (403)."""
+    return () if ctx.judge() is not None else network_rules
+
+
 def _invoice(ctx, invoice_id: str, identity):
     row = ctx.db.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,)).fetchone()
     if row is None or row["identity_id"] != identity["id"]:
@@ -69,8 +75,8 @@ def demo_pay(ctx, invoice_id: str):
     if inv["status"] not in ("pending", "seen", "underpaid") \
             or ctx.now > inv["expires_at"] + payments.UNDERPAID_GRACE_DAYS * 86400:
         raise ApiError(409, "conflict", "This invoice is paid or closed.")
-    with ctx.charged(("demo64", ctx.ip64, DEMO_PAY_PER_DAY, 86400, 1), ("demo48", ctx.ip48, 4, 86400, 1),
-                     ("demo_locker", identity["id"], DEMO_PAY_PER_DAY, 86400, 1)):
+    network = (("demo64", ctx.ip64, DEMO_PAY_PER_DAY, 86400, 1), ("demo48", ctx.ip48, 4, 86400, 1))
+    with ctx.charged(*_unless_judge(ctx, network), ("demo_locker", identity["id"], DEMO_PAY_PER_DAY, 86400, 1)):
         require_chain(ctx)
         judge = ctx.proof_of_work("demo_pay", body, budgeted=True)
         slice_ = slice_for(identity, ctx.now, judge)
@@ -90,8 +96,8 @@ def sponsor(ctx):
     identity = ctx.session()
     body = ctx.req.json()
     address = require_testnet_address(body.get("wallet_address"), "wallet_address")
-    with ctx.charged(("sponsor64", ctx.ip64, 1, 86400, 1), ("sponsor48", ctx.ip48, 3, 86400, 1),
-                     ("sponsor_locker", identity["id"], 1, 86400, 1)):
+    network = (("sponsor64", ctx.ip64, 1, 86400, 1), ("sponsor48", ctx.ip48, 3, 86400, 1))
+    with ctx.charged(*_unless_judge(ctx, network), ("sponsor_locker", identity["id"], 1, 86400, 1)):
         require_chain(ctx)
         judge = ctx.proof_of_work("sponsor", body, budgeted=True)
         slice_ = slice_for(identity, ctx.now, judge)

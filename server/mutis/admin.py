@@ -18,10 +18,12 @@ FEATURES = ("drops", "relay_send", "direct_send", "demo_pay", "sponsor", "decoys
 
 
 def _backup(cfg: config.Config) -> Path | None:
-    if not cfg.db_path.exists():
+    """A private copy of a database that a migration is about to change (none when nothing is pending)."""
+    if not cfg.db_path.exists() or db.version(cfg.db_path) >= db.SCHEMA_VERSION:
         return None
     target = cfg.data_dir / "backup" / time.strftime("pre-migrate-%Y%m%d-%H%M%S.sqlite3", time.gmtime())
     target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    target.touch(mode=0o600, exist_ok=False)          # SQLite fills an empty file; it never widens the mode
     src, dst = sqlite3.connect(cfg.db_path), sqlite3.connect(target)
     with dst:
         src.backup(dst)
@@ -175,9 +177,9 @@ def parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("migrate").set_defaults(fn=cmd_migrate, needs_db=False)
     sub.add_parser("check-config").set_defaults(fn=lambda cfg, conn, args: print("ok"), needs_db=False)
-    t = sub.add_parser("takedown")
+    t = sub.add_parser("takedown", usage="mutis-admin takedown {share,item,drop} [--note NOTE] -- id")
     t.add_argument("kind", choices=("share", "item", "drop"))
-    t.add_argument("id")
+    t.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
     t.add_argument("--note")
     t.set_defaults(fn=cmd_takedown)
     r = sub.add_parser("reports")

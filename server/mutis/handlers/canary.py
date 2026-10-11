@@ -2,6 +2,7 @@
 """GET /canary and /canary/raw (spec §6.3, §8.4): our own hourly sealed file, exactly as the disk holds it.
 
 P1: a canary's file key is published once it is a day old ("Yesterday's key — now you can read it").
+An hour whose key the verifier lost when it restarted is listed as `{"n", "sealed_at", "missed": true}`.
 """
 from .. import codec, db
 from ..http_util import ApiError, json_response
@@ -25,8 +26,12 @@ def latest(ctx):
         raise ApiError(404, "not_found", "No canary yet.")
     revealed = []
     for entry in reversed(_log(conn)):
-        old = _item(conn, entry["item_id"]) if entry.get("fk") else None
-        if old is not None:
+        old = _item(conn, entry["item_id"]) if entry.get("fk") or entry.get("missed") else None
+        if old is None:
+            continue
+        if entry.get("missed"):
+            revealed.append({"n": entry["n"], "sealed_at": entry["sealed_at"], "missed": True})
+        else:
             revealed.append({"n": entry["n"], "sealed_at": entry["sealed_at"],
                              "raw": f"/api/v1/canary/raw?n={entry['n']}", "fk": entry["fk"],
                              "header": codec.b64u(old["header"]), "meta_ct": codec.b64u(old["meta_ct"]),

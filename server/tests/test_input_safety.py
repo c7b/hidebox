@@ -111,6 +111,37 @@ class InputSafety(unittest.TestCase):
         with self.assertRaises(config.ConfigError):
             api.make_server(self.s.app, "0.0.0.0", 0)
 
+    def test_requests_in_flight_are_capped_per_network(self):
+        """Deploy review M6: slow downloads from one /64 (or /48) can't hold every API thread."""
+        ip64, ip48 = self.s.app.ipkeys.keys("203.0.113.9", self.s.now)
+        caps = ((ip64, api.IN_FLIGHT_64), (ip48, api.IN_FLIGHT_48))
+        for _ in range(api.IN_FLIGHT_64):
+            self.assertTrue(self.s.app.inflight.acquire_slot(caps))
+        try:
+            status, _, body = self.s.request("GET", "/api/v1/health", ip="203.0.113.9")
+            self.assertEqual((status, body["error"]["code"], body["error"]["retry_after"]), (429, "rate_limited", 1))
+            self.assertEqual(self.s.request("GET", "/api/v1/health", ip="203.0.113.10")[0], 200)   # same /24
+        finally:
+            for _ in range(api.IN_FLIGHT_64):
+                self.s.app.inflight.release_slot(caps)
+        self.assertEqual(self.s.request("GET", "/api/v1/health", ip="203.0.113.9")[0], 200)
+        self.s.app.inflight.wait_idle(5)       # the server thread releases its slot just after it answers
+        self.assertEqual(self.s.app.inflight.count, 0)
+
+    def test_config_rules(self):
+        raw = {"public_origin": ORIGIN, "memo_origins": [ORIGIN]}
+        for bad in ({"seal_log": {"checkpoint_interval_s": 599}}, {"e2e_expiry_s": -1}):
+            with self.assertRaises(config.ConfigError, msg=bad):
+                config.from_dict({**raw, **bad})
+        with self.assertRaises(config.ConfigError):
+            config.from_dict({**raw, "seal_log": {"checkpoint_interval": 900}})       # unknown keys stop us
+        release = self.s.tmp / "releases" / "r1" / "sidecar"
+        release.mkdir(parents=True)
+        (self.s.tmp / "current").symlink_to(release.parent)
+        argv = config.from_dict({**raw, "sidecar": {"dir": str(self.s.tmp / "current" / "sidecar")}}).sidecar_argv()
+        self.assertIn(f"--allow-fs-read={release.resolve()}", argv)         # Node resolves symlinks itself
+        self.assertEqual(argv[-1], f"{release.resolve()}/sidecar.mjs")
+
 
 if __name__ == "__main__":
     unittest.main()

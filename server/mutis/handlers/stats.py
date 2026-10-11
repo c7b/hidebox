@@ -4,9 +4,10 @@
 Disk sizes are rounded to 0.1 GiB: uploads reserve their full size at once, so exact free bytes
 refreshed every minute would show each upload's padded size and time.
 
-The wall shows coarse classes (size, time left, exit rule, sealed/opened/gone) for at most 24 items
-from the last 7 days, only when at least 8 exist, in random order, leaving out items under an hour
-old. It names no file, but someone who knows a file's classes may still recognise it there.
+The wall shows two coarse classes (size and exit rule) for at most 24 items from the last 7 days, only
+when at least 8 exist, in random order, leaving out items under an hour old and files taken down. It
+says nothing about whether or when a link was opened. It names no file, but someone who knows a file's
+size class and rule may still recognise it there.
 """
 import random
 
@@ -55,25 +56,16 @@ def _size_class(size: int) -> int:
     return 4
 
 
-def _ttl_class(item, now: int) -> int:
-    if item["state"] not in ("ready", "uploading"):
-        return 0
-    if item["retention"] == "kept" or item["expires_at"] is None:
-        return 4
-    left = item["expires_at"] - now
-    return 0 if left <= 0 else 1 if left < 3600 else 2 if left < 86400 else 3 if left < 7 * 86400 else 4
-
-
 def build_wall(ctx) -> dict:
     conn, now = ctx.db, ctx.now
     rows = conn.execute("SELECT * FROM items WHERE canary = 0 AND created_hour >= ? AND created_hour <= ? "
-                        "AND state <> 'uploading' ORDER BY created_hour DESC LIMIT ?",
+                        "AND state NOT IN ('uploading', 'removed') ORDER BY created_hour DESC LIMIT ?",
                         (now - 7 * 86400, now - WALL_HOLD_S, WALL_MAX)).fetchall()
     lockers = []
     if len(rows) >= WALL_MIN:
         for item in rows:
-            shares = conn.execute("SELECT max_views, views_used FROM shares WHERE item_id = ?", (item["id"],)).fetchall()
-            views = [s["max_views"] for s in shares]
+            views = [r["max_views"] for r in conn.execute("SELECT max_views FROM shares WHERE item_id = ?",
+                                                          (item["id"],))]
             if item["retention"] == "kept":
                 exit_ = "kept"
             elif 1 in views:
@@ -82,14 +74,7 @@ def build_wall(ctx) -> dict:
                 exit_ = "views"
             else:
                 exit_ = "time"
-            if item["state"] != "ready":
-                state = "gone"
-            elif any(s["views_used"] for s in shares):
-                state = "opened"
-            else:
-                state = "sealed"
-            lockers.append({"size": _size_class(item["size_stored"]), "ttl": _ttl_class(item, now), "exit": exit_,
-                            "state": state})
+            lockers.append({"size": _size_class(item["size_stored"]), "exit": exit_})
         random.SystemRandom().shuffle(lockers)
     canary = None
     item_id = db.get_meta(conn, "canary_item_id")

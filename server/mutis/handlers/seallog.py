@@ -18,14 +18,17 @@ def _require_seallog(ctx) -> None:
                        details={"feature": "seallog"})
 
 
+def _eta(ctx) -> int:
+    return seallog.next_checkpoint_eta(ctx.db, ctx.now, ctx.cfg["seal_log"]["checkpoint_interval_s"])
+
+
 def _proof(ctx, leaf: bytes) -> dict:
     """{"leaf_index", "proof", "checkpoint"} against the newest committed root, or a pending marker."""
     conn = ctx.db
     index = seallog.leaf_index(conn, leaf)
     checkpoint = seallog.latest_committed(conn)
     if index is None or checkpoint is None or checkpoint["tree_size"] <= index:
-        eta = seallog.next_checkpoint_eta(conn, ctx.now)
-        return {"leaf_index": None, "proof": {"pending": True, "next_checkpoint_eta": eta}, "checkpoint": None}
+        return {"leaf_index": None, "proof": {"pending": True, "next_checkpoint_eta": _eta(ctx)}, "checkpoint": None}
     size = checkpoint["tree_size"]
     tree = ctx.app.cached(f"seal:{size}", 3600, lambda: seallog.levels(seallog.leaf_hashes(conn, size)))
     return {"leaf_index": index, "proof": [h.hex() for h in seallog.inclusion_proof(tree, index)],
@@ -33,6 +36,7 @@ def _proof(ctx, leaf: bytes) -> dict:
 
 
 def checkpoints(ctx):
+    """Committed checkpoints, oldest first. `next` is an opaque cursor to pass as `after`."""
     _require_seallog(ctx)
     ctx.limit(("seal64", ctx.ip64, 60, 60, 1))
     after = ctx.req.query.get("after", "")
@@ -74,7 +78,7 @@ def exit_receipt(ctx, share_id: str):
            "leaf_hash": None}
     if item is None or item["exit_hour"] is None or item["ct_hash"] is None:
         out.update({"leaf_index": None, "checkpoint": None,
-                    "proof": {"pending": True, "next_checkpoint_eta": seallog.next_checkpoint_eta(ctx.db, ctx.now)}})
+                    "proof": {"pending": True, "next_checkpoint_eta": _eta(ctx)}})
         return json_response(200, out)
     leaf = seallog.exit_leaf(share["item_id"], item["exit_hour"])
     out.update({"exit_hour": item["exit_hour"], "leaf_hash": leaf.hex(), **_proof(ctx, leaf)})

@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: MIT
 """SealLog storage and exit receipts (spec §11, brand patch P-8): an RFC 9162 Merkle tree of leaf hashes.
 
-On a fixed cadence the chain worker pads the tree to a multiple of 64 leaves and appends the root to
-the SealLog component. A new leaf has no index until that checkpoint, which places the batch in a
-random order, so a leaf index says only which checkpoint committed it (spec §11.3). The log proves
-what we committed to and when, never what we did with it later.
+On a configured cadence (`seal_log.checkpoint_interval_s`) the chain worker pads the tree to the next
+multiple of 64 leaves above its size and appends the root to the SealLog component, which refuses a
+size that isn't a multiple of 64 or doesn't grow (template 2.0.0). A new leaf has no index until that
+checkpoint, which places the batch in a random order, so a leaf index says only which checkpoint
+committed it, and an idle window looks like any other (spec §11.3). The log shows what we committed
+to and when, never what we did with it later.
 """
 import secrets
 import sqlite3
@@ -13,7 +15,6 @@ import struct
 from . import codec, db
 
 PAD_TO = 64
-CHECKPOINT_INTERVAL_S = 6 * 3600
 
 
 def stored_leaf(item_id: str, ct_hash: bytes) -> bytes:
@@ -100,12 +101,12 @@ def leaf_index(conn: sqlite3.Connection, leaf_hash: bytes) -> int | None:
 
 
 def make_checkpoint(conn: sqlite3.Connection, now: int, rng=secrets.SystemRandom()) -> dict:
-    """Place every new leaf, with pad leaves up to the next multiple of 64, in a random order after the
-    leaves already placed, and record a pending checkpoint. Caller holds a transaction.
+    """Place every new leaf, with at least one pad leaf up to the next multiple of 64, in a random order
+    after the leaves already placed, and record a pending checkpoint. Caller holds a transaction.
     Returns {"idx", "tree_size", "root"}."""
     placed = conn.execute("SELECT COUNT(*) FROM seal_leaves WHERE idx IS NOT NULL").fetchone()[0]
     waiting = conn.execute("SELECT COUNT(*) FROM seal_leaves WHERE idx IS NULL").fetchone()[0]
-    for _ in range(-(placed + waiting) % PAD_TO):
+    for _ in range(PAD_TO - (placed + waiting) % PAD_TO):
         append(conn, "pad", pad_leaf())
     batch = [row[0] for row in conn.execute("SELECT rowid FROM seal_leaves WHERE idx IS NULL")]
     rng.shuffle(batch)
@@ -119,8 +120,9 @@ def make_checkpoint(conn: sqlite3.Connection, now: int, rng=secrets.SystemRandom
     return {"idx": idx, "tree_size": size, "root": tree_root}
 
 
-def mark_submitted(conn: sqlite3.Connection, idx: int, tx_id: str, now: int) -> None:
-    conn.execute("UPDATE seal_checkpoints SET tx_id = ?, submitted_at = ? WHERE idx = ?", (tx_id, now, idx))
+def mark_submitted(conn: sqlite3.Connection, idx: int, tx_id: str, component: str, now: int) -> None:
+    conn.execute("UPDATE seal_checkpoints SET tx_id = ?, component = ?, submitted_at = ? WHERE idx = ?",
+                 (tx_id, component, now, idx))
 
 
 def checkpoint(conn: sqlite3.Connection, idx: int) -> sqlite3.Row:
@@ -131,9 +133,10 @@ def submitted(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute("SELECT * FROM seal_checkpoints WHERE state = 'pending' AND tx_id IS NOT NULL").fetchall()
 
 
-def settle(conn: sqlite3.Connection, idx: int, state: str, epoch: int | None) -> None:
-    conn.execute("UPDATE seal_checkpoints SET state = ?, epoch = ? WHERE idx = ? AND state = 'pending'",
-                 (state, epoch, idx))
+def settle(conn: sqlite3.Connection, idx: int, state: str, epoch: int | None,
+           chain_index: int | None = None) -> None:
+    conn.execute("UPDATE seal_checkpoints SET state = ?, epoch = ?, chain_index = ? "
+                 "WHERE idx = ? AND state = 'pending'", (state, epoch, chain_index, idx))
 
 
 def recover(conn: sqlite3.Connection) -> None:
@@ -147,10 +150,12 @@ def latest_committed(conn: sqlite3.Connection) -> sqlite3.Row | None:
 
 
 def checkpoint_json(row: sqlite3.Row) -> dict:
-    return {"index": row["idx"], "tree_size": row["tree_size"], "root": row["root"].hex(), "epoch": row["epoch"],
-            "tx_id": row["tx_id"], "created_at": row["created_at"]}
+    """`index` is the component's own checkpoint number (its `SealLog.root` event), the one a reader finds on
+    chain; it is null when the worker couldn't read that event."""
+    return {"index": row["chain_index"], "component": row["component"], "tree_size": row["tree_size"],
+            "root": row["root"].hex(), "epoch": row["epoch"], "tx_id": row["tx_id"], "created_at": row["created_at"]}
 
 
-def next_checkpoint_eta(conn: sqlite3.Connection, now: int) -> int:
+def next_checkpoint_eta(conn: sqlite3.Connection, now: int, interval_s: int) -> int:
     last = int(db.get_meta(conn, "seal_last_at", "0"))
-    return max(now, last + CHECKPOINT_INTERVAL_S)
+    return max(now, last + interval_s)

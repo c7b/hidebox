@@ -22,6 +22,7 @@ DEFAULTS: dict = {
     "security_drop_url": "",
     "repo_url": "https://github.com/c7b/mutis",
     "onion": "",
+    "e2e_expiry_s": 0,              # > 0 only on a deployment the E2E suite runs against (spec §17.1)
     "gates": {"send_mode": "relay", "amount_proof": "wallet", "key_bundle": False},
     "features": {"drops": True, "relay_send": True, "direct_send": False, "demo_pay": True, "sponsor": False,
                  "decoys": True, "kept": True, "seallog": False},
@@ -37,7 +38,7 @@ DEFAULTS: dict = {
         "walletd_url": "http://127.0.0.1:5100/json_rpc",
         "sponsor_account": "sponsor",
         "service_account": "service",
-        "operator_account": "operator",
+        "operator_account": "service",   # G5 failed: walletd 0.45 signs manifests with service's key
         "receiver_keys": "/home/drive/mutis/receiver.json",
         "robot_keys": "/home/drive/mutis/robot.json",
         "indexers": ["https://ootle-indexer-b.tari.com", "https://ootle-indexer-a.tari.com"],
@@ -59,7 +60,10 @@ DEFAULTS: dict = {
         "canary_every_s": 3600,
     },
     "hosting": {"snapshots": "weekly"},
+    "seal_log": {"checkpoint_interval_s": 900},
 }
+
+SEAL_MIN_INTERVAL_S = 600            # with seal-now's own gap: at most one SealLog fee every 10 minutes
 
 
 class ConfigError(Exception):
@@ -93,8 +97,10 @@ class Config:
         sc = self.raw["sidecar"]
         if sc["command"]:
             return list(sc["command"])
-        return [sc["node"], "--experimental-permission", f"--allow-fs-read={sc['dir']}",
-                "--disallow-code-generation-from-strings", f"{sc['dir']}/sidecar.mjs"]
+        # Node's permission model resolves symlinks, so a release's `current` link must be resolved here.
+        directory = os.path.realpath(sc["dir"])
+        return [sc["node"], "--experimental-permission", f"--allow-fs-read={directory}",
+                "--disallow-code-generation-from-strings", f"{directory}/sidecar.mjs"]
 
 
 def _merge(base: dict, over: dict, path: str) -> dict:
@@ -133,6 +139,10 @@ def validate(raw: dict, dev: bool = False) -> None:
     lo, hi = raw["ootle"]["jitter_s"]
     if not 0 <= lo <= hi:
         raise ConfigError("ootle.jitter_s must be [low, high]")
+    if raw["seal_log"]["checkpoint_interval_s"] < SEAL_MIN_INTERVAL_S:
+        raise ConfigError(f"seal_log.checkpoint_interval_s must be at least {SEAL_MIN_INTERVAL_S}")
+    if raw["e2e_expiry_s"] < 0:
+        raise ConfigError("e2e_expiry_s must be 0 (off) or a number of seconds")
 
 
 def from_dict(over: dict, dev: bool = False) -> Config:

@@ -8,6 +8,7 @@ import unittest
 
 from harness import ORIGIN, Stack
 from mutis import admin, auth, budgets, codec, db
+from mutis.fake_chain import fake_keys
 
 
 def toml(raw: dict, prefix: str = "") -> str:
@@ -45,8 +46,17 @@ class Admin(unittest.TestCase):
 
     def test_check_config_and_migrate(self):
         self.assertEqual(self.run_admin("check-config").strip(), "ok")
-        self.assertIn(f"schema version {db.SCHEMA_VERSION}", self.run_admin("migrate"))
-        self.assertTrue(any((self.s.cfg.data_dir / "backup").glob("pre-migrate-*.sqlite3")))
+        backups = self.s.cfg.data_dir / "backup"
+        self.assertEqual(self.run_admin("migrate").strip(), f"schema version {db.SCHEMA_VERSION}")
+        self.assertFalse(backups.exists())                   # nothing pending: no copy
+        with db.tx(self.s.conn):                             # a database one migration behind
+            for column in ("component", "chain_index"):
+                self.s.conn.execute(f"ALTER TABLE seal_checkpoints DROP COLUMN {column}")
+            db.set_meta(self.s.conn, "schema_version", str(db.SCHEMA_VERSION - 1))
+        self.assertIn(f"schema version {db.SCHEMA_VERSION} (backup: ", self.run_admin("migrate"))
+        copy = next(backups.glob("pre-migrate-*.sqlite3"))
+        self.assertEqual(copy.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(db.version(copy), db.SCHEMA_VERSION - 1)
 
     def test_takedown_share_item_drop(self):
         s = self.s
@@ -67,6 +77,9 @@ class Admin(unittest.TestCase):
         self.assertEqual((status, body["error"]["details"]["reason"]), (410, "removed"))
         with self.assertRaises(SystemExit):
             self.run_admin("takedown", "item", "Q" * 22)
+        with self.assertRaises(SystemExit) as gone:          # an id that starts with '-' goes after `--`
+            self.run_admin("takedown", "item", "--note", "x", "--", "-" + "Q" * 21)
+        self.assertEqual(gone.exception.code, 1)              # "not found", not an argument error
 
     def test_freeze_feature_budget_unfreeze(self):
         s = self.s
@@ -121,6 +134,32 @@ class Admin(unittest.TestCase):
         self.assertEqual((status, resp["error"]["details"]), (403, {"judge": "invalid"}))
         status, _, resp = s.request("POST", "/api/v1/courier", body)
         self.assertEqual(status, 428)
+
+    def test_a_judge_pass_lifts_the_network_limits_of_grants_and_demo_payments(self):
+        """App-core review M1: two judges behind one address each get a sponsor grant and a demo payment."""
+        s = self.s
+        self.run_admin("feature", "sponsor", "on")
+        s.app._features = (0.0, {})
+        with db.tx(s.conn):
+            db.set_meta(s.conn, "receiver_address", s.receiver["address"])
+        judge = {"X-Mutis-Judge": self.run_admin("judge-pass", "new", "--uses", "4").strip()}
+        ip = "203.0.113.7"
+        for _ in range(2):
+            locker = s.register(ip=ip)
+            status, _, resp = s.request("POST", "/api/v1/sponsor", {"wallet_address": fake_keys()["address"]},
+                                        headers={**locker["auth"], **judge}, ip=ip)
+            self.assertEqual(status, 202, resp)
+            inv = s.request("POST", "/api/v1/invoices", {"pack": "s30"}, headers=locker["auth"], ip=ip)[2]
+            status, _, resp = s.request("POST", f"/api/v1/invoices/{inv['invoice_id']}/demo-pay", {},
+                                        headers={**locker["auth"], **judge}, ip=ip)
+            self.assertEqual(status, 202, resp)
+        statuses = []
+        for _ in range(2):                                   # without a pass: one grant per network a day
+            locker = s.register(ip=ip)
+            statuses.append(s.request("POST", "/api/v1/sponsor", {"wallet_address": fake_keys()["address"],
+                                                                 "pow": s.solve("sponsor", ip)},
+                                      headers=locker["auth"], ip=ip)[0])
+        self.assertEqual(statuses, [202, 429])
 
     def test_judge_pass_expires(self):
         s = self.s

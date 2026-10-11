@@ -9,7 +9,7 @@ from pathlib import Path
 
 SCHEMA = Path(__file__).with_name("schema.sql")
 MIGRATIONS = Path(__file__).with_name("migrations")
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 # Threads of one process queue here instead of spinning in SQLite's busy handler; other processes
 # (worker, cleanup) still wait on SQLite's own lock.
 _WRITERS = threading.Lock()
@@ -59,6 +59,17 @@ def set_meta(conn: sqlite3.Connection, key: str, value) -> None:
 
 def del_meta(conn: sqlite3.Connection, key: str) -> None:
     conn.execute("DELETE FROM meta WHERE key = ?", (key,))
+
+
+def version(path: Path | str) -> int:
+    """The schema version of an existing database file (0 before the schema exists)."""
+    conn = connect(path)
+    try:
+        if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='meta'").fetchone():
+            return 0
+        return int(get_meta(conn, "schema_version", "0"))
+    finally:
+        conn.close()
 
 
 def _migration_files(directory: Path) -> list[tuple[int, Path]]:

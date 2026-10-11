@@ -462,19 +462,25 @@ class Worker:
             return False
 
     def _reveal_canaries(self, now: int) -> None:
-        """P1: publish a canary's file key once it is a day old, while its ciphertext still exists."""
+        """P1: publish a canary's file key once it is a day old, while its ciphertext still exists.
+
+        The sidecar keeps canary keys in memory only, so after it restarts it answers `not_found`: that
+        hour is published as missed, never skipped.
+        """
         log = self._log()
         changed = False
         for entry in log:
-            if entry["fk"] or now - entry["sealed_at"] < REVEAL_AFTER_S:
+            if entry["fk"] or entry.get("missed") or now - entry["sealed_at"] < REVEAL_AFTER_S:
                 continue
             item = self.conn.execute("SELECT state FROM items WHERE id = ?", (entry["item_id"],)).fetchone()
             if item is None or item["state"] not in ("ready", "doomed"):
                 continue
             try:
                 entry["fk"] = self.sidecar.request("reveal", n=entry["n"])["fk"]
-            except SidecarError:
-                continue          # the sidecar restarted and forgot this key; it stays sealed
+            except SidecarError as e:
+                if e.code != "not_found":
+                    continue      # the sidecar is down or busy: try again next hour
+                entry["missed"] = True
             changed = True
         if changed:
             self._save_log(log)
@@ -499,15 +505,18 @@ class Worker:
     # --- SealLog checkpoints (spec §11.3) -------------------------------------------------------------
 
     def seal_checkpoint(self, now: int) -> None:
-        """Every 6 hours (or on `seal-now`, at most every 10 minutes) pad, root and submit the tree.
+        """Every `seal_log.checkpoint_interval_s` (or on `seal-now`, at most every 10 minutes) pad, root and
+        submit the tree.
 
         The worker submits checkpoints itself from this schedule; nothing in the database can ask it to
-        publish a root or spend the operator's funds.
+        publish a root or spend the operator's funds. A checkpoint the component refuses (a size that
+        doesn't grow, after one that committed late) is settled as failed; the next one covers its leaves.
         """
         for row in seallog.submitted(self.conn):
             self._settle_seal(row, row["tx_id"], POLL_WAIT_S, now)
         last = int(db.get_meta(self.conn, "seal_last_at", "0"))
-        if now - last < seallog.CHECKPOINT_INTERVAL_S and not (now - last >= SEAL_FORCE_GAP_S and self._force("seal")):
+        interval = self.cfg["seal_log"]["checkpoint_interval_s"]
+        if now - last < interval and not (now - last >= SEAL_FORCE_GAP_S and self._force("seal")):
             return
         with db.tx(self.conn):
             checkpoint = seallog.make_checkpoint(self.conn, now)
@@ -520,14 +529,15 @@ class Worker:
             self._seal_failed(checkpoint["idx"], now)
             raise
         with db.tx(self.conn):
-            seallog.mark_submitted(self.conn, checkpoint["idx"], tx_id, now)
+            seallog.mark_submitted(self.conn, checkpoint["idx"], tx_id, o["seallog_component"], now)
         logsafe.event("chain.seal_checkpoint")
         self._settle_seal(seallog.checkpoint(self.conn, checkpoint["idx"]), tx_id, SUBMIT_WAIT_S, now)
 
     def _seal_failed(self, idx: int, now: int) -> None:
+        interval = self.cfg["seal_log"]["checkpoint_interval_s"]
         with db.tx(self.conn):
             seallog.settle(self.conn, idx, "failed", None)
-            db.set_meta(self.conn, "seal_last_at", str(now - seallog.CHECKPOINT_INTERVAL_S + SEAL_RETRY_S))
+            db.set_meta(self.conn, "seal_last_at", str(now - interval + SEAL_RETRY_S))
         logsafe.event("chain.seal_failed", "warning")
 
     def _settle_seal(self, row: sqlite3.Row, tx_id: str, wait_s: int, now: int) -> None:
@@ -536,8 +546,9 @@ class Worker:
             if now - row["submitted_at"] >= SEND_TIMEOUT_S:
                 self._seal_failed(row["idx"], now)
         elif outcome["committed"]:
+            index, epoch = root_event(outcome["events"], row["component"]) or (None, self.epoch())
             with db.tx(self.conn):
-                seallog.settle(self.conn, row["idx"], "committed", self.epoch())
+                seallog.settle(self.conn, row["idx"], "committed", epoch, index)
         else:
             self._seal_failed(row["idx"], now)
 
@@ -563,6 +574,17 @@ class Worker:
                 "receiver_ready": self.receiver_base is not None,
                 "credit_freeze": db.get_meta(self.conn, "credit_freeze") == "1",
                 "reconcile_unknown": int(db.get_meta(self.conn, "reconcile_unknown", "0"))})
+
+
+def root_event(events: list[dict], component: str) -> tuple[int, int] | None:
+    """(index, epoch) of the `SealLog.root` event our append emitted on `component` (template 2.0.0)."""
+    for event in events:
+        payload = event.get("payload")
+        if event.get("topic") == "SealLog.root" and event.get("substate_id") == component and isinstance(payload, dict):
+            index, epoch = payload.get("index"), payload.get("epoch")
+            if isinstance(index, str) and index.isdigit() and isinstance(epoch, str) and epoch.isdigit():
+                return int(index), int(epoch)
+    return None
 
 
 def seal_manifest(root_hex: str, tree_size: int) -> str:
