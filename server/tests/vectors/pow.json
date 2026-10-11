@@ -1,0 +1,82 @@
+{
+ "cases": [
+  {
+   "challenge": "AQEIAGtJ0gDf8sjLW7BkVRjAv_SxA8bsIMoolzFQp7co61gP",
+   "difficulty": 8,
+   "digest": "00d2fe721dd94f744161613352ff3bb3fa584bee35ff4082d84bc96791f7dcc6",
+   "expiry": 1800000000,
+   "leading_zero_bits": 8,
+   "nonce": "AAAAAAAAAHQ",
+   "purpose": "upload",
+   "rand": "dff2c8cb5bb0645518c0bff4"
+  },
+  {
+   "challenge": "AQIMAGtJ0gAHZS38B96-mRaR2sX7geJoydEOD6MAYpKxmOMB",
+   "difficulty": 12,
+   "digest": "000e367a064af984d4ceaca13e08605ffd0f0b3ab0b9dd69d656f8047b70d214",
+   "expiry": 1800000000,
+   "leading_zero_bits": 12,
+   "nonce": "AAAAAAAAIQQ",
+   "purpose": "register",
+   "rand": "07652dfc07debe991691dac5"
+  },
+  {
+   "challenge": "AQUQAGtJ0gAOziVuCHBbuIfHs_I2roHpCNetas3imyaKNkhh",
+   "difficulty": 16,
+   "digest": "0000e6ee84f28931bc943d55501d7e031762c578b39a748a21e9314b50a4072d",
+   "expiry": 1800000000,
+   "leading_zero_bits": 16,
+   "nonce": "AAAAAAAA7bI",
+   "purpose": "report",
+   "rand": "0ece256e08705bb887c7b3f2"
+  }
+ ],
+ "invalid": [
+  {
+   "challenge": "AQEBAGtJ0gDf8sjLW7BkVRjAv_SxA8bsIMoolzFQp7co61gP",
+   "nonce": "AAAAAAAAAHQ",
+   "why": "difficulty edited"
+  },
+  {
+   "challenge": "AQEIAGtJ0gDf8sjLW7BkVRjAv_SxA8bsIMoolzFQp7co61gP",
+   "nonce": "__________8",
+   "why": "nonce doesn't solve"
+  }
+ ],
+ "k_pow": "0b5c516fd1272a9d044b945f446d866a4ae5c0b47ce4dd46f375e9ade9fe3f45",
+ "layout": "ver(1)=1 || purpose(1) || difficulty(1) || 0x00 || u32be(expiry) || rand(12) || HMAC-SHA256(k_pow, first 20 bytes)[0:16]; solve SHA-256(challenge || nonce8) >= difficulty leading zero bits",
+ "purposes": {
+  "courier": {
+   "base_bits": 18,
+   "code": 3
+  },
+  "demo_pay": {
+   "base_bits": 18,
+   "code": 4
+  },
+  "drop_create": {
+   "base_bits": 18,
+   "code": 6
+  },
+  "password": {
+   "base_bits": 16,
+   "code": 8
+  },
+  "register": {
+   "base_bits": 18,
+   "code": 2
+  },
+  "report": {
+   "base_bits": 16,
+   "code": 5
+  },
+  "sponsor": {
+   "base_bits": 18,
+   "code": 7
+  },
+  "upload": {
+   "base_bits": 16,
+   "code": 1
+  }
+ }
+}

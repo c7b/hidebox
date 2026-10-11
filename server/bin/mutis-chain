@@ -1,0 +1,35 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+"""mutis-chain: the chain worker (spec §10), run as `drive` next to walletd. Stops cleanly on SIGTERM."""
+import argparse
+import signal
+import sys
+import threading
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from mutis import config, logsafe  # noqa: E402
+from mutis.chain_worker import Worker  # noqa: E402
+from mutis.indexer import Indexers  # noqa: E402
+from mutis.sidecar import Sidecar  # noqa: E402
+from mutis.walletd import Walletd  # noqa: E402
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(prog="mutis-chain")
+    p.add_argument("--config")
+    args = p.parse_args()
+    logsafe.setup()
+    cfg = config.load(args.config)
+    stop = threading.Event()
+    signal.signal(signal.SIGTERM, lambda *_: stop.set())
+    signal.signal(signal.SIGINT, lambda *_: stop.set())
+    sidecar = Sidecar(cfg.sidecar_argv(), "http://" + cfg["listen"], cfg["sidecar"]["expected_wasm_sha256"])
+    worker = Worker(cfg, config.read_secret(cfg), Walletd(cfg["ootle"]["walletd_url"]),
+                    Indexers(cfg["ootle"]["indexers"]), sidecar)
+    worker.run(stop)
+
+
+if __name__ == "__main__":
+    main()
