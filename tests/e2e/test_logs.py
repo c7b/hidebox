@@ -18,7 +18,9 @@ this machine's addresses, every id, token and address of the session, the destin
 backups (backup/robot-*.json, backup/receiver-*.json) are skipped: they hold the destination used
 here, the robot locker, by design. The needles reach ultron on stdin, never on a command line (sudo
 logs command lines). Zero hits pass. Hits for the IPv4 address in sshd, logind or login records are
-operator SSH access, not visitor traffic; they are listed apart and don't fail the test.
+operator SSH access, not visitor traffic; they are listed apart and don't fail the test. The relay
+send's transaction id (public on chain) is a control: walletd keeps its own transactions, so it must
+be found in walletd's database, and anywhere outside walletd's storage it fails.
 
 --walletd-probe needs neither the API nor the chain worker: as drive, with the server's own code
 (jobs.courier_memo, Walletd.stealth_transfer, Sidecar), it makes one relay-shaped send from the
@@ -133,9 +135,10 @@ def only_family(family: int):
         socket.getaddrinfo = real
 
 
-def session(origin: str, destination: str, relay_wait: bool) -> list[tuple[str, str]]:
-    """Run the scripted session; return the (name, value) pairs that must never be logged."""
-    secret = []
+def session(origin: str, destination: str, relay_wait: bool) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """Run the scripted session; return the (name, value) pairs that must never be logged, and the relay's
+    transaction id, which walletd keeps with its own transactions and no log may hold (a control)."""
+    secret, controls = [], []
     a = apiclient.Client(origin)
     up = a.upload(3000)
     sh = a.share(up, max_views=2)
@@ -171,8 +174,8 @@ def session(origin: str, destination: str, relay_wait: bool) -> list[tuple[str, 
             time.sleep(5)
         job = owner.job(jobs["relay"])
         if job.get("result") and job["result"].get("tx_id"):
-            secret.append(("relay tx id", job["result"]["tx_id"]))
-    return secret
+            controls.append(("relay tx id", job["result"]["tx_id"]))
+    return secret, controls
 
 
 def force_502s(origin: str, ssh: list[str], access_share: dict) -> int:
@@ -243,6 +246,7 @@ def main() -> int:
     destination = public["address"]
 
     needles = [("destination address", destination)] + key_needles("destination", public["owner_pk"], public["view_pk"])
+    controls = []
     for family, label in ((socket.AF_INET6, "IPv6"), (socket.AF_INET, "IPv4")):
         ip = source_address(hostname, family)
         if not ip:
@@ -255,16 +259,19 @@ def main() -> int:
             needles.append(("this machine's IPv6 /64", net.exploded[:20]))
             needles.append(("this machine's IPv6 /64, compressed", str(net).rstrip(":") + ":"))
         with only_family(family):
-            needles += [(f"{name} ({label})", value) for name, value in session(origin, destination, args.relay)]
+            secret, control = session(origin, destination, args.relay)
+            needles += [(f"{name} ({label})", value) for name, value in secret]
+            controls += [(f"{name} ({label})", value) for name, value in control]
             target = apiclient.Client(origin)
             share = target.share(target.upload(1000), max_views=10)
             needles += [(f"502-test share id ({label})", share["share_id"]), (f"502-test access token ({label})", share["access"])]
             print(f"session over {label} from {ip}: done; 502s forced: {force_502s(origin, ssh, share)}")
-    return search(ssh, needles)
+    return search(ssh, needles, controls)
 
 
 def search(ssh: list[str], needles: list[tuple[str, str]], controls: list[tuple[str, str]] = ()) -> int:
-    """Search for `needles` (any hit fails) and `controls` (each must be found in walletd's database)."""
+    """Search for `needles` (any hit fails) and `controls` (each must be found in walletd's database, and a
+    hit outside walletd's own storage and its backups fails)."""
     script = GREP.replace("NEEDLES", repr(json.dumps([{"name": n, "value": v} for n, v in [*needles, *controls]])))
     out = subprocess.run(ssh + ["sudo python3 -I -"], input=script, capture_output=True, text=True, check=True).stdout
     found = json.loads(out)
@@ -272,7 +279,7 @@ def search(ssh: list[str], needles: list[tuple[str, str]], controls: list[tuple[
     missing = [n for n in control_names if not any(h["needle"] == n and "wallet.sqlite" in h["where"] for h in found)]
     for name in sorted(control_names - set(missing)):
         print(f"control {name}: found in walletd's database, as expected")
-    hits = [h for h in found if h["needle"] not in control_names]
+    hits = [h for h in found if h["needle"] not in control_names or not h["where"].startswith("/home/drive/wallet/")]
     operator = [h for h in hits if "IPv4 address" in h["needle"] and h["where"].startswith(OPERATOR_SOURCES)]
     visitor = [h for h in hits if h not in operator]
     print(f"searched the journal, /var/log and /home/drive/wallet (database, logs, backups) for {len(needles)} values")
