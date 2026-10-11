@@ -19,10 +19,13 @@ repo_url = "https://github.com/c7b/mutis"
 onion = ""
 
 [gates]
-# Runtime copy variants (12-integration §3). The integrator flips these after the gate evidence:
-# send_mode "direct" (G1), amount_proof "sidecar" (G4, once the real sidecar runs in production).
+# Runtime copy variants (12-integration §3, §7); the build also sets them into the pages.
+# send_mode: "relay" until E-J passes in direct mode (two browser contexts on one /64, the cold start
+# recorded; tests/e2e/README.md), then "direct" with features.direct_send and features.sponsor.
+# amount_proof: "sidecar" (G4 passed): the official library in mutis-chain's sidecar proves every
+# credited amount; "wallet" only if the sidecar can't run.
 send_mode = "relay"
-amount_proof = "wallet"
+amount_proof = "sidecar"
 key_bundle = false
 
 [features]
@@ -52,6 +55,12 @@ decoy = 120
 demo_pay_ut = 10000000
 sponsor_ut = 30000000
 
+# The canary, the daily evidence payment and judge passes; lockers can't reach it.
+[budgets.evidence]
+courier = 150
+demo_pay_ut = 10000000
+sponsor_ut = 10000000
+
 [ootle]
 walletd_url = "http://127.0.0.1:5100/json_rpc"
 sponsor_account = "sponsor"
@@ -68,7 +77,7 @@ courier_amount_ut = 1000
 jitter_s = [5, 45]
 decoy_mean_gap_s = 900
 sponsor_grant_ut = 1000000
-seallog_component = ""          # the live log: deploy/ootle/setup-accounts.md §4
+seallog_component = ""          # the live log (template 2.0.0): deploy/ootle/setup-accounts.md §4
 wasm_version = "0.45.0"
 mainnet_date = "2026-11-11"
 
@@ -79,6 +88,11 @@ dir = "/srv/mutis/app/current/sidecar"
 # this wrapper (installed by provision.sh) passes the live release's real directory.
 command = ["/usr/local/lib/mutis/run-sidecar.sh"]
 canary_every_s = 3600
+
+[seal_log]
+# One checkpoint every 15 minutes (12-integration §7.2), about 0.5 tTARI a day from `service`. Copy
+# reads the value from /config, never a typed number.
+checkpoint_interval_s = 900
 
 [hosting]
 # "weekly" while Hostinger's VPS snapshots are on (the owner checks the panel), else "off".

@@ -1,0 +1,24 @@
+$ deploy.sh's gate by hand: a copy of the working tree (server tools web deploy tests template) on ultron as build
+== Python 3.13.5, as build on srv2052606
+== python3 -I -m unittest discover -s deploy/tests
+Ran 61 tests in 2.775s
+
+OK
+SealLog: this deployment names no log
+== python3 -I tools/lint.py
+lint: PASS (0 problems)
+== python3 -I tools/check-copy.py
+WARN web/site/pages/faq.html: check the sense of 'anonymous'
+WARN web/site/pages/security.html: check the sense of 'anonymous'
+WARN web/site/pages/security.html: check the sense of 'anonymous'
+check-copy: PASS (0 problems, 3 to read, (3) skipped: no --config)
+== python3 -I tools/check-copy.py --config web/site/tests/fixtures/config.json
+check-copy: PASS (0 problems, 3 to read)
+== python3 -I tools/build.py into a scratch dist
+build: OK {"content_id": "481fd628", "files": 143, "git_sha": "fa7caf2d178cb90422bcd2e5e95b24cd6c5b0c0f", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 22, "vendored_checked": 6, "version": "integration-scratch"}
+   sitemap: 18 URLs, Spanish home: <loc>https://srv2052606.hstgr.cloud/es/</loc>
+   app/shots served: 0
+== python3 -I -m unittest discover -s server/tests -q (deploy.sh gate)
+Ran 188 tests in 29.344s
+
+OK (skipped=4)

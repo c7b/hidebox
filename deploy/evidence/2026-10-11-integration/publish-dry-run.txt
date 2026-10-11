@@ -1,0 +1,4 @@
+$ deploy/ootle/publish-template.sh check     # 2026-10-11, template 2.0.0, nothing submitted
+seal_log.wasm sha256 ok; service = component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71, author key 9c686313d4ebe9c442196ccdce78cf802eab4549961cbc69522d967ed8a55420
+a publish creates template_40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47
+publish dry run: Accept fee 755531 µT template_40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47 holding seal_log.wasm byte for byte
