@@ -6,7 +6,7 @@
 
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;
 -- keys: schema_version, free_quota_bytes, free_quota_updated_at, uploads_frozen, chain_heartbeat, chain_status (json),
---       mirror_cursor (json), mirror_source, receiver_address, receiver_scan_seq, credit_freeze, last_reconcile,
+--       mirror_cursors (json, per indexer), receiver_address, receiver_scan_seq, credit_freeze, last_reconcile,
 --       reconcile_unknown, canary_item_id, canary_n, canary_delivery_tx, canary_sealed_at, canary_log (json),
 --       evidence_pay_day, features (json overrides), alerts (json), budget_overrides (json), last_sealed_at,
 --       cleanup_hour, cleanup_day, seal_last_at, force (json: canary/evidence_pay/seal requests from mutis-admin)

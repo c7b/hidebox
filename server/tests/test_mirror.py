@@ -7,7 +7,7 @@ from pathlib import Path
 
 from harness import Stack
 from mutis import chain_worker, db, indexer
-from mutis.fake_chain import FakeIndexer, fake_keys
+from mutis.fake_chain import FakeChain, FakeIndexer, fake_keys
 from mutis.indexer import Indexers
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -59,8 +59,8 @@ class Mirror(unittest.TestCase):
         for _ in range(7):
             self.s.chain.add_output(fake_keys()["address"], 1000, {"Message": "x"})
         self.assertEqual(self.w.mirror(self.s.now), 7)
-        cursors = db.get_meta_json(self.s.conn, "mirror_cursor")
-        self.assertTrue(cursors)
+        cursors = db.get_meta_json(self.s.conn, "mirror_cursors")
+        self.assertTrue(cursors["indexer-1"])
         self.assertEqual(self.w.mirror(self.s.now), 0)
         self.s.chain.add_output(fake_keys()["address"], 5, None)
         self.assertEqual(self.w.mirror(self.s.now), 1)
@@ -76,27 +76,32 @@ class Mirror(unittest.TestCase):
         row = self.s.conn.execute("SELECT promise, viewable, auth FROM chain_utxos").fetchone()
         self.assertEqual(tuple(row), (8000, 0, "key"))
 
-    def test_a_switch_of_indexer_restarts_the_cursors(self):
-        """Review L15: shard versions are cursors into one indexer's state; another indexer starts from 0."""
-        first, second = self.s.indexer, FakeIndexer(self.s.chain)
-        self.addCleanup(second.server_close)
-        self.addCleanup(second.shutdown)
-        self.w.indexers = Indexers([first.url, second.url], rate=1000)
+    def test_every_indexer_is_mirrored_with_its_own_cursors(self):
+        """A stale indexer (it answers, but its stream stopped advancing) hides nothing another one streams;
+        shard versions are cursors into one indexer's state (review L15), so each keeps its own."""
+        live = self.s.indexer
+        stale = FakeIndexer(FakeChain())
+        self.addCleanup(stale.server_close)
+        self.addCleanup(stale.shutdown)
+        self.w.indexers = Indexers([stale.url, live.url], rate=1000)
         for _ in range(3):
             self.s.chain.add_output(fake_keys()["address"], 1000, None)
-        self.w.mirror(self.s.now)
-        self.assertEqual(db.get_meta(self.s.conn, "mirror_source"), "indexer-1")
-        asked = []
-        stream = self.w.indexers.stream_utxos
-        self.w.indexers.stream_utxos = lambda cursors, *a: (asked.append(dict(cursors)), stream(cursors, *a))[1]
-        first.shutdown()
-        first.server_close()
+        self.assertEqual(self.w.mirror(self.s.now), 3)
+        cursors = db.get_meta_json(self.s.conn, "mirror_cursors")
+        self.assertEqual(cursors["indexer-1"], {})
+        self.assertTrue(cursors["indexer-2"])
+        stale.shutdown()
+        stale.server_close()
         self.s.chain.add_output(fake_keys()["address"], 1000, None)
-        self.assertEqual(self.w.mirror(self.s.now), 1)
-        self.assertEqual(db.get_meta(self.s.conn, "mirror_source"), "indexer-2")
-        self.assertTrue(asked[0])                                 # the old cursors went to the new indexer once
-        self.assertEqual(asked[1], {})                            # then it started over from zero
+        self.s.now += 10
+        self.assertEqual(self.w.mirror(self.s.now), 1)            # one indexer down: the other still feeds it
+        self.assertEqual(self.w.status["mirror_ok_at"], self.s.now)
         self.assertEqual(self.rows(), 4)
+        live.shutdown()
+        live.server_close()
+        with self.assertRaises(indexer.IndexerError):            # none answers: the mirror is not current
+            self.w.mirror(self.s.now + 10)
+        self.assertEqual(self.w.status["mirror_ok_at"], self.s.now)
 
     def test_output_spent_before_fetch_is_skipped(self):
         self.s.chain.add_output(fake_keys()["address"], 1, None)
