@@ -28,6 +28,7 @@ ABSENT = ("server", "x-powered-by", "access-control-allow-origin")
 NOINDEX = {"x-robots-tag": "noindex, nofollow"}
 ROUTES = {
     "/": (APP_CSP, {}),
+    "/es/": (APP_CSP, {}),
     "/s/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),
     "/t": (APP_CSP, NOINDEX),
     "/d/7kq2x9mdh4": (APP_CSP, NOINDEX),
@@ -38,6 +39,7 @@ ROUTES = {
     "/upgrade": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
+    "/es/how": (SITE_CSP, {}),
     "/security": (SITE_CSP, {}),
     "/pricing": (SITE_CSP, {}),
     "/faq": (SITE_CSP, {}),

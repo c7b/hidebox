@@ -230,11 +230,25 @@ def e25(t: T) -> None:
     t.check(entry["delivery_tx"] in [d["tx_id"] for d in evidence["deliveries"]], "/evidence.json lists the delivery")
 
 
+def wallet_ut(page) -> int:
+    """The browser wallet's spendable µT after a fresh scan, as /upgrade's "Pay … from this browser" sees it."""
+    return int(page.eval("(async () => { const [{ loadIdentity }, { scan }, { balance }] = await Promise.all(["
+                         "import('/app/lib/identity.js'), import('/app/lib/scan.js'), import('/app/lib/wallet.js')]);"
+                         " const identity = await loadIdentity(); await scan(identity);"
+                         " return String(await balance(identity)); })()", await_promise=True, timeout=180))
+
+
 @scenario("E-J", "The judge script (spec §18.2) with a phone and a desktop, in under 6 minutes", CHAIN)
 def ej(t: T) -> None:
+    cfg = t.env.config()
+    direct = cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")
+    # Direct mode: both contexts share one /64 (the server's), like two judges in one office, and earlier
+    # lockers of this run took that network's daily sponsor grant; so, like a judge, they use a pass.
+    judge = t.env.remote.admin("judge-pass", "new", "--uses", "3").strip() if direct else None
     started = time.monotonic()
-    phone, desk = t.actor("iphone"), t.actor("desktop")
+    phone, desk = t.actor("iphone", judge_pass=judge), t.actor("desktop", judge_pass=judge)
     drop_url = make_drop_link(t, phone, "Council")                                          # step 1
+    opened = time.monotonic()
     phone.click("key-later")
     phone.goto(t.origin + "/locker")
     phone.wait_for("locker-safety")
@@ -250,11 +264,22 @@ def ej(t: T) -> None:
     phone.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 1", 600)
     t.check(phone.attr("watch-summary", "data-readable") == "0", "step 4: 0 files readable with the view key")
     phone.goto(t.origin + "/upgrade")                                                        # step 5
+    if direct:
+        price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
+        funded = poll(lambda: wallet_ut(phone) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10)
+        cold = time.monotonic() - opened
+        t.note(f"cold start: the sponsor grant was spendable {cold:.0f} s after the locker opened")
+        t.check(funded, "direct mode: the phone's browser wallet received its sponsor grant")
+        t.check(cold <= 195, f"cold start {cold:.0f} s: the grant is there by step 5 of the judge script (3:15)")
     phone.click("pack-s30")
     phone.wait_for("invoice-address", 60)
-    phone.click("pay-browser" if phone.exists("pay-browser") else "demo-pay")
+    phone.click("pay-browser" if direct else "demo-pay")
     t.check(phone.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 300),
             "step 5: Amount proven → Added")
+    if direct:
+        phone.collect()
+        t.check(any(r["method"] == "POST" and r["url"].endswith("/api/v1/chain/ix/transactions") for r in phone.requests),
+                "step 5: the browser built and submitted the payment itself (direct)")
     flows.home(desk, t.origin)                                                               # step 6
     flows.seal_file(desk, t.fixture("notes.txt"))
     url = flows.wait_link(desk)

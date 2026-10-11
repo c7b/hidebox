@@ -145,11 +145,17 @@ class T:
             self.browsers[jitless] = cdp.Browser(self.env.remote.browser_command(jitless))
         return self.browsers[jitless]
 
-    def actor(self, device: str = "desktop", reduced_motion: bool = False, jitless: bool = False) -> cdp.Page:
+    def actor(self, device: str = "desktop", reduced_motion: bool = False, jitless: bool = False,
+              judge_pass: str | None = None) -> cdp.Page:
+        """A fresh browser context. `judge_pass`: the tab holds it as /judges would keep it (P-12)."""
         ctx = self.browser(jitless).context()
         ctx.downloads_to(f"{REMOTE_DIR}/downloads/{self.sid}-{len(self.contexts)}")
         self.contexts.append(ctx)
-        return ctx.page(device, reduced_motion)
+        page = ctx.page(device, reduced_motion)
+        if judge_pass:
+            page.cmd("Page.addScriptToEvaluateOnNewDocument",
+                     {"source": f"sessionStorage.setItem('mutis.judge', {json.dumps(judge_pass)});"})
+        return page
 
     def fixture(self, name: str) -> str:
         return f"{REMOTE_DIR}/fixtures/{name}"
