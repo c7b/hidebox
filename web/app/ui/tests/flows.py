@@ -11,6 +11,7 @@ import re
 import time
 import urllib.parse
 
+REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", ".."))
 SCENARIOS = []
 VIEW_END = ("opened", "program-warning", "integrity-error", "burned", "expired", "revoked", "removed",
             "not-found", "locked", "error", "needs-locker", "wrong-key", "incomplete")
@@ -769,6 +770,68 @@ def upgrade_wallet(t):
     steps = a.eval("[...document.querySelectorAll('[data-testid=\"pay-step\"]')].map(e => e.dataset.step + ':' + e.dataset.done)")
     t.check(steps == ["waiting:true", "seen_wallet:true", "exists:true", "added:true"], f"paid with demo tTARI, every step is reached ({steps})")
     t.shot(a, "upgrade-390-credited-wallet", full_page=True)
+
+
+def b64u(raw):
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+@scenario("receipts", "P1 /verify: the locked file's own hash is kept; proofs are checked against the SealLog state on chain; a log with an owner is refused")
+def receipts(t):
+    a = t.actor()
+    home(t, a)
+    seal_text(a, "a receipt for this")
+    mine = a.eval("JSON.parse(localStorage.getItem('mutis.recent'))[0]")
+    served = a.eval(f"fetch('/api/v1/s/{mine['share_id']}/manage', {{ headers: {{ 'X-Mutis-Manage': {json.dumps(mine['manage_token'])} }} }})"
+                    ".then((r) => r.json()).then((j) => j.item.ct_hash)")
+    t.check(bool(mine.get("ct_hash")) and mine["ct_hash"] == served, "this device keeps the ciphertext hash it computed when locking (equal to our server's)")
+
+    # The template builder's vectors: the 2.0.0 component state on chain, and leaves with their proofs.
+    vectors = os.path.join(REPO, "template", "seal_log", "tests", "vectors")
+    state = json.load(open(os.path.join(vectors, "seallog-state-v1.json"), encoding="utf-8"))
+    v = json.load(open(os.path.join(vectors, "seallog-v1.json"), encoding="utf-8"))
+    research = json.load(open(os.path.join(REPO, "web", "app", "tests", "vectors", "seallog-component.json"), encoding="utf-8"))
+    stored, exited = v["leaves"][0], v["leaves"][64]
+    cp = next(c for c in v["checkpoints"] if int(c["tree_size"]) == 128)
+    path = {int(p["leaf_index"]): p["path"] for p in cp["proofs"]}
+    component = "component_" + "fd" * 32
+    checkpoint = {"index": 9, "component": component, "tree_size": 128, "epoch": 12128, "root": cp["root"]}  # /verify prints the log's own number
+    good, altered = "receipts" + "A" * 14, "altered" + "A" * 15
+    recent = [{"share_id": good, "item_id": stored["item_id_b64u"], "ct_hash": b64u(bytes.fromhex(stored["ct_hash"])), "expires": int(time.time()) + 3600},
+              {"share_id": altered, "item_id": stored["item_id_b64u"], "ct_hash": b64u(os.urandom(32)), "expires": int(time.time()) + 3600}]
+
+    def page(substate):
+        p = t.actor()
+        (Intercept(p)
+         .add("*/api/v1/config", "Response", lambda cfg: {**cfg, "features": {**cfg["features"], "seallog": True},
+                                                           "seal_log": {**cfg["seal_log"], "component": component}})
+         .add("*/api/v1/chain/ix/substates/component_*", "Request", lambda _p: (200, substate))
+         .add(f"*/api/v1/s/{good}/exit", "Request", lambda _p: (200, {"reason": "burned", "item_id": exited["item_id_b64u"],
+                                                                   "exit_hour": int(exited["exit_hour_unix"]), "leaf_hash": exited["leaf_hash"],
+                                                                   "leaf_index": 64, "proof": path[64], "checkpoint": checkpoint}))
+         .add(f"*/api/v1/s/{altered}/exit", "Request", api_error("conflict", 409))
+         .add(f"*/api/v1/seallog/proof/{stored['item_id_b64u']}", "Request", lambda _p: (200, {"item_id": stored["item_id_b64u"], "kind": "stored",
+                                                                                           "leaf_hash": stored["leaf_hash"], "leaf_index": 0,
+                                                                                           "proof": path[0], "checkpoint": checkpoint})))
+        p.goto(t.origin + "/")
+        p.eval(f"localStorage.setItem('mutis.recent', {json.dumps(json.dumps(recent))})")
+        p.goto(t.origin + "/verify")
+        return p
+
+    b = page(state)
+    b.wait("document.querySelectorAll('[data-testid=\"verify-stored\"]').length === 2 && "
+           "![...document.querySelectorAll('[data-testid=\"verify-stored\"]')].some((e) => /Checking/.test(e.textContent))", 60)
+    lines = b.eval("[...document.querySelectorAll('[data-testid=\"verify-item\"]')].map((e) => e.textContent)")
+    t.check("Stored: included at checkpoint #1 (epoch 12128)" in lines[0], f"the file's own hash is in the tree on chain, at the log's checkpoint #1 ({lines[0][:120]})")
+    t.check("Exit: included at checkpoint #1 (epoch 12128)" in lines[0], "its exit too, from the hour our server reports")
+    t.check("doesn't match" in lines[1] and "Exit:" not in lines[1], "a hash this file didn't have doesn't verify against the same root")
+    about = b.text("verify-log")
+    t.check("has no owner" in about and "d884dd886cc746" in about, f"the page says the log has no owner and names its one writer key ({about[:90]})")
+    t.shot(b, "verify-1440-receipts", full_page=True)
+    c = page(research)
+    c.wait_for("error-banner", 60)
+    t.check("trustworthy" in c.text("error-banner") and not c.exists("verify-item"),
+            "the research log on Esmeralda (it has an owner) is refused; nothing is checked against it")
 
 
 # --- accessibility, keyboard, layout, no-WebAssembly, Spanish --------------------------------------------

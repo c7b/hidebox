@@ -170,7 +170,7 @@ export async function mountWidget(root, opts) {
   }
 
   async function sealed(result) {
-    if (result.link) addRecentDrop({ share_id: result.link.shareId, item_id: result.item.itemId, manage_token: result.item.manageToken, expires: result.link.expiresAt });
+    if (result.link) addRecentDrop({ share_id: result.link.shareId, item_id: result.item.itemId, manage_token: result.item.manageToken, ct_hash: result.item.ctHash, expires: result.link.expiresAt });
     selection = null;
     emit('sealed', { preview: { name: result.meta.name, size: result.meta.size, sizeStored: result.item.sizeStored, noise: result.noise } });
     if (opts.onSealed) {

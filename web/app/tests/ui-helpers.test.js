@@ -2,7 +2,7 @@
 import { utf8 } from '../lib/bytes.js';
 import { h, scriptUrl, svg } from '../lib/dom.js';
 import { makePreview, previewKind } from '../lib/preview.js';
-import { sanitizeFileName } from '../lib/download.js';
+import { sanitizeFileName } from '../lib/filetype.js';
 import { match } from '../lib/router.js';
 import { formatBytes, t, useStrings } from '../lib/i18n.js';
 import { saveJudgePass, savedJudgePass } from '../lib/store.js';

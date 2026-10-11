@@ -113,7 +113,7 @@ export default [
       api.restore();
     }
   }],
-  ['interrupted upload resumes from the first missing chunk with the same key', async () => {
+  ['interrupted upload resumes from the first missing chunk with the same key, and keeps the first stored bytes', async () => {
     const api = installFakeApi();
     const realFetch = globalThis.fetch;
     let failures = 0;
@@ -126,10 +126,12 @@ export default [
     };
     try {
       const blob = fileOf(9 * MiB, 'big.bin');
-      const opts = anon();
+      const opts = anon({ headBytes: 9216 });
       const e = await rejects(() => sealItem({ file: blob, name: 'big.bin', type: '' }, opts), SealError);
-      ok(e.resume && e.resume.fromIndex <= 1, `resume from ${e.resume?.fromIndex}`);
+      ok(e.resume && e.resume.fromIndex === 1, `resume from ${e.resume?.fromIndex}`);
       const item = await sealItem({ file: blob, name: 'big.bin', type: '' }, { ...opts, resume: e.resume });
+      eq(hex(item.head), hex(api.state.items.get(item.itemId).blob.subarray(0, 9216)), 'head = what the server stores, though chunk 0 went in the first try');
+      ok(/^[A-Za-z0-9_-]{43}$/.test(item.ctHash), 'the ciphertext hash, as b64u');
       const link = await createLink(item, { origin: FAKE_ORIGIN });
       const { parts } = await receive(link.url);
       eq(hex(await sha256(concat(...parts))), hex(await sha256(new Uint8Array(await blob.arrayBuffer()))));

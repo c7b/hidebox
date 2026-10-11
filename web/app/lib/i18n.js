@@ -36,7 +36,8 @@ export async function loadLanguage(l = pickLanguage(), { remember = false } = {}
   return lang;
 }
 
-// Installs dictionaries without fetching them (tests).
+// Installs dictionaries fetched elsewhere: the home widget's first, smaller dictionary
+// (i18n/widget-<lang>.json, ui/more.js), and the tests'.
 export function useStrings(l, strings, fallback = strings) {
   lang = l;
   dict = strings;

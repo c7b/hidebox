@@ -82,7 +82,8 @@ export function sendStep(container, opts) {
     value: String(s), label: formatDuration(s), checked: s === state.expiry,
   })), (v) => { state.expiry = Number(v); }, true);
 
-  const howTo = cfg.send_mode === 'direct' ? 'send.how_direct' : 'send.how_relay';
+  // wallet.deliver() sends from this browser only in this mode; the sentence says what that links.
+  const direct = cfg.send_mode === 'direct' && cfg.features?.direct_send;
   submit.addEventListener('click', () => go());
 
   async function go() {
@@ -98,9 +99,9 @@ export function sendStep(container, opts) {
       let txId = sent.tx_id ?? null;
       if (sent.mode === 'relay') {
         show('waiting');
-        const { waitJob } = await import('../lib/courier.js');
+        const { unconfirmed, waitJob } = await import('../lib/courier.js');
         const done = await waitJob(sent.job_id, { onState: (s) => show(s === 'sending' ? 'sending' : 'waiting') });
-        if (done.state !== 'done') return failed(done.error ?? done.state);
+        if (done.state !== 'done') return failed(done.error ?? done.state, unconfirmed(done));
         txId = done.result?.tx_id ?? null;
       }
       delivered(sent.mode, txId);
@@ -120,7 +121,7 @@ export function sendStep(container, opts) {
     if (ready?.choices === choices) return ready.job;
     const item = opts.item();
     const link = await createLink(item, { mode: 'link', maxViews: state.count, expiresAt: Math.min(now() + state.expiry, item.expiresAt ?? Infinity) });
-    addRecentDrop({ share_id: link.shareId, item_id: item.itemId, manage_token: item.manageToken, expires: link.expiresAt });
+    addRecentDrop({ share_id: link.shareId, item_id: item.itemId, manage_token: item.manageToken, ct_hash: item.ctHash, expires: link.expiresAt });
     const { sealDelivery } = await import('../lib/courier.js');
     ready = { choices, job: { link, blob: await sealDelivery(state.address, { shareId: link.shareId, s: link.s }, state.kind) } };
     return ready.job;
@@ -138,10 +139,10 @@ export function sendStep(container, opts) {
     }, t(`send.step.${s}`)))));
   }
 
-  function failed(code) {
+  function failed(code, unsure) {
     show('failed');
     status.dataset.state = 'failed';
-    status.append(h('p', { class: 'a-warn' }, icon('warning'), h('span', {}, t('send.failed', { code: String(code) }))),
+    status.append(h('p', { class: 'a-warn' }, icon('warning'), h('span', {}, t(unsure ? 'send.unsure' : 'send.failed', { code: String(code) }))),
       h('button', { type: 'button', class: 'a-btn', onclick: () => go() }, t('send.retry')));
   }
 
@@ -161,7 +162,8 @@ export function sendStep(container, opts) {
     h('h3', { id: 'a-send-h' }, t('send.h')),
     h('label', { for: 'a-recipient', class: 'a-label' }, t('send.who')),
     field, message, safety, kinds, kindWarn, counts, afters,
-    h('p', { class: 'a-caption' }, t(howTo, { fee: formatTari(cfg.courier.max_fee_ut) })),
+    h('p', { class: 'a-caption' }, t(direct ? 'send.how_direct' : 'send.how_relay', { fee: formatTari(cfg.courier.max_fee_ut) }),
+      direct ? [' ', t('claim.c9_direct')] : null),
     submit, errors, status, testnetLine(cfg)));
   field.focus();
 }

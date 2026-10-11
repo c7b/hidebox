@@ -35,5 +35,4 @@ export const requestSponsor = (walletAddress, pow, headers) => request('POST', '
 // P1: kept files and SealLog receipts (contracts of §6.3 "P1 endpoints" and brand P-8)
 export const listMyItems = (cursor, headers) => request('GET', `/me/items?limit=50${cursor ? `&cursor=${enc(cursor)}` : ''}`, { headers });
 export const openMyItem = (itemId, headers) => request('POST', `/me/items/${enc(itemId)}/open`, { json: {}, headers });
-export const claimItem = (itemId, ownerWrap, headers) => request('POST', `/items/${enc(itemId)}/claim`, { json: { owner_wrap: ownerWrap }, headers });
 export const sealProof = (itemId) => request('GET', `/seallog/proof/${enc(itemId)}`);

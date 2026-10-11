@@ -116,14 +116,16 @@ export async function render(main, { dropId }) {
     live.textContent = t('drop.sending');
     const again = { label: t('send.retry'), onClick: () => send(link, meta, chip) };
     let job;
+    let unsure;
     try {
       const { job_id: jobId } = await leaveInDrop(drop, link);
-      const { waitJob } = await import('../lib/courier.js');
-      job = await waitJob(jobId, {});
+      const courier = await import('../lib/courier.js');
+      job = await courier.waitJob(jobId, {});
+      unsure = courier.unconfirmed(job);
     } catch (e) {
       return set('error', intro, chip, errorBanner(e, { action: again }));
     }
-    if (job.state !== 'done') return set('error', intro, chip, errorBanner({ code: 'chain_unavailable' }, { key: 'drop.failed', action: again }));
+    if (job.state !== 'done') return set('error', intro, chip, errorBanner({ code: 'chain_unavailable' }, { key: unsure ? 'drop.unsure' : 'drop.failed', action: again }));
     const tx = job.result?.tx_id ?? '';
     live.textContent = t('drop.delivered');
     set('delivered',

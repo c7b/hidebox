@@ -74,7 +74,7 @@ already accepts a 60-second link (`link_rules` needs only `expires_at > now`).
    and clear the fragment with `history.replaceState`. Until then the fragment is ignored and the form
    works as before.
 
-**App-core builder.**
+**App-core builder.** (All four applied in the integration pass: `NOTES-for-integrator.md` §4.)
 1. The noise strip needs the first stored chunk's ciphertext. `sealItem()` doesn't return it, so
    `ui/sealing.js` chooses the file key and salt itself and hands them to `sealItem()` through
    `resume` (which, without an `upload` in it, starts a new upload with them), then encrypts chunk 0 a

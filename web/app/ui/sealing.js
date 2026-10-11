@@ -4,20 +4,18 @@
 // with a progress view. Loaded when the visitor first reaches for the zone.
 import { announce, h, setVar, svg } from '../lib/dom.js';
 import { t, formatBytes } from '../lib/i18n.js';
-import { randomBytes } from '../lib/crypto.js';
 import { utf8 } from '../lib/bytes.js';
-import { encryptFile } from '../lib/format.js';
 import { sealItem } from '../lib/seal.js';
 import { icon } from './core.js';
 
 // The noise strip draws the first 96 × 96 bytes of the file's first stored chunk (11-brand §13.6).
 export const NOISE_BYTES = 9216;
 
-// The name is stored as a recipient's browser will save it (lib/download.js's rules), so the program
-// check below and the viewer's both see the extension that ends up on disk: "invoice.b\u200Bat" is
-// checked, shown and stored as "invoice.bat".
+// The name is stored as a recipient's browser will save it (lib/filetype.js's sanitizeFileName), so
+// the program check below and the viewer's both see the extension that ends up on disk:
+// "invoice.b\u200Bat" is checked, shown and stored as "invoice.bat".
 export async function fileSource(file) {
-  const { sanitizeFileName } = await import('../lib/download.js');
+  const { sanitizeFileName } = await import('../lib/filetype.js');
   return { file, name: sanitizeFileName(file.name), type: file.type, mtime: file.lastModified || null, stripped: false };
 }
 
@@ -67,25 +65,12 @@ export async function stripPhoto(source, { keepOriginal, onStrip }) {
   return { source: { ...source, file: r.file, stripped: r.removed }, exif: { removed: r.removed, notice: r.notice } };
 }
 
-// The first stored chunk is deterministic given the key, the salt and the bytes, so encrypting it
-// here with the same key and salt that sealItem() uses gives exactly the bytes our server stores.
-async function noiseOf(source, fk, salt) {
-  const data = source.text !== undefined ? utf8(source.text) : source.file;
-  const chunks = encryptFile(data, { fk, salt });
-  await chunks.next();
-  const first = await chunks.next();
-  await chunks.return();
-  return first.value.ciphertext.slice(0, NOISE_BYTES);
-}
-
-// Encrypts and uploads. opts: sealItem's options (headers, anonymous, expiresAt, dropId, keepFor,
-// onPhase, signal, resume). sealItem takes the key and salt from `resume` and, when it carries no
-// `upload`, starts a new one; choosing them here lets the noise strip show the real ciphertext.
+// Encrypts and uploads with sealItem's options (headers, anonymous, expiresAt, dropId, keepFor,
+// onPhase, signal, resume); the noise strip draws the start of the ciphertext our server stores.
 // -> {item, noise}
 export async function encryptAndUpload(source, opts) {
-  const resume = opts.resume ?? { fk: randomBytes(32), salt: randomBytes(16), fromIndex: 0 };
-  const [noise, item] = await Promise.all([noiseOf(source, resume.fk, resume.salt), sealItem(source, { ...opts, resume })]);
-  return { item, noise };
+  const item = await sealItem(source, { ...opts, headBytes: NOISE_BYTES });
+  return { item, noise: item.head };
 }
 
 // --- the progress view (11-brand §9.2 `sealing`, §13.7 the ¡ progress mark) ---------------------

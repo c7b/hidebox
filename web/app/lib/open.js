@@ -5,7 +5,7 @@
 import { b64uDecode, b64uEncode } from './b64.js';
 import { sha256 } from './crypto.js';
 import { decryptBlob, decryptMeta, deriveItemKeys, parseHeader } from './format.js';
-import { linkProof, shareKeys, unwrapFileKey, wrapFileKey } from './share.js';
+import { linkProof, shareKeys, unwrapFileKey } from './share.js';
 import { ApiError, blobDone, blobRange, openShare, peekShare, shareStatus } from './api.js';
 import { solvePow } from './pow.js';
 
@@ -78,11 +78,6 @@ export async function openKept(identity, row, headers) {
   const { openMyItem } = await import('./api-locker.js');
   const res = await openMyItem(row.item_id, headers);
   return { ...unlocked, ...transfer({ size_stored: row.size_stored, ...res }), burned: false, viewsLeft: null };
-}
-
-// P1, "Keep" a received file: its key wrapped under this locker's vault key, for POST /items/{id}/claim.
-export async function keepWrap(identity, opened) {
-  return b64uEncode(await wrapFileKey(identity.vaultKey, opened.headerHash, opened.fk));
 }
 
 // Downloads (or takes the inline copy) and decrypts everything; returns plaintext parts only after

@@ -39,7 +39,7 @@ PASS/FAIL lines and `title: TESTS PASS n/n`) or `node web/app/tests/node-run.mjs
 | `harness.js` | assertions and fixture loading for both runners |
 | `fake-api.js` | in-memory stand-in for the §6 API (installed over `fetch`) that records every request, so tests can show no secret leaves the client; it follows the server where the client depends on it (upload session vs item expiry, link expiry rules, PoW or judge pass on gated routes, password-only PoW after 3 wrong tries), and `contract` checks the same flows against the server itself |
 | `outputs.js` | builds chain-shaped stealth outputs offline with the official library |
-| `headless.py` | stdlib CDP runner: serves `/app/**`, `/vendor/**`, `/shared/**` with the app CSP, drives Chromium over `--remote-debugging-pipe`, fails on any CSP/Trusted Types violation; `--indexer` adds an allowlisted pass-through to the public indexer for the gate pages |
+| `headless.py` | stdlib CDP runner: serves `/app/**`, `/vendor/**`, `/shared/**` (and the server's and the template's vectors) with the app CSP, drives Chromium over `--remote-debugging-pipe`, fails on any CSP/Trusted Types violation; `--indexer` adds an allowlisted pass-through to the public indexer for the gate pages |
 | `sidecar_test.py`, `make-rows.mjs` | sidecar protocol tests and the scan benchmark rows |
 | `lint_core.py` | lint for `lib/`, `sidecar/`, `vendor/` (shim), `tests/` |
 | `run_all.py` | the one command above |
@@ -48,7 +48,7 @@ PASS/FAIL lines and `title: TESTS PASS n/n`) or `node web/app/tests/node-run.mjs
 | `vectors/crosscheck.py` | recomputes everything without AES or ristretto with Python's stdlib |
 | `vectors/esmeralda-outputs.json`, `vectors/fetch_outputs.py` | real outputs of four Esmeralda transactions (kept as data, so tests survive a testnet reset) |
 | `vectors/merkle-rfc9162.json`, `vectors/merkle_vectors.py` | RFC 9162 inclusion proofs from an independent Python implementation |
-| `vectors/seallog-component.json` | the live SealLog component substate (shape of `/verify` input) |
+| `vectors/seallog-component.json` | the research SealLog component on Esmeralda, as an indexer returned it: it has an owner, so `/verify` must refuse it. The 2.0.0 state and the Merkle leaves, roots and proofs come from the template builder (`template/seal_log/tests/vectors/`, served by `headless.py`) |
 | `fixtures/exif/*`, `fixtures/exif/make_fixtures.py` | photos with planted GPS/Exif/XMP/IPTC/comments/trailers, and truncated copies (ffmpeg + stdlib) |
 | `bench/bench.html`, `bench/bench.js` | PoW and scan benchmarks |
 | `gates/chain.html`, `gates/chain.js`, `gates/walletd_send.py` | the live gate checks on Esmeralda (below) |

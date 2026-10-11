@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Recipient safety (§12.3.2, brand P-14). The server can't see file types, so the browser checks:
 // anonymous uploads refuse programs, and the viewer warns before saving one. Names and magic bytes
-// are both checked, because either can be faked on its own. Also sniffs photos, so the metadata
-// stripper (exif.js) loads only for them.
+// are both checked, because either can be faked on its own. Every name check reads the name a
+// browser will save (sanitizeFileName), so a hidden character can't move the extension. Also sniffs
+// photos, so the metadata stripper (exif.js) loads only for them.
 
 // Programs, installers, disk images and shell files that run or mount when opened (§12.3.2's list,
 // plus disk images that skip Mark-of-the-Web, compiled help and Windows search/library/settings files).
@@ -24,11 +25,25 @@ const ARCHIVE_EXTENSIONS = new Set(['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2
 // Enough leading bytes for every signature below (ISO 9660 sits at 0x8001).
 export const SNIFF_BYTES = 0x8006;
 
+const MAX_NAME = 200;
+
+// The name a file is saved under (download.js) and stored under: no path separators, no characters
+// Windows refuses, no control or format characters (so "invoice.b\u200Bat" is "invoice.bat" and an
+// RTL override can't disguise one), and no leading or trailing dots and spaces, which Windows ignores
+// ("setup.exe. " is an .exe).
+export function sanitizeFileName(name) {
+  const cleaned = Array.from(String(name ?? ''))
+    .filter((c) => !/[\\/:*?"<>|\p{Cc}\p{Cf}]/u.test(c))
+    .join('')
+    .replace(/^[. ]+|[. ]+$/g, '');
+  return Array.from(cleaned).slice(0, MAX_NAME).join('') || 'mutis-file';
+}
+
+// The extension of the file as saved.
 export function extensionOf(name) {
-  // Windows ignores trailing dots and spaces, so "setup.exe. " is still an .exe.
-  const base = String(name).replace(/[. ]+$/, '');
+  const base = sanitizeFileName(name);
   const dot = base.lastIndexOf('.');
-  return dot > 0 || (dot === 0 && base.length > 1) ? base.slice(dot + 1).toLowerCase() : '';
+  return dot > 0 ? base.slice(dot + 1).toLowerCase() : '';
 }
 
 export function isExecutableName(name) {
@@ -58,9 +73,9 @@ export function programSignature(head) {
   return null;
 }
 
-// -> {risky, active, reason: 'name'|'content'|null, ext}. `risky`: a program (anonymous uploads
-// refuse it; the viewer's two-step save). `active`: a page or document that can run code when opened
-// (the viewer's softer notice; uploads are allowed).
+// -> {risky, active, reason: 'name'|'content'|null, ext (of the saved name)}. `risky`: a program
+// (anonymous uploads refuse it; the viewer's two-step save). `active`: a page or document that can
+// run code when opened (the viewer's softer notice; uploads are allowed).
 export function checkRisky(name, head) {
   const ext = extensionOf(name);
   if (PROGRAM_EXTENSIONS.has(ext)) return { risky: true, active: false, reason: 'name', ext };

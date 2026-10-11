@@ -51,11 +51,14 @@ async function putWithRetry(uploadId, chunk, headers, signal) {
 // source: {file, name, type, mtime, stripped} or {text}.
 // opts: {headers (Bearer, X-Mutis-Canary or none), anonymous (solve the upload PoW, or send the judge
 //        pass), expiresAt (unix seconds, required unless the item is kept), dropId, keepFor (P1: an
-//        Identity; the item is kept, its key wrapped under the vault key), onPhase(phase, fraction),
-//        signal, resume}
+//        Identity; the item is kept, its key wrapped under the vault key), headBytes (keep the first
+//        n bytes of the stored ciphertext, for a picture of what our server holds),
+//        onPhase(phase, fraction), signal, resume}
 // -> {itemId, uploadId, manageToken, expiresAt (the item's; null when kept), uploadExpiresAt (when
-//     this upload session ends, 2 h after it started), fk, headerHash, sizeStored, chunkCount, headers}
-export async function sealItem(source, { headers = {}, anonymous = false, expiresAt = null, dropId = null, keepFor = null, onPhase, signal, resume } = {}) {
+//     this upload session ends, 2 h after it started), fk, headerHash, sizeStored, chunkCount,
+//     ctHash (b64u, the ciphertext hash this tab computed; the server's matched it), head (the first
+//     headBytes bytes of chunk 0 as stored, or null), headers}
+export async function sealItem(source, { headers = {}, anonymous = false, expiresAt = null, dropId = null, keepFor = null, headBytes = 0, onPhase, signal, resume } = {}) {
   if (!keepFor && !Number.isSafeInteger(expiresAt)) throw new TypeError('expiresAt is required unless the item is kept');
   const { data, meta } = sourceBytes(source);
   const fk = resume?.fk ?? randomBytes(32);
@@ -81,6 +84,7 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
   }
   const itemHeaders = up.manageToken ? { ...headers, 'X-Mutis-Manage': up.manageToken } : headers;
   const hashes = resume?.hashes ?? [];
+  let head = resume?.head ?? null;
   const pending = new Map(); // chunk index -> its upload; finished uploads leave the map
   let failure = null;
   let uploaded = 0;
@@ -88,6 +92,7 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
   try {
     for await (const chunk of chunks) {
       hashes[chunk.index] = chunk.sha256;
+      if (chunk.index === 0 && headBytes) head = chunk.ciphertext.slice(0, headBytes);
       pending.set(chunk.index, putWithRetry(up.uploadId, chunk, headers, signal).then(() => {
         pending.delete(chunk.index);
         uploaded += chunk.ciphertext.length;
@@ -106,12 +111,12 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
       throw new SealError('aborted', e);
     }
     const fromIndex = pending.size ? Math.min(...pending.keys()) : next;
-    throw new SealError(e instanceof ApiError ? e.code : 'read', e, { fk, salt, fromIndex, hashes, upload: up });
+    throw new SealError(e instanceof ApiError ? e.code : 'read', e, { fk, salt, fromIndex, hashes, head, upload: up });
   }
   onPhase?.('finishing', 1);
   const done = await completeUpload(up.uploadId, headers);
   if (!equal(b64uDecode(done.ct_hash), await ctHash(hashes))) throw new SealError('integrity', new Error('server stored different bytes'));
-  return { ...up, fk, headerHash, sizeStored, chunkCount, headers: itemHeaders };
+  return { ...up, fk, headerHash, sizeStored, chunkCount, ctHash: done.ct_hash, head, headers: itemHeaders };
 }
 
 // mode: 'link' (key after #), 'link_password' (link + password, the default with a password) or
