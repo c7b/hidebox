@@ -1,0 +1,14 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# `sudo mutis-admin …` (installed in /usr/local/sbin by provision.sh): server/bin/mutis-admin of the
+# live release, with umask 007 so the database and its -wal/-shm files stay writable for group mutis.
+# Commands that talk to walletd run as drive, the only service user the port 5100 guard lets in
+# (spec §15.7); everything else runs as mutis.
+umask 007
+cd /tmp || exit 1
+case ${1:-} in
+  notarize|walletd-fixture) user=drive ;;
+  *) user=mutis ;;
+esac
+exec runuser -u "$user" -- env MUTIS_CONFIG=/etc/mutis/mutis.toml \
+  python3 -I /srv/mutis/app/current/server/bin/mutis-admin "$@"

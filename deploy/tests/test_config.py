@@ -1,0 +1,122 @@
+# SPDX-License-Identifier: MIT
+"""Static checks of the deploy configuration: the TOML example against the server's config schema,
+the Caddyfile against spec §14.2 (verbatim, from tests/e2e/headers_spec.py), and the systemd units."""
+import configparser
+import re
+import sys
+import tomllib
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tests" / "e2e"))
+sys.path.insert(0, str(ROOT / "server"))
+import headers_spec  # noqa: E402
+
+UNITS = ROOT / "deploy" / "systemd"
+HARDENING = ("NoNewPrivileges=yes", "ProtectSystem=strict", "PrivateTmp=yes", "PrivateDevices=yes",
+             "ProtectKernelTunables=yes", "ProtectKernelModules=yes", "ProtectControlGroups=yes", "RestrictNamespaces=yes",
+             "LockPersonality=yes", "SystemCallFilter=@system-service", "CapabilityBoundingSet=", "ProtectProc=invisible")
+
+
+def unit(name: str) -> configparser.ConfigParser:
+    parser = configparser.ConfigParser(strict=False, interpolation=None, delimiters=("=",))
+    parser.optionxform = str
+    parser.read_string((UNITS / name).read_text())
+    return parser
+
+
+class ConfigExampleTest(unittest.TestCase):
+    def test_example_parses_with_the_server_config(self):
+        try:
+            from mutis import config
+        except ImportError:
+            self.skipTest("server/ is not in this checkout")
+        with open(ROOT / "deploy" / "config" / "mutis.toml.example", "rb") as f:
+            cfg = config.from_dict(tomllib.load(f))
+        self.assertEqual(cfg.origin, "https://srv2052606.hstgr.cloud")
+        self.assertIn("https://mutis.sh", cfg["memo_origins"])
+
+
+class CaddyfileTest(unittest.TestCase):
+    text = (ROOT / "deploy" / "caddy" / "Caddyfile").read_text()
+
+    def test_csp_and_headers_are_the_spec_text(self):
+        self.assertIn(f'header Content-Security-Policy "{headers_spec.SITE_CSP}"', self.text)
+        self.assertIn(f'header Content-Security-Policy "{headers_spec.APP_CSP}"', self.text)
+        for name, value in headers_spec.COMMON.items():
+            self.assertTrue(re.search(rf'^\s*{name}\s+"{re.escape(value)}"$', self.text, re.I | re.M), name)
+        self.assertIn("header -Server", self.text)
+
+    def test_no_access_log_and_filtered_errors(self):
+        site = self.text.split("{$MUTIS_HOST} {", 1)[1]
+        self.assertNotRegex(site, r"(?m)^\s*log\b")
+        for field in ("remote_ip", "client_ip", "remote_port", "host", "uri", "headers"):
+            self.assertIn(f"request>{field} delete", self.text)
+        self.assertIn("admin unix//run/caddy/admin.sock", self.text)
+
+
+    def test_caching_and_error_pages(self):
+        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
+        handles = re.findall(r"(?ms)^\thandle( @\w+)? \{\n(.*?)^\t\}", site)
+        self.assertGreaterEqual(len(handles), 8)
+        for matcher, body in handles:
+            if matcher.strip() == "@api":
+                self.assertNotIn("Cache-Control", body, "the API sets its own Cache-Control (spec §6)")
+            else:
+                self.assertRegex(body, r"import revalidate|Cache-Control", matcher or "default handle")
+        self.assertNotRegex(self.text, r'Cache-Control "[^"]*immutable', "font names carry no version")
+        errors = site.split("handle_errors {", 1)[1]
+        self.assertRegex(errors, r"^\s*root \* /srv/mutis/app/current/dist", "error pages come from the release")
+        self.assertIn('header Cache-Control "no-store"', errors)
+        self.assertRegex(self.text, r"(?s)http://\{\$MUTIS_HOST\} \{\s*header -Server\s*redir https://")
+        self.assertIn("buffer_requests", self.text)
+
+
+class PinnedWasmTest(unittest.TestCase):
+    def test_every_copy_of_the_pinned_hash_agrees(self):
+        sys.path.insert(0, str(ROOT / "tools"))
+        import build
+        from mutis import config
+        pinned = build.PINNED["ootle-wasm-0.45.0/ootle_wasm_bg.wasm"]
+        sums = (ROOT / "web" / "app" / "vendor" / "ootle-wasm-0.45.0" / "SHA256SUMS").read_text()
+        self.assertIn(f"{pinned}  ootle_wasm_bg.wasm", sums)
+        self.assertEqual(config.PINNED_WASM_SHA256, pinned)
+        for script in ("activate-release.sh", "init-keys.sh"):
+            text = (ROOT / "deploy" / "scripts" / script).read_text()
+            self.assertEqual(re.findall(r"(?m)^pinned=([0-9a-f]{64})", text), [pinned], script)
+
+
+class UnitsTest(unittest.TestCase):
+    def test_every_unit_is_licensed(self):
+        for path in UNITS.rglob("*"):
+            if path.is_file():
+                self.assertIn("SPDX-License-Identifier: MIT", path.read_text().splitlines()[0], path.name)
+
+    def test_services_are_hardened_and_never_root(self):
+        for path in UNITS.glob("*.service"):
+            with self.subTest(path.name):
+                svc = unit(path.name)["Service"]
+                self.assertIn(svc.get("User"), ("mutis", "drive"))
+                text = path.read_text()
+                for line in HARDENING:
+                    self.assertIn(line, text)
+
+    def test_jit_only_where_needed(self):
+        self.assertEqual(unit("mutis-api.service")["Service"].get("MemoryDenyWriteExecute"), "yes")
+        self.assertIsNone(unit("mutis-chain.service")["Service"].get("MemoryDenyWriteExecute"))
+        self.assertIsNone(unit("walletd.service")["Service"].get("MemoryDenyWriteExecute"))
+
+    def test_walletd_password_never_on_the_command_line(self):
+        svc = unit("walletd.service")["Service"]
+        self.assertNotIn("keyring", svc["ExecStart"])
+        self.assertTrue(svc["LoadCredential"].startswith("keyring-pass:/etc/mutis/credentials/"))
+        self.assertNotIn("--override-keyring-password", (ROOT / "deploy" / "ootle" / "run-walletd.sh").read_text().split("set -euo")[1])
+
+    def test_every_timer_has_its_service(self):
+        for timer in UNITS.glob("*.timer"):
+            self.assertTrue((UNITS / timer.name.replace(".timer", ".service")).is_file(), timer.name)
+
+
+if __name__ == "__main__":
+    unittest.main()

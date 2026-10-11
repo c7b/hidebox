@@ -1,0 +1,17 @@
+== checks and build (641c91808ab6-dirty-20261011161349)
+Ran 141 tests in 21.161s
+
+OK (skipped=4)
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 3 to read, (3) skipped: no --config)
+build: OK {"files": 18, "git_sha": "641c91808ab63e4eda2e471837223cf3c38d2c85-dirty", "holding": true, "origin": "https://srv2052606.hstgr.cloud", "pages": 2, "vendored_checked": 6, "version": "641c918-dirty"}
+== upload and activate
+sidecar: hello ok, pinned ootle-wasm
+schema version 1 (backup: /srv/mutis/data/backup/pre-migrate-20261011-161414.sqlite3)
+switched current → releases/641c91808ab6-dirty-20261011161349
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+== deployed 641c91808ab6-dirty-20261011161349 to https://srv2052606.hstgr.cloud

@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: MIT
+# Daily copy of walletd's database and the receiver and robot keys as `drive` (spec §8.3), into
+# /home/drive/wallet/backup/ (0600; each copy deleted after 7 days). Never moves or edits the wallet itself.
+[Unit]
+Description=mutis wallet and key backup
+
+[Service]
+Type=oneshot
+User=drive
+Group=drive
+ExecStart=/usr/bin/python3 -I /usr/local/lib/mutis/backup.py wallet
+SyslogIdentifier=mutis-backup-wallet
+TimeoutStartSec=600
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/home/drive/wallet/backup
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0077

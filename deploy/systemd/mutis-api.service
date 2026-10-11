@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: MIT
+# The internet-facing API on 127.0.0.1:8787 behind Caddy (spec §2.2, §15.4). Runs as `mutis`, which
+# owns the blobs and the database and cannot reach walletd (ufw uid guard on port 5100).
+[Unit]
+Description=mutis API
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=mutis
+Group=mutis
+Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
+ExecStart=/usr/bin/python3 -I /srv/mutis/app/current/server/bin/mutis-api
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=25
+SyslogIdentifier=mutis-api
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/mutis/data
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0007
+MemoryMax=1G
+# One thread per request; idle threads cost little memory, and Caddy buffers request bodies, so
+# slow clients don't hold them. A low cap would turn a burst of slow downloads into 502s for all.
+TasksMax=2048
+
+[Install]
+WantedBy=multi-user.target

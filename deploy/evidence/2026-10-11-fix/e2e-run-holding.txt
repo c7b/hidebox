@@ -1,0 +1,41 @@
+$ python3 -I tests/e2e/run.py              # holding page live
+SKIP E-01      0.0s  Text secret, Once: B reads it; reload and C see burned; item deleted
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-02      0.0s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-04      0.0s  Link + password and password-only; path-only attempts never lock a link
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-05      0.0s  Expiry 60 s: after 65 s the link is expired
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-06      0.0s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-07      0.0s  A link without its #key shows incomplete
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-08      0.0s  Locker: lazy creation from Leave me a file; key saved; restored in a clean browser
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-15      0.0s  Burn race: five browsers press Open it together; exactly one opens
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-16      0.0s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-17      0.0s  Abuse: a reported link and drop are taken down by id
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-18      0.0s  Every page: only same-origin requests and no CSP or Trusted Types violation
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-19      0.0s  Phone: E-01 at 390×844; reduced motion; no horizontal scroll at 360 px
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-20      0.0s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+           the app isn't deployed yet (the home page has no drop widget)
+PASS E-21     44.0s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+SKIP E-22      0.0s  Programs: an anonymous .exe is refused; a locker's .exe opens behind the program warning
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-24      0.0s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm
+           the app isn't deployed yet (the home page has no drop widget)
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+           none of the instrumented scenarios ran in this session
+e2e: PASS (with skips; --final fails on them) {'PASS': 1, 'FAIL': 0, 'SKIP': 16} → <out>/20261011-130526/report.json
+
+$ python3 -I tests/e2e/run.py --final --only E-21,E-01
+SKIP E-01      0.0s  Text secret, Once: B reads it; reload and C see burned; item deleted
+           the app isn't deployed yet (the home page has no drop widget)
+PASS E-21     44.0s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+e2e: FAIL {'PASS': 1, 'FAIL': 0, 'SKIP': 1} → <out>/20261011-130611/report.json

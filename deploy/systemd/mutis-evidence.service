@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+# Public testnet evidence (spec §15.6): status/evidence.json from evidence jobs only (the canary
+# delivery and the daily evidence payment). Never user ids, invoices or addresses.
+[Unit]
+Description=mutis evidence collector
+
+[Service]
+Type=oneshot
+User=drive
+Group=drive
+SupplementaryGroups=mutis
+Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
+ExecStart=/usr/bin/python3 -I /srv/mutis/app/current/deploy/scripts/collect-evidence.py
+SyslogIdentifier=mutis-evidence
+TimeoutStartSec=120
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+# Reading a WAL database needs write access to its -shm index.
+ReadWritePaths=/srv/mutis/status /srv/mutis/data/db
+ReadOnlyPaths=/home/drive/mutis
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0007

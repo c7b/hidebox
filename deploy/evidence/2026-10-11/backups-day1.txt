@@ -1,0 +1,41 @@
+Created symlink '/etc/systemd/system/timers.target.wants/mutis-backup.timer' → '/etc/systemd/system/mutis-backup.timer'.
+backup wallet: wrote wallet-20261011.sqlite, receiver-20261011.json, robot-20261011.json
+mutis-backup-wallet.service: Deactivated successfully.
+Finished mutis-backup-wallet.service - mutis wallet and key backup.
+backup db: wrote mutis-20261011.sqlite3
+mutis-backup.service: Deactivated successfully.
+Finished mutis-backup.service - mutis database backup.
+/home/drive/wallet/backup:
+total 1464
+drwx------ 2 drive drive    4096 Oct 11 09:46 .
+drwx------ 6 drive drive    4096 Oct 11 09:17 ..
+-rw------- 1 drive drive     452 Oct 11 09:46 receiver-20261011.json
+-rw------- 1 drive drive     452 Oct 11 09:46 robot-20261011.json
+-rw------- 1 drive drive 1482752 Oct 11 09:46 wallet-20261011.sqlite
+
+/srv/mutis/data/backup:
+total 424
+drwx--S--- 2 mutis mutis   4096 Oct 11 09:46 .
+drwxrws--- 5 mutis mutis   4096 Oct 11 09:17 ..
+-rw------- 1 mutis mutis 217088 Oct 11 09:46 mutis-20261011.sqlite3
+-rw-r--r-- 1 mutis mutis 208896 Oct 11 09:33 pre-migrate-20261011-153333.sqlite3
+[
+ {
+  "backup": "mutis-20261011.sqlite3",
+  "integrity": "ok",
+  "tables": 20,
+  "rows": 110,
+  "copies": 1
+ }
+]
+restore-drill: PASS
+[
+ {
+  "backup": "wallet-20261011.sqlite",
+  "integrity": "ok",
+  "tables": 26,
+  "rows": 740,
+  "copies": 1
+ }
+]
+restore-drill: PASS

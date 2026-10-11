@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MIT
+# /etc/mutis/mutis.toml (root:mutis 0640): non-secret configuration, read with tomllib by mutis-api,
+# mutis-chain, mutis-cleanup, mutis-admin (server/mutis/config.py, where every default lives), by
+# tools/build.py (origin, network, URLs) and by the deploy scripts. An unknown key or a wrong type stops
+# the services on purpose; `mutis-admin check-config` validates a file. provision.sh installs this file
+# only when /etc/mutis/mutis.toml doesn't exist yet, so operator edits survive.
+
+public_origin = "https://srv2052606.hstgr.cloud"
+# Courier memos carry the origin on chain forever: keep every host we ever served from in this list.
+memo_origins = ["https://srv2052606.hstgr.cloud", "https://mutis.sh"]
+listen = "127.0.0.1:8787"
+data_dir = "/srv/mutis/data"
+secret_key = "/etc/mutis/secret.key"
+network = "esmeralda"
+single_uid = false
+# The owner's own dead drop for security reports. Empty: security.txt points at /abuse instead.
+security_drop_url = ""
+repo_url = "https://github.com/c7b/mutis"
+onion = ""
+
+[gates]
+# Runtime copy variants (12-integration §3). The integrator flips these after the gate evidence:
+# send_mode "direct" (G1), amount_proof "sidecar" (G4, once the real sidecar runs in production).
+send_mode = "relay"
+amount_proof = "wallet"
+key_bundle = false
+
+[features]
+drops = true
+relay_send = true
+direct_send = false
+demo_pay = true
+sponsor = false
+decoys = true
+kept = true
+seallog = false
+
+[limits]
+reserve_min_bytes = 10737418240
+small_lane_bytes = 1073741824
+drop_lane_bytes = 2147483648
+anon_lane_max_bytes = 6442450944
+
+[budgets.public]
+courier = 1500
+demo_pay_ut = 25000000
+sponsor_ut = 100000000
+
+[budgets.reserved]
+courier = 500
+decoy = 120
+demo_pay_ut = 10000000
+sponsor_ut = 30000000
+
+[ootle]
+walletd_url = "http://127.0.0.1:5100/json_rpc"
+sponsor_account = "sponsor"
+service_account = "service"
+# SealLog checkpoints are paid by and signed as this account. Gate G5 failed on walletd 0.45:
+# transactions.submit_manifest signs with the wallet's default key (service), so it must be service.
+operator_account = "service"
+receiver_keys = "/home/drive/mutis/receiver.json"
+robot_keys = "/home/drive/mutis/robot.json"
+indexers = ["https://ootle-indexer-b.tari.com", "https://ootle-indexer-a.tari.com"]
+mirror_start_epoch = 0
+max_fee_transfer_ut = 30000
+courier_amount_ut = 1000
+jitter_s = [5, 45]
+decoy_mean_gap_s = 900
+sponsor_grant_ut = 1000000
+seallog_component = ""          # the live log: deploy/ootle/setup-accounts.md §4
+wasm_version = "0.45.0"
+mainnet_date = "2026-11-11"
+
+[sidecar]
+node = "/usr/bin/node"
+dir = "/srv/mutis/app/current/sidecar"
+# Node's permission model resolves symlinks, so the sidecar can't run from `current` directly;
+# this wrapper (installed by provision.sh) passes the live release's real directory.
+command = ["/usr/local/lib/mutis/run-sidecar.sh"]
+canary_every_s = 3600
+
+[hosting]
+# "weekly" while Hostinger's VPS snapshots are on (the owner checks the panel), else "off".
+snapshots = "weekly"

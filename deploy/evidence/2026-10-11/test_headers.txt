@@ -1,0 +1,26 @@
+PASS GET / → 200
+PASS GET /s/AAAAAAAAAAAAAAAAAAAAAA → 404
+PASS GET /t → 404
+PASS GET /d/7kq2x9mdh4 → 404
+PASS GET /locker → 404
+PASS GET /inbox → 404
+PASS GET /send → 404
+PASS GET /watch → 404
+PASS GET /upgrade → 404
+PASS GET /verify/tx/0000000000000000000000000000000000000000000000000000000000000000 → 404
+PASS GET /how → 404
+PASS GET /security → 404
+PASS GET /pricing → 404
+PASS GET /faq → 404
+PASS GET /judges → 404
+PASS GET /terms → 404
+PASS GET /privacy → 404
+PASS GET /abuse → 404
+PASS GET /robots.txt → 404
+PASS GET /.well-known/security.txt → 404
+PASS GET /.well-known/mutis-manifest.json → 200
+PASS GET /this-page-does-not-exist → 404
+PASS GET /api/v1/health → 502 (security headers on API responses)
+PASS http://srv2052606.hstgr.cloud/how?x=1 → 308 https://srv2052606.hstgr.cloud/how?x=1
+PASS certificate for srv2052606.hstgr.cloud verifies, 90 days left
+test_headers: PASS

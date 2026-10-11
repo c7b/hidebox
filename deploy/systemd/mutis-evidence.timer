@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=mutis evidence collector, hourly
+
+[Timer]
+OnBootSec=300
+OnUnitActiveSec=3600
+
+[Install]
+WantedBy=timers.target

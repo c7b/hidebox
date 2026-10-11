@@ -1,0 +1,13 @@
+$ python3 -I tests/e2e/test_logs.py      # mutis-api started for the run, stopped afterwards
+note: the drop delivery was refused with chain_unavailable (mutis-chain is not running)
+note: the relay delivery was refused with chain_unavailable (mutis-chain is not running)
+session over IPv6 from <this machine IPv6, redacted>: done; 502s forced: 18
+note: the drop delivery was refused with chain_unavailable (mutis-chain is not running)
+note: the relay delivery was refused with chain_unavailable (mutis-chain is not running)
+session over IPv4 from <this machine IPv4, redacted>: done; 502s forced: 18
+searched the journal, /var/log and /home/drive/wallet (database, logs, backups) for 46 values
+note this machine's IPv4 address in /var/log/wtmp (operator SSH access, not visitor traffic)
+note this machine's IPv4 address in /var/log/wtmp.db (operator SSH access, not visitor traffic)
+note this machine's IPv4 address in /var/log/lastlog (operator SSH access, not visitor traffic)
+test_logs: PASS (0 hits)
+(670 further lines 'note this machine's IPv4 address in sshd-session (operator SSH access, not visitor traffic)' collapsed)

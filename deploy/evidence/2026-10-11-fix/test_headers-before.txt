@@ -1,0 +1,67 @@
+FAIL GET / → 200
+     cache-control: None
+FAIL GET /s/AAAAAAAAAAAAAAAAAAAAAA → 404
+     cache-control: None
+FAIL GET /t → 404
+     cache-control: None
+FAIL GET /d/7kq2x9mdh4 → 404
+     cache-control: None
+FAIL GET /locker → 404
+     cache-control: None
+FAIL GET /inbox → 404
+     cache-control: None
+FAIL GET /send → 404
+     cache-control: None
+FAIL GET /watch → 404
+     cache-control: None
+FAIL GET /upgrade → 404
+     cache-control: None
+FAIL GET /verify/tx/0000000000000000000000000000000000000000000000000000000000000000 → 404
+     cache-control: None
+FAIL GET /how → 404
+     cache-control: None
+FAIL GET /security → 404
+     cache-control: None
+FAIL GET /pricing → 404
+     cache-control: None
+FAIL GET /faq → 404
+     cache-control: None
+FAIL GET /judges → 404
+     cache-control: None
+FAIL GET /terms → 404
+     cache-control: None
+FAIL GET /privacy → 404
+     cache-control: None
+FAIL GET /abuse → 404
+     cache-control: None
+FAIL GET /robots.txt → 404
+     cache-control: None
+FAIL GET /.well-known/security.txt → 404
+     cache-control: None
+FAIL GET /.well-known/mutis-manifest.json → 200
+     cache-control: None
+FAIL GET /this-page-does-not-exist → 404
+     cache-control: None
+FAIL GET /status.json → 404
+     cache-control: 'no-cache'
+     unexpected server
+PASS GET /evidence.json → 200
+FAIL GET /releases.json → 404
+     cache-control: None
+FAIL GET /evidence-archive-x.json → 404 (an error page through another route)
+     cache-control: 'no-cache'
+     unexpected server
+FAIL GET /shared/fonts/x.woff2 → 404 (an error page through another route)
+     cache-control: 'public, max-age=31536000, immutable'
+FAIL GET /es/nope → 404 (an error page through another route)
+     cache-control: None
+     unexpected server
+FAIL GET /app/nope.js → 404 (an error page through another route)
+     cache-control: 'no-cache'
+FAIL GET /shared/fonts/MutisScript-Regular.woff2 → 200
+     cache-control: 'public, max-age=31536000, immutable'
+PASS GET /api/v1/health → 502 (security headers on API responses)
+FAIL http://srv2052606.hstgr.cloud/how?x=1 → 308 https://srv2052606.hstgr.cloud/how?x=1
+     unexpected server
+PASS certificate for srv2052606.hstgr.cloud verifies, 90 days left
+test_headers: FAIL (30)

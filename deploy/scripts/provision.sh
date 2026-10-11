@@ -1,0 +1,233 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+# Provision ultron for mutis, idempotently (spec §15.1). Run as root from any copy of deploy/:
+#   sudo bash deploy/scripts/provision.sh
+# Re-running is safe. It never overwrites /etc/mutis/mutis.toml or any key, and never moves, deletes
+# or re-initialises /home/drive/wallet or /home/drive/l1wallet. The one-time move of walletd from its
+# tmux session into walletd.service backs the wallet up first (root-only tar) and stops if the
+# balances walletd reports afterwards differ from before.
+set -euo pipefail
+umask 022
+
+DEPLOY=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+WALLET=/home/drive/wallet
+BACKUPS=/var/backups/mutis
+CREDENTIAL=/etc/mutis/credentials/walletd-keyring-pass
+PACKAGES=(caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg)
+
+step() { printf '\n== %s\n' "$*"; }
+die() { printf 'provision: %s\n' "$*" >&2; exit 1; }
+stamp() { date -u +%Y%m%dT%H%M%SZ; }
+
+[ "$(id -u)" = 0 ] || die "run as root"
+
+check_packages() {
+  step "Debian packages (installed by the owner; this script installs nothing)"
+  local missing=() p
+  for p in "${PACKAGES[@]}"; do
+    dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q 'install ok installed' || missing+=("$p")
+  done
+  [ ${#missing[@]} -eq 0 ] || die "missing packages: ${missing[*]} (apt-get install --no-install-recommends, after owner approval)"
+  if command -v npm >/dev/null || command -v npx >/dev/null; then die "npm/npx must not be installed"; fi
+  echo "ok: ${PACKAGES[*]} present; npm and npx absent"
+}
+
+users_and_dirs() {
+  step "users and directories (spec §8.1)"
+  getent passwd mutis >/dev/null ||
+    useradd --system --user-group --home-dir /srv/mutis --no-create-home --shell /usr/sbin/nologin mutis
+  id -nG drive | tr ' ' '\n' | grep -qx mutis || usermod -aG mutis drive
+  install -d -m 0755 -o root -g root /srv/mutis /srv/mutis/app /srv/mutis/app/releases
+  install -d -m 2770 -o mutis -g mutis /srv/mutis/data /srv/mutis/data/db
+  install -d -m 0700 -o mutis -g mutis /srv/mutis/data/blobs /srv/mutis/data/backup
+  install -d -m 2775 -o mutis -g mutis /srv/mutis/status
+  install -d -m 0700 -o drive -g drive /home/drive/mutis "$WALLET/backup"
+  install -d -m 0750 -o root -g mutis /etc/mutis
+  install -d -m 0700 -o root -g root /etc/mutis/credentials "$BACKUPS"
+  install -d -m 0755 -o root -g root /usr/local/lib/mutis /etc/caddy/mutis.d
+  echo "ok: mutis user ($(id mutis)); tree under /srv/mutis"
+}
+
+config_and_secrets() {
+  step "configuration and secrets (generated here; nothing comes from another machine)"
+  if [ ! -f /etc/mutis/mutis.toml ]; then
+    install -m 0640 -o root -g mutis "$DEPLOY/config/mutis.toml.example" /etc/mutis/mutis.toml
+    echo "installed /etc/mutis/mutis.toml from the example"
+  fi
+  chown root:mutis /etc/mutis/mutis.toml && chmod 0640 /etc/mutis/mutis.toml
+  if [ ! -f /etc/mutis/secret.key ]; then
+    (umask 077 && head -c 32 /dev/urandom > /etc/mutis/secret.key.new)
+    chown root:mutis /etc/mutis/secret.key.new && chmod 0640 /etc/mutis/secret.key.new
+    mv /etc/mutis/secret.key.new /etc/mutis/secret.key
+    echo "generated /etc/mutis/secret.key"
+  fi
+  if [ ! -f "$CREDENTIAL" ]; then
+    install -m 0600 -o root -g root "$WALLET/.keyring-pass" "$CREDENTIAL"
+    echo "copied walletd's keyring password into $CREDENTIAL (root only)"
+  fi
+  local host
+  host=$(python3 -I -c 'import sys, tomllib, urllib.parse
+print(urllib.parse.urlsplit(tomllib.load(open(sys.argv[1], "rb"))["public_origin"]).hostname)' /etc/mutis/mutis.toml)
+  printf 'MUTIS_HOST=%s\n' "$host" > /etc/mutis/caddy.env.new
+  chmod 0640 /etc/mutis/caddy.env.new && chown root:mutis /etc/mutis/caddy.env.new
+  mv /etc/mutis/caddy.env.new /etc/mutis/caddy.env
+  echo "ok: MUTIS_HOST=$host"
+}
+
+install_files() {
+  step "scripts, units and logging configuration"
+  install -m 0755 -o root -g root "$DEPLOY/ootle/run-walletd.sh" /usr/local/lib/mutis/run-walletd.sh
+  install -m 0755 -o root -g root "$DEPLOY/scripts/backup.py" /usr/local/lib/mutis/backup.py
+  install -m 0755 -o root -g root "$DEPLOY/scripts/run-sidecar.sh" /usr/local/lib/mutis/run-sidecar.sh
+  install -m 0755 -o root -g root "$DEPLOY/scripts/mutis-admin" /usr/local/sbin/mutis-admin
+  install -m 0640 -o root -g mutis "$DEPLOY/ootle/walletd-log4rs.yml" /etc/mutis/walletd-log4rs.yml
+  install -m 0644 -o root -g root "$DEPLOY"/systemd/*.service "$DEPLOY"/systemd/*.timer /etc/systemd/system/
+  install -d -m 0755 /etc/systemd/system/caddy.service.d /etc/systemd/journald.conf.d
+  install -m 0644 "$DEPLOY/systemd/caddy.service.d/mutis.conf" /etc/systemd/system/caddy.service.d/mutis.conf
+  if ! cmp -s "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf; then
+    install -m 0644 "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf
+    systemctl restart systemd-journald
+  fi
+  systemctl daemon-reload
+  echo "ok"
+}
+
+firewall() {
+  step "ufw: web ports open, logging off, loopback ports guarded by owner"
+  ufw allow 80/tcp comment 'mutis http' >/dev/null
+  ufw allow 443/tcp comment 'mutis https' >/dev/null
+  ufw logging off >/dev/null
+  local f changed=0
+  # 18143: the L1 console wallet's gRPC, no authentication, like walletd on 5100: root, lcam, drive.
+  # 8787: mutis-api trusts X-Real-IP from loopback; only Caddy (which sets it), the chain worker's
+  # sidecar (drive, the canary), root and lcam may connect, so `build`, which runs third-party
+  # build scripts when it compiles, can't forge client addresses past the per-IP limits.
+  local guards=("18143 0 $(id -u lcam) $(id -u drive)" "8787 0 $(id -u lcam) $(id -u drive) $(id -u caddy)")
+  for f in /etc/ufw/before.rules /etc/ufw/before6.rules; do
+    grep -q -- '--dport 5100 -j REJECT' "$f" || die "the walletd guard (port 5100) is missing from $f"
+    local guard
+    for guard in "${guards[@]}"; do
+      if ! grep -q -- "--dport ${guard%% *} -j REJECT" "$f"; then
+        [ -e "$f.bak-mutis" ] || cp -p "$f" "$f.bak-mutis"
+        python3 -I - "$f" $guard <<'PY'
+import sys
+path, port, *uids = sys.argv[1:]
+lines = open(path).read().split("\n")
+at = next(i for i, l in enumerate(lines) if "--dport 5100 -j REJECT" in l)
+chain = lines[at].split()[1]
+guard = [f"-A {chain} -o lo -p tcp --dport {port} -m owner --uid-owner {uid} -j ACCEPT" for uid in uids]
+guard.append(f"-A {chain} -o lo -p tcp --dport {port} -j REJECT --reject-with tcp-reset")
+open(path, "w").write("\n".join(lines[:at + 1] + guard + lines[at + 1:]))
+PY
+        changed=1
+      fi
+    done
+  done
+  [ "$changed" = 0 ] || ufw reload >/dev/null
+  ufw status | grep -E '^(80|443|22)/tcp ' | sed 's/^/  /'
+}
+
+caddy_site() {
+  step "Caddy"
+  [ -e /etc/caddy/Caddyfile.debian ] || cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.debian
+  install -m 0644 -o root -g root "$DEPLOY/caddy/Caddyfile" /etc/caddy/Caddyfile
+  (set -a && . /etc/mutis/caddy.env && caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1) ||
+    die "caddy validate failed: run it by hand to see why"
+  systemctl enable caddy >/dev/null 2>&1
+  if [ -S /run/caddy/admin.sock ]; then
+    systemctl reload caddy
+  else
+    systemctl restart caddy   # first switch from the TCP admin port to the socket
+  fi
+  echo "ok: $(systemctl is-active caddy)"
+}
+
+walletd_balances() {  # stdin, so drive needs no access to this copy of deploy/
+  runuser -u drive -- python3 -I - balances < "$DEPLOY/ootle/walletd-rpc.py"
+}
+
+walletd_listening() {
+  local i
+  for i in $(seq 1 90); do
+    if (exec 3<>/dev/tcp/127.0.0.1/5100) 2>/dev/null; then return 0; fi
+    sleep 1
+  done
+  return 1
+}
+
+walletd_service() {
+  step "walletd as a systemd unit"
+  if systemctl is-active --quiet walletd; then
+    systemctl enable walletd >/dev/null 2>&1
+    echo "ok: walletd.service already active"
+    return
+  fi
+  local ts before after
+  ts=$(stamp)
+  if runuser -u drive -- tmux has-session -t walletd 2>/dev/null; then
+    (umask 077
+     walletd_balances > "$BACKUPS/balances-$ts-before.json"
+     tar -C /home/drive -cf "$BACKUPS/wallet-$ts-live.tar" wallet)
+    echo "backed up $WALLET (live) to $BACKUPS/wallet-$ts-live.tar"
+    runuser -u drive -- tmux send-keys -t walletd C-c
+    for _ in $(seq 1 60); do
+      pgrep -u drive -f "tari_ootle_walletd .*--base-path $WALLET " >/dev/null || break
+      sleep 1
+    done
+    if pgrep -u drive -f "tari_ootle_walletd .*--base-path $WALLET " >/dev/null; then
+      runuser -u drive -- tmux kill-session -t walletd || true
+      sleep 5
+    fi
+    pgrep -u drive -f "tari_ootle_walletd .*--base-path $WALLET " >/dev/null && die "the tmux walletd did not stop"
+    runuser -u drive -- tmux kill-session -t walletd 2>/dev/null || true
+    (umask 077 && tar -C /home/drive -cf "$BACKUPS/wallet-$ts-cold.tar" wallet)
+    echo "stopped the tmux walletd; cold backup at $BACKUPS/wallet-$ts-cold.tar"
+  fi
+  systemctl enable --now walletd >/dev/null 2>&1
+  if ! walletd_listening; then
+    systemctl disable --now walletd >/dev/null 2>&1
+    runuser -u drive -- tmux new-session -d -s walletd "$WALLET/run-walletd.sh"
+    die "walletd.service did not come up (journalctl -u walletd); the tmux session is running again"
+  fi
+  if [ -f "$BACKUPS/balances-$ts-before.json" ]; then
+    (umask 077 && walletd_balances > "$BACKUPS/balances-$ts-after.json")
+    before=$(sha256sum < "$BACKUPS/balances-$ts-before.json")
+    after=$(sha256sum < "$BACKUPS/balances-$ts-after.json")
+    [ "$before" = "$after" ] || die "balances differ after the move: compare $BACKUPS/balances-$ts-{before,after}.json"
+    echo "ok: walletd.service active; every account balance unchanged"
+  else
+    echo "ok: walletd.service active"
+  fi
+}
+
+timers() {
+  step "timers that don't need the API: wallet backups always, database backups once a database exists"
+  systemctl enable --now mutis-backup-wallet.timer >/dev/null 2>&1
+  if [ -f /srv/mutis/data/db/mutis.sqlite3 ]; then
+    systemctl enable --now mutis-backup.timer >/dev/null 2>&1
+  fi
+  systemctl list-timers 'mutis-*' --no-pager | sed -n '1,4p' | sed 's/^/  /'
+}
+
+keys() {
+  step "receiver and robot-locker keys"
+  local sidecar
+  sidecar=$(readlink -f /srv/mutis/app/current/sidecar || true)   # Node's permission model wants the real path
+  if [ -n "$sidecar" ] && [ -f "$sidecar/sidecar.mjs" ]; then
+    runuser -u drive -- bash -s -- "$sidecar" < "$DEPLOY/scripts/init-keys.sh"
+  else
+    echo "skipped: no release deployed yet (deploy.sh runs this step after the first release)"
+  fi
+}
+
+check_packages
+users_and_dirs
+config_and_secrets
+install_files
+firewall
+caddy_site
+walletd_service
+timers
+keys
+step "privilege self-test (spec §15.1 step 9)"
+bash "$DEPLOY/scripts/privilege-check.sh"

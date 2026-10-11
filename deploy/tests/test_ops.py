@@ -1,0 +1,252 @@
+# SPDX-License-Identifier: MIT
+"""Operations scripts against temporary data: backups and the restore drill, the healthcheck's
+reaction to every D-07 failure, the evidence collector's privacy rule, the walletd start script."""
+import importlib.util
+import json
+import os
+import sqlite3
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS = ROOT / "deploy" / "scripts"
+
+
+def load(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+backup = load("backup", SCRIPTS / "backup.py")
+health = load("healthcheck", SCRIPTS / "healthcheck.py")
+evidence = load("collect_evidence", SCRIPTS / "collect-evidence.py")
+
+
+def mutis_db(path: Path) -> sqlite3.Connection:
+    """The tables the ops scripts read (server/mutis/schema.sql defines the real ones)."""
+    conn = sqlite3.connect(path, isolation_level=None)
+    conn.executescript("""
+        CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE abuse_reports (id TEXT PRIMARY KEY, state TEXT NOT NULL DEFAULT 'new');
+        CREATE TABLE jobs (id TEXT PRIMARY KEY, kind TEXT, slice TEXT, evidence INTEGER, payload TEXT, state TEXT,
+                           not_before INTEGER, result TEXT, error TEXT, attempts INTEGER, created_at INTEGER, updated_at INTEGER);
+        CREATE TABLE chain_utxos (seq INTEGER PRIMARY KEY, id TEXT UNIQUE, nonce BLOB, enc BLOB, tag BLOB, epoch INTEGER,
+                                  first_seen INTEGER);
+        CREATE TABLE seal_checkpoints (idx INTEGER PRIMARY KEY, tree_size INTEGER, root BLOB, created_at INTEGER,
+                                       state TEXT, job_id TEXT, tx_id TEXT, epoch INTEGER);""")
+    return conn
+
+
+def set_meta(conn, key, value):
+    conn.execute("INSERT OR REPLACE INTO meta VALUES (?, ?)", (key, value if isinstance(value, str) else json.dumps(value)))
+
+
+class BackupTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.data = Path(self.tmp.name) / "data"
+        (self.data / "db").mkdir(parents=True)
+        (self.data / "backup").mkdir()
+        conn = mutis_db(self.data / "db" / "mutis.sqlite3")
+        conn.execute("PRAGMA journal_mode=WAL")
+        set_meta(conn, "schema_version", "1")
+        conn.close()
+        (Path(self.tmp.name) / "m.toml").write_text(f'data_dir = "{self.data}"\n')
+        os.environ["MUTIS_CONFIG"] = str(Path(self.tmp.name) / "m.toml")
+
+    def tearDown(self):
+        del os.environ["MUTIS_CONFIG"]
+        self.tmp.cleanup()
+
+    def aged(self, name: str, days: float) -> Path:
+        path = self.data / "backup" / name
+        path.write_bytes(b"old")
+        when = time.time() - days * 86400
+        os.utime(path, (when, when))
+        return path
+
+    def test_db_backup_restores_and_is_one_file(self):
+        name = backup.backup_db()[0]
+        copy = self.data / "backup" / name
+        self.assertEqual(stat.S_IMODE(copy.stat().st_mode), 0o600)
+        result = backup.check_copy(copy)
+        self.assertEqual((result["integrity"], result["tables"]), ("ok", 5))
+        self.assertEqual(sorted(p.name for p in (self.data / "backup").iterdir()), [name],
+                         "no -wal/-shm left beside the copy, even after the restore drill opened it")
+
+    def test_every_copy_goes_after_keep_days(self):
+        sys.path.insert(0, str(ROOT / "server"))
+        from mutis import cleanup
+        self.assertEqual(backup.KEEP_DAYS, cleanup.DB_BACKUP_DAYS,
+                         "the retention /privacy publishes (db_backup_days) is the one backup.py applies")
+        old = [self.aged("mutis-20261001.sqlite3", 7), self.aged("pre-migrate-20261001-090000.sqlite3", 6.6),
+               self.aged("mutis-20261001.sqlite3-shm", 1), self.aged("pre-migrate-20261009-090000.sqlite3.part", 0)]
+        kept = [self.aged("mutis-20261005.sqlite3", 3), self.aged("pre-migrate-20261008-090000.sqlite3", 2)]
+        os.chmod(kept[1], 0o644)
+        backup.backup_db()
+        for path in old:
+            self.assertFalse(path.exists(), path.name)
+        for path in kept:
+            self.assertTrue(path.exists(), path.name)
+        self.assertEqual(stat.S_IMODE(kept[1].stat().st_mode), 0o600)
+
+    def test_never_more_than_keep_days_copies(self):
+        for day in range(1, 10):
+            self.aged(f"mutis-202610{day:02d}.sqlite3", 0.1 * (10 - day))
+        name = backup.backup_db()[0]
+        copies = sorted((self.data / "backup").glob("mutis-*.sqlite3"))
+        self.assertEqual(len(copies), backup.KEEP_DAYS)
+        self.assertIn(name, [c.name for c in copies])
+
+
+class HealthTest(unittest.TestCase):
+    NOW = 1_800_000_000
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.conn = mutis_db(Path(self.tmp.name) / "db.sqlite3")
+        set_meta(self.conn, "chain_heartbeat", str(self.NOW - 5))
+        set_meta(self.conn, "chain_status", {"updated_at": self.NOW - 30, "walletd_ok": True, "sidecar_ok": True,
+                                             "sponsor_balance_ut": 8_000_000_000, "mirror_ok_at": self.NOW - 10,
+                                             "payments_unconfirmed": 0})
+        set_meta(self.conn, "canary_log", [{"n": 7, "sealed_at": self.NOW - 1800, "verified": True}])
+        self.cfg = {"public_origin": "https://h.example", "data_dir": self.tmp.name,
+                    "limits": {"reserve_min_bytes": 10 << 30}, "ootle": {"mainnet_date": "2026-11-11"}}
+        self.probes = {"https": lambda o: ("green", "ok"), "api": lambda o: ("green", "ok"),
+                       "disk": lambda path, reserve: health.disk_check(path, reserve, self.statvfs)}
+        self.free = 60 << 30
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def statvfs(self, _path):
+        return SimpleNamespace(f_blocks=(100 << 30) // 4096, f_frsize=4096, f_bavail=self.free // 4096)
+
+    def report(self) -> dict:
+        return health.evaluate(self.cfg, self.conn, self.NOW, self.probes)
+
+    def test_all_green(self):
+        r = self.report()
+        self.assertEqual(r["overall"], "green", r)
+        self.assertFalse(r["attention"])
+        self.assertEqual(health.public_subset(r)["checks"]["canary"], "green")
+
+    def test_each_simulated_failure_turns_red(self):
+        failures = {
+            "api": lambda: self.probes.update(api=lambda o: ("red", "api_down")),
+            "chain_worker": lambda: set_meta(self.conn, "chain_heartbeat", str(self.NOW - 600)),
+            "walletd": lambda: set_meta(self.conn, "chain_status", {**json.loads(self.conn.execute(
+                "SELECT value FROM meta WHERE key = 'chain_status'").fetchone()[0]), "walletd_ok": False}),
+            "sidecar": lambda: set_meta(self.conn, "chain_status", {**json.loads(self.conn.execute(
+                "SELECT value FROM meta WHERE key = 'chain_status'").fetchone()[0]), "sidecar_ok": False}),
+            "canary": lambda: set_meta(self.conn, "canary_log", [{"n": 7, "sealed_at": self.NOW - 5 * 3600, "verified": True}]),
+            "disk": lambda: self.cfg["limits"].update(reserve_min_bytes=200 << 30),
+            "credit_freeze": lambda: set_meta(self.conn, "credit_freeze", "1"),
+        }
+        for check, simulate in failures.items():
+            with self.subTest(check):
+                self.setUp()
+                simulate()
+                r = self.report()
+                self.assertEqual(r["checks"][check]["state"], "red", r["checks"][check])
+                self.assertEqual(r["overall"], "red")
+
+    def test_budget_slice_at_half_raises_attention(self):
+        set_meta(self.conn, "alerts", {"budgets": {"courier:public": 50}})
+        r = self.report()
+        self.assertTrue(r["attention"])
+        self.assertEqual(r["reasons"], ["budget.courier.public.50"])
+        self.assertEqual(r["overall"], "green")
+
+    def test_unverified_canary_is_amber_then_red(self):
+        set_meta(self.conn, "canary_log", [{"n": 8, "sealed_at": self.NOW - 300, "verified": False}])
+        self.assertEqual(self.report()["checks"]["canary"]["state"], "amber")
+        set_meta(self.conn, "canary_log", [{"n": 8, "sealed_at": self.NOW - 1500, "verified": False}])
+        self.assertEqual(self.report()["checks"]["canary"]["state"], "red")
+
+    def test_phase(self):
+        self.assertEqual(health.phase(int(time.mktime((2026, 11, 10, 23, 0, 0, 0, 0, 0))) - time.timezone, "2026-11-11"), "pre")
+        self.assertEqual(health.phase(1_800_000_000, "2026-11-11"), "mainnet")
+
+
+class EvidenceTest(unittest.TestCase):
+    def test_only_evidence_jobs_are_published(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            conn = mutis_db(Path(tmp) / "db.sqlite3")
+            now = int(time.time())
+            rows = [("canary", "courier", 1, {"tx_id": "a" * 64, "utxo_ids": ["utxo_x"]}),
+                    ("user", "courier", 0, {"tx_id": "b" * 64}),
+                    ("pay", "demo_pay", 1, {"tx_id": "c" * 64}),
+                    ("decoy", "decoy", 0, {"tx_id": "d" * 64})]
+            for jid, kind, ev, result in rows:
+                conn.execute("INSERT INTO jobs (id, kind, slice, evidence, state, result, updated_at) VALUES (?, ?, 'reserved', ?, 'done', ?, ?)",
+                             (jid, kind, ev, json.dumps(result), now))
+            conn.execute("INSERT INTO chain_utxos (id, epoch) VALUES ('utxo_x', 12400)")
+            set_meta(conn, "receiver_address", "otl_esm_1receiver")
+            robot = Path(tmp) / "robot.json"
+            robot.write_text(json.dumps({"address": "otl_esm_1robot", "owner_sk": "secret"}))
+            evidence.STATUS = Path(tmp)
+            import datetime
+            doc = evidence.collect({"network": "esmeralda"}, conn, robot, datetime.datetime.now(datetime.UTC))
+            text = json.dumps(doc)
+            self.assertEqual([d["tx_id"] for d in doc["deliveries"]], ["a" * 64])
+            self.assertEqual(doc["deliveries"][0]["epoch"], 12400)
+            self.assertEqual([p["tx_id"] for p in doc["payments"]], ["c" * 64])
+            self.assertNotIn("b" * 64, text)
+            self.assertNotIn("d" * 64, text)
+            self.assertNotIn("secret", text)
+            self.assertFalse([k for k in doc if "decoy" in k], "no decoy count (it would reveal real volume)")
+            self.assertIsNone(doc["wasm_sha256"], "no sidecar has reported a hash yet")
+            set_meta(conn, "chain_status", {"sidecar": {"wasm_sha256": "e" * 64}})
+            doc = evidence.collect({"network": "esmeralda"}, conn, robot, datetime.datetime.now(datetime.UTC))
+            self.assertEqual(doc["wasm_sha256"], "e" * 64)
+
+
+class RunWalletdTest(unittest.TestCase):
+    def test_password_reaches_walletd_only_through_a_private_config(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "cred").mkdir()
+            (tmp / "run").mkdir()
+            (tmp / "wallet" / "esmeralda" / "config").mkdir(parents=True)
+            password = "pa55+word/with=SYMBOLS_ok"
+            (tmp / "cred" / "keyring-pass").write_text(password + "\n")
+            (tmp / "wallet" / "esmeralda" / "config" / "config.toml").write_text(
+                "[a]\nx = 1\n[esmeralda.ootle_wallet_daemon]\nindexer_api_url = [\"u\"]\n")
+            fake = tmp / "walletd"
+            fake.write_text("#!/bin/bash\nprintf '%s\\n' \"$@\"\n")
+            fake.chmod(0o755)
+            env = {"PATH": os.environ["PATH"], "CREDENTIALS_DIRECTORY": str(tmp / "cred"), "RUNTIME_DIRECTORY": str(tmp / "run"),
+                   "WALLETD_BASE": str(tmp / "wallet"), "WALLETD_BIN": str(fake)}
+            out = subprocess.run(["bash", str(ROOT / "deploy" / "ootle" / "run-walletd.sh")], env=env,
+                                 capture_output=True, text=True, check=True).stdout
+            self.assertNotIn(password, out)
+            self.assertIn("--authentication\nnone", out)
+            config = tmp / "run" / "config.toml"
+            self.assertEqual(stat.S_IMODE(config.stat().st_mode), 0o600)
+            import tomllib
+            stored = tomllib.loads(config.read_text())["esmeralda"]["ootle_wallet_daemon"]["override_keyring_password"]
+            self.assertEqual(bytes(stored).decode(), password)
+
+    def test_a_password_with_unexpected_characters_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "cred").mkdir()
+            (tmp / "cred" / "keyring-pass").write_text('bad"quote;$(x)')
+            env = {"PATH": os.environ["PATH"], "CREDENTIALS_DIRECTORY": str(tmp / "cred"), "RUNTIME_DIRECTORY": str(tmp)}
+            res = subprocess.run(["bash", str(ROOT / "deploy" / "ootle" / "run-walletd.sh")], env=env, capture_output=True, text=True)
+            self.assertEqual(res.returncode, 1)
+            self.assertNotIn("bad", res.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

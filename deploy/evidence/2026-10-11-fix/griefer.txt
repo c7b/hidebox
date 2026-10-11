@@ -1,0 +1,51 @@
+$ python3 -I tests/e2e/griefer.py        # E-23 on the local stack (run before --slow-only was split out; same checks)
+{
+ "anon_lane": {
+  "accepted": 85,
+  "refused_with": [
+   "lane_full"
+  ]
+ },
+ "small_lane": {
+  "accepted": 63,
+  "refused_with": [
+   "lane_full"
+  ]
+ },
+ "lockers": {
+  "accepted": 200,
+  "refused_with": []
+ },
+ "courier": {
+  "accepted": 106,
+  "refused_with": [
+   "budget_exhausted"
+  ]
+ },
+ "demo_pay": {
+  "accepted": 10,
+  "refused_with": [
+   "budget_exhausted"
+  ]
+ },
+ "pow_bits": {
+  "hammering /64": 18,
+  "fresh /48": 16
+ },
+ "slow_uploads": {
+  "held": 300,
+  "api_threads_before": 6,
+  "api_threads_peak": 7,
+  "slowest_health_s": 0.22
+ }
+}
+PASS the free quota didn't move (2348810240 → 2348810240)
+PASS PoW escalates for the hammering /64 only; a fresh /48 gets the base difficulty ({'hammering /64': 18, 'fresh /48': 16})
+PASS a 500 KB file still fits ()
+PASS path-only attempts never lock a link (the prober may be rate limited) (['bad_link', 'rate_limited'], active)
+PASS the public courier slice ran dry and said so (['budget_exhausted'])
+PASS the public demo_pay slice ran dry and said so (['budget_exhausted'])
+PASS 300 slow uploads held no API thread (6 → 7 threads)
+PASS the API answered through Caddy meanwhile (slowest 0.22 s)
+griefer: PASS
+exit 0

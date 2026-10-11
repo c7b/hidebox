@@ -1,0 +1,40 @@
+PASS / -> 200 []
+PASS /s/AAAAAAAAAAAAAAAAAAAAAA -> 200 []
+PASS /t -> 200 []
+PASS /d/7kq2x9mdh4 -> 200 []
+PASS /locker -> 200 []
+PASS /inbox -> 200 []
+PASS /send -> 200 []
+PASS /watch -> 200 []
+PASS /upgrade -> 200 []
+PASS /verify/tx/0000000000000000000000000000000000000000000000000000000000000000 -> 200 []
+PASS /how -> 200 []
+PASS /security -> 200 []
+PASS /pricing -> 200 []
+PASS /faq -> 200 []
+PASS /judges -> 200 []
+PASS /terms -> 200 []
+PASS /privacy -> 200 []
+PASS /abuse -> 200 []
+PASS /robots.txt -> 200 []
+PASS /.well-known/security.txt -> 200 []
+PASS /.well-known/mutis-manifest.json -> 200 []
+PASS /this-page-does-not-exist -> 404 []
+PASS /how serves how/index.html without redirect
+PASS /how/ 200
+PASS /index.html has app CSP
+PASS /s/* -> view.html
+PASS /t -> view.html
+PASS /locker/x -> app.html
+PASS /verify/tx -> app.html
+PASS /es/nope -> es 404 page
+PASS /nope -> 404 page
+PASS wasm type application/wasm
+PASS font cache public, max-age=31536000, immutable font/woff2
+PASS /app/* no-cache no-cache
+PASS /status.json from status dir
+PASS webmanifest type application/manifest+json
+PASS sitemap 200
+PASS security.txt 200 Contact: https://srv2052606.hstgr.cloud/abuse
+PASS css gzip gzip
+routes: PASS

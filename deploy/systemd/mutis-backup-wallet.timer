@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=mutis wallet and key backup, daily 03:35
+
+[Timer]
+OnCalendar=*-*-* 03:35:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

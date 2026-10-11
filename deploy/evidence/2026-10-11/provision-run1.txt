@@ -1,0 +1,62 @@
+
+== Debian packages (installed by the owner; this script installs nothing)
+ok: caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg present; npm and npx absent
+
+== users and directories (spec §8.1)
+ok: mutis user (uid=995(mutis) gid=987(mutis) groups=987(mutis)); tree under /srv/mutis
+
+== configuration and secrets (generated here; nothing comes from another machine)
+installed /etc/mutis/mutis.toml from the example
+generated /etc/mutis/secret.key
+ok: MUTIS_HOST=srv2052606.hstgr.cloud
+
+== scripts, units and logging configuration
+ok
+
+== ufw: web ports open, logging off, wallet ports limited to root, lcam and drive
+  22/tcp                     LIMIT       Anywhere                   # ssh
+  80/tcp                     ALLOW       Anywhere                   # mutis http
+  443/tcp                    ALLOW       Anywhere                   # mutis https
+  22/tcp (v6)                LIMIT       Anywhere (v6)              # ssh
+  80/tcp (v6)                ALLOW       Anywhere (v6)              # mutis http
+  443/tcp (v6)               ALLOW       Anywhere (v6)              # mutis https
+
+== Caddy
+ok: active
+
+== walletd as a systemd unit
+backed up /home/drive/wallet (live) to /var/backups/mutis/wallet-20261011T151744Z-live.tar
+stopped the tmux walletd; cold backup at /var/backups/mutis/wallet-20261011T151744Z-cold.tar
+ok: walletd.service active; every account balance unchanged
+
+== receiver and robot-locker keys
+skipped: no release deployed yet (deploy.sh runs this step after the first release)
+
+== privilege self-test (spec §15.1 step 9)
+PASS mutis cannot connect to 127.0.0.1:5100
+PASS build cannot connect to 127.0.0.1:5100
+PASS caddy cannot connect to 127.0.0.1:5100
+PASS drive can connect to 127.0.0.1:5100
+PASS mutis cannot connect to 127.0.0.1:18143
+PASS build cannot connect to 127.0.0.1:18143
+PASS caddy cannot connect to 127.0.0.1:18143
+PASS drive can connect to 127.0.0.1:18143
+PASS nothing listens on Caddy's default admin port 2019
+PASS Caddy's admin socket exists
+PASS mutis cannot use Caddy's admin socket
+PASS build cannot use Caddy's admin socket
+PASS drive cannot use Caddy's admin socket
+PASS mutis cannot read /home/drive
+PASS build cannot read /srv/mutis/data
+PASS caddy cannot read /srv/mutis/data
+PASS build cannot read /etc/mutis/secret.key
+PASS mutis can read /etc/mutis/secret.key
+PASS mutis cannot read the walletd keyring credential
+PASS drive cannot read the walletd keyring credential
+PASS build cannot read the walletd keyring credential
+SKIP no release deployed yet
+PASS build cannot read /home/drive/mutis keys
+PASS walletd's keyring password is on no process command line
+PASS npm is not installed
+PASS npx is not installed
+privilege-check: PASS
