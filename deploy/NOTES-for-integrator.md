@@ -177,5 +177,71 @@ deploy/README.md "Turning the app on".
   proven, but every UI scenario still has to pass once against the real app.
 - **D-06** needs three calendar days of timer runs (day 1 done).
 - **Esmeralda resets:** the reset playbook is rehearsed except the burn, which needs a human.
-- **Budgets:** worst case ≈ 230 tTARI/day across all slices; sponsor holds 8,900. SealLog at a 6-hour
-  cadence ≈ 47 tTARI/year from `service` (16.29 public now): enough through Nov 30.
+- **Budgets:** worst case ≈ 230 tTARI/day across all slices; sponsor holds 8,900. SealLog at the
+  ratified 15-minute cadence ≈ 0.50 tTARI/day from `service` (16.29 public now): about a month, so a
+  top-up before November (§5).
+
+## 5. Integration pass (2026-10-11)
+
+Every request aimed at `deploy/`, `tools/` or `tests/e2e/` in the builders' NOTES, NOTES-ui and the
+reviews' builder responses, and every 12-integration §7 ratification that touches them. Nothing on
+production changed: no deploy, no config edit, no transaction (only dry runs, and the throwaway local
+stack as build). Evidence: `evidence/2026-10-11-integration/`.
+
+### Integration responses
+
+| From | Request | Change | Test |
+|---|---|---|---|
+| site §1.6, site §6 deploy 1 (review H3) | `/es/` needs the app CSP | Caddyfile `@home path / /index.html /es /es/ /es/index.html`; `/es/` and `/es/how` in `headers_spec.ROUTES` | `test_config.test_both_home_pages_get_the_app_policy`; `test_headers.py --local hidebox` 35 PASS (`test_headers-local.txt`) |
+| site §1.13, site §6 deploy 2 (review M11), 12-integration §7.5, §7.6 | set the copy variants at build time | `build.py` runs the site's `tools/variants.py` on the copied pages before includes and placeholders (it also rewrites `llms-full.txt`); the build takes the parsed config, and the manifest records the config tables the variants read (`variant_config`: `gates`, `features`, `hosting`) | `test_build.test_copy_variants_follow_the_config`, `test_a_site_build_needs_the_variants_tool` |
+| (follows from the above) | verify-deploy must rebuild the same pages | it writes the live manifest's `variant_config` into the rebuild's config (plain names and scalar values only; anything else a manifest carries is dropped), not `/config`'s runtime `features`, which `mutis-admin feature` can change without a rebuild | `test_verify_deploy.BuildConfigTest` |
+| site §1.5, site §6 deploy 3 (review M7) | the sitemap's Spanish home is `/es/` | sitemap URLs come from the page's source name (`index` → a directory URL with its slash) | `test_build.test_sitemap_skips_404_and_noindex` |
+| NOTES-ui (app review M9) | don't serve `web/app/shots` | `build.py` never copies `web/app/shots` or `web/app/ui/tests` (`web/site/shots` was never copied) | `test_build.test_test_evidence_is_never_served` |
+| NOTES-ui 1 | count or expiry changes keep the link | `flows.set_rules` waits for the card's `data-rule` counter and returns the link, same or new | first run against the app (D-08) |
+| NOTES-ui 2 (brand P-15) | key passphrase on by default | E-08 fills `key-passphrase`, checks the file holds `Locked key:`, restores with `restore-passphrase`; the passphrase is a registered secret for E-03 | first run against the app |
+| NOTES-ui 5, server §7 deploy 3 | E-05: the 60 s preset, not `when=expires` | E-05 picks `expiry-preset` = `/config.e2e_expiry_s` and waits that long + 5 s, or skips; tests/e2e/README says how to turn it on for the run only | first run against the app |
+| app-core deploy 6, 12-integration §7.5 | E-J in direct mode: two contexts on one /64, the cold start recorded | in direct mode E-J makes a judge pass (`judge-pass new --uses 3`), gives it to both contexts (sessionStorage `mutis.judge`, as `/judges` keeps it), measures from the locker opening until the browser wallet can pay (a fresh scan; `report.json` notes), requires that by step 5 (3:15), and checks step 5's payment was a browser `POST /api/v1/chain/ix/transactions` | `test_harness.py`: the pass is in the tab before its scripts run (18/18); E-J itself on its first run in direct mode (go-live gate) |
+| site §1.11 | health check names the status page labels | checks are `https api chain_worker walletd sponsor_balance mirror canary credits disk budgets`: the verifier sidecar is part of `chain_worker` (`sidecar_down`), `credit_freeze` and `payments` became `credits`, an unreadable database turns `chain_worker` red, and `budgets` is new (amber at 90 %) | `test_ops.HealthTest.test_check_names_are_the_ones_status_labels` and the rest of `HealthTest` |
+| server §3 deploy 10 | `reconcile_unknown ≥ 3` is an alert apart from a freeze | `credits` amber, detail `indexers_unreachable` | `test_ops.HealthTest.test_payments_the_indexers_cant_confirm_are_amber` |
+| server §3 deploy 1, §7 deploy 1 | schema 3; stop mutis-chain for the migration | `activate-release.sh` stops mutis-chain (when active) around `mutis-admin migrate`, starts it again if the migration fails, and the restarts after the switch start it as before | `bash -n`; next deploy |
+| server §7 deploy 2, 12-integration §7.6 | `amount_proof = "sidecar"` | `mutis.toml.example` (with `[seal_log] checkpoint_interval_s = 900` and `[budgets.evidence]`, server §3 deploy 9); the live `/etc/mutis/mutis.toml` is a go-live step (README "Turning the app on" 1), not changed now | `test_config.test_example_parses_with_the_server_config` |
+| server §7 deploy 5 | `/evidence.json` names the chain's checkpoint number | `seallog.latest_checkpoint` = `{index, component, tree_size, tx_id, epoch}`, `index` = `seal_checkpoints.chain_index`, only checkpoints of the live component | `test_ops.EvidenceTest.test_seallog_names_the_live_log_its_chain_index_and_the_retired_ones` |
+| template §1.5, 12-integration §7.2 | list the retired logs | `seallog.retired` = the 1.0.0 log `component_0ff7e892…22aa` and the research log `component_32dae273…e36e` | same test |
+| template §1.1, §1.2, 12-integration §7.2 | publish 2.0.0's exact bytes | `publish-template.sh` builds the transaction itself (one `PublishTemplate`, the binary as its blob, `pay_fee` from `service`) for `transactions.submit_dry_run` / `transactions.submit` with `seal_signer` = the `service` key id; prints the address `wasm_check.py address` predicts, and after a publish runs `wasm_check.py onchain` | dry run: `Accept`, 755,531 µT, `template_40c5f1cf…0a47`, the chain's copy byte for byte (`publish-dry-run.txt`) |
+| template §1.3 | wire `check.sh --onchain` into verify-deploy | when `/config.seal_log.component` is set, verify-deploy reads the log's template address from indexer-a and runs the tag's `template/wasm_check.py onchain` (what `check.sh --onchain` runs, without needing bash); both addresses must be 64 hex characters (they come from the live site and an indexer); a mismatch is a difference | `test_verify_deploy.test_no_seallog_no_check`, `test_a_component_that_isnt_an_address_is_a_difference`; tried on the retired 1.0.0 log: "different bytes", as it should |
+| template §1.4, §1.5, 12-integration §7.2 | new log, header check, retire, top up `service` | `ootle/setup-accounts.md` §4 (go-live steps, the header check command, budget at 900 s), README "Turning the app on" 3, reset playbook §4 | — |
+| 12-integration §7.7 | E2E against production before the fresh database | README "Turning the app on" 4–5; tests/e2e/README "Against production" (when, the hourly locker limit, E-05) | — |
+| 12-integration §7.4 | claim registry | nothing in these directories states the changed claims (C9, C11, C13, Lock 1, takedown scope, C22, the memo bound); the film's "(Then it leaves. On the record.)" is SealLog's C7, so `film.py` now drops "On the record." while `features.seallog` is off | lint |
+| app-core deploy 4 | compress `/api/v1/chain/utxos` | already true: the site-wide `encode zstd gzip` matches `application/json*`, so API JSON through Caddy is compressed (`/api/v1/config`: zstd on the local stack); no change | `test_headers-local.txt` |
+| app-core deploy 1, 2, 3, 5; site §1.1–§1.4, §1.7–§1.10, §1.15; server §3 deploy 2–8, 11 | | already done in the build and fix passes (sidecar release layout, lint allowances, `application/wasm`, the served-file allow-list, includes, placeholders, `.well-known`, JSON-LD, SRI, font caching, `X-Real-IP`, body size, accounts by name) | existing tests |
+| server §7 deploy 4 | `run-sidecar.sh` is optional now | kept as `sidecar.command`: it is what mutis-chain's sandbox was proven with (`evidence/2026-10-11-fix/sidecar-symlink.txt`) and E-11 runs the release's sidecar through it; with the server resolving `sidecar.dir` itself, `dir` alone would also work | — |
+| found in this pass | `test_headers.py --local` couldn't build: the build's lint resolves `web/app/ui/tests/devserver.py`'s import of the server package, and the stub copy had no `server/` | `localstack.stub_build` copies `server/` next to `web/` | `test_headers.py --local hidebox` PASS |
+
+**Not applied: template §1.7** (one dry run creating the log signed by `operator`, a G5 retry).
+12-integration §7.3 settled that `service` writes SealLog, and the site's ratified `/security` lines
+name it. Moving the writer to `operator` would need every append the chain worker makes to carry a
+seal-signer key id (a server change) and new copy. For later: walletd 0.45's
+`transactions.submit_manifest` takes `seal_signer_key_id` and `signing_key_ids` (its own web UI sends
+them), and `transactions.submit` takes `seal_signer`; the earlier G5 probe tried other field names.
+
+### Integration requests
+
+**Go-live operator** (README "Turning the app on", in order): the config (`amount_proof = "sidecar"`,
+`send_mode = "relay"`), the units, the tag; SealLog 2.0.0 from the committed `template/dist/seal_log.wasm`
+(`publish-template.sh check`, `publish`, `instantiate`, the header check, `seallog_component`,
+`features.seallog = true`, deploy again); the E2E in batches an hour apart (5 new lockers per network
+an hour), E-05 with `e2e_expiry_s = 60` for its run only; the fresh database; `verify-deploy` against
+the tag. E-J in direct mode is the gate for `send_mode = "direct"`.
+
+**Owner (Tier 3, human step):** `service` pays the 15-minute checkpoints (≈ 0.50 tTARI a day) and has
+16.29 tTARI public, about a month after the publish and the log. Before November, burn tXTM from the
+L1 wallet so the claim lands in `service` (reset-playbook §3). `sponsor`'s stealth tTARI can't be
+moved into a public vault with `accounts.transfer` (dry run: "vault not found").
+
+**Server builder:** report `service`'s public balance in `meta.chain_status` (e.g.
+`service_public_ut`), so the healthcheck can turn amber before SealLog can't pay its checkpoints.
+Until then the fallback is `walletd-rpc.py balances` once a week (setup-accounts §4).
+
+**Template builder:** the dry run and the predicted address are for `seal_log.wasm` sha256
+`9af71aa2…d6f2`. If 2.0.0's bytes change before go-live, the address changes with them;
+`publish-template.sh check` prints the new one.

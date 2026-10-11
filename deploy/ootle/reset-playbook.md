@@ -57,10 +57,10 @@ If the L1 wallet is empty, ask the L1 faucet for tXTM first. walletd claims the 
 rpc balances --refresh                 # where the claimed tTARI landed (the default account: service)
 ```
 
-Re-create and re-fund `sponsor` (and `operator` once SealLog is live) exactly as in
-[setup-accounts.md](setup-accounts.md) §2–§3, then republish SealLog and instantiate a new log
-(setup-accounts.md §4) and put the new `ootle.seallog_component` in `/etc/mutis/mutis.toml`
-(`admin check-config`). The receiver and robot-locker keys survive a reset:
+Re-create and re-fund `sponsor` exactly as in [setup-accounts.md](setup-accounts.md) §2 (the burn
+lands in `service`, which pays for SealLog), then republish SealLog and instantiate a new log
+(setup-accounts.md §4, `publish-template.sh check | publish | instantiate`) and put the new
+`ootle.seallog_component` in `/etc/mutis/mutis.toml` (`admin check-config`). The receiver and robot-locker keys survive a reset:
 addresses are derived from keys, not from chain state. `init-keys.sh` confirms they are there and
 never overwrites them:
 

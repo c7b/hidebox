@@ -1,0 +1,41 @@
+$ python3 -I tests/e2e/test_headers.py --local hidebox    # integration pass: /es/ and /es/how added
+PASS GET / → 200
+PASS GET /es/ → 200
+PASS GET /s/AAAAAAAAAAAAAAAAAAAAAA → 200
+PASS GET /t → 200
+PASS GET /d/7kq2x9mdh4 → 200
+PASS GET /locker → 200
+PASS GET /inbox → 200
+PASS GET /send → 200
+PASS GET /watch → 200
+PASS GET /upgrade → 200
+PASS GET /verify/tx/0000000000000000000000000000000000000000000000000000000000000000 → 200
+PASS GET /how → 200
+PASS GET /es/how → 200
+PASS GET /security → 200
+PASS GET /pricing → 200
+PASS GET /faq → 200
+PASS GET /judges → 200
+PASS GET /terms → 200
+PASS GET /privacy → 200
+PASS GET /abuse → 200
+PASS GET /robots.txt → 200
+PASS GET /.well-known/security.txt → 200
+PASS GET /.well-known/mutis-manifest.json → 200
+PASS GET /this-page-does-not-exist → 404
+PASS GET /status.json → 404
+PASS GET /evidence.json → 404
+PASS GET /releases.json → 404
+PASS GET /evidence-archive-x.json → 404 (an error page through another route)
+PASS GET /shared/fonts/x.woff2 → 404 (an error page through another route)
+PASS GET /es/nope → 404 (an error page through another route)
+PASS GET /app/nope.js → 404 (an error page through another route)
+PASS GET /shared/fonts/MutisScript-Regular.woff2 → 200
+PASS GET /api/v1/health → 200 (security headers on API responses)
+PASS HEAD /app/vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm is application/wasm
+PASS http://127.0.0.1:18445/how?x=1 → 308 https://127.0.0.1/how?x=1
+test_headers: PASS
+
+# API JSON through the same Caddyfile (local stack), Accept-Encoding: zstd, gzip
+/api/v1/config 200 application/json; charset=utf-8 Content-Encoding: zstd 1019 bytes on the wire
+/api/v1/chain/utxos?after=0&limit=1000 200 application/json; charset=utf-8 Content-Encoding: None 30 bytes on the wire   (the dev chain is empty: under Caddy minimum_length, 512)

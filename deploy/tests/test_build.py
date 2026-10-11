@@ -14,6 +14,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 import build  # noqa: E402
 
 SOURCE = ["a" * 40, "v1-test", "1760000000"]
+CFG = {"public_origin": "https://example.test", "gates": {"send_mode": "relay", "amount_proof": "wallet"},
+       "features": {"seallog": False, "kept": True}, "hosting": {"snapshots": "weekly"}}
 VALUES = {"ORIGIN": "https://example.test", "NETWORK": "Esmeralda", "SECURITY_DROP_URL": "https://example.test/abuse",
           "REPO_URL": "https://code.example/mutis"}
 PAGE = """<!doctype html>
@@ -22,7 +24,9 @@ PAGE = """<!doctype html>
 <link rel="canonical" href="{{ORIGIN}}/how">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
 <script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
-</head><body><!--#include header--><p>{{NETWORK}} · {{GIT_SHA}} · {{BUILD_DATE}}</p></body></html>
+</head><body><!--#include header--><main><p>{{NETWORK}} · {{GIT_SHA}} · {{BUILD_DATE}}</p>
+<p data-when="send_mode=relay">Our relay posts it.</p><p data-when="send_mode=direct" hidden>Your browser posts it.</p>
+</main></body></html>
 """
 
 
@@ -42,6 +46,8 @@ class BuildTest(unittest.TestCase):
         (web / "site" / "pages" / "index.html").write_text(PAGE)
         (web / "site" / "pages" / "404.html").write_text(PAGE)
         (web / "site" / "pages" / "es" / "how.html").write_text(PAGE)
+        (web / "site" / "pages" / "es" / "index.html").write_text(PAGE)
+        (web / "site" / "pages" / "security.html").write_text(PAGE)
         (web / "site" / "pages" / "status.html").write_text(PAGE.replace("<title>", '<meta name="robots" content="noindex"><title>'))
         (web / "site" / "css").mkdir()
         (web / "site" / "css" / "site.css").write_text("/* SPDX-License-Identifier: MIT */\nbody { margin: 0; }\n")
@@ -49,6 +55,9 @@ class BuildTest(unittest.TestCase):
         (web / "site" / "js" / "site.js").write_text("// SPDX-License-Identifier: MIT\nexport const x = 1;\n")
         (web / "site" / "static" / ".well-known").mkdir(parents=True)
         (web / "site" / "static" / ".well-known" / "security.txt").write_text("Contact: {{SECURITY_DROP_URL}}\n")
+        (web / "site" / "tools").mkdir()
+        for tool in ("variants.py", "llms_full.py"):
+            shutil.copyfile(ROOT / "web" / "site" / "tools" / tool, web / "site" / "tools" / tool)
         (web / "app" / "tests").mkdir(parents=True)
         (web / "app" / "tests" / "run.html").write_text("<!doctype html>\n<!-- SPDX-License-Identifier: MIT -->\n")
         (web / "app" / "README.md").write_text("<!-- SPDX-License-Identifier: MIT -->\n# app\n")
@@ -58,9 +67,9 @@ class BuildTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp)
 
-    def build(self, holding: bool = False) -> dict:
+    def build(self, holding: bool = False, cfg: dict = CFG) -> dict:
         state = build.source_state(SOURCE)
-        return build.build(self.web, self.tmp / "dist", self.tmp / "release", VALUES, state, holding=holding)
+        return build.build(self.web, self.tmp / "dist", self.tmp / "release", cfg, VALUES, state, holding=holding)
 
     def test_layout_includes_placeholders(self):
         self.build()
@@ -90,12 +99,44 @@ class BuildTest(unittest.TestCase):
         for kept in ("LICENSE", "SHA256SUMS", "ootle_wasm.d.ts"):
             self.assertTrue((dist / "vendor" / "ootle-wasm-0.45.0" / kept).is_file(), kept)
 
+    def test_test_evidence_is_never_served(self):
+        (self.web / "app" / "shots").mkdir()
+        (self.web / "app" / "shots" / "home-390.webp").write_bytes(b"RIFF")
+        (self.web / "app" / "ui" / "tests").mkdir(parents=True)
+        (self.web / "app" / "ui" / "tests" / "fixture.json").write_text("{}\n")
+        self.build()
+        self.assertFalse((self.tmp / "dist" / "app" / "shots").exists(), "screenshots show dev links with keys")
+        self.assertFalse((self.tmp / "dist" / "app" / "ui" / "tests").exists())
+
+    def test_copy_variants_follow_the_config(self):
+        self.build()
+        how = (self.tmp / "dist" / "how" / "index.html").read_text()
+        self.assertIn('<p data-when="send_mode=relay">Our relay posts it.</p>', how)
+        self.assertIn('<p data-when="send_mode=direct" hidden>', how)
+        direct = CFG | {"gates": {"send_mode": "direct", "amount_proof": "sidecar"}}
+        self.build(cfg=direct)
+        how = (self.tmp / "dist" / "how" / "index.html").read_text()
+        self.assertIn('<p data-when="send_mode=relay" hidden>', how)
+        self.assertIn('<p data-when="send_mode=direct">Your browser posts it.</p>', how)
+        llms = (self.tmp / "dist" / "llms-full.txt").read_text()
+        self.assertIn("Your browser posts it.", llms, "llms-full.txt is written from the built pages")
+        self.assertNotIn("Our relay posts it.", llms)
+        self.assertIn("https://example.test/how", llms, "its placeholders are filled")
+        manifest = json.loads((self.tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text())
+        self.assertEqual(manifest["variant_config"]["gates"], direct["gates"], "verify-deploy rebuilds with these")
+        self.assertNotIn("public_origin", manifest["variant_config"])
+
+    def test_a_site_build_needs_the_variants_tool(self):
+        (self.web / "site" / "tools" / "variants.py").unlink()
+        with self.assertRaisesRegex(build.BuildError, "variants"):
+            self.build()
+
     def test_content_id_names_what_is_served(self):
         first = self.build()["content_id"]
         self.assertRegex(first, r"^[0-9a-f]{8}$")
         self.assertEqual(self.build()["content_id"], first, "same commit and config, same release id")
         state = build.source_state(SOURCE)
-        moved = build.build(self.web, self.tmp / "dist", self.tmp / "release",
+        moved = build.build(self.web, self.tmp / "dist", self.tmp / "release", CFG,
                             VALUES | {"ORIGIN": "https://mutis.example"}, state)["content_id"]
         self.assertNotEqual(moved, first, "same commit with a new origin is a new release")
 
@@ -113,6 +154,7 @@ class BuildTest(unittest.TestCase):
         self.assertIn("<loc>https://example.test/</loc>", sitemap)
         self.assertIn("<loc>https://example.test/how</loc>", sitemap)
         self.assertIn("<loc>https://example.test/es/how</loc>", sitemap)
+        self.assertIn("<loc>https://example.test/es/</loc>", sitemap, "the Spanish home, as its canonical says")
         self.assertNotIn("404", sitemap)
         self.assertNotIn("/status", sitemap)
 
@@ -162,11 +204,12 @@ class BuildTest(unittest.TestCase):
     def test_settings(self):
         config = self.tmp / "m.toml"
         config.write_text('public_origin = "https://h.example"\nsecurity_drop_url = ""\n')
-        values = build.settings(config, None)
+        cfg = build.load_config(config)
+        values = build.settings(cfg, None)
         self.assertEqual(values["SECURITY_DROP_URL"], "https://h.example/abuse")
-        self.assertEqual(build.settings(config, "https://other.example/")["ORIGIN"], "https://other.example")
+        self.assertEqual(build.settings(cfg, "https://other.example/")["ORIGIN"], "https://other.example")
         with self.assertRaises(build.BuildError):
-            build.settings(config, "http://example.test")
+            build.settings(cfg, "http://example.test")
 
     def test_holding_build(self):
         summary = self.build(holding=True)

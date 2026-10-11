@@ -28,9 +28,9 @@ tests/e2e/                          the E2E suite, the griefer and the local sta
 python3 -I -m unittest discover -s deploy/tests        # about 3 s, no network
 ```
 
-They cover the build (the served-file allow-list, layout, includes, placeholders, SRI, vendored
-hashes, lint gate, sitemap, manifest determinism, content ids, holding mode), the lint and copy
-rules, verify-deploy's comparison, backups (age-based retention equal to the published
+They cover the build (the served-file allow-list, layout, copy variants from the config, includes,
+placeholders, SRI, vendored hashes, lint gate, sitemap, manifest determinism, content ids, holding
+mode), the lint and copy rules, verify-deploy's comparison and rebuild config, backups (age-based retention equal to the published
 `db_backup_days`, no side files) and the restore drill, the healthcheck's reaction to every D-07
 failure, the evidence collector's privacy rules, the walletd start script, the config example against
 the server's schema, the Caddyfile against spec §14.2 (and its caching and error pages), every copy
@@ -45,7 +45,7 @@ python3 -I tests/e2e/test_logs.py --walletd-probe       # what walletd keeps of 
 python3 -I tests/e2e/test_fonts.py                      # 11-brand P-18: no OTS errors in Chromium
 python3 -I tests/e2e/griefer.py [--slow-only]           # E-23 on a throwaway stack, never production
 python3 -I tests/e2e/run.py [--chain] [--final]         # the §17 scenarios (tests/e2e/README.md)
-python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>   # D-09
+python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>   # D-09 (and the SealLog template on chain)
 ```
 
 ## The server
@@ -70,8 +70,8 @@ the chain worker and its Node sidecar, wallet backups, evidence; in group `mutis
 (compiles and runs the headless browser; no sudo, no wallet, no data), `caddy`.
 
 Units: `walletd.service` (enabled), `caddy.service` (Debian's, plus `caddy.service.d/mutis.conf`),
-`mutis-backup.timer` and `mutis-backup-wallet.timer` (enabled), and, installed but left off until the
-integrator turns the app on: `mutis-api`, `mutis-chain`, `mutis-cleanup.timer`, `mutis-health.timer`,
+`mutis-backup.timer` and `mutis-backup-wallet.timer` (enabled), and, installed but left off until
+go-live ("Turning the app on"): `mutis-api`, `mutis-chain`, `mutis-cleanup.timer`, `mutis-health.timer`,
 `mutis-evidence.timer`.
 
 ## Provisioning (idempotent)
@@ -100,10 +100,12 @@ deploy/scripts/deploy.sh --working-tree --holding   # the holding page (while th
 It refuses uncommitted changes for a ref. On the server, as `build` with the server's Python 3.13, it
 runs the server's and these unit tests, the lint and the copy check (a 3.14-only API on the workstation can't pass them by accident); then it builds here with the live `/etc/mutis/mutis.toml`. The
 release id ends in a hash of what the build serves, so the same commit built with a new
-`public_origin` or `security_drop_url` is a new release that really goes live. Then one tarball
+`public_origin`, `security_drop_url` or copy-variant setting (`gates`, `features`, `hosting`; the
+manifest records these for verify-deploy) is a new release that really goes live. Then one tarball
 over one multiplexed SSH connection; on the server `activate-release.sh` fixes ownership, makes the
-sidecar prove it runs the pinned ootle-wasm, checks the config, migrates the database (the migration
-backs it up; copies are made 0600), switches `current` with one rename, restarts what is enabled,
+sidecar prove it runs the pinned ootle-wasm, checks the config, migrates the database with
+mutis-chain stopped (the migration backs it up; copies are made 0600), switches `current` with one
+rename, restarts what is enabled,
 validates and reloads a changed Caddyfile, refreshes the installed `backup.py`, warns when units
 differ (run provision), makes missing keys, and keeps 5 releases. A release id that is already live
 is left alone if it serves the same files and refused if it doesn't. Last, `tests/e2e/smoke.py` from
@@ -121,36 +123,56 @@ ssh hidebox 'sudo bash /srv/mutis/app/current/deploy/scripts/rollback.sh [<relea
 Rolling back code never rolls back the database: migrations only go forward, and an older API
 refuses a newer schema (it says so in the journal; the healthcheck turns red).
 
-## Turning the app on (integrator)
+## Turning the app on (go-live)
 
-Before: decide the gates in `/etc/mutis/mutis.toml` (`gates.send_mode`, `gates.amount_proof`,
-`features.*`, 12-integration §3). Keep `sidecar.command = ["/usr/local/lib/mutis/run-sidecar.sh"]`:
-without it the chain worker can't start its sidecar from the `current` symlink. Check `ootle.mirror_start_epoch`: it must be an epoch of the
-current chain at or before the first delivery mutis should see (it was set to 12140, Esmeralda's
-epoch on 2026-10-11; after a testnet reset, see reset-playbook §5). With 0, the mirror and every
-restored locker would scan Esmeralda's whole history. Then `sudo mutis-admin check-config`.
+12-integration §7 decides production; in this order, from the commit that will be tagged:
 
-```sh
-curl -s https://ootle-indexer-b.tari.com/epoch-manager/stats     # current_epoch, for the check above
-ssh hidebox 'sudo systemctl enable --now mutis-api mutis-chain mutis-cleanup.timer mutis-health.timer mutis-evidence.timer'
-deploy/scripts/deploy.sh <ref>                   # the smoke test now includes /api/v1/health and chain_ok
-python3 -I tests/e2e/test_headers.py && python3 -I tests/e2e/run.py --chain --final
-```
-
-Test runs on production leave their items on the home page's wall for 7 days (removed items stay
-as 30-day tombstones). To start clean after the last test run and before the public post: stop
-mutis-api and mutis-chain, move `/srv/mutis/data/db/mutis.sqlite3*` into `/var/backups/mutis/`
-(root, 0600), run `sudo mutis-admin migrate` (a new, empty database, mode 0660) and start the two
-services again.
+1. **Config** (`sudo editor /etc/mutis/mutis.toml`; keep a copy in `/var/backups/mutis/`):
+   `gates.send_mode = "relay"` (§7.5: `"direct"`, with `features.direct_send` and `features.sponsor`,
+   only after E-J passes in direct mode, tests/e2e/README.md) and `gates.amount_proof = "sidecar"`
+   (§7.6). `[seal_log] checkpoint_interval_s = 900` is the default (§7.2). Keep
+   `sidecar.command = ["/usr/local/lib/mutis/run-sidecar.sh"]` (the server resolves `sidecar.dir`
+   through the `current` symlink as well now; the wrapper is what mutis-chain's sandbox was proven
+   with, and E-11 runs the release's sidecar through it). Check `ootle.mirror_start_epoch`: an epoch
+   of the current chain at or before the first delivery mutis should see (12140, Esmeralda's epoch on
+   2026-10-11; after a testnet reset, reset-playbook §5). With 0, the mirror and every restored locker
+   would scan Esmeralda's whole history. Then `sudo mutis-admin check-config`.
+2. **Units and the release.** The build sets the copy variants (relay or direct, how payments are
+   checked, SealLog on or off) into the pages from this config, so every config change that copy
+   follows is a redeploy (a new release id). Activation migrates the database (schema 3 in this
+   release) with mutis-chain stopped and starts it again.
+   ```sh
+   curl -s https://ootle-indexer-b.tari.com/epoch-manager/stats     # current_epoch, for the check above
+   ssh hidebox 'sudo systemctl enable --now mutis-api mutis-chain mutis-cleanup.timer mutis-health.timer mutis-evidence.timer'
+   deploy/scripts/deploy.sh <ref>                   # the smoke test now includes /api/v1/health and chain_ok
+   ```
+3. **SealLog 2.0.0** ([ootle/setup-accounts.md](ootle/setup-accounts.md) §4): publish the raw
+   template, create the new log, check its header, set `ootle.seallog_component` and
+   `features.seallog = true`, deploy again. From then on every deploy notarizes its manifest
+   (`/releases.json`), and `/evidence.json` names the live log, its latest checkpoint's chain index
+   and the two retired logs. Top up `service` before November (same section).
+4. **Tests** (tests/e2e/README.md: in batches an hour apart, E-05 with `e2e_expiry_s = 60` for the
+   run only):
+   ```sh
+   python3 -I tests/e2e/test_headers.py
+   python3 -I tests/e2e/run.py --chain --final --only E-01,E-02,E-03,…   # each batch with E-03 (it reads its batch's traffic)
+   python3 -I tests/e2e/test_logs.py --relay        # D-02 after a real relay send
+   ```
+5. **A fresh database** (§7.7), after the last test run and before the public post, so the wall
+   shows no test items: stop mutis-api and mutis-chain, move `/srv/mutis/data/db/mutis.sqlite3*` into
+   `/var/backups/mutis/` (root, 0600), run `sudo mutis-admin migrate` (a new, empty database at the
+   current schema, mode 0660), start both again, `sudo mutis-admin canary-now`.
+6. **The tag:** `python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>` → 0
+   differences, the SealLog template included.
 
 ## Day to day
 
 | Task | Command |
 |---|---|
-| Health | `https://srv2052606.hstgr.cloud/status.json`; full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
+| Health | `https://srv2052606.hstgr.cloud/status.json` (the checks `/status` labels: https, api, chain_worker with its verifier, walletd, sponsor_balance, mirror, canary, credits, disk, budgets); full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
 | Takedown | `sudo mutis-admin takedown share|item|drop <id>`; `sudo mutis-admin reports --new` |
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |
-| Features, budgets | `sudo mutis-admin feature <name> on|off|clear`; `sudo mutis-admin budget show` |
+| Features, budgets | `sudo mutis-admin feature <name> on|off|clear` (at once for the app and for pages read with JavaScript; the built pages follow the TOML at the next deploy); `sudo mutis-admin budget show` |
 | Canary, evidence | `sudo mutis-admin canary-now`; `sudo systemctl start mutis-evidence` |
 | walletd | `systemctl status walletd`; `journalctl -u walletd` (warnings only); restart `sudo systemctl restart walletd` |
 | Balances | `cd /tmp && sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py balances [--refresh]` |

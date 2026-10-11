@@ -159,8 +159,8 @@ http://{$MUTIS_HOST} {
 		file_server
 	}
 
-	# The home page is the product (the drop widget), so it gets the app policy.
-	@home path / /index.html
+	# Both home pages are the product (the drop widget), so they get the app policy.
+	@home path / /index.html /es /es/ /es/index.html
 	handle @home {
 		import app_csp
 		import revalidate

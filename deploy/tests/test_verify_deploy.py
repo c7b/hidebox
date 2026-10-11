@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MIT
 """tools/verify-deploy.py compare(): equal sites pass; changed bytes, missing files and a lying
-manifest are each reported. A local HTTP server plays the live site."""
+manifest are each reported. A local HTTP server plays the live site. The rebuild's config: the
+variant tables the live manifest records, and nothing else a manifest could smuggle in."""
 import hashlib
 import http.server
 import importlib.util
 import shutil
 import tempfile
 import threading
+import tomllib
 import unittest
 from functools import partial
 from pathlib import Path
@@ -59,6 +61,33 @@ class VerifyDeployTest(unittest.TestCase):
         self.assertIn("missing on the live site: new.html", diffs)
         self.assertIn("on the live site but not in the build: old.html", diffs)
         self.assertTrue(any("commit other" in d for d in diffs))
+
+
+class BuildConfigTest(unittest.TestCase):
+    def test_the_variant_tables_of_the_live_build_are_used(self):
+        cfg = {"network": "esmeralda", "security_drop": None, "repo_url": "https://code.example/mutis"}
+        recorded = {"gates": {"send_mode": "direct", "amount_proof": "sidecar"}, "features": {"seallog": True},
+                    "hosting": {"snapshots": "off"}}
+        doc = tomllib.loads(verify.build_config("https://h.example", cfg, recorded))
+        self.assertEqual(doc["public_origin"], "https://h.example")
+        self.assertEqual(doc["security_drop_url"], "")
+        self.assertEqual({t: doc[t] for t in ("gates", "features", "hosting")}, recorded)
+
+    def test_a_manifest_cannot_add_keys_or_tables(self):
+        recorded = {"gates": {"send_mode": "relay", 'x = 1\n[evil]\ny': True, "nested": {"a": 1}},
+                    "secrets": {"key": "value"}}
+        doc = tomllib.loads(verify.build_config("https://h.example", {}, recorded))
+        self.assertEqual(doc["gates"], {"send_mode": "relay"})
+        self.assertNotIn("secrets", doc)
+        self.assertNotIn("evil", doc)
+
+    def test_no_seallog_no_check(self):
+        self.assertEqual(verify.seallog_check({"seal_log": {"component": None}}, ROOT), [])
+
+    def test_a_component_that_isnt_an_address_is_a_difference(self):
+        diffs = verify.seallog_check({"seal_log": {"component": "component_../../evil?x="}}, ROOT)
+        self.assertEqual(len(diffs), 1)
+        self.assertIn("no valid component", diffs[0])
 
 
 if __name__ == "__main__":

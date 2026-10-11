@@ -55,7 +55,13 @@ mv "$new" "$dir"
 
 if [ -x "$dir/server/bin/mutis-admin" ]; then
   as_mutis python3 -I "$dir/server/bin/mutis-admin" check-config >/dev/null || die "mutis-admin check-config failed"
-  as_mutis python3 -I "$dir/server/bin/mutis-admin" migrate   # backs the database up first
+  # The chain worker writes all the time; it waits out the migration (the restarts below start it again).
+  chain_was=$(systemctl is-active mutis-chain 2>/dev/null || true)
+  [ "$chain_was" = active ] && systemctl stop mutis-chain
+  if ! as_mutis python3 -I "$dir/server/bin/mutis-admin" migrate; then   # backs the database up first
+    [ "$chain_was" = active ] && systemctl start mutis-chain
+    die "mutis-admin migrate failed; the previous release stays live"
+  fi
   find /srv/mutis/data/backup -maxdepth 1 -name 'pre-migrate-*' ! -perm 0600 -exec chmod 0600 {} +
 fi
 

@@ -4,6 +4,8 @@
 
 Writes data/health.json (full detail, not served) and status/status.json (the public subset served at
 /status.json: green/amber/red per check, `attention` with fixed reason codes, the mainnet phase).
+The check names are the ones /status labels (web/site/js/status.js): https api chain_worker walletd
+sponsor_balance mirror canary credits disk budgets; the detail says which part failed.
 A red check also writes one CRIT line with its fixed code to the journal. The chain worker's state
 comes from the database (meta.chain_status, written by mutis-chain), because `mutis` cannot reach
 walletd. No check reads or writes anything that identifies a visitor, a link or an address.
@@ -31,6 +33,8 @@ CANARY_MAX_S = 75 * 60
 CANARY_VERIFY_S = 20 * 60
 SPONSOR_MIN_UT = 200_000_000
 CERT_MIN_DAYS = 14
+RECONCILE_UNKNOWN_ALERT = 3     # hourly reconciles in a row without a verdict (server payments.UNKNOWN_ALERT_AFTER)
+BUDGET_ALERT = 90               # a daily budget slice at 90 % of its limit (meta.alerts)
 
 
 def https_ok(origin: str) -> tuple[str, str]:
@@ -73,18 +77,28 @@ def meta(conn: sqlite3.Connection, key: str, default=None):
 def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
     checks = {}
     beat = int(meta(conn, "chain_heartbeat", 0) or 0)
-    checks["chain_worker"] = (GREEN, "heartbeat ok") if now - beat < HEARTBEAT_MAX_S else (RED, "chain_worker_stale")
     status = meta(conn, "chain_status", {}) or {}
     fresh = now - int(status.get("updated_at", 0)) < STATUS_MAX_S
+    if now - beat >= HEARTBEAT_MAX_S:
+        checks["chain_worker"] = (RED, "chain_worker_stale")
+    elif not (fresh and status.get("sidecar_ok")):
+        checks["chain_worker"] = (RED, "sidecar_down")       # the verifier the worker runs
+    else:
+        checks["chain_worker"] = (GREEN, "heartbeat ok, verifier running")
     checks["walletd"] = (GREEN, "reachable") if fresh and status.get("walletd_ok") else (RED, "walletd_unreachable")
-    checks["sidecar"] = (GREEN, "running") if fresh and status.get("sidecar_ok") else (RED, "sidecar_down")
     balance = int(status.get("sponsor_balance_ut") or 0)
     checks["sponsor_balance"] = (GREEN, f"{balance // 1_000_000} tTARI") if balance > SPONSOR_MIN_UT else \
         (AMBER, "sponsor_low")
     mirror_at = int(status.get("mirror_ok_at") or 0)
     checks["mirror"] = (GREEN, "current") if now - mirror_at < MIRROR_MAX_S else (RED, "mirror_lagging")
-    checks["credit_freeze"] = (RED, "credit_freeze_on") if str(meta(conn, "credit_freeze", "")) == "1" else \
-        (GREEN, "off")
+    if str(meta(conn, "credit_freeze", "")) == "1":
+        checks["credits"] = (RED, "credit_freeze_on")
+    elif int(status.get("reconcile_unknown") or 0) >= RECONCILE_UNKNOWN_ALERT:
+        checks["credits"] = (AMBER, "indexers_unreachable")
+    elif int(status.get("payments_unconfirmed") or 0):
+        checks["credits"] = (AMBER, "payments_unconfirmed")
+    else:
+        checks["credits"] = (GREEN, "all confirmed")
     log = meta(conn, "canary_log", []) or []
     latest = max(log, key=lambda e: e["sealed_at"], default=None)
     if latest is None or now - latest["sealed_at"] > CANARY_MAX_S:
@@ -95,8 +109,8 @@ def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
         checks["canary"] = (RED, "canary_unverified")
     else:
         checks["canary"] = (AMBER, "canary_in_flight")
-    unconfirmed = int(status.get("payments_unconfirmed") or 0)
-    checks["payments"] = (GREEN, "all confirmed") if unconfirmed == 0 else (AMBER, "payments_unconfirmed")
+    levels = ((meta(conn, "alerts", {}) or {}).get("budgets") or {}).values()
+    checks["budgets"] = (AMBER, "budget_90") if any(level >= BUDGET_ALERT for level in levels) else (GREEN, "below 90 %")
     return checks
 
 
@@ -128,7 +142,7 @@ def evaluate(cfg: dict, conn: sqlite3.Connection | None, now: int, probes: dict)
     origin = cfg["public_origin"]
     checks = {"https": probes["https"](origin), "api": probes["api"](origin)}
     if conn is None:
-        checks["database"] = (RED, "database_unreadable")
+        checks["chain_worker"] = (RED, "database_unreadable")    # its state is read from the database
         reasons = []
     else:
         checks |= chain_checks(conn, now)

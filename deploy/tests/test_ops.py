@@ -41,7 +41,8 @@ def mutis_db(path: Path) -> sqlite3.Connection:
         CREATE TABLE chain_utxos (seq INTEGER PRIMARY KEY, id TEXT UNIQUE, nonce BLOB, enc BLOB, tag BLOB, epoch INTEGER,
                                   first_seen INTEGER);
         CREATE TABLE seal_checkpoints (idx INTEGER PRIMARY KEY, tree_size INTEGER, root BLOB, created_at INTEGER,
-                                       state TEXT, job_id TEXT, tx_id TEXT, epoch INTEGER);""")
+                                       state TEXT, tx_id TEXT, submitted_at INTEGER, epoch INTEGER, component TEXT,
+                                       chain_index INTEGER);""")
     return conn
 
 
@@ -146,19 +147,44 @@ class HealthTest(unittest.TestCase):
             "chain_worker": lambda: set_meta(self.conn, "chain_heartbeat", str(self.NOW - 600)),
             "walletd": lambda: set_meta(self.conn, "chain_status", {**json.loads(self.conn.execute(
                 "SELECT value FROM meta WHERE key = 'chain_status'").fetchone()[0]), "walletd_ok": False}),
-            "sidecar": lambda: set_meta(self.conn, "chain_status", {**json.loads(self.conn.execute(
-                "SELECT value FROM meta WHERE key = 'chain_status'").fetchone()[0]), "sidecar_ok": False}),
+            "chain_worker:sidecar_down": lambda: self.status(sidecar_ok=False),
             "canary": lambda: set_meta(self.conn, "canary_log", [{"n": 7, "sealed_at": self.NOW - 5 * 3600, "verified": True}]),
             "disk": lambda: self.cfg["limits"].update(reserve_min_bytes=200 << 30),
-            "credit_freeze": lambda: set_meta(self.conn, "credit_freeze", "1"),
+            "credits": lambda: set_meta(self.conn, "credit_freeze", "1"),
         }
-        for check, simulate in failures.items():
-            with self.subTest(check):
+        for name, simulate in failures.items():
+            check, _, detail = name.partition(":")
+            with self.subTest(name):
+                self.tearDown()
                 self.setUp()
                 simulate()
                 r = self.report()
                 self.assertEqual(r["checks"][check]["state"], "red", r["checks"][check])
+                if detail:
+                    self.assertEqual(r["checks"][check]["detail"], detail)
                 self.assertEqual(r["overall"], "red")
+
+    def status(self, **changes):
+        current = json.loads(self.conn.execute("SELECT value FROM meta WHERE key = 'chain_status'").fetchone()[0])
+        set_meta(self.conn, "chain_status", current | changes)
+
+    def test_check_names_are_the_ones_status_labels(self):
+        labels = {"https", "api", "chain_worker", "walletd", "sponsor_balance", "mirror", "canary", "credits", "disk",
+                  "budgets"}
+        self.assertEqual(set(self.report()["checks"]), labels)
+        self.assertEqual(set(health.evaluate(self.cfg, None, self.NOW, self.probes)["checks"]) - labels, set())
+
+    def test_payments_the_indexers_cant_confirm_are_amber(self):
+        self.status(reconcile_unknown=2)
+        self.assertEqual(self.report()["checks"]["credits"]["state"], "green")
+        self.status(reconcile_unknown=3)
+        self.assertEqual(self.report()["checks"]["credits"], {"state": "amber", "detail": "indexers_unreachable"})
+        self.status(reconcile_unknown=0, payments_unconfirmed=1)
+        self.assertEqual(self.report()["checks"]["credits"], {"state": "amber", "detail": "payments_unconfirmed"})
+
+    def test_a_budget_slice_at_90_is_amber(self):
+        set_meta(self.conn, "alerts", {"budgets": {"courier:public": 90}})
+        self.assertEqual(self.report()["checks"]["budgets"], {"state": "amber", "detail": "budget_90"})
 
     def test_budget_slice_at_half_raises_attention(self):
         set_meta(self.conn, "alerts", {"budgets": {"courier:public": 50}})
@@ -209,6 +235,27 @@ class EvidenceTest(unittest.TestCase):
             set_meta(conn, "chain_status", {"sidecar": {"wasm_sha256": "e" * 64}})
             doc = evidence.collect({"network": "esmeralda"}, conn, robot, datetime.datetime.now(datetime.UTC))
             self.assertEqual(doc["wasm_sha256"], "e" * 64)
+            conn.close()
+
+    def test_seallog_names_the_live_log_its_chain_index_and_the_retired_ones(self):
+        live, old = "component_" + "1" * 64, "component_" + "2" * 64
+        with tempfile.TemporaryDirectory() as tmp:
+            conn = mutis_db(Path(tmp) / "db.sqlite3")
+            cfg = {"features": {"seallog": False}, "ootle": {"seallog_component": live}}
+            self.assertIsNone(evidence.seallog(conn, cfg), "nothing while SealLog is off")
+            cfg["features"]["seallog"] = True
+            self.assertIsNone(evidence.seallog(conn, cfg)["latest_checkpoint"])
+            rows = [(1, old, 9, "committed"), (2, live, 3, "committed"), (3, live, None, "failed")]
+            for idx, component, chain_index, state in rows:
+                conn.execute("INSERT INTO seal_checkpoints (idx, tree_size, root, created_at, state, tx_id, epoch, "
+                             "component, chain_index) VALUES (?, 64, x'00', 0, ?, ?, 12200, ?, ?)",
+                             (idx, state, f"{idx}" * 64, component, chain_index))
+            doc = evidence.seallog(conn, cfg)
+            conn.close()
+        self.assertEqual(doc["latest_checkpoint"], {"index": 3, "component": live, "tree_size": 64,
+                                                    "tx_id": "2" * 64, "epoch": 12200})
+        self.assertEqual(doc["retired"], list(evidence.RETIRED_LOGS))
+        self.assertNotIn(live, doc["retired"])
 
 
 class RunWalletdTest(unittest.TestCase):

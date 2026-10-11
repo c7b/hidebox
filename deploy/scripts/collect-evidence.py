@@ -23,6 +23,11 @@ import tomllib
 from pathlib import Path
 
 STATUS = Path("/srv/mutis/status")
+# SealLog components we wrote to before the live one (template NOTES §1.5): the 1.0.0 log, never
+# appended to, and the research log, with one test checkpoint. Listed so that a reader who finds
+# them on chain knows they are ours and retired; /api/v1/config names the live one.
+RETIRED_LOGS = ("component_0ff7e892de37ee65d60e37a5e55cdfe24b11bd9e84cb5af49831e309f6bd22aa",
+                "component_32dae273fb4c4c63c77cd1c70ef4e53e07cb56aaa378730fabcd228e45a7e36e")
 
 
 def meta(conn: sqlite3.Connection, key: str, default=None):
@@ -53,10 +58,13 @@ def seallog(conn: sqlite3.Connection, cfg: dict) -> dict | None:
     component = cfg.get("ootle", {}).get("seallog_component", "")
     if not (cfg.get("features", {}).get("seallog") and component):
         return None
-    row = conn.execute("SELECT tree_size, tx_id, epoch FROM seal_checkpoints WHERE state = 'committed' "
-                       "ORDER BY idx DESC LIMIT 1").fetchone()
-    latest = {"tree_size": row[0], "tx_id": row[1], "epoch": row[2]} if row else None
-    return {"component": component, "latest_checkpoint": latest}
+    row = conn.execute("SELECT chain_index, tree_size, tx_id, epoch FROM seal_checkpoints "
+                       "WHERE state = 'committed' AND component = ? ORDER BY idx DESC LIMIT 1", (component,)).fetchone()
+    # `index` is the log's own checkpoint number, the one a reader finds on chain (null when the
+    # worker couldn't read it from the append's event), as in the API's checkpoint objects.
+    latest = {"index": row[0], "component": component, "tree_size": row[1], "tx_id": row[2], "epoch": row[3]} \
+        if row else None
+    return {"component": component, "latest_checkpoint": latest, "retired": list(RETIRED_LOGS)}
 
 
 def collect(cfg: dict, conn: sqlite3.Connection, robot_file: Path, now: datetime.datetime) -> dict:
