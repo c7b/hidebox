@@ -63,6 +63,24 @@ class Canary(unittest.TestCase):
         self.assertEqual(s.conn.execute("SELECT state FROM items WHERE id = ?", (entry["item_id"],)).fetchone()[0],
                          "deleted")
 
+    def test_a_key_the_restarted_verifier_lost_is_published_as_missed(self):
+        """App-core review L8: the sidecar keeps canary keys in memory; after a restart that hour shows as
+        missed, never skipped, and the worker doesn't ask again."""
+        s = self.s
+        self.w.tick()
+        self.tick(10, 6)
+        self.w.sidecar.stop()                 # the next request starts a fresh sidecar that knows no canary
+        s.now += 25 * 3600
+        self.w.tick()
+        revealed = s.request("GET", "/api/v1/canary")[2]["revealed"]
+        sealed_at = db.get_meta_json(s.conn, "canary_log")[0]["sealed_at"]
+        self.assertEqual(revealed, [{"n": 1, "sealed_at": sealed_at, "missed": True}])
+        calls = []
+        self.w.sidecar.request = lambda cmd, **fields: calls.append(cmd) or {}
+        self.w.last.pop("reveal")
+        self.w._reveal_canaries(s.now)
+        self.assertNotIn("reveal", calls)
+
     def test_hourly_cadence(self):
         self.w.tick()
         self.tick(600, 5)

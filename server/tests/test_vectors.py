@@ -193,10 +193,11 @@ class Codec(unittest.TestCase):
         try:
             migrations = s.tmp / "migrations"
             migrations.mkdir()
-            (migrations / "003_example.sql").write_text("-- SPDX-License-Identifier: MIT\n"
-                                                        "CREATE TABLE example (x INTEGER) STRICT;\n")
-            self.assertEqual(db.migrate(s.cfg.db_path, migrations), 3)
-            self.assertEqual(db.migrate(s.cfg.db_path, migrations), 3)
+            following = db.SCHEMA_VERSION + 1
+            (migrations / f"{following:03d}_example.sql").write_text("-- SPDX-License-Identifier: MIT\n"
+                                                                    "CREATE TABLE example (x INTEGER) STRICT;\n")
+            self.assertEqual(db.migrate(s.cfg.db_path, migrations), following)
+            self.assertEqual(db.migrate(s.cfg.db_path, migrations), following)
             self.assertIsNotNone(s.conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'example'").fetchone())
         finally:
             s.close()

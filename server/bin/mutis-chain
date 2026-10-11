@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """mutis-chain: the chain worker (spec §10), run as `drive` next to walletd. Stops cleanly on SIGTERM."""
 import argparse
+import os
 import signal
 import sys
 import threading
@@ -20,6 +21,7 @@ def main() -> None:
     p = argparse.ArgumentParser(prog="mutis-chain")
     p.add_argument("--config")
     args = p.parse_args()
+    os.umask(0o007)           # files we create (the database, its -wal and -shm) stay within group mutis
     logsafe.setup()
     cfg = config.load(args.config)
     stop = threading.Event()

@@ -3,7 +3,8 @@
 
 Everything below was run on 2026-10-11, on the jarvis box (Python 3.14) and on ultron as `build`
 (Python 3.13.5, Node 20.19.2) in `/home/build/work/server`. Nothing ran as `drive`; walletd was read
-once, read-only, as `lcam` (§1.3). §5 lists what the devil's-advocate fix pass changed (schema 2).
+once, read-only, as `lcam` (§1.3). §5 lists what the devil's-advocate fix pass changed (schema 2); §6 and §7
+are the integration pass (schema 3), which also updated the rows of §2 and §3 it touched.
 
 ## 1. Gate G3: indexer UTXO framing — PASS (mirror via the stream with per-shard cursors)
 
@@ -91,11 +92,11 @@ and reports `checks.amount_proven: false`. An invoice goes `pending → seen →
 | Never-shared items | doomed only after the 2-hour upload window (they never had a link) | a slow phone must not lose its upload between `complete` and creating its link |
 | Unread request bodies | drained (≤ 8 MiB) before answering an early error; larger ones close the connection | a browser gets the JSON error instead of a reset |
 | Listen backlog | 128 (the `http.server` default of 5 dropped bursts: 50 concurrent opens took 7.6 s, now 0.1 s) | judge-path bursts behind Caddy |
-| Judge passes (P-12) | header `X-Mutis-Judge: judge-<24 Crockford chars>` (case-insensitive), valid 30 days from `judge-pass new`; each PoW it stands in for uses one of its `--pow-skips` (default 100); budgeted sends (courier, demo-pay, sponsor) spend one of its `--uses` (default 5) inside the transaction that queues the job (a refused send keeps its use) and draw from the **evidence** slice; unknown, expired or used up → `403 forbidden` `details.judge = "invalid"` | 5 uses would otherwise run out midway through the judge script; a leaked pass can't skip PoW without limit |
+| Judge passes (P-12) | header `X-Mutis-Judge: judge-<24 Crockford chars>` (case-insensitive), valid 30 days from `judge-pass new`; each PoW it stands in for uses one of its `--pow-skips` (default 100); budgeted sends (courier, demo-pay, sponsor) spend one of its `--uses` (default 5) inside the transaction that queues the job (a refused send keeps its use) and draw from the **evidence** slice; a valid pass lifts the per-/64 and per-/48 limits of `POST /sponsor` and demo-pay (the per-locker limits stay); unknown, expired or used up → `403 forbidden` `details.judge = "invalid"` | 5 uses would otherwise run out midway through the judge script; a leaked pass can't skip PoW without limit; two judges on one network both get a grant (app-core review M1) |
 | Drop and canary links | the server fixes their rule (3 opens until the drop item's 7-day expiry; 3 opens within 24 h for the canary) and answers the effective values; a client value is not an error | fewer ways for the judge path to fail |
 | `first_opened_min` (P-25) | unix **seconds** floored to the minute (like `*_hour`); only in `GET /s/{id}/manage` | the API's time convention |
 | SealLog tables | in schema v1 directly (`seal_leaves` with `kind ∈ stored|exit|pad`, `seal_checkpoints`), plus `items.exit_hour` | nothing is deployed yet; pad leaves must live in the tree; the exit leaf is recomputed from the item id and hour, so no table maps leaves to items |
-| Checkpoint cadence | every 6 h (spec §11.3), `/config.seal_log.checkpoint_interval_s = 21600` | brand 8.3's "15" is overridden by spec numbers (12-integration precedence); C7 copy must read the variable |
+| Checkpoint cadence | config `seal_log.checkpoint_interval_s`, default **900** (15 minutes), refused below 600; `/config.seal_log.checkpoint_interval_s` reports it | ratified by the integrator (12-integration §7.2, the template builder's recommendation); C7 copy reads the variable |
 | Password-only PoW | `peek`/`open` accept an optional JSON body `{"pow": {challenge, nonce}}`; `POST /pow` accepts `min_difficulty` (for the 20-bit busy-day rule); waiting shows as `428 pow_required` with `retry_after` | the spec gives the rule but no wire format |
 | Unlock | `PATCH /s/{id}` accepts `{"unlock": true}` from the owner | "locks until its owner unlocks or revokes it" |
 | "Keep" for a received file (P1) | **no server endpoint.** The recipient opens the link normally (the view is used, the sender's file leaves on its rule and gets its exit receipt), then the browser seals the plaintext again as the recipient's own kept file (`POST /uploads` with `retention: "kept"`). `POST /s/{id}/claim` and `POST /items/{id}/claim` answer 404 | a server-side claim let a recipient cancel a Once link's exit without opening it and showed the sender a false "revoked" (review H4); re-sealing keeps every exit promise literally true and uses only existing endpoints |
@@ -107,20 +108,26 @@ and reports `checks.amount_proven: false`. An invoice goes `pending → seen →
 | Claim order | evidence slice, then reserved, then public; `not_before` within each | judge and canary sends don't wait behind a burst of public drop deliveries |
 | Budget slices | `public`, `reserved` (lockers older than today, decoys) and a new `evidence` slice (canary, daily evidence payment, judge passes): courier 150, demo-pay 10 tTARI, sponsor 10 tTARI a day | lockers can't drain what the canary and judges need (review M3); worst case adds ≈ 25 tTARI/day to §9.5's ≈ 230 |
 | Budget overrides | `mutis-admin budget set` can only **lower** a slice for the day; raising one means editing the TOML and restarting | the API user can write the database; a bug there must not raise what the worker spends (spec D4, review M8) |
-| SealLog checkpoints | submitted by the worker itself every 6 h (`seal-now` at most every 10 minutes; a failed submission retries after 10 minutes); there is no `seal` job kind any more | nothing in the database can make the worker publish a root or spend the operator's funds (review M8) |
+| SealLog checkpoints | submitted by the worker itself every `checkpoint_interval_s` (`seal-now` at most every 10 minutes; a failed submission, including one the component refuses, retries after 10 minutes and the next checkpoint covers its leaves); every checkpoint adds at least one pad leaf, up to the next multiple of 64; there is no `seal` job kind any more | nothing in the database can make the worker publish a root or spend the operator's funds (review M8); template 2.0.0 refuses a size that doesn't grow, and idle windows must not show |
 | SealLog leaf indices | a leaf has no index until the checkpoint that commits it, which places the batch (with its pad leaves) in a random order; proofs return `leaf_index` only with a committed checkpoint | an index must not count uploads (spec §11.3, review M1) |
 | SealLog off | `/seallog/proof`, `/seallog/checkpoints` and `/s/{id}/exit` answer `503 feature_disabled` (`details.feature = "seallog"`) unless `features.seallog` is on **and** `ootle.seallog_component` is set | no page may promise a checkpoint that never comes (review M2) |
 | Demo payments | the worker sends a `demo_pay` only to the receiver address it learned itself (key file or walletd), never one read from the database | a rewritten `meta.receiver_address` can't redirect the sponsor's funds (review M8) |
 | Indexer checks | `ok` / `missing` / `unknown`; credits need `ok`; the hourly reconcile freezes credits only when every indexer says a credited output is gone (or the sidecar no longer proves its value), and skips the round on `unknown` | one CDN 503 must not stop every pack until a human acts (review H3) |
 | Mirror cursors | stored with the indexer that served them (`meta.mirror_source`); an answer from the other indexer restarts the cursors from zero | shard versions may be per indexer (review L15). After the schema-2 upgrade the mirror re-syncs once (no source recorded yet), which also fills `promise`/`viewable`/`auth` for live outputs |
 | `/stats` disk sizes | rounded down to 0.1 GiB | uploads reserve their full padded size at once, so exact bytes every minute showed each upload's padded size (review M6). `last_sealed_min` (spec §6.3) still tells, to the minute, when the latest upload finished; `/privacy` should say so |
-| `/stats/wall` | random order; items appear 1–2 hours after upload (never under an hour); `opened` kept as the spec defines it | a fresh upload can't be picked out by position (review L3); whoever knows a file's classes may still recognise it, which `/privacy` should say |
+| `/stats/wall` | `{size, exit}` per item only (no `state`, no `ttl`); random order; items appear 1–2 hours after upload (never under an hour); taken-down items are left out | a fresh upload can't be picked out by position (review L3); the wall must not say when a link was opened (site review M15); an E2E run that takes its items down leaves no trace there (12-integration §7.7); whoever knows a file's size class and rule may still recognise it, which `/privacy` should say |
 | `/me/items` cursor | `"<created_hour>.<item_id>"` of the last row, newest hour first | the old global `rowid` leaked total volume (review L11) |
 | Active lockers N (§9.2) | lockers active on ≥ 2 days **that store something** | lockers made only to be counted don't push the free quota down (review L6); no new column |
 | Database | `PRAGMA secure_delete=ON` on every connection | scrubbing a wrapped key must not depend on the distro's build flags (review L7) |
 | Address normalisation | addresses we store or send to are canonical lowercase without a pay-ref (`ootle_addr.base_address`) | walletd would otherwise copy an embedded pay-ref into the memo |
 | `limits.anon.courier_per_day` (P-3) | = the probation locker's 3 sends a day | every send leaves from a (silently created) locker; anonymous sessions can't relay-send at all |
 | `limits.anon.uploads_per_hour` | 30 (small files); `large_uploads_per_hour` = 10 (5–25 MiB) | both limits exist (spec §6.2) |
+| SealLog checkpoint numbers | `seal_checkpoints.component` and `chain_index` (schema 3): the component appended to and the `index` of its `SealLog.root` event, read from walletd's `transactions.wait_result` `result.events` (shape checked live on the notarize transaction `c9026517…4329`); the committed epoch also comes from that event. API checkpoint objects: `index` = that chain index (null if the event couldn't be read), plus `component`; `/seallog/checkpoints` `next` is an opaque cursor | the server's own row id also counts failed checkpoints, so "SealLog checkpoint #n" must be the number a reader finds on chain (template NOTES §2) |
+| Missed canary reveals | when the sidecar answers `reveal` with `not_found` (it restarted and forgot the key), the hour is marked missed and `GET /canary` lists it in `revealed[]` as `{"n", "sealed_at", "missed": true}` (no `fk`) while its ciphertext is still held; other sidecar errors retry the next hour | never skip an hour (app-core review L8) |
+| E2E expiry preset | config `e2e_expiry_s` (default 0 = off); when set, `/config` carries `"e2e_expiry_s": <value>` | spec §17.1's 60 s option, absent in production (app-ui review M8) |
+| Requests in flight | at most 32 per /64 (IPv4: per address) and 128 per /48 (IPv4: per /24); over that `429 rate_limited`, `retry_after: 1` | slow downloads from one network can't hold every API thread (deploy review M6); a browser uses about 6 at once |
+| `operator_account` | default `"service"` | G5 failed: walletd 0.45 signs SealLog calls with the default key (12-integration §7.3) |
+| Process umask | every `bin/*` sets 007; `migrate` copies the database (0600) only when a migration is pending | the database and its `-wal`/`-shm` must stay group-`mutis` only, whoever runs the command |
 
 ## 3. Requests
 
@@ -133,16 +140,20 @@ and reports `checks.amount_proven: false`. An invoice goes `pending → seen →
    `min_difficulty` on `POST /pow`, `{"pow"}` bodies on `peek`/`open`, `/config` fields (`send_mode`,
    `amount_proof` as a string, `repo_url`, `security_drop` (null until set), `seal_log`, `retention`, `quota`,
    `password`, `invoices`, `hosting`, `onion`, `limits.demo_pay_per_day`, `limits.anon.{courier_per_day,
-   uploads_per_hour, large_uploads_per_hour}`, `ootle.{wasm_version, mainnet_date}`), `/stats.{disk_total_bytes,
+   uploads_per_hour, large_uploads_per_hour}`, `ootle.{wasm_version, mainnet_date}`, `e2e_expiry_s` only where
+   configured), `/stats.{disk_total_bytes,
    disk_free_bytes, seal_log}`, `GET /canary` `revealed[]` entries carry `header`, `meta_ct`, `size_stored` so
-   a visitor can decrypt with `fk`, `GET /chain/tx/{id}/view` adds `substates_created` and per output
+   a visitor can decrypt with `fk` (or are `{n, sealed_at, missed: true}`), checkpoint objects carry the
+   chain's `index` and `component`, `/stats/wall` items are `{size, exit}`, `GET /chain/tx/{id}/view` adds
+   `substates_created` and per output
    `amount` ∈ `hidden | lower_bound | viewable | unknown` (+ `min_value_ut` when a lower bound is public)
    and `owner` ∈ `one-time key | spend rule | unknown`. **Removed:** `POST /items/{id}/claim` (P1 "Keep"
    is a re-seal in the browser; §2).
 2. The `/config` class block is named `limits.locker` (spec §6.3); 11-brand §8.3 calls it `limits.free`.
 3. Config key names follow spec §15.3 (`memo_origins`, not 12-integration's `allowed_memo_origins`); a new
-   gate `gates.key_bundle` (G2a fallback, default false) and `ootle.seallog_component`. Unknown keys stop
-   the service on purpose.
+   gate `gates.key_bundle` (G2a fallback, default false), `ootle.seallog_component`,
+   `seal_log.checkpoint_interval_s` (default 900) and `e2e_expiry_s` (default 0). Unknown keys stop the
+   service on purpose.
 4. Add the owner's real Tari Universe / L1 address samples to `server/tests/make_vectors.py` (`addr.json`
    `pending` note), then re-run it.
 5. `features.kept` defaults to `true` (P1 item 1 is in this build: "Only me" files and the locker list);
@@ -155,22 +166,24 @@ and reports `checks.amount_proven: false`. An invoice goes `pending → seen →
    `internal`. Every one leaves the item and link intact; the UI offers **Try again**.
 7. `/privacy`, `/how` and the glass box (review L10): `shares.first_opened_min` is the **minute** of the
    first open (owner only, P-25) and `items.exit_hour` the hour of deletion; the daily database backups
-   hold the wrapped keys of links that were active at backup time for 7 days; the wall can show that a
-   file of a given size and rule was opened (to someone who already knows those). "Two independent
-   indexers" stays banned: the mirror and the payment check both use indexer-b first.
+   hold the wrapped keys of links that were active at backup time for 7 days; the wall shows a recent
+   file's size class and exit rule (never whether it was opened), which someone who knows those may
+   recognise. "Two independent indexers" stays banned: the mirror and the payment check both use
+   indexer-b first.
 8. Spec §9.5 gains the `evidence` slice and "overrides only lower"; spec §10.4 loses the `seal` job kind.
 
 ### Deploy builder
 
 1. Release: write `server/GIT_SHA`. Run `mutis-admin migrate` before starting `mutis-api` (it refuses a
-   stale schema). **This release is schema 2** (`mutis/migrations/002_review_fixes.sql`, tested against a
-   copy of the deployed schema 1); stop `mutis-chain` for the migration. `mutis-admin check-config`
-   validates the TOML.
+   stale schema). **This release is schema 3** (`mutis/migrations/002_review_fixes.sql` and
+   `003_seal_chain_index.sql`, tested against a copy of the deployed schema 1); stop `mutis-chain` for the
+   migration. `mutis-admin check-config` validates the TOML.
 2. `mutis-chain` reaches the API at `http://<listen>` for the canary (the sidecar uploads through it; the
    worker opens the canary link once): keep it on `127.0.0.1:8787`.
 3. Sidecar command: `[sidecar] node`, `dir` (→ `node --experimental-permission --allow-fs-read=<dir>
-   --disallow-code-generation-from-strings <dir>/sidecar.mjs`, env `MUTIS_API` only) or a full `command`
-   list for the Chromium fallback. `expected_wasm_sha256` defaults to the pinned 0.45.0 hash.
+   --disallow-code-generation-from-strings <dir>/sidecar.mjs` with `<dir>` resolved through symlinks, env
+   `MUTIS_API` only) or a full `command` list for the Chromium fallback. `expected_wasm_sha256` defaults to
+   the pinned 0.45.0 hash.
 4. `receiver.json` / `robot.json` = the sidecar's `newKeys` answer as JSON
    (`owner_sk, view_sk, owner_pk, view_pk, address`). The worker reads `view_sk` (receiver) and all three
    for the robot.
@@ -181,7 +194,8 @@ and reports `checks.amount_proven: false`. An invoice goes `pending → seen →
    `kind = 'demo_pay'`); `meta.canary_delivery_tx`.
 7. Caddy: `X-Real-IP {remote_host}` (trusted only from 127.0.0.1); the API sends no `Server` header;
    `request_body max_size 5MB` fits a 4 MiB + 16 chunk.
-8. walletd: the worker uses accounts `sponsor`, `service` (G4 fallback), `operator` (SealLog) by name.
+8. walletd: the worker uses accounts `sponsor`, `service` (G4 fallback) and `ootle.operator_account`
+   (SealLog; default `service`, G5) by name.
 9. `mutis.toml.example` may list `[budgets.evidence]` (`courier = 150`, `demo_pay_ut = 10000000`,
    `sponsor_ut = 10000000`); the defaults apply without it. `budget set` now only lowers a limit.
 10. Healthcheck: `chain_status.reconcile_unknown ≥ 3` is an alert (indexers unreachable for the hourly
@@ -211,9 +225,10 @@ and reports `checks.amount_proven: false`. An invoice goes `pending → seen →
 
 ### Site builder
 
-`/stats` (60 s; `disk_total_bytes`/`disk_free_bytes` in steps of 0.1 GiB), `/stats/wall` (300 s; random
-order, not newest first; items show 1–2 hours after upload; `quiet: true` and `lockers: []` below 8),
-`/canary` (404 until the first delivery is done) and `/config` follow §6.3 plus the fields in Integrator 1.
+`/stats` (60 s; `disk_total_bytes`/`disk_free_bytes` in steps of 0.1 GiB), `/stats/wall` (300 s; items
+`{size, exit}` only, random order, not newest first; items show 1–2 hours after upload; `quiet: true` and
+`lockers: []` below 8), `/canary` (404 until the first delivery is done; `revealed[]` may hold
+`{n, sealed_at, missed: true}`) and `/config` follow §6.3 plus the fields in Integrator 1.
 The tx view's outputs say `amount: "hidden"` only for outputs that hide it; render the value as given.
 
 ## 4. Open risks
@@ -251,3 +266,76 @@ fresh install and a migrated schema-1 database are identical (`test_schema.py`).
 | M7 tx view | `test_contract.ChainReads.test_tx_view_reads_each_output_before_calling_it_hidden`; `test_mirror.test_mirror_records_what_each_output_reveals`; the recorded live fixture |
 | M8 spend bounds | `test_payments.test_demo_payments_go_only_to_our_receiver`, `test_courier.test_overrides_only_lower_a_budget`, `test_seallog.Receipts.test_failed_submission_retries_in_ten_minutes_and_force_is_rate_limited`, `test_schema` (the `seal` kind is refused) |
 | Lows | L1 `test_input_safety.test_non_canonical_ticket_is_not_found`; L2 `test_contract.Uploads.test_a_bad_rewrite_of_a_good_chunk_unregisters_it`; L3 `test_contract.System.test_wall_is_shuffled_and_holds_new_items_back`; L5 `test_admin.test_judge_pass`, `test_judge_pass_expires`; L6 `test_quota`; L7 `test_schema.test_connections_zero_deleted_bytes`; L11 `test_contract.Links.test_items_page_cursor`; L12 `test_seallog.Tree` (level-based proofs equal the RFC's recursive PATH); L15 `test_mirror.test_a_switch_of_indexer_restarts_the_cursors`; L16 `test_vectors.Memory`; L17 `test_courier.Decoys` |
+
+## 6. Integration responses (2026-10-11)
+
+Every request aimed at `server/` in the builders' NOTES, NOTES-ui and REVIEW-devil "Builder response"
+files, and every 12-integration §7 ratification that touches it, is applied below except one (rejected,
+last). Schema 3 (`mutis/migrations/003_seal_chain_index.sql`) adds two columns; a migrated schema-1
+database still equals a fresh install (`test_schema`).
+
+| From | Request | Change | Test |
+|---|---|---|---|
+| template NOTES §2, 12-integration §7.2 | pad strictly: at least one pad per checkpoint | `seallog.make_checkpoint` pads to the next multiple of 64 above the size | `test_seallog.LeafOrder.test_every_checkpoint_grows_by_at_least_one_pad`, `SharedVector.test_padding_rule` |
+| template NOTES §2 | a refused append settles as failed; the next checkpoint commits its leaves | already the behaviour; the fake chain now refuses like 2.0.0 (multiple of 64, must grow) so it is tested | `test_seallog.Receipts.test_a_refused_append_fails_and_the_next_checkpoint_covers_its_leaves` |
+| template NOTES §2, 12-integration §7.2 | cadence from config, 900 s | `seal_log.checkpoint_interval_s` (default 900, refused below 600), used by the worker, the receipts' `next_checkpoint_eta` and `/config` | `test_seallog.Receipts.test_stored_and_exit_receipts_end_to_end`, `test_contract.System.test_config`, `test_input_safety.test_config_rules` |
+| template NOTES §2 | name the component and the chain's checkpoint index | schema 3 columns; `chain_worker.root_event` reads the `SealLog.root` event from walletd's result; checkpoint objects: `index` (chain), `component` | `test_seallog.Receipts.test_stored_and_exit_receipts_end_to_end` |
+| template NOTES §2 | load `seallog-v1.json` in the server tests | leaves, roots, proofs and the padding rule | `test_seallog.SharedVector` |
+| 12-integration §7.3, deploy server 3 | SealLog from `service` | `ootle.operator_account` defaults to `"service"` | suite |
+| site §3.1 | drop `state` and `ttl` from `/stats/wall` | items are `{size, exit}` | `test_contract.System.test_wall_shows_no_opens_and_no_takedowns` |
+| 12-integration §7.7 | E2E cleans up after itself | taken-down items leave the wall at once (no purge needed there) | same test |
+| site §3.2, app-core server 5 (review L8) | a reveal the restarted sidecar can't answer shows as missed | `{n, sealed_at, missed: true}` in `revealed[]`, never asked again | `test_canary.test_a_key_the_restarted_verifier_lost_is_published_as_missed` |
+| app-core server 1 (review M1) | a judge pass lifts the per-/64 and per-/48 limits of sponsor and demo-pay | `invoices._unless_judge`; per-locker limits and the pass's uses stay | `test_admin.test_a_judge_pass_lifts_the_network_limits_of_grants_and_demo_payments` |
+| app-ui NOTES-ui (review M8) | `/config.e2e_expiry_s` only where configured | config `e2e_expiry_s` (default 0 = absent) | `test_contract.System.test_e2e_expiry_preset_only_when_configured` |
+| deploy server 1 | ids that start with `-` | `takedown` usage and help say `-- <id>`: argparse classifies an argument that starts with `-` as an option before any type runs, so no type can accept one (the E2E already passes `--`) | `test_admin.test_takedown_share_item_drop` |
+| deploy server 2, 5 | umask; pre-migrate copy only when pending, 0600 | `os.umask(0o007)` in every `bin/*`; `admin._backup` + `db.version` | `test_admin.test_check_config_and_migrate` |
+| deploy server 4, deploy integrator 1 | resolve `sidecar.dir` | `Config.sidecar_argv` uses `os.path.realpath` | `test_input_safety.test_config_rules` |
+| deploy server 6 (review M6) | per-/64 cap on requests in flight | `api.InFlight`: 32 per /64, 128 per /48, else `429 rate_limited` | `test_input_safety.test_requests_in_flight_are_capped_per_network` |
+| 12-integration §7.4 | claim registry | README "privacy promises": the credit row has the `wallet` and proven variants (C11), the relay row says direct-mode memos are bounded by the sponsor budget, SealLog volume and idle windows, the wall's two classes | — |
+
+Already true, no change: app-core server 2 (every indexer request sends `User-Agent: mutis`); 3 (ids are
+`codec.new_id()`, canonical 16-byte base64url; a non-canonical id matches nothing and answers 404); 4
+(`amount_proof` is a string, `memo_origins` lists both hosts, `text_max_chars` = `quota.TEXT_MAX_CHARS`);
+6, second half (`/me/items/{id}/open` answers `ticket`, `ticket_expires_at`, `inline_ct` like
+`/s/{id}/open`); 7 (`judge_passes.pow_skips_left` has a default, so app-core's insert works).
+
+Fixed while testing on ultron: `test_real_sidecar`'s canary test failed about half the time. The test froze
+the API clock while the real sidecar stamps `expires_at` with its own, later clock; once a second boundary
+fell in between, `expires_at` exceeded `now + 48 h` (`422 invalid`). Production's API clock moves, so only
+the test changed (the API reads the real clock there): 5 runs out of 5 pass since.
+
+**Rejected:** app-core server 6, first half (return `item_id` from `/s/{id}/open`, or accept
+`POST /s/{id}/claim`, for P1 "Keep"). A server-side claim lets a recipient cancel a Once link's exit
+without opening it and shows the sender a false "revoked" (review H4). "Keep" stays a re-seal in the
+browser with `sealItem(…, {keepFor})`, so every exit sentence stays literally true; both claim routes
+answer 404 (`test_contract.Links.test_no_server_side_keep`).
+
+## 7. Integration requests (2026-10-11)
+
+**Deploy builder**
+1. This release is schema 3: `mutis-admin migrate` on activation, as today (stop `mutis-chain` first).
+2. Production config: `gates.amount_proof = "sidecar"` (12-integration §7.6) in `/etc/mutis/mutis.toml` and
+   `mutis.toml.example`. `[seal_log] checkpoint_interval_s = 900` may be listed there (the default applies
+   without it); `operator_account = "service"` is now the default.
+3. E-05 against production: set `e2e_expiry_s = 60` for the run and remove it afterwards (or run before the
+   go-live reset). `mutis-api --dev` leaves it off, as production does. Items the run takes down leave the
+   wall immediately.
+4. `/usr/local/lib/mutis/run-sidecar.sh` is optional now: `sidecar.dir` is resolved through symlinks.
+5. `collect-evidence.py` may add `seal_checkpoints.chain_index` (and `component`) to `latest_checkpoint`, so
+   `/evidence.json` names the checkpoint number a reader finds on chain.
+
+**Site builder**
+1. `/canary` `revealed[]` may hold `{"n", "sealed_at", "missed": true}` (no `fk`, `raw` or `header`): show
+   "missed (the verifier restarted)" for that hour (your NOTES §3.2 asked for the field name: `missed`).
+
+**App builders (core and UI)**
+1. Checkpoint objects (`/seallog/proof`, `/s/{id}/exit` → `checkpoint`, `/seallog/checkpoints`) carry
+   `index` = the component's own checkpoint number (null if the worker couldn't read the event) and
+   `component`; `epoch` is the event's epoch, so `/verify`'s match on `leaf_count` and `epoch` against the
+   component state is exact. `/verify` can also require `checkpoint.component === /config.seal_log.component`.
+
+**Integrator (spec patches)**
+1. §11.3: cadence = `seal_log.checkpoint_interval_s` (900 s), pad to the next multiple of 64 **above** the
+   size. §6.3: checkpoint objects (`index` = chain index, `component`), `/stats/wall` items `{size, exit}`,
+   `/canary` missed entries, `/config.e2e_expiry_s`. §6.2: the in-flight caps. §15.3: the new keys and the
+   `operator_account` default.

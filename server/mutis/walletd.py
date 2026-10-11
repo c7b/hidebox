@@ -87,20 +87,23 @@ class Walletd:
         return tx_id
 
     def wait_result(self, tx_id: str, timeout_s: int = 120) -> dict:
-        """→ {"committed": bool, "timed_out": bool, "utxo_ids": [...]} from transactions.wait_result."""
+        """→ {"committed": bool, "timed_out": bool, "utxo_ids": [...], "events": [...]} from
+        transactions.wait_result. Events are {"topic", "substate_id", "payload", …} (checked live, 0.45.0)."""
         result = self.call("transactions.wait_result", {"transaction_id": tx_id, "timeout_secs": timeout_s})
         if not isinstance(result, dict):
             raise WalletdError("walletd_error")
         if result.get("timed_out"):
-            return {"committed": False, "timed_out": True, "utxo_ids": []}
+            return {"committed": False, "timed_out": True, "utxo_ids": [], "events": []}
         outer = result.get("result")
         finalize = outer.get("result") if isinstance(outer, dict) else None
         accept = finalize.get("Accept") if isinstance(finalize, dict) else None
         if not isinstance(accept, dict):
-            return {"committed": False, "timed_out": False, "utxo_ids": []}
+            return {"committed": False, "timed_out": False, "utxo_ids": [], "events": []}
         ups = [u[0] for u in accept.get("up_substates", []) if isinstance(u, list) and u
                and isinstance(u[0], str) and u[0].startswith("utxo_")]
-        return {"committed": True, "timed_out": False, "utxo_ids": ups}
+        events = outer.get("events") if isinstance(outer.get("events"), list) else []
+        return {"committed": True, "timed_out": False, "utxo_ids": ups,
+                "events": [e for e in events if isinstance(e, dict)]}
 
     def stealth_utxos(self, component_address: str) -> list[dict]:
         """Incoming stealth outputs of an account, with walletd's decrypted value and memo (G4 fallback)."""

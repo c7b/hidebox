@@ -5,7 +5,7 @@ import os
 import unittest
 
 from harness import ORIGIN, Stack
-from mutis import codec, db, ootle_addr, quota
+from mutis import codec, db, items, ootle_addr, quota
 from mutis.fake_chain import fake_keys
 
 V = "/api/v1"
@@ -57,6 +57,18 @@ class System(unittest.TestCase):
         self.assertIsNone(c["onion"])
         self.assertEqual(c["retention"]["ticket_s"], 1800)
         self.assertEqual(c["password"]["lock_after"], 5)
+        self.assertEqual(c["seal_log"], {"checkpoint_interval_s": 900, "component": None})
+        self.assertNotIn("e2e_expiry_s", c)                   # only where the deployment turns it on
+
+    def test_e2e_expiry_preset_only_when_configured(self):
+        s = Stack({"e2e_expiry_s": 60})
+        self.addCleanup(s.close)
+        self.assertEqual(s.request("GET", f"{V}/config")[2]["e2e_expiry_s"], 60)
+        item = s.upload(1000)
+        link = s.share(item, expires_at=s.now + 60)            # the 60-second preset is an ordinary link
+        s.now += 61
+        status, _, body = s.request("GET", f"{V}/s/{link['share_id']}")
+        self.assertEqual((status, body["error"]["details"]["reason"]), (410, "expired"))
 
     def test_pow(self):
         status, _, body = self.s.request("POST", f"{V}/pow", {"purpose": "upload"})
@@ -96,6 +108,28 @@ class System(unittest.TestCase):
             self.assertEqual(len(wall["lockers"]), 10)
             orders.add(tuple(e["exit"] for e in wall["lockers"]))
         self.assertGreater(len(orders), 1)
+
+    def test_wall_shows_no_opens_and_no_takedowns(self):
+        """Site review M15: nothing on the wall says whether or when a link was opened; a takedown (an abuse
+        removal, or an E2E run cleaning up after itself) leaves the wall."""
+        s = Stack()
+        self.addCleanup(s.close)
+        uploads = [s.upload(1000) for _ in range(10)]
+        links = [s.share(item, max_views=1) for item in uploads]
+        s.now += 2 * 3600
+        before = s.request("GET", f"{V}/stats/wall")[2]["lockers"]
+        for link in links[:5]:
+            s.request("POST", f"{V}/s/{link['share_id']}/open", headers=link["access"])
+        s.run_cleanup()
+        s.app.cache.clear()
+        after = s.request("GET", f"{V}/stats/wall")[2]["lockers"]
+        self.assertEqual(sorted(map(str, before)), sorted(map(str, after)))
+        self.assertEqual({tuple(sorted(e)) for e in after}, {("exit", "size")})
+        with db.tx(s.conn):
+            for item in uploads[-3:]:
+                items.remove(s.conn, s.app.blobs, item["item_id"], s.now)
+        s.app.cache.clear()
+        self.assertEqual(s.request("GET", f"{V}/stats/wall")[2], {"lockers": [], "quiet": True, "canary": None})
 
     def test_unknown_route_and_malformed_id(self):
         status, _, body = self.s.request("GET", f"{V}/nope")

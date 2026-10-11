@@ -58,7 +58,8 @@ class RealSidecar(unittest.TestCase):
 
     def test_canary_sealed_through_this_api_and_opened_with_robot_keys(self):
         s = Stack(chain=True)
-        s.now = int(time.time())           # the real sidecar stamps the canary with its own clock
+        s.now = int(time.time())           # the real sidecar stamps the canary with its own clock, so the API
+        s.app.clock = codec.now            # must read the real one too: a frozen one may lag a second behind
         s.heartbeat()
         car = Sidecar(argv(), f"http://127.0.0.1:{s.port}", PINNED_WASM_SHA256)
         try:

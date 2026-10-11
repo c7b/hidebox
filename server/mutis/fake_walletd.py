@@ -85,17 +85,18 @@ class FakeWalletd(ThreadingHTTPServer):
                                    int(t["blinded_output_amount"]), memo, int(p["max_fee"]))
             return {"transaction_id": tx_id}
         if method == "transactions.submit_manifest":
-            return {"transaction_id": chain.manifest_call()}
+            return {"transaction_id": chain.manifest_call(p["manifest"], p["variables"])}
         if method == "transactions.wait_result":
             receipt = chain.receipts[p["transaction_id"]]
             if self.wait_outcome == "timeout":
                 return {"transaction_id": p["transaction_id"], "result": None, "timed_out": True}
-            if self.wait_outcome == "reject":
+            if self.wait_outcome == "reject" or receipt["outcome"] == "Reject":
                 return {"transaction_id": p["transaction_id"], "timed_out": False,
-                        "result": {"result": {"Reject": "fake rejection"}}}
+                        "result": {"result": {"Reject": "fake rejection"}, "events": []}}
             ups = [[u["substate_id"], {}] for u in receipt["diff_summary"]["upped"]]
             return {"transaction_id": p["transaction_id"], "timed_out": False, "status": "Accepted",
-                    "result": {"result": {"Accept": {"up_substates": ups}}}, "final_fee": "30000"}
+                    "result": {"result": {"Accept": {"up_substates": ups}}, "events": receipt.get("events", [])},
+                    "final_fee": "30000"}
         if method == "stealth_utxos.list":
             return {"utxos": self.received(p["account_address"])}
         raise KeyError(method)

@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: MIT
 """SealLog storage and exit receipts (spec §11, brand patch P-8): RFC 9162 trees, padding, hidden leaf
-order, proofs end to end, and the worker's own checkpoint schedule."""
+order, proofs end to end, the worker's own checkpoint schedule, and the template's shared vector."""
 import hashlib
+import json
 import random
 import unittest
+from pathlib import Path
 
 from harness import Stack
 from mutis import chain_worker, codec, db, seallog
 
 COMPONENT = "component_" + "ab" * 32
+TEMPLATE_VECTOR = Path(__file__).resolve().parents[2] / "template/seal_log/tests/vectors/seallog-v1.json"
 
 
 def reference_mth(leaves: list[bytes]) -> bytes:
@@ -94,13 +97,53 @@ class LeafOrder(unittest.TestCase):
         self.assertTrue(all(64 <= seallog.leaf_index(conn, h) < 128 for h in second))
         self.assertEqual(cp["root"], reference_mth(seallog.leaf_hashes(conn, 128)))
 
-    def test_an_empty_interval_repeats_the_same_size(self):
-        with db.tx(self.s.conn):
-            self.assertEqual(seallog.make_checkpoint(self.s.conn, self.s.now)["tree_size"], 0)
-        self.add(64)
-        with db.tx(self.s.conn):
-            self.assertEqual(seallog.make_checkpoint(self.s.conn, self.s.now)["tree_size"], 64)
-            self.assertEqual(seallog.make_checkpoint(self.s.conn, self.s.now)["tree_size"], 64)
+    def test_every_checkpoint_grows_by_at_least_one_pad(self):
+        """Template 2.0.0 refuses a size that doesn't grow, and an idle window must look like any other."""
+        sizes = []
+        for new in (0, 64, 0, 1):
+            self.add(new)
+            with db.tx(self.s.conn):
+                sizes.append(seallog.make_checkpoint(self.s.conn, self.s.now)["tree_size"])
+        self.assertEqual(sizes, [64, 192, 256, 320])
+
+
+class SharedVector(unittest.TestCase):
+    """template/seal_log/tests/vectors/seallog-v1.json: the leaves, roots, proofs and padding the template,
+    this server and the browser all agree on."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not TEMPLATE_VECTOR.exists():
+            raise unittest.SkipTest(f"{TEMPLATE_VECTOR} not present")
+        cls.v = json.loads(TEMPLATE_VECTOR.read_text(encoding="utf-8"))
+
+    def test_leaves(self):
+        for leaf in self.v["leaves"]:
+            expected = bytes.fromhex(leaf["leaf_hash"])
+            self.assertEqual(codec.sha256(b"\x00", bytes.fromhex(leaf["leaf_data"])), expected, leaf["index"])
+            if leaf["kind"] == "stored":
+                self.assertEqual(seallog.stored_leaf(leaf["item_id_b64u"], bytes.fromhex(leaf["ct_hash"])), expected)
+            if leaf["kind"] == "exit":                # the API's exit_hour is unix seconds at the hour
+                self.assertEqual(seallog.exit_leaf(leaf["item_id_b64u"], leaf["exit_hour_unix"]), expected)
+                self.assertEqual(leaf["exit_hour_unix"] // 3600, leaf["exit_hour_index"])
+
+    def test_roots_and_proofs(self):
+        leaves = [bytes.fromhex(leaf["leaf_hash"]) for leaf in self.v["leaves"]]
+        for cp in self.v["checkpoints"]:
+            tree = seallog.levels(leaves[:cp["tree_size"]])
+            self.assertEqual(tree[-1][0].hex(), cp["root"], cp["tree_size"])
+            for proof in cp["proofs"]:
+                path = seallog.inclusion_proof(tree, proof["leaf_index"])
+                self.assertEqual([h.hex() for h in path], proof["path"], (cp["tree_size"], proof["leaf_index"]))
+
+    def test_padding_rule(self):
+        s = Stack()
+        self.addCleanup(s.close)
+        for cp in self.v["checkpoints"]:
+            with db.tx(s.conn):
+                for _ in range(cp["new_records"]):
+                    seallog.append(s.conn, "stored", codec.sha256(codec.new_id().encode()))
+                self.assertEqual(seallog.make_checkpoint(s.conn, s.now)["tree_size"], cp["tree_size"])
 
 
 class Receipts(unittest.TestCase):
@@ -140,11 +183,37 @@ class Receipts(unittest.TestCase):
             self.assertTrue(seallog.verify_inclusion(leaf, receipt["leaf_index"], 64,
                                                      [bytes.fromhex(h) for h in receipt["proof"]], root))
             status, _, page = s.request("GET", "/api/v1/seallog/checkpoints")
-            self.assertEqual(page["checkpoints"][0]["tree_size"], 64)
+            self.assertEqual(page["checkpoints"], [proof["checkpoint"]])
+            self.assertEqual({k: proof["checkpoint"][k] for k in ("index", "component", "tree_size", "epoch")},
+                             {"index": 0, "component": COMPONENT, "tree_size": 64, "epoch": s.chain.epoch})
             self.assertEqual(s.request("GET", "/api/v1/stats")[2]["seal_log"]["tree_size"], 64)
-            s.now += 3600
+            interval = s.request("GET", "/api/v1/config")[2]["seal_log"]["checkpoint_interval_s"]
+            self.assertEqual(interval, 900)
+            s.now += interval - 1
             s.worker.tick()
-            self.assertEqual(s.conn.execute("SELECT COUNT(*) FROM seal_checkpoints").fetchone()[0], 1)  # 6 h cadence
+            self.assertEqual(s.conn.execute("SELECT COUNT(*) FROM seal_checkpoints").fetchone()[0], 1)
+            s.now += 1
+            s.worker.tick()                       # an idle window: one more row of pads, the chain's checkpoint #1
+            latest = seallog.checkpoint_json(seallog.latest_committed(s.conn))
+            self.assertEqual((latest["index"], latest["tree_size"]), (1, 128))
+        finally:
+            s.close()
+
+    def test_a_refused_append_fails_and_the_next_checkpoint_covers_its_leaves(self):
+        """A checkpoint that committed after we gave it up makes the component refuse the same size again."""
+        s = self.stack()
+        try:
+            s.chain.seal_logs[COMPONENT] = [64]
+            item = s.upload(1000)
+            s.worker.tick()
+            self.assertEqual([r[0] for r in s.conn.execute("SELECT state FROM seal_checkpoints")], ["failed"])
+            s.now += chain_worker.SEAL_RETRY_S
+            s.worker.tick()
+            row = seallog.latest_committed(s.conn)
+            self.assertEqual((row["tree_size"], row["chain_index"]), (128, 1))
+            proof = s.request("GET", f"/api/v1/seallog/proof/{item['item_id']}")[2]
+            self.assertLess(proof["leaf_index"], 64)          # placed by the refused checkpoint, proven by the next
+            self.assertEqual(proof["checkpoint"]["tree_size"], 128)
         finally:
             s.close()
 

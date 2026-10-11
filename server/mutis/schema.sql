@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: MIT
--- mutis database, schema version 2 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
--- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002).
+-- mutis database, schema version 3 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
+-- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 and 003).
 -- Deliberately absent: email, name, IP address, user agent, any user public key, a user's locker address,
 -- file name, MIME type, plaintext size, any secret key, any grant or recipient table, the drop an item came from.
 
@@ -178,7 +178,9 @@ CREATE TABLE seal_checkpoints (                   -- submitted by the chain work
   root         BLOB NOT NULL,
   created_at   INTEGER NOT NULL,
   state        TEXT NOT NULL CHECK (state IN ('pending','committed','failed')),
-  tx_id        TEXT, submitted_at INTEGER, epoch INTEGER
+  tx_id        TEXT, submitted_at INTEGER, epoch INTEGER,
+  component    TEXT,                              -- the SealLog component it was appended to
+  chain_index  INTEGER                            -- that component's checkpoint number (its root event)
 ) STRICT;
 
 CREATE TABLE judge_passes (                       -- P-12: passes for the Council

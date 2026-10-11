@@ -16,6 +16,7 @@ def main() -> None:
     p = argparse.ArgumentParser(prog="mutis-cleanup")
     p.add_argument("--config")
     args = p.parse_args()
+    os.umask(0o007)           # files we create (the database, its -wal and -shm) stay within group mutis
     logsafe.setup()
     cfg = config.load(args.config)
     conn = db.connect(cfg.db_path)
