@@ -5,9 +5,8 @@ headers of spec §14.2, and answers the public API from tests/fixtures/, so page
 in a real browser without the server stack.
 
 Usage: python3 -I web/site/tests/serve.py [--port 8791] [--wall 24|8|quiet] [--wall-delay S]
-       [--mode relay|direct] [--seallog] [--no-canary] [--widget FILE] [--dist DIR] [--api URL]
+       [--mode relay|direct] [--seallog] [--no-canary] [--dist DIR] [--api URL]
 --wall-delay answers /api/v1/stats/wall S seconds late (a slow network, for the wall's data switch).
---widget serves FILE as /app/drop-widget.js (a preview stand-in until the app's widget exists).
 --dist serves a tree built by tools/build.py instead of expanding sources.
 --api forwards /api/* to a running server (e.g. `mutis-api --dev`) instead of the fixtures.
 """
@@ -73,10 +72,6 @@ class Site:
 
         def sri(m):
             target = self.file_for(m[2])
-            if m[2] == "/app/drop-widget.js" and self.opts.widget:
-                target = Path(self.opts.widget)
-            if not target.is_file():
-                return m[1]   # nothing to pin yet (the app's widget): leave the tag without integrity
             digest = base64.b64encode(hashlib.sha384(self.render(target, m[2])).digest()).decode()
             return f'{m[1]} integrity="sha384-{digest}"'
 
@@ -120,7 +115,8 @@ class Api:
         if path == "/api/v1/canary" and self.opts.canary:
             c = self.fixture("canary.json")
             c["sealed_at"] = now - 240
-            c["revealed"][0]["sealed_at"] = now - 86400 - 240
+            for i, entry in enumerate(c["revealed"]):   # newest first, a day old and older
+                entry["sealed_at"] = now - 86400 - 240 - 3600 * i
             return 200, c
         if re.fullmatch(r"/api/v1/chain/tx/[0-9a-f]{64}/view", path):
             return 200, self.fixture("txview.json")
@@ -191,8 +187,6 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/") or path in ("/evidence.json", "/status.json"):
             return self.json(*self.api.get(path, query))
         f = self.site.file_for(path)
-        if path == "/app/drop-widget.js" and self.site.opts.widget:
-            f = Path(self.site.opts.widget)
         if ".." in path or not f.is_file():
             f, status = self.site.file_for("/es/404" if path.startswith("/es/") else "/404"), 404
             if self.site.opts.dist:
@@ -241,7 +235,6 @@ def options(argv=None):
     p.add_argument("--mode", choices=("relay", "direct"), default="relay")
     p.add_argument("--seallog", action="store_true")
     p.add_argument("--no-canary", dest="canary", action="store_false")
-    p.add_argument("--widget")
     p.add_argument("--dist")
     p.add_argument("--api")
     return p.parse_args(argv)

@@ -220,14 +220,14 @@ class Page:
                 and e["params"]["request"].get("hasPostData")]
 
     def requests(self) -> list[dict]:
-        """Every request since the last goto: url, status, encoded bytes on the wire, failure."""
+        """Every request since the last goto: url, method, status, encoded bytes on the wire, failure."""
         reqs: dict[str, dict] = {}
         for e in self._mine():
             p = e.get("params", {})
             m = e.get("method")
             if m == "Network.requestWillBeSent":
-                reqs.setdefault(p["requestId"], {"url": p["request"]["url"], "status": None, "bytes": 0,
-                                                 "type": p.get("type"), "failed": None})
+                reqs.setdefault(p["requestId"], {"url": p["request"]["url"], "method": p["request"]["method"],
+                                                 "status": None, "bytes": 0, "type": p.get("type"), "failed": None})
             elif m == "Network.responseReceived" and p["requestId"] in reqs:
                 reqs[p["requestId"]]["status"] = p["response"]["status"]
                 reqs[p["requestId"]]["encoding"] = {k.lower(): v for k, v in p["response"]["headers"].items()}.get("content-encoding")

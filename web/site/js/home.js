@@ -61,13 +61,19 @@ whenNear(glass, '100% 0px', () => Promise.all([noise(), demoCiphertext()]).then(
 
 whenNear(section('try'), '100% 0px', () => canary().then(({ show, data }) => show(section('try'), data)));
 
-// Optional detail from the widget after a drop: {name, size, sizeStored, noise}. It never leaves this tab.
+// The widget's states. While its card shows, the card is the result and the heading stands alone;
+// line 2 comes back with the empty zone. 'sealed' may carry {name, size, sizeStored, noise}: the
+// visitor's own file, which never leaves this tab.
+const line2 = document.querySelector('.hero-line2');
 document.addEventListener('mutis:state', ({ detail }) => {
-  const preview = detail?.state === 'sealed' ? detail.preview : null;
+  if (detail?.state === 'idle') line2.hidden = false;
+  if (detail?.state !== 'sealed') return;
+  line2.hidden = true;
+  const { preview } = detail;
   if (!preview?.noise) return;
   glass.dataset.yours = '';
   glass.querySelector('[data-glass-caption]').textContent = AFTER_DROP;
-  glass.querySelector('[data-glass="name"]').textContent = preview.name;
+  if (preview.name) glass.querySelector('[data-glass="name"]').textContent = preview.name; // '' for a note: "(a note: no name)" stays
   glass.querySelector('[data-glass="contents"]').textContent = YOUR_FILE;
   glass.querySelector('[data-glass="size"]').textContent = bytesText(preview.size);
   glass.querySelector('[data-glass="stored"]').textContent = bytesText(preview.sizeStored);

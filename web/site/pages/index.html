@@ -30,6 +30,7 @@
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/home.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/home.js" integrity="{{SRI}}"></script>
 <script type="application/ld+json">
@@ -194,7 +195,7 @@
           <tr><th scope="row">Size</th><td data-cue="You" data-glass="size">15 bytes</td><td data-cue="Our server"><span data-glass="stored">1,040 bytes</span><span class="caption block">Rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger.</span></td></tr>
           <tr><th scope="row">Contents</th><td data-cue="You" data-glass="contents"><span class="quote">Only you. Once.</span></td><td data-cue="Our server"><canvas class="noise" data-glass-noise width="33" height="33" aria-hidden="true" hidden></canvas><span class="caption" data-glass-noise-caption>Ciphertext: the encrypted bytes, drawn as pixels.</span></td></tr>
           <tr><th scope="row">Key</th><td data-cue="You">in your link, after the <code>#</code></td><td data-cue="Our server">never sent to us</td></tr>
-          <tr><th scope="row">Opens</th><td data-cue="You">you'll see “Opened” and the time</td><td data-cue="Our server">a count and the hour</td></tr>
+          <tr><th scope="row">Opens</th><td data-cue="You">you'll see “Opened” and the time</td><td data-cue="Our server">a count, and the time of the first open</td></tr>
           <tr><th scope="row">You</th><td data-cue="You">whoever you are</td><td data-cue="Our server">an IP address while connected; not written to disk</td></tr>
         </tbody>
       </table>
@@ -230,6 +231,7 @@
         <p class="caption" data-reveal-key hidden>Key: <code data-reveal-key-value></code></p>
         <pre data-reveal-out hidden></pre>
       </div>
+      <p class="caption missed" data-reveal-missed hidden></p>
 
       <h3 class="checks-h">How to check what we claim</h3>
       <table class="checks">
@@ -253,7 +255,7 @@
       </div>
       <ul class="truths">
         <li><b>To us:</b> a padded size, the hour a file arrives and leaves, how often it's opened, your IP while you're connected<span data-when="send_mode=relay">, and, when our relay posts a Tari payment for you, the address it goes to</span><span data-when="send_mode=direct" hidden>, and that your locker sent a Tari payment, not to whom</span>.</li>
-        <li><b>To anyone watching the Ootle:</b> that a payment happened and its fee<span data-when="send_mode=relay">, and that our relay's wallet sent it</span><span data-when="send_mode=direct" hidden>. Sends from your browser trace back to our sponsor wallet's grant, and to each other through their change; dead-drop deliveries come from our relay's wallet</span><span data-when="seallog=on" hidden>; how many records (stored files plus exits) we add per checkpoint</span>.</li>
+        <li><b>To anyone watching the Ootle:</b> that a payment happened and its fee<span data-when="send_mode=relay">, and that our relay's wallet sent it</span><span data-when="send_mode=direct" hidden>. Sends from your browser trace back to our sponsor wallet's grant, and to each other through their change; dead-drop deliveries come from our relay's wallet</span><span data-when="seallog=on" hidden>; roughly how many records (stored files plus exits) we write, in steps of 64</span>.</li>
         <li><b>To whoever has the full link:</b> everything. The link is the key.</li>
         <li><b>To your own browser:</b> the full link, in your history and any history sync, and to any extension allowed to read your tabs. Copied links can sit in clipboard history.</li>
         <li><b>To the person you send it to:</b> everything, forever. They can save a copy. No software can stop that.</li>

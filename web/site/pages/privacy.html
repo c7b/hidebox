@@ -81,9 +81,13 @@
   </table>
 </div>
 <div class="prose page-body">
+  <h2 id="public">What we publish</h2>
+  <p>Our live numbers (<code>/api/v1/stats</code>) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them;<span data-when="seallog=on" hidden> SealLog's latest checkpoint;</span> and how many minutes ago the latest file finished uploading, to the minute.</p>
+  <p>The wall of lockers on our home page shows, for up to 24 recent files at least an hour old, a coarse size and an exit rule, only when at least 8 exist in the last week: never a name, an id or whether a file was opened. Someone who knows a file's size and rule may still recognise it there. Our hourly test file and our own test transactions are public too; never a visitor's.</p>
+
   <h2 id="retention">How long things last</h2>
   <p>We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish. We never had the key, so any leftover bytes are noise.</p>
-  <p>Our database (never files) is backed up daily<span data-needs="config" hidden>, and each copy is deleted after <span data-v="db_backup_days"></span></span>. It holds the rows listed above.</p>
+  <p>Our database (never files) is backed up daily<span data-needs="config" hidden>, and each copy is deleted after <span data-v="db_backup_days"></span></span>. It holds the rows listed above, including the wrapped key of every link still open when the copy was made; a wrapped key opens nothing without the link's secret. What we erase from the database is overwritten, but an older copy of it can sit in the database's write-ahead log until that space is reused, and in the backups until they're deleted.</p>
   <p data-when="snapshots=weekly">Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</p>
   <p data-when="snapshots=off" hidden>Our host doesn't keep snapshots of the server.</p>
   <p>Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. Without the key it's noise.</p>

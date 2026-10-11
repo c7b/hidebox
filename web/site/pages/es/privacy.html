@@ -81,9 +81,13 @@
   </table>
 </div>
 <div class="prose page-body">
+  <h2 id="public">Lo que publicamos</h2>
+  <p>Nuestras cifras en vivo (<code>/api/v1/stats</code>) son públicas: la cuota gratuita; el tamaño y el espacio libre de nuestro disco, redondeados; si las subidas o las funciones de Tari están en pausa; cuántos casilleros estuvieron activos hace poco, cuando ya son suficientes;<span data-when="seallog=on" hidden> el último punto de control de SealLog;</span> y hace cuántos minutos terminó de subirse el archivo más reciente, al minuto.</p>
+  <p>La pared de casilleros de nuestra página principal muestra, para hasta 24 archivos recientes con al menos una hora, un tamaño aproximado y una regla de salida, solo cuando hay al menos 8 en la última semana: nunca un nombre, un id ni si un archivo se abrió. Quien conozca el tamaño y la regla de un archivo podría reconocerlo ahí. Nuestro archivo de prueba de cada hora y nuestras propias transacciones de prueba también son públicos; nunca los de quien nos visita.</p>
+
   <h2 id="retention">Cuánto duran las cosas</h2>
   <p>Borramos el texto cifrado de nuestro disco menos de un minuto después de su salida. Si la salida fue una descarga, esperamos a que termine. Nunca tuvimos la llave, así que cualquier byte que quede es ruido.</p>
-  <p>Nuestra base de datos (nunca los archivos) se respalda a diario<span data-needs="config" hidden>, y cada copia se borra después de <span data-v="db_backup_days"></span></span>. Contiene las filas listadas arriba.</p>
+  <p>Nuestra base de datos (nunca los archivos) se respalda a diario<span data-needs="config" hidden>, y cada copia se borra después de <span data-v="db_backup_days"></span></span>. Contiene las filas listadas arriba, incluida la llave envuelta de cada enlace que seguía abierto cuando se hizo la copia; una llave envuelta no abre nada sin el secreto del enlace. Lo que borramos de la base de datos se sobrescribe, pero una copia anterior puede quedar en su registro de escritura anticipada hasta que se reutilice ese espacio, y en los respaldos hasta que se borren.</p>
   <p data-when="snapshots=weekly">Nuestro proveedor también toma instantáneas automáticas de todo el servidor y las guarda unas semanas. Un archivo que existía cuando se tomó una sigue en ella, como texto cifrado, hasta que esa instantánea se descarta.</p>
   <p data-when="snapshots=off" hidden>Nuestro proveedor no guarda instantáneas del servidor.</p>
   <p>Los discos no se pueden borrar de forma segura, así que el texto cifrado borrado puede quedar en bloques libres. Sin la llave es ruido.</p>

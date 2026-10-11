@@ -106,7 +106,7 @@
  "security_drop": null,
  "repo_url": "https://github.com/c7b/mutis",
  "seal_log": {
-  "checkpoint_interval_s": 21600,
+  "checkpoint_interval_s": 900,
   "component": null
  },
  "retention": {

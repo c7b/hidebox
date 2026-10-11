@@ -77,8 +77,8 @@
       <li><span class="n">B3</span><span class="do">On the computer: drop a file → <strong>Send it to a Tari address instead</strong> → paste the phone's address (copy it on the phone and send it to yourself in any messenger) → <strong>Send</strong>.</span><span class="see"><strong>Sent</strong>, <strong>On the Ootle ✓</strong> and <strong>What the chain sees</strong>: amount hidden, owner hidden, memo encrypted, fee public.</span></li>
       <li><span class="n">B4</span><span class="do">On the phone: <strong>Inbox</strong>.</span><span class="see">A delivery that only the phone's keys could find; the scan line shows how many outputs it checked. <strong>Open</strong> it: your file.</span></li>
       <li><span class="n">B5</span><span class="do">On the phone: <strong>See what a view key sees</strong>.</span><span class="see">Deliveries and amounts, and <strong>0 files readable with this key</strong>. A view key sees arrivals; it can't spend and can't open the files sealed to this locker.</span></li>
-      <li><span class="n">B6</span><span class="do">On either device: <strong>Get more room</strong> → the smallest pack → <strong>Pay with demo tTARI</strong>.</span><span class="see"><strong>Waiting → Seen on chain → <span data-when="proof=proven" hidden>Amount proven → </span>Added</strong> within about a minute. Our demo wallet pays our own invoice: a real stealth transaction with play money.</span></li>
-      <li data-when="seallog=on" hidden><span class="n">B7</span><span class="do">On either device: <strong>Verify</strong> → the file from B3.</span><span class="see">An inclusion proof, a root that matches the SealLog component on the Ootle, and the exit receipt from A3.</span></li>
+      <li><span class="n">B6</span><span class="do">On either device: <strong>Get more room</strong> → the smallest pack → <strong>Pay with demo tTARI</strong>.</span><span class="see"><strong>Waiting → <span data-when="proof=proven" hidden>Seen on chain → Amount proven → </span><span data-when="proof=wallet">Seen by our wallet → Exists on chain → </span>Added</strong> within about a minute. Our demo wallet pays our own invoice: a real stealth transaction with play money.</span></li>
+      <li data-when="seallog=on" hidden><span class="n">B7</span><span class="do">On either device: <strong>Verify</strong> → the file from B3.</span><span class="see">An inclusion proof, a root that matches the SealLog component on the Ootle, and the exit receipt from A3. Until our next checkpoint<span data-needs="config" hidden>, at most <span data-v="checkpoint"></span> away</span>, each one says it is “not on the record yet”.</span></li>
   </ol>
 </section>
 
@@ -104,7 +104,6 @@
       <dt>Official Tari library</dt><dd>ootle-wasm <span data-ev="version"></span>, SHA-256 <code data-ev="wasm"></code></dd>
       <dt>Test deliveries (a file key sealed to our own test locker)</dt><dd><ul class="tx-list" data-ev="deliveries"></ul></dd>
       <dt>Test payments (our demo wallet paying our own invoice)</dt><dd><ul class="tx-list" data-ev="payments"></ul></dd>
-      <dt>Decoy sends today</dt><dd data-ev="decoys"></dd>
     </dl>
   </div>
 

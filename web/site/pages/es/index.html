@@ -30,6 +30,7 @@
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/home.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/home.js" integrity="{{SRI}}"></script>
 <script type="application/ld+json">
@@ -194,7 +195,7 @@
           <tr><th scope="row">Tamaño</th><td data-cue="Tú" data-glass="size">18 bytes</td><td data-cue="Nuestro servidor"><span data-glass="stored">1,040 bytes</span><span class="caption block">Redondeado hacia arriba para ocultar el tamaño exacto: al menos 1 KB, y como mucho 12% más para todo lo mayor.</span></td></tr>
           <tr><th scope="row">Contenido</th><td data-cue="Tú" data-glass="contents"><span class="quote">Solo tú. Una vez.</span></td><td data-cue="Nuestro servidor"><canvas class="noise" data-glass-noise width="33" height="33" aria-hidden="true" hidden></canvas><span class="caption" data-glass-noise-caption>Texto cifrado: los bytes cifrados, dibujados como píxeles.</span></td></tr>
           <tr><th scope="row">Llave</th><td data-cue="Tú">en tu enlace, después del <code>#</code></td><td data-cue="Nuestro servidor">nunca nos llega</td></tr>
-          <tr><th scope="row">Aperturas</th><td data-cue="Tú">verás “Abierto” y la hora</td><td data-cue="Nuestro servidor">un conteo y la hora</td></tr>
+          <tr><th scope="row">Aperturas</th><td data-cue="Tú">verás “Abierto” y la hora</td><td data-cue="Nuestro servidor">un conteo, y la hora de la primera apertura</td></tr>
           <tr><th scope="row">Tú</th><td data-cue="Tú">seas quien seas</td><td data-cue="Nuestro servidor">una dirección IP mientras estás conectado; no se escribe en disco</td></tr>
         </tbody>
       </table>
@@ -230,6 +231,7 @@
         <p class="caption" data-reveal-key hidden>Llave: <code data-reveal-key-value></code></p>
         <pre data-reveal-out hidden></pre>
       </div>
+      <p class="caption missed" data-reveal-missed hidden></p>
 
       <h3 class="checks-h">Cómo comprobar lo que decimos</h3>
       <table class="checks">
@@ -253,7 +255,7 @@
       </div>
       <ul class="truths">
         <li><b>A nosotros:</b> un tamaño con relleno, la hora en que un archivo llega y se va, cuántas veces se abre, tu IP mientras estás conectado<span data-when="send_mode=relay"> y, cuando nuestro relay publica un pago de Tari por ti, la dirección a la que va</span><span data-when="send_mode=direct" hidden> y que tu casillero envió un pago de Tari, no a quién</span>.</li>
-        <li><b>A quien observe el Ootle:</b> que hubo un pago y su comisión<span data-when="send_mode=relay">, y que lo envió la cartera de nuestro relay</span><span data-when="send_mode=direct" hidden>. Los envíos desde tu navegador llevan de vuelta al saldo que les asignó nuestra cartera patrocinadora, y entre sí por su cambio; las entregas de buzón salen de la cartera de nuestro relay</span><span data-when="seallog=on" hidden>; cuántos registros (archivos guardados más salidas) agregamos por punto de control</span>.</li>
+        <li><b>A quien observe el Ootle:</b> que hubo un pago y su comisión<span data-when="send_mode=relay">, y que lo envió la cartera de nuestro relay</span><span data-when="send_mode=direct" hidden>. Los envíos desde tu navegador llevan de vuelta al saldo que les asignó nuestra cartera patrocinadora, y entre sí por su cambio; las entregas de buzón salen de la cartera de nuestro relay</span><span data-when="seallog=on" hidden>; aproximadamente cuántos registros (archivos guardados más salidas) escribimos, en pasos de 64</span>.</li>
         <li><b>A quien tenga el enlace completo:</b> todo. El enlace es la llave.</li>
         <li><b>A tu propio navegador:</b> el enlace completo, en tu historial y en cualquier sincronización del historial, y a cualquier extensión con permiso para leer tus pestañas. Los enlaces copiados pueden quedarse en el historial del portapapeles.</li>
         <li><b>A la persona a quien lo envías:</b> todo, para siempre. Puede guardar una copia. Ningún software puede evitarlo.</li>

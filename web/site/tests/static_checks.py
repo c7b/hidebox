@@ -151,21 +151,23 @@ def check_banned_words():
 def config_numbers():
     """Every number /config provides, formatted the ways stats.js prints it (en and es)."""
     c = json.loads((SITE / "tests" / "fixtures" / "config.json").read_text())
-    nums = set()
+    nums, seconds = set(), set()
 
-    def walk(v):
+    def walk(v, key=""):
         if isinstance(v, bool):
             return
         if isinstance(v, (int, float)):
             nums.add(v)
+            if key.endswith("_s"):
+                seconds.add(v)
         elif isinstance(v, str) and v.isdigit():
             nums.add(int(v))
         elif isinstance(v, dict):
-            for x in v.values():
-                walk(x)
+            for k, x in v.items():
+                walk(x, k)
         elif isinstance(v, list):
             for x in v:
-                walk(x)
+                walk(x, key)
     walk({k: v for k, v in c.items() if k not in ("network_byte",)})
     out = set()
     for n in nums:
@@ -183,6 +185,9 @@ def config_numbers():
             out.add(f"{n:,}")
         if n % 1000 == 0 and n < 10_000_000:
             out.add(f"{n / 1e6:g} tTARI")
+    for n in seconds:   # durations stats.js prints in minutes, such as the SealLog cadence (12-integration §7.2)
+        if n % 3600 and n % 60 == 0 and n >= 120:
+            out |= {f"{n // 60} minutes", f"{n // 60} minutos"}
     return out
 
 
@@ -497,23 +502,37 @@ def _strings(value):
             yield from _strings(v)
 
 
+# The payment steps the app shows in each amount-proof mode (web/app/i18n upgrade.step.*).
+PAY_STEPS = {"proven": ("waiting", "seen", "proven", "added"), "wallet": ("waiting", "seen_wallet", "exists", "added")}
+HIDDEN_SPAN = re.compile(r"<span[^>]*\shidden[\s>][^<]*</span>")
+
+
 def check_ui_strings():
-    """/judges quotes the app's own words (NOTES §2.7). Once the app's i18n files exist, each phrase in
-    bold in a step must be one of their strings ({placeholders} match anything), unless the site's own
-    home page says it. SKIP until the app-ui builder writes web/app/i18n/."""
+    """/judges quotes the app's own words (NOTES §2.7). The page is read in each amount-proof mode, as
+    tools/variants.py builds it. Each phrase in bold in a step must be one of the app's i18n strings
+    ({placeholders} match anything) unless the site's own home page says it, and a bold arrow sequence
+    with the payment steps must be exactly the app's upgrade.step labels for that mode, so a label the
+    app shows only in the other mode fails. SKIP until the app-ui builder writes web/app/i18n/."""
     problems = []
     for lang, page, home in (("en", "judges.html", "index.html"), ("es", "es/judges.html", "es/index.html")):
         i18n = WEB / "app" / "i18n" / f"{lang}.json"
         if not i18n.is_file():
             return None
-        patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".*", re.escape(s.strip())) + "$") for s in _strings(json.loads(i18n.read_text()))]
+        strings = json.loads(i18n.read_text())
+        patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".*", re.escape(s.strip())) + "$") for s in _strings(strings)]
         own = " ".join(parse(SITE / "pages" / home).text)
-        steps = re.findall(r'<li[^>]*><span class="n">.*?</li>', (SITE / "pages" / page).read_text())
-        for bold in re.findall(r"<strong>(.*?)</strong>", " ".join(steps)):
-            for phrase in re.sub(r"<[^>]+>|[“”✓]", "", bold).split("→"):
-                phrase = phrase.strip()
-                if phrase and phrase not in own and not any(p.match(phrase) for p in patterns):
-                    problems.append(f"pages/{page}: quotes “{phrase}”, which web/app/i18n/{lang}.json doesn't say")
+        for proof, keys in PAY_STEPS.items():
+            text = variants.resolve((SITE / "pages" / page).read_text(), {"proof": proof})
+            steps = re.findall(r'<li[^>]*><span class="n">.*?</li>', text)
+            pay = [strings.get(f"upgrade.step.{k}") for k in keys]
+            for bold in re.findall(r"<strong>(.*?)</strong>", " ".join(steps)):
+                phrases = [p.strip() for p in re.sub(r"<[^>]+>|[“”✓]", "", HIDDEN_SPAN.sub("", bold)).split("→")]
+                if pay[0] in phrases and phrases != pay:
+                    problems.append(f"pages/{page} ({proof}): payment steps “{' → '.join(phrases)}”, the app shows "
+                                    f"“{' → '.join(str(s) for s in pay)}”")
+                for phrase in phrases:
+                    if phrase and phrase not in own and not any(p.match(phrase) for p in patterns):
+                        problems.append(f"pages/{page}: quotes “{phrase}”, which web/app/i18n/{lang}.json doesn't say")
     return problems
 
 

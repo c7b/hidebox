@@ -77,8 +77,8 @@
       <li><span class="n">B3</span><span class="do">En la computadora: suelta un archivo → <strong>Mejor envíalo a una dirección de Tari</strong> → pega la dirección del teléfono (cópiala en el teléfono y envíatela por cualquier mensajería) → <strong>Enviar</strong>.</span><span class="see"><strong>Enviado</strong>, <strong>En el Ootle ✓</strong> y <strong>Lo que ve la cadena</strong>: monto oculto, dueño oculto, memo cifrado, comisión pública.</span></li>
       <li><span class="n">B4</span><span class="do">En el teléfono: <strong>Bandeja</strong>.</span><span class="see">Una entrega que solo las llaves del teléfono podían encontrar; la línea de búsqueda muestra cuántas salidas revisó. <strong>Ábrela</strong>: tu archivo.</span></li>
       <li><span class="n">B5</span><span class="do">En el teléfono: <strong>Ver lo que ve una llave de vista</strong>.</span><span class="see">Entregas y montos, y <strong>0 archivos legibles con esta llave</strong>. Una llave de vista ve llegadas; no puede gastar ni abrir los archivos sellados a este casillero.</span></li>
-      <li><span class="n">B6</span><span class="do">En cualquiera de los dos: <strong>Más espacio</strong> → el paquete más chico → <strong>Pagar con tTARI de demostración</strong>.</span><span class="see"><strong>Esperando → Visto en la cadena → <span data-when="proof=proven" hidden>Monto probado → </span>Agregado</strong> en más o menos un minuto. Nuestra cartera de demostración paga nuestra propia factura: una transacción stealth real con dinero de juguete.</span></li>
-      <li data-when="seallog=on" hidden><span class="n">B7</span><span class="do">En cualquiera de los dos: <strong>Verificar</strong> → el archivo de B3.</span><span class="see">Una prueba de inclusión, una raíz que coincide con el componente SealLog en el Ootle, y el recibo de salida de A3.</span></li>
+      <li><span class="n">B6</span><span class="do">En cualquiera de los dos: <strong>Más espacio</strong> → el paquete más chico → <strong>Pagar con tTARI de demostración</strong>.</span><span class="see"><strong>Esperando → <span data-when="proof=proven" hidden>Visto en la cadena → Monto probado → </span><span data-when="proof=wallet">Visto por nuestra cartera → Existe en la cadena → </span>Agregado</strong> en más o menos un minuto. Nuestra cartera de demostración paga nuestra propia factura: una transacción stealth real con dinero de juguete.</span></li>
+      <li data-when="seallog=on" hidden><span class="n">B7</span><span class="do">En cualquiera de los dos: <strong>Verificar</strong> → el archivo de B3.</span><span class="see">Una prueba de inclusión, una raíz que coincide con el componente SealLog en el Ootle, y el recibo de salida de A3. Hasta nuestro siguiente punto de control<span data-needs="config" hidden>, a lo más en <span data-v="checkpoint"></span></span>, cada uno dice que “todavía no está en el registro”.</span></li>
   </ol>
 </section>
 
@@ -104,7 +104,6 @@
       <dt>Biblioteca oficial de Tari</dt><dd>ootle-wasm <span data-ev="version"></span>, SHA-256 <code data-ev="wasm"></code></dd>
       <dt>Entregas de prueba (la llave de un archivo sellada a nuestro propio casillero de prueba)</dt><dd><ul class="tx-list" data-ev="deliveries"></ul></dd>
       <dt>Pagos de prueba (nuestra cartera de demostración pagando nuestra propia factura)</dt><dd><ul class="tx-list" data-ev="payments"></ul></dd>
-      <dt>Envíos señuelo hoy</dt><dd data-ev="decoys"></dd>
     </dl>
   </div>
 
