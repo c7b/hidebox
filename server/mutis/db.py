@@ -88,6 +88,10 @@ def migrate(path: Path | str, migrations: Path = MIGRATIONS) -> int:
     Returns the resulting schema version. Each migration runs in its own transaction.
     """
     Path(path).parent.mkdir(parents=True, exist_ok=True)
+    if not Path(path).exists():
+        # SQLite creates files 0644 minus the umask, never group-writable, and its -wal and -shm copy
+        # the database's mode; mutis (API) and drive (chain worker) share it through group mutis.
+        Path(path).touch(mode=0o660)
     conn = connect(path)
     try:
         has_meta = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='meta'").fetchone()
