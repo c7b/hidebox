@@ -1,0 +1,49 @@
+/* SPDX-License-Identifier: MIT — mutis base (spec §3.4.1): reset, page colours, focus, and the few
+   utilities every page shares. Nothing else lives here; site.css and app.css build on it. */
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { font: var(--t-body); }
+body { background: var(--bg); color: var(--fg); min-height: 100svh; overflow-wrap: break-word; }
+img, svg, canvas, video { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+table { border-collapse: collapse; }
+h1, h2, h3 { text-wrap: balance; }
+p, li, dd { text-wrap: pretty; }
+
+::selection { background: var(--fg); color: var(--bg); }   /* selected text looks like a redaction bar */
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+.mono { font-family: var(--font-code); font-variant-numeric: tabular-nums; }
+
+/* A bar that hides text (the glass box's "not known to us"); [data-revealed] shows the text. */
+.redact { background: var(--fg); color: transparent; }
+.redact[data-revealed] { background: none; color: inherit; }
+
+.container {
+  width: 100%; max-width: calc(var(--content-max) + 2 * var(--gutter));
+  margin-inline: auto; padding-inline: var(--gutter);
+}
+
+.skip-link {
+  position: absolute; left: var(--gutter); top: var(--s-2); z-index: var(--z-modal);
+  padding: var(--s-3) var(--s-4); background: var(--bg); color: var(--fg); font: var(--t-ui);
+  box-shadow: var(--shadow-float); transform: translateY(-200%);
+}
+.skip-link:focus-visible { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *:not(.motion-allowed), *:not(.motion-allowed)::before, *:not(.motion-allowed)::after {
+    animation-duration: 0s !important; animation-iteration-count: 1 !important;
+    transition-duration: 0s !important; scroll-behavior: auto !important;
+  }
+}

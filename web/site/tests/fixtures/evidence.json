@@ -1,0 +1,26 @@
+{
+ "network": "esmeralda",
+ "ootle_version": "0.45.0",
+ "wasm_sha256": "57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df",
+ "receiver_address": "otl_esm_1q9fixturereceiveraddressxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+ "robot_address": "otl_esm_1q9fixturerobotaddressxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+ "deliveries": [
+  {
+   "tx_id": "45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a",
+   "epoch": 12131
+  },
+  {
+   "tx_id": "0c735d349f9941e280a3d1096f66909812cc8338ec2aec6cefafc705351ec4ff",
+   "epoch": 12090
+  }
+ ],
+ "payments": [
+  {
+   "tx_id": "0c735d349f9941e280a3d1096f66909812cc8338ec2aec6cefafc705351ec4ff",
+   "epoch": 12090
+  }
+ ],
+ "decoys_today": 4,
+ "seallog": null,
+ "archive": []
+}

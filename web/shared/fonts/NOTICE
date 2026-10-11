@@ -1,0 +1,5 @@
+Mutis Script and Mutis Script Code are Modified Versions of Courier Prime and Courier Prime Code
+by Quote-Unquote Apps (OFL-1.1), renamed as the licence requires. Source: Debian package
+fonts-courier-prime 0+git20190115-4. Changes: subset to Latin,
+Latin-1, Latin Extended-A, punctuation, the euro and trademark signs; renamed; converted to WOFF2
+by web/site/tools/subset-fonts.sh. Licence: OFL.txt in this directory.

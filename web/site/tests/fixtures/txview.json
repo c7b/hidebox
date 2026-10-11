@@ -1,0 +1,27 @@
+{
+ "tx_id": "45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a",
+ "status": "Commit",
+ "epoch": 12131,
+ "fee_ut": "30000",
+ "inputs": [
+  "utxo_fixture_input"
+ ],
+ "outputs": [
+  {
+   "id": "utxo_fixture_a",
+   "commitment": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0",
+   "amount": "hidden",
+   "owner": "one-time key",
+   "sealed_bytes": 201
+  },
+  {
+   "id": "utxo_fixture_b",
+   "commitment": "b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+   "amount": "hidden",
+   "owner": "one-time key",
+   "sealed_bytes": 80
+  }
+ ],
+ "substates_created": [],
+ "_source": "indexer-b"
+}

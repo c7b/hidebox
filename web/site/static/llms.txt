@@ -1,0 +1,26 @@
+# mutis
+
+> mutis is an open-source (MIT) encrypted file-sharing service. Files are encrypted in the browser (AES-256-GCM, WebCrypto) before upload; the server stores only ciphertext and never receives keys. Each file has an exit rule: once, a number of opens, a set time, or until deleted, and the server deletes the ciphertext when the rule says so. A file's key can be sent to a Tari address sealed inside a stealth TARI payment that only the recipient's keys open. Anyone can leave a file for a mutis user through a dead-drop link; deliveries travel on Tari Ootle sealed to the recipient's owner and view keys. A payment is credited only after a Tari-run public indexer confirms it on the Ootle. Runs on the Esmeralda testnet; tTARI has no monetary value. Independent project, not affiliated with Tari Labs.
+
+The live limits (file sizes, expiry, views, prices) are in the public configuration: {{ORIGIN}}/api/v1/config
+
+## Docs
+
+- [How it works]({{ORIGIN}}/how): the mechanism, who sees what, and what mutis can't protect you from
+- [Security]({{ORIGIN}}/security): threat model, cryptography, logging, verifying a deployment
+- [Pricing and limits]({{ORIGIN}}/pricing): free space, rented space in tTARI
+- [Council guide]({{ORIGIN}}/judges): a two-track walkthrough with expected results
+- [Full text of How it works and Security]({{ORIGIN}}/llms-full.txt)
+
+## API
+
+- [API reference]({{REPO_URL}}/blob/main/docs/api.md): the API only ever handles ciphertext
+
+## Source
+
+- [Code (MIT)]({{REPO_URL}})
+
+## Contact
+
+- [Report a link]({{ORIGIN}}/abuse)
+- [Report a vulnerability]({{ORIGIN}}/security#disclosure)

@@ -1,0 +1,56 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- mutis icons (11-brand §13.8, spec §12.1): 24-px grid, 1.5-px stroke, square caps, mitre joins,
+     built from a square, a circle and a slot. Use: <svg class="icon"><use href="/shared/icons.svg#arrow"/></svg> -->
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="lock" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M4 4H20V20H4Z"/>
+    <path fill="currentColor" fill-rule="evenodd" d="M9.5 10A2.5 2.5 0 1 0 14.5 10A2.5 2.5 0 1 0 9.5 10ZM11.25 13.5H12.75L14 17H10Z"/>
+  </symbol>
+  <symbol id="link" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M3 8H13V18H3ZM11 6H21V16H11Z"/>
+  </symbol>
+  <symbol id="copy" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M8 8H20V20H8ZM16 8V4H4V16H8"/>
+  </symbol>
+  <symbol id="send" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M3 12A3 3 0 1 0 9 12A3 3 0 1 0 3 12ZM9 12H21M17 8L21 12L17 16M13 12V15"/>
+  </symbol>
+  <symbol id="check" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M4 4H20V20H4ZM8 12.5L11 15.5L16.5 9"/>
+  </symbol>
+  <symbol id="warning" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M4 4H20V20H4ZM12 8V13M12 16V16.5"/>
+  </symbol>
+  <symbol id="report" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M6 21V4H17L14.5 8.5L17 13H6"/>
+  </symbol>
+  <symbol id="save" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M12 4V15M7 10L12 15L17 10M4 15V20H20V15"/>
+  </symbol>
+  <symbol id="exit" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M4 4H16V16H4Z"/>
+    <path fill="currentColor" d="M18 18H21V21H18Z"/>
+  </symbol>
+  <symbol id="menu" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M4 7H20M4 12H20M4 17H20"/>
+  </symbol>
+  <symbol id="close" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M6 6L18 18M18 6L6 18"/>
+  </symbol>
+  <symbol id="external" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M10 5H5V19H19V14M13 5H19V11M19 5L11 13"/>
+  </symbol>
+  <symbol id="arrow" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M4 12H19M14 7L19 12L14 17"/>
+  </symbol>
+  <symbol id="drop" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M5 3H19V21H5ZM9 8H15M15 13V15"/>
+  </symbol>
+  <symbol id="watch" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" d="M3 9C7 4 17 4 21 9C17 14 7 14 3 9ZM10 9A2 2 0 1 0 14 9A2 2 0 1 0 10 9ZM8 15H16V21H8Z"/>
+  </symbol>
+  <!-- The keyhole of the ¡-mark alone, filled by the using element (the exit wall's lockers). -->
+  <symbol id="keyhole" viewBox="38 22 24 58">
+    <path d="M38.5 33.5A11.5 11.5 0 1 0 61.5 33.5A11.5 11.5 0 1 0 38.5 33.5ZM45.25 52H54.75L60.25 80H39.75Z"/>
+  </symbol>
+</svg>

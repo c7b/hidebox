@@ -1,0 +1,224 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo funciona mutis</title>
+<meta name="description" content="Tu navegador cifra cada archivo antes de subirlo; guardamos texto cifrado. Qué vemos exactamente, qué hace el Ootle de Tari y de qué no podemos protegerte.">
+<link rel="canonical" href="{{ORIGIN}}/es/how">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/how">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/how">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/how">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="Cómo funciona mutis">
+<meta property="og:description" content="Tu navegador cifra cada archivo antes de subirlo; guardamos texto cifrado. Qué vemos exactamente, qué hace el Ootle de Tari y de qué no podemos protegerte.">
+<meta property="og:url" content="{{ORIGIN}}/es/how">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+<!--#include header-es-->
+<main id="main" class="container">
+<header class="page-head">
+  <p class="scene-heading"><span class="no" aria-hidden="true">1</span>INT. TRAS BAMBALINAS — DÍA<span class="no" aria-hidden="true">1</span></p>
+  <h1>Nunca vemos qué hay adentro. Esto es exactamente lo que sí vemos.</h1>
+  <p class="lede">mutis está construido sobre la testnet de Tari™ Ootle. Esta es la versión larga: el mecanismo, cada parte que ve algo y aquello de lo que no podemos protegerte.</p>
+  <nav class="toc" aria-label="En esta página">
+    <ol>
+      <li><a href="#short">La versión corta</a></li>
+      <li><a href="#drop">Qué pasa cuando sueltas un archivo</a></li>
+      <li><a href="#exits">Cómo funcionan las salidas</a></li>
+      <li><a href="#locks">Dos cerraduras</a></li>
+      <li><a href="#tari">Dónde entra Tari</a></li>
+      <li><a href="#what-we-store">Quién ve qué</a></li>
+      <li><a href="#cant-protect">De qué no podemos protegerte</a></li>
+      <li><a href="#verify">Verifícanos</a></li>
+      <li><a href="#about">Quién está detrás, y por qué “mutis”</a></li>
+    </ol>
+  </nav>
+</header>
+
+<div class="prose page-body">
+  <h2 id="short">La versión corta</h2>
+  <ol>
+    <li>Tu navegador cifra cada archivo con AES-256-GCM antes de subirlo. Guardamos texto cifrado y nunca recibimos la llave.</li>
+    <li>La llave vive en el enlace después del <code>#</code>, en una contraseña que solo tú conoces, en tu casillero, o sellada dentro de un pago de Tari a una sola dirección. Nunca con nosotros.</li>
+    <li>Tú escribes la salida: una vez, un número de aperturas, una hora, o hasta que lo borres. Nuestro servidor la hace cumplir y borra el texto cifrado en su señal.</li>
+    <li data-when="seallog=on" hidden>Cada salida queda en el registro público del Ootle.</li>
+    <li>Tu casillero es una llave que crea tu navegador. Sin correo, sin teléfono, sin contraseña con nosotros.</li>
+  </ol>
+
+  <h2 id="drop">Qué pasa cuando sueltas un archivo</h2>
+  <ol>
+    <li>Si es una foto (JPEG, PNG o WebP), tu navegador primero le quita los datos de ubicación y de la cámara, salvo que elijas conservar la original.</li>
+    <li>Tu navegador crea una llave aleatoria de 256 bits dentro de WebCrypto. Nunca sale de la pestaña.</li>
+    <li>Cifra el archivo en bloques de 4 MB con AES-256-GCM. El nombre, el tipo y el tamaño real van <em>dentro</em> del cifrado.</li>
+    <li>Rellena el archivo para que veamos un rango de tamaño, no el tamaño exacto (el esquema Padmé: al menos 1 KB, y como mucho 12% más para archivos mayores).</li>
+    <li>Sube el texto cifrado y recibe un id aleatorio.</li>
+    <li>Arma tu enlace: el id antes del <code>#</code>, un secreto propio del enlace después. Los navegadores nunca envían a un servidor lo que va después del <code>#</code>; así funciona la web, no es una promesa nuestra.</li>
+    <li><strong>Enlace + contraseña:</strong> el secreto combina el enlace y tu contraseña<span data-needs="config" hidden> (<span data-v="pbkdf2_iter"></span> rondas de PBKDF2-SHA256, la cifra actual de OWASP)</span>. Ninguno de los dos lo abre por sí solo, y nadie puede adivinar tu contraseña solo con nuestra base de datos, porque nunca vemos la parte del enlace.<span data-needs="config" hidden> Tras <span data-v="pw_lock_after"></span> contraseñas equivocadas el enlace se pausa, cada vez por más tiempo.</span></li>
+    <li><strong>Solo contraseña:</strong> guardamos el texto cifrado, así que alguien con una copia de nuestra base de datos podría adivinar una contraseña débil sin conexión. Los intentos en línea se frenan tras unos cuantos errores. Usa cuatro o más palabras al azar.</li>
+  </ol>
+
+  <h2 id="exits">Cómo funcionan las salidas</h2>
+  <p>Nuestro servidor cuenta aperturas, vigila el reloj y borra el texto cifrado cuando la regla lo dice. Abrir siempre requiere un clic, así que las vistas previas de enlaces en las apps de chat no gastan una vista.</p>
+  <p>Borramos el texto cifrado de nuestro disco menos de un minuto después de su salida. Si la salida fue una descarga, esperamos a que termine<span data-needs="config" hidden> (como mucho <span data-v="ticket"></span>)</span>. Guardamos una nota de que el enlace existió<span data-needs="config" hidden> durante <span data-v="tombstone_days"></span></span>, para poder decirte por qué ya no está. Nunca tuvimos la llave, así que cualquier byte que quede es ruido.</p>
+  <p>Nuestra base de datos (nunca los archivos) se respalda a diario<span data-needs="config" hidden>, y cada copia se borra después de <span data-v="db_backup_days"></span></span>. Contiene las filas que imprime nuestra página “Lo que sabemos”.</p>
+  <p data-when="snapshots=off" hidden>Nuestro proveedor no guarda instantáneas del servidor.</p>
+  <p data-when="snapshots=weekly">Nuestro proveedor también toma instantáneas automáticas de todo el servidor y las guarda unas semanas. Un archivo que existía cuando se tomó una sigue en ella, como texto cifrado, hasta que esa instantánea se descarta.</p>
+  <p>Los discos no se pueden borrar de forma segura, así que el texto cifrado borrado puede quedar en bloques libres. Sin la llave es ruido.</p>
+  <p data-when="seallog=on" hidden>Cada salida queda en el registro público: la agregamos a SealLog en el Ootle en el siguiente punto de control<span data-needs="config" hidden> (en menos de <span data-v="checkpoint"></span>)</span>. Prueba que dijimos que la borramos, de forma pública y permanente. No puede probar que no guardamos una copia.</p>
+
+  <h2 id="locks">Dos cerraduras</h2>
+  <p>Secretos programables: tú escribes la regla y nuestro servidor lleva el tiempo. El Ootle lleva llaves que no podemos leer y pagos cuyo monto solo ven quien paga y quien cobra<span data-when="seallog=on" hidden>, y guarda los recibos</span>.</p>
+</div>
+<div class="locks">
+  <article class="lock">
+    <svg class="lock-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M0 0H100V100H0ZM38.5 33.5A11.5 11.5 0 1 0 61.5 33.5A11.5 11.5 0 1 0 38.5 33.5ZM45.25 52H54.75L60.25 80H39.75Z"/></svg>
+    <h3><span class="cue">Cerradura 1 · El Ootle</span> <small>(la parte que no podemos leer)</small></h3>
+    <ul>
+      <li>Lleva la llave de un archivo a una sola dirección de Tari, sellada dentro de un pago stealth.</li>
+      <li>Mueve dinero como TARI stealth, verificado contra el estado de la cadena.</li>
+      <li data-when="seallog=on" hidden>Guarda los recibos: hashes públicos de qué guardamos y cuándo se fue.</li>
+    </ul>
+  </article>
+  <p class="locks-arrow" data-when="seallog=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg><span class="direction">(cada salida)</span></p>
+  <article class="lock">
+    <svg class="lock-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M0 0H100V100H0ZM38.5 33.5A11.5 11.5 0 1 0 61.5 33.5A11.5 11.5 0 1 0 38.5 33.5ZM45.25 52H54.75L60.25 80H39.75Z"/></svg>
+    <h3><span class="cue">Cerradura 2 · Nuestro servidor</span> <small>(confía en él, y luego compruébalo)</small></h3>
+    <ul>
+      <li>Guarda ruido: texto cifrado, nunca llaves.</li>
+      <li>Lleva el reloj: cuenta aperturas, vigila la caducidad, borra en su señal.</li>
+      <li data-when="seallog=on" hidden>Escribe cada salida en la Cerradura 1, donde cualquiera puede comprobarla.</li>
+    </ul>
+  </article>
+</div>
+
+<div class="prose page-body">
+  <h2 id="tari">Dónde entra Tari</h2>
+  <p>El Ootle es la capa de aplicaciones de Tari, donde los pagos son privados por defecto y pueden llevar mensajes sellados. mutis lo usa para entregar llaves y mover dinero, y cada uso de abajo es algo que puedes comprobar.</p>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th scope="col">Capacidad de Tari</th><th scope="col">Qué hace en mutis</th><th scope="col">Cómo lo compruebas</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Salidas stealth (monto y dueño ocultos)</th><td>Enviar un archivo a una dirección de Tari, entregas de buzón, rentar espacio</td><td><code>/verify/tx/&lt;id&gt;</code>: monto oculto, dueño una llave de un solo uso, memo cifrado, comisión pública</td></tr>
+      <tr><th scope="row">Memo cifrado (XChaCha20-Poly1305)</th><td>Lleva la llave sellada de un archivo a una sola dirección de Tari</td><td>Solo las llaves del destinatario lo abren; cualquier otra falla al descifrar</td></tr>
+      <tr><th scope="row">Llaves de vista, separadas del gasto</th><td>Tu bandeja revisa la cadena en tu navegador; <code>/watch</code> muestra lo que ve una llave de vista</td><td>Una llave de vista lee llegadas y montos. No puede gastar, ni abrir archivos sellados a tu casillero</td></tr>
+      <tr data-when="send_mode=direct" hidden><th scope="row">Transacciones privadas armadas en tu navegador</th><td>Envíos firmados y pagados por tu navegador</td><td>La entrada de la transacción es una salida de la cartera de tu navegador, no de la nuestra</td></tr>
+      <tr><th scope="row">Direcciones de factura con referencia</th><td>Asociar un pago a su factura sin cuentas</td><td>El memo del pago lleva el id de la factura; nada en la cadena lo vincula contigo</td></tr>
+      <tr><th scope="row">Pagos verificados contra el estado de la cadena</th><td>Abonar espacio rentado</td><td><span data-when="proof=proven" hidden>La biblioteca oficial de Tari abre el compromiso al monto exacto, y luego un indexador público operado por Tari muestra que quedó confirmado.</span><span data-when="proof=wallet">Nuestra cartera lo ve y un indexador público operado por Tari confirma que existe en la cadena. El monto es el que lee nuestra cartera.</span> <a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">El código<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></td></tr>
+      <tr data-when="seallog=on" hidden><th scope="row">Una plantilla: SealLog</th><td>Hashes públicos de los archivos guardados y de cada salida</td><td><code>/verify</code>: prueba de inclusión, raíz, el estado del componente en el Ootle</td></tr>
+      <tr><th scope="row">Identidad por par de llaves</th><td>Tu casillero y su dirección de Tari</td><td>No hay campo de correo en ningún lado</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="prose page-body">
+  <p>¿Por qué no una plantilla de custodia (escrow)? En el Ootle, el TARI que guarda una plantilla revela su monto. Las salidas stealth nativas lo mantienen oculto, así que eso usamos.</p>
+
+  <h2 id="what-we-store">Quién ve qué</h2>
+  <p>El cifrado oculta el contenido, no todo. Estas son todas las partes, y lo que cada una puede ver.</p>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><td></td><th scope="col">Nuestro servidor</th><th scope="col">Quien observe el Ootle</th><th scope="col">Quien tenga el enlace completo</th><th scope="col">La persona a quien lo envías</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Contenido del archivo</th><td>no (texto cifrado)</td><td>no</td><td>sí</td><td>sí</td></tr>
+      <tr><th scope="row">Nombre y tipo</th><td>no (cifrados adentro)</td><td>no</td><td>sí</td><td>sí</td></tr>
+      <tr><th scope="row">Tamaño exacto</th><td>no (un rango con relleno)</td><td>no</td><td>sí</td><td>sí</td></tr>
+      <tr><th scope="row">La llave</th><td>no</td><td>no</td><td>sí (el enlace es la llave)</td><td>sí</td></tr>
+      <tr><th scope="row">Que un archivo existe, su hora de llegada, su regla, sus aperturas</th><td>sí</td><td><span data-when="seallog=on" hidden>solo conteos: registros (archivos guardados más salidas) por punto de control</span><span data-when="seallog=off">no</span></td><td>en parte (estado, aperturas restantes)</td><td>—</td></tr>
+      <tr><th scope="row">Tu dirección IP</th><td>mientras estás conectado; no se escribe en disco</td><td>no (el indexador de Tari la ve solo si presionas “Compruébalo en el indexador de Tari”)</td><td>no</td><td>no</td></tr>
+      <tr><th scope="row">A quién envías</th><td><span data-when="send_mode=relay">sí en cada envío y entrega de buzón, mientras se envía; luego se borra del trabajo</span><span data-when="send_mode=direct" hidden>envíos desde tu navegador: no; entregas de buzón: sí, mientras se envían</span></td><td>no (una dirección stealth de un solo uso)</td><td>—</td><td>sabe que es para ella</td></tr>
+      <tr><th scope="row">Que mutis hizo un pago</th><td>sí</td><td>sí para los envíos del relay: una cartera, una comisión<span data-when="send_mode=direct" hidden>; los envíos desde tu navegador llevan de vuelta al saldo que les asignó nuestra cartera patrocinadora, y entre sí por su cambio</span></td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">Montos de pago</th><td>del espacio que nos rentas, porque somos el vendedor</td><td>no (un compromiso de Pedersen)</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">La comisión de red</th><td>—</td><td>pública</td><td>—</td><td>—</td></tr>
+      <tr data-when="seallog=on" hidden><th scope="row">SealLog (hashes, conteos, horas)</th><td>sí</td><td>público por diseño</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="prose page-body">
+  <h3>Nuestro servidor, en detalle</h3>
+  <dl class="detail">
+    <dt>Ve y guarda</dt>
+    <dd>El texto cifrado y su tamaño con relleno; la hora en que llegó; la caducidad y los conteos de vistas; la regla de salida (enlace o contraseña); de los casilleros: un id de aspecto aleatorio, un hash de su llave de inicio de sesión, el primer y el último día activo, en cuántos días distintos estuvo activo, su cuota y los paquetes comprados; facturas (paquete, monto, estado) y las salidas de la cadena que las pagaron; de los buzones: la dirección de Tari del buzón, su etiqueta, su marca y sus contadores diarios; reportes de abuso; notas sobre enlaces terminados (estado y día).</dd>
+    <dt>Ve, pero nunca guarda</dt>
+    <dd>La dirección IP de quien sube y de quien abre, en vivo (así que en ese momento podríamos vincular quién subió un enlace con quién lo abrió); la llave de inicio de sesión al entrar; los tokens de acceso (se convierten en hash al llegar); en qué buzón se dejó un archivo, y la IP de quien lo dejó<span data-when="send_mode=relay">; la dirección de Tari de destino de cada envío, el blob sellado de 125 bytes, qué casillero lo envió y, por la hora, qué enlace lleva; todo eso queda en el trabajo hasta que se envía y luego se borra</span><span data-when="send_mode=direct" hidden>; que tu casillero envió una transacción, no a quién; en las entregas de buzón, la dirección del buzón mientras se envía</span>.</dd>
+    <dt>Nunca ve</dt>
+    <dd>Nombres, tipos, contenido y tamaño real de los archivos; llaves de archivo, secretos de enlace, contraseñas, semillas o cualquier llave privada; la dirección de Tari de tu casillero, salvo que crees un buzón o que un envío del relay vaya a ella<span data-when="send_mode=direct" hidden>; a quién le envías un archivo</span>; qué salidas de la cadena puede abrir tu navegador (todos descargan la misma copia de la cadena); quién comparte con quién (dentro de mutis no hay forma de compartir entre cuentas).</dd>
+  </dl>
+  <h3>Todos los demás</h3>
+  <dl class="detail">
+    <dt>Alguien que observa la red</dt><dd>Que hablas con mutis, los tiempos y los tamaños de transferencia con relleno. Nada dentro de TLS.</dd>
+    <dt>Alguien con solo la ruta del enlace (sin <code>#</code>)</dt><dd>Que el enlace existe, si pide contraseña y su estado. No la llave, el contenido ni los metadatos.</dd>
+    <dt>Quien tenga una llave de vista</dt><dd>Cada entrega y cada pago a esa dirección: monto, hora y el texto del enlace en el memo. No los archivos sellados al casillero, y no puede gastar. La única excepción: los archivos que alguien envió con “Quien lo recibe usa otra cartera de Ootle” sí se abren con la llave de vista, y la pantalla de envío lo dice.</dd>
+    <dt>El público, a través de nuestras cifras en vivo</dt><dd>La cuota gratuita, hace cuántos minutos alguien cifró un archivo por última vez y, para hasta 24 archivos recientes, un tamaño aproximado, el tiempo restante, la regla de salida y el estado, solo cuando hay al menos 8 en la última semana. Nada por persona.</dd>
+    <dt>Nuestro proveedor (Hostinger)</dt><dd>Todo lo que guarda nuestro servidor, más el disco y las instantáneas que conserve; en principio, también la memoria en vivo.</dd>
+  </dl>
+
+  <h2 id="cant-protect">De qué no podemos protegerte</h2>
+  <ol class="truths-list">
+    <li><strong>De la persona a quien lo envías.</strong> Puede guardarlo, hacer capturas o reenviarlo.</li>
+    <li><strong>De quien obtenga el enlace completo.</strong> El enlace es la llave. Usa Enlace + contraseña (enviada por otro medio) o envíalo a una sola dirección de Tari.</li>
+    <li><strong>De las apps de chat que muestran vistas previas.</strong> Sus servidores ven el enlace completo. No pueden gastar una vista (abrir requiere un clic), pero sí podrían abrirlo.</li>
+    <li><strong>De tu propio navegador.</strong> Tu historial, y cualquier sincronización del historial, puede guardar el enlace completo, con todo y llave. Quitamos la llave de la barra de direcciones en cuanto se abre, pero no podemos tocar tu historial. Las extensiones con permiso para leer tus pestañas pueden ver el enlace. El historial del portapapeles (y los portapapeles en la nube) puede guardar un enlace copiado.</li>
+    <li><strong>De un dispositivo o una extensión comprometidos.</strong> El cifrado en el navegador no le gana a un malware en el navegador.</li>
+    <li><strong>De una versión maliciosa de este sitio.</strong> Es el punto débil conocido de todo cifrado web: si nuestro servidor estuviera comprometido, podría servir código que filtre llaves. SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: nuestro script de verificación y correr tu propia copia.</li>
+    <li><strong>De los metadatos.</strong> Vemos un tamaño con relleno (redondeado hacia arriba para ocultar el tamaño exacto: al menos 1 KB, y como mucho 12% más para todo lo mayor), la hora de llegada, su regla de salida y cuántas veces se abre. No el nombre, el tipo, el contenido ni la llave. Nuestro servidor ve tu dirección IP mientras estás conectado. No la escribimos en disco: los límites de uso usan un hash con llave, en memoria, con una llave que cambia cada día. Una VPN o Tor te ocultan de nosotros; los enlaces sin casillero funcionan en el modo Más seguro de Tor Browser, y las funciones de Tari necesitan WebAssembly.</li>
+    <li><strong>De los hechos en la cadena.</strong> La cadena muestra una salida con monto oculto, dueño oculto y memo cifrado. La comisión es pública. Los pagos que envía nuestro relay salen de una sola cartera con la misma comisión, así que alguien que observe podría agruparlos como “enviados por mutis”, pero no ver a quién.<span data-when="send_mode=direct" hidden> Los envíos desde tu navegador gastan el saldo que le asigna nuestra cartera patrocinadora, y luego el cambio de cada envío, así que cualquiera que lea el Ootle puede vincularlos entre sí y con nuestra cartera patrocinadora, pero no ver a quién ni cuánto.</span><span data-when="seallog=on" hidden> SealLog muestra cuántos registros (archivos guardados más salidas) agregamos, y cuándo.</span></li>
+    <li><strong>Del borrado que no puedes ver.</strong> Borramos en la señal, y nada puede probar que no guardamos una copia. Las instantáneas y los bloques libres del disco se explican arriba.</li>
+    <li><strong>De los reinicios de la testnet.</strong> Esmeralda puede reiniciarse. Los pagos y registros en la cadena de antes de un reinicio quedan archivados en nuestro repositorio; los archivos en nuestro servidor no se ven afectados.</li>
+    <li><strong>De las solicitudes legales.</strong> Si nos obligan, podemos entregar lo que tenemos: texto cifrado, las columnas de la página “Lo que sabemos”, facturas. No contenidos. No llaves.</li>
+  </ol>
+
+  <h2 id="verify">Verifícanos</h2>
+  <ul class="link-list">
+    <li><a class="more" href="/.well-known/mutis-manifest.json">Los hashes de cada archivo que sirve este sitio<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+    <li><a class="more" href="{{REPO_URL}}/tree/{{GIT_SHA}}">El código en el commit que estás usando<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></li>
+    <li><a class="more" href="/es/security#verify">Cómo comparar este despliegue con el código<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+    <li><a class="more" href="/es/judges#evidence">Transacciones de ejemplo<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+    <li><a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Guía para instalarlo tú<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></li>
+  </ul>
+
+  <h2 id="about">Quién está detrás</h2>
+  <p>mutis lo construye un desarrollador independiente en México, para el concurso de construcción “Spooky Secrets” de la comunidad de Tari en octubre de 2026, y está pensado para sobrevivirlo. mutis es un proyecto independiente de código abierto. No está afiliado, respaldado ni patrocinado por Tari Labs, el Consejo de Tari ni el proyecto Tari.</p>
+
+  <h3>¿Por qué “mutis”?</h3>
+  <div class="screenplay">
+    <p class="scene">INT. UN TEATRO EN LA CIUDAD DE MÉXICO — NOCHE</p>
+    <p>La sala está llena. Alguien habla demasiado fuerte.</p>
+    <p class="character">APUNTADOR</p>
+    <p class="paren">(en un susurro)</p>
+    <p class="dialogue">¡Mutis!</p>
+    <p>Silencio. Un actor sale de escena, en su señal.</p>
+    <p>En español, mutis es el silencio y la salida discreta. En latín, mūtīs significa “a los silenciosos”. En inglés suena a “mute”. Mira la i de nuestro nombre: es una cerradura, y es un signo de exclamación al revés, el ¡ de ¡mutis!</p>
+    <p class="transition">MUTIS.</p>
+  </div>
+  <p><strong>mutis</strong> /ˈmu.tis/.</p>
+
+  <h3>Cómo está hecho</h3>
+  <p>Construido con agentes de programación de IA bajo la dirección del autor. El diseño, el modelo de amenazas y las decisiones criptográficas los revisó el autor; la evidencia de verificación está <a href="{{REPO_URL}}/tree/main/docs/evidence">en el repositorio</a>.</p>
+  <p>En tu navegador: nuestros propios módulos, su WebCrypto y una sola biblioteca incluida, la ootle-wasm oficial de Tari<span data-needs="config" hidden> <span data-v="ootle_wasm_version"></span></span>, fijada por su hash. En el servidor: la biblioteca estándar de Python, Caddy y Node de Debian, y el walletd de Tari para la cadena. Sin npm install, en ningún lado.</p>
+  <p>Nuestra tipografía de guion es Mutis Script, una copia renombrada y reducida de Courier Prime de Quote-Unquote Apps (<a href="/shared/fonts/OFL.txt">SIL Open Font License 1.1</a>).</p>
+</div>
+</main>
+<!--#include footer-es-->
+</body>
+</html>

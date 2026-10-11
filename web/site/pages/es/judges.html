@@ -1,0 +1,120 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía del Consejo · mutis</title>
+<meta name="description" content="mutis en 60 segundos o en 5 minutos: una guía de dos rutas para el Consejo de Tari, con lo que deberías ver en cada paso y evidencia en vivo en la cadena.">
+<link rel="canonical" href="{{ORIGIN}}/es/judges">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/judges">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/judges">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/judges">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="Guía del Consejo · mutis">
+<meta property="og:description" content="mutis en 60 segundos o en 5 minutos: una guía de dos rutas para el Consejo de Tari, con lo que deberías ver en cada paso y evidencia en vivo en la cadena.">
+<meta property="og:url" content="{{ORIGIN}}/es/judges">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/judges.js" integrity="{{SRI}}"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+<!--#include header-es-->
+<main id="main" class="container">
+<header class="page-head">
+  <p class="scene-heading"><span class="no" aria-hidden="true">1</span>INT. EL PALCO — NOCHE DE ESTRENO<span class="no" aria-hidden="true">1</span></p>
+  <h1>mutis en 60 segundos, o en 5 minutos.</h1>
+  <p class="lede">La guía para el Consejo. Nada que instalar. Cada paso dice qué deberías ver. Si ves otra cosa, es un error: cuéntanos en nuestro hilo del <a href="https://community.tari.com/">foro de la comunidad de Tari™</a>.</p>
+</header>
+
+<details class="judge-pass" data-judge-pass hidden>
+  <summary>¿Tienes un pase de jurado?</summary>
+  <form class="form">
+    <div class="field">
+      <label for="judge-code">Pase de jurado (opcional)</label>
+      <p class="hint" id="judge-hint">Los pases los damos nosotros, a petición. Uno se salta la verificación anti-bots y usa un presupuesto que apartamos, así que es mucho menos probable que la demostración se quede sin fondos para ti. Se guarda solo para esta pestaña.</p>
+      <input type="text" id="judge-code" name="code" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="judge-hint judge-status">
+    </div>
+    <p><button type="submit" class="btn">Guardar pase</button> <button type="button" class="btn" data-judge-forget hidden>Olvidarlo</button></p>
+    <p class="form-status" id="judge-status" role="status"></p>
+  </form>
+</details>
+
+<section class="track" aria-labelledby="track-a">
+  <h2 id="track-a">Ruta A · 60 segundos, sin cartera</h2>
+  <p class="track-cols" aria-hidden="true"><span></span><span>Haz esto</span><span>Deberías ver</span></p>
+  <ol>
+      <li><span class="n">A1</span><span class="do">En una computadora, abre la página de inicio y suelta cualquier archivo. Deja <strong>Se abre una vez</strong>. Presiona <strong>Copiar enlace</strong>.</span><span class="see">Tu archivo y su ruido guardado lado a lado, y un enlace cuya parte después del <code>#</code> es la llave.</span></li>
+      <li><span class="n">A2</span><span class="do">Abre el enlace en tu teléfono. Presiona <strong>Abrirlo</strong>.</span><span class="see">El archivo.</span></li>
+      <li><span class="n">A3</span><span class="do">Recarga la página en el teléfono.</span><span class="see"><strong>“Este secreto ya hizo mutis.”</strong> Abre <strong>Lo que sabemos de este enlace</strong>: sin nombre, sin tipo, sin llave.</span></li>
+      <li><span class="n">A4</span><span class="do">Opcional: página de inicio → <strong>Intenta leerlo</strong> → <strong>Descargar los bytes guardados</strong>.</span><span class="see">Un archivo que ciframos en la última hora, tal como lo guarda nuestro disco: ruido.</span></li>
+  </ol>
+</section>
+
+<section class="track" aria-labelledby="track-b">
+  <h2 id="track-b">Ruta B · 5 minutos, la parte de Tari™</h2>
+  <p class="direction">Dos dispositivos. El teléfono es quien recibe; la computadora es todos los demás.</p>
+  <p class="track-cols" aria-hidden="true"><span></span><span>Haz esto</span><span>Deberías ver</span></p>
+  <ol>
+      <li><span class="n">B1</span><span class="do">En tu teléfono, abre la página de inicio → <strong>Abrir mi casillero</strong>. Cuando te pida guardar tu llave, toca <strong>Más tarde</strong>.</span><span class="see">Un casillero se abre en unos segundos, sin correo: un código de seguridad de 12 emoji y una dirección de Tari <code>otl_esm_…</code>.</span></li>
+      <li><span class="n">B2</span><span class="do">En el teléfono: <strong>Déjame un archivo</strong> → <strong>Crear mi enlace de buzón</strong>. En la computadora, abre ese enlace corto y suelta una foto.</span><span class="see">“Se quitaron los datos de ubicación y de la cámara”, luego <strong>Entregado</strong> en más o menos un minuto. La bandeja del teléfono lo muestra en <strong>Dejado en tu buzón</strong>.</span></li>
+      <li><span class="n">B3</span><span class="do">En la computadora: suelta un archivo → <strong>Mejor envíalo a una dirección de Tari</strong> → pega la dirección del teléfono (cópiala en el teléfono y envíatela por cualquier mensajería) → <strong>Enviar</strong>.</span><span class="see"><strong>Enviado</strong>, <strong>En el Ootle ✓</strong> y <strong>Lo que ve la cadena</strong>: monto oculto, dueño oculto, memo cifrado, comisión pública.</span></li>
+      <li><span class="n">B4</span><span class="do">En el teléfono: <strong>Bandeja</strong>.</span><span class="see">Una entrega que solo las llaves del teléfono podían encontrar; la línea de búsqueda muestra cuántas salidas revisó. <strong>Ábrela</strong>: tu archivo.</span></li>
+      <li><span class="n">B5</span><span class="do">En el teléfono: <strong>Ver lo que ve una llave de vista</strong>.</span><span class="see">Entregas y montos, y <strong>0 archivos legibles con esta llave</strong>. Una llave de vista ve llegadas; no puede gastar ni abrir los archivos sellados a este casillero.</span></li>
+      <li><span class="n">B6</span><span class="do">En cualquiera de los dos: <strong>Más espacio</strong> → el paquete más chico → <strong>Pagar con tTARI de demostración</strong>.</span><span class="see"><strong>Esperando → Visto en la cadena → <span data-when="proof=proven" hidden>Monto probado → </span>Agregado</strong> en más o menos un minuto. Nuestra cartera de demostración paga nuestra propia factura: una transacción stealth real con dinero de juguete.</span></li>
+      <li data-when="seallog=on" hidden><span class="n">B7</span><span class="do">En cualquiera de los dos: <strong>Verificar</strong> → el archivo de B3.</span><span class="see">Una prueba de inclusión, una raíz que coincide con el componente SealLog en el Ootle, y el recibo de salida de A3.</span></li>
+  </ol>
+</section>
+
+<div class="prose page-body">
+  <h2 id="trouble">Si algo no cuadra</h2>
+  <p><strong>¿Funciones de Tari en pausa?</strong> La testnet se está reiniciando; la Ruta A sigue funcionando. <strong>¿Un paso falla dos veces?</strong> Espera un minuto e intenta una vez más, y luego cuéntanos en el hilo del foro con el número del paso.</p>
+
+  <h2 id="map">Qué muestra cada paso</h2>
+  <ul>
+    <li><strong>Salidas stealth:</strong> B2, B3 y B6 mueven valor con el monto y el dueño ocultos.</li>
+    <li><strong>Memos cifrados:</strong> B2 y B3 llevan la llave de un archivo sellada a un solo casillero; solo las llaves de ese casillero la abren.</li>
+    <li><strong>Llaves de vista separadas de los archivos:</strong> B5 ve llegadas pero no abre nada.</li>
+    <li><strong>Pagos verificados contra el estado de la cadena:</strong> <span data-when="proof=proven" hidden>B6 se abona solo después de que la biblioteca oficial de Tari prueba su monto y un indexador de Tari lo muestra en la cadena.</span><span data-when="proof=wallet">B6 se abona solo después de que un indexador de Tari confirma que el pago existe en la cadena; el monto es el que lee nuestra cartera.</span></li>
+    <li><strong>Sin llaves en el servidor:</strong> de A1 a A4. Nuestro servidor guarda texto cifrado; la llave se queda en el enlace.</li>
+  </ul>
+  <p>El mapa completo y cada observador: <a class="more" href="/es/how#tari">Dónde entra Tari<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a> · <a class="more" href="/es/how#what-we-store">Quién ve qué<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+
+  <h2 id="evidence">Evidencia en vivo</h2>
+  <p>Nuestras propias transacciones de prueba, nunca las de un usuario. Vienen de <a href="/evidence.json">/evidence.json</a>, que se actualiza cada hora; las anteriores están archivadas en <a class="more" href="{{REPO_URL}}/tree/main/docs/evidence">el repositorio<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+  <div class="evidence" data-evidence hidden>
+    <dl class="detail">
+      <dt>Red</dt><dd data-ev="network"></dd>
+      <dt>Biblioteca oficial de Tari</dt><dd>ootle-wasm <span data-ev="version"></span>, SHA-256 <code data-ev="wasm"></code></dd>
+      <dt>Entregas de prueba (la llave de un archivo sellada a nuestro propio casillero de prueba)</dt><dd><ul class="tx-list" data-ev="deliveries"></ul></dd>
+      <dt>Pagos de prueba (nuestra cartera de demostración pagando nuestra propia factura)</dt><dd><ul class="tx-list" data-ev="payments"></ul></dd>
+      <dt>Envíos señuelo hoy</dt><dd data-ev="decoys"></dd>
+    </dl>
+  </div>
+
+  <h2 id="self-host">Corre tu propia copia</h2>
+  <p>Compartir archivos necesita la biblioteca estándar de Python y un servidor web. Las funciones de Tari también necesitan un walletd en la testnet de Ootle y Node para el verificador de pagos. <a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Guía para instalarlo tú<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+
+  <h2 id="ai">Cómo se hizo</h2>
+  <p>Construido con agentes de programación de IA bajo la dirección del autor. El diseño, el modelo de amenazas y las decisiones criptográficas los revisó el autor; la evidencia de verificación está enlazada arriba. Este despliegue corre el commit <code>{{GIT_SHA}}</code>.</p>
+</div>
+</main>
+<!--#include footer-es-->
+</body>
+</html>

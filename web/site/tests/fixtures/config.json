@@ -1,0 +1,141 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "memo_origins": [
+  "https://srv2052606.hstgr.cloud",
+  "https://mutis.sh"
+ ],
+ "network": "esmeralda",
+ "network_byte": 38,
+ "testnet": true,
+ "send_mode": "relay",
+ "amount_proof": "wallet",
+ "chunk_size": 4194304,
+ "text_max_chars": 10000,
+ "text_max_bytes": 65536,
+ "inline_max_stored": 262144,
+ "limits": {
+  "anon": {
+   "max_file_bytes": 26214400,
+   "small_lane_max_bytes": 5242880,
+   "max_expiry_s": 86400,
+   "default_expiry_s": 86400,
+   "max_views": 10,
+   "courier_per_day": 3,
+   "uploads_per_hour": 30,
+   "large_uploads_per_hour": 10
+  },
+  "drop": {
+   "max_file_bytes": 26214400,
+   "expiry_s": 604800,
+   "views": 3
+  },
+  "probation": {
+   "max_file_bytes": 67108864,
+   "quota_bytes": 67108864,
+   "max_expiry_s": 604800,
+   "default_expiry_s": 604800,
+   "max_views": 50,
+   "sends_per_day": 3
+  },
+  "locker": {
+   "max_file_bytes": 536870912,
+   "max_expiry_s": 2592000,
+   "default_expiry_s": 604800,
+   "max_views": 50,
+   "sends_per_day": 20
+  },
+  "paid": {
+   "max_file_bytes": 2147483648,
+   "max_expiry_s": 2592000,
+   "default_expiry_s": 604800,
+   "max_views": 50,
+   "sends_per_day": 50
+  },
+  "demo_pay_per_day": 2
+ },
+ "kdf": {
+  "alg": "PBKDF2-SHA256",
+  "min_iter": 600000,
+  "max_iter": 5000000
+ },
+ "pricing": {
+  "unit": "tTARI",
+  "packs": [
+   {
+    "id": "s30",
+    "bytes": 2147483648,
+    "days": 30,
+    "price_ut": "500000"
+   },
+   {
+    "id": "m30",
+    "bytes": 10737418240,
+    "days": 30,
+    "price_ut": "2000000"
+   }
+  ]
+ },
+ "features": {
+  "drops": true,
+  "relay_send": true,
+  "direct_send": false,
+  "demo_pay": true,
+  "sponsor": false,
+  "decoys": true,
+  "kept": true,
+  "seallog": false
+ },
+ "courier": {
+  "amount_ut": "1000",
+  "max_fee_ut": "30000",
+  "jitter_s": [
+   5,
+   45
+  ]
+ },
+ "sponsor_grant_ut": "1000000",
+ "ootle": {
+  "mirror_start_seq": 1,
+  "indexers": [
+   "https://ootle-indexer-b.tari.com",
+   "https://ootle-indexer-a.tari.com"
+  ],
+  "wasm_version": "0.45.0",
+  "mainnet_date": "2026-11-11"
+ },
+ "security_drop": null,
+ "repo_url": "https://github.com/c7b/mutis",
+ "seal_log": {
+  "checkpoint_interval_s": 21600,
+  "component": null
+ },
+ "retention": {
+  "ticket_s": 1800,
+  "tombstone_days": 30,
+  "db_backup_days": 7,
+  "inactive_days": 180,
+  "lapse_grace_days": 30,
+  "session_s": 2592000
+ },
+ "quota": {
+  "floor_bytes": 268435456,
+  "ceiling_bytes": 5368709120,
+  "overcommit": 4,
+  "active_days": 30
+ },
+ "password": {
+  "lock_after": 5,
+  "lock_s": 60,
+  "permanent_after": 50,
+  "min_chars_link_password": 4,
+  "min_chars_password_only": 10
+ },
+ "invoices": {
+  "underpaid_grace_days": 7,
+  "expires_s": 3600
+ },
+ "hosting": {
+  "snapshots": "weekly"
+ },
+ "onion": null
+}

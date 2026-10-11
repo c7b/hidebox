@@ -1,0 +1,157 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security · mutis</title>
+<meta name="description" content="The mutis threat model: what we defend against and what we don't, the cryptography, what never touches a disk, and how to verify this deployment.">
+<link rel="canonical" href="{{ORIGIN}}/security">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/security">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/security">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/security">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="Security · mutis">
+<meta property="og:description" content="The mutis threat model: what we defend against and what we don't, the cryptography, what never touches a disk, and how to verify this deployment.">
+<meta property="og:url" content="{{ORIGIN}}/security">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Every secret leaves on cue. A dark wall of lockers with one keyhole still lit.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to the content</a>
+<!--#include header-->
+<main id="main" class="container">
+<header class="page-head">
+  <h1>What we defend against, and what we don't.</h1>
+  <p class="lede">The threat model, the cryptography, what never touches a disk, and how to check that the code you run is the code we published. mutis runs on the Tari™ Ootle testnet.</p>
+  <nav class="toc" aria-label="On this page">
+    <ol>
+      <li><a href="#threats">Threat model</a></li>
+      <li><a href="#crypto">Cryptography</a></li>
+      <li><a href="#addresses">Sealing a file to a Tari address</a></li>
+      <li><a href="#payments">How payments are checked</a></li>
+      <li><a href="#logs">What never touches a disk</a></li>
+      <li><a href="#headers">Headers and content security policy</a></li>
+      <li><a href="#verify">Verify this deployment</a></li>
+      <li><a href="#devtools">Check it in your devtools</a></li>
+      <li><a href="#disclosure">Report a vulnerability</a></li>
+    </ol>
+  </nav>
+</header>
+
+<div class="prose page-body">
+  <h2 id="threats">Threat model</h2>
+  <p>Who could attack a mutis link, what they could do, what stops them, and what still remains.</p>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th scope="col">Adversary</th><th scope="col">Can</th><th scope="col">What stops them</th><th scope="col">What remains</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Network observer</th><td>see TLS metadata</td><td>HTTPS only, HSTS, Padmé size buckets</td><td>timing and volume</td></tr>
+      <tr><th scope="row">A curious or compromised server (including our host)</th><td>read the database and the stored files, change responses, watch IP addresses live</td><td>everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or locker addresses stored for logins; no sharing graph; each chunk is authenticated together with its header</td><td>can serve malicious JavaScript (see <a href="#verify">verify</a>); can refuse service; sees the metadata listed on <a href="/how#what-we-store">How it works</a><span data-when="send_mode=relay">; knows each relay send's destination</span>; can ignore a deletion and keep ciphertext, which is useless without the key</td></tr>
+      <tr><th scope="row">Someone with only the link's path</th><td>ask for its status</td><td>the key lives only after the <code>#</code>; opening needs an access token derived from it; link + password adds a link proof</td><td>learns that a link exists, and its state</td></tr>
+      <tr><th scope="row">Password guesser, online</th><td>try passwords</td><td>the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords</td><td>slow guessing against weak password-only links</td></tr>
+      <tr><th scope="row">Password guesser, with a copy of our database</th><td>guess password-only links offline</td><td>PBKDF2-SHA256<span data-needs="config" hidden> with <span data-v="pbkdf2_iter"></span> rounds</span>; link + password is the default, and password-only links come with a warning</td><td>weak password-only secrets</td></tr>
+      <tr><th scope="row">Chain observer</th><td>read all public state</td><td>stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends</td><td>the fee and the transaction graph are public; relay sends are recognisable as ours<span data-when="send_mode=direct" hidden>; sends from a browser spend a grant from our sponsor wallet and then their own change, so they can be linked to each other and to us</span></td></tr>
+      <tr><th scope="row">A view-key holder</th><td>read arrivals, amounts and memo text</td><td>files sealed to a locker need its owner key too</td><td>files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)</td></tr>
+      <tr><th scope="row">Phishing through our relay</th><td>make our wallet send a link</td><td>the server writes every memo from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address</td><td>someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs<span data-when="send_mode=direct" hidden>. Sends from browsers carry a memo the browser wrote, so a modified client can put any text on chain to any address, within one sponsor grant a day per locker and per network; inboxes show a memo that isn't exactly a mutis link as plain text, never as a link</span></td></tr>
+      <tr><th scope="row">Griefer</th><td>fill storage, push proof of work up, drain daily budgets, lock links</td><td>reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts</td><td>someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working</td></tr>
+      <tr><th scope="row">Someone hosting abuse</th><td>upload and share</td><td>small and short-lived anonymous files, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, <code>noindex</code>, the <a href="/abuse">report form</a>, removal by id</td><td>we can't scan encrypted content, by design</td></tr>
+      <tr><th scope="row">Script injection or a poisoned dependency</th><td>run code in our origin</td><td>no third-party code; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash; SRI on every script and stylesheet</td><td>browser extensions (out of scope)</td></tr>
+      <tr><th scope="row">Draining our wallet through the API</th><td>spend the sponsor wallet</td><td>the internet-facing API runs as a separate user that can't reach the wallet; jobs are validated; daily budget slices; a firewall rule per user on the wallet port</td><td>at most the daily budgets</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="prose page-body">
+  <h2 id="crypto">Cryptography</h2>
+  <p>Everything that touches a file or a key runs in your browser, with your browser's own WebCrypto. The server never receives a file key, a link's secret, a password or your seed. At sign-in it sees your login key and keeps only its SHA-256.</p>
+  <ul>
+    <li><strong>Files:</strong> a fresh random 32-byte key per file. The content is padded with Padmé (at least 1 KB, at most 12% over above that), cut into 4 MB chunks and encrypted with AES-256-GCM. Each chunk's nonce holds its index and a “last chunk” flag, and every chunk authenticates the file's header, so reordering, truncation and extension all fail.</li>
+    <li><strong>Metadata:</strong> the name, type and real size are encrypted separately, also with AES-256-GCM, padded to a multiple of 256 bytes.</li>
+    <li><strong>Keys from keys:</strong> HKDF-SHA256 with a separate label for every purpose, so one derived key reveals nothing about another.</li>
+    <li><strong>Links:</strong> every link has its own 32-byte secret, after the <code>#</code>. It unwraps the file key and derives an access token; our server stores only the SHA-256 of that token.</li>
+    <li><strong>Passwords:</strong> PBKDF2-SHA256<span data-needs="config" hidden>, <span data-v="pbkdf2_iter"></span> rounds</span>, combined with the link's secret by default (link + password), so a copy of our database isn't enough to guess it.</li>
+    <li><strong>Lockers:</strong> one 32-byte seed made in your browser, kept in its storage, and backed up as your recovery code or key file. Everything else is derived from it: the login key (we store its SHA-256), the locker's Tari keys, a separate wallet key, and the dead-drop tags. There is no email and no password with us.</li>
+    <li><strong>Safety code:</strong> 12 emoji (96 bits) derived from a locker's public keys, so two people can compare a locker out loud.</li>
+    <li><strong>Proof of work:</strong> SHA-256 with a number of leading zero bits, instead of a captcha. Your browser solves it in a background worker.</li>
+    <li><strong>Photos:</strong> location and camera data are removed from JPEG, PNG and WebP files before encryption, unless you choose to keep the original.</li>
+  </ul>
+
+  <h2 id="addresses">Sealing a file to a Tari address</h2>
+  <p>When you send a file to a Tari address, your browser seals the link's secret to that address's two public keys, the owner key and the view key, using the official Tari library for the key agreement. The sealed blob is 125 bytes, and it travels as the memo of a stealth payment.</p>
+  <ul>
+    <li><strong>Why a view key can't open your files:</strong> the seal needs both the owner key and the view key to open. A view key alone shows that a delivery arrived, its amount and its memo text, but not the file.</li>
+    <li><strong>The exception, labelled:</strong> a sender can choose “The recipient uses another Ootle wallet”. That seal uses the view key only, so anyone with that view key can open the file, and the send screen says so.</li>
+    <li data-when="send_mode=relay"><strong>Who posts the payment:</strong> our relay. We post the payment for you, so we learn the address you send to, never the key. The server writes the memo from its own address; a client supplies only the sealed blob.</li>
+    <li data-when="send_mode=direct" hidden><strong>Who posts the payment:</strong> your browser builds, signs and pays for it, and our server passes it to the network without learning who it's for. It spends a grant from our sponsor wallet, so the chain links your sends to that wallet and to each other. Dead-drop deliveries still go through our relay, because a drop's address is public by design.</li>
+  </ul>
+
+  <h2 id="payments">How payments are checked</h2>
+  <p>In September a wallet bug on the testnet showed deposits that never happened (<a href="https://community.tari.com/t/402">forum thread</a>). A wallet saying “sent” isn't enough, so mutis credits rented space only after its own checks.</p>
+  <p data-when="proof=proven" hidden>We credit a payment only after the official Tari library opens its commitment to the exact amount and a Tari-run public indexer shows it committed on the chain. The check runs in a separate process that can only read; walletd never decides a credit.</p>
+  <p data-when="proof=wallet">We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads; this deployment doesn't prove it with the official Tari library.</p>
+  <p><a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">Read the code that does it<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+
+  <h2 id="logs">What never touches a disk</h2>
+  <p>Our server and web server never write your IP address, your links or your files' ids to disk.</p>
+  <ul>
+    <li><strong>Web server:</strong> no access log, and the error log drops addresses, paths, hosts and headers.</li>
+    <li><strong>API:</strong> logs only the route's name, the status and how long it took.</li>
+    <li><strong>Rate limits:</strong> a keyed hash of your network prefix, kept in memory, with a key that changes every day.</li>
+    <li><strong>Background jobs:</strong> fixed codes, never addresses, ids or memos. Our own test transactions are the only ones we publish.</li>
+    <li><strong>The firewall:</strong> logging is off. <strong>System journal:</strong> kept for seven days.</li>
+  </ul>
+  <p>That's not the same as “nobody ever sees your IP”: our server sees it while you're connected, and so could our host.</p>
+
+  <h2 id="headers">Headers and content security policy</h2>
+  <p>Every response carries HSTS, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: no-referrer</code>, <code>Cross-Origin-Opener-Policy</code> and <code>Cross-Origin-Resource-Policy: same-origin</code>, <code>X-Frame-Options: DENY</code> and a <code>Permissions-Policy</code> that turns off the camera, microphone, location, payment and USB APIs.</p>
+  <p>Pages allow scripts, styles, fonts and requests only from this origin, and nothing inline is allowed to run. The app pages add WebAssembly for the official Tari library, Trusted Types where the browser supports them, and the two Tari-run indexers for the “Check it on Tari's indexer” button.</p>
+
+  <h2 id="verify">Verify this deployment</h2>
+  <p>SRI only pins files to this page; it can't protect you from us. What can: comparing what we serve with the published source, and running your own copy.</p>
+  <ol>
+    <li>Every build writes <a href="/.well-known/mutis-manifest.json">a manifest</a> with the SHA-256 of every file this site serves and the git commit it came from.</li>
+    <li><code>tools/verify-deploy.py</code> rebuilds the site from a clean checkout of that commit, downloads every file in the live manifest, and prints any difference.</li>
+  </ol>
+  <pre class="terminal" aria-label="Commands to check this deployment"><span>$ </span>git clone {{REPO_URL}}
+<span>$ </span>cd mutis
+<span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
+  <p>This checks the site now. A browser can't pin it for you between visits.</p>
+
+  <h2 id="devtools">Check it in your devtools</h2>
+  <p>No analytics, no trackers, no third-party scripts or fonts. Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”. To see it for yourself:</p>
+  <ol>
+    <li>Open your browser's developer tools and choose the Network tab.</li>
+    <li>Reload this page, then drop a file on the home page.</li>
+    <li>Every request goes to this site's own address. Nothing else appears unless you press “Check it on Tari's indexer”.</li>
+  </ol>
+
+  <h2 id="disclosure">Report a vulnerability</h2>
+  <p>Please tell us privately before you tell anyone else. We'll answer, fix what's real, and credit you if you want.</p>
+  <ul class="link-list">
+    <li data-when="security_drop=on" hidden><a class="more" data-href="security_drop" href="/abuse">Leave us a file through our own dead drop<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+    <li><a class="more" href="{{REPO_URL}}/security/advisories/new">Open a private security advisory on GitHub<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></li>
+    <li><a class="more" href="/abuse">Report a link that hosts something harmful<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+  </ul>
+  <p>The full threat model, with the findings of our own review, is in <a class="more" href="{{REPO_URL}}/blob/main/docs/threat-model.md">docs/threat-model.md<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a>.</p>
+</div>
+</main>
+<!--#include footer-->
+</body>
+</html>

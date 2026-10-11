@@ -1,0 +1,157 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seguridad · mutis</title>
+<meta name="description" content="El modelo de amenazas de mutis: de qué nos defendemos y de qué no, la criptografía, lo que nunca toca un disco y cómo verificar este despliegue.">
+<link rel="canonical" href="{{ORIGIN}}/es/security">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/security">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/security">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/security">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="Seguridad · mutis">
+<meta property="og:description" content="El modelo de amenazas de mutis: de qué nos defendemos y de qué no, la criptografía, lo que nunca toca un disco y cómo verificar este despliegue.">
+<meta property="og:url" content="{{ORIGIN}}/es/security">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+<!--#include header-es-->
+<main id="main" class="container">
+<header class="page-head">
+  <h1>De qué nos defendemos, y de qué no.</h1>
+  <p class="lede">El modelo de amenazas, la criptografía, lo que nunca toca un disco y cómo comprobar que el código que usas es el que publicamos. mutis corre en la testnet de Tari™ Ootle.</p>
+  <nav class="toc" aria-label="En esta página">
+    <ol>
+      <li><a href="#threats">Modelo de amenazas</a></li>
+      <li><a href="#crypto">Criptografía</a></li>
+      <li><a href="#addresses">Sellar un archivo a una dirección de Tari</a></li>
+      <li><a href="#payments">Cómo se verifican los pagos</a></li>
+      <li><a href="#logs">Lo que nunca toca un disco</a></li>
+      <li><a href="#headers">Cabeceras y política de seguridad de contenido</a></li>
+      <li><a href="#verify">Verifica este despliegue</a></li>
+      <li><a href="#devtools">Compruébalo en tus herramientas de desarrollo</a></li>
+      <li><a href="#disclosure">Reporta una vulnerabilidad</a></li>
+    </ol>
+  </nav>
+</header>
+
+<div class="prose page-body">
+  <h2 id="threats">Modelo de amenazas</h2>
+  <p>Quién podría atacar un enlace de mutis, qué podría hacer, qué lo detiene y qué queda.</p>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th scope="col">Adversario</th><th scope="col">Puede</th><th scope="col">Qué lo detiene</th><th scope="col">Qué queda</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Quien observa la red</th><td>ver metadatos de TLS</td><td>solo HTTPS, HSTS, rangos de tamaño Padmé</td><td>tiempos y volumen</td></tr>
+      <tr><th scope="row">Un servidor curioso o comprometido (incluido nuestro proveedor)</th><td>leer la base de datos y los archivos guardados, cambiar respuestas, ver direcciones IP en vivo</td><td>todo se cifra en el navegador; los tokens y verificadores se guardan como hash; no guardamos llaves públicas ni direcciones de casillero para iniciar sesión; no hay grafo de quién comparte con quién; cada bloque se autentica junto con su cabecera</td><td>puede servir JavaScript malicioso (ver <a href="#verify">verifica</a>); puede negar el servicio; ve los metadatos listados en <a href="/es/how#what-we-store">Cómo funciona</a><span data-when="send_mode=relay">; conoce el destino de cada envío del relay</span>; puede ignorar un borrado y guardar texto cifrado, que sin la llave no sirve</td></tr>
+      <tr><th scope="row">Alguien con solo la ruta del enlace</th><td>pedir su estado</td><td>la llave vive solo después del <code>#</code>; abrir requiere un token de acceso derivado de ella; enlace + contraseña añade una prueba del enlace</td><td>sabe que el enlace existe, y su estado</td></tr>
+      <tr><th scope="row">Quien adivina contraseñas, en línea</th><td>probar contraseñas</td><td>el token de acceso sale de la contraseña; pausas crecientes; prueba de trabajo; solo quien tiene el enlace completo cuenta como contraseña equivocada</td><td>adivinar despacio contra enlaces débiles de solo contraseña</td></tr>
+      <tr><th scope="row">Quien adivina contraseñas, con una copia de nuestra base de datos</th><td>adivinar sin conexión los enlaces de solo contraseña</td><td>PBKDF2-SHA256<span data-needs="config" hidden> con <span data-v="pbkdf2_iter"></span> rondas</span>; enlace + contraseña es lo predeterminado, y los enlaces de solo contraseña traen una advertencia</td><td>secretos débiles de solo contraseña</td></tr>
+      <tr><th scope="row">Quien observa la cadena</th><td>leer todo el estado público</td><td>salidas stealth, memos cifrados, una comisión y un monto iguales para cada envío del relay, envíos señuelo</td><td>la comisión y el grafo de transacciones son públicos; los envíos del relay se reconocen como nuestros<span data-when="send_mode=direct" hidden>; los envíos desde un navegador gastan el saldo que asigna nuestra cartera patrocinadora y luego su propio cambio, así que se pueden vincular entre sí y con nosotros</span></td></tr>
+      <tr><th scope="row">Quien tenga una llave de vista</th><td>leer llegadas, montos y el texto del memo</td><td>los archivos sellados a un casillero también necesitan su llave de dueño</td><td>los archivos enviados con “Quien lo recibe usa otra cartera de Ootle” se abren con la llave de vista (se avisa al enviar)</td></tr>
+      <tr><th scope="row">Phishing a través de nuestro relay</th><td>hacer que nuestra cartera envíe un enlace</td><td>el servidor escribe cada memo desde su propia dirección; un cliente solo entrega un blob sellado de 125 bytes; enviar requiere un casillero; las entregas de buzón solo van a la dirección del propio buzón</td><td>alguien puede enviar entregas de mutis no deseadas a una dirección: topes diarios, buzones que se pueden cerrar, una sección aparte en la bandeja, sin vista previa automática, una advertencia antes de los programas<span data-when="send_mode=direct" hidden>. Los envíos desde navegadores llevan un memo que escribió el navegador, así que un cliente modificado puede poner cualquier texto en la cadena hacia cualquier dirección, con un saldo de patrocinio al día por casillero y por red; las bandejas muestran como texto plano, nunca como enlace, un memo que no sea exactamente un enlace de mutis</span></td></tr>
+      <tr><th scope="row">Quien busca saturarnos</th><td>llenar el almacenamiento, subir la prueba de trabajo, agotar presupuestos diarios, bloquear enlaces</td><td>carriles reservados para archivos pequeños y anónimos, límites por prefijo de red, un primer día limitado para casilleros nuevos, presupuestos públicos y reservados con alertas</td><td>alguien con muchas redes puede agotar la parte pública por un día; la parte reservada mantiene funcionando la demostración guiada</td></tr>
+      <tr><th scope="row">Quien aloja abuso</th><td>subir y compartir</td><td>archivos anónimos pequeños y de vida corta, una apertura por defecto, prueba de trabajo, límites de uso, solo descargas, una advertencia antes de los programas, sin listados ni búsqueda, <code>noindex</code>, el <a href="/es/abuse">formulario de reporte</a>, retiro por id</td><td>no podemos revisar contenido cifrado, por diseño</td></tr>
+      <tr><th scope="row">Inyección de scripts o una dependencia envenenada</th><td>correr código en nuestro origen</td><td>sin código de terceros; una política de seguridad de contenido estricta con Trusted Types donde existe; sin puntos de inserción de HTML en nuestro código; el único artefacto incluido está fijado por hash; SRI en cada script y hoja de estilos</td><td>extensiones del navegador (fuera de alcance)</td></tr>
+      <tr><th scope="row">Vaciar nuestra cartera a través de la API</th><td>gastar la cartera patrocinadora</td><td>la API expuesta a internet corre como un usuario aparte que no puede llegar a la cartera; los trabajos se validan; presupuestos diarios; una regla de firewall por usuario en el puerto de la cartera</td><td>como mucho, los presupuestos diarios</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="prose page-body">
+  <h2 id="crypto">Criptografía</h2>
+  <p>Todo lo que toca un archivo o una llave corre en tu navegador, con el WebCrypto de tu propio navegador. El servidor nunca recibe la llave de un archivo, el secreto de un enlace, una contraseña ni tu semilla. Al iniciar sesión ve tu llave de acceso y solo guarda su SHA-256.</p>
+  <ul>
+    <li><strong>Archivos:</strong> una llave aleatoria nueva de 32 bytes por archivo. El contenido se rellena con Padmé (al menos 1 KB, como mucho 12% más), se corta en bloques de 4 MB y se cifra con AES-256-GCM. El nonce de cada bloque lleva su índice y una marca de “último bloque”, y cada bloque autentica la cabecera del archivo, así que reordenar, truncar o extender falla siempre.</li>
+    <li><strong>Metadatos:</strong> el nombre, el tipo y el tamaño real se cifran aparte, también con AES-256-GCM, rellenados a un múltiplo de 256 bytes.</li>
+    <li><strong>Llaves a partir de llaves:</strong> HKDF-SHA256 con una etiqueta distinta para cada propósito, así que una llave derivada no revela nada de otra.</li>
+    <li><strong>Enlaces:</strong> cada enlace tiene su propio secreto de 32 bytes, después del <code>#</code>. Desenvuelve la llave del archivo y deriva un token de acceso; nuestro servidor solo guarda el SHA-256 de ese token.</li>
+    <li><strong>Contraseñas:</strong> PBKDF2-SHA256<span data-needs="config" hidden>, <span data-v="pbkdf2_iter"></span> rondas</span>, combinado por defecto con el secreto del enlace (enlace + contraseña), así que una copia de nuestra base de datos no basta para adivinarla.</li>
+    <li><strong>Casilleros:</strong> una semilla de 32 bytes creada en tu navegador, guardada en su almacenamiento y respaldada como tu código de recuperación o archivo de llave. Todo lo demás se deriva de ella: la llave de inicio de sesión (guardamos su SHA-256), las llaves de Tari del casillero, una llave de cartera aparte y las marcas de los buzones. No hay correo ni contraseña con nosotros.</li>
+    <li><strong>Código de seguridad:</strong> 12 emoji (96 bits) derivados de las llaves públicas de un casillero, para que dos personas puedan compararlo en voz alta.</li>
+    <li><strong>Prueba de trabajo:</strong> SHA-256 con cierto número de bits en cero al inicio, en lugar de un captcha. Tu navegador la resuelve en segundo plano.</li>
+    <li><strong>Fotos:</strong> se quitan los datos de ubicación y de la cámara de los archivos JPEG, PNG y WebP antes de cifrarlos, salvo que elijas conservar la original.</li>
+  </ul>
+
+  <h2 id="addresses">Sellar un archivo a una dirección de Tari</h2>
+  <p>Cuando envías un archivo a una dirección de Tari, tu navegador sella el secreto del enlace con las dos llaves públicas de esa dirección, la de dueño y la de vista, usando la biblioteca oficial de Tari para el acuerdo de llaves. El blob sellado mide 125 bytes y viaja como el memo de un pago stealth.</p>
+  <ul>
+    <li><strong>Por qué una llave de vista no abre tus archivos:</strong> para abrir el sello hacen falta la llave de dueño y la de vista. Una llave de vista sola muestra que llegó una entrega, su monto y el texto de su memo, pero no el archivo.</li>
+    <li><strong>La excepción, avisada:</strong> quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”. Ese sello usa solo la llave de vista, así que cualquiera con esa llave de vista puede abrir el archivo, y la pantalla de envío lo dice.</li>
+    <li data-when="send_mode=relay"><strong>Quién publica el pago:</strong> nuestro relay. Publicamos el pago por ti, así que sabemos a qué dirección envías, nunca la llave. El servidor escribe el memo desde su propia dirección; un cliente solo entrega el blob sellado.</li>
+    <li data-when="send_mode=direct" hidden><strong>Quién publica el pago:</strong> tu navegador lo arma, lo firma y lo paga, y nuestro servidor lo pasa a la red sin saber para quién es. Gasta el saldo que le asigna nuestra cartera patrocinadora, así que la cadena vincula tus envíos con esa cartera y entre sí. Las entregas de buzón siguen pasando por nuestro relay, porque la dirección de un buzón es pública por diseño.</li>
+  </ul>
+
+  <h2 id="payments">Cómo se verifican los pagos</h2>
+  <p>En septiembre, un error de una cartera en la testnet mostró depósitos que nunca ocurrieron (<a href="https://community.tari.com/t/402">hilo del foro</a>). Que una cartera diga “enviado” no basta, así que mutis abona espacio rentado solo después de sus propias verificaciones.</p>
+  <p data-when="proof=proven" hidden>Abonamos un pago solo después de que la biblioteca oficial de Tari abre su compromiso al monto exacto y un indexador público operado por Tari muestra que quedó confirmado en la cadena. La verificación corre en un proceso aparte que solo puede leer; walletd nunca decide un abono.</p>
+  <p data-when="proof=wallet">Abonamos un pago solo después de que nuestra cartera lo ve y un indexador público operado por Tari confirma que existe en la cadena. El monto es el que lee nuestra cartera; este despliegue no lo prueba con la biblioteca oficial de Tari.</p>
+  <p><a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">Lee el código que lo hace<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+
+  <h2 id="logs">Lo que nunca toca un disco</h2>
+  <p>Nuestro servidor y nuestro servidor web nunca escriben en disco tu dirección IP, tus enlaces ni los ids de tus archivos.</p>
+  <ul>
+    <li><strong>Servidor web:</strong> sin registro de accesos, y el registro de errores descarta direcciones, rutas, hosts y cabeceras.</li>
+    <li><strong>API:</strong> solo registra el nombre de la ruta, el estado y cuánto tardó.</li>
+    <li><strong>Límites de uso:</strong> un hash con llave de tu prefijo de red, en memoria, con una llave que cambia cada día.</li>
+    <li><strong>Trabajos en segundo plano:</strong> códigos fijos, nunca direcciones, ids ni memos. Nuestras propias transacciones de prueba son las únicas que publicamos.</li>
+    <li><strong>El firewall:</strong> sin registro. <strong>El diario del sistema:</strong> se guarda siete días.</li>
+  </ul>
+  <p>Eso no es lo mismo que “nadie ve nunca tu IP”: nuestro servidor la ve mientras estás conectado, y nuestro proveedor también podría.</p>
+
+  <h2 id="headers">Cabeceras y política de seguridad de contenido</h2>
+  <p>Cada respuesta lleva HSTS, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: no-referrer</code>, <code>Cross-Origin-Opener-Policy</code> y <code>Cross-Origin-Resource-Policy: same-origin</code>, <code>X-Frame-Options: DENY</code> y una <code>Permissions-Policy</code> que apaga la cámara, el micrófono, la ubicación, los pagos y el USB.</p>
+  <p>Las páginas solo permiten scripts, estilos, fuentes y peticiones de este mismo origen, y no se permite correr nada en línea. Las páginas de la app añaden WebAssembly para la biblioteca oficial de Tari, Trusted Types donde el navegador los soporta, y los dos indexadores operados por Tari para el botón “Compruébalo en el indexador de Tari”.</p>
+
+  <h2 id="verify">Verifica este despliegue</h2>
+  <p>SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: comparar lo que servimos con el código publicado, y correr tu propia copia.</p>
+  <ol>
+    <li>Cada compilación escribe <a href="/.well-known/mutis-manifest.json">un manifiesto</a> con el SHA-256 de cada archivo que sirve este sitio y el commit de git del que salió.</li>
+    <li><code>tools/verify-deploy.py</code> recompila el sitio desde una copia limpia de ese commit, descarga cada archivo del manifiesto en vivo e imprime cualquier diferencia.</li>
+  </ol>
+  <pre class="terminal" aria-label="Comandos para verificar este despliegue"><span>$ </span>git clone {{REPO_URL}}
+<span>$ </span>cd mutis
+<span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
+  <p>Esto verifica el sitio ahora. Un navegador no puede fijarlo por ti entre visitas.</p>
+
+  <h2 id="devtools">Compruébalo en tus herramientas de desarrollo</h2>
+  <p>Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros. Tu navegador contacta un indexador operado por Tari solo cuando presionas “Compruébalo en el indexador de Tari”. Para verlo tú:</p>
+  <ol>
+    <li>Abre las herramientas de desarrollo de tu navegador y elige la pestaña Red.</li>
+    <li>Recarga esta página y luego suelta un archivo en la página de inicio.</li>
+    <li>Cada petición va a la dirección de este sitio. No aparece nada más salvo que presiones “Compruébalo en el indexador de Tari”.</li>
+  </ol>
+
+  <h2 id="disclosure">Reporta una vulnerabilidad</h2>
+  <p>Cuéntanos en privado antes de contarle a nadie más. Te responderemos, arreglaremos lo que sea real y te daremos crédito si lo quieres.</p>
+  <ul class="link-list">
+    <li data-when="security_drop=on" hidden><a class="more" data-href="security_drop" href="/es/abuse">Déjanos un archivo en nuestro propio buzón<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+    <li><a class="more" href="{{REPO_URL}}/security/advisories/new">Abre un aviso de seguridad privado en GitHub<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></li>
+    <li><a class="more" href="/es/abuse">Reporta un enlace que aloje algo dañino<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></li>
+  </ul>
+  <p>El modelo de amenazas completo, con los hallazgos de nuestra propia revisión, está en <a class="more" href="{{REPO_URL}}/blob/main/docs/threat-model.md">docs/threat-model.md<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+</div>
+</main>
+<!--#include footer-es-->
+</body>
+</html>

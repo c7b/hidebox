@@ -1,0 +1,318 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mutis — archivos cifrados que saben cuándo irse</title>
+<meta name="description" content="Suelta un archivo. Tu navegador lo cifra antes de subirlo y se va cuando digas: una vez, a cierta hora o para una dirección de Tari. Gratis.">
+<link rel="canonical" href="{{ORIGIN}}/es/">
+<link rel="alternate" hreflang="en" href="{{ORIGIN}}/">
+<link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/">
+<link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mutis">
+<meta property="og:title" content="mutis — Cada secreto sabe cuándo hacer mutis.">
+<meta property="og:description" content="Archivos cifrados que se van en su señal. Tu navegador cifra cada archivo antes de subirlo; nunca vemos qué hay adentro.">
+<meta property="og:url" content="{{ORIGIN}}/es/">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/shared/fonts/MutisScript-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/home.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/home.js" integrity="{{SRI}}"></script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "mutis", "url": "{{ORIGIN}}/es/",
+ "description": "Archivos cifrados que se van en su señal. Se cifran en el navegador antes de subirlos; el servidor solo guarda texto cifrado.", "inLanguage": "es",
+ "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
+ "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "license": "{{REPO_URL}}/blob/main/LICENSE"}
+</script>
+</head>
+<body class="home">
+<a class="skip-link" href="#drop">Saltar a la zona para soltar archivos</a>
+<!--#include header-es-->
+<main id="main">
+
+  <section class="hero" id="drop" aria-labelledby="hero-h">
+    <p class="fade fade-in" aria-hidden="true">FUNDIDO DE ENTRADA:</p>
+    <div class="hero-main">
+      <h1 class="hero-h1" id="hero-h"><span class="if-fine">Suelta un archivo.</span><span class="if-coarse">Elige un archivo.</span></h1>
+      <p class="hero-line2"><span class="if-fine">Se cifra antes de salir de esta pestaña.</span><span class="if-coarse">Se cifra antes de salir de tu teléfono.</span></p>
+      <div id="mutis-drop" data-variant="hero"></div>
+      <noscript><p class="noscript">mutis cifra en tu navegador, así que necesita JavaScript.</p></noscript>
+      <script type="module" src="/app/drop-widget.js" integrity="{{SRI}}"></script>
+      <p class="hero-sub">Gratis. Sin registro. No podemos abrirlo.</p>
+      <p class="hero-built">Construido sobre la testnet de Tari™ Ootle: <a class="more" href="#send">la llave de un archivo puede viajar sellada dentro de un pago stealth<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <section class="wall-scene stage" id="exit-wall" data-scene aria-labelledby="wall-h">
+    <div class="scene-stage">
+      <p class="scene-heading container" id="wall-h"><span class="no" aria-hidden="true">1</span>INT. NUESTRO SERVIDOR — NOCHE<span class="no" aria-hidden="true">1</span></p>
+      <p class="sr-only" data-wall-desc>Una escena: una pared de archivos cifrados en nuestro servidor. No vemos dentro de ninguno. Uno por uno se van en su señal: abiertos una vez, vistos tres veces, a medianoche, y los demás. Queda uno, esperando. Nunca vemos qué hay adentro. En su señal, se va.</p>
+      <div class="wall-camera" aria-hidden="true">
+        <p class="wall-clock" data-wall-clock></p>
+        <ol class="wall">
+          <li class="locker m m1" data-cue="once"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una vez)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m2" data-cue="views"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(3 vistas)</span><span class="fate">tercera vista. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m3" data-cue="midnight"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(medianoche)</span><span class="fate">00:00. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="once"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una vez)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m4" data-cue="rest"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una dirección)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="views"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(3 vistas)</span><span class="fate">tercera vista. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="rest"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(contraseña)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m6" data-cue="once"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una vez)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m5 lit centre" data-cue="centre"><span class="slot"></span><span class="box"><span class="face front"><canvas class="noise-door" width="48" height="48"></canvas><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(esperando)</span><span class="fate">espera su señal.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m8" data-cue="midnight"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(medianoche)</span><span class="fate">00:00. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="once"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una vez)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m9" data-cue="rest"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una semana)</span><span class="fate">venció. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker m m7" data-cue="views"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(3 vistas)</span><span class="fate">tercera vista. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="midnight"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(medianoche)</span><span class="fate">00:00. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="rest"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(solo yo)</span><span class="fate">lo borró su dueño. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="rest"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(1 hora)</span><span class="fate">venció. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="views"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(3 vistas)</span><span class="fate">tercera vista. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+          <li class="locker" data-cue="once"><span class="slot"></span><span class="box"><span class="face front"><svg class="keyhole"><use href="/shared/icons.svg#keyhole"/></svg><svg class="keyhole on"><use href="/shared/icons.svg#keyhole"/></svg><span class="label">(una vez)</span><span class="fate">se abrió. Mutis.</span></span><span class="face side l"></span><span class="face side r"></span><span class="face side t"></span><span class="face side b"></span></span></li>
+        </ol>
+      </div>
+      <div class="wall-end">
+        <p class="wall-promise">Nunca vemos qué hay adentro.<br>En su señal, se va.</p>
+        <p class="wall-caption">(Borramos el texto cifrado menos de un minuto después de su salida, o cuando termina una descarga en curso.<span data-when="seallog=on" hidden> Cada salida queda en el registro público.</span>)</p>
+      </div>
+      <p class="wall-direction" data-wall-direction aria-hidden="true"></p>
+    </div>
+  </section>
+
+  <section class="section" id="two-locks" aria-labelledby="locks-h">
+    <div class="container">
+      <p class="scene-heading"><span class="no" aria-hidden="true">2</span>INT. TRAS BAMBALINAS — CONTINUO<span class="no" aria-hidden="true">2</span></p>
+      <div class="section-head">
+        <h2 id="locks-h">Dos cerraduras. Solo una somos nosotros.</h2>
+        <p class="lede">Secretos programables: tú escribes la regla y nuestro servidor lleva el tiempo. El Ootle lleva llaves que no podemos leer y pagos cuyo monto solo ven quien paga y quien cobra<span data-when="seallog=on" hidden>, y guarda los recibos</span>.</p>
+      </div>
+      <div class="locks">
+        <article class="lock">
+          <svg class="lock-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M0 0H100V100H0ZM38.5 33.5A11.5 11.5 0 1 0 61.5 33.5A11.5 11.5 0 1 0 38.5 33.5ZM45.25 52H54.75L60.25 80H39.75Z"/></svg>
+          <h3><span class="cue">Cerradura 1 · El Ootle</span> <small>(la parte que no podemos leer)</small></h3>
+          <ul>
+            <li>Lleva la llave de un archivo a una sola dirección de Tari, sellada dentro de un pago stealth.</li>
+            <li>Mueve dinero como TARI stealth, verificado contra el estado de la cadena.</li>
+            <li data-when="seallog=on" hidden>Guarda los recibos: hashes públicos de qué guardamos y cuándo se fue.</li>
+          </ul>
+        </article>
+        <p class="locks-arrow" data-when="seallog=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg><span class="direction">(cada salida)</span></p>
+        <article class="lock">
+          <svg class="lock-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M0 0H100V100H0ZM38.5 33.5A11.5 11.5 0 1 0 61.5 33.5A11.5 11.5 0 1 0 38.5 33.5ZM45.25 52H54.75L60.25 80H39.75Z"/></svg>
+          <h3><span class="cue">Cerradura 2 · Nuestro servidor</span> <small>(confía en él, y luego compruébalo)</small></h3>
+          <ul>
+            <li>Guarda ruido: texto cifrado, nunca llaves.</li>
+            <li>Lleva el reloj: cuenta aperturas, vigila la caducidad, borra en su señal.</li>
+            <li data-when="seallog=on" hidden>Escribe cada salida en la Cerradura 1, donde cualquiera puede comprobarla.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="footnote" data-when="seallog=on" hidden>La regla corre en nuestro servidor. Esa es la parte en la que confías, así que escribe sus salidas donde puedes comprobarlas.</p>
+      <p class="footnote" data-when="seallog=off">La regla corre en nuestro servidor. Esa es la parte en la que confías, así que imprimimos <a href="/es/how#what-we-store">todo lo que guarda</a>.</p>
+      <p class="footnote">Construido sobre Tari Ootle, la cadena programable de privacidad.</p>
+    </div>
+  </section>
+
+  <section class="section" id="send" aria-labelledby="send-h">
+    <div class="container">
+      <p class="scene-heading"><span class="no" aria-hidden="true">3</span>EXT. EL OOTLE — NOCHE<span class="no" aria-hidden="true">3</span></p>
+      <div class="split">
+        <div>
+          <div class="section-head">
+            <h2 id="send-h">Envía un archivo a una dirección de Tari.</h2>
+            <p class="lede">Sin correo, sin cuenta. Pega la dirección de Tari de alguien. La llave del archivo le llega sellada dentro de un pago stealth de TARI, y solo las llaves de su casillero la abren.</p>
+          </div>
+          <ol class="steps">
+            <li><span>Tu navegador cifra el archivo. Recibimos ruido.</span></li>
+            <li data-when="send_mode=relay"><span>Tu navegador sella la llave del archivo a su dirección. Publicamos un pago stealth<span data-needs="config" hidden> de <span data-v="courier_amount"></span> tTARI</span> que la lleva.</span></li>
+            <li data-when="send_mode=direct" hidden><span>Tu navegador sella la llave del archivo a su dirección y envía un pago stealth<span data-needs="config" hidden> de <span data-v="courier_amount"></span> tTARI</span> que la lleva.</span></li>
+            <li><span>Su bandeja de mutis encuentra el pago, abre el sello y luego el archivo.</span></li>
+          </ol>
+          <p class="aside">Necesita una dirección de Tari. ¿No tiene cartera? Un casillero gratuito le crea una en segundos, sin correo.</p>
+        </div>
+        <div class="chain-col">
+          <figure class="chain-card" data-chain-card hidden>
+            <figcaption><span>(lo que ve la cadena)</span><span>tx <span data-chain="tx"></span> · <span data-chain="network"></span></span><span class="onchain" data-chain="final" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#check"/></svg>En el Ootle</span></figcaption>
+            <dl>
+              <dt>monto</dt><dd class="v">oculto</dd><dd>(compromiso de Pedersen)</dd>
+              <dt>dueño</dt><dd class="v">oculto</dd><dd>(dirección stealth de un solo uso)</dd>
+              <dt>memo</dt><dd class="v">sellado</dd><dd>(<span data-chain="sealed"></span> bytes cifrados)</dd>
+              <dt>comisión</dt><dd class="v"><span data-chain="fee"></span> tTARI</dd><dd>pública</dd>
+            </dl>
+            <p class="caption">Nuestra entrega de prueba de cada hora, tal como la muestra la cadena.</p>
+            <p class="links"><a class="more" data-chain="verify" href="/verify">Lo que ve la cadena<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a><a class="more" data-chain="indexer" href="https://ootle-indexer-b.tari.com/">Compruébalo en el indexador de Tari<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+          </figure>
+          <p class="footnote" data-when="send_mode=relay">Nuestro relay publica el pago por ti, así que sabemos a qué dirección envías, nunca la llave.</p>
+          <p class="footnote" data-when="send_mode=direct" hidden>Tu navegador arma y paga el pago por su cuenta. Nosotros lo pasamos a la red, así que vemos que tu casillero envió una transacción, no para quién.</p>
+          <p class="footnote">La cadena muestra una salida con monto oculto, dueño oculto y memo cifrado. La comisión es pública. Los pagos que envía nuestro relay salen de una sola cartera con la misma comisión, así que alguien que observe podría agruparlos como “enviados por mutis”, pero no ver a quién.</p>
+          <p class="footnote" data-when="send_mode=direct" hidden>Los envíos desde tu navegador gastan el saldo que le asigna nuestra cartera patrocinadora, y luego el cambio de cada envío. Cualquiera que lea el Ootle puede vincular tus envíos entre sí y con nuestra cartera patrocinadora, pero no ver a quién ni cuánto.</p>
+        </div>
+      </div>
+
+      <div class="split subpart">
+        <div class="section-head">
+          <h3 id="drop-h">O deja que cualquiera te deje uno.</h3>
+          <p>Crea un enlace de buzón en tu casillero y ponlo donde quieras: una bio, la página de una redacción, un security.txt. Cualquiera puede dejarte un archivo ahí, sin cuenta y sin cartera.</p>
+        </div>
+        <div>
+          <ol class="steps">
+            <li><span>Su navegador cifra el archivo antes de que salga.</span></li>
+            <li><span>Nuestro relay entrega su llave a tu casillero dentro de un pago stealth en el Ootle.</span></li>
+            <li><span>Tu bandeja lo encuentra. Solo las llaves de tu casillero lo abren.</span></li>
+          </ol>
+          <p class="footnote aside">Un enlace de buzón es público por diseño, y su dirección de Tari también. Vemos en qué buzón se dejó un archivo y la IP de quien lo dejó mientras está conectado, nunca el archivo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="what-we-store" aria-labelledby="store-h">
+    <div class="container">
+      <p class="scene-heading"><span class="no" aria-hidden="true">4</span>INT. NUESTRA BASE DE DATOS — CONTINUO<span class="no" aria-hidden="true">4</span></p>
+      <div class="section-head">
+        <h2 id="store-h">Qué guardamos.</h2>
+        <p class="direction" data-glass-caption>(Abajo: la frase “Solo tú. Una vez.”, cifrada en tu navegador hace un momento, junto a lo que guardaría nuestro servidor.)</p>
+      </div>
+      <table class="glass">
+        <colgroup><col class="c-row"><col><col></colgroup>
+        <thead><tr><td></td><th scope="col">Tú</th><th scope="col">Nuestro servidor</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Nombre</th><td data-cue="Tú" data-glass="name">(una nota: sin nombre)</td><td data-cue="Nuestro servidor"><span class="redact" aria-hidden="true">▇▇▇▇▇▇▇▇</span>no lo conocemos</td></tr>
+          <tr><th scope="row">Tamaño</th><td data-cue="Tú" data-glass="size">18 bytes</td><td data-cue="Nuestro servidor"><span data-glass="stored">1,040 bytes</span><span class="caption block">Redondeado hacia arriba para ocultar el tamaño exacto: al menos 1 KB, y como mucho 12% más para todo lo mayor.</span></td></tr>
+          <tr><th scope="row">Contenido</th><td data-cue="Tú" data-glass="contents"><span class="quote">Solo tú. Una vez.</span></td><td data-cue="Nuestro servidor"><canvas class="noise" data-glass-noise width="33" height="33" aria-hidden="true" hidden></canvas><span class="caption" data-glass-noise-caption>Texto cifrado: los bytes cifrados, dibujados como píxeles.</span></td></tr>
+          <tr><th scope="row">Llave</th><td data-cue="Tú">en tu enlace, después del <code>#</code></td><td data-cue="Nuestro servidor">nunca nos llega</td></tr>
+          <tr><th scope="row">Aperturas</th><td data-cue="Tú">verás “Abierto” y la hora</td><td data-cue="Nuestro servidor">un conteo y la hora</td></tr>
+          <tr><th scope="row">Tú</th><td data-cue="Tú">seas quien seas</td><td data-cue="Nuestro servidor">una dirección IP mientras estás conectado; no se escribe en disco</td></tr>
+        </tbody>
+      </table>
+      <p class="links"><a class="more" href="/es/how#what-we-store">Quién ve qué, completo<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <section class="section" id="try" aria-labelledby="try-h">
+    <div class="container">
+      <p class="scene-heading"><span class="no" aria-hidden="true">5</span>INT. NUESTRO DISCO — AHORA MISMO<span class="no" aria-hidden="true">5</span></p>
+      <div class="section-head">
+        <h2 id="try-h">Intenta leerlo.</h2>
+        <p class="direction" data-canary-missing hidden>(Nuestro archivo de prueba de cada hora está entre tomas. Vuelve en unos minutos.)</p>
+      </div>
+      <div class="canary" data-canary>
+        <figure data-canary-figure hidden>
+          <canvas class="noise" data-canary-noise width="1" height="1" aria-hidden="true"></canvas>
+          <figcaption class="caption"><span data-canary-size></span> bytes, tal como los guarda nuestro disco, dibujados como píxeles.</figcaption>
+        </figure>
+        <div class="actions">
+          <p class="lede" data-canary-lede>Cada hora ciframos un archivo de prueba. Aquí está, tal como lo guarda nuestro disco.</p>
+          <p class="lede" data-canary-aged hidden>Este es un archivo que ciframos <span data-canary-age></span>. Está en nuestro disco ahora mismo.</p>
+          <a class="btn btn-primary" href="/api/v1/canary/raw" download><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#save"/></svg>Descargar los bytes guardados</a>
+          <div class="copy-row"><code id="canary-cmd">curl -OJ {{ORIGIN}}/api/v1/canary/raw</code><button type="button" class="btn" data-copy="canary-cmd" hidden>Copiar</button></div>
+          <p class="footnote" data-canary-tx hidden>Su llave salió por el Ootle, sellada a nuestro propio casillero de prueba: <a data-canary-tx-link href="/verify">tx <span data-canary-tx-short></span></a>.</p>
+          <p class="footnote">Muestra lo que guarda nuestro disco. No puede probar que no podemos leer tus archivos: este lo ciframos nosotros, y publicamos su llave un día después.</p>
+        </div>
+      </div>
+      <div class="reveal" data-reveal hidden>
+        <h3>La llave de ayer: ahora puedes leerlo.</h3>
+        <p>Cuando un archivo de prueba cumple un día, publicamos su llave. Tu navegador descarga los bytes guardados y los abre aquí, igual que un enlace.</p>
+        <p><button type="button" class="btn" data-reveal-open><span>Abrir el archivo de prueba #<span data-reveal-n></span> con su llave publicada</span></button></p>
+        <p class="caption" data-reveal-key hidden>Llave: <code data-reveal-key-value></code></p>
+        <pre data-reveal-out hidden></pre>
+      </div>
+
+      <h3 class="checks-h">Cómo comprobar lo que decimos</h3>
+      <table class="checks">
+        <tbody>
+          <tr data-when="seallog=on" hidden><th scope="row">Cada salida queda en el registro público.</th><td><a class="more" href="/verify">Ver un recibo de salida<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></td></tr>
+          <tr data-when="seallog=on" hidden><th scope="row">Cada archivo guardado tiene una huella pública.</th><td><a class="more" href="/verify">SealLog en Esmeralda<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></td></tr>
+          <tr><th scope="row"><span data-when="proof=proven" hidden>Los pagos se verifican en la cadena, no por la palabra de una cartera.</span><span data-when="proof=wallet">Abonamos un pago solo después de que un indexador de Tari confirma que existe en la cadena.</span> En septiembre, un error de una cartera <a href="https://community.tari.com/t/402">mostró depósitos que nunca ocurrieron</a>.</th><td><a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">Lee la verificación<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></td></tr>
+          <tr><th scope="row">El código que usas es el que publicamos, si lo compruebas.</th><td><a class="more" href="/es/security#verify">Cómo verificar este despliegue<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></td></tr>
+          <tr><th scope="row">Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros.</th><td><a class="more" href="/es/security#devtools">Compruébalo en tus herramientas de desarrollo<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="cant-hide" aria-labelledby="hide-h">
+    <div class="container">
+      <p class="scene-heading"><span class="no" aria-hidden="true">6</span>EXT. EN TODAS PARTES — DÍA<span class="no" aria-hidden="true">6</span></p>
+      <div class="section-head">
+        <h2 id="hide-h">Lo que no podemos ocultar.</h2>
+        <p class="lede">El cifrado oculta el contenido. No lo oculta todo. Esto es lo que todavía se ve.</p>
+      </div>
+      <ul class="truths">
+        <li><b>A nosotros:</b> un tamaño con relleno, la hora en que un archivo llega y se va, cuántas veces se abre, tu IP mientras estás conectado<span data-when="send_mode=relay"> y, cuando nuestro relay publica un pago de Tari por ti, la dirección a la que va</span><span data-when="send_mode=direct" hidden> y que tu casillero envió un pago de Tari, no a quién</span>.</li>
+        <li><b>A quien observe el Ootle:</b> que hubo un pago y su comisión<span data-when="send_mode=relay">, y que lo envió la cartera de nuestro relay</span><span data-when="send_mode=direct" hidden>. Los envíos desde tu navegador llevan de vuelta al saldo que les asignó nuestra cartera patrocinadora, y entre sí por su cambio; las entregas de buzón salen de la cartera de nuestro relay</span><span data-when="seallog=on" hidden>; cuántos registros (archivos guardados más salidas) agregamos por punto de control</span>.</li>
+        <li><b>A quien tenga el enlace completo:</b> todo. El enlace es la llave.</li>
+        <li><b>A tu propio navegador:</b> el enlace completo, en tu historial y en cualquier sincronización del historial, y a cualquier extensión con permiso para leer tus pestañas. Los enlaces copiados pueden quedarse en el historial del portapapeles.</li>
+        <li><b>A la persona a quien lo envías:</b> todo, para siempre. Puede guardar una copia. Ningún software puede evitarlo.</li>
+      </ul>
+      <p class="links"><a class="more" href="/es/security">El modelo de amenazas completo<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a><a class="more" href="/es/how#cant-protect">De qué no podemos protegerte<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <section class="section" id="free" aria-labelledby="free-h">
+    <div class="container">
+      <p class="scene-heading"><span class="no" aria-hidden="true">7</span>INT. UN DISCO REAL — DÍA<span class="no" aria-hidden="true">7</span></p>
+      <div class="section-head">
+        <h2 id="free-h">Gratis, con un límite real.</h2>
+        <p class="lede">mutis corre en un disco real<span data-needs="stats" hidden>, de <span data-v="disk_total"></span></span>. El espacio gratuito es una parte justa de él, recalculada cada hora.</p>
+      </div>
+      <p class="live-line" data-needs="stats" hidden>Hoy: <span data-v="free_each"></span> por casillero · <span data-v="disk_free"></span> libres de <span data-v="disk_total"></span></p>
+      <div class="prose">
+        <p>Sobrevendemos como una aerolínea: la mayoría usa una fracción de su parte. Si el disco de verdad se llena, las subidas nuevas se pausan para todos, y no se pierde nada de lo ya guardado.</p>
+        <p>¿Necesitas más espacio? Réntalo en tTARI, por mes.</p>
+        <p data-needs="config" hidden>¿Sin casillero? Archivos de hasta <span data-v="anon_max_file"></span>, que se van en menos de <span data-v="anon_max_expiry"></span>.</p>
+      </div>
+      <p class="links"><a class="more" href="/es/pricing">Precios y límites<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <section class="section" id="open-source" aria-labelledby="oss-h">
+    <div class="container split">
+      <div>
+        <p class="scene-heading"><span class="no" aria-hidden="true">8</span>EXT. TU PROPIO SERVIDOR — CUANDO QUIERAS<span class="no" aria-hidden="true">8</span></p>
+        <div class="section-head">
+          <h2 id="oss-h">Código abierto. Llévatelo a casa.</h2>
+          <p class="lede">Licencia MIT. En tu navegador: nuestros propios módulos, su WebCrypto y una sola biblioteca incluida, la ootle-wasm oficial de Tari, fijada por hash. En el servidor: la biblioteca estándar de Python, Caddy y Node de Debian, y el walletd de Tari para la cadena. Sin npm install, en ningún lado.</p>
+        </div>
+        <p class="links">
+          <a class="more" href="{{REPO_URL}}">Código<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a>
+          <a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Instálalo tú: solo compartir archivos, o con un walletd para las funciones de Tari<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a>
+          <a class="more" href="/es/security#verify">Verifica este despliegue<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a>
+        </p>
+      </div>
+      <pre class="terminal" aria-label="Comandos para verificar este despliegue"><span>$ </span>git clone {{REPO_URL}}
+<span>$ </span>cd mutis
+<span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
+    </div>
+  </section>
+
+  <section class="section closing" aria-labelledby="close-h">
+    <div class="container">
+      <blockquote>
+        <p lang="en">“our wallets aren't a window into our souls”</p>
+        <cite>(“nuestras carteras no son una ventana a nuestras almas”) Bloque génesis de Tari, 6 de mayo de 2025 (<a href="https://rfc.tari.com/TIP-0002_tari_community_charter">TIP-0002</a>)</cite>
+      </blockquote>
+      <h2 id="close-h">Tampoco tus archivos.</h2>
+      <a class="btn btn-primary" href="#drop" data-pick-file>Suelta un archivo</a>
+      <p class="signoff">Suelta un archivo. Mutis.</p>
+      <p class="fade fade-out" aria-hidden="true">FUNDIDO A NEGRO.</p>
+    </div>
+  </section>
+
+</main>
+<!--#include footer-es-->
+</body>
+</html>
