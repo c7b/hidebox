@@ -1,0 +1,11 @@
+# D-09 mechanics, on a scratch copy of the working tree with its own throwaway git history (the shared
+# repository has no deployable commit yet). The "live site" is that tree's build served on loopback.
+$ git init && git commit -qm scratch && git tag v-scratch            # in the scratch copy only
+$ python3 -I tools/build.py --origin http://127.0.0.1:18555 --holding --out <served>/dist ...
+build: OK {"files": 18, "git_sha": "3f3ce9296786968b602450870f5f4e31f62c2204", "holding": true, ...}
+$ python3 -I tools/verify-deploy.py http://127.0.0.1:18555 v-scratch
+verify-deploy: 0 differences across 18 files (v-scratch = 3f3ce9296786, http://127.0.0.1:18555)
+$ echo "// tamper" >> <served>/dist/shared/theme.js
+$ python3 -I tools/verify-deploy.py http://127.0.0.1:18555 v-scratch
+DIFF shared/theme.js: served bytes differ from the build
+verify-deploy: 1 differences across 18 files (v-scratch = 3f3ce9296786, http://127.0.0.1:18555)

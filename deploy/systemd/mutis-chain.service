@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+# The chain worker (spec §10) and its Node verifier sidecar, as `drive` next to walletd. It talks to
+# the API only through the SQLite job queue, plus loopback HTTP for the hourly canary.
+[Unit]
+Description=mutis chain worker
+After=network-online.target walletd.service mutis-api.service
+Wants=network-online.target walletd.service
+
+[Service]
+Type=simple
+User=drive
+Group=drive
+SupplementaryGroups=mutis
+Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
+ExecStart=/usr/bin/python3 -I /srv/mutis/app/current/server/bin/mutis-chain
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+SyslogIdentifier=mutis-chain
+
+# The same hardening as mutis-api except MemoryDenyWriteExecute: the Node sidecar needs JIT and WASM.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/mutis/data/db /srv/mutis/status
+ReadOnlyPaths=/home/drive/mutis
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0007
+MemoryMax=1G
+TasksMax=256
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,46 @@
+active
+active
+enabled
+l1: 1 windows (created Sun Oct 11 03:57:20 2026)
+total 16176
+drwx------ 2 root root    4096 Oct 11 09:17 .
+drwxr-xr-x 3 root root    4096 Oct 11 09:17 ..
+-rw------- 1 root root     723 Oct 11 09:17 balances-20261011T151744Z-after.json
+-rw------- 1 root root     723 Oct 11 09:17 balances-20261011T151744Z-before.json
+-rw------- 1 root root 8273920 Oct 11 09:17 wallet-20261011T151744Z-cold.tar
+-rw------- 1 root root 8273920 Oct 11 09:17 wallet-20261011T151744Z-live.tar
+drive      85081 /opt/tari/bin/tari_ootle_walletd --network esme --base-path /home/drive/wallet --config /run/walletd/config.toml --log-config /etc/mutis/walletd-log4rs.yml --listen-on 127.0.0.1:5100 --authentication none run
+WARNING: The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4rs.yml` or use a base path you own.
+WARNING: The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own.
+WARN common::config ⚠️  The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4rs.yml` or use a base path you own.
+WARN common::config ⚠️  The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own.
+WARN tari::ootle::wallet_daemon ⚠️ Setting auth to none is dangerous. Your wallet has no password and any program on this computer, or anyone who can reach it over the network, can spend your funds without your consent. If this is not a temporary local-only test wallet, switch authentication=webauthn before sending any value to it.
+→ Overall exposure level for walletd.service: 1.5 OK 🙂
+{
+ "accounts": [
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "3500000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d8700ed82d425312b298d9867b8acefeb4b7d345de5dec388f0bb12e6c4755bb",
+   "name": "buyer-demo"
+  },
+  {
+   "balances": [
+    {
+     "balance": "19292442",
+     "confidential_balance": "8972298000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71",
+   "name": "service"
+  }
+ ],
+ "network": "esmeralda",
+ "version": "0.45.0"
+}

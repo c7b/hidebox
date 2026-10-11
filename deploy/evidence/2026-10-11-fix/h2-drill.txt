@@ -1,0 +1,44 @@
+# H2 drill, 2026-10-11: a committed snapshot of the working tree in a scratch repository (commit e4e389be…, not the shared repo)
+
+$ deploy/scripts/deploy.sh HEAD --holding        # first deploy of this commit
+== checks on the server as build (the server's Python)
+Ran 178 tests in 28.322s
+OK (skipped=4)
+Ran 49 tests in 2.566s
+OK
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 3 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "e1b8ff55", "files": 18, "git_sha": "e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4", "holding": true, "origin": "https://srv2052606.hstgr.cloud", "pages": 2, "vendored_checked": 6, "version": "e4e389b"}
+== upload and activate e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55
+sidecar: hello ok, pinned ootle-wasm
+schema version 2 (backup: /srv/mutis/data/backup/pre-migrate-20261011-185010.sqlite3)
+switched current → releases/e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+notarize: skipped (features.seallog is off)
+== deployed e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55 to https://srv2052606.hstgr.cloud
+
+$ deploy/scripts/deploy.sh HEAD --holding        # the same commit and config again
+== build
+build: OK {"content_id": "e1b8ff55", "files": 18, "git_sha": "e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4", "holding": true, "origin": "https://srv2052606.hstgr.cloud", "pages": 2, "vendored_checked": 6, "version": "e4e389b"}
+== upload and activate e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55
+sidecar: hello ok, pinned ootle-wasm
+release e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55 is already live with the same files: nothing to switch
+== smoke test
+PASS smoke home
+PASS smoke manifest
+notarize: skipped (features.seallog is off)
+== deployed e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55 to https://srv2052606.hstgr.cloud
+
+# same release id, one served file hash changed in the upload, activate-release.sh run by hand:
+before: releases/e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55
+activate: release e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55 is live but this upload serves different files; refusing (a build that isn't deterministic?)
+activate exit 1
+after: releases/e4e389be80e176a58f88d2ef22c8ff9d6c1a5db4-ce1b8ff55   (unchanged; the .new upload removed)
+
+$ python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud HEAD     # D-09 against the live host
+verify-deploy: 0 differences across 18 files (HEAD = e4e389be80e1, https://srv2052606.hstgr.cloud)

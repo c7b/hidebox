@@ -1,0 +1,14 @@
+== 1 pause
+overrides: ('{"decoys":false,"demo_pay":false,"direct_send":false,"drops":false,"relay_send":false,"sponsor":false}',)
+== 2 evidence
+evidence: archived evidence-archive-20261011.json
+evidence: 0 deliveries, 0 payments, 0 decoys today
+archive served: 200
+== 4 accounts and keys
+['buyer-demo', 'service', 'sponsor']
+init-keys: receiver.json and robot.json exist; nothing to do
+== 5 mirror (mutis-chain is disabled in this rehearsal: no stop/start)
+mirror cursor cleared
+== 6 resume
+overrides: ('{}',)
+operator time without the burn: 5 s

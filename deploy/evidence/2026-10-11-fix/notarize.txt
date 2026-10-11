@@ -1,0 +1,11 @@
+# M8: the mutis-admin wrapper runs walletd commands as drive (the 5100 guard admits drive, not mutis)
+$ sudo mutis-admin walletd-fixture wallet.get_info
+{"network": "esmeralda", "network_byte": 38, "version": "0.45.0"}
+
+# One notarization of the live (holding) manifest through SealLog, by hand, to prove the chain path.
+# deploy.sh calls deploy/scripts/notarize-release.py for this automatically once features.seallog is on.
+$ sudo mutis-admin notarize $(sha256sum /srv/mutis/app/current/dist/.well-known/mutis-manifest.json | cut -d" " -f1)
+manifest sha256 0da3fbf7e81de32863a79e786a59ef332d717b390b6b46e1370fcb692593dd72   (release e4e389be…-ce1b8ff55, the H2 drill commit)
+{"tx_id": "c902651786748b967960284fcc0150bce2b3b2c756fdc8c5879d9a62f6a94329", "committed": true}   (1.8 s)
+
+# Before this pass the same commands ran as mutis and walletd's port guard reset the connection.

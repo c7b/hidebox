@@ -1,0 +1,5 @@
+$ python3 -I tests/e2e/test_logs.py --walletd-probe
+walletd probe: relay-shaped send 42c3ed2f6313… committed=True
+control the probe transaction id: found in walletd's database, as expected
+searched the journal, /var/log and /home/drive/wallet (database, logs, backups) for 10 values
+test_logs: PASS (0 hits)

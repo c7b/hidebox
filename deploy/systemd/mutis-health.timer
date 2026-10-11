@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=mutis healthcheck every 5 minutes
+
+[Timer]
+OnBootSec=120
+OnUnitActiveSec=300
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

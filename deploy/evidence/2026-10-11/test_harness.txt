@@ -1,0 +1,18 @@
+PASS desktop: a pointer press runs the handler
+PASS desktop: choose() picks a button by value
+PASS desktop: fill() types into a textarea
+PASS desktop: set_files() hands the server's file to the input
+PASS desktop: a download lands on the server with the right SHA-256
+PASS desktop: requests and their bodies are captured
+PASS desktop: the CSP violation of a remote image is reported
+PASS desktop: the accessibility tree has named buttons
+PASS iphone: a touch press runs the handler
+PASS iphone: choose() picks a button by value
+PASS iphone: fill() types into a textarea
+PASS iphone: set_files() hands the server's file to the input
+PASS iphone: a download lands on the server with the right SHA-256
+PASS iphone: requests and their bodies are captured
+PASS iphone: the CSP violation of a remote image is reported
+PASS iphone: the accessibility tree has named buttons
+PASS Tab moves focus to the first control
+test_harness: PASS (17/17)

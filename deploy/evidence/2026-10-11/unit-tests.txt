@@ -1,0 +1,86 @@
+test_failures (test_build.BuildTest.test_failures) ... ok
+test_holding_build (test_build.BuildTest.test_holding_build) ... ok
+test_layout_includes_placeholders (test_build.BuildTest.test_layout_includes_placeholders) ... ok
+test_manifest_lists_every_file_and_is_deterministic (test_build.BuildTest.test_manifest_lists_every_file_and_is_deterministic) ... ok
+test_release_sidecar_layout (test_build.BuildTest.test_release_sidecar_layout) ... ok
+test_settings (test_build.BuildTest.test_settings) ... ok
+test_sitemap_skips_404_and_noindex (test_build.BuildTest.test_sitemap_skips_404_and_noindex) ... ok
+test_sri_is_sha384_of_the_served_file (test_build.BuildTest.test_sri_is_sha384_of_the_served_file) ... ok
+test_vendored_hash_mismatch_stops_the_build (test_build.BuildTest.test_vendored_hash_mismatch_stops_the_build) ... ok
+test_banned_words_in_visible_text_only (test_check_copy.CheckCopyTest.test_banned_words_in_visible_text_only) ... ok
+test_config_numbers_in_site_pages (test_check_copy.CheckCopyTest.test_config_numbers_in_site_pages) ... ok
+test_exceptions_and_watch_words (test_check_copy.CheckCopyTest.test_exceptions_and_watch_words) ... ok
+test_i18n_digits (test_check_copy.CheckCopyTest.test_i18n_digits) ... ok
+test_not_promises_and_retired_nouns (test_check_copy.CheckCopyTest.test_not_promises_and_retired_nouns) ... ok
+test_csp_and_headers_are_the_spec_text (test_config.CaddyfileTest.test_csp_and_headers_are_the_spec_text) ... ok
+test_no_access_log_and_filtered_errors (test_config.CaddyfileTest.test_no_access_log_and_filtered_errors) ... ok
+test_example_parses_with_the_server_config (test_config.ConfigExampleTest.test_example_parses_with_the_server_config) ... ok
+test_every_timer_has_its_service (test_config.UnitsTest.test_every_timer_has_its_service) ... ok
+test_every_unit_is_licensed (test_config.UnitsTest.test_every_unit_is_licensed) ... ok
+test_jit_only_where_needed (test_config.UnitsTest.test_jit_only_where_needed) ... ok
+test_services_are_hardened_and_never_root (test_config.UnitsTest.test_services_are_hardened_and_never_root) ... ok
+test_walletd_password_never_on_the_command_line (test_config.UnitsTest.test_walletd_password_never_on_the_command_line) ... ok
+test_clean_tree_passes (test_lint.LintTest.test_clean_tree_passes) ... ok
+test_css_remote_resource (test_lint.LintTest.test_css_remote_resource) ... ok
+test_forbidden_js (test_lint.LintTest.test_forbidden_js) ... ok
+test_headers_todos_attribution (test_lint.LintTest.test_headers_todos_attribution) ... ok
+test_html_rules (test_lint.LintTest.test_html_rules) ... ok
+test_python_third_party_import (test_lint.LintTest.test_python_third_party_import) ... ok
+test_test_files_may_use_urls_but_not_sinks (test_lint.LintTest.test_test_files_may_use_urls_but_not_sinks) ... ok
+test_urls_in_served_js (test_lint.LintTest.test_urls_in_served_js) ... ok
+test_db_backup_keeps_seven_and_restores (test_ops.BackupTest.test_db_backup_keeps_seven_and_restores) ... ok
+test_only_evidence_jobs_are_published (test_ops.EvidenceTest.test_only_evidence_jobs_are_published) ... ok
+test_all_green (test_ops.HealthTest.test_all_green) ... ok
+test_budget_slice_at_half_raises_attention (test_ops.HealthTest.test_budget_slice_at_half_raises_attention) ... ok
+test_each_simulated_failure_turns_red (test_ops.HealthTest.test_each_simulated_failure_turns_red) ... /usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0_bgwt4v'>
+  _warnings.warn(warn_message, ResourceWarning)
+/usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmptpelgydr'>
+  _warnings.warn(warn_message, ResourceWarning)
+/usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0dgaiwuk'>
+  _warnings.warn(warn_message, ResourceWarning)
+/usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpyz2wkg8w'>
+  _warnings.warn(warn_message, ResourceWarning)
+/usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpd8rqiky_'>
+  _warnings.warn(warn_message, ResourceWarning)
+/usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0zem66ac'>
+  _warnings.warn(warn_message, ResourceWarning)
+/usr/lib/python3.14/tempfile.py:961: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpmc9qj8vz'>
+  _warnings.warn(warn_message, ResourceWarning)
+ok
+test_phase (test_ops.HealthTest.test_phase) ... ok
+test_unverified_canary_is_amber_then_red (test_ops.HealthTest.test_unverified_canary_is_amber_then_red) ... ok
+test_a_password_with_unexpected_characters_is_refused (test_ops.RunWalletdTest.test_a_password_with_unexpected_characters_is_refused) ... ok
+test_password_reaches_walletd_only_through_a_private_config (test_ops.RunWalletdTest.test_password_reaches_walletd_only_through_a_private_config) ... ok
+test_identical (test_verify_deploy.VerifyDeployTest.test_identical) ... /usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f4124d0>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f413e20>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f413f10>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f2dc040>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f2dc130>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f2dc220>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f2dc400>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.14/threading.py:301: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7b689f2dc310>
+  if hasattr(lock, '_release_save'):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_lying_manifest_is_caught (test_verify_deploy.VerifyDeployTest.test_lying_manifest_is_caught) ... ok
+test_missing_and_extra_files_and_commit (test_verify_deploy.VerifyDeployTest.test_missing_and_extra_files_and_commit) ... ok
+test_served_bytes_differ (test_verify_deploy.VerifyDeployTest.test_served_bytes_differ) ... ok
+
+----------------------------------------------------------------------
+Ran 43 tests in 2.686s
+
+OK

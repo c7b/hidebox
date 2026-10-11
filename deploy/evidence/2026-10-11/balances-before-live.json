@@ -1,0 +1,28 @@
+{
+ "accounts": [
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "3500000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d8700ed82d425312b298d9867b8acefeb4b7d345de5dec388f0bb12e6c4755bb",
+   "name": "buyer-demo"
+  },
+  {
+   "balances": [
+    {
+     "balance": "19292442",
+     "confidential_balance": "8972298000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71",
+   "name": "service"
+  }
+ ],
+ "network": "esmeralda",
+ "version": "0.45.0"
+}

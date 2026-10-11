@@ -1,0 +1,19 @@
+Integration bug found during the M3 probe: the chain worker's sidecar cannot start from the `current` symlink.
+
+$ printf '{"id":1,"cmd":"hello"}\n' | sudo -u drive env -i MUTIS_API=http://127.0.0.1:8787 /usr/bin/node \
+    --experimental-permission --allow-fs-read=/srv/mutis/app/current/sidecar \
+    --disallow-code-generation-from-strings /srv/mutis/app/current/sidecar/sidecar.mjs
+node:fs:2765
+        binding.stat(baseLong, false, undefined, true);
+Error: Access to this API has been restricted
+(Node resolves the main script to /srv/mutis/app/releases/<id>/sidecar/sidecar.mjs, outside the allowed path.
+ server/mutis/config.py sidecar_argv() builds exactly this command from sidecar.dir, so mutis-chain would
+ fail its sidecar start in production: no canary, no amount proofs, no decoys.)
+
+Fix (deploy): /usr/local/lib/mutis/run-sidecar.sh resolves the real release directory and execs node with it;
+/etc/mutis/mutis.toml [sidecar] command = ["/usr/local/lib/mutis/run-sidecar.sh"] (check-config: ok).
+
+Check inside mutis-chain's own sandbox (every hardening property of the unit, via systemd-run, as drive):
+argv ['/usr/local/lib/mutis/run-sidecar.sh']
+selftest passed True (its cases: 3 real Esmeralda outputs open; every forged case rejected; output trimmed)
+info {'version': 'mutis-sidecar/1', 'wasm_sha256': '57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df', 'node': 'v20.19.2'}

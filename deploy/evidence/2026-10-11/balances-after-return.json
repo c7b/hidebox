@@ -1,0 +1,50 @@
+{
+ "accounts": [
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "3500000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d8700ed82d425312b298d9867b8acefeb4b7d345de5dec388f0bb12e6c4755bb",
+   "name": "buyer-demo"
+  },
+  {
+   "balances": [
+    {
+     "balance": "2295612",
+     "confidential_balance": "0",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_9cc28c3d40aed687fcf991cac3bbdad4a263dac6fc769202e3fa13ae643e47ff",
+   "name": "operator"
+  },
+  {
+   "balances": [
+    {
+     "balance": "16290001",
+     "confidential_balance": "72268000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71",
+   "name": "service"
+  },
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "8900000000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d5614f51c39ff8a0ec5dcd2bb274f4f850cb83ec357a30b539f7a44d6883ddaf",
+   "name": "sponsor"
+  }
+ ],
+ "network": "esmeralda",
+ "version": "0.45.0"
+}

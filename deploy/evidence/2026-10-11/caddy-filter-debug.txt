@@ -1,0 +1,4 @@
+lines: 22
+token leaked: 0  share leaked: 0  ip leaked: 0
+2026/10/11 15:45:54.266	[35mDEBUG[0m	http.handlers.reverse_proxy	upstream roundtrip	{"upstream": "127.0.0.1:18999", "duration": 0.00029286, "request": {"proto": "HTTP/1.1", "method": "POST"}, "error": "dial tcp 127.0.0.1:18999: connect: connection refused"}
+2026/10/11 15:45:54.266	[35mDEBUG[0m	http.log.error	dial tcp 127.0.0.1:18999: connect: connection refused	{"request": {"proto": "HTTP/1.1", "method": "POST"}, "duration": 0.000560361, "status": 502, "err_id": "a6rjiq1mc", "err_trace": "reverseproxy.statusError (reverseproxy.go:1272)"}

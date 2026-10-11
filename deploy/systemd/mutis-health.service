@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MIT
+# The healthcheck (spec §15.6): data/health.json in full, status/status.json as the public subset.
+[Unit]
+Description=mutis healthcheck
+
+[Service]
+Type=oneshot
+User=mutis
+Group=mutis
+Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
+ExecStart=/usr/bin/python3 -I /srv/mutis/app/current/deploy/scripts/healthcheck.py
+SyslogIdentifier=mutis-health
+TimeoutStartSec=120
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/mutis/data /srv/mutis/status
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0007

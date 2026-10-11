@@ -1,0 +1,202 @@
+# SPDX-License-Identifier: MIT
+# mutis on Caddy 2.6 (spec §15.2). Installed as /etc/caddy/Caddyfile by deploy/scripts/provision.sh.
+# MUTIS_HOST comes from /etc/mutis/caddy.env, which provision.sh writes from public_origin in
+# /etc/mutis/mutis.toml. Headers and CSPs are spec §14.2, checked by tests/e2e/test_headers.py.
+{
+	# The admin API listens on a socket only root and caddy can reach, so no local user can
+	# reconfigure the web server (the default is an unauthenticated TCP port).
+	admin unix//run/caddy/admin.sock
+	servers {
+		protocols h1 h2
+		timeouts {
+			read_header 10s
+			read_body 120s
+			write 600s
+			idle 120s
+		}
+	}
+	# No access log anywhere. Errors only, with every request field that could identify a visitor
+	# or a link removed (spec §14.3). tests/e2e/test_logs.py checks the journal from outside.
+	log default {
+		output stderr
+		format filter {
+			wrap console
+			fields {
+				request>remote_ip delete
+				request>client_ip delete
+				request>remote_port delete
+				request>host delete
+				request>uri delete
+				request>headers delete
+				request>tls delete
+			}
+		}
+		level ERROR
+	}
+}
+
+# A move to a new domain adds its redirect blocks here (deploy/README.md, "Moving to a domain").
+import /etc/caddy/mutis.d/*.caddy
+
+# Plain HTTP only redirects (Let's Encrypt's HTTP challenge is answered before this block). Written
+# out instead of Caddy's automatic redirect so that it, too, sends no Server header.
+http://{$MUTIS_HOST} {
+	header -Server
+	redir https://{host}{uri} 308
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+	}
+	# A deletion is applied when the response is written; kept apart so the headers above are set
+	# at once and survive error responses too.
+	header -Server
+}
+
+# Pages and their scripts revalidate on every visit (ETags keep that cheap). A page cached by
+# heuristics could otherwise outlive a deploy and carry an SRI hash its new script no longer has.
+(revalidate) {
+	header Cache-Control "no-cache"
+}
+
+(site_csp) {
+	header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests"
+}
+
+(app_csp) {
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' https://ootle-indexer-a.tari.com https://ootle-indexer-b.tari.com; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types mutis-url; upgrade-insecure-requests"
+}
+
+{$MUTIS_HOST} {
+	# No `log` directive: no access log.
+	root * /srv/mutis/app/current/dist
+	import security_headers
+	encode {
+		zstd
+		gzip
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/javascript*
+			header Content-Type application/wasm
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+		}
+	}
+
+	# Types Go's MIME table lacks on Debian (it reads shared-mime-info, not /etc/mime.types).
+	@webmanifest path *.webmanifest
+	header @webmanifest Content-Type "application/manifest+json"
+	@notice path */NOTICE
+	header @notice Content-Type "text/plain; charset=utf-8"
+
+	@api path /api/*
+	@viewer path /s/* /t
+	@approute path /d/* /locker /locker/* /inbox /inbox/* /send /send/* /watch /watch/* /upgrade /upgrade/* /verify /verify/*
+	@appfiles path /app/* /vendor/*
+	@status path /evidence.json /evidence-archive-*.json /status.json /releases.json
+	@fonts path /shared/fonts/*
+
+	handle @api {
+		import site_csp
+		request_body {
+			max_size 5MB
+		}
+		# Caddy reads a whole request body (5 MB at most) before the API sees it, so a client that
+		# uploads slowly holds a Caddy goroutine, never one of the API's threads.
+		reverse_proxy 127.0.0.1:8787 {
+			buffer_requests
+			max_buffer_size 6MB
+			flush_interval -1
+			header_up X-Real-IP {remote_host}
+			header_up -X-Forwarded-For
+			# The API sends nosniff itself (spec §6); Caddy already sets it on every response.
+			header_down -X-Content-Type-Options
+		}
+	}
+
+	handle @viewer {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/view.html
+		file_server
+	}
+
+	handle @approute {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/app.html
+		file_server
+	}
+
+	handle @appfiles {
+		import app_csp
+		import revalidate
+		file_server
+	}
+
+	handle @status {
+		import site_csp
+		import revalidate
+		root * /srv/mutis/status
+		file_server
+	}
+
+	# A day, not immutable: the font file names carry no version (12-integration §2), and a font has
+	# no SRI hash, so a stale one can only look old for a day, never break a page.
+	handle @fonts {
+		import site_csp
+		header Cache-Control "public, max-age=86400"
+		file_server
+	}
+
+	# The home page is the product (the drop widget), so it gets the app policy.
+	@home path / /index.html
+	handle @home {
+		import app_csp
+		import revalidate
+		file_server
+	}
+
+	handle {
+		import site_csp
+		import revalidate
+		try_files {path} {path}/index.html
+		file_server
+	}
+
+	# Error pages always come from the release, whatever root the failed route had (/status.json,
+	# for one, is looked up in /srv/mutis/status), and are never cached.
+	handle_errors {
+		root * /srv/mutis/app/current/dist
+		import security_headers
+		import site_csp
+		header Cache-Control "no-store"
+		@es_missing expression `{err.status_code} == 404 && {path}.startsWith("/es/")`
+		@missing expression `{err.status_code} == 404`
+		handle @es_missing {
+			try_files /es/404.html /404.html
+			file_server {
+				status 404
+			}
+		}
+		handle @missing {
+			rewrite * /404.html
+			file_server {
+				status 404
+			}
+		}
+		handle {
+			respond "" {err.status_code}
+		}
+	}
+}

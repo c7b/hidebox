@@ -1,0 +1,43 @@
+Running as unit: walletd-trial.service; invocation ID: 2bb286ffc9014e3eb67a0434e1850c16
+trial pid=78752 after 2s
+trial pid 78752: password not on its command line
+runtime config mode: walletd
+balances-ok
+WARN tari::ootle::wallet_daemon::auto_claim_burn Failed to create burn proof directory: Read-only file system (os error 30)
+ERROR tari::ootle::wallet_daemon 🚨 A service has crashed: No path was found. about ["/home/drive/.local/share/tari/esmeralda/burn_proofs"]. Shutting down
+Error: No path was found. about ["/home/drive/.local/share/tari/esmeralda/burn_proofs"]
+walletd-trial.service: Main process exited, code=exited, status=1/FAILURE
+walletd-trial.service: Failed with result 'exit-code'.
+Starting walletd-trial.service - [systemd-run] /usr/local/lib/mutis/run-walletd.sh...
+Started walletd-trial.service - [systemd-run] /usr/local/lib/mutis/run-walletd.sh.
+Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+ERROR tari::ootle::wallet_services::account_monitor Error refreshing all accounts: Substate API error: Network interface error: Indexer client error: Failed to send request: error sending request for url (https://ootle-indexer-a.tari.com/substates/component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71?local_search_only=false&include_proof=false): client error (Connect): tcp connect error: Network is unreachable (os error 101)
+trial-done
+{
+ "accounts": [
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "3500000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d8700ed82d425312b298d9867b8acefeb4b7d345de5dec388f0bb12e6c4755bb",
+   "name": "buyer-demo"
+  },
+  {
+   "balances": [
+    {
+     "balance": "19292442",
+     "confidential_balance": "8972298000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71",
+   "name": "service"
+  }
+ ],
+ "network": "esmeralda",
+ "version": "0.45.0"
+}

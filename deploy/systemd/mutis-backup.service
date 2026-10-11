@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+# Daily database backup as `mutis` (spec §8.3): data/backup/mutis-YYYYMMDD.sqlite3, each copy (and
+# each pre-migrate copy) deleted after 7 days.
+# Blobs are never backed up: a file that made its exit must not live on in our backups.
+[Unit]
+Description=mutis database backup
+
+[Service]
+Type=oneshot
+User=mutis
+Group=mutis
+Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
+ExecStart=/usr/bin/python3 -I /usr/local/lib/mutis/backup.py db
+SyslogIdentifier=mutis-backup
+TimeoutStartSec=600
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+# Reading a WAL database needs write access to its -shm index, hence all of data/.
+ReadWritePaths=/srv/mutis/data
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0007

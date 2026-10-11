@@ -1,0 +1,4 @@
+PASS /shared/fonts/MutisScript-Bold.woff2 
+PASS /shared/fonts/MutisScript-Regular.woff2 
+PASS /shared/fonts/MutisScriptCode-Regular.woff2 
+test_fonts: PASS (3 fonts, 0 OTS messages)

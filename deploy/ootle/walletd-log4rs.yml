@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+# walletd logging for mutis (installed as /etc/mutis/walletd-log4rs.yml, passed with --log-config).
+# Warnings and errors only, to stdout, which systemd sends to the journal (7-day retention). No log
+# files: walletd's default debug files record every transfer it makes, and relay sends carry other
+# people's destinations (spec §14.3). tests/e2e/test_logs.py checks the journal after a relay send.
+refresh_rate: 30 seconds
+
+appenders:
+  stdout:
+    kind: console
+    encoder:
+      pattern: "{l} {t} {m}{n}"
+
+root:
+  level: warn
+  appenders:
+    - stdout

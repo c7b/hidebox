@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+# Format constants that may appear with digits in i18n values (11-brand §16 P-20). One phrase per
+# line, matched exactly; a value passes when every digit belongs to one of these or to a {variable}.
+AES-256-GCM
+SHA-256
+PBKDF2
+256-bit
+12%
+12 emoji
+all 12
+96 bits
+4 MB chunks
+bloques de 4 MB
+groups of 5
+first and last 6
+0%
+404

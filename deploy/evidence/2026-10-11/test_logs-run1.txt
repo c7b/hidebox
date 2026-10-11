@@ -1,0 +1,10 @@
+# python3 -I tests/e2e/test_logs.py   (from the workstation, mutis-api started for the run)
+note: the drop delivery was refused with chain_unavailable (mutis-chain is not running)
+note: the relay delivery was refused with chain_unavailable (mutis-chain is not running)
+session over IPv6 from <workstation-box-ipv6>: done; 502s forced: 18
+note: the drop delivery was refused with chain_unavailable (mutis-chain is not running)
+note: the relay delivery was refused with chain_unavailable (mutis-chain is not running)
+session over IPv4 from <workstation-box-ipv4>: done; 502s forced: 19
+searched the journal, /var/log and walletd's log directory for 32 values
+note this machine's IPv4 address (the SSH client) found only in operator SSH records: /var/log/lastlog ×1, /var/log/wtmp ×1, /var/log/wtmp.db ×1, sshd-session ×58 (not visitor traffic; not a failure)
+test_logs: PASS (0 hits)
