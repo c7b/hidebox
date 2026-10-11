@@ -1,0 +1,58 @@
+{
+  "about": "SealLog component substate after two appends (the roots of seallog-v1.json at epochs 12127 and 12128), as an Ootle indexer returns it in the `substate` field of GET /substates/<component>. Written by tests/seal_log.rs; do not edit. template_address, entity_id and the key in the append_root rule come from the test engine; on Esmeralda they are the published template's address, the log's entity id and our writer key.",
+  "substate": {
+    "Component": {
+      "body": {
+        "state": [
+          [
+            [
+              12127,
+              {
+                "@cbor": "bytes",
+                "hex": "511494118b292d471dd6141cb29ddeae9de2cae84a4cddf69e5a2909afb00b74"
+              },
+              64
+            ],
+            [
+              12128,
+              {
+                "@cbor": "bytes",
+                "hex": "f90ac46ceb47cb60adcd2c5456884fc60c1910c068f2e88cf10731f48c983fbd"
+              },
+              128
+            ]
+          ],
+          0
+        ]
+      },
+      "header": {
+        "access_rules": {
+          "default": "DenyAll",
+          "method_access": {
+            "append_root": {
+              "Restricted": {
+                "Require": {
+                  "Require": {
+                    "NonFungibleAddress": {
+                      "id": {
+                        "U256": "d884dd886cc7464402a04920485aebe6dd657b98072de655c46ec6179a52cd0d"
+                      },
+                      "resource_address": "resource_0100000000000000000000000000000000000000000000000000000000000000"
+                    }
+                  }
+                }
+              }
+            },
+            "checkpoint_count": "AllowAll",
+            "get": "AllowAll",
+            "latest": "AllowAll",
+            "notarize": "AllowAll"
+          }
+        },
+        "entity_id": "fd",
+        "owner_rule": "None",
+        "template_address": "64f405276891730adbeeeb3b5fafe93c0a19453c1b21abeaaa2004c9a783e432"
+      }
+    }
+  }
+}
