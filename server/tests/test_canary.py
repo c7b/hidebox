@@ -81,6 +81,18 @@ class Canary(unittest.TestCase):
         self.w._reveal_canaries(s.now)
         self.assertNotIn("reveal", calls)
 
+    def test_status_says_whether_the_verifier_answers(self):
+        """Before the first canary is in the mirror there is nothing to scan; the status (the healthcheck's
+        chain_worker check) still says whether the verifier runs."""
+        s = self.s
+        self.w.write_status(s.now)
+        status = db.get_meta_json(s.conn, "chain_status")
+        self.assertEqual((status["sidecar_ok"], status["sidecar"]["version"]), (True, "fake"))
+        self.w.sidecar.stop()
+        self.w.sidecar.argv = [str(s.tmp / "no-such-sidecar")]
+        self.w.write_status(s.now)
+        self.assertFalse(db.get_meta_json(s.conn, "chain_status")["sidecar_ok"])
+
     def test_hourly_cadence(self):
         self.w.tick()
         self.tick(600, 5)

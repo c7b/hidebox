@@ -557,6 +557,11 @@ class Worker:
     def write_status(self, now: int) -> None:
         sponsor = self.walletd.stealth_balance_ut(self.cfg["ootle"]["sponsor_account"])
         self.status.update({"walletd_ok": True, "sponsor_balance_ut": sponsor})
+        try:          # scans are rare on a quiet day, so ask the verifier itself (it starts it if needed)
+            self.sidecar.request("hello")
+            self.status["sidecar_ok"] = True
+        except SidecarError:
+            self.status["sidecar_ok"] = False
         levels = budgets.alert_levels(self.conn, self.cfg["budgets"], now)
         previous = db.get_meta_json(self.conn, "alerts", {}).get("budgets", {})
         for key, level in levels.items():
