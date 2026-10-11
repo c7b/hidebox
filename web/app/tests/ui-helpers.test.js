@@ -1,0 +1,96 @@
+// SPDX-License-Identifier: MIT
+import { utf8 } from '../lib/bytes.js';
+import { h, scriptUrl, svg } from '../lib/dom.js';
+import { makePreview, previewKind } from '../lib/preview.js';
+import { sanitizeFileName } from '../lib/download.js';
+import { match } from '../lib/router.js';
+import { formatBytes, t, useStrings } from '../lib/i18n.js';
+import { saveJudgePass, savedJudgePass } from '../lib/store.js';
+import { eq, isNode, ok, rejects } from './harness.js';
+
+export const env = 'any';
+
+const browserOnly = (fn) => async () => { if (!isNode) await fn(); };
+
+export default [
+  ['dom.h builds elements from text only; HTML, inline handlers, style strings and script URLs are refused', browserOnly(async () => {
+    const el = h('p', { class: ['a', null, 'b'], 'data-testid': 'x', hidden: true }, '<img src=x onerror=alert(1)>', 3);
+    eq(el.textContent, '<img src=x onerror=alert(1)>3');
+    eq(el.children.length, 0);
+    eq(el.className, 'a b');
+    ok(el.hidden);
+    let clicked = 0;
+    h('button', { onclick: () => { clicked++; } }).click();
+    eq(clicked, 1);
+    await rejects(async () => h('div', { innerhtml: '<b>x</b>' }), TypeError);
+    await rejects(async () => h('div', { style: 'color:red' }), TypeError);
+    await rejects(async () => h('div', { onclick: 'alert(1)' }), TypeError);
+    await rejects(async () => h('a', { href: 'javascript:alert(1)' }), TypeError);
+    await rejects(async () => h('a', { href: ' JaVaScRiPt:alert(1)' }), TypeError);
+    await rejects(async () => h('iframe', { srcdoc: '<p>' }), TypeError);
+    eq(svg('use', { href: '/shared/brand/stencil/sprite.svg#d0' }).namespaceURI, 'http://www.w3.org/2000/svg');
+  })],
+  ['Trusted Types: one policy, same-origin /app/ scripts only', browserOnly(async () => {
+    ok(String(scriptUrl('/app/lib/pow-worker.js')).endsWith('/app/lib/pow-worker.js'));
+    await rejects(async () => scriptUrl('https://evil.example/app/x.js'), TypeError);
+    await rejects(async () => scriptUrl('/shared/x.js'), TypeError);
+  })],
+  ['previews: exact allowlist; never SVG, HTML or PDF; text only through textContent', browserOnly(async () => {
+    eq(previewKind({ kind: 'file', type: 'image/png', size: 10 }), 'image');
+    eq(previewKind({ kind: 'file', type: 'IMAGE/JPEG; q=1', size: 10 }), 'image');
+    eq(previewKind({ kind: 'file', type: 'image/svg+xml', size: 10 }), null);
+    eq(previewKind({ kind: 'file', type: 'text/html', size: 10 }), null);
+    eq(previewKind({ kind: 'file', type: 'application/pdf', size: 10 }), null);
+    eq(previewKind({ kind: 'file', type: 'video/mp4', size: 300 * 1024 * 1024 }), null);
+    eq(previewKind({ kind: 'text', type: '', size: 10 }), 'text');
+    const p = makePreview([utf8('<script>alert(1)</script>')], { kind: 'text', type: 'text/plain', size: 25 });
+    eq(p.el.tagName, 'PRE');
+    eq(p.el.textContent, '<script>alert(1)</script>');
+    eq(p.el.children.length, 0);
+    const img = makePreview([new Uint8Array(4)], { kind: 'file', type: 'image/png', size: 4 }, { label: 'Decrypted photo' });
+    ok(img.el.src.startsWith('blob:') && img.el.alt === 'Decrypted photo');
+    img.revoke();
+    eq(makePreview([new Uint8Array(4)], { kind: 'file', type: 'image/svg+xml', size: 4 }), null);
+  })],
+  ['saved file names: path, reserved and control characters stripped; RTL override removed; fallback', () => {
+    eq(sanitizeFileName('../../etc/passwd'), 'etcpasswd');
+    eq(sanitizeFileName('C:\\Users\\a.txt'), 'CUsersa.txt');
+    eq(sanitizeFileName('a<b>c:d*e?f"g|h.txt'), 'abcdefgh.txt');
+    eq(sanitizeFileName('invoice\u202Etxt.exe'), 'invoicetxt.exe');
+    eq(sanitizeFileName('  ..hidden. '), 'hidden');
+    eq(sanitizeFileName('\u0000\u0007'), 'mutis-file');
+    eq(sanitizeFileName(''), 'mutis-file');
+    eq(Array.from(sanitizeFileName('🔒'.repeat(300))).length, 200);
+  }],
+  ['routes: §3.2 paths with validated parameters', () => {
+    const id = 'AbCdEfGhIjKlMnOpQrStU_';
+    eq(JSON.stringify(match(`/s/${id}`)), JSON.stringify({ name: 'view', params: { shareId: id } }));
+    eq(match('/t').name, 'delivery');
+    eq(match('/d/7kq2x9mdh4').params.dropId, '7kq2x9mdh4');
+    eq(match('/locker/').name, 'locker');
+    eq(match(`/verify/tx/${'ab'.repeat(32)}`).params.txId, 'ab'.repeat(32));
+    for (const bad of ['/s/short', `/s/${id}x`, '/d/7kq2x9mdhu', '/d/7KQ2X9MDH4', '/verify/tx/xyz', '/admin', '/s/../etc']) {
+      eq(match(bad).name, 'not-found', bad);
+    }
+  }],
+  ['i18n: interpolation, Intl plurals, English fallback, unknown keys visible', () => {
+    useStrings('es', { 'views.left': { one: 'Queda {count} vista', other: 'Quedan {count} vistas' }, hello: 'Hola, {name}' },
+      { 'views.left': { one: '{count} view left', other: '{count} views left' }, hello: 'Hi, {name}', only_en: 'Only English' });
+    eq(t('views.left', { count: 1 }), 'Queda 1 vista');
+    eq(t('views.left', { count: 3 }), 'Quedan 3 vistas');
+    eq(t('hello', { name: '<b>Ana</b>' }), 'Hola, <b>Ana</b>');
+    eq(t('only_en'), 'Only English');
+    eq(t('missing.key'), 'missing.key');
+    useStrings('en', { size: 'Up to {n}' });
+    eq(t('size', { n: 25000 }), 'Up to 25,000');
+    eq(formatBytes(2.4 * 1024 * 1024), '2.4 MB');
+    eq(formatBytes(512), '512 B');
+    eq(formatBytes(25 * 1024 * 1024), '25 MB');
+  }],
+  ['judge pass kept per tab in sessionStorage (in Node, where there is none, it just isn\'t kept)', () => {
+    saveJudgePass('judge-7kq2x9mdh4ab7kq2x9mdh4ab');
+    eq(savedJudgePass(), isNode ? null : 'judge-7kq2x9mdh4ab7kq2x9mdh4ab');
+    saveJudgePass(null);
+    eq(savedJudgePass(), null);
+  }],
+];

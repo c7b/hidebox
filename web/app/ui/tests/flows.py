@@ -1,0 +1,1049 @@
+# SPDX-License-Identifier: MIT
+"""The app-ui flows, against the real API (`--dev`) in headless Chromium. Each flow names what it
+covers (10-spec §16.2 A-04…A-09, §12.3 states, the golden paths of the task). Selectors come from the
+data-testid contract of spec §3.4.9 and brand patch P-6."""
+import base64
+import fnmatch
+import hashlib
+import json
+import os
+import re
+import time
+import urllib.parse
+
+SCENARIOS = []
+VIEW_END = ("opened", "program-warning", "integrity-error", "burned", "expired", "revoked", "removed",
+            "not-found", "locked", "error", "needs-locker", "wrong-key", "incomplete")
+VIEW_ASK = ("ready", "password", "needs-locker", "wrong-key", "incomplete", "burned", "expired", "revoked",
+            "removed", "not-found", "locked", "error")
+
+
+def scenario(sid, title, **opts):
+    def wrap(fn):
+        SCENARIOS.append((sid, title, fn, opts))
+        return fn
+    return wrap
+
+
+# --- steps shared by the flows -------------------------------------------------------------------
+
+def home(t, page, path="/"):
+    page.goto(t.origin + path)
+    page.wait_for("drop-input", 60)
+
+
+def wait_link(page, previous="", timeout=120):
+    return page.wait("(() => { const e = document.querySelector('[data-testid=\"sealed-link\"]'); const v = e && e.value; "
+                     f"return v && v.startsWith('http') && v !== {json.dumps(previous)} ? v : ''; }})()", timeout)
+
+
+def seal_text(page, text):
+    page.click("drop-write")
+    page.wait_for("drop-textarea")
+    page.fill("drop-textarea", text)
+    page.click("drop-seal-text")
+    return wait_link(page)
+
+
+def open_link(page, url, password=None, open_it=True):
+    page.goto(url)
+    state = page.wait_state("view-root", VIEW_ASK, 60)
+    if state == "password" and password is not None:
+        page.fill("view-password", password)
+        page.click("view-password-submit")
+        state = page.wait("(() => { const r = document.querySelector('[data-testid=\"view-root\"]'); const s = r?.dataset.state;"
+                          " return s !== 'password' ? s : (/not it/i.test(r.textContent) ? 'password:wrong' : ''); })()", 60)
+    if state == "ready" and open_it:
+        page.click("view-open")
+        state = page.wait_state("view-root", VIEW_END, 120)
+    return state
+
+
+def rule_version(page):
+    return page.eval("document.querySelector('.md-card')?.dataset.rule ?? ''")
+
+
+def apply_rules(page, who=None, mode=None, password=None, when=None, views=None, expiry=None):
+    """Changes the rule in the Change panel; returns the link (new for a password, the same otherwise)."""
+    before_link, before_rule = page.value("sealed-link"), rule_version(page)
+    if not page.visible("who"):
+        page.click("card-change")
+        page.wait_for("who")
+    if who:
+        page.click("who", who)
+    if mode:
+        page.click("password-mode", mode)
+    if password is not None:
+        page.fill("password-input", password)
+    if when:
+        page.click("when", when)
+    if views is not None:
+        page.fill("views-input", str(views))
+    if expiry:
+        page.click("expiry-preset", expiry)
+    page.click("apply-rules")
+    try:
+        page.wait(f"(document.querySelector('.md-card')?.dataset.rule ?? '') !== {json.dumps(before_rule)}", 60)
+    except TimeoutError:
+        raise TimeoutError("the rule didn't apply: " + page.eval("document.querySelector('.md-change')?.innerText.replace(/\\s+/g, ' ') ?? ''")[-500:]) from None
+    return page.value("sealed-link") or before_link
+
+
+def suggested_names(browser):
+    """The file names this browser offered to save (Chromium stores downloads under random names)."""
+    return [e["params"]["suggestedFilename"] for e in browser.events if e.get("method") == "Browser.downloadWillBegin"]
+
+
+def same_origin(t, page):
+    return [r["url"] for r in page.requests if not r["url"].startswith((t.origin, "data:", "blob:", "about:", "chrome"))]
+
+
+def no_hscroll(page):
+    return bool(page.eval("document.scrollingElement.scrollWidth <= window.innerWidth"))
+
+
+def safety_emoji(page, testid):
+    return page.eval(f"[...new Intl.Segmenter().segment(document.querySelector('[data-testid=\"{testid}\"]').textContent)]"
+                     ".map(s => s.segment).filter(g => /\\p{Extended_Pictographic}/u.test(g))")
+
+
+class Intercept:
+    """Test-only: rewrites some of one page's API traffic (states the dev server can't produce on cue).
+    rules: (url pattern, method or None, stage, fn). At the Request stage fn(params) returns None to let
+    the request through, or (status, body) to answer it; at the Response stage fn(json body) returns the
+    body to deliver."""
+
+    def __init__(self, page):
+        self.page, self.rules = page, []
+        page.on("Fetch.requestPaused", self._paused)
+
+    def add(self, pattern, stage, fn, method=None):
+        self.rules.append((pattern, method, stage, fn))
+        self.page.cmd("Fetch.enable", {"patterns": [{"urlPattern": p, "requestStage": st} for p, _, st, _ in self.rules]})
+        return self
+
+    def clear(self):
+        self.rules = []
+        self.page.cmd("Fetch.disable")
+
+    def _paused(self, params):
+        req, rid = params["request"], params["requestId"]
+        stage = "Response" if "responseStatusCode" in params else "Request"
+        for pattern, method, st, fn in self.rules:
+            if st == stage and fnmatch.fnmatchcase(req["url"], pattern) and method in (None, req["method"]):
+                if stage == "Request":
+                    answer_ = fn(params)
+                    if answer_ is not None:
+                        return self._fulfil(rid, *answer_)
+                else:
+                    got = self.page.cmd("Fetch.getResponseBody", {"requestId": rid})
+                    raw = base64.b64decode(got["body"]) if got.get("base64Encoded") else got["body"].encode()
+                    return self._fulfil(rid, params["responseStatusCode"], fn(json.loads(raw)))
+                break
+        self.page.cmd("Fetch.continueRequest", {"requestId": rid})
+
+    def _fulfil(self, rid, status, body):
+        self.page.cmd("Fetch.fulfillRequest", {"requestId": rid, "responseCode": status,
+                                               "responseHeaders": [{"name": "Content-Type", "value": "application/json"}],
+                                               "body": base64.b64encode(json.dumps(body).encode()).decode()})
+
+
+def api_error(code, status, retry_after=None):
+    return lambda _params: (status, {"error": {"code": code, "message": code, "details": {}, "retry_after": retry_after}})
+
+
+def sha256_file(path):
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def downloaded(page, before=(), timeout=10):
+    """The first file this page downloaded that isn't in `before` (Chromium names downloads by guid)."""
+    end = time.time() + timeout
+    while time.time() < end:
+        page.b.drain(0.3)
+        new = [f for f in (os.listdir(page.downloads) if os.path.isdir(page.downloads) else []) if f not in before
+               and not f.endswith(".crdownload")]
+        if new:
+            return os.path.join(page.downloads, new[0])
+    return None
+
+
+def make_locker_with_drop(t, page, label):
+    page.goto(t.origin + "/locker")
+    page.wait_for("locker-root", 60)
+    page.wait_for("drop-create", 60)
+    page.fill("drop-label", label)
+    page.click("drop-create")
+    url = page.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]'); return e?.value?.includes('/d/') ? e.value : ''; })()", 120)
+    return url
+
+
+# --- the anonymous golden path -----------------------------------------------------------------------
+
+@scenario("home-text", "Home: a text secret, Once; copy; open; reload and a second browser see it burned")
+def home_text(t):
+    a = t.actor("iphone")
+    events = []
+    home(t, a)
+    a.eval("document.addEventListener('mutis:state', e => (window.__states ||= []).push(e.detail.state))")
+    t.shot(a, "home-390-idle")
+    started = time.time()
+    url = seal_text(a, "The office key is under the plant.")
+    took = time.time() - started
+    t.check(re.match(rf"^{re.escape(t.origin)}/s/[A-Za-z0-9_-]{{22}}#1[A-Za-z0-9_-]{{43}}$", url) is not None, f"the sealed link has the key after # ({url[-50:]})")
+    t.check(took < 10, f"from text to link in {took:.1f} s on a 390×844 phone (< 10 s)")
+    states = a.eval("window.__states")
+    t.check(states[-1] == "sealed" and "sealing" in states, f"mutis:state events {states}")
+    t.check(a.eval("(document.querySelector('.md-live')?.textContent || '').length > 0"), "the live region announces the locked state")
+    noise = a.eval("(() => { const c = document.querySelector('[data-testid=\"noise-canvas\"]'); const d = c.getContext('2d').getImageData(0, 0, 96, 96).data;"
+                   " const s = new Set(); for (let i = 0; i < d.length; i += 4) s.add(d[i]); return s.size; })()")
+    t.check(noise > 64, f"the noise strip draws real ciphertext bytes ({noise} grey levels)")
+    t.shot(a, "home-390-sealed")
+    a.click("known-toggle")
+    a.wait("(document.querySelector('[data-testid=\"known-panel\"]')?.textContent || '').includes('access_hash')", 30)
+    t.check(not a.eval("document.querySelector('[data-testid=\"known-panel\"]').hidden"), "the glass box opens on the card")
+    t.shot(a, "home-390-known", full_page=True)
+    a.click("card-change")
+    a.wait_for("who")
+    t.shot(a, "home-390-change", full_page=True)
+    a.click("card-change")
+    a.click("copy-link")
+    copied = a.wait("navigator.clipboard.readText()", 10)
+    t.check(copied == url, "Copy link puts the full link on the clipboard")
+    t.check(not same_origin(t, a), "the home page made no third-party request")
+    stored = a.eval("JSON.stringify(Object.fromEntries(Object.entries(localStorage)))")
+    t.check(url.split("#")[1] not in stored and "under the plant" not in stored
+            and set(json.loads(stored)) <= {"mutis.recent", "mutis.lang", "mutis.theme", "mutis.keyAsked"},
+            f"localStorage holds no key and no text, only the recent-drops list ({sorted(json.loads(stored))})")
+    b = t.actor("android")
+    t.check(open_link(b, url, open_it=False) == "ready", "B sees the ready state, nothing used yet")
+    t.check(b.text("view-views-left") == "Opens once", "the chip says Opens once")
+    t.shot(b, "view-412-ready")
+    b.click("view-open")
+    t.check(b.wait_state("view-root", VIEW_END, 60) == "opened", "B opens it")
+    t.check(b.text("view-text") == "The office key is under the plant.", "B reads exactly the text")
+    t.check(b.eval("location.hash") == "", "the key left the address bar after the open")
+    t.shot(b, "view-412-opened-text")
+    b.reload()
+    t.check(b.wait_state("view-root", VIEW_ASK, 60) == "burned", "B's reload shows burned")
+    t.shot(b, "view-412-burned")
+    c = t.actor("desktop")
+    t.check(open_link(c, url) == "burned", "a second browser sees burned")
+    t.check("made its exit" in c.text("view-root"), "burned copy: This secret already made its exit.")
+    t.shot(c, "view-1440-burned")
+
+
+@scenario("viewer-states", "Viewer: incomplete, not-found, a damaged key, the glass box")
+def viewer_states(t):
+    a = t.actor()
+    home(t, a)
+    url = seal_text(a, "glass box check")
+    base = url.split("#")[0]
+    b = t.actor()
+    t.check(open_link(b, base) == "incomplete", "a link without its key: incomplete")
+    t.shot(b, "view-1440-incomplete")
+    t.check(open_link(b, t.origin + "/s/" + "A" * 22 + "#1" + "A" * 43) == "not-found", "an unknown id: not-found")
+    bad = url[:-4] + ("AAAA" if not url.endswith("AAAA") else "BBBB")
+    t.check(open_link(b, bad, open_it=False) == "wrong-key", "a changed key: This key doesn't fit, no view used")
+    t.check(open_link(b, url, open_it=False) == "ready", "the real link is still ready (no view was used)")
+    b.click("view-known")
+    b.wait("(document.querySelector('[data-testid=\"known-panel\"]')?.textContent || '').includes('wrapped_key')", 30)
+    text = b.text("known-panel")
+    t.check(all(w in text for w in ("size_stored", "access_hash", "not known", "That's all we have.")) or "Not stored anywhere" in text,
+            "the glass box prints the columns and what is stored nowhere")
+    t.shot(b, "view-1440-known", full_page=True)
+
+
+# --- exit rules, passwords, deleting -------------------------------------------------------------------
+
+@scenario("rules", "Change panel: 3 opens on the same link; link + password; password only; Delete now")
+def rules(t):
+    a = t.actor()
+    home(t, a)
+    t.shot(a, "home-1440-idle")
+    # A slow uplink, so the sealing state stays on screen long enough to be seen and pictured.
+    a.cmd("Network.emulateNetworkConditions", {"offline": False, "latency": 80, "downloadThroughput": -1, "uploadThroughput": 256 * 1024})
+    a.set_files("drop-input", [t.fixture("report.dat")])
+    phase = a.wait("['encrypting', 'uploading'].includes(document.querySelector('[data-testid=\"seal-progress\"]')?.dataset.phase) && document.querySelector('[data-testid=\"seal-progress\"]').dataset.phase", 30)
+    t.check(phase in ("encrypting", "uploading"), f"the progress line names its phase ({phase})")
+    t.shot(a, "home-1440-sealing")
+    url = wait_link(a)
+    a.cmd("Network.emulateNetworkConditions", {"offline": False, "latency": 0, "downloadThroughput": -1, "uploadThroughput": -1})
+    t.shot(a, "home-1440-sealed-file")
+    a.click("card-change")
+    a.wait_for("who")
+    t.shot(a, "home-1440-change")
+    same = apply_rules(a, when="views", views=3)
+    t.check(same == url, "a count change keeps the same link (PATCH, spec §5.4)")
+    t.check(a.eval("document.querySelector('.md-card').dataset.maxViews") == "3", "the card shows 3 opens")
+    t.check("3" in a.eval("document.querySelector('.md-rule-text').textContent"), "the rule line says 3 opens")
+    for who in "BCD":
+        p = t.actor()
+        t.check(open_link(p, url) == "opened", f"{who} opens the file")
+        p.click("view-save")
+        p.b.drain(1.5)
+        saved = [f for f in os.listdir(p.downloads)] if os.path.isdir(p.downloads) else []
+        t.check(bool(saved), f"{who}'s Save file downloads it")
+    t.check(open_link(t.actor(), url) == "burned", "the fourth browser sees burned")
+
+    home(t, a)
+    url = seal_text(a, "behind a password")
+    new = apply_rules(a, who="password", mode="link_password", password="correct horse battery")
+    t.check(new != url and "#2" in new, "a password makes a new link with a #2 key part")
+    t.shot(a, "home-1440-password")
+    t.check(open_link(t.actor(), url) == "revoked", "the old link no longer works (revoked)")
+    b = t.actor("iphone")
+    first = open_link(b, new, password="wrong one")
+    t.check(first == "password:wrong", "a wrong password: That's not it")
+    msg1 = b.eval("document.getElementById('a-view-pw-msg').textContent")
+    b.fill("view-password", "wrong two")
+    b.click("view-password-submit")
+    msg2 = b.wait(f"(() => {{ const m = document.getElementById('a-view-pw-msg').textContent; return /not it/.test(m) && m !== {json.dumps(msg1)} ? m : ''; }})()", 60)
+    t.check("left" in msg2, f"the next wrong try says how many are left ({msg2})")
+    t.shot(b, "view-390-password-wrong")
+    b.fill("view-password", "correct horse battery")
+    b.click("view-password-submit")
+    t.check(b.wait_state("view-root", ("ready",), 60) == "ready", "the right password reaches ready")
+    b.click("view-open")
+    t.check(b.wait_state("view-root", VIEW_END, 60) == "opened" and b.text("view-text") == "behind a password", "and opens it")
+
+    home(t, a)
+    seal_text(a, "password only")
+    only = apply_rules(a, who="password", mode="password", password="four random words here")
+    t.check("#" not in only, "password only: the link has no key part")
+    c = t.actor()
+    t.check(open_link(c, only, password="four random words here") == "opened", "a password-only link opens with the password alone")
+
+    # Our server doesn't confirm that the old link ended: nothing changes, and nothing says it did.
+    home(t, a)
+    kept_url = seal_text(a, "the old link stays")
+    sid = kept_url.split("/s/")[1].split("#")[0]
+    cut = Intercept(a).add(f"*/api/v1/s/{sid}", "Request", api_error("internal", 500), method="DELETE")
+    a.click("card-change")
+    a.wait_for("who")
+    a.click("who", "password")
+    a.fill("password-input", "correct horse battery")
+    a.click("apply-rules")
+    a.wait("!!document.querySelector('.md-change [data-testid=\"error-banner\"]')", 60)
+    toast = a.eval("document.querySelector('.a-toast:not([hidden])')?.textContent ?? ''")
+    t.check(a.value("sealed-link") == kept_url and "no longer works" not in toast,
+            "a revoke that fails: the card keeps the old link and no toast says it stopped working")
+    cut.clear()
+    t.check(open_link(t.actor(), kept_url, open_it=False) == "ready", "the old link still opens, as the card says")
+
+    home(t, a)
+    gone = seal_text(a, "to be deleted")
+    a.click("card-change")
+    a.wait_for("delete-drop")
+    a.click("delete-drop")
+    a.wait_for("delete-confirm")
+    a.click("delete-confirm")
+    a.wait_for("drop-input", 30)
+    t.check(open_link(t.actor(), gone) == "revoked", "Delete now: the link answers revoked")
+
+
+@scenario("card-fresh", "A first visit: the card's Tari action and locker rules open a locker in place; errors stay in the card")
+def card_fresh(t):
+    _, _, address = owner_with_drop(t, "desktop")
+
+    # The locker can't open (a shared address at its sign-up limit): the error shows in the card.
+    e = t.actor()
+    home(t, e)
+    link = seal_text(e, "the link stays on screen")
+    Intercept(e).add("*/api/v1/auth/register", "Request", api_error("rate_limited", 429, 1800), method="POST")
+    e.click("card-send-address")
+    e.wait("!!document.querySelector('.md-card [data-testid=\"error-banner\"]')", 120)
+    t.check(e.attr("error-banner", "data-code") == "rate_limited" and e.value("sealed-link") == link and e.visible("copy-link"),
+            "a locker that can't open: the error is in the card, with the link and Copy link still there")
+    t.shot(e, "home-1440-card-error")
+
+    # "Send it to a Tari address instead" from a browser that has never had a locker.
+    a = t.actor("iphone")
+    home(t, a)
+    old = seal_text(a, "sent instead of linked")
+    sid = old.split("/s/")[1].split("#")[0]
+    a.click("card-send-address")
+    a.wait_for("send-recipient", 120)
+    t.check(True, "the locker opens in place and the send step appears")
+    a.fill("send-recipient", address)
+    a.wait_for("send-safety", 30)
+    cut = Intercept(a).add(f"*/api/v1/s/{sid}", "Request", api_error("internal", 500), method="DELETE")
+    a.click("send-submit")
+    t.check(a.wait_state("send-status", ("delivered", "failed"), 180) == "delivered", "Sent")
+    a.wait_for("card-close-link", 60)
+    t.check(a.value("sealed-link") == old and a.exists("copy-link"), "the old link isn't confirmed closed: the card still shows it, and says so")
+    t.check(open_link(t.actor(), old, open_it=False) == "ready", "it still works")
+    cut.clear()
+    a.click("card-close-link")
+    a.wait_for("card-sent", 60)
+    t.check(not a.exists("copy-link") and not a.exists("sealed-link"), "once closed, the card drops the link and Copy link")
+    sentence = a.text("card-sent")
+    t.check(sentence.startswith("Sent to otl_esm_1") and "no longer works" in sentence, f"and says where the file went ({sentence[:70]})")
+    t.check(open_link(t.actor(), old) == "revoked", "the old link answers revoked")
+    t.shot(a, "home-390-sent-instead", full_page=True)
+
+    # Change → 7 days (a locker's rule) from a browser that has never had a locker.
+    c = t.actor()
+    home(t, c)
+    url = seal_text(c, "a week")
+    same = apply_rules(c, expiry="604800")
+    left = int(c.eval("document.querySelector('.md-card').dataset.expiresAt")) - time.time()
+    t.check(same == url and abs(left - 604800) < 600, f"7 days applies to the same link ({left / 86400:.2f} days)")
+
+
+@scenario("kept", "P1 kept files: Only me and Until I delete it from a first visit; /locker lists, saves and deletes them")
+def kept(t):
+    a = t.actor()
+    home(t, a)
+    a.set_files("drop-input", [t.fixture("notes.txt")])
+    wait_link(a)
+    a.click("card-change")
+    a.wait_for("who")
+    a.click("who", "only_me")
+    a.click("apply-rules")
+    a.wait("!document.querySelector('[data-testid=\"sealed-link\"]') && /only this locker/.test(document.querySelector('.md-kept')?.textContent || '')", 180)
+    t.check(True, "Only me: kept in the locker, no link")
+    home(t, a)
+    a.set_files("drop-input", [t.fixture("report.dat")])
+    before = wait_link(a)
+    url = apply_rules(a, when="never")
+    t.check(url != before and "stays until you delete it" in a.eval("document.querySelector('.md-rule-text').textContent"),
+            "Until I delete it: a new link whose rule line says it stays")
+    t.check(open_link(t.actor(), before) in ("revoked", "not-found"), "the link to the anonymous copy no longer works")
+    b = t.actor()
+    t.check(open_link(b, url) == "opened", "the kept file's link opens")
+    a.goto(t.origin + "/locker")
+    a.wait("document.querySelectorAll('[data-testid=\"kept-row\"]').length === 2", 120)
+    t.shot(a, "locker-1440-kept", full_page=True)
+    rows = a.eval("[...document.querySelectorAll('[data-testid=\"kept-row\"]')].map((r) => r.textContent)")
+    t.check(any("notes.txt" in r for r in rows) and any("report.dat" in r for r in rows), "/locker lists both kept files by name")
+    a.eval("[...document.querySelectorAll('[data-testid=\"kept-row\"]')].find((r) => r.textContent.includes('notes.txt')).querySelector('[data-testid=\"kept-save\"]').click()")
+    saved = downloaded(a)
+    t.check(bool(saved) and sha256_file(saved) == sha256_file(t.fixture("notes.txt")), "Save gives back exactly the file that was kept")
+    a.eval("[...document.querySelectorAll('[data-testid=\"kept-row\"]')].find((r) => r.textContent.includes('report.dat')).querySelector('[data-testid=\"kept-delete\"]').click()")
+    a.wait("document.querySelectorAll('[data-testid=\"kept-row\"]').length === 1", 60)
+    a.reload()
+    a.wait("!!document.querySelector('[aria-labelledby=\"a-kept-h\"]') && !document.querySelector('.a-kept .a-working')", 120)
+    rows = a.eval("[...document.querySelectorAll('[data-testid=\"kept-row\"]')].map((r) => r.textContent)")
+    t.check(len(rows) == 1 and "notes.txt" in rows[0], f"Delete removes the kept file on our server: after a reload only notes.txt is listed ({len(rows)})")
+
+
+# --- recipient safety, limits, photos -------------------------------------------------------------------
+
+@scenario("safety", "Programs refused before upload; a too-big file offers a locker; photos lose their GPS")
+def safety(t):
+    a = t.actor()
+    home(t, a)
+    a.set_files("drop-input", [t.fixture("setup.exe")])
+    a.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'program'", 30)
+    t.check(not [r for r in a.requests if r["url"].endswith("/api/v1/uploads")], "an anonymous .exe is refused before any upload")
+    t.shot(a, "home-1440-program")
+    a.set_files("drop-input", [t.fixture("too-big.bin")])
+    a.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'too_large'", 30)
+    t.check("free locker" in a.text("error-banner") and a.exists("offer-locker"), "too large: the banner offers a free locker")
+    t.check(not [r for r in a.requests if r["url"].endswith("/api/v1/uploads")], "nothing was uploaded")
+    # Names whose program extension appears only once invisible or forbidden characters are gone.
+    for name, ext in (("invoice.b\u200bat", "bat"), ("run.p|s1", "ps1")):
+        a.set_files("drop-input", [t.fixture(name)])
+        a.wait(f"(document.querySelector('[data-testid=\"error-banner\"]')?.textContent || '').includes('(.{ext})')", 30)
+        t.check(a.attr("error-banner", "data-code") == "program", f"{name!r} is refused as the .{ext} it would be saved as")
+    t.check(not [r for r in a.requests if r["url"].endswith("/api/v1/uploads")], "none of them was uploaded")
+    a.set_files("drop-input", [t.fixture("setup.exe")])
+    a.wait_for("offer-locker", 30)
+    a.click("offer-locker")
+    url = wait_link(a, timeout=120)
+    t.check(bool(url), "with a locker opened in place, the program is locked as the locker's file")
+    b = t.actor()
+    t.check(open_link(b, url) == "program-warning", "the viewer shows the program warning")
+    t.check(b.exists("view-save-anyway") and not b.exists("view-image"), "no preview; Save anyway is offered")
+    t.shot(b, "view-1440-program")
+
+    # A sender whose client skips the checks: the viewer goes by the name the file would be saved under.
+    m = t.actor()
+    home(t, m)
+    names = {"invoice.b\u200bat": "invoice.bat", "run.p|s1": "run.ps1", "photo\u202egpj.exe": "photogpj.exe"}
+    links = m.eval("(async () => { const { sealItem, createLink } = await import('/app/lib/seal.js');"
+                   " const now = Math.floor(Date.now() / 1000); const out = [];"
+                   f" for (const name of {json.dumps(list(names))}) {{"
+                   "   const item = await sealItem({ file: new File(['echo hi'], 'x.txt'), name, type: '', mtime: null, stripped: false },"
+                   "     { anonymous: true, expiresAt: now + 3600 });"
+                   "   out.push((await createLink(item, { maxViews: 1, expiresAt: now + 3600 })).url); }"
+                   " return out; })()", timeout=120)
+    v = t.actor()
+    for link, (raw, saved) in zip(links, names.items()):
+        state = open_link(v, link)
+        shown = v.text("view-filename") if v.exists("view-filename") else ""
+        t.check(state == "program-warning" and shown == saved, f"stored as {raw!r}: the program warning, named {saved} ({state}, {shown!r})")
+    v.click("view-save-anyway")
+    v.click("view-save")
+    v.b.drain(1.5)
+    t.check(suggested_names(t.browser)[-1:] == ["photogpj.exe"], f"Save anyway offers the name it showed ({suggested_names(t.browser)[-1:]})")
+
+    p = t.actor("iphone")
+    home(t, p)
+    p.set_files("drop-input", [t.fixture("photo-gps.jpg")])
+    p.wait("document.querySelector('[data-testid=\"exif-chip\"]')?.dataset.removed === 'true'", 60)
+    t.check(True, "the photo chip says location and camera data were removed")
+    photo = wait_link(p)
+    t.shot(p, "home-390-sealed-photo")
+    q = t.actor("iphone")
+    t.check(open_link(q, photo) == "opened" and q.exists("view-image"), "the photo opens with a preview")
+    t.shot(q, "view-390-opened-photo")
+
+
+# --- lockers, keys, dead drops, the inbox ---------------------------------------------------------------
+
+@scenario("locker", "Locker: made silently from Leave me a file; key modal; key file with passphrase; restore")
+def locker(t):
+    a = t.actor("iphone")
+    a.goto(t.origin + "/locker")
+    a.wait_for("locker-root", 60)
+    t.shot(a, "locker-390-empty", full_page=True)
+    drop = make_locker_with_drop(t, a, "Council")
+    t.check(re.match(rf"^{re.escape(t.origin)}/d/[0-9a-hjkmnp-tv-z]{{10}}$", drop) is not None, f"a short drop link ({drop})")
+    a.wait_for("key-save-file", 30)
+    t.check(a.eval("!!document.querySelector('dialog[open]')"), "the key modal asks once, now that something persistent exists")
+    t.shot(a, "locker-390-key-modal")
+    a.click("key-save-file")
+    t.check("passphrase" in a.text("key-save-file").lower() or a.eval("!!document.activeElement?.matches('[data-testid=\"key-passphrase\"]')"),
+            "with the passphrase box ticked (P-15) an empty passphrase stops the download")
+    a.fill("key-passphrase", "orchid lantern quiet river")
+    a.click("key-save-file")
+    a.b.drain(2)
+    files = os.listdir(a.downloads) if os.path.isdir(a.downloads) else []
+    key_text = open(os.path.join(a.downloads, files[0]), encoding="utf-8").read() if files else ""
+    t.check("Locked key:" in key_text and "MUTIS-" not in key_text, "the key file is locked with the passphrase; the plain key isn't in it")
+    a.click("key-later")
+    a.wait("!document.querySelector('dialog[open]')", 10)
+    a.wait_for("locker-safety", 30)
+    safety = safety_emoji(a, "locker-safety")
+    address = a.text("locker-address").strip()
+    t.check(len(safety) == 12, f"the safety code has 12 emoji ({len(safety)})")
+    t.check(address.startswith("otl_esm_1"), "the locker shows its otl_esm_ Tari address")
+    t.check(a.exists("key-banner"), "the key banner stays until the key is saved")
+    t.check(a.attr("locker-root", "data-probation") == "true", "a new locker is on probation")
+    stored = a.eval("JSON.stringify(localStorage)")
+    code = a.eval("(async () => { const { loadIdentity, recoveryCode } = await import('/app/lib/identity.js'); return recoveryCode((await loadIdentity()).seed); })()")
+    t.check(code.replace("MUTIS-", "")[:20] not in stored, "localStorage holds no key material (the locker's seed lives in IndexedDB, spec §4.8.1)")
+    stores = a.eval("new Promise((r) => { const q = indexedDB.open('mutis'); q.onsuccess = () => r([...q.result.objectStoreNames]); })")
+    t.check(sorted(stores) == ["identity", "inbox"], f"IndexedDB holds only the locker record and the inbox state ({stores})")
+    t.check(int(a.attr("quota-bar", "data-limit") or 0) > 0, "the quota bar shows the locker's limit")
+    t.shot(a, "locker-390-full", full_page=True)
+    t.shared.update(drop=drop, safety=safety, address=address)
+    b = t.actor()
+    b.goto(t.origin + "/locker")
+    b.wait_for("restore-text", 60)
+    b.fill("restore-text", key_text)
+    b.click("restore-submit")
+    b.wait_for("restore-passphrase", 20)
+    b.fill("restore-passphrase", "orchid lantern quiet river")
+    b.click("restore-submit")
+    b.wait_for("locker-safety", 120)
+    t.check(safety_emoji(b, "locker-safety") == safety and b.text("locker-address").strip() == address,
+            "restored elsewhere: the same safety code and address")
+    t.shot(b, "locker-1440-restored", full_page=True)
+
+
+def owner_with_drop(t, device="iphone"):
+    a = t.actor(device)
+    drop = make_locker_with_drop(t, a, "Council")
+    if a.exists("key-later"):
+        a.click("key-later")
+    a.wait_for("locker-address", 30)
+    address = a.text("locker-address").strip()
+    t.realizer.addresses.add(address)
+    return a, drop, address
+
+
+@scenario("deaddrop", "Dead drop: a stranger leaves a photo; Delivered; What the chain sees; the inbox opens it")
+def deaddrop(t):
+    a, drop, address = owner_with_drop(t)
+    safety = safety_emoji(a, "locker-safety")
+    b = t.actor()
+    b.goto(drop)
+    t.check(b.wait_state("dd-root", ("ready", "closed", "not-found", "error"), 60) == "ready", "the drop page is ready")
+    t.check(safety_emoji(b, "dd-safety") == safety, "it shows the owner's 12-emoji safety code")
+    t.check(b.eval("document.querySelector('[data-testid=\"dd-label\"] bdi')?.textContent") == "Council",
+            "the drop's label, isolated in a <bdi> inside the quotes")
+    t.check("doesn't check it" in b.text("dd-root"), "the page says the link's maker wrote the label and mutis doesn't check it")
+    report = b.attr("dd-report", "href") or ""
+    t.check(b.eval("!!document.querySelector('main [data-testid=\"dd-report\"]')") and report.startswith("/abuse#link=")
+            and urllib.parse.unquote(report) == f"/abuse#link={drop}", f"a Report this drop link in the page, filled in ({report[:60]})")
+    t.shot(b, "drop-1440-ready")
+    b.set_files("dd-input", [t.fixture("setup.exe")])
+    b.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'program_drop'", 30)
+    t.check(not [r for r in b.requests if r["url"].endswith("/api/v1/uploads")], "a program can't be left in a drop; nothing was uploaded")
+    b.set_files("dd-input", [t.fixture("photo-gps.jpg")])
+    b.wait("document.querySelector('[data-testid=\"exif-chip\"]')?.dataset.removed === 'true'", 60)
+    t.check(b.wait_state("dd-root", ("delivered", "error"), 180) == "delivered", "Delivered")
+    tx = b.attr("dd-tx", "data-tx")
+    t.check(bool(re.match(r"^[0-9a-f]{64}$", tx or "")), "the delivery has a transaction id")
+    t.shot(b, "drop-1440-delivered")
+    b.click("dd-chain-link")
+    b.wait_for("tx-root", 60)
+    b.wait("document.querySelectorAll('[data-testid=\"tx-output\"]').length > 0", 30)
+    t.check(b.eval("[...document.querySelectorAll('[data-testid=\"tx-output\"]')].every(e => ['hidden', 'unknown'].includes(e.dataset.amount))"),
+            "What the chain sees: no output amount is shown")
+    t.check(b.exists("tx-fee"), "the fee is shown, as public")
+    t.shot(b, "verify-1440-tx", full_page=True)
+    indexer = lambda: [r["url"] for r in b.requests if "ootle-indexer" in r["url"]]
+    t.check(not indexer(), "no request to Tari's indexer before the button is pressed")
+    b.eval("[...document.querySelectorAll('button')].find((e) => e.textContent.includes(\"Tari's indexer\")).click()")
+    b.wait("!document.querySelector('.a-direct .a-working')", 30)
+    t.check(len(indexer()) >= 1 and all(u.startswith(("https://ootle-indexer-a.tari.com/", "https://ootle-indexer-b.tari.com/")) for u in indexer()),
+            f"the explicit button asks Tari's indexer directly ({[u[:60] for u in indexer()]})")
+
+    t.realizer.attach(a)
+    a.goto(t.origin + "/inbox")
+    a.wait("!!document.querySelector('[data-testid=\"inbox-item\"][data-source=\"drop\"]')", 120)
+    t.check(bool(a.wait("Number(document.querySelector('[data-testid=\"inbox-scan\"]')?.dataset.checked || 0) > 0", 30)),
+            "the scan line says how many outputs it checked")
+    t.shot(a, "inbox-390")
+    a.eval("document.querySelector('[data-testid=\"inbox-item\"][data-source=\"drop\"] button').click()")
+    t.check(a.wait_state("view-root", VIEW_END, 120) == "opened", "the owner opens what was left")
+    t.check(a.exists("view-image") and a.exists("view-chain-saw"), "the photo and What the chain saw")
+    amount = a.eval("(async () => { const { config } = await import('/app/lib/api.js'); const { formatTari } = await import('/app/ui/marks.js');"
+                    " return formatTari((await config()).courier.amount_ut); })()")
+    saw = a.text("view-chain-saw")
+    t.check(f"reads {amount} tTARI" in saw, f"What the chain saw: hidden on chain, the locker reads {amount} tTARI ({saw[saw.find('Amount'):][:60]!r})")
+    t.shot(a, "inbox-390-opened", full_page=True)
+    a.click("view-keep")
+    a.wait("!!document.querySelector('.a-item-view .a-done')", 120)
+    a.goto(t.origin + "/locker")
+    a.wait("document.querySelectorAll('[data-testid=\"kept-row\"]').length >= 1", 120)
+    t.check("photo-gps.jpg" in a.text("kept-row"), "Keep a copy in my locker: the photo is listed under Kept in your locker")
+
+
+@scenario("send", "Send to a Tari address (relay); the recipient's inbox opens it; /watch sees it and opens nothing")
+def send(t):
+    a, _, address = owner_with_drop(t, "desktop")
+    safety = safety_emoji(a, "locker-safety")
+    b = t.actor("android")
+    b.goto(t.origin + "/send")
+    b.wait_for("drop-input", 60)
+    seal_text_send = "sent to an address"
+    b.click("drop-write")
+    b.fill("drop-textarea", seal_text_send)
+    b.click("drop-seal-text")
+    b.wait_for("send-recipient", 120)
+    b.fill("send-recipient", address)
+    b.wait_for("send-safety", 30)
+    t.check(safety_emoji(b, "send-safety") == safety, "the send screen shows the recipient's safety code")
+    t.shot(b, "send-412-recipient", full_page=True)
+    b.click("send-submit")
+    t.check(b.wait_state("send-status", ("delivered", "failed"), 180) == "delivered", "Sent")
+    tx = b.attr("send-tx", "data-tx")
+    t.check(bool(re.match(r"^[0-9a-f]{64}$", tx or "")), "the send has a transaction id")
+    t.check("learned the address" in b.text("send-status"), "the relay sentence (C8) follows how this send went")
+    t.shot(b, "send-412-sent", full_page=True)
+    t.realizer.attach(a)
+    a.goto(t.origin + "/inbox")
+    a.wait("!!document.querySelector('[data-testid=\"inbox-item\"][data-source=\"send\"]')", 120)
+    a.eval("document.querySelector('[data-testid=\"inbox-item\"][data-source=\"send\"] button').click()")
+    t.check(a.wait_state("view-root", VIEW_END, 120) == "opened" and a.text("view-text") == seal_text_send, "the recipient opens what was sent")
+    a.goto(t.origin + "/locker")
+    a.wait_for("watch-mine", 60)
+    a.click("watch-mine")
+    a.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 1", 120)
+    t.check(a.attr("watch-summary", "data-readable") == "0", "/watch with the locker's view key: deliveries seen, 0 files readable")
+    t.shot(a, "watch-1440-mine", full_page=True)
+    a.goto(t.origin + "/locker")
+    a.wait_for("export-view-key", 30)
+    a.click("export-view-key")
+    a.wait_for("view-key-value")
+    view_key = a.value("view-key-value")
+    c = t.actor("iphone")
+    t.realizer.attach(c)
+    c.goto(t.origin + "/watch")
+    c.wait_for("watch-address", 60)
+    c.fill("watch-address", address)
+    c.fill("watch-viewkey", view_key)
+    c.click("watch-run")
+    c.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 1", 120)
+    t.check(c.attr("watch-summary", "data-readable") == "0", "another browser with the exported view key: 0 files readable")
+    t.check(c.eval("document.querySelectorAll('[data-testid=\"watch-row\"]').length") >= 1, "the rows list the arrivals")
+    t.shot(c, "watch-390-viewkey", full_page=True)
+    d = t.actor()
+    d.goto(t.origin + "/watch")
+    d.wait_for("watch-address", 60)
+    d.fill("watch-address", address)
+    d.fill("watch-viewkey", "00" * 32)
+    d.click("watch-run")
+    d.wait("!!document.querySelector('[data-testid=\"error-banner\"]')", 30)
+    t.check(d.attr("error-banner", "data-code") == "address_mismatch", "a view key of another address is refused")
+
+
+@scenario("kind4", "Kind 4: a /t#4 link opens with the address's view key alone; kind 3 refuses it")
+def kind4(t):
+    a, _, address = owner_with_drop(t, "desktop")
+    a.goto(t.origin + "/locker")
+    a.wait_for("export-view-key", 30)
+    a.click("export-view-key")
+    view_key = a.value("view-key-value")
+    b = t.actor()
+    b.goto(t.origin + "/send")
+    b.wait_for("drop-input", 60)
+    b.click("drop-write")
+    b.fill("drop-textarea", "for another wallet")
+    b.click("drop-seal-text")
+    b.wait_for("send-recipient", 120)
+    for wrong, words in (("2" * 70, "base-layer"), ("otl_main_1qqqqqqqqqqqq", "not a testnet"), ("hello", "Ootle address")):
+        b.fill("send-recipient", wrong)
+        b.wait(f"document.getElementById('a-recipient-msg').textContent.includes({json.dumps(words)})", 10)
+        t.check(not b.visible("send-safety"), f"the address check explains it: {words}")
+    b.fill("send-recipient", address)
+    b.wait_for("send-safety", 30)
+    b.click("send-kind", "4")
+    t.check(b.eval("!document.querySelector('.a-send .a-warn').hidden"), "kind 4 shows its warning")
+    b.click("send-submit")
+    t.check(b.wait_state("send-status", ("delivered", "failed"), 180) == "delivered", "Sent in other-wallet mode")
+    t.realizer.attach(a)
+    a.goto(t.origin + "/inbox")
+    a.wait("!!document.querySelector('[data-testid=\"inbox-item\"]')", 120)
+    memo = next((m["Message"] for m in t.realizer.memos if isinstance(m, dict) and "/t#4" in m.get("Message", "")), "")
+    t.check(memo.startswith("https://mutis.sh/t#4"), "the delivery's memo is a /t#4 link")
+    link = t.origin + "/t#" + memo.split("#", 1)[1]
+    c = t.actor("iphone")
+    c.goto(link)
+    t.check(c.wait_state("view-root", VIEW_ASK, 60) == "needs-locker", "a browser without a locker is asked for a key")
+    t.shot(c, "view-390-needs-locker")
+    c.fill("t-viewkey", view_key)
+    c.click("t-viewkey-submit")
+    t.check(c.wait_state("view-root", ("ready", "opened", "error", "wrong-key"), 60) in ("ready", "opened"), "the view key alone unlocks a kind-4 link")
+    if c.state("view-root") == "ready":
+        c.click("view-open")
+        c.wait_state("view-root", VIEW_END, 60)
+    t.check(c.text("view-text") == "for another wallet", "and it is the text that was sent")
+
+
+@scenario("upgrade", "Upgrade: s30 with demo tTARI; Waiting → Seen on chain → Amount proven → Added")
+def upgrade(t):
+    a = t.actor("iphone")
+    make_locker_with_drop(t, a, "pack test")
+    if a.exists("key-later"):
+        a.click("key-later")
+    a.wait_for("quota-bar", 30)
+    before = int(a.attr("quota-bar", "data-limit"))
+    a.goto(t.origin + "/upgrade")
+    a.wait_for("pack-s30", 60)
+    t.shot(a, "upgrade-390-plans", full_page=True)
+    a.click("pack-s30")
+    a.wait_for("invoice-address", 60)
+    t.check(a.value("invoice-address").startswith("otl_esm_1"), "the invoice has a Tari address")
+    a.click("demo-pay")
+    a.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 180)
+    steps = a.eval("[...document.querySelectorAll('[data-testid=\"pay-step\"]')].map(e => e.dataset.step + ':' + e.dataset.done)")
+    t.check(steps == ["waiting:true", "seen:true", "proven:true", "added:true"], f"the stepper reaches Added ({steps})")
+    t.shot(a, "upgrade-390-credited", full_page=True)
+    a.goto(t.origin + "/locker")
+    a.wait_for("quota-bar", 60)
+    t.check(int(a.attr("quota-bar", "data-limit")) >= before + 2 * 1024 ** 3, "the quota grew by the pack's 2 GiB")
+
+    # After Nov 11 the testnet line changes by itself, in step with the footer (D13).
+    p = t.actor()
+    p.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": "Date.now = () => Date.UTC(2026, 10, 12, 12)"})
+    p.goto(t.origin + "/upgrade")
+    line = p.wait("document.querySelector('.a-testnet')?.textContent", 60)
+    footer = p.eval("!document.querySelector('.a-lang-en footer [data-phase-show=\"mainnet\"]')?.hidden")
+    t.check("mainnet is live" in line and footer, f"on Nov 12 the testnet line says the mainnet is live, like the footer ({line[:80]})")
+
+
+@scenario("upgrade-wallet", "Upgrade in production's payment mode (amount_proof = wallet): Waiting → Seen by our wallet → Exists on chain → Added",
+          amount_proof="wallet")
+def upgrade_wallet(t):
+    a = t.actor("iphone")
+    make_locker_with_drop(t, a, "pack test")
+    if a.exists("key-later"):
+        a.click("key-later")
+    a.goto(t.origin + "/upgrade")
+    a.wait_for("pack-s30", 60)
+    a.click("pack-s30")
+    a.wait_for("invoice-address", 60)
+    labels = a.eval("[...document.querySelectorAll('[data-testid=\"pay-step\"]')].map((e) => e.textContent.trim())")
+    t.check(labels == ["Waiting", "Seen by our wallet", "Exists on chain", "Added"], f"the stepper names the checks this mode runs ({labels})")
+    claim = a.eval("document.querySelector('.a-invoice').textContent")
+    t.check("our wallet sees it" in claim and "official Tari library" not in claim, "the claim under it is the wallet variant (C11)")
+    a.click("demo-pay")
+    a.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 180)
+    steps = a.eval("[...document.querySelectorAll('[data-testid=\"pay-step\"]')].map(e => e.dataset.step + ':' + e.dataset.done)")
+    t.check(steps == ["waiting:true", "seen_wallet:true", "exists:true", "added:true"], f"paid with demo tTARI, every step is reached ({steps})")
+    t.shot(a, "upgrade-390-credited-wallet", full_page=True)
+
+
+# --- accessibility, keyboard, layout, no-WebAssembly, Spanish --------------------------------------------
+
+@scenario("keyboard", "Keyboard only: drop and copy; open; make a drop link; leave a file; send; buy; watch")
+def keyboard(t):
+    a = t.actor()
+    home(t, a)
+    t.check(not a.ax_unnamed(), f"home: every control has an accessible name ({a.ax_unnamed()[:5]})")
+    t.check(a.tab_to("a.dataset.testid === 'drop-write'"), "Tab reaches 'or paste text'")
+    a.key("Enter", text="\r")
+    a.wait_for("drop-textarea")
+    a.type_text("typed with the keyboard")
+    a.key("Enter", modifiers=2)
+    url = wait_link(a)
+    t.check(a.eval("document.activeElement?.dataset?.testid") == "copy-link", "focus lands on Copy link")
+    a.key("Enter", text="\r")
+    t.check(a.wait("navigator.clipboard.readText()", 10) == url, "Enter copies the link")
+    t.check(not a.ax_unnamed(), f"the locked card: every control named ({a.ax_unnamed()[:5]})")
+    b = t.actor()
+    b.goto(url)
+    b.wait_state("view-root", ("ready",), 60)
+    t.check(b.eval("document.activeElement?.dataset?.testid") == "view-open", "the viewer focuses Open it")
+    b.key("Enter", text="\r")
+    t.check(b.wait_state("view-root", VIEW_END, 60) == "opened", "Enter opens it")
+    o = t.actor()
+    o.goto(t.origin + "/locker")
+    o.wait_for("drop-create", 60)
+    t.check(not o.ax_unnamed(), f"/locker: every control named ({o.ax_unnamed()[:5]})")
+    t.check(o.tab_to("a.dataset.testid === 'drop-label'"), "Tab reaches the drop label")
+    o.type_text("keyboard")
+    o.key("Tab")
+    o.key("Enter", text="\r")
+    drop = o.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]'); return e?.value?.includes('/d/') ? e.value : ''; })()", 120)
+    o.wait("!!document.querySelector('dialog[open]')", 30)
+    t.check(o.eval("document.querySelector('dialog[open]').contains(document.activeElement)"), "the key modal takes the focus")
+    o.key("Escape")
+    o.wait("!document.querySelector('dialog[open]')", 10)
+    t.check(True, "Escape closes the key modal")
+    t.check(not o.ax_unnamed(), f"the locker: every control named ({o.ax_unnamed()[:5]})")
+    s = t.actor()
+    s.goto(drop)
+    s.wait_state("dd-root", ("ready",), 60)
+    t.check(not s.ax_unnamed(), f"the drop page: every control named ({s.ax_unnamed()[:5]})")
+    t.check(s.tab_to("a.dataset.testid === 'drop-write'"), "Tab reaches 'or paste text' on the drop page")
+    s.key("Enter", text="\r")
+    s.wait_for("drop-textarea")
+    s.type_text("left with the keyboard")
+    s.key("Enter", modifiers=2)
+    t.check(s.wait_state("dd-root", ("delivered", "error"), 180) == "delivered", "left in the drop with the keyboard")
+    address = o.text("locker-address").strip() if o.exists("locker-address") else ""
+    o.goto(t.origin + "/send")
+    o.wait_for("drop-input", 60)
+    o.tab_to("a.dataset.testid === 'drop-write'")
+    o.key("Enter", text="\r")
+    o.wait_for("drop-textarea")
+    o.type_text("sent with the keyboard")
+    o.key("Enter", modifiers=2)
+    o.wait_for("send-recipient", 120)
+    t.check(o.eval("document.activeElement?.dataset?.testid") == "send-recipient", "focus moves to the recipient field")
+    o.type_text(address)
+    o.wait_for("send-safety", 30)
+    t.check(o.tab_to("a.dataset.testid === 'send-submit'"), "Tab reaches Send")
+    o.key("Enter", text="\r")
+    t.check(o.wait_state("send-status", ("delivered", "failed"), 180) == "delivered", "sent with the keyboard")
+    t.check(not o.ax_unnamed(), f"/send: every control named ({o.ax_unnamed()[:5]})")
+    o.goto(t.origin + "/upgrade")
+    o.wait_for("pack-s30", 60)
+    t.check(o.tab_to("a.dataset.testid === 'pack-s30'"), "Tab reaches the s30 pack")
+    o.key("Enter", text="\r")
+    o.wait_for("demo-pay", 60)
+    t.check(o.tab_to("a.dataset.testid === 'demo-pay'"), "Tab reaches Pay with demo tTARI")
+    o.key("Enter", text="\r")
+    o.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 180)
+    t.check(True, "a pack bought with the keyboard")
+    t.check(not o.ax_unnamed(), f"/upgrade: every control named ({o.ax_unnamed()[:5]})")
+    o.goto(t.origin + "/watch")
+    o.wait_for("watch-address", 60)
+    t.check(o.tab_to("a.textContent.trim() === \"Use my locker's view key\""), "Tab reaches Use my locker's view key")
+    o.key("Enter", text="\r")
+    t.check(o.tab_to("a.dataset.testid === 'watch-run'"), "Tab reaches Look")
+    o.key("Enter", text="\r")
+    o.wait_for("watch-summary", 120)
+    t.check(True, "watched with the keyboard")
+    t.check(not o.ax_unnamed(), f"/watch: every control named ({o.ax_unnamed()[:5]})")
+
+
+APP_PAGES = ["/", "/es/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify", "/t", "/verify/tx/" + "0" * 64,
+             "/s/" + "A" * 22, "/d/" + "2" * 10]
+
+
+@scenario("layout", "Every app page: no horizontal scroll at 360 px, only same-origin requests, no violations")
+def layout(t):
+    for device in ("narrow", "iphone", "desktop"):
+        p = t.actor(device)
+        wide = []
+        for path in APP_PAGES:
+            p.goto(t.origin + path)
+            p.b.drain(1.5)
+            if not no_hscroll(p):
+                wide.append(path)
+        t.check(not wide, f"{device}: no horizontal scroll ({wide})")
+        t.check(not same_origin(t, p), f"{device}: no third-party request ({same_origin(t, p)[:3]})")
+
+
+@scenario("nowasm", "Without WebAssembly (--jitless): anonymous drop and open work; locker pages say needs_wasm",
+          args=("--js-flags=--jitless",))
+def nowasm(t):
+    a = t.actor()
+    home(t, a)
+    url = seal_text(a, "no wasm here")
+    b = t.actor()
+    t.check(open_link(b, url) == "opened" and b.text("view-text") == "no wasm here", "an anonymous drop opens without WebAssembly")
+    for path in ("/locker", "/d/" + "2" * 10, "/inbox", "/watch"):
+        a.goto(t.origin + path)
+        a.wait("!!document.querySelector('[data-code=\"needs_wasm\"]')", 30)
+        t.check(True, f"{path} shows needs_wasm")
+    t.shot(a, "watch-1440-needs-wasm")
+
+
+@scenario("spanish", "Spanish: the app follows the chosen language; the /es/ home widget speaks Spanish")
+def spanish(t):
+    a = t.actor("iphone")
+    a.goto(t.origin + "/es/")
+    a.wait_for("drop-input", 60)
+    t.check("Elegir archivo" in a.eval("document.querySelector('#mutis-drop').textContent"), "the /es/ widget says Elegir archivo")
+    url = seal_text(a, "hola")
+    t.check(a.eval("document.querySelector('.md-locked').textContent") == "Listo, cifrado.", "Listo, cifrado.")
+    t.shot(a, "es-home-390-sealed")
+    a.eval("localStorage.setItem('mutis.lang', JSON.stringify('es'))")
+    b = a
+    t.check(open_link(b, url) == "opened", "the viewer opens it")
+    b.reload()
+    b.wait_state("view-root", VIEW_ASK, 60)
+    t.check("Este secreto ya hizo mutis." in b.text("view-root"), "burned in Spanish: Este secreto ya hizo mutis.")
+    t.check(b.eval("document.documentElement.lang") == "es", "<html lang> is es")
+    t.shot(b, "es-view-390-burned")
+    b.goto(t.origin + "/locker")
+    b.wait_for("drop-create", 60)
+    t.check("Déjame un archivo" in b.eval("document.body.textContent"), "/locker in Spanish")
+    t.shot(b, "es-locker-390", full_page=True)
+
+
+@scenario("dark", "Dark theme and reduced motion: the card, the viewer, the locker")
+def dark(t):
+    a = t.actor("desktop", dark=True, reduced_motion=True)
+    home(t, a)
+    url = seal_text(a, "in the dark")
+    t.check(a.eval("getComputedStyle(document.body).backgroundColor") == "rgb(14, 13, 11)", "the stage background in dark mode")
+    t.shot(a, "home-1440-dark-sealed")
+    b = t.actor("iphone", dark=True, reduced_motion=True)
+    t.check(open_link(b, url) == "opened", "opens in dark mode with reduced motion")
+    t.shot(b, "view-390-dark-opened")
+    b.goto(t.origin + "/locker")
+    b.wait_for("drop-create", 60)
+    t.shot(b, "locker-390-dark-empty", full_page=True)
+
+
+# A-06's 40 KB holds for a first drop of text. A file also loads lib/filetype.js, lib/download.js and,
+# for a photo, lib/exif.js (recipient safety and metadata removal); this ceiling keeps that honest.
+PHOTO_CEILING = 48 * 1024
+
+
+@scenario("budget", "A-06: what the home page loads for the widget, before and after a drop")
+def budget(t):
+    import gzip
+    a = t.actor()
+    home(t, a)
+    a.b.drain(2)
+    dist = os.path.join(t.work, "dist")
+
+    def size(urls):
+        total = 0
+        for u in sorted(set(urls)):
+            path = os.path.join(dist, u[len(t.origin) + 1:].split("?")[0])
+            if os.path.isfile(path):
+                total += len(gzip.compress(open(path, "rb").read(), 9))
+        return total
+    widget = lambda: [r["url"] for r in a.requests if r["url"].startswith((t.origin + "/app/", t.origin + "/vendor/"))]
+    at_load = size(widget())
+    t.check("ootle_wasm" not in " ".join(widget()), "no ootle-wasm on the home page before a locker action")
+    seal_text(a, "budget")
+    after = size(widget())
+    t.check(after <= 40 * 1024, f"widget payload compressed: {at_load} B at load, {after} B after a drop (≤ 40 KB)")
+    t.check("ootle_wasm" not in " ".join(widget()), "still no ootle-wasm after an anonymous drop")
+    home(t, a)
+    a.set_files("drop-input", [t.fixture("photo-gps.jpg")])
+    wait_link(a)
+    photo = size(widget())
+    t.check(photo <= PHOTO_CEILING, f"after a photo too: {photo} B (≤ {PHOTO_CEILING} B; A-06 waiver: the file-type check and "
+                                   "the metadata stripper load for files, P-14 and §4.13)")
+
+
+@scenario("ten-seconds", "A first visit on a phone (4× slower CPU): landing to a copied link of a photo in under 10 s")
+def ten_seconds(t):
+    a = t.actor("android")
+    a.cmd("Emulation.setCPUThrottlingRate", {"rate": 4})
+    started = time.time()
+    home(t, a)
+    ready = time.time() - started
+    a.set_files("drop-input", [t.fixture("photo-gps.jpg")])
+    wait_link(a)
+    a.click("copy-link")
+    copied = a.wait("navigator.clipboard.readText().then((x) => x.includes('/s/'))", 10)
+    total = time.time() - started
+    t.check(copied and total < 10, f"landing {ready:.1f} s, then photo to copied link: {total:.1f} s in all (< 10 s, no human pauses)")
+
+
+def flip_a_bit(data):
+    """One flipped bit in the stored ciphertext of an /open answer."""
+    raw = bytearray(base64.urlsafe_b64decode(data["inline_ct"] + "=" * (-len(data["inline_ct"]) % 4)))
+    raw[10] ^= 1
+    return {**data, "inline_ct": base64.urlsafe_b64encode(bytes(raw)).decode().rstrip("=")}
+
+
+@scenario("states", "Every remaining state: expired (a real 60-second link), removed, locked, integrity-error; drop closed and not found; empty inbox")
+def states(t):
+    # A test deployment's /config offers a 60-second preset (spec §17.1, E-05); this run's /config
+    # gets the field the way such a deployment would send it.
+    x = t.actor()
+    Intercept(x).add("*/api/v1/config", "Response", lambda cfg: {**cfg, "e2e_expiry_s": 60})
+    home(t, x)
+    seal_text(x, "leaves in a minute")
+    short = apply_rules(x, expiry="60")
+    short_at = time.time()
+    t.check(0 < int(x.eval("document.querySelector('.md-card').dataset.expiresAt")) - short_at <= 62, "the 60-second preset sets the link to leave within a minute")
+
+    a = t.actor()
+    home(t, a)
+    url = seal_text(a, "states")
+    sid = url.split("/s/")[1].split("#")[0]
+    # States the dev server can't reach on cue (an abuse takedown, a permanent password lock) are its
+    # own answers, replayed.
+    for reason, state in (("expired", "expired"), ("removed", "removed"), ("owner_deleted", "revoked")):
+        p = t.actor()
+        gone = {"error": {"code": "gone", "message": "This link has ended.", "details": {"reason": reason, "ended_day": "2026-10-31", "views": 0}}}
+        Intercept(p).add(f"*/api/v1/s/{sid}", "Request", lambda _params, body=gone: (410, body))
+        t.check(open_link(p, url) == state, f"a link that ended as {reason}: {state}")
+        if reason == "expired":
+            t.shot(p, "view-1440-expired")
+    p = t.actor("iphone")
+    Intercept(p).add(f"*/api/v1/s/{sid}/peek", "Request", lambda _params: (423, {"error": {"code": "locked", "message": "Locked.", "details": {"permanent": True}}}))
+    t.check(open_link(p, url, open_it=False) == "locked", "a link locked after too many wrong passwords: locked")
+    t.shot(p, "view-390-locked")
+    q = t.actor()
+    q.goto(url)
+    q.wait_state("view-root", ("ready",), 60)
+    Intercept(q).add(f"*/api/v1/s/{sid}/open", "Response", flip_a_bit)
+    q.click("view-open")
+    t.check(q.wait_state("view-root", VIEW_END, 60) == "integrity-error", "one flipped bit in the stored bytes: integrity-error, nothing shown")
+    t.check(not q.exists("view-text") and not q.exists("view-save"), "no plaintext and no Save after an integrity failure")
+    t.shot(q, "view-1440-integrity")
+
+    o = t.actor()
+    drop = make_locker_with_drop(t, o, "to be closed")
+    if o.exists("key-later"):
+        o.click("key-later")
+    o.click("drop-close")
+    o.wait_for("drop-create", 60)
+    c = t.actor()
+    c.goto(drop)
+    t.check(c.wait_state("dd-root", ("ready", "closed", "not-found", "error"), 60) == "closed", "a closed drop: This drop is closed.")
+    c.goto(t.origin + "/d/" + "2" * 10)
+    t.check(c.wait_state("dd-root", ("ready", "closed", "not-found", "error"), 60) == "not-found", "an unknown drop: No drop here.")
+    home(t, a)
+    a.wait("!!document.querySelector('.md-recent')", 30)
+    a.eval("document.querySelector('.md-recent').open = true")
+    state = a.wait("(() => { const s = document.querySelector('.md-recent-state'); return s && !/checking/.test(s.textContent) ? s.textContent : ''; })()", 30)
+    t.check(bool(state) and str(time.localtime().tm_year) in state, f"recent drops on this device list the links with their state ({state})")
+    o.goto(t.origin + "/inbox")
+    o.wait_for("inbox-empty", 120)
+    t.check(o.exists("inbox-root") and o.visible("inbox-empty"), "a new locker's inbox: Nothing for you yet")
+    t.shot(o, "inbox-1440-empty")
+
+    time.sleep(max(0, short_at + 65 - time.time()))
+    e = t.actor()
+    t.check(open_link(e, short) == "expired", "65 seconds later the real server answers: expired")
+    t.check("left on cue" in e.text("view-root"), "Its time ran out. … It left on cue.")
