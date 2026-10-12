@@ -11,7 +11,7 @@ service's own transactions are public), and no screenshot that shows one.
 
 | | |
 |---|---|
-| Release | `68cd71222dd17999a8d346fdc7c0686862291d55-c88c6fb32` (git `68cd712`), notarized on SealLog in tx `c2ac2616…d8e8` (`public/json/releases.json`) |
+| Release | built from the repository's HEAD (`deploy/scripts/deploy.sh HEAD`; anyone checks it with `python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <commit>`). The last code change of the day is `68cd712`; its release `68cd712…-c88c6fb32` passed D-09 at 19:59 and is notarized on SealLog in tx `c2ac2616…d8e8` (`public/json/releases.json`). The commits after it only add documentation, each deployed the same way |
 | Config | `send_mode = "direct"` (with `features.direct_send` and `features.sponsor`), `amount_proof = "sidecar"`, `features.seallog = true`, `seal_log.checkpoint_interval_s = 900`, `hosting.snapshots = "weekly"`, `ootle.mirror_start_epoch = 12140`; `e2e_expiry_s` removed (`public/json/config.json`) |
 | SealLog 2.0.0 | template `template_40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47`, published raw by `service` in tx `07b4422b…e546` (the chain holds `template/dist/seal_log.wasm` byte for byte, sha256 `9af71aa2…d6f2`); the log `component_b7d212151546338e8e17975f7d8a4fb67023047357fe41308935fbb75604fdf2`, made in tx `3fb7657f…f726`; retired logs listed in `/evidence.json` (`seallog/`) |
 | Database | fresh at go-live (schema 3); after the tests, every E2E item and drop taken down by id, the forged E-14 payment rows and their invoices deleted, the E-J judge pass deleted; the owner's locker, the security dead drop that `security.txt` points to, the robot's canary items and the 20 judge passes untouched (`deploy/step7-purge.txt`) |

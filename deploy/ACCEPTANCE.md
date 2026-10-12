@@ -45,8 +45,10 @@ the server's tests: `integration-gate.txt`). Repository lint `tools/lint.py` →
 
 The app went live the same day: fresh database, SealLog 2.0.0, every step of README "Turning the app
 on". Evidence: [`docs/evidence/2026-10-11/`](../docs/evidence/2026-10-11/) (its README indexes the
-files). Live release at the end of the day: `68cd712…-c88c6fb32`, `send_mode = "direct"`,
-`amount_proof = "sidecar"`, `features.seallog = true`.
+files). The last code change of the day is `68cd712` (release `68cd712…-c88c6fb32`); the commits after
+it only add documentation and are deployed the same way, so `verify-deploy` of the repository's HEAD
+reports no difference. Production: `send_mode = "direct"`, `amount_proof = "sidecar"`,
+`features.seallog = true`.
 
 | Id | Status | Evidence (paths under `docs/evidence/2026-10-11/`) |
 |---|---|---|
