@@ -7,6 +7,10 @@
                             /home/drive/wallet/backup/ (0600)
   backup.py restore-drill   as mutis or drive: restores the newest backup of the database(s) this user
                             can read into a temporary directory and checks it (integrity, tables, rows)
+  backup.py prune-root      as root (mutis-backup.service runs it first): deletes the database copies
+                            the operator playbooks leave under /var/backups/mutis (go-live and
+                            pre-migrate copies) once they are KEEP_DAYS old; never a wallet tar, a
+                            balance snapshot or a config copy
 
 Every copy is deleted once it is KEEP_DAYS old (the db_backup_days that /privacy and /how publish),
 mutis-admin migrate's pre-migrate copies included, and so are side files (-wal, -shm, .part) that
@@ -32,6 +36,8 @@ SLACK_S = 12 * 3600    # the daily run that falls on day 7 removes the day-0 cop
 WALLET_DB = Path("/home/drive/wallet/esmeralda/data/wallet.sqlite")
 WALLET_BACKUPS = Path("/home/drive/wallet/backup")
 KEYS = Path("/home/drive/mutis")
+ROOT_BACKUPS = Path("/var/backups/mutis")
+DB_COPY_SUFFIXES = (".sqlite3", ".sqlite3-wal", ".sqlite3-shm", ".sqlite3.part")   # mutis databases only
 
 
 def data_dir() -> Path:
@@ -112,6 +118,21 @@ def backup_wallet(now: float | None = None) -> list[str]:
     return done
 
 
+def prune_root(now: float | None = None, folder: Path = ROOT_BACKUPS) -> list[str]:
+    """Delete every mutis database copy under `folder` (any depth) that is KEEP_DAYS old, so root's
+    go-live and pre-migrate copies keep the retention the site publishes. Only files named like a
+    mutis database go (DB_COPY_SUFFIXES); the wallet tars, balance snapshots and config copies beside
+    them never do, whatever their age. Returns what was deleted."""
+    now = time.time() if now is None else now
+    gone = []
+    for path in sorted(folder.rglob("*")):
+        if path.is_file() and path.name.endswith(DB_COPY_SUFFIXES) and "wallet" not in path.name \
+                and now - path.stat().st_mtime >= KEEP_DAYS * 86400 - SLACK_S:
+            path.unlink()
+            gone.append(str(path.relative_to(folder)))
+    return gone
+
+
 def check_copy(path: Path) -> dict:
     """Restore one backup into a scratch directory and prove it opens and is whole."""
     with tempfile.TemporaryDirectory(prefix="mutis-restore-") as scratch:
@@ -143,7 +164,7 @@ def restore_drill() -> list[dict]:
 def main() -> int:
     os.umask(0o007)   # SQLite's -wal/-shm files must stay writable for the other users of group mutis
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("what", choices=("db", "wallet", "restore-drill"))
+    p.add_argument("what", choices=("db", "wallet", "restore-drill", "prune-root"))
     args = p.parse_args()
     if args.what == "restore-drill":
         results = restore_drill()
@@ -151,6 +172,9 @@ def main() -> int:
         ok = bool(results) and all(r["integrity"] == "ok" and r["tables"] > 0 for r in results)
         print(f"restore-drill: {'PASS' if ok else 'FAIL'}")
         return 0 if ok else 1
+    if args.what == "prune-root":
+        print(f"prune-root: deleted {', '.join(prune_root()) or 'nothing'}")
+        return 0
     names = backup_db() if args.what == "db" else backup_wallet()
     print(f"backup {args.what}: wrote {', '.join(names)}")
     return 0

@@ -99,6 +99,29 @@ class BackupTest(unittest.TestCase):
             self.assertTrue(path.exists(), path.name)
         self.assertEqual(stat.S_IMODE(kept[1].stat().st_mode), 0o600)
 
+    def test_roots_database_copies_go_at_the_same_age_and_nothing_else(self):
+        """Claims review item 22: the go-live and pre-migrate copies under /var/backups/mutis keep the
+        published retention; wallet tars, balance snapshots and config copies stay whatever their age."""
+        root = self.data / "var-backups"
+        golive = root / "pre-golive-20261011T233723Z"
+        golive.mkdir(parents=True)
+        age = lambda path, days: (path.write_bytes(b"x"), os.utime(path, (time.time() - days * 86400,) * 2))
+        old = [golive / "mutis.sqlite3", golive / "mutis.sqlite3-wal", golive / "mutis.sqlite3-shm",
+               golive / "pre-migrate-20261011-153333.sqlite3", root / "mutis-20261001.sqlite3.part"]
+        kept = [root / "wallet-20261011T151744Z-cold.tar", root / "balances-20261011T151744Z-before.json",
+                root / "mutis.toml-20261011T184552Z", golive / "evidence.json", root / "wallet-copy.sqlite3",
+                golive / "mutis-fresh.sqlite3"]
+        for path in old + kept[:-1]:
+            age(path, 8)
+        age(kept[-1], 6)
+        gone = backup.prune_root(folder=root)
+        self.assertEqual(sorted(gone), sorted(str(p.relative_to(root)) for p in old))
+        for path in old:
+            self.assertFalse(path.exists(), path.name)
+        for path in kept:
+            self.assertTrue(path.exists(), path.name)
+        self.assertEqual(backup.prune_root(folder=root), [], "a second run finds nothing")
+
     def test_never_more_than_keep_days_copies(self):
         for day in range(1, 10):
             self.aged(f"mutis-202610{day:02d}.sqlite3", 0.1 * (10 - day))

@@ -109,16 +109,27 @@ http://{$MUTIS_HOST} {
 		request_body {
 			max_size 5MB
 		}
+		# A body declared longer than that limit is refused here, in the API's own error shape
+		# (http_util.ApiError), before a byte of it is read: Caddy's limit would otherwise fail
+		# mid-read inside the proxy and answer a bare 502.
+		@too_large expression `{http.request.header.Content-Length} != "" && int({http.request.header.Content-Length}) > 5242880`
+		handle @too_large {
+			header Content-Type "application/json; charset=utf-8"
+			header Cache-Control "no-store"
+			respond `{"error":{"code":"too_large","message":"Request body too large.","details":{"max_bytes":5242880}}}` 413
+		}
 		# Caddy reads a whole request body (5 MB at most) before the API sees it, so a client that
 		# uploads slowly holds a Caddy goroutine, never one of the API's threads.
-		reverse_proxy 127.0.0.1:8787 {
-			buffer_requests
-			max_buffer_size 6MB
-			flush_interval -1
-			header_up X-Real-IP {remote_host}
-			header_up -X-Forwarded-For
-			# The API sends nosniff itself (spec §6); Caddy already sets it on every response.
-			header_down -X-Content-Type-Options
+		handle {
+			reverse_proxy 127.0.0.1:8787 {
+				buffer_requests
+				max_buffer_size 6MB
+				flush_interval -1
+				header_up X-Real-IP {remote_host}
+				header_up -X-Forwarded-For
+				# The API sends nosniff itself (spec §6); Caddy already sets it on every response.
+				header_down -X-Content-Type-Options
+			}
 		}
 	}
 
@@ -199,4 +210,21 @@ http://{$MUTIS_HOST} {
 			respond "" {err.status_code}
 		}
 	}
+}
+
+# Any other Host name, on either port: no site here. The same headers, nothing reflected, no
+# redirect to a name a client made up (421 Misdirected Request).
+(misdirected) {
+	import security_headers
+	import site_csp
+	header Cache-Control "no-store"
+	respond 421
+}
+
+https:// {
+	import misdirected
+}
+
+http:// {
+	import misdirected
 }
