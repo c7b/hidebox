@@ -15,7 +15,7 @@ From the repository root:
 python3 -I -m unittest discover -s server/tests
 ```
 
-194 tests, about 30 seconds (ultron, Python 3.13.5: `Ran 194 tests in 29.4s, OK`). Opt-in suites:
+195 tests, about 30 seconds (ultron, Python 3.13.5: `Ran 195 tests in 29.4s, OK`). Opt-in suites:
 
 | Command | What it adds |
 |---|---|

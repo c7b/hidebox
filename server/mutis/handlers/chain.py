@@ -7,17 +7,18 @@ The proxy forwards no client header and only paths on the allowlist.
 import json
 import re
 
-from .. import indexer
+from .. import indexer, mirror
 from ..http_util import ApiError, PARAM_RE, Response, json_response
 from ..indexer import IndexerError
 
 PAGE_MAX = 1000
 INDEXER_LOOKUPS = 8              # outputs per transaction view the indexer is asked about when the mirror can't say
 TX_BODY_MAX = 200 * 1024
+_RESULT = re.compile(r"^transactions/([0-9a-f]{64})/result$")
 _GET_ALLOW = [
     (re.compile(r"^substates/((?:utxo|component|template|resource|vault)_[0-9a-f_]{20,200})$"),
      "/substates/{0}?include_proof=true"),
-    (re.compile(r"^transactions/([0-9a-f]{64})/result$"), "/transactions/{0}/result"),
+    (_RESULT, "/transactions/{0}/result"),
     (re.compile(r"^network$"), "/network"),
     (re.compile(r"^epoch-manager/stats$"), "/epoch-manager/stats"),     # the browser wallet's epoch (G1)
     (re.compile(r"^templates/((?:template_)?[0-9a-f]{64})$"), "/templates/{0}"),
@@ -84,6 +85,8 @@ def proxy(ctx, rest: str):
             return status, _with_source(data, source)
 
         status, body = ctx.app.cached("ix:" + upstream, 10, fetch)
+        if status == 200 and pattern is _RESULT:
+            ctx.app.cached("mirrored:" + m.group(1), 86400, lambda: _mirror_if_committed(ctx, body))
         return Response(status, body, {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"})
 
     if rest not in _POST_ALLOW:
@@ -100,6 +103,16 @@ def proxy(ctx, rest: str):
     except IndexerError as e:
         raise ApiError(503, "chain_unavailable", "The Tari indexers aren't answering.") from e
     return Response(status, _with_source(data, source), {"Content-Type": "application/json; charset=utf-8"})
+
+
+def _mirror_if_committed(ctx, body: bytes) -> bool | None:
+    """Direct mode: a browser waits for its own transaction here. Once it has committed, its outputs go
+    into the mirror at once, as the chain worker's own do (once per transaction; None asks again)."""
+    tx = _from_result(json.loads(body))
+    if tx is None or tx["outcome"] != "Commit":
+        return None
+    mirror.add_committed(ctx.db, ctx.app.indexers, tx["upped"], tx["epoch"], ctx.now)
+    return True
 
 
 def tx_view(ctx, tx_id: str):
