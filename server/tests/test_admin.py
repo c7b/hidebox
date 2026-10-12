@@ -154,12 +154,12 @@ class Admin(unittest.TestCase):
                                         headers={**locker["auth"], **judge}, ip=ip)
             self.assertEqual(status, 202, resp)
         statuses = []
-        for _ in range(2):                                   # without a pass: one grant per network a day
+        for _ in range(3):                                   # without a pass: two grants per /64 a day
             locker = s.register(ip=ip)
             statuses.append(s.request("POST", "/api/v1/sponsor", {"wallet_address": fake_keys()["address"],
                                                                  "pow": s.solve("sponsor", ip)},
                                       headers=locker["auth"], ip=ip)[0])
-        self.assertEqual(statuses, [202, 429])
+        self.assertEqual(statuses, [202, 202, 429])
 
     def test_judge_pass_expires(self):
         s = self.s

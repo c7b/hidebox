@@ -77,8 +77,7 @@ def effective_state(share, now: int) -> str:
 def gone(share, state: str, now: int) -> ApiError:
     ended = share["ended_at"] or share["expires_at"] or now
     return ApiError(410, "gone", "This link has ended.",
-                    details={"reason": items.ENDED_REASON[state], "ended_day": codec.day(ended),
-                             "views": share["views_used"]})
+                    details={"reason": items.ENDED_REASON[state], "ended_day": codec.day(ended)})
 
 
 def _header_b64(ctx, name: str, length: int) -> bytes | None:
@@ -214,7 +213,12 @@ def link_rules(cls: str, max_views, expires_at, item, now: int) -> tuple[int | N
     if expires_at <= now or expires_at > now + limits["max_expiry_s"] + 60 \
             or (item["expires_at"] is not None and expires_at > item["expires_at"]):
         raise invalid("expires_at")
-    return max_views, expires_at
+    return max_views, _coarse(expires_at, item, now)
+
+
+def _coarse(expires_at: int, item, now: int) -> int:
+    rounded = codec.coarse_expiry(expires_at, now)
+    return rounded if item["expires_at"] is None else min(rounded, item["expires_at"])
 
 
 def create(ctx, item_id: str):
@@ -301,8 +305,7 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
         return error
     item = conn.execute("SELECT * FROM items WHERE id = ?", (share["item_id"],)).fetchone()
     if item["state"] != "ready":
-        return ApiError(410, "gone", "This link has ended.", details={"reason": "removed",
-                                                                       "ended_day": codec.day(now), "views": 0})
+        return ApiError(410, "gone", "This link has ended.", details={"reason": "removed", "ended_day": codec.day(now)})
     if share["max_views"] is None:
         hour = codec.floor_hour(now)
         opens = share["opens_in_hour"] if share["opens_hour"] == hour else 0
@@ -363,8 +366,7 @@ def stored_bytes(ctx, share_id: str):
     ctx.limit(("stored64", ctx.ip64, 30, 60, 1))
     _, item = authorized_share(ctx, share_id, {})
     if item["state"] != "ready":
-        raise ApiError(410, "gone", "This link has ended.", details={"reason": "removed",
-                                                                     "ended_day": codec.day(ctx.now), "views": 0})
+        raise ApiError(410, "gone", "This link has ended.", details={"reason": "removed", "ended_day": codec.day(ctx.now)})
     with db.tx(ctx.db):
         allowed = _egress_ok(ctx.db, item, ctx.now, item["size_stored"])
     if not allowed:
@@ -418,7 +420,7 @@ def _apply_patch(conn, share, item, cls, views_given, new_views, new_expiry, unl
             return invalid("expires_at")
         if expiry is not None and new_expiry > expiry:
             loosen = True
-        expiry = new_expiry
+        expiry = _coarse(new_expiry, item, now)
     if loosen and share["views_used"] > 0:
         return ApiError(409, "already_opened", "It was already opened, so its rule can only get stricter.")
     conn.execute("UPDATE shares SET max_views = ?, expires_at = ? WHERE id = ?", (views, expiry, share["id"]))

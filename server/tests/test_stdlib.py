@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 SERVER = Path(__file__).resolve().parents[1]
-OURS = {"mutis", "harness", "make_vectors"} | {p.stem for p in (SERVER / "tests").glob("test_*.py")}
+OURS = {"mutis", "harness", "make_vectors", "cbor_fixture"} | {p.stem for p in (SERVER / "tests").glob("test_*.py")}
 
 
 def python_files() -> list[Path]:

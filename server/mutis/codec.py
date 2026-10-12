@@ -84,6 +84,13 @@ def floor_hour(ts: int) -> int:
     return ts - ts % 3600
 
 
+def coarse_expiry(expires_at: int, now: int) -> int:
+    """An expiry at least an hour away is rounded up to the next whole hour, so `expires_at - preset`
+    can't give away the second a file arrived (arrival is stored to the hour). Shorter expiries (the
+    E2E preset) stay exact."""
+    return -(-expires_at // 3600) * 3600 if expires_at - now >= 3600 else expires_at
+
+
 def floor_minute(ts: int) -> int:
     return ts - ts % 60
 
