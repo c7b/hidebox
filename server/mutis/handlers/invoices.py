@@ -91,12 +91,13 @@ def demo_pay(ctx, invoice_id: str):
 
 
 def sponsor(ctx):
-    """G1 only: one grant a day to this locker's browser wallet (its address is then known to us)."""
+    """G1 only: one grant a day to this locker's browser wallet (its address is then known to us);
+    two a day per /64, so a phone and a computer on one network both get theirs."""
     ctx.require_feature("sponsor")
     identity = ctx.session()
     body = ctx.req.json()
     address = require_testnet_address(body.get("wallet_address"), "wallet_address")
-    network = (("sponsor64", ctx.ip64, 1, 86400, 1), ("sponsor48", ctx.ip48, 3, 86400, 1))
+    network = (("sponsor64", ctx.ip64, 2, 86400, 1), ("sponsor48", ctx.ip48, 3, 86400, 1))
     with ctx.charged(*_unless_judge(ctx, network), ("sponsor_locker", identity["id"], 1, 86400, 1)):
         require_chain(ctx)
         judge = ctx.proof_of_work("sponsor", body, budgeted=True)

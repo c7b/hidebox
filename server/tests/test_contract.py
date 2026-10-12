@@ -1,15 +1,21 @@
 # SPDX-License-Identifier: MIT
 """S-02: every endpoint of spec §6.3 answers with the documented shapes and errors."""
+import base64
 import hashlib
+import json
 import os
 import unittest
+from pathlib import Path
 
 from harness import ORIGIN, Stack
+
+import cbor_fixture  # noqa: E402  (harness puts server/ on the path)
 from mutis import codec, db, items, ootle_addr, quota
 from mutis.fake_chain import FakeChain, FakeIndexer, fake_keys
 from mutis.indexer import Indexers
 
 V = "/api/v1"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 class System(unittest.TestCase):
@@ -262,6 +268,25 @@ class Links(unittest.TestCase):
     def tearDown(self):
         self.s.close()
 
+    def test_expiries_are_whole_hours(self):
+        """An expiry at least an hour away is stored rounded up to the hour (an exact one would give the arrival
+        second away as expires_at - preset); a link's never passes its item's; the E2E preset stays exact."""
+        s = self.s
+        whole = lambda at: -(-at // 3600) * 3600   # noqa: E731
+        item = s.upload(1000, expires_at=s.now + 7200 + 1234)
+        link = s.share(item, expires_at=s.now + 3600 + 5)
+        self.assertEqual(link["expires_at"], whole(s.now + 3600 + 5))
+        stored = s.conn.execute("SELECT expires_at FROM items WHERE id = ?", (item["item_id"],)).fetchone()[0]
+        self.assertEqual(stored % 3600, 0)
+        self.assertGreaterEqual(stored, s.now + 7200 + 1234)
+        status, _, patched = s.request("PATCH", f"{V}/s/{link['share_id']}", {"expires_at": s.now + 3600},
+                                       headers=item["manage"])
+        self.assertEqual((status, patched["expires_at"]), (200, whole(s.now + 3600)))
+        short = s.share(item, expires_at=s.now + 60)
+        self.assertEqual(short["expires_at"], s.now + 60)
+        capped = s.share(item, expires_at=stored - 30)
+        self.assertEqual(capped["expires_at"], stored)
+
     def test_create_status_peek_open_once(self):
         s = self.s
         item = s.upload(1000)
@@ -288,7 +313,7 @@ class Links(unittest.TestCase):
         self.assertEqual(codec.unb64u(opened["inline_ct"]), item["blob"])
         status, _, body = s.request("GET", f"{V}/s/{sid}")
         self.assertEqual((status, body["error"]["code"], body["error"]["details"]["reason"]), (410, "gone", "burned"))
-        self.assertEqual(body["error"]["details"]["views"], 1)
+        self.assertEqual(set(body["error"]["details"]), {"reason", "ended_day"})   # the path holder gets no open count
         status, _, body = s.request("POST", f"{V}/s/{sid}/open", headers=link["access"])
         self.assertEqual((status, body["error"]["details"]["reason"]), (410, "burned"))
         row = s.conn.execute("SELECT state, exit_hour FROM items WHERE id = ?", (item["item_id"],)).fetchone()
@@ -690,6 +715,51 @@ class ChainReads(unittest.TestCase):
         self.assertEqual((status, body["error"]["code"]), (404, "not_found"))
         status, _, body = self.s.request("POST", f"{V}/chain/ix/transactions", {"x": 1})
         self.assertEqual((status, body["error"]["code"]), (503, "feature_disabled"))
+
+    def test_submitting_takes_a_locker_session_and_relays_only_our_sends(self):
+        """Claims review item 21: the submit proxy is no address-hiding relay for any Esmeralda user.
+        It wants a session, and the envelope must be shaped like wallet.js's send() (fixture: real
+        envelopes from the official library), fee included; the dry-run path gets the same checks."""
+        s = self.s
+        with db.tx(s.conn):
+            db.set_meta(s.conn, "features", {"direct_send": True})
+        s.app._features = (0.0, {})
+        self.addCleanup(setattr, s.app, "_features", (0.0, {}))
+        self.addCleanup(db.set_meta, s.conn, "features", {})
+        envelopes = json.loads((FIXTURES / "stealth-envelopes.json").read_text())
+        auth = s.register()["auth"]
+        post = lambda body, headers=auth, path="transactions": s.request("POST", f"{V}/chain/ix/{path}", body, headers=headers)
+        status, _, body = post({"transaction": envelopes["two_outputs"]}, headers={})
+        self.assertEqual((status, body["error"]["code"]), (401, "auth_required"))
+        for name in ("one_output", "two_outputs", "two_inputs"):
+            status, _, body = post({"transaction": envelopes[name]})
+            self.assertEqual((status, set(body)), (200, {"transaction_id", "_source"}), name)
+        self.assertEqual(post({"transaction": envelopes["one_output"]}, path="transactions/dry-run")[0], 200)
+        refused = {"not an object": {"x": 1}, "a second field": {"transaction": envelopes["one_output"], "x": 1},
+                   "not base64": {"transaction": "!!"}, "not CBOR": {"transaction": "AAAA"},
+                   "over the size cap": {"transaction": base64.b64encode(b"\x82\x00" + b"\xa0" * 9000).decode()}}
+        envelope = cbor_fixture.decode(envelopes["two_inputs"])
+        unsigned = envelope[1][0][0][0]
+        statement = unsigned[1][0][1][1]
+        tampered = {"fee above the limit": (lambda: statement[1][1].__setitem__(0, 30001)),
+                    "a third output": (lambda: statement[1][0].append(statement[1][0][0])),
+                    "five inputs": (lambda: unsigned[3].extend([unsigned[3][1]] * 3)),
+                    "an instruction after the fee phase": (lambda: unsigned[2].append(unsigned[1][1])),
+                    "a fourth fee instruction": (lambda: unsigned[1].append(unsigned[1][1])),
+                    "another version": (lambda: envelope.__setitem__(0, 1))}
+        for name, change in tampered.items():
+            fresh = cbor_fixture.decode(envelopes["two_inputs"])
+            envelope, unsigned = fresh, fresh[1][0][0][0]
+            statement = unsigned[1][0][1][1]
+            change()
+            refused[name] = {"transaction": base64.b64encode(cbor_fixture.encode(fresh)).decode()}
+        for name, body in refused.items():
+            status, _, resp = post(body)
+            self.assertEqual((status, resp["error"]["code"]), (422, "invalid"), name)
+        self.assertEqual(s.request("POST", f"{V}/chain/ix/transactions", headers=auth, raw=b"{" * 13000)[0], 413)
+        # Untouched, a re-encoded fixture still passes: the checks read the structure, not the bytes.
+        again = base64.b64encode(cbor_fixture.encode(cbor_fixture.decode(envelopes["two_inputs"]))).decode()
+        self.assertEqual(post({"transaction": again})[0], 200)
 
     def test_tx_view(self):
         status, _, view = self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")

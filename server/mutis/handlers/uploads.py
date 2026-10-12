@@ -113,6 +113,8 @@ def create(ctx):
             if not now < expires_at <= now + quota.CLASSES[cls]["max_expiry_s"] + 60:
                 raise invalid("expires_at")
         rules = [("up_locker64", ctx.ip64, 120, 3600, 1), ("up_locker", identity["id"], 60, 3600, 1)]
+    if not canary and expires_at is not None:
+        expires_at = codec.coarse_expiry(expires_at, now)
 
     with ctx.charged(*rules):
         if lane == "small" and not canary:

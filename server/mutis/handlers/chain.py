@@ -2,18 +2,26 @@
 """Chain reads: the UTXO mirror, the allowlisted indexer proxy and "What the chain sees" (spec §6.3, §10.6, §10.7).
 
 Everyone downloads the same mirror, so the server never learns which outputs a browser can open.
-The proxy forwards no client header and only paths on the allowlist.
+The proxy forwards no client header and only paths on the allowlist. Submitting a transaction takes
+a locker session and relays only a transaction shaped like the ones wallet.js builds, so the proxy
+can't serve as an address-hiding relay for any other Esmeralda transaction (claims review, item 21).
 """
+import base64
+import binascii
 import json
 import re
 
-from .. import indexer, mirror
+from .. import cbor, indexer, mirror
 from ..http_util import ApiError, PARAM_RE, Response, json_response
 from ..indexer import IndexerError
 
 PAGE_MAX = 1000
 INDEXER_LOOKUPS = 8              # outputs per transaction view the indexer is asked about when the mirror can't say
-TX_BODY_MAX = 200 * 1024
+ENVELOPE_MAX = 8 * 1024          # a four-input send with change and a delivery memo is about 2.5 KB
+TX_BODY_MAX = 12 * 1024          # the envelope in base64 plus its JSON wrapper
+MAX_INPUTS = 4                   # wallet.js MAX_INPUTS: outputs spent in one send
+# Instruction variants as tari_bor numbers them (web/app/lib/wallet.js unsignedTx, in that order).
+STEALTH_TRANSFER, PUT_LAST_OUTPUT_ON_WORKSPACE, PAY_FEE_FROM_BUCKET = 12, 3, 13
 _RESULT = re.compile(r"^transactions/([0-9a-f]{64})/result$")
 _GET_ALLOW = [
     (re.compile(r"^substates/((?:utxo|component|template|resource|vault)_[0-9a-f_]{20,200})$"),
@@ -92,17 +100,42 @@ def proxy(ctx, rest: str):
     if rest not in _POST_ALLOW:
         raise ApiError(404, "not_found", "That indexer path isn't proxied.")
     ctx.require_feature("direct_send")
+    ctx.session()
     ctx.limit(("ixpost64", ctx.ip64, 30, 3600, 1), ("ixpost48", ctx.ip48, 90, 3600, 1))
     ctx.req.check_length(TX_BODY_MAX)
-    body = b"".join(ctx.req.body_slices(ctx.req.content_length))
+    body = ctx.req.json()
+    envelope = _own_send_envelope(body, ctx.cfg["ootle"]["max_fee_transfer_ut"])
     try:
-        json.loads(body)
-        status, data, source = ctx.app.indexers.call("POST", _POST_ALLOW[rest], body)
-    except ValueError:
-        raise ApiError(400, "bad_request", "Body is not valid JSON.") from None
+        status, data, source = ctx.app.indexers.call("POST", _POST_ALLOW[rest], json.dumps({"transaction": envelope}).encode())
     except IndexerError as e:
         raise ApiError(503, "chain_unavailable", "The Tari indexers aren't answering.") from e
     return Response(status, _with_source(data, source), {"Content-Type": "application/json; charset=utf-8"})
+
+
+def _own_send_envelope(body: dict, max_fee: int) -> str:
+    """The base64 BOR envelope of a transaction shaped like wallet.js's send(): one stealth transfer
+    in the fee phase paying its own fee of at most `max_fee` from a bucket, one output plus change,
+    up to MAX_INPUTS inputs after the resource, no other instruction. Anything else is refused."""
+    raw = body.get("transaction")
+    if set(body) != {"transaction"} or not isinstance(raw, str) or len(raw) > ENVELOPE_MAX * 4 // 3 + 4:
+        raise ApiError(422, "invalid", "Not a transaction this app builds.", details={"field": "transaction"})
+    try:
+        envelope = base64.b64decode(raw, validate=True)
+        if len(envelope) > ENVELOPE_MAX:
+            raise ValueError("too large")
+        version, [((unsigned, signatures), _seal)] = cbor.loads(envelope)
+        fee_instructions, instructions, inputs = unsigned[1], unsigned[2], unsigned[3]
+        (kind, (_resource, statement)), *rest = fee_instructions
+        outputs, (fee, _seal_key), _proof = statement[1]
+        shaped = (version == 0 and kind == STEALTH_TRANSFER and instructions == []
+                  and [r[0] for r in rest] == [PUT_LAST_OUTPUT_ON_WORKSPACE, PAY_FEE_FROM_BUCKET]
+                  and 2 <= len(inputs) <= 1 + MAX_INPUTS and len(signatures) == len(inputs) - 1
+                  and 1 <= len(outputs) <= 2 and isinstance(fee, int) and 0 < fee <= max_fee)
+    except (binascii.Error, cbor.CborError, IndexError, TypeError, ValueError):
+        shaped = False
+    if not shaped:
+        raise ApiError(422, "invalid", "Not a transaction this app builds.", details={"field": "transaction"})
+    return raw
 
 
 def _mirror_if_committed(ctx, body: bytes) -> bool | None:
