@@ -66,7 +66,9 @@ if (translation && preferred === other && !storage('mutis.lang') && !storage('mu
   no.textContent = DISMISS[other];
   no.addEventListener('click', () => { storage('mutis.lang.offer', 'no'); offer.remove(); });
   offer.append(go, no);
-  document.body.prepend(offer);
+  const skip = document.querySelector('.skip-link');
+  if (skip) skip.after(offer);
+  else document.body.prepend(offer);
 }
 
 // The header's chip while a judge pass is saved on this device (judges.js, the app's pow.js).

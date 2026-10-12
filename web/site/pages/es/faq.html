@@ -15,7 +15,7 @@
 <meta property="og:title" content="Preguntas frecuentes · mutis">
 <meta property="og:description" content="Respuestas cortas sobre mutis: qué podemos ver, qué pasa cuando se abre un enlace, Tari y tTARI, llaves, llaves de vista, límites y confianza.">
 <meta property="og:url" content="{{ORIGIN}}/es/faq">
-<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image" content="{{ORIGIN}}/og-es.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
@@ -70,7 +70,7 @@
   },
   {
    "@type": "Question",
-   "name": "¿La vista previa de WhatsApp o Slack gasta mi única vista?",
+   "name": "¿La vista previa de WhatsApp o Slack gasta mi única apertura?",
    "acceptedAnswer": {
     "@type": "Answer",
     "text": "No. Abrir requiere un clic. Pero el servicio de vista previa ya tiene el enlace completo, así que usa Enlace + contraseña o envíalo a una sola dirección de Tari para cualquier cosa delicada."
@@ -113,7 +113,7 @@
    "name": "¿Qué es el código de seguridad?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Tu código de seguridad son 12 emoji (96 bits) que salen de las llaves públicas de tu casillero. Compara los 12 con esa persona, en voz alta o por llamada. Para una dirección de Tari sin más, compara los primeros y los últimos 6 caracteres."
+    "text": "Tu código de seguridad son 12 emoji (96 bits) que salen de las llaves públicas de tu casillero. Compara los 12 con esa persona, en voz alta o por llamada. Para una dirección de Tari normal, sin casillero, compara los primeros y los últimos 6 caracteres."
    }
   },
   {
@@ -121,7 +121,7 @@
    "name": "¿Qué muestra una llave de vista, y debo compartirla?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Llegadas y montos. No puede gastar, y no puede abrir archivos sellados a tu casillero. La excepción: quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”, y esos archivos sí se abren con la llave de vista. Compártela solo con alguien que pueda ver lo que te llega."
+    "text": "Llegadas y montos. No puede gastar, y no puede abrir archivos cifrados para tu casillero. La excepción: quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”, y esos archivos sí se abren con la llave de vista. Compártela solo con alguien que pueda ver lo que te llega."
    }
   },
   {
@@ -195,87 +195,87 @@
 </header>
 <dl class="faq page-body">
   <div class="faq-item" id="see">
-    <dt>¿Pueden ver mis archivos?</dt>
+    <dt id="can-you-see-my-files">¿Pueden ver mis archivos?</dt>
     <dd><p>No. Tu navegador cifra cada archivo con AES-256-GCM antes de subirlo. Guardamos texto cifrado y nunca recibimos la llave.</p></dd>
   </div>
   <div class="faq-item" id="store">
-    <dt>¿Qué guardan exactamente?</dt>
+    <dt id="what-do-you-actually-store">¿Qué guardan exactamente?</dt>
     <dd><p>Un id aleatorio, el texto cifrado, un tamaño con relleno, la hora en que llegó, cuándo se va (redondeado hacia arriba a la hora), su regla y su número de aperturas, más algunas columnas técnicas. La página “Lo que sabemos” de cada enlace imprime cada columna, y <a href="/es/privacy#inventory">nuestra página de privacidad</a> lista cada tabla.</p></dd>
   </div>
   <div class="faq-item" id="once">
-    <dt>¿Qué pasa cuando se abre un enlace de una sola vez?</dt>
+    <dt id="what-happens-when-a-once-only-link-is-opened">¿Qué pasa cuando se abre un enlace de una sola vez?</dt>
     <dd><p>Quien lo recibe hace clic en Abrir, su navegador descifra el archivo y nuestro servidor borra el texto cifrado cuando termina la descarga. Al recargar aparece “Este secreto ya hizo mutis.” Si no lo abriste tú, lo abrió alguien más.</p></dd>
   </div>
   <div class="faq-item" id="back">
-    <dt>¿Puedo recuperar un archivo borrado?</dt>
+    <dt id="can-i-get-a-deleted-file-back">¿Puedo recuperar un archivo borrado?</dt>
     <dd><p>No. No respaldamos archivos, y nunca tuvimos la llave.</p><p data-when="snapshots=weekly">Nuestro proveedor (Hostinger) puede tomar instantáneas semanales de todo el servidor. No las hemos desactivado, y todavía no hemos confirmado en su panel cuánto tiempo las guarda. Un archivo que existía cuando se tomó una sigue en ella, como texto cifrado, hasta que esa instantánea se descarta.</p></dd>
   </div>
   <div class="faq-item" id="preview">
-    <dt>¿La vista previa de WhatsApp o Slack gasta mi única vista?</dt>
+    <dt id="will-a-link-preview-in-whatsapp-or-slack-use-up-my-one-open">¿La vista previa de WhatsApp o Slack gasta mi única apertura?</dt>
     <dd><p>No. Abrir requiere un clic. Pero el servicio de vista previa ya tiene el enlace completo, así que usa Enlace + contraseña o envíalo a una sola dirección de Tari para cualquier cosa delicada.</p></dd>
   </div>
   <div class="faq-item" id="wallet">
-    <dt>¿Necesito cripto o una cartera?</dt>
+    <dt id="do-i-need-crypto-or-a-wallet">¿Necesito cripto o una cartera?</dt>
     <dd><p>No. Los enlaces, las contraseñas, la apertura única, las vistas y la caducidad son gratis y no necesitan nada. Las funciones de Tari™ usan tTARI, y damos tTARI de demostración en la testnet.</p></dd>
   </div>
   <div class="faq-item" id="tari">
-    <dt>¿Qué es Tari, y qué es el Ootle?</dt>
+    <dt id="whats-tari-and-whats-the-ootle">¿Qué es Tari, y qué es el Ootle?</dt>
     <dd><p>Tari es una blockchain de privacidad de código abierto y prueba de trabajo. El Ootle es su capa de aplicaciones, donde los pagos son privados por defecto y pueden llevar mensajes sellados. mutis la usa para entregar llaves y mover dinero.</p></dd>
   </div>
   <div class="faq-item" id="money">
-    <dt>¿El tTARI es dinero real?</dt>
+    <dt id="is-ttari-real-money">¿El tTARI es dinero real?</dt>
     <dd><p>No. No tiene valor monetario.<span data-needs="config" hidden> La mainnet de Ootle se lanza el <span data-v="mainnet_date"></span>;</span> las funciones de pago se quedan en la testnet hasta que revisen nuestro código.</p></dd>
   </div>
   <div class="faq-item" id="anonymous">
-    <dt>¿mutis es anónimo?</dt>
+    <dt id="is-mutis-anonymous">¿mutis es anónimo?</dt>
     <dd><p>Sin cuenta y sin correo. Eso no es anonimato: nuestro servidor sigue viendo tu IP mientras estás conectado. Mira <a href="/es/how#cant-protect">de qué no podemos protegerte</a>.</p></dd>
   </div>
   <div class="faq-item" id="receipt" data-when="seallog=on" hidden>
-    <dt>¿Qué es un recibo de salida?</dt>
-    <dd><p>Cada salida queda en el registro público: la agregamos a SealLog en el Ootle en el siguiente punto de control. Prueba que dijimos que la borramos, de forma pública y permanente. No puede probar que no guardamos una copia.</p></dd>
+    <dt id="what-is-an-exit-receipt">¿Qué es un recibo de salida?</dt>
+    <dd><p>Cada salida queda en el registro público: la agregamos a SealLog en el Ootle en el siguiente checkpoint. Prueba que dijimos que la borramos, de forma pública y permanente. No puede probar que no guardamos una copia.</p></dd>
   </div>
   <div class="faq-item" id="lost">
-    <dt>¿Y si pierdo mi llave?</dt>
+    <dt id="what-if-i-lose-my-key">¿Y si pierdo mi llave?</dt>
     <dd><p>Tu casillero se pierde para siempre. Nadie puede restablecerlo. Es el precio de que nadie pueda quitártelo.</p></dd>
   </div>
   <div class="faq-item" id="safety">
-    <dt>¿Qué es el código de seguridad?</dt>
-    <dd><p>Tu código de seguridad son 12 emoji (96 bits) que salen de las llaves públicas de tu casillero. Compara los 12 con esa persona, en voz alta o por llamada. Para una dirección de Tari sin más, compara los primeros y los últimos 6 caracteres.</p></dd>
+    <dt id="whats-the-safety-code">¿Qué es el código de seguridad?</dt>
+    <dd><p>Tu código de seguridad son 12 emoji (96 bits) que salen de las llaves públicas de tu casillero. Compara los 12 con esa persona, en voz alta o por llamada. Para una dirección de Tari normal, sin casillero, compara los primeros y los últimos 6 caracteres.</p></dd>
   </div>
   <div class="faq-item" id="viewkey">
-    <dt>¿Qué muestra una llave de vista, y debo compartirla?</dt>
-    <dd><p>Llegadas y montos. No puede gastar, y no puede abrir archivos sellados a tu casillero. La excepción: quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”, y esos archivos sí se abren con la llave de vista. Compártela solo con alguien que pueda ver lo que te llega.</p></dd>
+    <dt id="what-does-a-view-key-show-and-should-i-share-it">¿Qué muestra una llave de vista, y debo compartirla?</dt>
+    <dd><p>Llegadas y montos. No puede gastar, y no puede abrir archivos cifrados para tu casillero. La excepción: quien envía puede elegir “Quien lo recibe usa otra cartera de Ootle”, y esos archivos sí se abren con la llave de vista. Compártela solo con alguien que pueda ver lo que te llega.</p></dd>
   </div>
   <div class="faq-item" id="unwanted">
-    <dt>¿Alguien puede enviarme archivos que no pedí?</dt>
+    <dt id="can-someone-send-me-files-i-didnt-ask-for">¿Alguien puede enviarme archivos que no pedí?</dt>
     <dd><p>Cualquiera con tu dirección de Tari o tu enlace de buzón puede. Las entregas nunca se abren solas, los programas traen una advertencia y puedes cerrar un enlace de buzón cuando quieras.</p></dd>
   </div>
   <div class="faq-item" id="size">
-    <dt>¿Qué tan grandes pueden ser los archivos?</dt>
+    <dt id="how-big-can-files-be">¿Qué tan grandes pueden ser los archivos?</dt>
     <dd><p data-needs="config" hidden><span data-v="anon_max_file"></span> sin casillero, <span data-v="key_max_file"></span> con un casillero gratuito, <span data-v="paid_max_file"></span> con espacio rentado.</p><p>Las cifras en vivo están en <a href="/es/pricing#limits">Precios y límites</a>.</p></dd>
   </div>
   <div class="faq-item" id="quota">
-    <dt>¿Por qué cambia mi espacio gratuito?</dt>
+    <dt id="why-does-my-free-space-change">¿Por qué cambia mi espacio gratuito?</dt>
     <dd><p>Es una parte justa de un disco real, recalculada cada hora, no una cifra de marketing.</p></dd>
   </div>
   <div class="faq-item" id="scan">
-    <dt>¿Pueden revisar los archivos en busca de virus?</dt>
+    <dt id="can-you-scan-files-for-viruses">¿Pueden revisar los archivos en busca de virus?</dt>
     <dd><p>No podemos ver dentro, así que tampoco podemos revisarlo. Abre solo archivos que esperabas. Todo visor avisa antes de guardar un programa, y nuestra app no envía uno sin casillero. Esa regla vive en la app: nuestro servidor no puede ver qué tipo de archivo guarda, así que no puede imponerla.</p></dd>
   </div>
   <div class="faq-item" id="trust-js">
-    <dt>¿Por qué debería confiar en su JavaScript?</dt>
+    <dt id="why-should-i-trust-your-javascript">¿Por qué debería confiar en su JavaScript?</dt>
     <dd><p>SRI solo fija los archivos a esta página; no te protege de nosotros. Lo que sí: <a href="/es/security#verify">nuestro script de verificación</a> y correr tu propia copia.</p></dd>
   </div>
   <div class="faq-item" id="cookies">
-    <dt>¿Cookies? ¿Analítica?</dt>
+    <dt id="cookies-analytics">¿Cookies? ¿Analítica?</dt>
     <dd><p>Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros. Tu navegador contacta un indexador operado por Tari solo cuando presionas “Compruébalo en el indexador de Tari”. Tu llave y tus preferencias viven en el almacenamiento de tu propio navegador.</p></dd>
   </div>
   <div class="faq-item" id="illegal">
-    <dt>¿Puedo usar mutis para compartir cosas ilegales?</dt>
+    <dt id="can-i-use-mutis-to-share-illegal-things">¿Puedo usar mutis para compartir cosas ilegales?</dt>
     <dd><p>No. Mira los <a href="/es/terms">términos</a> y <a href="/es/abuse">cómo reportar un enlace</a>. Retiramos enlaces reportados por su id, sin necesidad de ver dentro.</p></dd>
   </div>
   <div class="faq-item" id="official">
-    <dt>¿mutis es oficial de Tari?</dt>
+    <dt id="is-mutis-official-tari">¿mutis es oficial de Tari?</dt>
     <dd><p>No. Es un proyecto independiente de código abierto, no afiliado, respaldado ni patrocinado por Tari Labs, el Consejo de Tari ni el proyecto Tari.</p></dd>
   </div>
 </dl>

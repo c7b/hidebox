@@ -25,7 +25,7 @@ mutis is built on the Tari™ Ootle testnet. This page is the long version: the 
 - Password only: we hold the ciphertext, so a weak password could be guessed offline by someone with a copy of our database. Online guessing slows down after a few wrong tries. Use four or more random words.
 
 ## How exits work
-Our server counts opens, watches the clock, and deletes the ciphertext when the rule says so. Opening always takes a click, so link previews in chat apps don't use up a view.
+Our server counts opens, watches the clock, and deletes the ciphertext when the rule says so. Opening always takes a click, so link previews in chat apps don't use up an open.
 We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish. We keep a note that the link existed, so we can tell you why it's gone. We never had the key, so any leftover bytes are noise.
 Our database (never files) is backed up daily. It holds the rows our “What we know” page prints, and the wrapped key of every link still open when the copy was made, which opens nothing without the link's secret.
 Our host (Hostinger) can take weekly snapshots of the whole server. We haven't switched them off, and we haven't yet confirmed in its panel how long it keeps them. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.
@@ -47,7 +47,7 @@ The Ootle is Tari's layer for applications, where payments are private by defaul
 | Tari capability | What it does in mutis | How you check it
 | Stealth outputs (amount and owner hidden) | Sending a file to a Tari address, dead-drop deliveries, renting space | /verify/tx/<id>: amount hidden, owner a one-time key, memo encrypted, fee public
 | Encrypted memo (XChaCha20-Poly1305) | Carries a file's sealed key to one Tari address | Only the recipient's keys open it; any other key fails to decrypt
-| View keys, separate from spending | Your inbox scans the chain in your browser; /watch shows what a view key sees | A view key reads arrivals and amounts. It can't spend, and it can't open files sealed to your locker
+| View keys, separate from spending | Your inbox scans the chain in your browser; /watch shows what a view key sees | A view key reads arrivals and amounts. It can't spend, and it can't open files locked to your locker
 | Invoice addresses with a reference | Matching a payment to its invoice without accounts | Our receiving address with the invoice's reference inside it; the reference travels in the payment's encrypted memo, so nothing on chain shows which invoice was paid, or by whom
 | Payments checked against chain state | Crediting rented space | Our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads. The code ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 | Keypair identity | Your locker and its Tari address | There is no email field anywhere
@@ -81,7 +81,7 @@ That you talk to mutis, timing, and padded transfer sizes. Nothing inside TLS.
 - Someone with only the link's path (no #)
 That a link exists, whether it needs a password, and its state; once it has ended, why and on what day. Not the key, the contents, the name, the real size or the open count.
 - A view-key holder
-Every delivery and payment to that address: amount, time and the memo's link text. Not the files sealed to the locker, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.
+Every delivery and payment to that address: amount, time and the memo's link text. Not the files locked to the locker, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.
 - The public, through our live numbers
 The free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them; how many minutes ago someone last locked a file; and for up to 24 recent files, each at least an hour old, a coarse size and an exit rule, never whether one was opened, only when at least 8 exist in the last week. Nothing per person, but someone who knows a file's size and rule may recognise it there.
 - Our host (Hostinger)
@@ -140,7 +140,7 @@ Who could attack a mutis link, what they could do, what stops them, and what sti
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours
-| A view-key holder | read arrivals, amounts and memo text | files sealed to a locker need its owner key too | files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)
+| A view-key holder | read arrivals, amounts and memo text | files locked to a locker need its owner key too | files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)
 | Phishing through our relay | make our wallet send a link | the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address | someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working
 | Someone hosting abuse | upload and share | small and short-lived anonymous files, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, noindex, the report form (/abuse), removal by id | we can't scan encrypted content, by design

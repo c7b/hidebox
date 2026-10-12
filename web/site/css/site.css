@@ -40,9 +40,12 @@ code, .code { font-family: var(--font-code); font-size: max(12px, .92em); }
 .btn:hover { background: var(--fg); color: var(--bg); }
 .btn-primary { background: var(--fg); color: var(--bg); }
 .btn-primary:hover { background: transparent; color: var(--fg); }
-.more { display: inline-flex; align-items: center; gap: .35em; min-height: 24px; font: var(--t-ui); }
+/* Inline, so a long label wraps and the arrow follows its last word; the padding keeps a 24 px target. */
+.more { display: inline; padding-block: 3px; font: var(--t-ui); }
+.more .icon { display: inline; vertical-align: -3px; margin-left: .25em; }
 .icon { width: 1.2em; height: 1.2em; flex: none; }
 .btn .icon, .more .icon { width: 18px; height: 18px; }
+.nowrap { white-space: nowrap; }
 .copy-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--s-2); }
 .copy-row code {
   display: flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-4);
@@ -146,6 +149,7 @@ code, .code { font-family: var(--font-code); font-size: max(12px, .92em); }
 .locks-arrow { display: grid; justify-items: center; gap: var(--s-2); }
 .locks-arrow .icon { width: 32px; height: 32px; transform: rotate(-90deg); }
 .locks + .footnote { margin-top: var(--s-6); }
+.page-body + .locks { margin-top: var(--s-6); }
 @media (min-width: 720px) {
   .locks { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: var(--s-6); }
   .lock:first-child { grid-column: 1; }

@@ -70,7 +70,7 @@
   },
   {
    "@type": "Question",
-   "name": "Will a link preview in WhatsApp or Slack use up my one view?",
+   "name": "Will a link preview in WhatsApp or Slack use up my one open?",
    "acceptedAnswer": {
     "@type": "Answer",
     "text": "No. Opening takes a click. But the preview service now has the full link, so use Link + password or send it to one Tari address for anything sensitive."
@@ -121,7 +121,7 @@
    "name": "What does a view key show, and should I share it?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Arrivals and amounts. It can't spend, and it can't open files sealed to your locker. The exception: a sender can choose “The recipient uses another Ootle wallet”, and those files do open with the view key. Share it only with someone allowed to see what arrives."
+    "text": "Arrivals and amounts. It can't spend, and it can't open files locked to your locker. The exception: a sender can choose “The recipient uses another Ootle wallet”, and those files do open with the view key. Share it only with someone allowed to see what arrives."
    }
   },
   {
@@ -190,92 +190,92 @@
 <main id="main" class="container">
 <header class="page-head">
   <p class="scene-heading"><span class="no" aria-hidden="true">1</span>INT. THE LOBBY — INTERMISSION<span class="no" aria-hidden="true">1</span></p>
-  <h1>Questions, answered short.</h1>
+  <h1>Questions, short answers.</h1>
   <p class="lede">About mutis, built on the Tari™ Ootle testnet. The long answers, with every boundary, are on <a class="more" href="/how">How it works<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
 </header>
 <dl class="faq page-body">
   <div class="faq-item" id="see">
-    <dt>Can you see my files?</dt>
+    <dt id="can-you-see-my-files">Can you see my files?</dt>
     <dd><p>No. Your browser encrypts each file with AES-256-GCM before upload. We store ciphertext and never receive the key.</p></dd>
   </div>
   <div class="faq-item" id="store">
-    <dt>What do you actually store?</dt>
+    <dt id="what-do-you-actually-store">What do you actually store?</dt>
     <dd><p>A random id, the ciphertext, a padded size, the hour it arrived, when it leaves (rounded up to the hour), its rule and its open count, plus a few technical columns. Each link's “What we know” page prints every column, and <a href="/privacy#inventory">our privacy page</a> lists every table.</p></dd>
   </div>
   <div class="faq-item" id="once">
-    <dt>What happens when a once-only link is opened?</dt>
+    <dt id="what-happens-when-a-once-only-link-is-opened">What happens when a once-only link is opened?</dt>
     <dd><p>The recipient clicks Open, their browser decrypts the file, and our server deletes the ciphertext when the download finishes. Reloading shows “This secret already made its exit.” If you didn't open it, someone else did.</p></dd>
   </div>
   <div class="faq-item" id="back">
-    <dt>Can I get a deleted file back?</dt>
+    <dt id="can-i-get-a-deleted-file-back">Can I get a deleted file back?</dt>
     <dd><p>No. We keep no backups of files, and we never had the key.</p><p data-when="snapshots=weekly">Our host (Hostinger) can take weekly snapshots of the whole server. We haven't switched them off, and we haven't yet confirmed in its panel how long it keeps them. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</p></dd>
   </div>
   <div class="faq-item" id="preview">
-    <dt>Will a link preview in WhatsApp or Slack use up my one view?</dt>
+    <dt id="will-a-link-preview-in-whatsapp-or-slack-use-up-my-one-open">Will a link preview in WhatsApp or Slack use up my one open?</dt>
     <dd><p>No. Opening takes a click. But the preview service now has the full link, so use Link + password or send it to one Tari address for anything sensitive.</p></dd>
   </div>
   <div class="faq-item" id="wallet">
-    <dt>Do I need crypto or a wallet?</dt>
+    <dt id="do-i-need-crypto-or-a-wallet">Do I need crypto or a wallet?</dt>
     <dd><p>No. Links, passwords, once-only, views and expiry are free and need nothing. Tari™ features use tTARI, and we give demo tTARI on the testnet.</p></dd>
   </div>
   <div class="faq-item" id="tari">
-    <dt>What's Tari, and what's the Ootle?</dt>
+    <dt id="whats-tari-and-whats-the-ootle">What's Tari, and what's the Ootle?</dt>
     <dd><p>Tari is an open-source, proof-of-work privacy blockchain. The Ootle is its layer for applications, where payments are private by default and can carry sealed messages. mutis uses it to deliver keys and move money.</p></dd>
   </div>
   <div class="faq-item" id="money">
-    <dt>Is tTARI real money?</dt>
+    <dt id="is-ttari-real-money">Is tTARI real money?</dt>
     <dd><p>No. It has no monetary value.<span data-needs="config" hidden> Ootle mainnet launches <span data-v="mainnet_date"></span>;</span> paid features stay on the testnet until our code is reviewed.</p></dd>
   </div>
   <div class="faq-item" id="anonymous">
-    <dt>Is mutis anonymous?</dt>
+    <dt id="is-mutis-anonymous">Is mutis anonymous?</dt>
     <dd><p>No account and no email. That's not anonymity: our server still sees your IP while you're connected. See <a href="/how#cant-protect">what we can't protect you from</a>.</p></dd>
   </div>
   <div class="faq-item" id="receipt" data-when="seallog=on" hidden>
-    <dt>What is an exit receipt?</dt>
+    <dt id="what-is-an-exit-receipt">What is an exit receipt?</dt>
     <dd><p>Every exit goes on the public record: we add it to SealLog on the Ootle at the next checkpoint. It proves we said we deleted it, publicly and permanently. It can't prove we kept no copy.</p></dd>
   </div>
   <div class="faq-item" id="lost">
-    <dt>What if I lose my key?</dt>
+    <dt id="what-if-i-lose-my-key">What if I lose my key?</dt>
     <dd><p>Your locker is gone for good. Nobody can reset it. That's the price of nobody being able to take it.</p></dd>
   </div>
   <div class="faq-item" id="safety">
-    <dt>What's the safety code?</dt>
+    <dt id="whats-the-safety-code">What's the safety code?</dt>
     <dd><p>Your safety code is 12 emoji (96 bits) from your locker's public keys. Compare all 12 with the person, out loud or on a call. For a plain Tari address, compare the first and last 6 characters instead.</p></dd>
   </div>
   <div class="faq-item" id="viewkey">
-    <dt>What does a view key show, and should I share it?</dt>
-    <dd><p>Arrivals and amounts. It can't spend, and it can't open files sealed to your locker. The exception: a sender can choose “The recipient uses another Ootle wallet”, and those files do open with the view key. Share it only with someone allowed to see what arrives.</p></dd>
+    <dt id="what-does-a-view-key-show-and-should-i-share-it">What does a view key show, and should I share it?</dt>
+    <dd><p>Arrivals and amounts. It can't spend, and it can't open files locked to your locker. The exception: a sender can choose “The recipient uses another Ootle wallet”, and those files do open with the view key. Share it only with someone allowed to see what arrives.</p></dd>
   </div>
   <div class="faq-item" id="unwanted">
-    <dt>Can someone send me files I didn't ask for?</dt>
+    <dt id="can-someone-send-me-files-i-didnt-ask-for">Can someone send me files I didn't ask for?</dt>
     <dd><p>Anyone with your Tari address or drop link can. Deliveries never open by themselves, programs get a warning, and you can close a drop link anytime.</p></dd>
   </div>
   <div class="faq-item" id="size">
-    <dt>How big can files be?</dt>
+    <dt id="how-big-can-files-be">How big can files be?</dt>
     <dd><p data-needs="config" hidden><span data-v="anon_max_file"></span> without a locker, <span data-v="key_max_file"></span> with a free locker, <span data-v="paid_max_file"></span> with rented space.</p><p>The live numbers are on <a href="/pricing#limits">Pricing and limits</a>.</p></dd>
   </div>
   <div class="faq-item" id="quota">
-    <dt>Why does my free space change?</dt>
+    <dt id="why-does-my-free-space-change">Why does my free space change?</dt>
     <dd><p>It's a fair share of a real disk, recalculated hourly, not a marketing number.</p></dd>
   </div>
   <div class="faq-item" id="scan">
-    <dt>Can you scan files for viruses?</dt>
+    <dt id="can-you-scan-files-for-viruses">Can you scan files for viruses?</dt>
     <dd><p>We can't see inside, so we can't scan it either. Only open files you expected. Every viewer warns before saving a program, and our app won't send one without a locker. That rule lives in the app: our server can't see what kind of file it holds, so it can't enforce it.</p></dd>
   </div>
   <div class="faq-item" id="trust-js">
-    <dt>Why should I trust your JavaScript?</dt>
+    <dt id="why-should-i-trust-your-javascript">Why should I trust your JavaScript?</dt>
     <dd><p>SRI only pins files to this page; it can't protect you from us. What can: <a href="/security#verify">our verify-deploy script</a> and running your own copy.</p></dd>
   </div>
   <div class="faq-item" id="cookies">
-    <dt>Cookies? Analytics?</dt>
+    <dt id="cookies-analytics">Cookies? Analytics?</dt>
     <dd><p>No analytics, no trackers, no third-party scripts or fonts. Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”. Your key and preferences live in your browser's own storage.</p></dd>
   </div>
   <div class="faq-item" id="illegal">
-    <dt>Can I use mutis to share illegal things?</dt>
+    <dt id="can-i-use-mutis-to-share-illegal-things">Can I use mutis to share illegal things?</dt>
     <dd><p>No. See the <a href="/terms">terms</a> and <a href="/abuse">how to report a link</a>. We remove reported links by id, without needing to see inside.</p></dd>
   </div>
   <div class="faq-item" id="official">
-    <dt>Is mutis official Tari?</dt>
+    <dt id="is-mutis-official-tari">Is mutis official Tari?</dt>
     <dd><p>No. It's an independent open-source project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project.</p></dd>
   </div>
 </dl>

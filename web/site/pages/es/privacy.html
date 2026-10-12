@@ -15,7 +15,7 @@
 <meta property="og:title" content="Privacidad · mutis">
 <meta property="og:description" content="Qué recopila mutis y qué no puede: cada tabla de nuestra base de datos, cuánto dura cada una, tu dirección IP, sin cookies, sin analítica.">
 <meta property="og:url" content="{{ORIGIN}}/es/privacy">
-<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image" content="{{ORIGIN}}/og-es.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
@@ -43,7 +43,7 @@
 <div class="prose page-body">
   <h2 id="short">La versión corta</h2>
   <ul>
-    <li><strong>Recopilamos</strong> texto cifrado, tamaños con relleno, horas, reglas, conteos de aperturas, el id aleatorio de tu casillero y un hash de su llave de inicio de sesión (si usas uno), y facturas del espacio que rentas. La lista completa está abajo.</li>
+    <li><strong>Recopilamos</strong> texto cifrado, tamaños con relleno, horas, reglas, conteos de aperturas, el id aleatorio de tu casillero y un hash de su llave de inicio de sesión (si tienes casillero), y facturas del espacio que rentas. La lista completa está abajo.</li>
     <li><strong>No recopilamos</strong> nombres, correos, teléfonos, nombres de archivo, contenidos, llaves, contraseñas, analítica ni cookies de rastreo.</li>
     <li><strong>Tu IP:</strong> nuestro servidor ve tu dirección IP mientras estás conectado. No la escribimos en disco: los límites de uso usan un hash con llave, en memoria, con una llave que cambia cada día. Nuestro servidor web no guarda registros de acceso.</li>
     <li><strong>Terceros:</strong> nuestro proveedor, Hostinger, que puede ver lo que guarda nuestro servidor; Let's Encrypt, por nuestro certificado; el indexador de Tari, solo cuando presionas “Compruébalo en el indexador de Tari”. Sin analítica, sin rastreadores, sin scripts ni fuentes de terceros.</li>
@@ -62,7 +62,7 @@
       <tr><th scope="row"><code>items</code></th><td>Una fila por archivo guardado: un id aleatorio; el casillero dueño, si hay; un hash del token de gestión de quien lo subió; si es un enlace o un archivo guardado; su carril; su estado; la cabecera en claro de 32 bytes (formato, número de bloques, una sal aleatoria); el nombre, el tipo y el tamaño cifrados; en archivos guardados, la llave del archivo cerrada con tu casillero; número de bloques y tamaño con relleno; el hash del texto cifrado; la hora en que llegó; cuándo caduca y cuándo se fue; el volumen de descarga de hoy.</td><td>El texto cifrado se borra menos de un minuto después de la salida. La fila queda como nota<span data-needs="config" hidden> durante <span data-v="tombstone_days"></span></span>, para poder decirle a quien visite por qué ya no está el enlace.</td></tr>
       <tr><th scope="row"><code>chunks</code></th><td>El SHA-256 de cada bloque cifrado.</td><td>Con su archivo.</td></tr>
       <tr><th scope="row"><code>uploads</code></th><td>Una subida en curso: su id, su archivo, su carril y el espacio apartado.</td><td>Hasta que termina o caduca (dos horas).</td></tr>
-      <tr><th scope="row"><code>shares</code></th><td>Una fila por enlace: su modo (enlace, enlace + contraseña, solo contraseña); la llave del archivo envuelta con el secreto del enlace; el SHA-256 de su token de acceso y, en enlace + contraseña, de su prueba del enlace; los parámetros para estirar la contraseña (nunca la contraseña); vistas permitidas y usadas; caducidad; estado; la hora en que se creó y cuándo terminó; contadores de contraseñas equivocadas; aperturas en la hora actual; el minuto de su primera apertura, visible solo para su dueño.</td><td>La llave envuelta y los hashes se borran en la salida; el resto queda como la nota de arriba.</td></tr>
+      <tr><th scope="row"><code>shares</code></th><td>Una fila por enlace: su modo (enlace, enlace + contraseña, solo contraseña); la llave del archivo envuelta con el secreto del enlace; el SHA-256 de su token de acceso y, en enlace + contraseña, de su prueba del enlace; los parámetros para estirar la contraseña (nunca la contraseña); aperturas permitidas y usadas; caducidad; estado; la hora en que se creó y cuándo terminó; contadores de contraseñas equivocadas; aperturas en la hora actual; el minuto de su primera apertura, visible solo para su dueño.</td><td>La llave envuelta y los hashes se borran en la salida; el resto queda como la nota de arriba.</td></tr>
       <tr><th scope="row"><code>tickets</code></th><td>Una descarga en curso: el SHA-256 de su token, el enlace y el archivo, un tope de bytes.</td><td>Hasta que termina la descarga<span data-needs="config" hidden> (como mucho <span data-v="ticket"></span>)</span>.</td></tr>
       <tr><th scope="row"><code>identities</code></th><td>Una fila por casillero: un id de aspecto aleatorio; el SHA-256 de su llave de inicio de sesión; el primer y el último día activo y en cuántos días; bytes usados, apartados y rentados; cuándo termina el espacio rentado; los envíos de hoy.</td><td>Hasta que borras tu casillero.</td></tr>
       <tr><th scope="row"><code>sessions</code></th><td>El SHA-256 de un token de sesión, su casillero, cuándo se creó y caduca, el último día que se usó.</td><td>Hasta que caduca.</td></tr>
@@ -82,7 +82,7 @@
 </div>
 <div class="prose page-body">
   <h2 id="public">Lo que publicamos</h2>
-  <p>Nuestras cifras en vivo (<code>/api/v1/stats</code>) son públicas: la cuota gratuita; el tamaño y el espacio libre de nuestro disco, redondeados; si las subidas o las funciones de Tari están en pausa; cuántos casilleros estuvieron activos hace poco, cuando ya son suficientes;<span data-when="seallog=on" hidden> el último punto de control de SealLog;</span> y hace cuántos minutos terminó de subirse el archivo más reciente, al minuto.</p>
+  <p>Nuestras cifras en vivo (<code>/api/v1/stats</code>) son públicas: la cuota gratuita; el tamaño y el espacio libre de nuestro disco, redondeados; si las subidas o las funciones de Tari están en pausa; cuántos casilleros estuvieron activos hace poco, cuando ya son suficientes;<span data-when="seallog=on" hidden> el último checkpoint de SealLog;</span> y hace cuántos minutos terminó de subirse el archivo más reciente, al minuto.</p>
   <p>La pared de casilleros de nuestra página principal muestra, para hasta 24 archivos recientes con al menos una hora, un tamaño aproximado y una regla de salida, solo cuando hay al menos 8 en la última semana: nunca un nombre, un id ni si un archivo se abrió. Quien conozca el tamaño y la regla de un archivo podría reconocerlo ahí. Nuestro archivo de prueba de cada hora y nuestras propias transacciones de prueba también son públicos; nunca los de quien nos visita.</p>
 
   <h2 id="retention">Cuánto duran las cosas</h2>

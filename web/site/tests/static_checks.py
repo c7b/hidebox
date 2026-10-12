@@ -18,7 +18,7 @@ PAGES = sorted((SITE / "pages").glob("*.html")) + sorted((SITE / "pages" / "es")
 PARTIALS = sorted((SHARED / "partials").glob("*.html"))
 JS = sorted((SITE / "js").glob("*.js")) + sorted(SHARED.glob("*.js"))
 PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI"}
-DATA_FILES = {".json", ".png", ".webp", ".woff2", ".bin", ".webmanifest", ".pyc"}
+DATA_FILES = {".json", ".png", ".ico", ".webp", ".woff2", ".bin", ".webmanifest", ".pyc"}
 NOT_SOURCE = {"OFL.txt", "NOTICE", "llms.txt", "llms-full.txt"}
 
 # 11-brand §7.4 (and 12-integration "not promises"); "encriptado" per §7.7. Word-bounded, any case.
@@ -404,12 +404,17 @@ def check_static():
     s = SITE / "static"
     problems = []
     robots = (s / "robots.txt").read_text()
-    for path in ("/s/", "/t$", "/d/", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
+    for path in ("/s/", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
         if f"Disallow: {path}\n" not in robots:
             problems.append(f"robots.txt: no Disallow: {path}")
-    for path in ("/t", "/s/abc", "/d/abc", "/api/v1/config", "/locker", "/verify/tx/1"):
+    for path in ("/t", "/s/abc", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
         if robots_allows(robots, path):
             problems.append(f"robots.txt: {path} is not disallowed")
+    # A drop page is public by design (it carries noindex itself); the public config and numbers are
+    # what the pages fill in, so a crawler that renders them may read them.
+    for path in ("/d/abc", "/api/v1/config", "/api/v1/stats"):
+        if not robots_allows(robots, path):
+            problems.append(f"robots.txt: {path} is disallowed")
     problems += [f"robots.txt: blocks the indexable page {path}" for path in indexable_paths() if not robots_allows(robots, path)]
     if "Sitemap: {{ORIGIN}}/sitemap.xml" not in robots:
         problems.append("robots.txt: no Sitemap line")
@@ -427,6 +432,7 @@ def check_static():
         if not (s / icon["src"].lstrip("/")).is_file():
             problems.append(f"manifest icon {icon['src']} missing")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
+                              ("og-es.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
                               ("apple-touch-icon.png", (180, 180), None)):
         f = s / name
@@ -434,9 +440,14 @@ def check_static():
             problems.append(f"{name}: missing or not {size}")
         elif limit and f.stat().st_size > limit:
             problems.append(f"{name}: over {limit} bytes")
+    if not (s / "favicon.ico").is_file() or (s / "favicon.ico").read_bytes()[:4] != b"\0\0\1\0":
+        problems.append("favicon.ico: missing or not an ICO (Bing and unfurlers ask for it by name)")
     llms = (s / "llms.txt").read_text()
     if not llms.startswith("# mutis\n") or "pay-to-open" in llms or "dead-drop" not in llms:
         problems.append("llms.txt: not the spec §13.4 shape")
+    for fact in ("send_mode=direct", "send_mode=relay", "seallog=on"):
+        if f"{{when:{fact}}}" not in llms:
+            problems.append(f"llms.txt: no line for {fact} (tools/variants.py keeps the ones true here)")
     fonts = SHARED / "fonts"
     for name in ("MutisScript-Regular.woff2", "MutisScript-Bold.woff2", "MutisScriptCode-Regular.woff2"):
         if (fonts / name).read_bytes()[:4] != b"wOF2":

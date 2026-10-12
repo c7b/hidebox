@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How mutis works</title>
+<title>How mutis works: browser encryption and Tari Ootle</title>
 <meta name="description" content="Your browser encrypts each file before upload; we store ciphertext. Exactly what we see, what Tari's Ootle does, and what we can't protect you from.">
 <link rel="canonical" href="{{ORIGIN}}/how">
 <link rel="alternate" hreflang="en" href="{{ORIGIN}}/how">
@@ -12,7 +12,7 @@
 <link rel="alternate" hreflang="x-default" href="{{ORIGIN}}/how">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="mutis">
-<meta property="og:title" content="How mutis works">
+<meta property="og:title" content="How mutis works: browser encryption and Tari Ootle">
 <meta property="og:description" content="Your browser encrypts each file before upload; we store ciphertext. Exactly what we see, what Tari's Ootle does, and what we can't protect you from.">
 <meta property="og:url" content="{{ORIGIN}}/how">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
@@ -78,7 +78,7 @@
   </ol>
 
   <h2 id="exits">How exits work</h2>
-  <p>Our server counts opens, watches the clock, and deletes the ciphertext when the rule says so. Opening always takes a click, so link previews in chat apps don't use up a view.</p>
+  <p>Our server counts opens, watches the clock, and deletes the ciphertext when the rule says so. Opening always takes a click, so link previews in chat apps don't use up an open.</p>
   <p>We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish<span data-needs="config" hidden> (at most <span data-v="ticket"></span>)</span>. We keep a note that the link existed<span data-needs="config" hidden> for <span data-v="tombstone_days"></span></span>, so we can tell you why it's gone. We never had the key, so any leftover bytes are noise.</p>
   <p>Our database (never files) is backed up daily<span data-needs="config" hidden>, and each copy is deleted after <span data-v="db_backup_days"></span></span>. It holds the rows our “What we know” page prints, and the wrapped key of every link still open when the copy was made, which opens nothing without the link's secret.</p>
   <p data-when="snapshots=off" hidden>Our host doesn't keep snapshots of the server.</p>
@@ -120,14 +120,14 @@
   <table class="data-table">
     <thead><tr><th scope="col">Tari capability</th><th scope="col">What it does in mutis</th><th scope="col">How you check it</th></tr></thead>
     <tbody>
-      <tr><th scope="row">Stealth outputs (amount and owner hidden)</th><td>Sending a file to a Tari address, dead-drop deliveries, renting space</td><td><code>/verify/tx/&lt;id&gt;</code>: amount hidden, owner a one-time key, memo encrypted, fee public</td></tr>
-      <tr><th scope="row">Encrypted memo (XChaCha20-Poly1305)</th><td>Carries a file's sealed key to one Tari address</td><td>Only the recipient's keys open it; any other key fails to decrypt</td></tr>
-      <tr><th scope="row">View keys, separate from spending</th><td>Your inbox scans the chain in your browser; <code>/watch</code> shows what a view key sees</td><td>A view key reads arrivals and amounts. It can't spend, and it can't open files sealed to your locker</td></tr>
-      <tr data-when="send_mode=direct" hidden><th scope="row">Private transactions built in your browser</th><td>Sends signed and paid by your browser</td><td>The transaction's input is your browser wallet's output, not ours</td></tr>
-      <tr><th scope="row">Invoice addresses with a reference</th><td>Matching a payment to its invoice without accounts</td><td>Our receiving address with the invoice's reference inside it; the reference travels in the payment's encrypted memo, so nothing on chain shows which invoice was paid, or by whom</td></tr>
-      <tr><th scope="row">Payments checked against chain state</th><td>Crediting rented space</td><td><span data-when="proof=proven" hidden>The official Tari library opens the commitment to the exact amount, then a Tari-run public indexer shows it committed.</span><span data-when="proof=wallet">Our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads.</span> <a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">The code<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></td></tr>
-      <tr data-when="seallog=on" hidden><th scope="row">A template: SealLog</th><td>Public hashes of stored files and of every exit</td><td><code>/verify</code>: inclusion proof, root, the component's state on the Ootle</td></tr>
-      <tr><th scope="row">Keypair identity</th><td>Your locker and its Tari address</td><td>There is no email field anywhere</td></tr>
+      <tr><th scope="row">Stealth outputs (amount and owner hidden)</th><td data-cue="Tari capability">Sending a file to a Tari address, dead-drop deliveries, renting space</td><td data-cue="What it does in mutis"><code>/verify/tx/&lt;id&gt;</code>: amount hidden, owner a one-time key, memo encrypted, fee public</td></tr>
+      <tr><th scope="row">Encrypted memo (XChaCha20-Poly1305)</th><td data-cue="Tari capability">Carries a file's sealed key to one Tari address</td><td data-cue="What it does in mutis">Only the recipient's keys open it; any other key fails to decrypt</td></tr>
+      <tr><th scope="row">View keys, separate from spending</th><td data-cue="Tari capability">Your inbox scans the chain in your browser; <code>/watch</code> shows what a view key sees</td><td data-cue="What it does in mutis">A view key reads arrivals and amounts. It can't spend, and it can't open files locked to your locker</td></tr>
+      <tr data-when="send_mode=direct" hidden><th scope="row">Private transactions built in your browser</th><td data-cue="Tari capability">Sends signed and paid by your browser</td><td data-cue="What it does in mutis">The transaction's input is your browser wallet's output, not ours</td></tr>
+      <tr><th scope="row">Invoice addresses with a reference</th><td data-cue="Tari capability">Matching a payment to its invoice without accounts</td><td data-cue="What it does in mutis">Our receiving address with the invoice's reference inside it; the reference travels in the payment's encrypted memo, so nothing on chain shows which invoice was paid, or by whom</td></tr>
+      <tr><th scope="row">Payments checked against chain state</th><td data-cue="Tari capability">Crediting rented space</td><td data-cue="What it does in mutis"><span data-when="proof=proven" hidden>The official Tari library opens the commitment to the exact amount, then a Tari-run public indexer shows it committed.</span><span data-when="proof=wallet">Our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads.</span> <a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">The code<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></td></tr>
+      <tr data-when="seallog=on" hidden><th scope="row">A template: SealLog</th><td data-cue="Tari capability">Public hashes of stored files and of every exit</td><td data-cue="What it does in mutis"><code>/verify</code>: inclusion proof, root, the component's state on the Ootle</td></tr>
+      <tr><th scope="row">Keypair identity</th><td data-cue="Tari capability">Your locker and its Tari address</td><td data-cue="What it does in mutis">There is no email field anywhere</td></tr>
     </tbody>
   </table>
 </div>
@@ -141,17 +141,17 @@
   <table class="data-table">
     <thead><tr><td></td><th scope="col">Our server</th><th scope="col">Anyone watching the Ootle</th><th scope="col">Someone with the full link</th><th scope="col">The person you send it to</th></tr></thead>
     <tbody>
-      <tr><th scope="row">File contents</th><td>no (ciphertext)</td><td>no</td><td>yes</td><td>yes</td></tr>
-      <tr><th scope="row">Name and type</th><td>no (encrypted inside)</td><td>no</td><td>yes</td><td>yes</td></tr>
-      <tr><th scope="row">Exact size</th><td>no (a padded bucket)</td><td>no</td><td>yes</td><td>yes</td></tr>
-      <tr><th scope="row">The key</th><td>no</td><td>no</td><td>yes (the link is the key)</td><td>yes</td></tr>
-      <tr><th scope="row">That a file exists, its arrival hour, its rule, its opens</th><td>yes</td><td><span data-when="seallog=on" hidden>counts only, in steps of 64: records (stored files plus exits) per checkpoint</span><span data-when="seallog=off">no</span></td><td>partly (state, opens left)</td><td>—</td></tr>
-      <tr><th scope="row">Your IP address</th><td>while you're connected; not written to disk</td><td>no (Tari's indexer sees it only if you press “Check it on Tari's indexer”)</td><td>no</td><td>no</td></tr>
-      <tr><th scope="row">Who you send to</th><td><span data-when="send_mode=relay">yes for every send and dead-drop delivery, while it's sent; then the job is scrubbed</span><span data-when="send_mode=direct" hidden>sends from your browser: no; sends our relay posts (before your browser's wallet has its grant) and dead-drop deliveries: yes, while they're sent</span></td><td>no (a one-time stealth address)</td><td>—</td><td>they know it's them</td></tr>
-      <tr><th scope="row">That mutis sent a payment</th><td>yes</td><td>yes for relay sends: one wallet, one fee<span data-when="send_mode=direct" hidden>; sends from your browser trace back to our sponsor wallet's grant, and to each other through their change</span></td><td>—</td><td>—</td></tr>
-      <tr><th scope="row">Payment amounts</th><td>for space rented from us, because we're the seller</td><td>no (a Pedersen commitment)</td><td>—</td><td>—</td></tr>
-      <tr><th scope="row">The network fee</th><td>—</td><td>public</td><td>—</td><td>—</td></tr>
-      <tr data-when="seallog=on" hidden><th scope="row">SealLog (hashes, counts, times)</th><td>yes</td><td>public by design, written by the same key that holds our public tTARI</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">File contents</th><td data-cue="Our server">no (ciphertext)</td><td data-cue="Anyone watching the Ootle">no</td><td data-cue="Someone with the full link">yes</td><td data-cue="The person you send it to">yes</td></tr>
+      <tr><th scope="row">Name and type</th><td data-cue="Our server">no (encrypted inside)</td><td data-cue="Anyone watching the Ootle">no</td><td data-cue="Someone with the full link">yes</td><td data-cue="The person you send it to">yes</td></tr>
+      <tr><th scope="row">Exact size</th><td data-cue="Our server">no (a padded bucket)</td><td data-cue="Anyone watching the Ootle">no</td><td data-cue="Someone with the full link">yes</td><td data-cue="The person you send it to">yes</td></tr>
+      <tr><th scope="row">The key</th><td data-cue="Our server">no</td><td data-cue="Anyone watching the Ootle">no</td><td data-cue="Someone with the full link">yes (the link is the key)</td><td data-cue="The person you send it to">yes</td></tr>
+      <tr><th scope="row">That a file exists, its arrival hour, its rule, its opens</th><td data-cue="Our server">yes</td><td data-cue="Anyone watching the Ootle"><span data-when="seallog=on" hidden>counts only, in steps of 64: records (stored files plus exits) per checkpoint</span><span data-when="seallog=off">no</span></td><td data-cue="Someone with the full link">partly (state, opens left)</td><td data-cue="The person you send it to">—</td></tr>
+      <tr><th scope="row">Your IP address</th><td data-cue="Our server">while you're connected; not written to disk</td><td data-cue="Anyone watching the Ootle">no (Tari's indexer sees it only if you press “Check it on Tari's indexer”)</td><td data-cue="Someone with the full link">no</td><td data-cue="The person you send it to">no</td></tr>
+      <tr><th scope="row">Who you send to</th><td data-cue="Our server"><span data-when="send_mode=relay">yes for every send and dead-drop delivery, while it's sent; then the job is scrubbed</span><span data-when="send_mode=direct" hidden>sends from your browser: no; sends our relay posts (before your browser's wallet has its grant) and dead-drop deliveries: yes, while they're sent</span></td><td data-cue="Anyone watching the Ootle">no (a one-time stealth address)</td><td data-cue="Someone with the full link">—</td><td data-cue="The person you send it to">they know it's them</td></tr>
+      <tr><th scope="row">That mutis sent a payment</th><td data-cue="Our server">yes</td><td data-cue="Anyone watching the Ootle">yes for relay sends: one wallet, one fee<span data-when="send_mode=direct" hidden>; sends from your browser trace back to our sponsor wallet's grant, and to each other through their change</span></td><td data-cue="Someone with the full link">—</td><td data-cue="The person you send it to">—</td></tr>
+      <tr><th scope="row">Payment amounts</th><td data-cue="Our server">for space rented from us, because we're the seller</td><td data-cue="Anyone watching the Ootle">no (a Pedersen commitment)</td><td data-cue="Someone with the full link">—</td><td data-cue="The person you send it to">—</td></tr>
+      <tr><th scope="row">The network fee</th><td data-cue="Our server">—</td><td data-cue="Anyone watching the Ootle">public</td><td data-cue="Someone with the full link">—</td><td data-cue="The person you send it to">—</td></tr>
+      <tr data-when="seallog=on" hidden><th scope="row">SealLog (hashes, counts, times)</th><td data-cue="Our server">yes</td><td data-cue="Anyone watching the Ootle">public by design, written by the same key that holds our public tTARI</td><td data-cue="Someone with the full link">—</td><td data-cue="The person you send it to">—</td></tr>
     </tbody>
   </table>
 </div>
@@ -168,8 +168,8 @@
   <h3>Everyone else</h3>
   <dl class="detail">
     <dt>A network observer</dt><dd>That you talk to mutis, timing, and padded transfer sizes. Nothing inside TLS.</dd>
-    <dt>Someone with only the link's path (no <code>#</code>)</dt><dd>That a link exists, whether it needs a password, and its state; once it has ended, why and on what day<span data-when="seallog=on" hidden>, and its exit receipt: the file's id and exit hour, and through the log which checkpoint windows its arrival and exit fell in</span>. Not the key, the contents, the name, the real size or the open count.</dd>
-    <dt>A view-key holder</dt><dd>Every delivery and payment to that address: amount, time and the memo's link text. Not the files sealed to the locker, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.</dd>
+    <dt>Someone with only the link's path <span class="nowrap">(no <code>#</code>)</span></dt><dd>That a link exists, whether it needs a password, and its state; once it has ended, why and on what day<span data-when="seallog=on" hidden>, and its exit receipt: the file's id and exit hour, and through the log which checkpoint windows its arrival and exit fell in</span>. Not the key, the contents, the name, the real size or the open count.</dd>
+    <dt>A view-key holder</dt><dd>Every delivery and payment to that address: amount, time and the memo's link text. Not the files locked to the locker, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.</dd>
     <dt>The public, through our live numbers</dt><dd>The free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them;<span data-when="seallog=on" hidden> SealLog's latest checkpoint;</span> how many minutes ago someone last locked a file; and for up to 24 recent files, each at least an hour old, a coarse size and an exit rule, never whether one was opened, only when at least 8 exist in the last week. Nothing per person, but someone who knows a file's size and rule may recognise it there.</dd>
     <dt>Our host (Hostinger)</dt><dd>Everything our server stores, plus the disk and any snapshots it keeps; in principle, live memory.</dd>
   </dl>

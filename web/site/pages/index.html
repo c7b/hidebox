@@ -4,8 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mutis — encrypted file drops that leave on cue</title>
-<meta name="description" content="Drop a file. Your browser encrypts it before upload, and it leaves when you say: once, at a set time, or for one Tari address. Free, no sign-up.">
+<title>mutis — encrypted file drops, keys sent over Tari Ootle</title>
+<meta name="description" content="Your browser encrypts each file; we hold only ciphertext. Send its key to a Tari address inside a stealth payment, with every exit logged on the Ootle.">
 <link rel="canonical" href="{{ORIGIN}}/">
 <link rel="alternate" hreflang="en" href="{{ORIGIN}}/">
 <link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/">
@@ -13,7 +13,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="mutis">
 <meta property="og:title" content="mutis — Every secret leaves on cue.">
-<meta property="og:description" content="Encrypted file drops that leave on cue. Your browser locks each file before upload; we never see inside.">
+<meta property="og:description" content="Encrypted file drops on Tari Ootle: keys travel sealed in stealth payments, and every exit is logged on the Ootle. We never see inside.">
 <meta property="og:url" content="{{ORIGIN}}/">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
 <meta property="og:image:width" content="1200">
@@ -34,10 +34,15 @@
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/home.js" integrity="{{SRI}}"></script>
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "mutis", "url": "{{ORIGIN}}/",
- "description": "Encrypted file drops that leave on cue. Files are encrypted in the browser before upload; the server stores only ciphertext.",
- "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
- "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "license": "{{REPO_URL}}/blob/main/LICENSE"}
+{"@context": "https://schema.org", "@graph": [
+ {"@type": "WebSite", "@id": "{{ORIGIN}}/#website", "url": "{{ORIGIN}}/", "name": "mutis", "inLanguage": ["en", "es"]},
+ {"@type": "SoftwareApplication", "@id": "{{ORIGIN}}/#app", "name": "mutis", "url": "{{ORIGIN}}/",
+  "description": "Encrypted file drops on Tari Ootle (testnet). The browser encrypts each file before upload and the server stores only ciphertext; a file's key can travel to a Tari address sealed inside a stealth tTARI payment.",
+  "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "featureList": ["Encryption in the browser (AES-256-GCM, WebCrypto)", "Exit rules: once, a number of opens, a set time, or until deleted", "Send a file's key to a Tari address inside a stealth payment", "Dead-drop links delivered over Tari Ootle", "SealLog: a public record of stored files and exits on the Ootle"],
+  "image": "{{ORIGIN}}/og.png", "softwareHelp": {"@type": "CreativeWork", "url": "{{ORIGIN}}/how"},
+  "license": "https://spdx.org/licenses/MIT.html", "isPartOf": {"@id": "{{ORIGIN}}/#website"}}]}
 </script>
 </head>
 <body class="home">
@@ -48,8 +53,8 @@
   <section class="hero" id="drop" aria-labelledby="hero-h">
     <p class="fade fade-in" aria-hidden="true">FADE IN:</p>
     <div class="hero-main">
-      <h1 class="hero-h1" id="hero-h"><span class="if-fine">Drop a file.</span><span class="if-coarse">Choose a file.</span></h1>
-      <p class="hero-line2"><span class="if-fine">It's locked before it leaves this tab.</span><span class="if-coarse">It's locked before it leaves your phone.</span></p>
+      <h1 class="hero-h1" id="hero-h"><span class="if-fine">Drop a file.</span> <span class="if-coarse">Choose a file.</span></h1>
+      <p class="hero-line2"><span class="if-fine">It's locked before it leaves this tab.</span> <span class="if-coarse">It's locked before it leaves your phone.</span></p>
       <div id="mutis-drop" data-variant="hero"></div>
       <noscript><p class="noscript">mutis encrypts in your browser, so it needs JavaScript.</p></noscript>
       <script type="module" src="/app/drop-widget.js" integrity="{{SRI}}"></script>
@@ -157,8 +162,8 @@
             <p class="links"><a class="more" data-chain="verify" href="/verify">What the chain sees<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a><a class="more" data-chain="indexer" href="/verify">Check it on Tari's indexer<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
           </figure>
           <p class="footnote" data-when="send_mode=relay">Our relay posts the payment for you, so we learn the address you send to, never the key.</p>
-          <p class="footnote" data-when="send_mode=direct" hidden>Once your browser's wallet holds its testnet grant (about a minute after your locker opens), your browser builds and pays for the payment itself and we pass it to the network: we see that your locker sent a transaction, not who it was for. Before that, our relay posts it and learns the address, never the key.</p>
-          <p class="footnote">The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. The fee is public. Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as "sent by mutis", but not see to whom.</p>
+          <p class="footnote" data-when="send_mode=direct" hidden>Once your browser's wallet holds its testnet grant (a minute or two after your locker opens), your browser builds and pays for the payment itself and we pass it to the network: we see that your locker sent a transaction, not who it was for. Before that, our relay posts it and learns the address, never the key.</p>
+          <p class="footnote">The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. The fee is public. Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as “sent by mutis”, but not see to whom.</p>
           <p class="footnote" data-when="send_mode=direct" hidden>Sends from your browser spend a grant from our sponsor wallet, then each send's change. Anyone reading the Ootle can link your sends to each other and to our sponsor wallet, but not see to whom or how much.</p>
         </div>
       </div>

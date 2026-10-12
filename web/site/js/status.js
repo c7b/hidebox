@@ -8,14 +8,27 @@ const T = {
       sponsor_balance: 'Demo tTARI in the sponsor wallet', mirror: 'Our copy of the chain', canary: 'Hourly test file',
       credits: 'Crediting payments', disk: 'Disk space', budgets: 'Daily budgets' },
     states: { green: 'working', amber: 'slow or near a limit', red: 'broken' },
+    reasons: { budget: (kind, slice, pct) => `${pct}% of today's ${slice} budget for ${kind} is used.`, 'abuse.new_reports': 'New abuse reports are waiting for us.' },
+    kinds: { sponsor: 'sponsor grants', courier: 'deliveries', demo_pay: 'demo payments', decoy: 'decoy sends' },
+    slices: { public: 'public', reserved: 'reserved', evidence: 'test-delivery' },
   },
   es: {
     names: { https: 'Servidor web y certificado', api: 'API', chain_worker: 'Proceso de la cadena', walletd: 'Nuestra cartera',
       sponsor_balance: 'tTARI de demostración en la cartera patrocinadora', mirror: 'Nuestra copia de la cadena',
       canary: 'Archivo de prueba de cada hora', credits: 'Abono de pagos', disk: 'Espacio en disco', budgets: 'Presupuestos diarios' },
     states: { green: 'funciona', amber: 'lento o cerca de un límite', red: 'roto' },
+    reasons: { budget: (kind, slice, pct) => `Se usó el ${pct}% del presupuesto ${slice} de hoy para ${kind}.`, 'abuse.new_reports': 'Hay reportes de abuso nuevos esperándonos.' },
+    kinds: { sponsor: 'saldos patrocinados', courier: 'entregas', demo_pay: 'pagos de demostración', decoy: 'envíos señuelo' },
+    slices: { public: 'público', reserved: 'reservado', evidence: 'de entregas de prueba' },
   },
 }[lang];
+
+// Reason codes are fixed strings from the health check (budget.<kind>.<slice>.<percent>, abuse.new_reports).
+function reasonText(code) {
+  const [head, kind, slice, pct] = code.split('.');
+  if (head === 'budget' && pct) return T.reasons.budget(T.kinds[kind] ?? kind, T.slices[slice] ?? slice, pct);
+  return T.reasons[code] ?? code;
+}
 
 getJson('/status.json').then((status) => {
   const list = document.querySelector('[data-status-list]');
@@ -32,7 +45,15 @@ getJson('/status.json').then((status) => {
   }
   document.querySelector('[data-status-time]').textContent =
     new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(status.updated_at * 1000));
-  document.querySelector('[data-status-attention]').hidden = !status.attention;
+  const attention = document.querySelector('[data-status-attention]');
+  attention.hidden = status.overall === 'green';
+  const reasons = document.querySelector('[data-status-reasons]');
+  for (const code of status.reasons ?? []) {
+    const li = document.createElement('li');
+    li.textContent = reasonText(code);
+    reasons.append(li);
+  }
+  reasons.hidden = attention.hidden || !reasons.childElementCount;
   document.querySelector('[data-status]').hidden = false;
   document.querySelector('[data-status-missing]').hidden = true;
 }).catch(() => {}); // the "board is dark" line stays
