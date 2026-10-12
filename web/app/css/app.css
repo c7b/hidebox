@@ -8,6 +8,7 @@ html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
 .a-page { display: flex; flex-direction: column; min-height: 100svh; }
 .a-main { flex: 1; display: grid; align-content: start; gap: var(--s-6); padding-block: var(--s-7) var(--s-9); outline: none; }
 .a-main > * { min-width: 0; }
+.a-main > .a-btn { justify-self: start; }   /* the inbox's "Check again" is sized to its words */
 @media (min-width: 1200px) { .a-main { max-width: calc(960px + 2 * var(--gutter)); } }   /* one column, centred like the site's sections */
 .a-h1 { font: var(--t-display); font-size: clamp(36px, 5.2vw, 64px); letter-spacing: -.02em; }
 .a-notfound { display: grid; gap: var(--s-5); justify-items: start; }
