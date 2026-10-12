@@ -64,7 +64,12 @@ build, activation, smoke PASS, manifest notarized in tx `f64332b5…09a2`); `ver
 across 143 files; `/status.json` overall green; D-01 against production PASS (certificate 89 days
 left). The changed `mutis-backup.service` was installed by hand (`install` + `daemon-reload`, the
 notice activation prints); `backup.py prune-root` run once as root deleted nothing (every copy is
-younger than 7 days). The production E2E and judge runs are under "Evidence" below.
+younger than 7 days). The production E2E and judge runs are under "Evidence" below. After them, HEAD
+(`ea20751`: the tests commit and this documentation) was deployed the same way at 00:31 as release
+`ea20751ce0033a8208ca7815c0b4de7feab3c00d-cc3ac6cfe` (gates, build, activation, smoke PASS, manifest
+notarized in tx `b9955589…bdfe`); `verify-deploy` 0 differences across 143 files, `/api/v1/health`
+green on that commit, `/status.json` green, D-01 against production PASS, `/config` without
+`e2e_expiry_s`, the wall quiet (`fix-pass/deploy/*-ea20751.txt`).
 
 ## Evidence: the production E2E and judge runs (`docs/evidence/2026-10-11/fix-pass/e2e/`)
 
