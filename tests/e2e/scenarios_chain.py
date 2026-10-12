@@ -200,9 +200,22 @@ def e12(t: T) -> None:
     t.check(not t.hygiene(), "the view key never left the tab (E-03)")
 
 
+def wallet_ut(page) -> int:
+    """The browser wallet's spendable µT after a fresh scan, as /upgrade's "Pay … from this browser" sees it."""
+    return int(page.eval("(async () => { const [{ loadIdentity }, { scan }, { balance }] = await Promise.all(["
+                         "import('/app/lib/identity.js'), import('/app/lib/scan.js'), import('/app/lib/wallet.js')]);"
+                         " const identity = await loadIdentity(); await scan(identity);"
+                         " return String(await balance(identity)); })()", await_promise=True, timeout=180))
+
+
 @scenario("E-13", "Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB", CHAIN)
 def e13(t: T) -> None:
-    a = t.actor()
+    cfg = t.env.config()
+    direct = cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")
+    # Direct mode: the browser pays from its sponsor grant, two a day per network; every locker of a run
+    # shares ultron's /64, so the buyer holds a one-use judge pass, as E-J does, and waits for the grant.
+    judge = t.env.remote.admin("judge-pass", "new", "--uses", "1").strip() if direct else None
+    a = t.actor(judge_pass=judge)
     make_drop_link(t, a, "E2E E-13")
     if a.exists("key-later"):
         a.click("key-later")
@@ -210,9 +223,13 @@ def e13(t: T) -> None:
     a.wait_for("quota-bar", 60)
     before = int(a.attr("quota-bar", "data-limit") or 0)
     a.goto(t.origin + "/upgrade")
+    if direct:
+        price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
+        t.check(poll(lambda: wallet_ut(a) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10),
+                "direct mode: the browser wallet received its sponsor grant")
     a.click("pack-s30")
     a.wait_for("invoice-address", 60)
-    a.click("pay-browser" if a.exists("pay-browser") else "demo-pay")
+    a.click("pay-browser" if direct else "demo-pay")
     t.check(a.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 420),
             "the invoice is credited")
     steps = a.eval("[...document.querySelectorAll('[data-testid=\"pay-step\"]')].map(e => e.dataset.step)")
@@ -253,14 +270,6 @@ def e25(t: T) -> None:
                                 timeout=20) as res:
         evidence = json.load(res)
     t.check(entry["delivery_tx"] in [d["tx_id"] for d in evidence["deliveries"]], "/evidence.json lists the delivery")
-
-
-def wallet_ut(page) -> int:
-    """The browser wallet's spendable µT after a fresh scan, as /upgrade's "Pay … from this browser" sees it."""
-    return int(page.eval("(async () => { const [{ loadIdentity }, { scan }, { balance }] = await Promise.all(["
-                         "import('/app/lib/identity.js'), import('/app/lib/scan.js'), import('/app/lib/wallet.js')]);"
-                         " const identity = await loadIdentity(); await scan(identity);"
-                         " return String(await balance(identity)); })()", await_promise=True, timeout=180))
 
 
 @scenario("E-J", "The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed", CHAIN)

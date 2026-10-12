@@ -44,6 +44,8 @@ Against production (there is no staging; 12-integration §7.7):
   ultron's /64 like two judges in one office. It records the **cold start** (from the locker opening
   to the sponsor grant being spendable in the browser wallet; it must be there within 3:15, spec
   §18.2's step 5) and checks that B6's payment was built and submitted by the browser itself.
+  **E-13** in direct mode takes a one-use pass the same way: its buyer's locker gets the sponsor grant
+  it pays from, even after that network's two grants a day are spent.
 
 | File | What |
 |---|---|
