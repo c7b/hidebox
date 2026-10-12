@@ -149,6 +149,16 @@ class FakeChain:
         return None
 
 
+def result_of(receipt: dict) -> dict:
+    """GET /transactions/{id}/result as tari_indexer 0.45 answers it, from a receipt."""
+    diff = receipt["diff_summary"]
+    accept = {"up_substates": [[u["substate_id"], {}] for u in diff["upped"]],
+              "down_substates": [[d["substate_id"], 0] for d in diff["downed"]]}
+    return {"result": {"Finalized": {"final_decision": receipt["outcome"], "execution_result": {
+        "execute_epoch": receipt["epoch"],
+        "finalize": {"result": {"Accept": accept}, "fee_receipt": receipt["fee_receipt"]}}}}}
+
+
 class _IndexerHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     chain: FakeChain
@@ -175,11 +185,11 @@ class _IndexerHandler(BaseHTTPRequestHandler):
             return self._send(200, found) if found else self._send(404, {"error": "not found"})
         if path.startswith("/transaction-receipts/"):
             receipt = chain.receipts.get(path.removeprefix("/transaction-receipts/"))
-            return self._send(200, {"receipt": receipt}) if receipt else self._send(404, {"error": "not found"})
+            return self._send(200, {"receipt": receipt}) if receipt and self.server.receipts_ready \
+                else self._send(404, {"error": "not found"})
         if path.startswith("/transactions/") and path.endswith("/result"):
             receipt = chain.receipts.get(path.split("/")[2])
-            return self._send(200, {"result": {"Finalized": {"final_decision": "Commit"}}}) if receipt \
-                else self._send(404, {"error": "not found"})
+            return self._send(200, result_of(receipt)) if receipt else self._send(404, {"error": "not found"})
         return self._send(404, {"error": "not found"})
 
     def do_POST(self):
@@ -201,6 +211,7 @@ class FakeIndexer(ThreadingHTTPServer):
 
     def __init__(self, chain: FakeChain):
         self.chain = chain
+        self.receipts_ready = True        # False: like a real indexer in the minutes before it files a receipt
         super().__init__(("127.0.0.1", 0), _IndexerHandler)
         threading.Thread(target=self.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True).start()
 

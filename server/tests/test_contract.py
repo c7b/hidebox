@@ -741,6 +741,17 @@ class ChainReads(unittest.TestCase):
         stale.chain = self.s.chain                # the stale indexer catches up
         self.assertEqual(self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[0], 200)
 
+    def test_tx_view_before_the_receipt_is_filed(self):
+        """Indexers file a transaction's receipt minutes after it is final; until then the view comes from
+        its result, with the same outputs, fee and epoch."""
+        live = self.s.indexer
+        self.s.app.cache.clear()
+        want = self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[2]
+        self.s.app.cache.clear()
+        live.receipts_ready = False
+        self.addCleanup(setattr, live, "receipts_ready", True)
+        self.assertEqual(self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[2], want)
+
 
 class CanaryAbuseSeal(unittest.TestCase):
     def setUp(self):

@@ -103,8 +103,8 @@ def proxy(ctx, rest: str):
 
 
 def tx_view(ctx, tx_id: str):
-    """The "What the chain sees" model: the indexer's committed receipt (kept indefinitely), and for
-    each output what it reveals, read from our mirror or the indexer, never assumed."""
+    """The "What the chain sees" model: the transaction as an indexer holds it, and for each output what
+    it reveals, read from our mirror or the indexer, never assumed."""
     ctx.limit(("chain64", ctx.ip64, 120, 60, 1))
     view = ctx.app.cached("txview:" + tx_id, 60, lambda: _build_view(ctx, tx_id))
     if view is None:
@@ -112,40 +112,70 @@ def tx_view(ctx, tx_id: str):
     return json_response(200, view, "public, max-age=60")
 
 
-def _receipt(ctx, tx_id: str) -> tuple[dict, str] | None:
-    """The committed receipt from the first indexer that has it: a transaction committed seconds ago
-    can reach one indexer before the other."""
+def _ask_each(ctx, path: str, parse):
+    """`parse(answer)` of the first indexer whose answer parses (None: try the next), with its name."""
     answered = False
     for position in range(len(ctx.app.indexers.upstreams)):
         try:
-            status, obj, source = ctx.app.indexers.get_json(f"/transaction-receipts/{tx_id}", only=position)
+            status, obj, source = ctx.app.indexers.get_json(path, only=position)
         except IndexerError:
             continue
         answered = True
-        if status == 200 and isinstance(obj, dict) and isinstance(obj.get("receipt"), dict):
-            return obj["receipt"], source
+        found = parse(obj) if status == 200 and isinstance(obj, dict) else None
+        if found is not None:
+            return found, source
     if not answered:
         raise ApiError(503, "chain_unavailable", "The Tari indexers aren't answering.")
     return None
 
 
+def _from_receipt(obj: dict) -> dict | None:
+    """GET /transaction-receipts/{id}: kept indefinitely, but filled in minutes after the commit."""
+    receipt = obj.get("receipt")
+    if not isinstance(receipt, dict):
+        return None
+    diff = receipt.get("diff_summary") or {}
+    return {"outcome": receipt.get("outcome"), "epoch": receipt.get("epoch"),
+            "upped": [u.get("substate_id") for u in diff.get("upped", []) if isinstance(u, dict)],
+            "downed": [d.get("substate_id") for d in diff.get("downed", []) if isinstance(d, dict)],
+            "fee": (receipt.get("fee_receipt") or {}).get("total_fees_paid")}
+
+
+def _from_result(obj: dict) -> dict | None:
+    """GET /transactions/{id}/result: there as soon as the transaction is final, forgotten after 50 epochs."""
+    final = (obj.get("result") or {}).get("Finalized") if isinstance(obj.get("result"), dict) else None
+    execution = final.get("execution_result") if isinstance(final, dict) else None
+    finalize = execution.get("finalize") if isinstance(execution, dict) else None
+    if not isinstance(finalize, dict):
+        return None
+    accept = (finalize.get("result") or {}).get("Accept") or {}
+    return {"outcome": final.get("final_decision"), "epoch": execution.get("execute_epoch"),
+            "upped": _first_items(accept.get("up_substates", [])), "downed": _first_items(accept.get("down_substates", [])),
+            "fee": (finalize.get("fee_receipt") or {}).get("total_fees_paid")}
+
+
+def _first_items(rows) -> list:
+    """[[substate_id, …], …] → the ids."""
+    return [r[0] for r in rows if isinstance(r, list) and r]
+
+
 def _build_view(ctx, tx_id: str) -> dict | None:
-    found = _receipt(ctx, tx_id)
+    """From the committed receipt, or, until the indexers have filled it in, the transaction's result.
+    Each indexer is asked in turn: a transaction committed seconds ago can reach one before the other."""
+    found = _ask_each(ctx, f"/transaction-receipts/{tx_id}", _from_receipt) \
+        or _ask_each(ctx, f"/transactions/{tx_id}/result", _from_result)
     if found is None:
         return None
-    receipt, source = found
-    diff = receipt.get("diff_summary") or {}
-    upped = [u.get("substate_id") for u in diff.get("upped", []) if isinstance(u, dict)]
-    downed = [d.get("substate_id") for d in diff.get("downed", []) if isinstance(d, dict)]
-    utxos = [sid for sid in upped
-             if isinstance(sid, str) and PARAM_RE["substate"].match(sid) and sid.startswith("utxo_")]
+    tx, source = found
+    upped = [u for u in tx["upped"] if isinstance(u, str)]
+    utxos = [sid for sid in upped if PARAM_RE["substate"].match(sid) and sid.startswith("utxo_")]
     outputs = [_output_view(ctx, sid, ask_indexer=i < INDEXER_LOOKUPS) for i, sid in enumerate(utxos)]
-    fee = (receipt.get("fee_receipt") or {}).get("total_fees_paid")
-    return {"tx_id": tx_id, "status": receipt.get("outcome"), "epoch": receipt.get("epoch"),
+    fee = tx["fee"]
+    return {"tx_id": tx_id, "status": tx["outcome"], "epoch": tx["epoch"],
             "fee_ut": str(fee) if isinstance(fee, int) else None,
-            "inputs": [d for d in downed if isinstance(d, str)],
+            "inputs": [d for d in tx["downed"] if isinstance(d, str)],
             "outputs": outputs,
-            "substates_created": [u for u in upped if isinstance(u, str) and not u.startswith("utxo_")],
+            "substates_created": [u for u in upped if not u.startswith("utxo_")],
             "_source": source}
 
 
