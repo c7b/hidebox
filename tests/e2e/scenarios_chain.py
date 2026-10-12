@@ -152,6 +152,8 @@ def e11(t: T) -> None:
         raise Skipped("opening with a pasted view key needs the t-viewkey / t-viewkey-submit test ids (NOTES, app-ui)")
     c.fill("t-viewkey", keys["view_sk"])
     c.click("t-viewkey-submit")
+    t.check(c.wait_state("view-root", ("ready",) + flows.VIEW_END, 120) == "ready", "the view key alone unlocks the link")
+    c.click("view-open")
     t.check(c.wait_state("view-root", flows.VIEW_END, 120) == "opened", "the view key alone opens a kind-4 file")
     t.check("E2E E-11 for another wallet" in c.text("view-text"), "it is the text that was sent")
     t.check(not t.hygiene(), "no secret in any request (E-03)")
