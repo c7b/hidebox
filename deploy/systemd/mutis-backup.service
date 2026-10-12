@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Daily database backup as `mutis` (spec §8.3): data/backup/mutis-YYYYMMDD.sqlite3, each copy (and
-# each pre-migrate copy) deleted after 7 days.
+# each pre-migrate copy) deleted after 7 days. The one step with full privileges ("+") first deletes
+# the database copies the operator playbooks leave under /var/backups/mutis (root, 0700) at the same
+# age; nothing else there is touched.
 # Blobs are never backed up: a file that made its exit must not live on in our backups.
 [Unit]
 Description=mutis database backup
@@ -10,6 +12,7 @@ Type=oneshot
 User=mutis
 Group=mutis
 Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
+ExecStartPre=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py prune-root
 ExecStart=/usr/bin/python3 -I /usr/local/lib/mutis/backup.py db
 SyslogIdentifier=mutis-backup
 TimeoutStartSec=600

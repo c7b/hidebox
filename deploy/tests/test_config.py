@@ -67,7 +67,8 @@ class CaddyfileTest(unittest.TestCase):
         self.assertGreaterEqual(len(handles), 8)
         for matcher, body in handles:
             if matcher.strip() == "@api":
-                self.assertNotIn("Cache-Control", body, "the API sets its own Cache-Control (spec §6)")
+                proxied = re.sub(r"(?ms)^\t\thandle @too_large \{.*?^\t\t\}", "", body)   # the 413 mirrors the API's no-store
+                self.assertNotIn("Cache-Control", proxied, "the API sets its own Cache-Control (spec §6)")
             else:
                 self.assertRegex(body, r"import revalidate|Cache-Control", matcher or "default handle")
         self.assertNotRegex(self.text, r'Cache-Control "[^"]*immutable', "font names carry no version")
@@ -76,6 +77,21 @@ class CaddyfileTest(unittest.TestCase):
         self.assertIn('header Cache-Control "no-store"', errors)
         self.assertRegex(self.text, r"(?s)http://\{\$MUTIS_HOST\} \{\s*header -Server\s*redir https://")
         self.assertIn("buffer_requests", self.text)
+
+    def test_a_declared_body_over_the_limit_is_a_413_in_the_api_shape(self):
+        """Claims review item 24: never a bare 502 for a 6 MB chunk."""
+        api = re.search(r"(?ms)^\thandle @api \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn("max_size 5MB", api)
+        self.assertRegex(api, r"@too_large expression .*Content-Length.* > 5242880")
+        self.assertIn('respond `{"error":{"code":"too_large","message":"Request body too large.","details":{"max_bytes":5242880}}}` 413', api)
+        self.assertLess(api.index("handle @too_large"), api.index("reverse_proxy"), "refused before the proxy reads it")
+
+    def test_any_other_host_gets_a_421_with_the_headers(self):
+        """Claims review item 23: no bare 200 and no redirect to a made-up Host, on either port."""
+        self.assertRegex(self.text, r"(?s)\(misdirected\) \{\s*import security_headers\s*import site_csp\s*header Cache-Control \"no-store\"\s*respond 421\s*\}")
+        for block in ("https://", "http://"):
+            self.assertRegex(self.text, rf"(?m)^{re.escape(block)} \{{\n\timport misdirected\n\}}$", block)
+        self.assertLess(self.text.index("\n{$MUTIS_HOST} {"), self.text.index("\nhttps:// {"), "after the site")
 
 
 class PinnedWasmTest(unittest.TestCase):
@@ -106,6 +122,15 @@ class UnitsTest(unittest.TestCase):
                 text = path.read_text()
                 for line in HARDENING:
                     self.assertIn(line, text)
+
+    def test_root_runs_only_the_backup_prune(self):
+        """Claims review item 22: the one "+" (full privileges) step deletes root's database copies
+        before the backup; no other unit escalates."""
+        for path in UNITS.glob("*.service"):
+            lines = [line for line in path.read_text().splitlines() if "=+" in line]
+            expected = ["ExecStartPre=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py prune-root"] \
+                if path.name == "mutis-backup.service" else []
+            self.assertEqual(lines, expected, path.name)
 
     def test_jit_only_where_needed(self):
         self.assertEqual(unit("mutis-api.service")["Service"].get("MemoryDenyWriteExecute"), "yes")

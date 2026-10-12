@@ -61,7 +61,7 @@ python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>   # D-09 
 | `/etc/mutis/credentials/` | root 0700 | `walletd-keyring-pass` (systemd `LoadCredential`) |
 | `/home/drive/wallet/` | drive 0700 | walletd's data (never moved, deleted or re-initialised); `backup/` daily copies |
 | `/home/drive/mutis/` | drive 0700 | `receiver.json`, `robot.json` (sidecar-made keys) |
-| `/var/backups/mutis/` | root 0700 | wallet tars and balance snapshots taken before any change to walletd |
+| `/var/backups/mutis/` | root 0700 | wallet tars and balance snapshots taken before any change to walletd; config copies; the go-live and pre-migrate database copies, which `backup.py prune-root` (the first step of `mutis-backup.service`, run as root) deletes at the published `db_backup_days` like every other database copy |
 | `/usr/local/lib/mutis/` | root | `run-walletd.sh`; `run-sidecar.sh`, the config's `sidecar.command` (Node's permission model needs the release's real path, not the `current` symlink); `backup.py`, the one copy both backup units run (provision installs it, every activation refreshes it, a rollback leaves it) |
 | `/usr/local/sbin/mutis-admin` | root | `sudo mutis-admin …` = the release's admin CLI as mutis (as drive for `notarize` and `walletd-fixture`, which talk to walletd), umask 007 |
 
@@ -178,7 +178,7 @@ refuses a newer schema (it says so in the journal; the healthcheck turns red).
 | Canary, evidence | `sudo mutis-admin canary-now`; `sudo systemctl start mutis-evidence` |
 | walletd | `systemctl status walletd`; `journalctl -u walletd` (warnings only); restart `sudo systemctl restart walletd` |
 | Balances | `cd /tmp && sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py balances [--refresh]` |
-| Backups | daily 03:30 (database, as mutis) and 03:35 (wallet + keys, as drive); restore drill: `cd /tmp && sudo -u mutis python3 -I - restore-drill < …/backup.py` (and as drive) |
+| Backups | daily 03:30 (root's database copies under `/var/backups/mutis` pruned, then the database, as mutis) and 03:35 (wallet + keys, as drive); restore drill: `cd /tmp && sudo -u mutis python3 -I - restore-drill < …/backup.py` (and as drive) |
 | L1 wallet | stays in tmux `l1` (a TUI, needed only for burns): `sudo -iu drive tmux attach -t l1`, detach with Ctrl-b d |
 
 The L1 wallet has no unit on purpose: its console UI is how the burn's human capture check is done
