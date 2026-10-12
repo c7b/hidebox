@@ -40,6 +40,8 @@ def local_caddyfile(text: str, buffered: bool = True) -> str:
         ("import /etc/caddy/mutis.d/*.caddy", ""),
         ("http://{$MUTIS_HOST} {", f"http://127.0.0.1:{REDIRECT_PORT} {{\n\tbind 127.0.0.1"),
         ("\n{$MUTIS_HOST} {", f"\nhttp://127.0.0.1:{WEB_PORT} {{\n\tbind 127.0.0.1"),
+        ("\nhttps:// {", f"\nhttp://:{WEB_PORT} {{\n\tbind 127.0.0.1"),
+        ("\nhttp:// {", f"\nhttp://:{REDIRECT_PORT} {{\n\tbind 127.0.0.1"),
         ("/srv/mutis/app/current/dist", f"{WORK}/dist"),
         ("/srv/mutis/status", f"{WORK}/status"),
         ("reverse_proxy 127.0.0.1:8787", f"reverse_proxy 127.0.0.1:{API_PORT}"),
