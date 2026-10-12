@@ -94,7 +94,7 @@ export async function render(main) {
         class: ['a-step', reached[i] && 'a-step--done', reached[i] && i >= 2 && 'a-step--chain'],
         'data-testid': 'pay-step', 'data-step': name, 'data-done': String(reached[i]),
         'aria-current': reached[i] && !reached[i + 1] ? 'step' : null,
-      }, reached[i] && i >= 2 ? icon('check') : null, h('span', {}, t(`upgrade.step.${name}`)))));
+      }, reached[i] ? icon('check') : null, h('span', {}, t(`upgrade.step.${name}`)))));
       if (inv.status === 'credited') {
         pay?.remove();
         stepper.after(h('p', { class: 'a-done' }, t('upgrade.added', { bytes: formatBytes(inv.credited?.bytes ?? pack.bytes), date: formatDate((inv.credited?.until ?? 0) * 1000, { dateStyle: 'medium' }) })));

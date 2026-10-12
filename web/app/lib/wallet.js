@@ -9,7 +9,7 @@ import { b64uEncode, hex, unhex } from './b64.js';
 import { NETWORK_BYTE, TARI_RESOURCE, bindings, parseAddress, ready, tryDecryptUtxo } from './ootle.js';
 import { ApiError, config } from './api.js';
 import { chainIx, demoPay, postCourier, requestSponsor } from './api-locker.js';
-import { inboxState, updateWallet } from './scan.js';
+import { inboxState, scan, updateWallet } from './scan.js';
 import { memoFor } from './courier.js';
 import { withPow } from './pow.js';
 import { authHeaders } from './session.js';
@@ -144,7 +144,8 @@ export async function send(identity, { to, amountUt, memo = null, signal }) {
   for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(NETWORK_BYTE, identity.wallet.ownerSk, i.nonce), sealPk);
   const envelope = w.borEncodeTransaction(w.sealTransaction(tx, sealSk));
 
-  const { transaction_id: txId } = await chainIx('POST', 'transactions', { transaction: envelope });
+  // Submitting takes the locker session: the proxy relays sends of our lockers, not anyone's transactions.
+  const { transaction_id: txId } = await chainIx('POST', 'transactions', { transaction: envelope }, authHeaders());
   const ids = inputs.map((i) => i.utxoId);
   await updateWallet(identity, ids, { pending: { tx: txId, at: Date.now() } });
   try {
@@ -164,18 +165,28 @@ export async function payInvoice(identity, invoice, opts = {}) {
   return send(identity, { to: invoice.address, amountUt: invoice.amount_ut, memo: { Message: invoice.invoice_id }, ...opts });
 }
 
+const courierAmount = (cfg) => BigInt(cfg.courier?.amount_ut ?? '1000');
+
+// Whether the next send goes from this browser: /config says direct, and after a fresh scan (the
+// sponsor grant is an output only a scan finds) the spendable balance covers the courier amount plus
+// the fee. The send screen shows this before Send; deliver() decides by it.
+export async function canSendDirect(identity, cfg, { signal } = {}) {
+  if (!(cfg.send_mode === 'direct' && cfg.features?.direct_send)) return false;
+  await scan(identity, { signal }).catch(() => null); // a failed scan only means the balance is as last seen
+  return (await balance(identity)) >= courierAmount(cfg) + FEE_UT;
+}
+
 // Sends a sealed link (kind 3 or 4, the 125-byte blob) to an Ootle address: from the browser wallet
-// when /config says direct and the wallet covers the courier amount plus the fee, otherwise through
-// our relay (session required; a judge pass draws from the reserved budget). A direct send that finds
-// too little after asking the indexer falls back to the relay too; nothing was submitted then.
+// when canSendDirect(), otherwise through our relay (session required; a judge pass draws from the
+// reserved budget). A direct send that finds too little after asking the indexer falls back to the
+// relay too; nothing was submitted then.
 // -> {mode: 'direct', tx_id, …} | {mode: 'relay', job_id, not_before}
 export async function deliver(identity, { address, kind, blob, signal }) {
   const cfg = await config();
-  const amountUt = BigInt(cfg.courier?.amount_ut ?? '1000');
-  if (cfg.send_mode === 'direct' && cfg.features?.direct_send && await balance(identity) >= amountUt + FEE_UT) {
+  if (await canSendDirect(identity, cfg, { signal })) {
     try {
       const memo = { Message: memoFor(cfg.origin, kind, blob) };
-      return { mode: 'direct', ...(await send(identity, { to: address, amountUt, memo, signal })) };
+      return { mode: 'direct', ...(await send(identity, { to: address, amountUt: courierAmount(cfg), memo, signal })) };
     } catch (e) {
       if (!(e instanceof WalletError && e.code === 'insufficient')) throw e;
     }

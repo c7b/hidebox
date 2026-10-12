@@ -248,6 +248,7 @@ export function installFakeApi({ mirror = [], config = {}, powDifficulty = 2, su
       return json(200, { version: 0, verified: true, substate: { Utxo: { output: { output: { public_nonce: o.nonce, encrypted_data: o.enc } }, is_frozen: false } } });
     }],
     ['POST', /^\/chain\/ix\/transactions$/, async (req) => {
+      if (!req.headers.get('Authorization')) return fail(401, 'auth_required');
       const b = await req.json();
       state.submitted.push(b.transaction);
       return json(200, { transaction_id: hex(await sha256(new TextEncoder().encode(b.transaction))) });

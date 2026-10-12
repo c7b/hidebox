@@ -21,6 +21,7 @@ const START_GRID = 64;
 export const WATCH_EPOCHS = 300;
 
 const yieldToPage = () => new Promise((r) => setTimeout(r, 0));
+const nowS = () => Math.floor(Date.now() / 1000);
 
 export async function inboxState(identity) {
   const s = await idbGet('inbox', 'current');
@@ -73,7 +74,7 @@ export async function scan(identity, { onDelivery, onReceipt, onProgress, signal
       seen.add(row.id);
       const parsed = parseMemo(mine.memo, cfg.memo_origins ?? []);
       if (parsed) {
-        const d = { utxoId: row.id, seq: row.seq, epoch: row.epoch, value: mine.value.toString(), kind: parsed.kind, blob: b64uEncode(parsed.blob), source: 'send', dropIndex: null, openable: false };
+        const d = { utxoId: row.id, seq: row.seq, epoch: row.epoch, found: nowS(), value: mine.value.toString(), kind: parsed.kind, blob: b64uEncode(parsed.blob), source: 'send', dropIndex: null, openable: false, exited: false };
         try {
           const inner = await deliverySecret(identity, d);
           d.openable = true;
@@ -88,7 +89,7 @@ export async function scan(identity, { onDelivery, onReceipt, onProgress, signal
         state.deliveries.push(d);
         onDelivery?.(d);
       } else {
-        const r = { utxoId: row.id, seq: row.seq, epoch: row.epoch, value: mine.value.toString(), text: memoPlainText(mine.memo) };
+        const r = { utxoId: row.id, seq: row.seq, epoch: row.epoch, found: nowS(), value: mine.value.toString(), text: memoPlainText(mine.memo) };
         state.receipts.push(r);
         onReceipt?.(r);
       }
@@ -119,6 +120,13 @@ export async function scan(identity, { onDelivery, onReceipt, onProgress, signal
 export async function updateWallet(identity, utxoIds, patch) {
   const state = await inboxState(identity);
   for (const w of state.wallet) if (utxoIds.includes(w.utxoId)) Object.assign(w, patch);
+  await idbPut('inbox', 'current', state);
+}
+
+// Sets fields on a stored delivery (the inbox: {exited} once its link made its exit in this browser).
+export async function updateDelivery(identity, utxoId, patch) {
+  const state = await inboxState(identity);
+  for (const d of state.deliveries) if (d.utxoId === utxoId) Object.assign(d, patch);
   await idbPut('inbox', 'current', state);
 }
 

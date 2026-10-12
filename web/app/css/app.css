@@ -8,6 +8,7 @@ html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
 .a-page { display: flex; flex-direction: column; min-height: 100svh; }
 .a-main { flex: 1; display: grid; align-content: start; gap: var(--s-6); padding-block: var(--s-7) var(--s-9); outline: none; }
 .a-main > * { min-width: 0; }
+@media (min-width: 1200px) { .a-main { max-width: calc(960px + 2 * var(--gutter)); } }   /* one column, centred like the site's sections */
 .a-h1 { font: var(--t-display); font-size: clamp(36px, 5.2vw, 64px); letter-spacing: -.02em; }
 .a-h2 { font: var(--t-h3); }
 .a-lede { font: var(--t-body); font-size: clamp(17px, 1.4vw, 19px); color: var(--fg-2); max-width: 60ch; }
@@ -135,6 +136,7 @@ html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
 
 /* --- /inbox, /watch ------------------------------------------------------------------------------- */
 .a-inbox, .a-watch, .a-upgrade, .a-verify, .a-tx-view { display: grid; gap: var(--s-5); max-width: 860px; }
+.a-inbox > :empty { display: none; }   /* the problems slot takes no row while there is none */
 .a-scanline { font: var(--t-caption); font-family: var(--font-code); color: var(--fg-2); padding-block: var(--s-2); border-block: 1px solid var(--hair); }
 .a-items { list-style: none; padding: 0; display: grid; }
 .a-item { display: grid; gap: var(--s-3); padding-block: var(--s-3); border-bottom: 1px solid var(--hair); }
@@ -161,9 +163,10 @@ html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
 .a-invoice { display: grid; gap: var(--s-3); padding: var(--s-5); border: 1.5px solid var(--fg); max-width: 640px; }
 .a-invoice-status { font: var(--t-ui); }
 .a-paysteps { gap: var(--s-2); }
-/* Lime only where the chain itself confirmed something (11-brand P-21), with a line and ink text. */
-.a-paysteps .a-step--chain::before { display: none; }
-.a-paysteps .a-step--chain svg { width: 18px; height: 18px; background: var(--ok); color: var(--on-ok); outline: 1px solid var(--line); }
+/* A completed step shows the check in ink; lime only where the chain itself confirmed something (11-brand P-21). */
+.a-paysteps .a-step--done::before { display: none; }
+.a-paysteps .a-step--done svg { width: 18px; height: 18px; outline: 1px solid var(--line); }
+.a-paysteps .a-step--chain svg { background: var(--ok); color: var(--on-ok); }
 
 /* --- /verify/tx --------------------------------------------------------------------------------- */
 .a-outputs, .a-inputs { list-style: none; padding: 0; display: grid; gap: var(--s-3); }

@@ -10,7 +10,7 @@ import { adoptItem } from '../lib/api-locker.js';
 import { deleteItem, deleteShare, manageShare, patchShare } from '../lib/api.js';
 import { createLink } from '../lib/seal.js';
 import { addRecentDrop, removeRecentDrop } from '../lib/store.js';
-import { msToNextLocalMidnight } from '/shared/dates.js';
+import { coarseExpiry, msToNextLocalMidnight } from '/shared/dates.js';
 import { formatDuration } from './core.js';
 import { errorBanner } from './errors.js';
 
@@ -75,7 +75,8 @@ export async function rulesPanel(st, hooks) {
     password: '',
     count: cur.maxViews === 1 ? 'once' : cur.maxViews === null ? 'expires' : 'views',
     views: cur.maxViews && cur.maxViews > 1 ? cur.maxViews : 3,
-    expiry: st.kept && !cur.expiresAt ? 'never' : presets.find((p) => Math.abs(p - curExpiry) < 120) ?? 86400,
+    // The server rounds an expiry up to the hour, so a preset's link may run up to an hour longer.
+    expiry: st.kept && !cur.expiresAt ? 'never' : presets.find((p) => curExpiry - p > -120 && curExpiry - p < 3720) ?? 86400,
   };
   const maxViews = own ? own.max_views : fresh.max_views;
   const maxExpiry = own ? own.max_expiry_s : fresh.max_expiry_s;
@@ -129,7 +130,8 @@ export async function rulesPanel(st, hooks) {
 
   function describe() {
     const x = rule();
-    const at = expiryOf(x);
+    const raw = expiryOf(x);
+    const at = raw && coarseExpiry(raw); // the hour the server will store (it rounds up)
     const who = x.who === 'password' ? (x.mode === 'password' ? 'password_only' : 'password') : x.who === 'only_me' ? 'only_me' : 'link';
     const count = x.maxViews === 1 ? 'once' : x.maxViews === null ? 'unlimited' : 'n';
     sentence.textContent = who === 'only_me'

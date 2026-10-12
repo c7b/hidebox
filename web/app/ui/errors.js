@@ -3,7 +3,7 @@
 // what happened, what did not happen, what to do. The server's English `message` only ever appears
 // inside "Technical details".
 import { h } from '../lib/dom.js';
-import { t } from '../lib/i18n.js';
+import { formatBytes, t } from '../lib/i18n.js';
 import { icon } from './core.js';
 
 // API and client codes that share one sentence.
@@ -25,7 +25,7 @@ const SAME = {
 
 const KNOWN = new Set(`bad_request auth_required bad_auth identity_exists forbidden bad_link bad_origin not_found
 drop_not_found drop_closed conflict upload_broken upload_expired already_opened sold_out gone too_large
-too_large_locker too_large_drop program_drop locked pow_required rate_limited byte_cap uploads_frozen uploads_frozen_all lane_full quota_exceeded
+too_large_locker too_large_drop too_large_request program_drop locked pow_required rate_limited byte_cap uploads_frozen uploads_frozen_all lane_full quota_exceeded
 probation_limit chain_unavailable feature_disabled budget_exhausted bad_address mainnet_address l1_address bad_blob
 unknown_pack internal client network crypto memory clipboard empty folder many text_long program needs_wasm needs_wasm_drop
 integrity read wrong_password keyfile checksum locked_key wrong_passphrase address_mismatch view_key drop_limit
@@ -40,6 +40,7 @@ export function uiError(code) {
 // server's `internal` when our server sent it, and `client` when it came from this tab.
 export function describe(e) {
   const name = e?.name;
+  const api = name === 'ApiError' ? e : e?.cause?.name === 'ApiError' ? e.cause : null;   // a SealError wraps the one it met
   let code = typeof e?.code === 'string' ? e.code : null;
   if (name === 'IntegrityError') code = 'integrity';
   else if (name === 'KeyError' && code === 'locked') code = 'locked_key';
@@ -47,19 +48,22 @@ export function describe(e) {
   else if (name === 'QuotaExceededError' || /allocation|out of memory/i.test(e?.message ?? '')) code = 'memory';
   else if (name === 'DropError' && code === 'limit') code = 'drop_limit';
   if (code === 'uploads_frozen' && e.details?.scope === 'all') code = 'uploads_frozen_all';
+  // A 413 from our server or the web server in front of it (details.max_bytes), not the app's own size check.
+  if (code === 'too_large' && api) code = 'too_large_request';
   code = SAME[code] ?? code;
   return {
     code: KNOWN.has(code) ? code : name === 'ApiError' ? 'internal' : 'client',
     retryAfter: e?.retryAfter ?? null,
-    details: e?.details ?? {},
+    details: e?.details ?? api?.details ?? {},
     message: name === 'ApiError' && e.message !== e.code ? e.message : '',
   };
 }
 
 export function errorText(e, params = {}) {
-  const { code, retryAfter } = describe(e);
+  const { code, retryAfter, details } = describe(e);
   const wait = retryAfter ? mmss(retryAfter) : '';
-  return t(`error.${code}`, { wait, ...params });
+  const max = Number.isFinite(details.max_bytes) ? formatBytes(details.max_bytes) : '';
+  return t(`error.${code}`, { wait, max, ...params });
 }
 
 export function mmss(seconds) {

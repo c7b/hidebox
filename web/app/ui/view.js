@@ -75,6 +75,7 @@ export function viewer(root, opts) {
 
   function ended(reason, details = {}) {
     const state = REASON_STATE[reason] ?? 'revoked';
+    opts.onEnded?.(reason);
     const receipt = cfg.features?.seallog ? h('p', { class: 'a-receipt' }) : null;
     if (receipt) {
       exitReceipt(shareId).then((r) => {
@@ -168,7 +169,7 @@ export function viewer(root, opts) {
     set('ready',
       h('h1', { class: 'a-view-h' }, t('viewer.h')),
       h('ul', { class: 'a-chips' },
-        h('li', { class: 'a-chip mono' }, formatBytes(item.size_stored)),
+        h('li', { class: 'a-chip mono' }, t('viewer.stored_size', { size: formatBytes(item.size_stored) })),
         h('li', { class: 'a-chip', 'data-testid': 'view-views-left', 'data-left': left ?? '' },
           left === 1 && share.max_views === 1 ? t('viewer.once') : left === null ? t('viewer.unlimited') : t('viewer.left', { count: left })),
         share.expires_at ? h('li', { class: 'a-chip a-chip--exit' }, t('viewer.gone', { relative: formatRelative(share.expires_at * 1000) })) : null),
@@ -249,6 +250,7 @@ export function viewer(root, opts) {
     const label = meta.kind === 'text' ? t('viewer.note_label') : name;
     const preview = makePreview(parts, meta, { label });
     const once = opened.burned;
+    if (once) opts.onEnded?.('burned');
     const notices = [
       risk.active ? h('p', { class: 'a-warn' }, icon('warning'), h('span', {}, t('viewer.active', { ext: risk.ext }))) : null,
       meta.kind !== 'text' && isArchiveName(name) ? h('p', { class: 'a-warn' }, icon('warning'), h('span', {}, t('viewer.archive'))) : null,
@@ -268,7 +270,7 @@ export function viewer(root, opts) {
         keepButton(opened, name, parts)),
       h('p', { class: 'a-view-body' }, once ? t('viewer.burn_line', { ticket_min: Math.ceil(cfg.retention.ticket_s / 60) })
         : opened.viewsLeft === null ? '' : t('viewer.left', { count: opened.viewsLeft })),
-      h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { n: opened.chunkCount }))));
+      h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { count: opened.chunkCount }))));
   }
 
   // What the chain saw for a delivery found in this browser's inbox: built only from the mirror row
