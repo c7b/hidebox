@@ -22,11 +22,10 @@
 .noscript { margin-top: var(--s-4); font: var(--t-ui); }
 .hero-sub { margin-top: var(--s-5); font: var(--t-ui); color: var(--fg-2); }
 .hero-built { margin-top: var(--s-3); font: var(--t-ui); color: var(--fg-2); max-width: 44ch; }
-.hero-built .more { color: var(--fg); display: inline; }
-.hero-built .icon { display: inline; vertical-align: -4px; margin-left: .25em; }
+.hero-built .more { color: var(--fg); }
 .if-coarse { display: none; }
 @media (pointer: coarse) { .if-fine { display: none; } .if-coarse { display: inline; } }
-@media (max-width: 639.98px) { #mutis-drop { min-height: 280px; } }
+@media (max-width: 639.98px) { #mutis-drop { min-height: 280px; } .hero { row-gap: var(--s-6); } }
 
 /* ---------- the exit wall (stage) ---------- */
 .wall-scene { background: var(--bg); color: var(--fg); padding-block: var(--s-8); }
@@ -56,9 +55,10 @@
 .keyhole { position: relative; grid-area: 1 / 1; width: 30%; height: auto; align-self: center; fill: var(--lamp-off); }
 .keyhole.on { fill: var(--lamp); filter: drop-shadow(0 0 6px var(--lamp-glow)); opacity: 0; }
 .locker.lit .keyhole.on { opacity: 1; }
+/* Two lines of room for every label, so "(one address)" wrapping doesn't lift its keyhole. */
 .label {
   position: relative; grid-row: 2; font: var(--t-cue); color: var(--fg); text-align: center; line-height: 1.15;
-  background: var(--stage-raised); padding: 2px 6px; max-width: 100%;
+  background: var(--stage-raised); padding: 2px 6px; max-width: 100%; min-height: 2.3em; display: grid; align-content: end;
 }
 .fate { display: none; grid-row: 3; }
 .side, .noise-door { display: none; }
@@ -66,6 +66,7 @@
 .wall-clock { font: 400 clamp(24px, 3vw, 40px)/1 var(--font-script); }
 .wall-end { margin-top: var(--s-7); padding-inline: var(--gutter); text-align: center; display: grid; gap: var(--s-4); justify-items: center; }
 .wall-promise { font: var(--t-h2); letter-spacing: -.015em; }
+@media (max-width: 639.98px) { .wall-promise br { display: none; } .wall-promise { text-wrap: balance; } }
 .wall-caption { font: var(--t-direction); color: var(--fg-2); max-width: 46ch; }
 
 /* Static wall (no JavaScript, or reduced motion): every locker shows its fate. */

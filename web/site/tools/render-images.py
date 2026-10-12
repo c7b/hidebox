@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: MIT
 """Renders the OG cards and app icons in web/site/og/ to PNGs in web/site/static/ with headless
-Chromium (Debian package), over the DevTools pipe. Python standard library only; run as `build` on
-the server: python3 -I web/site/tools/render-images.py
+Chromium (Debian package), over the DevTools pipe, and wraps the 192 px icon as favicon.ico (an ICO
+may hold PNG data; Bing, feed readers and some unfurlers ask for that path by name). Python standard
+library only; run as `build` on the server: python3 -I web/site/tools/render-images.py
 """
+import struct
 import sys
 from pathlib import Path
 
@@ -11,9 +13,17 @@ from cdp import Browser  # noqa: E402
 
 SITE = Path(__file__).resolve().parents[1]
 OG_MAX_BYTES = 150 * 1024   # 11-brand §13.10
-JOBS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630),
+JOBS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630), ("og-es.html", "og-es.png", 1200, 630),
         ("icon.html", "icon-512.png", 512, 512), ("icon.html", "icon-192.png", 192, 192),
         ("icon.html", "apple-touch-icon.png", 180, 180))
+
+
+def write_ico(png: Path, out: Path) -> None:
+    """One ICO directory entry whose image data is the PNG as it is (192 px, 32-bit)."""
+    data = png.read_bytes()
+    header = struct.pack("<HHH", 0, 1, 1)
+    entry = struct.pack("<BBBBHHII", 192, 192, 0, 0, 1, 32, len(data), len(header) + 16)
+    out.write_bytes(header + entry + data)
 
 
 def main() -> int:
@@ -33,6 +43,8 @@ def main() -> int:
             for line in page.console():
                 print("  console:", line)
                 failed = failed or "OTS parsing error" in line
+    write_ico(SITE / "static" / "icon-192.png", SITE / "static" / "favicon.ico")
+    print(f"favicon.ico: {(SITE / 'static' / 'favicon.ico').stat().st_size} bytes")
     return 1 if failed else 0
 
 

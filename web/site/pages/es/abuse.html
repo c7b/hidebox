@@ -15,7 +15,7 @@
 <meta property="og:title" content="Reportar un enlace · mutis">
 <meta property="og:description" content="Reporta un enlace o un buzón de mutis que aloje algo dañino. Puedes quitar la llave: retiramos enlaces por su id sin ver dentro.">
 <meta property="og:url" content="{{ORIGIN}}/es/abuse">
-<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image" content="{{ORIGIN}}/og-es.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
@@ -49,14 +49,15 @@
       <p class="hint" id="abuse-link-hint">Un enlace a un archivo (<code>/s/…</code>) o a un buzón (<code>/d/…</code>).</p>
     </div>
     <div class="field">
-      <label for="abuse-category">Qué pasa</label>
+      <label for="abuse-category">Motivo</label>
       <select id="abuse-category" name="category" required>
+        <option value="" disabled selected>Elige una</option>
         <option value="csam">Material de abuso sexual infantil</option>
         <option value="malware">Malware</option>
         <option value="phishing">Phishing</option>
         <option value="harassment">Acoso</option>
         <option value="copyright">Derechos de autor</option>
-        <option value="other" selected>Otra cosa</option>
+        <option value="other">Otra cosa</option>
       </select>
     </div>
     <div class="field">

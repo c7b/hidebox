@@ -6,9 +6,10 @@ and js/stats.js shows the right one from /api/v1/config. Without this step, read
 JavaScript, crawlers and llms-full.txt would get the HTML's defaults (relay sends, wallet-read
 amounts, SealLog off), and every visitor would see the copy switch once /config arrives. This gives
 each variant its `hidden` attribute from the deployment's mutis.toml before anything is served, then
-writes llms-full.txt again from the built pages. A condition the TOML doesn't set keeps the HTML's
-default, which is also the server's. The runtime switch stays, for flags an admin changes later
-without a rebuild (`mutis-admin feature`).
+writes llms-full.txt again from the built pages, and keeps in llms.txt only the lines whose
+`{when:name=value}` marker is true here (the marker is dropped; a line for an unknown condition
+stays). A condition the TOML doesn't set keeps the HTML's default, which is also the server's. The
+runtime switch stays, for flags an admin changes later without a rebuild (`mutis-admin feature`).
 
 Run it on dist/ right after the pages are copied, before includes and placeholders are expanded:
   python3 -I web/site/tools/variants.py --config /etc/mutis/mutis.toml dist
@@ -33,6 +34,7 @@ READ = {
     "security_drop": lambda c: "on" if c["security_drop_url"] else "off",
 }
 VARIANT = re.compile(r'<[a-z][a-z0-9]*\s[^>]*?\bdata-when="([a-z_]+)=([a-z0-9_]+)"[^>]*>')
+LINE = re.compile(r'^\{when:([a-z_]+)=([a-z0-9_]+)\} (.*\n?)', re.M)
 HIDDEN = re.compile(r'\s+hidden(?=[\s>])')
 NOT_PAGES = ("app/", "vendor/", "shared/", "site/")
 
@@ -57,6 +59,16 @@ def resolve(html: str, known: dict) -> str:
     return VARIANT.sub(one, html)
 
 
+def resolve_lines(text: str, known: dict) -> str:
+    """llms.txt: a marked line stays, unmarked, when its condition holds here; goes when it doesn't."""
+    def one(m: re.Match) -> str:
+        name, wanted, line = m.groups()
+        if name not in known:
+            return line
+        return line if known[name] == wanted else ""
+    return LINE.sub(one, text)
+
+
 def apply(dist: Path, cfg: dict) -> dict:
     known = facts(cfg)
     changed = 0
@@ -70,6 +82,9 @@ def apply(dist: Path, cfg: dict) -> dict:
             changed += 1
     llms = llms_full.render(lambda name: (dist / name / "index.html").read_text(encoding="utf-8"))
     (dist / "llms-full.txt").write_text(llms, encoding="utf-8")
+    short = dist / "llms.txt"
+    if short.is_file():
+        short.write_text(resolve_lines(short.read_text(encoding="utf-8"), known), encoding="utf-8")
     return {"facts": known, "pages_changed": changed}
 
 

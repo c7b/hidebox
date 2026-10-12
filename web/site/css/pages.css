@@ -14,6 +14,16 @@ main.container h2 { font: 700 clamp(26px, 2.8vw, 38px)/1.1 var(--font-script); l
 .data-table th, .data-table td { text-align: left; vertical-align: top; padding: var(--s-3) var(--s-4) var(--s-3) 0; border-bottom: 1px solid var(--hair); }
 .data-table thead th { font: var(--t-scene); text-transform: uppercase; border-bottom: 1px solid var(--fg); }
 .data-table tbody th { font-weight: 600; }
+/* On a phone each row stacks, every cell under its column's name (data-cue), as the home page's
+   "What we store" table does; nothing is clipped off-screen. */
+@media (max-width: 639.98px) {
+  .data-table, .data-table tbody, .data-table tr, .data-table th, .data-table td { display: block; min-width: 0; }
+  .data-table thead { display: none; }
+  .data-table tr { padding-block: var(--s-3); border-bottom: 1px solid var(--hair); }
+  .data-table th, .data-table td { border: 0; padding: var(--s-1) 0; }
+  .data-table tbody th { font: var(--t-h3); }
+  .data-table td::before { content: attr(data-cue); display: block; font: var(--t-scene); text-transform: uppercase; color: var(--fg-2); }
+}
 .box-note { border: 1px solid var(--line); padding: var(--s-5); background: var(--bg-raised); }
 .box-note > * + * { margin-top: var(--s-3); }
 .price { color: var(--pay-text); font-weight: 700; }
@@ -47,7 +57,7 @@ main.container h2 { font: 700 clamp(26px, 2.8vw, 38px)/1.1 var(--font-script); l
 .track-cols { display: none; }
 .track ol { list-style: none; padding: 0; border-top: 1px solid var(--fg); }
 .track li { display: grid; gap: var(--s-2); padding-block: var(--s-4); border-bottom: 1px solid var(--hair); }
-.track .do { font-weight: 600; }
+.track .do strong { font-weight: 600; }
 .track .see { color: var(--fg-2); }
 .track .see::before { content: "You should see: "; font-family: var(--font-script); color: var(--fg); }
 :lang(es) .track .see::before { content: "Deberías ver: "; }
@@ -58,6 +68,7 @@ main.container h2 { font: 700 clamp(26px, 2.8vw, 38px)/1.1 var(--font-script); l
   .track .see::before { content: none; }
 }
 .track .n { font-family: var(--font-script); font-weight: 700; }
+.status-reasons { font: var(--t-ui); color: var(--fg-2); padding-left: 1.2em; margin-bottom: var(--s-4); }
 .status-list { list-style: none; padding: 0; border-top: 1px solid var(--fg); }
 .status-list li { display: flex; justify-content: space-between; gap: var(--s-4); padding-block: var(--s-3); border-bottom: 1px solid var(--hair); }
 .state { font: var(--t-cue); padding: 2px var(--s-2); border: 1px solid var(--line); }

@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: MIT
-# Content pages are open to every crawler, AI crawlers included. Links, drops and lockers are private.
+# Content pages are open to every crawler, AI crawlers included, and so are the public configuration
+# and numbers that the pages fill in. Links and lockers are private; a drop page is public by design
+# and carries its own noindex.
 User-agent: *
 Allow: /
+Allow: /api/v1/config$
+Allow: /api/v1/stats$
 Disallow: /s/
 Disallow: /t$
-Disallow: /d/
 Disallow: /api/
 Disallow: /locker
 Disallow: /inbox

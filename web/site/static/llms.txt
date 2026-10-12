@@ -1,16 +1,26 @@
 # mutis
 
-> mutis is an open-source (MIT) encrypted file-sharing service. Files are encrypted in the browser (AES-256-GCM, WebCrypto) before upload; the server stores only ciphertext and never receives keys. Each file has an exit rule: once, a number of opens, a set time, or until deleted, and the server deletes the ciphertext when the rule says so. A file's key can be sent to a Tari address sealed inside a stealth TARI payment that only the recipient's keys open. Anyone can leave a file for a mutis user through a dead-drop link; deliveries travel on Tari Ootle sealed to the recipient's owner and view keys. A payment is credited only after a Tari-run public indexer confirms it on the Ootle and, where the deployment runs the proof sidecar, the official Tari library has proven its amount ({{ORIGIN}}/pricing says which). Runs on the Esmeralda testnet; tTARI has no monetary value. Independent project, not affiliated with Tari Labs.
+> mutis is an encrypted file drop built on Tari Ootle's privacy features (Esmeralda testnet). Your browser encrypts every file (AES-256-GCM, WebCrypto) before upload; the server stores only ciphertext and never receives a key. A file's key can travel to any Tari address sealed inside a stealth tTARI payment: the chain shows a hidden amount, a one-time owner and an encrypted memo, and only the recipient's keys open it. Anyone can leave a file for a mutis user through a dead-drop link; deliveries are sealed to the recipient's owner and view keys, so a view key sees arrivals but opens no file. Each file leaves on its rule (once, a number of opens, a set time, or until deleted) and the server deletes the ciphertext when the rule says so. Rented space is paid in tTARI; tTARI has no monetary value. Open source (MIT). Independent project, not affiliated with Tari Labs.
 
-The live limits (file sizes, expiry, views, prices) are in the public configuration: {{ORIGIN}}/api/v1/config
+{when:send_mode=direct} Sends: once a locker's testnet grant arrives (a minute or two after it opens), the browser builds and pays for the stealth payment itself and the server only passes it to the network, so the server never learns the destination; before that, and for dead-drop deliveries, the server's relay posts it and learns the address only while it is sent.
+{when:send_mode=relay} Sends: the server's relay posts the stealth payment and learns the destination address only while it is sent, never the key.
+{when:seallog=on} SealLog: every stored file's ciphertext hash and every exit are committed to SealLog, a template on the Ootle with no owner, at each checkpoint; anyone can check an inclusion proof against the component's state on the chain.
+{when:proof=proven} Payments: rented space is credited only after the official Tari library (ootle-wasm) proves the payment's exact amount and a Tari-run public indexer shows it committed.
+{when:proof=wallet} Payments: rented space is credited after the server's wallet sees the payment and a Tari-run public indexer confirms it on the chain; the amount is the one the wallet reads.
+
+The live limits (file sizes, expiry, opens, prices) are in the public configuration: {{ORIGIN}}/api/v1/config
 
 ## Docs
 
 - [How it works]({{ORIGIN}}/how): the mechanism, who sees what, and what mutis can't protect you from
 - [Security]({{ORIGIN}}/security): threat model, cryptography, logging, verifying a deployment
+- [Privacy]({{ORIGIN}}/privacy): every table the server keeps, column by column
 - [Pricing and limits]({{ORIGIN}}/pricing): free space, rented space in tTARI
+- [FAQ]({{ORIGIN}}/faq)
 - [Council guide]({{ORIGIN}}/judges): a two-track walkthrough with expected results
+- [Spanish]({{ORIGIN}}/es/)
 - [Full text of How it works and Security]({{ORIGIN}}/llms-full.txt)
+- [Notarized releases]({{ORIGIN}}/releases.json): each release's manifest hash, recorded through SealLog
 
 ## API
 

@@ -4,8 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mutis — archivos cifrados que saben cuándo irse</title>
-<meta name="description" content="Suelta un archivo. Tu navegador lo cifra antes de subirlo y se va cuando digas: una vez, a cierta hora o para una dirección de Tari. Gratis.">
+<title>mutis — archivos cifrados, llaves por Tari Ootle</title>
+<meta name="description" content="Tu navegador cifra cada archivo; solo guardamos texto cifrado. Manda su llave a una dirección de Tari en un pago stealth; cada salida queda en el Ootle.">
 <link rel="canonical" href="{{ORIGIN}}/es/">
 <link rel="alternate" hreflang="en" href="{{ORIGIN}}/">
 <link rel="alternate" hreflang="es" href="{{ORIGIN}}/es/">
@@ -13,9 +13,9 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="mutis">
 <meta property="og:title" content="mutis — Cada secreto sabe cuándo hacer mutis.">
-<meta property="og:description" content="Archivos cifrados que se van en su señal. Tu navegador cifra cada archivo antes de subirlo; nunca vemos qué hay adentro.">
+<meta property="og:description" content="Archivos cifrados sobre Tari Ootle: las llaves viajan selladas en pagos stealth y cada salida queda registrada en el Ootle. Nunca vemos qué hay adentro.">
 <meta property="og:url" content="{{ORIGIN}}/es/">
-<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image" content="{{ORIGIN}}/og-es.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="mutis. Cada secreto sabe cuándo hacer mutis. Una pared oscura de casilleros con una sola cerradura encendida.">
@@ -34,22 +34,27 @@
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/home.js" integrity="{{SRI}}"></script>
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "mutis", "url": "{{ORIGIN}}/es/",
- "description": "Archivos cifrados que se van en su señal. Se cifran en el navegador antes de subirlos; el servidor solo guarda texto cifrado.", "inLanguage": "es",
- "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
- "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "license": "{{REPO_URL}}/blob/main/LICENSE"}
+{"@context": "https://schema.org", "@graph": [
+ {"@type": "WebSite", "@id": "{{ORIGIN}}/#website", "url": "{{ORIGIN}}/", "name": "mutis", "inLanguage": ["en", "es"]},
+ {"@type": "SoftwareApplication", "@id": "{{ORIGIN}}/es/#app", "name": "mutis", "url": "{{ORIGIN}}/es/", "inLanguage": "es",
+  "description": "Archivos cifrados sobre Tari Ootle (testnet). El navegador cifra cada archivo antes de subirlo y el servidor solo guarda texto cifrado; la llave de un archivo puede viajar a una dirección de Tari sellada dentro de un pago stealth de tTARI.",
+  "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "featureList": ["Cifrado en el navegador (AES-256-GCM, WebCrypto)", "Reglas de salida: una vez, cierto número de aperturas, una hora fija, o hasta que lo borres", "Enviar la llave de un archivo a una dirección de Tari dentro de un pago stealth", "Enlaces de buzón entregados por Tari Ootle", "SealLog: un registro público de archivos guardados y salidas en el Ootle"],
+  "image": "{{ORIGIN}}/og.png", "softwareHelp": {"@type": "CreativeWork", "url": "{{ORIGIN}}/es/how"},
+  "license": "https://spdx.org/licenses/MIT.html", "isPartOf": {"@id": "{{ORIGIN}}/#website"}}]}
 </script>
 </head>
 <body class="home">
-<a class="skip-link" href="#drop">Saltar a la zona para soltar archivos</a>
+<a class="skip-link" href="#drop">Ir a la zona de archivos</a>
 <!--#include header-es-->
 <main id="main">
 
   <section class="hero" id="drop" aria-labelledby="hero-h">
     <p class="fade fade-in" aria-hidden="true">FUNDIDO DE ENTRADA:</p>
     <div class="hero-main">
-      <h1 class="hero-h1" id="hero-h"><span class="if-fine">Suelta un archivo.</span><span class="if-coarse">Elige un archivo.</span></h1>
-      <p class="hero-line2"><span class="if-fine">Se cifra antes de salir de esta pestaña.</span><span class="if-coarse">Se cifra antes de salir de tu teléfono.</span></p>
+      <h1 class="hero-h1" id="hero-h"><span class="if-fine">Suelta un archivo.</span> <span class="if-coarse">Elige un archivo.</span></h1>
+      <p class="hero-line2"><span class="if-fine">Se cifra antes de salir de esta pestaña.</span> <span class="if-coarse">Se cifra antes de salir de tu teléfono.</span></p>
       <div id="mutis-drop" data-variant="hero"></div>
       <noscript><p class="noscript">mutis cifra en tu navegador, así que necesita JavaScript.</p></noscript>
       <script type="module" src="/app/drop-widget.js" integrity="{{SRI}}"></script>
@@ -97,7 +102,7 @@
     <div class="container">
       <p class="scene-heading"><span class="no" aria-hidden="true">2</span>INT. TRAS BAMBALINAS — CONTINUO<span class="no" aria-hidden="true">2</span></p>
       <div class="section-head">
-        <h2 id="locks-h">Dos cerraduras. Solo una somos nosotros.</h2>
+        <h2 id="locks-h">Dos cerraduras. Solo una es nuestra.</h2>
         <p class="lede">Secretos programables: tú escribes la regla y nuestro servidor lleva el tiempo. El Ootle lleva llaves que no podemos leer y pagos cuyo monto solo ven quien paga y quien cobra<span data-when="seallog=on" hidden>, y guarda los recibos</span>.</p>
       </div>
       <div class="locks">
@@ -142,7 +147,7 @@
             <li data-when="send_mode=direct" hidden><span>Tu navegador sella la llave del archivo a su dirección y envía un pago stealth<span data-needs="config" hidden> de <span data-v="courier_amount"></span> tTARI</span> que la lleva.</span></li>
             <li><span>Su bandeja de mutis encuentra el pago, abre el sello y luego el archivo.</span></li>
           </ol>
-          <p class="aside">Necesita una dirección de Tari. ¿No tiene cartera? Un casillero gratuito le crea una en segundos, sin correo.</p>
+          <p class="aside">La otra persona necesita una dirección de Tari. ¿No tiene cartera? Un casillero gratuito le da una en segundos, sin correo.</p>
         </div>
         <div class="chain-col">
           <figure class="chain-card" data-chain-card hidden>
@@ -157,7 +162,7 @@
             <p class="links"><a class="more" data-chain="verify" href="/verify">Lo que ve la cadena<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a><a class="more" data-chain="indexer" href="/verify">Compruébalo en el indexador de Tari<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
           </figure>
           <p class="footnote" data-when="send_mode=relay">Nuestro relay publica el pago por ti, así que sabemos a qué dirección envías, nunca la llave.</p>
-          <p class="footnote" data-when="send_mode=direct" hidden>Cuando la cartera de tu navegador ya tiene su saldo de testnet (más o menos un minuto después de abrir tu casillero), tu navegador arma y paga el pago por su cuenta y nosotros lo pasamos a la red: vemos que tu casillero envió una transacción, no para quién. Antes de eso, nuestro relay lo publica y sabe la dirección, nunca la llave.</p>
+          <p class="footnote" data-when="send_mode=direct" hidden>Cuando la cartera de tu navegador ya tiene su saldo de testnet (uno o dos minutos después de abrir tu casillero), tu navegador arma y paga el pago por su cuenta y nosotros lo pasamos a la red: vemos que tu casillero envió una transacción, no para quién. Antes de eso, nuestro relay lo publica y sabe la dirección, nunca la llave.</p>
           <p class="footnote">La cadena muestra una salida con monto oculto, dueño oculto y memo cifrado. La comisión es pública. Los pagos que envía nuestro relay salen de una sola cartera con la misma comisión, así que alguien que observe podría agruparlos como “enviados por mutis”, pero no ver a quién.</p>
           <p class="footnote" data-when="send_mode=direct" hidden>Los envíos desde tu navegador gastan el saldo que le asigna nuestra cartera patrocinadora, y luego el cambio de cada envío. Cualquiera que lea el Ootle puede vincular tus envíos entre sí y con nuestra cartera patrocinadora, pero no ver a quién ni cuánto.</p>
         </div>
@@ -165,7 +170,7 @@
 
       <div class="split subpart">
         <div class="section-head">
-          <h3 id="drop-h">O deja que cualquiera te deje uno.</h3>
+          <h3 id="drop-h">O que cualquiera te deje uno.</h3>
           <p>Crea un enlace de buzón en tu casillero y ponlo donde quieras: una bio, la página de una redacción, un security.txt. Cualquiera puede dejarte un archivo ahí, sin cuenta y sin cartera.</p>
         </div>
         <div>
@@ -220,7 +225,7 @@
           <p class="lede" data-canary-aged hidden>Este es un archivo que ciframos <span data-canary-age></span>. Está en nuestro disco ahora mismo.</p>
           <a class="btn btn-primary" href="/api/v1/canary/raw" download><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#save"/></svg>Descargar los bytes guardados</a>
           <div class="copy-row"><code id="canary-cmd">curl -OJ {{ORIGIN}}/api/v1/canary/raw</code><button type="button" class="btn" data-copy="canary-cmd" hidden>Copiar</button></div>
-          <p class="footnote" data-canary-tx hidden>Su llave salió por el Ootle, sellada a nuestro propio casillero de prueba: <a data-canary-tx-link href="/verify">tx <span data-canary-tx-short></span></a>.</p>
+          <p class="footnote" data-canary-tx hidden>Su llave salió por el Ootle, sellada para nuestro propio casillero de prueba: <a data-canary-tx-link href="/verify">tx <span data-canary-tx-short></span></a>.</p>
           <p class="footnote">Muestra lo que guarda nuestro disco. No puede probar que no podemos leer tus archivos: este lo ciframos nosotros, y publicamos su llave un día después.</p>
         </div>
       </div>
