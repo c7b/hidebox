@@ -22,7 +22,10 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 - A state-changing request with an `Origin` header must carry the deployment's own origin
   (403 `bad_origin`). No CORS headers are sent.
 - Proof of work: `POST /pow {"purpose"}` returns a challenge and a difficulty; requests that need one
-  carry `"pow": {"challenge", "nonce"}`. A missing or stale one answers 428 `pow_required`.
+  carry `"pow": {"challenge", "nonce"}`. A missing or stale one answers 428 `pow_required`. A challenge
+  is good for 300 s, once, from the network it was issued to (the network key is part of its MAC), and
+  only at a difficulty within two bits of what that network is asked for at the time it is spent:
+  a 428 `pow_invalid` says to solve a fresh one, at the difficulty in `details`.
 - Errors: `{"error": {"code": "<snake_case>", "message": "<English>", "retry_after": <s>, "details": {…}}}`
   (`retry_after` and `details` only when they apply). The app maps `code` to its copy; `message` is for
   logs and fallbacks. 429 `rate_limited` and `budget_exhausted` carry `Retry-After`.
@@ -64,7 +67,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /jobs/{id}` | whoever holds the job id | `queued`, `sending`, `done` (with `tx_id`) or `failed`; never an address |
 | `GET /chain/utxos?after=&limit=` | anyone | the server's mirror of every TARI UTXO since `mirror_start_epoch`, for scanning in the browser |
 | `GET /chain/seq?epoch=` | anyone | the mirror position right before an epoch, to pass as `after` |
-| `GET /chain/tx/{id}/view` | anyone | "What the chain sees" for one transaction: hidden amounts, one-time owners, encrypted memos, the fee |
+| `GET /chain/tx/{id}/view` | anyone | "What the chain sees" for one transaction: hidden amounts, one-time owners, encrypted memos, the fee. An id the indexers don't know (up to four upstream calls) draws on a budget of ten a minute per network |
 | `GET /chain/ix/{path}` | anyone | an allowlisted pass-through to the Tari indexers (substates with proofs, results, the epoch) |
 | `POST /chain/ix/transactions` | a locker session | submits a transaction in direct mode: only `{"transaction": <base64 BOR envelope>}` shaped like the app's own send (one stealth transfer paying its fee of at most `courier.max_fee_ut` from a bucket, one output plus change, up to four inputs, no other instruction), 12 KB at most; anything else is `422 invalid`. The proxy is not a relay for other transactions |
 | `POST /invoices`, `GET /invoices/{id}` | the locker | a pack invoice: a receiver address with the invoice's reference, the amount; its status (`pending`, `seen`, `credited`, …) |
