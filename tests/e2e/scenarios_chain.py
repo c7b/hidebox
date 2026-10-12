@@ -47,17 +47,18 @@ def open_inbox_item(t: T, page, source: str) -> str:
 
 def tx_view(t: T, page, tx: str) -> None:
     page.goto(f"{t.origin}/verify/tx/{tx}")
-    page.wait_for("tx-root", 60)
-    t.check(page.eval("[...document.querySelectorAll('[data-testid=\"tx-output\"]')].every(e => e.dataset.amount === 'hidden')"),
-            "What the chain sees: every output amount is hidden")
-    t.check(page.exists("tx-fee"), "the fee is shown (public)")
+    page.wait("!!document.querySelector('[data-testid=\"tx-fee\"], [data-testid=\"error-banner\"]')", 90)
+    t.check(page.exists("tx-fee"), "What the chain sees: the transaction, with its fee (public)")
+    amounts = page.eval("[...document.querySelectorAll('[data-testid=\"tx-output\"]')].map(e => e.dataset.amount)")
+    t.check(amounts and set(amounts) == {"hidden"}, f"every output amount is hidden ({amounts})")
 
 
 def send_to_address(t: T, page, text: str, address: str, safety: list[str]) -> str:
     """Sender side of a send to a Tari address (/send); returns the delivery transaction id."""
     page.goto(t.origin + "/send")
     page.wait_for("drop-input")
-    flows.seal_text(page, text)
+    flows.lock_text(page, text)
+    page.wait_for("send-recipient", 120)
     page.fill("send-recipient", address)
     page.wait_for("send-safety")
     t.check(safety_emoji(page, "send-safety") == safety, "the send screen shows the recipient's safety code")
@@ -131,7 +132,8 @@ def e11(t: T) -> None:
     b = t.actor()
     b.goto(t.origin + "/send")
     b.wait_for("drop-input")
-    flows.seal_text(b, "E2E E-11 for another wallet")
+    flows.lock_text(b, "E2E E-11 for another wallet")
+    b.wait_for("send-recipient", 120)
     b.fill("send-recipient", keys["address"])
     b.choose("send-kind", "4")
     b.click("send-submit")
@@ -166,6 +168,7 @@ def e12(t: T) -> None:
     safety, address = locker_identity(a)
     leave_photo(t, t.actor(), drop_url, safety)
     a.goto(t.origin + "/locker")
+    a.wait_for("locker-safety", 120)
     a.click("export-view-key")
     a.wait_for("view-key-value")
     view_key = a.eval("(() => { const e = document.querySelector('[data-testid=\"view-key-value\"]');"
