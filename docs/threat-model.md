@@ -17,7 +17,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 |---|---|---|---|
 | Network observer | see TLS metadata | HTTPS only, HSTS, Padmé size buckets | timing and volume |
 | A curious or compromised server (including our host) | read the database and the stored files, change responses, watch IP addresses live | everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or locker addresses stored for logins; no sharing graph; each chunk is authenticated together with its header | can serve malicious JavaScript (see "Verify"); can refuse service; sees the metadata listed on `/how`; in relay mode knows each send's destination while it is queued; can ignore a deletion and keep ciphertext, which is useless without the key |
-| Someone with only the link's path | ask for its status | the key lives only after the `#`; opening needs an access token derived from it; link + password adds a link proof | learns that a link exists, and its state |
+| Someone with only the link's path | ask for its status | the key lives only after the `#`; opening needs an access token derived from it; link + password adds a link proof | learns that a link exists, its state, and once it has ended why and on what day (with SealLog: its exit receipt, so the file's id and which checkpoint windows its arrival and exit fell in); not the open count |
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links |
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets |
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours; direct sends link to our sponsor wallet and to each other |
@@ -25,7 +25,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Phishing through our sends | make someone receive a mutis link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact mutis delivery as plain text | someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small files and files without a locker, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts, a cap on requests in flight per network | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working |
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
-| Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash and re-hashed before it runs; SRI on every script and stylesheet | browser extensions (out of scope) |
+| Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash and re-hashed before it runs; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet (a firewall rule per user on the wallet port); jobs are validated; daily budget slices | at most the daily budgets |
 
 ## Send modes
@@ -39,10 +39,14 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
   list an output only once the network's consensus epoch reaches it); the chain already shows those
   transactions as ours.
 - **Direct** (`send_mode = "direct"`): the browser builds, signs and pays for the payment from a small
-  grant our sponsor wallet sends to the locker, and the server passes it to the network without
-  learning who it's for. The chain links those sends to the sponsor wallet and to each other. When the
-  browser asks our proxy for its transaction's result and it has committed, the server adds its outputs
-  to the mirror; it already passed that transaction on, so it learns nothing new.
+  grant our sponsor wallet sends to the locker (one a day per locker, two per /64), and the server
+  passes it to the network without learning who it's for. That submit path takes a locker session and
+  relays only a transaction shaped like the app's own send (one stealth transfer paying its own fee,
+  one output plus change), so it is no address-hiding relay for other transactions. The chain links those sends to the sponsor
+  wallet and to each other. When the browser asks our proxy for its transaction's result and it has
+  committed, the server adds its outputs to the mirror; it already passed that transaction on, so it
+  learns nothing new. Until the grant is spendable (about a minute after the locker opens) a send falls
+  back to the relay, and the send screen says which way the next send goes before Send is pressed.
   Dead-drop deliveries still go through the relay, because a drop's address is public by design.
 
 ## Payments
