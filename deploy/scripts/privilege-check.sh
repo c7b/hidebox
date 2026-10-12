@@ -74,9 +74,13 @@ check "drive (group mutis) can write the database" ok as drive test -w /srv/muti
 leaked() { ps -eo args | grep -q -F -f /etc/mutis/credentials/walletd-keyring-pass; }
 check "walletd's keyring password is on no process command line" denied leaked
 
-# D-11: no npm toolchain anywhere on the box.
+# D-11: no npm toolchain anywhere on the box. Debian's nodejs ships corepack, which can fetch pnpm
+# or yarn from the registry on first use; nothing calls it, and its shims must not exist.
 check "npm is not installed" denied command -v npm
 check "npx is not installed" denied command -v npx
+check "pnpm is not installed" denied command -v pnpm
+check "yarn is not installed" denied command -v yarn
+check "pip is not installed" denied command -v pip
 
 echo "privilege-check: $([ "$failures" = 0 ] && echo PASS || echo "FAIL ($failures)")"
 exit $((failures > 0))

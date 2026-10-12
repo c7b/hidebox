@@ -133,6 +133,16 @@ http://{$MUTIS_HOST} {
 		}
 	}
 
+	# Pages and files are read-only: a TRACE, PUT, POST or DELETE on them answers 405 (the API above
+	# takes its own methods).
+	@notread not method GET HEAD
+	handle @notread {
+		import site_csp
+		header Allow "GET, HEAD"
+		header Cache-Control "no-store"
+		respond 405
+	}
+
 	handle @viewer {
 		import app_csp
 		import revalidate
