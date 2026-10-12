@@ -46,12 +46,22 @@ stealth outputs keep it hidden, so mutis uses those.
 ## What the server sees
 
 Encryption hides contents, not everything. The server stores ciphertext, padded sizes, arrival hours,
-exit rules and open counts. It sees IP addresses while you are connected and never writes them to
-disk. In relay mode (this deployment's setting, `send_mode` in
-[`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config)) it learns the Tari address you send
-to while the send is queued, then scrubs it. For a relay send, anyone watching the Ootle sees that our wallet
-paid a fee; the amount, the recipient and the key stay hidden. The complete tables, party by party, are on `/how`; what
-we can't protect you from is on `/how` and `/security`.
+expiries rounded up to the hour, exit rules and open counts. It sees IP addresses while you are
+connected and never writes them to a log. The send mode is `send_mode` in
+[`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config), and the site's copy follows it:
+
+- **Direct** (this deployment's setting): once the browser wallet holds the testnet grant our sponsor
+  wallet sends when a locker opens, the browser builds and pays for the send itself and we pass it to
+  the network, so we see that your locker sent a transaction, not to whom. The chain links those sends
+  to the sponsor wallet and to each other. Dead-drop deliveries, and any send made before the grant is
+  spendable (about a minute), go through our relay, which learns the destination while the send is
+  queued and then scrubs it.
+- **Relay**: our wallet posts every send; we learn the address while it is queued, then scrub it.
+  Anyone watching the Ootle sees that our wallet paid a fee; the amount, the recipient and the key
+  stay hidden.
+
+The complete tables, party by party, are on `/how`; what we can't protect you from is on `/how` and
+`/security`.
 
 ## Cryptography, in short
 
@@ -77,7 +87,8 @@ browser ──HTTPS──► Caddy ──► mutis-api (Python 3.13, stdlib only
                      │            │ SealLog checkpoints, payment proofs through the sidecar
                      │            ├──► sidecar (Node 20 permission model + vendored ootle-wasm 0.45.0)
                      │            └──► tari_ootle_walletd 0.45.0 (official binary) ──► Esmeralda
-                     └──► the site and the app: static files, served with SRI and a per-route CSP
+                     └──► the site and the app: static files, a per-route CSP, SRI on each page's top-level
+                          scripts and stylesheets, a hash manifest for everything served
 ```
 
 | Directory | What |

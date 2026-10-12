@@ -44,7 +44,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `POST /uploads/{id}/complete` | the uploader | → `item_id`, `ct_hash`, `size_stored` |
 | `DELETE /uploads/{id}` | the uploader | abandon it and release the reservation |
 | `POST /items/{id}/shares` | owner or manage token | a link: mode (`link`, `link_password`, `password`), wrapped key, access verifier, link verifier, KDF, views, expiry |
-| `GET /s/{id}` | anyone with the path | state, mode, whether it needs a password (410 `gone` with the reason once it has left) |
+| `GET /s/{id}` | anyone with the path | state, mode, whether it needs a password (410 `gone` with the reason and the day once it has left; never the open count) |
 | `POST /s/{id}/peek` | `X-Mutis-Access` | what the server knows about the link, without using a view (the "What we know" panel) |
 | `POST /s/{id}/open` | `X-Mutis-Access` | uses a view; returns the wrapped key, the header and metadata, and the ciphertext inline (small files) or a short-lived download ticket |
 | `GET /blobs/{ticket}`, `POST /blobs/{ticket}/done` | the ticket | the ciphertext (Range supported); "done" ends the ticket, and a file whose last link has left loses its ciphertext at once |
@@ -65,7 +65,8 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /chain/utxos?after=&limit=` | anyone | the server's mirror of every TARI UTXO since `mirror_start_epoch`, for scanning in the browser |
 | `GET /chain/seq?epoch=` | anyone | the mirror position right before an epoch, to pass as `after` |
 | `GET /chain/tx/{id}/view` | anyone | "What the chain sees" for one transaction: hidden amounts, one-time owners, encrypted memos, the fee |
-| `GET`, `POST /chain/ix/{path}` | anyone | an allowlisted pass-through to the Tari indexers (substates with proofs, results, transaction submission in direct mode) |
+| `GET /chain/ix/{path}` | anyone | an allowlisted pass-through to the Tari indexers (substates with proofs, results, the epoch) |
+| `POST /chain/ix/transactions` | a locker session | submits a transaction in direct mode: only `{"transaction": <base64 BOR envelope>}` shaped like the app's own send (one stealth transfer paying its fee of at most `courier.max_fee_ut` from a bucket, one output plus change, up to four inputs, no other instruction), 12 KB at most; anything else is `422 invalid`. The proxy is not a relay for other transactions |
 | `POST /invoices`, `GET /invoices/{id}` | the locker | a pack invoice: a receiver address with the invoice's reference, the amount; its status (`pending`, `seen`, `credited`, …) |
 | `POST /invoices/{id}/demo-pay` | the locker (PoW) | our demo wallet pays the invoice (play money, real stealth transaction) |
 | `POST /sponsor` | the locker (PoW) | direct mode: a small grant to the locker's wallet address, once a day |
