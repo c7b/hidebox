@@ -85,14 +85,20 @@
 <div class="prose page-body">
   <h3>When rented space ends</h3>
   <p>Your limit goes back to the free share. Nothing is deleted<span data-needs="config" hidden> for <span data-v="lapse_grace_days"></span></span>. After that, if you're still over, your oldest kept files are removed until you fit.</p>
-  <h3 data-needs="config" hidden>Unused lockers</h3>
-  <p data-needs="config" hidden>Files kept by a locker that hasn't signed in for <span data-v="inactive_days"></span> are deleted.</p>
+  <div data-needs="config" hidden>
+    <h3>Unused lockers</h3>
+    <p>Files kept by a locker that hasn't signed in for <span data-v="inactive_days"></span> are deleted.</p>
+  </div>
   <h3>How paying works</h3>
   <p><span data-when="proof=proven" hidden>We credit a payment only after the official Tari library opens its commitment to the exact amount and a Tari-run public indexer shows it committed on the chain.</span><span data-when="proof=wallet">We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads.</span> You pay our receiving address with this invoice's reference inside it; the reference travels in the payment's encrypted memo, so the chain doesn't show which invoice was paid, or by whom. The network fee is public on the chain. The amount and who paid are not. For space you rent from us we see the amount, because we're the seller. Nobody else does.</p>
-  <h3 data-needs="config" hidden>Sending a file to a Tari address</h3>
-  <p data-needs="config" hidden><span data-v="courier_amount"></span> tTARI plus a network fee of <span data-v="courier_fee"></span> per send<span data-when="send_mode=relay">, on us during the testnet</span>.</p>
-  <h3 data-needs="config" hidden><span data-when="send_mode=relay">Demo tTARI</span><span data-when="send_mode=direct" hidden>Testnet tTARI for your browser</span></h3>
-  <p data-needs="config" hidden><span data-when="send_mode=relay">Try paid features with demo tTARI from our sponsor wallet, <span data-v="demo_pay_daily"></span> payments a day. Our demo wallet pays our own invoice: a real stealth transaction with play money. You can check it on the chain.</span><span data-when="send_mode=direct" hidden>When your locker opens, our sponsor wallet sends its browser wallet a grant of <span data-v="sponsor_grant"></span> tTARI, once a day. Packs are paid from it: a real stealth transaction with play money, built and signed in your browser. You can check it on the chain.</span></p>
+  <div data-needs="config" hidden>
+    <h3>Sending a file to a Tari address</h3>
+    <p><span data-v="courier_amount"></span> tTARI plus a network fee of <span data-v="courier_fee"></span> per send<span data-when="send_mode=relay">, on us during the testnet</span>.</p>
+  </div>
+  <div data-needs="config" hidden>
+    <h3><span data-when="send_mode=relay">Demo tTARI</span><span data-when="send_mode=direct" hidden>Testnet tTARI for your browser</span></h3>
+    <p><span data-when="send_mode=relay">Try paid features with demo tTARI from our sponsor wallet, <span data-v="demo_pay_daily"></span> payments a day. Our demo wallet pays our own invoice: a real stealth transaction with play money. You can check it on the chain.</span><span data-when="send_mode=direct" hidden>When your locker opens, our sponsor wallet sends its browser wallet a grant of <span data-v="sponsor_grant"></span> tTARI, once a day. Packs are paid from it: a real stealth transaction with play money, built and signed in your browser. You can check it on the chain.</span></p>
+  </div>
   <div class="box-note">
     <p><strong>Testnet.</strong> tTARI has no monetary value. These prices are real logic with play money.</p>
     <p><span data-needs="config" hidden>Ootle mainnet launches <span data-v="mainnet_date"></span>. </span>Paid features stay on the testnet until our code has been reviewed.</p>

@@ -85,14 +85,20 @@
 <div class="prose page-body">
   <h3>Cuando termina el espacio rentado</h3>
   <p>Tu límite vuelve a la parte gratuita. No se borra nada<span data-needs="config" hidden> durante <span data-v="lapse_grace_days"></span></span>. Después, si sigues por encima, se quitan tus archivos guardados más antiguos hasta que quepas.</p>
-  <h3 data-needs="config" hidden>Casilleros sin uso</h3>
-  <p data-needs="config" hidden>Los archivos guardados por un casillero que no ha iniciado sesión en <span data-v="inactive_days"></span> se borran.</p>
+  <div data-needs="config" hidden>
+    <h3>Casilleros sin uso</h3>
+    <p>Los archivos guardados por un casillero que no ha iniciado sesión en <span data-v="inactive_days"></span> se borran.</p>
+  </div>
   <h3>Cómo funciona el pago</h3>
   <p><span data-when="proof=proven" hidden>Abonamos un pago solo después de que la biblioteca oficial de Tari abre su compromiso al monto exacto y un indexador público operado por Tari muestra que quedó confirmado en la cadena.</span><span data-when="proof=wallet">Abonamos un pago solo después de que nuestra cartera lo ve y un indexador público operado por Tari confirma que existe en la cadena. El monto es el que lee nuestra cartera.</span> Pagas a nuestra dirección de cobro con la referencia de esta factura adentro; la referencia viaja en el memo cifrado del pago, así que la cadena no muestra qué factura se pagó, ni quién. La comisión de red es pública en la cadena. El monto y quién pagó, no. Del espacio que nos rentas vemos el monto, porque somos el vendedor. Nadie más lo ve.</p>
-  <h3 data-needs="config" hidden>Enviar un archivo a una dirección de Tari</h3>
-  <p data-needs="config" hidden><span data-v="courier_amount"></span> tTARI más una comisión de red de <span data-v="courier_fee"></span> por envío<span data-when="send_mode=relay">, por nuestra cuenta durante la testnet</span>.</p>
-  <h3 data-needs="config" hidden><span data-when="send_mode=relay">tTARI de demostración</span><span data-when="send_mode=direct" hidden>tTARI de testnet para tu navegador</span></h3>
-  <p data-needs="config" hidden><span data-when="send_mode=relay">Prueba las funciones de pago con tTARI de demostración de nuestra cartera patrocinadora, <span data-v="demo_pay_daily"></span> pagos al día. Nuestra cartera de demostración paga nuestra propia factura: una transacción stealth real con dinero de juguete. Puedes comprobarla en la cadena.</span><span data-when="send_mode=direct" hidden>Al abrir tu casillero, nuestra cartera patrocinadora le manda a la cartera de tu navegador un saldo de <span data-v="sponsor_grant"></span> tTARI, una vez al día. Los paquetes se pagan con él: una transacción stealth real con dinero de juguete, armada y firmada en tu navegador. Puedes comprobarla en la cadena.</span></p>
+  <div data-needs="config" hidden>
+    <h3>Enviar un archivo a una dirección de Tari</h3>
+    <p><span data-v="courier_amount"></span> tTARI más una comisión de red de <span data-v="courier_fee"></span> por envío<span data-when="send_mode=relay">, por nuestra cuenta durante la testnet</span>.</p>
+  </div>
+  <div data-needs="config" hidden>
+    <h3><span data-when="send_mode=relay">tTARI de demostración</span><span data-when="send_mode=direct" hidden>tTARI de testnet para tu navegador</span></h3>
+    <p><span data-when="send_mode=relay">Prueba las funciones de pago con tTARI de demostración de nuestra cartera patrocinadora, <span data-v="demo_pay_daily"></span> pagos al día. Nuestra cartera de demostración paga nuestra propia factura: una transacción stealth real con dinero de juguete. Puedes comprobarla en la cadena.</span><span data-when="send_mode=direct" hidden>Al abrir tu casillero, nuestra cartera patrocinadora le manda a la cartera de tu navegador un saldo de <span data-v="sponsor_grant"></span> tTARI, una vez al día. Los paquetes se pagan con él: una transacción stealth real con dinero de juguete, armada y firmada en tu navegador. Puedes comprobarla en la cadena.</span></p>
+  </div>
   <div class="box-note">
     <p><strong>Testnet.</strong> El tTARI no tiene valor monetario. Estos precios son lógica real con dinero de juguete.</p>
     <p><span data-needs="config" hidden>La mainnet de Ootle se lanza el <span data-v="mainnet_date"></span>. </span>Las funciones de pago se quedan en la testnet hasta que revisen nuestro código.</p>
