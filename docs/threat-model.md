@@ -35,11 +35,14 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
   writes the memo itself, so a client can only supply the 125-byte sealed blob. Relay sends all come
   from one wallet with one fee, so an observer can group them as "sent by mutis", but not see to whom.
   The chain worker puts the outputs of its own transactions (deliveries, change and decoys alike) into
-  the public UTXO mirror as soon as they commit, instead of waiting for the indexers' streams; the
-  chain already shows those transactions as ours.
+  the public UTXO mirror as soon as they commit, instead of waiting for the indexers' streams (which
+  list an output only once the network's consensus epoch reaches it); the chain already shows those
+  transactions as ours.
 - **Direct** (`send_mode = "direct"`): the browser builds, signs and pays for the payment from a small
   grant our sponsor wallet sends to the locker, and the server passes it to the network without
-  learning who it's for. The chain links those sends to the sponsor wallet and to each other.
+  learning who it's for. The chain links those sends to the sponsor wallet and to each other. When the
+  browser asks our proxy for its transaction's result and it has committed, the server adds its outputs
+  to the mirror; it already passed that transaction on, so it learns nothing new.
   Dead-drop deliveries still go through the relay, because a drop's address is public by design.
 
 ## Payments

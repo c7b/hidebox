@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import budgets, codec, db, indexer, jobs, logsafe, ootle_addr, payments, quota, seallog
+from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, payments, quota, seallog
 from .indexer import IndexerError, Indexers
 from .sidecar import Sidecar, SidecarError
 from .walletd import Walletd, WalletdError
@@ -243,7 +243,7 @@ class Worker:
                     for pair in s["unspent"]:
                         out = fetched.get(pair)
                         if out is not None:      # None: spent between the stream and the fetch
-                            added += self._insert_utxo(out, epoch, now)
+                            added += mirror.insert(self.conn, out, epoch, now)
                     cursors[s["shard"]] = s["version"]
                 every = db.get_meta_json(self.conn, "mirror_cursors", {})
                 every[name] = {str(k): v for k, v in cursors.items()}
@@ -251,35 +251,6 @@ class Worker:
             if not any(s["has_more"] for s in shards):
                 break
         return added
-
-    def _insert_utxo(self, out: dict, epoch: int | None, now: int) -> int:
-        return self.conn.execute(
-            "INSERT OR IGNORE INTO chain_utxos(id, nonce, enc, tag, epoch, first_seen, promise, viewable, auth) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (indexer.utxo_id(out["commitment"]), bytes.fromhex(out["nonce"]), bytes.fromhex(out["enc"]),
-             out["tag"].to_bytes(4, "big"), epoch, now, out["promise"], out["viewable"], out["auth"])).rowcount
-
-    def _mirror_own(self, utxo_ids: list[str], now: int) -> None:
-        """Every output of a transaction we sent goes into the mirror as soon as it commits.
-
-        The indexers' streams list an output only once the network's consensus epoch reaches it, so a
-        delivery could wait an epoch (about 20 minutes on Esmeralda, 2026-10-11) before an inbox finds it.
-        The chain already shows these outputs as ours (our wallet, our fee); decoys go in the same way.
-        """
-        found = []
-        for utxo_id in utxo_ids:
-            try:
-                status, obj, _ = self.indexers.get_json(f"/substates/{utxo_id}")
-            except IndexerError:
-                continue
-            utxo = (obj.get("substate") or {}).get("Utxo") if status == 200 and isinstance(obj, dict) else None
-            out = indexer.parse_fetched([utxo_id.rsplit("_", 1)[1], utxo]) if isinstance(utxo, dict) else None
-            if out is not None:
-                found.append(out)
-        epoch = self.epoch()
-        with db.tx(self.conn):
-            for out in found:
-                self._insert_utxo(out, epoch, now)
 
     # --- payments (spec §10.5) -----------------------------------------------------------------------
 
@@ -391,7 +362,9 @@ class Worker:
                 result["utxo_ids"] = outcome["utxo_ids"]
             jobs.finish(self.conn, job["id"], result, now)
             logsafe.event("chain.job_done")
-            self._mirror_own(outcome["utxo_ids"], now)
+            # Its outputs (the delivery, the change, a decoy's alike) go into the mirror now, not an epoch
+            # later; the chain already shows the transaction as ours (our wallet, our fee).
+            mirror.add_committed(self.conn, self.indexers, outcome["utxo_ids"], self.epoch(), now)
         else:                             # rejected: nothing moved, so a retry may send a new transaction
             self._failed(job, "rejected", now)
 

@@ -723,6 +723,18 @@ class ChainReads(unittest.TestCase):
         first = self.s.request("GET", f"{V}/chain/tx/{tx}/view")[2]["outputs"][0]
         self.assertEqual((first["amount"], first["owner"], first["sealed_bytes"]), ("hidden", "one-time key", 201))
 
+    def test_a_committed_transaction_polled_through_the_proxy_is_mirrored(self):
+        """Direct mode: a browser polls its own transaction's result through the proxy; once it has
+        committed, its outputs are in the mirror without waiting for the indexers' stream."""
+        tx = self.s.chain.transfer("sponsor", fake_keys()["address"], 1000, None, 30000)
+        outputs = self.s.chain.transfers[-1]["outputs"]
+        self.addCleanup(self.s.conn.execute, f"DELETE FROM chain_utxos WHERE id IN ({','.join('?' * len(outputs))})",
+                        outputs)
+        status, _, body = self.s.request("GET", f"{V}/chain/ix/transactions/{tx}/result")
+        self.assertEqual((status, body["result"]["Finalized"]["final_decision"]), (200, "Commit"))
+        mirrored = {r[0] for r in self.s.conn.execute("SELECT id FROM chain_utxos")}
+        self.assertTrue(set(outputs) <= mirrored)
+
     def test_tx_view_asks_every_indexer_and_caches_no_miss(self):
         """A transaction committed seconds ago can reach one indexer before the other: the view asks each,
         and "not known yet" isn't cached, so the next request asks again."""
