@@ -5,7 +5,8 @@
 import { h } from '../lib/dom.js';
 import { LANGUAGES, loadLanguage, pickLanguage, t } from '../lib/i18n.js';
 import { setJudgePass } from '../lib/pow.js';
-import { idbGet, localSet, savedJudgePass } from '../lib/store.js';
+import { idbGet } from '../lib/idb.js';
+import { localSet, savedJudgePass } from '../lib/store.js';
 import { icon } from './core.js';
 
 const TABS = [['locker', '/locker', 'lock'], ['inbox', '/inbox', 'drop'], ['send', '/send', 'send']];

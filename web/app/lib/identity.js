@@ -9,7 +9,8 @@ import { sha256Sync } from './sha256sync.js';
 import { addressFromKeys, deriveOotleKeys } from './ootle.js';
 import { safetyCode } from './emoji.js';
 import { chainUtxos } from './api-locker.js';
-import { idbDelete, idbGet, idbPut, persistStorage, set as setState, storageAvailable } from './store.js';
+import { idbDelete, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
+import { set as setState } from './store.js';
 import { PBKDF2_ITER } from './password.js';
 
 const SALT = 'mutis/v1';
