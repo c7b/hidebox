@@ -17,7 +17,7 @@
       return null;
     }
   };
-  // Same rule as dates.js isOctober31(); repeated here because a module would load after paint.
+  // Oct 31 from 18:00 local. A classic script, so the rule lives here and not in a module that would load after paint.
   const now = new Date();
   const halloweenNight = now.getMonth() === 9 && now.getDate() === 31 && now.getHours() >= 18;
   const chosen = stored();

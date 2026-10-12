@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Runs on every site page: the mainnet phase, live numbers and copy variants, the language switch,
-// and copy buttons. Other page modules import `config`, `getJson`, `lang`, `locale` and the tx helpers from here.
+// Runs on every site page: the mainnet phase, live numbers and copy variants, the language switch
+// (and one line offering the page's translation when the browser prefers the other language), the
+// judge-pass chip, and copy buttons. Other page modules import `config`, `getJson`, `lang`, `locale`
+// and the tx helpers from here.
 import { applyPhase } from '/shared/dates.js';
 import { applyConditions, fillVariables } from './stats.js';
 
@@ -33,6 +35,44 @@ for (const a of document.querySelectorAll('a[data-lang]')) {
   const alt = document.querySelector(`link[rel="alternate"][hreflang="${a.dataset.lang}"]`);
   if (alt) a.href = new URL(alt.href).pathname;
 }
+
+// A browser that prefers the other language, with no choice made here yet, is offered the
+// translation once per device.
+const OFFER = { en: 'Read this in English', es: 'Leer en español' };
+const DISMISS = { en: 'No, thanks', es: 'No, gracias' };
+const storage = (key, value) => {
+  try {
+    if (value === undefined) return localStorage.getItem(key);
+    localStorage.setItem(key, value);
+  } catch {
+    // Blocked storage: the offer shows again next time, nothing else.
+  }
+  return null;
+};
+const other = lang === 'en' ? 'es' : 'en';
+const preferred = (navigator.languages || []).map((l) => l.toLowerCase().split('-')[0]).find((l) => l === 'en' || l === 'es');
+const translation = document.querySelector(`link[rel="alternate"][hreflang="${other}"]`);
+if (translation && preferred === other && !storage('mutis.lang') && !storage('mutis.lang.offer')) {
+  const offer = document.createElement('div');
+  offer.className = 'lang-offer';
+  offer.lang = other;
+  const go = document.createElement('a');
+  go.href = new URL(translation.href).pathname;
+  go.textContent = OFFER[other];
+  go.addEventListener('click', () => storage('mutis.lang', JSON.stringify(other)));
+  const no = document.createElement('button');
+  no.type = 'button';
+  no.className = 'a-linkbtn';
+  no.textContent = DISMISS[other];
+  no.addEventListener('click', () => { storage('mutis.lang.offer', 'no'); offer.remove(); });
+  offer.append(go, no);
+  document.body.prepend(offer);
+}
+
+// The header's chip while a judge pass is saved on this device (judges.js, the app's pow.js).
+import('/app/lib/store.js').then(({ savedJudgePass }) => {
+  if (savedJudgePass()) for (const chip of document.querySelectorAll('[data-judge-active]')) chip.hidden = false;
+}, () => null);
 
 const COPIED = { en: 'Copied.', es: 'Copiado.' };
 if (navigator.clipboard) {

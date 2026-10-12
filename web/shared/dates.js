@@ -8,8 +8,10 @@ export function phase(now = Date.now()) {
   return now >= MAINNET ? 'mainnet' : 'pre';
 }
 
-export function isOctober31(localNow = new Date()) {
-  return localNow.getMonth() === 9 && localNow.getDate() === 31;
+// A file's or link's expiry at least an hour away is rounded up to the next whole hour, the server's
+// rule (codec.coarse_expiry), so the second it was locked can't be read back from its expiry.
+export function coarseExpiry(at, now = Math.floor(Date.now() / 1000)) {
+  return at - now >= 3600 ? Math.ceil(at / 3600) * 3600 : at;
 }
 
 // Built from local calendar fields, so a daylight-saving change in between is counted correctly.

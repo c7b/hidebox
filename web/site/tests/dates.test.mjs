@@ -3,7 +3,7 @@
 //   TZ=Europe/Madrid node --experimental-default-type=module --test web/site/tests/dates.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { MAINNET, applyPhase, isOctober31, msToNextLocalMidnight, phase } from '../../shared/dates.js';
+import { MAINNET, applyPhase, coarseExpiry, msToNextLocalMidnight, phase } from '../../shared/dates.js';
 
 test('mainnet phase switches at 2026-11-11T00:00Z', () => {
   assert.equal(MAINNET, Date.parse('2026-11-11T00:00:00Z'));
@@ -22,9 +22,12 @@ test('a daylight-saving change is counted (Madrid: Oct 25 2026 has 25 hours; Mex
   assert.equal(msToNextLocalMidnight(new Date(2026, 9, 25, 0, 0, 0)), hours * 3_600_000);
 });
 
-test('October 31 is the local calendar day', () => {
-  assert.equal(isOctober31(new Date(2026, 9, 31, 18, 0)), true);
-  assert.equal(isOctober31(new Date(2026, 10, 1, 0, 0)), false);
+test('an expiry an hour or more away is a whole hour; a shorter one is exact', () => {
+  const now = 1_791_700_000;                       // 20:26:40 UTC
+  assert.equal(coarseExpiry(now + 3600, now), 1_791_705_600);
+  assert.equal(coarseExpiry(now + 86400 + 1234, now), 1_791_788_400);
+  assert.equal(coarseExpiry(1_791_705_600, now), 1_791_705_600);
+  assert.equal(coarseExpiry(now + 60, now), now + 60);
 });
 
 test('applyPhase shows exactly one status line', () => {

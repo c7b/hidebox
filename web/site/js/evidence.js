@@ -2,10 +2,9 @@
 // Real transactions only: /evidence.json lists our own test deliveries and payments (never a user's),
 // and /api/v1/chain/tx/<id>/view says what the chain shows for one of them. Nothing here is a mock;
 // if either request fails, or the chain doesn't show what the card says, the card stays hidden.
-import { getJson, isTxId, locale, shortTx } from './site.js';
+import { config, getJson, isTxId, locale, shortTx } from './site.js';
 import { formatTari } from './stats.js';
 
-export const INDEXER = 'https://ootle-indexer-b.tari.com';
 export const txId = (entry) => (typeof entry === 'string' ? entry : entry?.tx_id);
 export const networkName = (name = 'esmeralda') => name.charAt(0).toUpperCase() + name.slice(1);
 
@@ -26,6 +25,8 @@ export async function showChainCard(card, evidence) {
   set('fee', view.fee_ut ? formatTari(view.fee_ut, locale) : '—');
   card.querySelector('[data-chain="final"]').hidden = view.status !== 'Commit';
   card.querySelector('[data-chain="verify"]').href = `/verify/tx/${id}`;
-  card.querySelector('[data-chain="indexer"]').href = `${INDEXER}/transaction-receipts/${id}`;
+  // The two Tari-run indexers don't always agree on a fresh receipt: link the one that answered.
+  const indexer = (await config)?.ootle?.indexers?.find((url) => view._source && url.includes(view._source));
+  if (indexer) card.querySelector('[data-chain="indexer"]').href = `${indexer}/transaction-receipts/${id}`;
   card.hidden = false;
 }

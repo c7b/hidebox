@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
-// The Council guide: the optional judge pass (kept for this tab where the app reads it, so it can be
-// sent as X-Mutis-Judge) and the live list of our own test transactions from /evidence.json.
+// The Council guide: the optional judge pass (kept on this device where the app reads it, so it can
+// be sent as X-Mutis-Judge; a /judges#pass=… link saves it on opening) and the live list of our own
+// test transactions from /evidence.json.
 import { isTxId, lang, shortTx } from './site.js';
-import { INDEXER, loadEvidence, networkName, txId } from './evidence.js';
+import { loadEvidence, networkName, txId } from './evidence.js';
 import { saveJudgePass, savedJudgePass } from '/app/lib/store.js';
 
 const PASS = /^judge-[0-9a-hjkmnp-tv-z]{24}$/;
 const T = {
-  en: { saved: 'Saved for this tab.', forgot: 'Forgotten.', bad: 'That doesn\'t look like a judge pass: it starts with “judge-” and has 24 more letters and digits.', none: 'none yet', check: 'indexer', unreported: 'not reported yet' },
-  es: { saved: 'Guardado para esta pestaña.', forgot: 'Olvidado.', bad: 'Eso no parece un pase de jurado: empieza con “judge-” y tiene 24 letras y números más.', none: 'ninguno todavía', check: 'indexador', unreported: 'todavía no reportado' },
+  en: { saved: 'Saved on this device for a week.', forgot: 'Forgotten.', bad: 'That doesn\'t look like a judge pass: it starts with “judge-” and has 24 more letters and digits.', none: 'none yet', check: 'what the chain sees', unreported: 'not reported yet' },
+  es: { saved: 'Guardado en este dispositivo durante una semana.', forgot: 'Olvidado.', bad: 'Eso no parece un pase de jurado: empieza con “judge-” y tiene 24 letras y números más.', none: 'ninguno todavía', check: 'lo que ve la cadena', unreported: 'todavía no reportado' },
 }[lang];
 
 const box = document.querySelector('[data-judge-pass]');
@@ -16,10 +17,27 @@ const form = box.querySelector('form');
 const input = form.querySelector('input');
 const status = form.querySelector('[role="status"]');
 const forget = form.querySelector('[data-judge-forget]');
+const chips = (shown) => document.querySelectorAll('[data-judge-active]').forEach((chip) => { chip.hidden = !shown; });
+
+// A pass handed out as a link (/judges#pass=…): saved on opening, or when the address changes while
+// this page is open (a fragment change runs no script), and the code leaves the address bar.
+function passFromLink() {
+  const code = location.hash.startsWith('#pass=') ? location.hash.slice(6) : '';
+  if (!PASS.test(code)) return;
+  saveJudgePass(code);
+  history.replaceState(null, '', location.pathname);
+  input.value = code;
+  forget.hidden = false;
+  box.open = true;
+  status.textContent = T.saved;
+  chips(true);
+}
 input.value = savedJudgePass() ?? '';
 forget.hidden = !input.value;
 box.open = Boolean(input.value);
 box.hidden = false;
+passFromLink();
+window.addEventListener('hashchange', passFromLink);
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -34,12 +52,14 @@ form.addEventListener('submit', (event) => {
   saveJudgePass(code);
   status.textContent = T.saved;
   forget.hidden = false;
+  chips(true);
 });
 forget.addEventListener('click', () => {
   saveJudgePass(null);
   input.value = '';
   forget.hidden = true;
   status.textContent = T.forgot;
+  chips(false);
 });
 
 function txItems(list, entries) {
@@ -48,16 +68,17 @@ function txItems(list, entries) {
     list.textContent = T.none;
     return;
   }
+  // Each one links to its "What the chain sees" page, whose button asks Tari's indexers directly.
   for (const id of ids) {
     const li = document.createElement('li');
     const own = document.createElement('a');
     own.href = `/verify/tx/${id}`;
     own.className = 'code';
     own.textContent = shortTx(id);
-    const ix = document.createElement('a');
-    ix.href = `${INDEXER}/transaction-receipts/${id}`;
-    ix.textContent = T.check;
-    li.append(own, ' · ', ix);
+    const see = document.createElement('a');
+    see.href = `/verify/tx/${id}`;
+    see.textContent = T.check;
+    li.append(own, ' · ', see);
     list.append(li);
   }
 }
