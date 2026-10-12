@@ -221,9 +221,12 @@ class Page:
         return found
 
     def goto(self, url: str, timeout: float = 45) -> None:
+        """Load `url` as a new document. A URL that differs from the current one only after the # is a
+        same-document navigation (no loaderId, no load event), so that case reloads."""
         self.collect()
         self.b.take(self.s, "Page.loadEventFired")
-        self.cmd("Page.navigate", {"url": url}, timeout=timeout)
+        if "loaderId" not in self.cmd("Page.navigate", {"url": url}, timeout=timeout):
+            self.cmd("Page.reload", {"ignoreCache": True})
         self.b.wait_event("Page.loadEventFired", self.s, timeout)
 
     def reload(self, timeout: float = 45) -> None:
@@ -278,9 +281,17 @@ class Page:
                          f"return {want}.includes(s) ? s : ''; }})()", timeout)
 
     def center(self, testid: str, value: str | None = None) -> tuple[float, float]:
-        box = self.eval(f"(() => {{ const e = document.querySelector({self.sel(testid, value)}); e.scrollIntoView({{block: 'center'}});"
-                        f" const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }})()")
-        return box[0], box[1]
+        """The element's centre in the viewport, once hit testing finds it there: right after a scroll,
+        Chromium can still hit-test the old position (seen on the home page's long sticky scene)."""
+        probe = (f"(() => {{ const e = document.querySelector({self.sel(testid, value)}); e.scrollIntoView({{block: 'center'}});"
+                 " const r = e.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;"
+                 " return [x, y, e.contains(document.elementFromPoint(x, y))]; })()")
+        end = time.monotonic() + 5
+        while True:
+            x, y, hit = self.eval(probe)
+            if hit or time.monotonic() > end:
+                return x, y
+            self.b.drain(0.1)
 
     def click(self, testid: str, value: str | None = None) -> None:
         """A real pointer (or touch) press at the element's centre, so user-activation rules apply."""

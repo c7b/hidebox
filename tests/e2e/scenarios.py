@@ -51,11 +51,11 @@ def e01(t: T) -> None:
 def e02(t: T) -> None:
     a = t.actor()
     flows.home(a, t.origin)
-    flows.seal_file(a, t.fixture("ten-mb.bin"))
-    t.secret("the file name", "ten-mb.bin")
+    flows.seal_file(a, t.fixture("ten-mb.dat"))
+    t.secret("the file name", "ten-mb.dat")
     url = flows.set_rules(a, when="views", views=3)
     t.secret("the link key", flows.fragment(url))
-    want = big_fixture_sha256("ten-mb.bin")
+    want = big_fixture_sha256("ten-mb.dat")
     for who in "BCD":
         page = t.actor()
         t.check(flows.open_link(page, url) == "opened", f"{who} opens the file")
@@ -89,7 +89,9 @@ def e04(t: T) -> None:
             probe.call("POST", f"/s/{flows.share_id(url)}/peek", headers={"X-Mutis-Access": apiclient.b64u(secrets.token_bytes(32))})
         except apiclient.ApiError as e:
             codes.add(e.code)
-    t.check(codes == {"bad_link"}, f"60 path-only attempts answer bad_link (got {sorted(codes)})")
+    # After 30 of them a network is rate_limited on that link; none counts as a wrong password.
+    t.check("bad_link" in codes and codes <= {"bad_link", "rate_limited"},
+            f"60 path-only attempts answer bad_link, then rate_limited; never locked (got {sorted(codes)})")
     _, status = probe.call("GET", f"/s/{flows.share_id(url)}")
     t.check(status.get("state") == "active", "the link is still active after them")
     b = t.actor()
@@ -122,7 +124,7 @@ def e05(t: T) -> None:
 def e06(t: T) -> None:
     a = t.actor()
     flows.home(a, t.origin)
-    url = flows.seal_file(a, t.fixture("five-mb.bin"))
+    url = flows.seal_file(a, t.fixture("five-mb.dat"))
     item = item_of(t, url)
     path = f"/srv/mutis/data/blobs/{item[:2]}/{item[2:4]}/{item}.bin"
     flip = f"f = open({path!r}, 'r+b'); f.seek(4096); b = f.read(1); f.seek(4096); f.write(bytes([b[0] ^ 1])); f.close()"
@@ -218,7 +220,7 @@ def e15(t: T) -> None:
 def e16(t: T) -> None:
     a = t.actor()
     flows.home(a, t.origin)
-    a.set_files("drop-input", [t.fixture("too-big.bin")])
+    a.set_files("drop-input", [t.fixture("too-big.dat")])
     a.wait("!!document.querySelector('[data-testid=\"error-banner\"]') || /locker/i.test(document.querySelector('#mutis-drop')?.textContent || '')", 30)
     a.collect()
     t.check(not [r for r in a.requests if r["url"].endswith("/api/v1/uploads") and r["method"] == "POST"],
@@ -342,21 +344,17 @@ def e20(t: T) -> None:
     t.check(not unnamed_controls(a), "drop page: every control has an accessible name")
 
 
-@scenario("E-22", "Programs: an anonymous .exe is refused; a locker's .exe opens behind the program warning")
+@scenario("E-22", "Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning")
 def e22(t: T) -> None:
     a = t.actor()
     flows.home(a, t.origin)
     a.set_files("drop-input", [t.fixture("setup.exe")])
-    a.b.drain(5)
+    code = a.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code ?? ''", 30)
     a.collect()
     uploaded = [r for r in a.requests if r["url"].endswith("/api/v1/uploads") and r["method"] == "POST"]
-    t.check(not uploaded and flows.banner(a), f"the widget refuses the program before upload (banner {flows.banner(a)})")
-    k = t.actor()
-    k.goto(t.origin + "/locker")
-    k.wait_for("locker-root")
-    if not k.exists("drop-input"):
-        t.skip("the locker page has no drop widget to seal a program as a locker")
-    url = flows.seal_file(k, t.fixture("setup.exe"))
+    t.check(code == "program" and not uploaded, f"the widget refuses the program before upload (banner {code})")
+    a.click("offer-locker")                     # "Open a free locker": the same selection is sealed in it
+    url = flows.wait_link(a)
     b = t.actor()
     state = flows.open_link(b, url)
     t.check(state in ("program-warning", "opened-risky"), f"the viewer shows the program warning (got {state})")

@@ -107,7 +107,7 @@ class Env:
 
 
 # Big upload fixtures: SHA-256 of a counter, concatenated, cut to size. Made on the server, hashed here.
-BIG_FIXTURES = {"ten-mb.bin": 10 * 1024 * 1024, "five-mb.bin": 5 * 1024 * 1024, "too-big.bin": 26 * 1024 * 1024 + 1}
+BIG_FIXTURES = {"ten-mb.dat": 10 * 1024 * 1024, "five-mb.dat": 5 * 1024 * 1024, "too-big.dat": 26 * 1024 * 1024 + 1}
 BIG_FIXTURE_CODE = ("import hashlib, sys; n = int(sys.argv[2]); "
                     "data = b''.join(hashlib.sha256(i.to_bytes(4, 'big')).digest() for i in range(n // 32 + 1)); "
                     "open(sys.argv[1], 'wb').write(data[:n])")
