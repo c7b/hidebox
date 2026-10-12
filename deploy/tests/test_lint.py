@@ -93,6 +93,14 @@ class LintTest(unittest.TestCase):
         self.write("docs/x.md", "text\n\nCo-" "Authored-By: someone\n")
         self.assertTrue(any("attribution" in p for p in self.problems()))
 
+    def test_public_addresses(self):
+        """An evidence log once named the operator's own machine (security review, finding 1)."""
+        public4, public6 = ".".join("8888"), "2606" + ":4700::1111"          # built here so this file passes too
+        self.write("docs/evidence/log.txt", f"from {public4} and {public6}; own 179.236.70.195 and 2a02:4780:95:64c5::1; "
+                   "test 203.0.113.5, 192.168.1.9 and 2001:db8::1; RFC 9162 §2.1.3.2; version 154.0.0.0; at 01:49:19\n")
+        self.assertEqual(self.problems(), [f"docs/evidence/log.txt: public address {public4}",
+                                           f"docs/evidence/log.txt: public address {public6}"])
+
 
 if __name__ == "__main__":
     unittest.main()

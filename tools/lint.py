@@ -15,10 +15,14 @@ Checks, with the file sets they apply to:
     and integrity="{{SRI}}" on every local script and stylesheet tag.
   - Source files: SPDX-License-Identifier: MIT in the first lines; no TODO/FIXME comments; no
     attribution trailers.
+  - Every text file: no public IP address but the server's own (an operator's address in an
+    evidence log would name a machine of the owner's; private, loopback, link-local and
+    documentation ranges, and x.0.0.0 network literals, are fine).
 Exit status 1 when anything is found.
 """
 import argparse
 import ast
+import ipaddress
 import os
 import re
 import subprocess
@@ -64,6 +68,10 @@ HANDLER_ATTR = re.compile(r"<[a-zA-Z][^>]*\son[a-z]+\s*=", re.S)
 INLINE_SCRIPT = re.compile(r"<script\b([^>]*)>(.*?)</script>", re.I | re.S)
 COMMENT_TODO = re.compile(r"(#|//|/\*|<!--)\s*(TO" + r"DO|FIX" + r"ME|XXX)\b")
 ATTRIBUTION = re.compile(r"^\s*Co-Authored-By:|Generated with \[?Claude", re.I | re.M)
+# The deployment's own addresses (deploy/README.md): the only public ones a file may name.
+OWN_ADDRESSES = {"179.236.70.195", "2a02:4780:95:64c5::1"}
+IPV4_LITERAL = re.compile(r"(?<![\w.§])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])")
+IPV6_LITERAL = re.compile(r"(?<![\w:.])(?=[0-9a-fA-F:]*::|(?:[0-9a-fA-F]{1,4}:){7})[0-9a-fA-F:]{3,39}(?![\w:.])")
 
 
 def attrs(tag_body: str) -> dict:
@@ -191,6 +199,27 @@ def html_problems(name: str, text: str) -> list[str]:
     return found
 
 
+def address_problems(name: str, text: str) -> list[str]:
+    """Public IP literals other than the server's own. A literal that isn't an address (a version, a
+    time) never parses; x.0.0.0 is a network, not a host."""
+    found = []
+    for m in IPV4_LITERAL.finditer(text):
+        try:
+            ip = ipaddress.IPv4Address(m.group(0))
+        except ValueError:
+            continue
+        if ip.is_global and not str(ip).endswith(".0.0.0") and str(ip) not in OWN_ADDRESSES:
+            found.append(f"{name}: public address {ip}")
+    for m in IPV6_LITERAL.finditer(text):
+        try:
+            ip = ipaddress.IPv6Address(m.group(0))
+        except ValueError:
+            continue
+        if ip.is_global and str(ip) not in OWN_ADDRESSES:
+            found.append(f"{name}: public address {ip}")
+    return found
+
+
 def header_problems(name: str, text: str) -> list[str]:
     head = text.splitlines()[:3]
     if not any("SPDX-License-Identifier: MIT" in line for line in head):
@@ -225,6 +254,7 @@ def lint(root: Path, only: str | tuple[str, ...] = "") -> list[str]:
             problems += [f"{name}: {m.group(2)} comment" for m in COMMENT_TODO.finditer(text)]
         if ATTRIBUTION.search(text):
             problems.append(f"{name}: attribution line")
+        problems += address_problems(name, text)
     return problems
 
 
