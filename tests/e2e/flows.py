@@ -30,11 +30,16 @@ def banner(page: Page) -> str | None:
     return page.eval("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code ?? null")
 
 
-def seal_text(page: Page, text: str) -> str:
+def lock_text(page: Page, text: str) -> None:
+    """Type a note into the drop widget and lock it (on /send the page then asks for the address)."""
     page.click("drop-write")
     page.wait_for("drop-textarea")
     page.fill("drop-textarea", text)
     page.click("drop-seal-text")
+
+
+def seal_text(page: Page, text: str) -> str:
+    lock_text(page, text)
     return wait_link(page)
 
 

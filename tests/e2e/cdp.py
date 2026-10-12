@@ -280,17 +280,24 @@ class Page:
         return self.wait(f"(() => {{ const s = document.querySelector({self.sel(testid)})?.dataset.state; "
                          f"return {want}.includes(s) ? s : ''; }})()", timeout)
 
-    def center(self, testid: str, value: str | None = None) -> tuple[float, float]:
-        """The element's centre in the viewport, once hit testing finds it there: right after a scroll,
-        Chromium can still hit-test the old position (seen on the home page's long sticky scene)."""
-        probe = (f"(() => {{ const e = document.querySelector({self.sel(testid, value)}); e.scrollIntoView({{block: 'center'}});"
+    def center(self, testid: str, value: str | None = None, timeout: float = 30) -> tuple[float, float]:
+        """The element's centre in the viewport, once it is on the page and hit testing finds it there:
+        right after a scroll, Chromium can still hit-test the old position (seen on the home page's long
+        sticky scene). A missing element fails after `timeout` s; one that stays covered is pressed anyway
+        after 5 s."""
+        probe = (f"(() => {{ const e = document.querySelector({self.sel(testid, value)}); if (!e) return null;"
+                 " e.scrollIntoView({block: 'center'});"
                  " const r = e.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;"
                  " return [x, y, e.contains(document.elementFromPoint(x, y))]; })()")
-        end = time.monotonic() + 5
+        end, settle = time.monotonic() + timeout, None
         while True:
-            x, y, hit = self.eval(probe)
-            if hit or time.monotonic() > end:
-                return x, y
+            found, now = self.eval(probe), time.monotonic()
+            if found:
+                settle = settle or now + 5
+                if found[2] or now > settle:
+                    return found[0], found[1]
+            elif now > end:
+                raise CdpError(f"no element {self.sel(testid, value)} after {timeout} s")
             self.b.drain(0.1)
 
     def click(self, testid: str, value: str | None = None) -> None:
