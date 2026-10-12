@@ -81,7 +81,9 @@ tar -cf - deploy | ssh hidebox 'rm -rf /tmp/mutis-deploy && mkdir -m 711 /tmp/mu
 ssh hidebox 'sudo bash /tmp/mutis-deploy/deploy/scripts/provision.sh'
 ```
 
-It checks the Debian packages (it installs nothing; npm/npx must be absent), creates the `mutis`
+It checks the Debian packages (it installs nothing; npm/npx must be absent, and so must pnpm and yarn:
+Debian's `nodejs` ships `corepack`, which would fetch them from the registry on first use; nothing here
+calls it, and `privilege-check.sh` fails if a shim appears), creates the `mutis`
 user and the tree above, installs the config only if missing, generates `secret.key` if missing,
 copies the keyring password into the credential store once, writes `caddy.env` from `public_origin`,
 installs units and logging config, opens 80/443, keeps logging off, adds the 18143 and 8787 guards, installs

@@ -97,9 +97,9 @@ run, so "Pay 0.5 tTARI from this browser" answered "This browser's testnet walle
 tTARI for that" and the invoice stayed at Waiting until it expired unpaid an hour later (the failure
 screenshot; nothing was credited, as it should be). (2) E-13 was given a one-use judge pass in direct
 mode, as E-J has, and still got no grant: item 6 moved the pass from `sessionStorage` to
-`localStorage` (`{code, until}`, a week, as a `/judges#pass=` link saves it) and the harness still
+`localStorage` (`{code, until}`, a week, as a `/judges#pass=` link saves it) and the test harness still
 wrote the old key, so the app never sent `X-Mutis-Judge`; E-J's direct run would have failed the same
-way. The harness now writes what `store.saveJudgePass` writes, and E-13 waits for the grant to be
+way. The test harness now writes what `store.saveJudgePass` writes, and E-13 waits for the grant to be
 spendable before it pays (commit `3cd5622`). The pass path is now proven on production: the grant
 was queued from the evidence slice within a minute of the locker opening, and the payment went out
 of the browser.
