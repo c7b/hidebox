@@ -46,8 +46,70 @@ first pass truncated after item 19).
 
 ## Suites run after the changes
 
-Filled in below under "Evidence" from the actual runs (server 3.13, site with browser checks, app-ui,
-app-core on ultron; deploy tests, lint, copy check locally; the production E2E and judge runs).
+On ultron as `build` with the server's Python 3.13, Node 20 and Chromium 154, from a tarball of the
+tree that became commit `7c9e627` (logs in `docs/evidence/2026-10-11/fix-pass/suites/`):
+
+| Suite | Result |
+|---|---|
+| server (`python3 -I -m unittest discover -s server/tests`) | 197 tests OK, 4 skipped (the deploy gate's run as `build`: OK, 5 skipped) |
+| site (`web/site/tests/run.py`, static and browser checks) | 28 of 28 (a first run failed the judge-pass check, item 6's hash-change fix) |
+| app-ui (`web/app/ui/tests/run.py`) | 229 of 229 (a first run failed once: the new 413 case had counted as an upload for a later check; moved to its own actor) |
+| app-core (`web/app/tests/run_all.py`) | ALL PASS, 9 steps (lint 824/824, cross-check 80/80, KATs 118/118 under Node and in Chromium, jitless 75/75, sidecar 16/16, PoW and scan benches, contract 12/12 against `mutis-api --dev`; the two contract expiries now expect the hour rounding of item 16) |
+| deploy tests (`deploy/tests`, locally) | 65 OK |
+| `tools/lint.py` · `tools/check-copy.py --config <live /config>` | PASS · PASS (3 phrases to read, as before) |
+| D-01 on the throwaway stack (`test_headers.py --local ultron`, the real Caddy 2.6.2) | PASS, 413 shape and 421 on both ports included |
+
+Deployed as release `7c9e6279927e4ed3bc12558cfaec27bb280056ff-c9a2957d0` at 22:11 (`deploy.sh HEAD`: gates,
+build, activation, smoke PASS, manifest notarized in tx `f64332b5…09a2`); `verify-deploy` 0 differences
+across 143 files; `/status.json` overall green; D-01 against production PASS (certificate 89 days
+left). The changed `mutis-backup.service` was installed by hand (`install` + `daemon-reload`, the
+notice activation prints); `backup.py prune-root` run once as root deleted nothing (every copy is
+younger than 7 days). The production E2E and judge runs are under "Evidence" below.
+
+## Evidence: the production E2E and judge runs (`docs/evidence/2026-10-11/fix-pass/e2e/`)
+
+Every scenario ran against release `7c9e627…-c9a2957d0` with `run.py --chain --final`, in batches:
+every browser runs on ultron, so all actors share one /64, and the API allows five new lockers and
+five new drops per network an hour (tests/e2e/README.md). `e2e_expiry_s = 60` was in the config for
+the first batch only (E-05) and removed, `mutis-api` restarted, before the second; `/config` carries
+no `e2e_expiry_s` now.
+
+| Run | Scenarios | Result | Where |
+|---|---|---|---|
+| batch1, 22:21 | E-01, E-02, E-04, E-05, E-06, E-07, E-08, E-11, E-13, E-14, E-15, E-16, E-17, E-18, E-19, E-20, E-21, E-22, E-24, E-25, E-03 | 20 of 21 PASS; E-13 FAIL (below) | `batch1.log`, `reports/batch1-*.json`, `shots/batch1-*` |
+| batch2a, 23:28 | E-09, E-10, E-13 | E-09 (23 s) and E-10 (52 s) PASS; E-13 FAIL (below) | `batch2a.log`, `reports/batch2a-*.json` |
+| batch2b, 23:40 | E-13 | PASS, 30 s: the browser wallet received its grant, Waiting → Seen → Amount proven → Added, paid by the browser, quota +2 GiB | `batch2b.log`, `reports/batch2b-*.json` |
+| batch2c, 23:41 | E-12 | PASS, 30 s | `batch2c.log`, `reports/batch2c-*.json` |
+| batch2d, 23:53 | E-J, direct mode | FAIL at B1: the computer's locker was refused with "Easy. You can do that again in 10:49" (429 `rate_limited`): E-J's phone had been the fifth new locker of that hour on ultron's /64, the limit working as published | `batch2d.log`, `reports/batch2d-*.json` |
+| batch2e, 00:17 | E-J, direct mode | PASS, 1.5 min (track A 5 s, track B 84 s; B1 4 s, B2 27 s, B3 14 s, B4 13 s, B5 2 s, B6 22 s, B7 1 s); cold start 60 s (the grant spendable within 3:15); B3 and B6 built and submitted by the browser; B7 lists the exit receipt from A3 | `batch2e.log`, `reports/batch2e-*.json`, `shots/batch2e-*` |
+
+So every scenario of §17.2 and E-J in direct mode passed on the new code, each at least once after
+its last change.
+
+**E-13 failed twice, both times in the test, not the product.** (1) In batch1 the buyer's fresh locker
+got no sponsor grant: the two grants a day per /64 (item 2) had gone to earlier lockers of the same
+run, so "Pay 0.5 tTARI from this browser" answered "This browser's testnet wallet doesn't have enough
+tTARI for that" and the invoice stayed at Waiting until it expired unpaid an hour later (the failure
+screenshot; nothing was credited, as it should be). (2) E-13 was given a one-use judge pass in direct
+mode, as E-J has, and still got no grant: item 6 moved the pass from `sessionStorage` to
+`localStorage` (`{code, until}`, a week, as a `/judges#pass=` link saves it) and the harness still
+wrote the old key, so the app never sent `X-Mutis-Judge`; E-J's direct run would have failed the same
+way. The harness now writes what `store.saveJudgePass` writes, and E-13 waits for the grant to be
+spendable before it pays (commit `3cd5622`). The pass path is now proven on production: the grant
+was queued from the evidence slice within a minute of the locker opening, and the payment went out
+of the browser.
+
+**Purge (00:21–00:33, `fix-pass/deploy/purge.txt`).** By id, from a read-only diff against the 22:21
+snapshot of the ids an E2E run can create: 22 items and 12 drops taken down (`mutis-admin takedown`),
+the E-14 forged payment row and the two unpaid E-13 invoices deleted, the four test judge passes
+deleted. Kept: the two credited E-13 invoices (paid on chain), the 18 test lockers (identities, as at
+go-live), the owner's locker, the security dead drop (active), the robot's canary items and the 20
+judge passes. The wall then still listed eight exits from the 20:00 hour: the judge-run and claims
+reviews' own burned test items from before the snapshot (three named in the claims probe's
+`created.json`, three found through the walk's links, two sealed in the same minutes), taken down by
+id as well. `/api/v1/stats/wall` reads quiet, canary only; `/config` carries no `e2e_expiry_s`. Left
+alone for the owner: one unlabeled dead drop, still active, created during the reviews' hour with no
+trace in their logs (open item 6).
 
 ## Open items for the owner (Tier 3)
 
@@ -63,3 +125,6 @@ app-core on ultron; deploy tests, lint, copy check locally; the production E2E a
 5. Check the Hostinger panel: are VPS snapshots on, how often, and how long are they kept? Then set
    `hosting.snapshots` in `/etc/mutis/mutis.toml` ("weekly" or "off") and make the snapshot sentence
    on `/how`, `/privacy`, `/faq`, `llms-full.txt` and the app's `claim.c5snap` state the retention.
+6. One unlabeled dead drop is still active, made on 2026-10-12 UTC during the reviews' hour with no trace
+   in their logs (`SELECT id FROM drops WHERE state = 'active' AND label = ''` as `mutis`, read-only). If it
+   isn't yours, `sudo mutis-admin takedown drop -- <id>`.

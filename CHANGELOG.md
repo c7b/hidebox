@@ -29,6 +29,10 @@
 - Copy made literally true: the FAQ says the program rule lives in the app (our server can't see file
   types); the snapshot sentence says our host can keep weekly snapshots, that we haven't switched them
   off and haven't yet confirmed the retention in its panel.
+- E2E: the harness keeps a judge pass where the app now reads it (`localStorage`, a week, as a
+  `/judges#pass=` link saves it); E-13 in direct mode takes a one-use pass, as E-J does, so its
+  buyer's locker gets the sponsor grant it pays from after the test network's two grants a day
+  are spent.
 
 ## spooky-secrets-2026-10 (2026-10-11): first public release
 

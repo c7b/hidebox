@@ -49,6 +49,17 @@ was root-caused and fixed in the repository before the next batch (git log of 20
 last failure was in the test itself: `needs-locker` is also a `VIEW_END` state, so the wait returned
 before the pasted view key had been used.
 
+## Fix pass (`fix-pass/`, 22:11–00:35)
+
+The fix pass after the judge-run and claims reviews (docs/review/fix-log.md) deployed release
+`7c9e627…-c9a2957d0` at 22:11 and, after the tests, the last code change `3cd5622` (tests only) with this
+documentation, the same way (`/api/v1/health` prints the release that is live). `suites/` holds the four suites' logs on ultron
+(server 197, site 28/28, app-ui 229/229, app-core ALL PASS) and `deploy/` the deploy log, D-01 on the
+throwaway stack and on production, and D-09. `e2e/` holds the production runs on the new code: every
+scenario and E-J in direct mode (`batch1.log` to `batch2e.log`, `reports/`, a few screenshots as PNG
+in `shots/`); the two E-13 failures and E-J's first attempt were the test and the rate limit, not the
+product (the fix-log's "Evidence" section). The E2E data was purged by id (`deploy/purge.txt`); the wall reads quiet, canary only.
+
 ## Files
 
 - `seallog/`: publish dry run, publish, instantiate, `check --onchain`, the component header from the indexer, the `service` top-up.
