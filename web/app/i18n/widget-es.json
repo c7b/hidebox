@@ -40,7 +40,7 @@
  "known.toggle": "Lo que sabemos de este enlace",
  "locker.opening": "Abriendo un casillero gratis en este navegador…",
  "locker.offer": "Abrir un casillero gratis",
- "recent.h": "Tus envíos recientes (solo en este dispositivo)",
+ "recent.h": "Tus enlaces recientes (solo en este dispositivo)",
  "noise.alt": "Bytes cifrados de tu archivo, dibujados como píxeles.",
  "dur.minute": {
   "one": "{count} minuto",

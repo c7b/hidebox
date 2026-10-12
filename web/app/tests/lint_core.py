@@ -5,7 +5,7 @@
   python3 -I web/app/tests/lint_core.py
 
 Spec §0.7 and §3.3 step 8 rules, plus the library-side checks of A-06: the modules an anonymous drop
-or open needs never import the Ootle WebAssembly, browser storage is touched only in store.js, and the
+or open needs never import the Ootle WebAssembly, browser storage is touched only in store.js and idb.js, and the
 library never logs.
 """
 import gzip
@@ -90,13 +90,13 @@ for p in (p for p in SOURCES if p.endswith(".py")):
             if top not in sys.stdlib_module_names:
                 flag(p, f"non-stdlib import {top}")
 
-# 6. Library hygiene: storage only in store.js, no console output, no third-party imports (static or
+# 6. Library hygiene: storage only in store.js and idb.js, no console output, no third-party imports (static or
 #    dynamic).
 for p in files("lib", exts=(".js",)):
     src = open(p, encoding="utf-8").read()
     checks += 1
-    if os.path.basename(p) != "store.js" and re.search(r"\b(localStorage|sessionStorage|indexedDB)\b", src):
-        flag(p, "browser storage outside store.js")
+    if os.path.basename(p) not in ("store.js", "idb.js") and re.search(r"\b(localStorage|sessionStorage|indexedDB)\b", src):
+        flag(p, "browser storage outside store.js and idb.js")
     if re.search(r"\bconsole\.", src):
         flag(p, "console output in the library")
     for spec in re.findall(r"^import .* from '([^']+)';", src, re.M) + re.findall(r"\bimport\(\s*'([^']+)'\s*\)", src):
@@ -126,7 +126,7 @@ def gz(paths):
 
 WIDGET = ["seal.js", "open.js", "filetype.js", "pow.js", "pow-worker.js", "preview.js", "download.js", "router.js", "i18n.js", "store.js"]
 LAZY = ["exif.js", "password.js"]
-LOCKER_ONLY = ["api-locker.js", "identity.js", "session.js", "scan.js", "wallet.js", "drop.js", "courier.js"]
+LOCKER_ONLY = ["api-locker.js", "idb.js", "identity.js", "session.js", "scan.js", "wallet.js", "drop.js", "courier.js"]
 BUDGET = 40 * 1024
 anon = set().union(*(closure(os.path.join(APP, "lib", m)) for m in WIDGET))
 checks += 1

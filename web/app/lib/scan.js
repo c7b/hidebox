@@ -9,7 +9,7 @@ import { ready, tryDecryptUtxo, unwrapBlob } from './ootle.js';
 import { decodeInner, memoPlainText, parseMemo } from './courier.js';
 import { dropIndexForTag } from './drop.js';
 import { updateIdentity } from './identity.js';
-import { idbGet, idbPut } from './store.js';
+import { idbGet, idbPut } from './idb.js';
 
 const PAGE = 1000;
 const YIELD_EVERY = 256;

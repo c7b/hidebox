@@ -40,7 +40,7 @@
  "known.toggle": "What we know about this link",
  "locker.opening": "Opening a free locker in this browser…",
  "locker.offer": "Open a free locker",
- "recent.h": "Your recent drops (only on this device)",
+ "recent.h": "Your recent links (only on this device)",
  "noise.alt": "Encrypted bytes of your file, drawn as pixels.",
  "dur.minute": {
   "one": "{count} minute",

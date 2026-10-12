@@ -48,7 +48,7 @@ export function currentLanguage() {
   return lang;
 }
 
-// Formats follow the site's locales (site.js): Mexican Spanish writes 1.9 GB and 10,000, as the site does.
+// The site's locales (site.js): Mexican Spanish writes 1.9 GB and 10,000.
 const locale = () => (lang === 'es' ? 'es-MX' : 'en-US');
 const numberFormat = (n) => new Intl.NumberFormat(locale()).format(n);
 

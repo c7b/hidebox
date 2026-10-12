@@ -2,7 +2,8 @@
 import { randomBytes } from '../lib/crypto.js';
 import { identityFromSeed } from '../lib/identity.js';
 import { newRandomKeys, ready } from '../lib/ootle.js';
-import { idbPut, set } from '../lib/store.js';
+import { idbPut } from '../lib/idb.js';
+import { set } from '../lib/store.js';
 import { inboxState } from '../lib/scan.js';
 import { FEE_UT, WalletError, balance, deliver, send } from '../lib/wallet.js';
 import { ApiError } from '../lib/api.js';

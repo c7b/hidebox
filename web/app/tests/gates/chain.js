@@ -11,7 +11,7 @@ import { memoFor, parseMemo, decodeInner, sealDelivery } from '../../lib/courier
 import { ready, tryDecryptUtxo, unwrapBlob } from '../../lib/ootle.js';
 import { configureApi } from '../../lib/api.js';
 import { chainIx } from '../../lib/api-locker.js';
-import { idbPut } from '../../lib/store.js';
+import { idbPut } from '../../lib/idb.js';
 import { send } from '../../lib/wallet.js';
 
 const ORIGIN = 'https://srv2052606.hstgr.cloud';
