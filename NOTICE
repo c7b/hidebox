@@ -1,0 +1,31 @@
+mutis
+Copyright (c) 2026 Cristobal Alanis and the mutis contributors. MIT License (LICENSE).
+
+This repository includes or is built with the following third-party work.
+
+1. @tari-project/ootle-wasm 0.45.0 (the official Tari Ootle client cryptography)
+   Files: web/app/vendor/ootle-wasm-0.45.0/ (vendored byte for byte from the npm tarball,
+   never installed with npm). Source: https://github.com/tari-project/tari-ootle, tag v0.45.0,
+   commit 9c626062673760530ffb075b6b006a67becebe5a.
+   ootle_wasm_bg.wasm sha256 57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df
+   ootle_wasm_bg.js   sha256 2a338a3c8ef81b314c41487c9e2dc3d1f77942ea9f47c672fd971ab40d3ac36b
+   License: BSD-3-Clause, Copyright (c) 2019, The Tari Developer Community
+   (web/app/vendor/ootle-wasm-0.45.0/LICENSE). Provenance: PROVENANCE.md in the same folder.
+
+2. Tari emoji address alphabet (RFC-0155)
+   The 256-emoji table in web/app/lib/emoji.js, copied in order from tari-project/tari v6.1.0
+   (commit 463e53d), base_layer/common_types/src/emoji.rs.
+   License: BSD-3-Clause, Copyright (c) 2019, The Tari Developer Community.
+
+3. Tari template crates
+   template/seal_log is compiled against tari_template_lib 0.34.0 (built with
+   tari_ootle_template_build 0.14.0, tested with tari_template_test_tooling 0.45.0).
+   License: BSD-3-Clause, The Tari Developer Community. template/seal_log/Cargo.lock pins every crate.
+
+4. Mutis Script and Mutis Script Code (web/shared/fonts/)
+   Modified Versions of Courier Prime and Courier Prime Code by Quote-Unquote Apps, renamed as the
+   licence requires and subset (details in web/shared/fonts/NOTICE).
+   License: SIL Open Font License 1.1 (web/shared/fonts/OFL.txt).
+
+mutis is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the
+Tari Council, or the Tari project. “Tari” is a trademark of Tari Labs.
