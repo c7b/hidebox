@@ -14,6 +14,8 @@ import { errorBanner } from './errors.js';
 import { setTitle } from './shell.js';
 
 const short = (id) => (id.length > 24 ? `${id.slice(0, 14)}…${id.slice(-8)}` : id);
+const TX_TRIES = 7;           // about 30 seconds of asking before "the indexers don't know it"
+const TX_RETRY_MS = 5000;
 
 export async function renderTx(main, { txId }) {
   setTitle('chain.sees');
@@ -22,10 +24,17 @@ export async function renderTx(main, { txId }) {
   root.replaceChildren(h('p', { class: 'a-working mono' }, t('chain.loading')));
   const { txView } = await import('../lib/api-locker.js');
   let view;
-  try {
-    view = await txView(txId);
-  } catch (e) {
-    return root.replaceChildren(errorBanner(e, { key: e?.code === 'not_found' ? 'chain.unknown_tx' : null }));
+  for (let attempt = 1; !view; attempt++) {
+    try {
+      view = await txView(txId);
+    } catch (e) {
+      // A transaction committed seconds ago can take a few more to reach the indexers.
+      if (e?.code === 'not_found' && attempt < TX_TRIES) {
+        await new Promise((r) => setTimeout(r, TX_RETRY_MS));
+        continue;
+      }
+      return root.replaceChildren(errorBanner(e, { key: e?.code === 'not_found' ? 'chain.unknown_tx' : null }));
+    }
   }
   const direct = h('div', { class: 'a-direct', 'aria-live': 'polite' });
   const ask = h('button', { type: 'button', class: 'a-btn' }, icon('external'), h('span', {}, t('chain.check_direct')));
