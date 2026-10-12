@@ -134,6 +134,14 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         problems.append(f"not the API's error shape: {data[:80]!r}")
     results.append((f"PUT 6 MB to /api/v1/uploads/…/chunks/0 → {status} (413 in the API's error shape, not a bare 502)", problems))
 
+    for method in ("TRACE", "PUT"):
+        status, headers, data = fetch(origin + "/how", method)
+        problems = ([] if status == 405 and headers.get("allow") == "GET, HEAD" else [f"status {status}, allow {headers.get('allow')!r}"])
+        problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.ERROR_CACHE)
+        if b"<" in data:
+            problems.append("a page body came back")
+        results.append((f"{method} /how → {status} (405 with Allow: GET, HEAD, the headers, no body)", problems))
+
     host = urllib.parse.urlsplit(origin).hostname
     status, headers, _ = fetch(f"{plain_http or 'http://' + host}/how?x=1")
     ok = status == 308 and headers.get("location") == f"https://{host}/how?x=1"
