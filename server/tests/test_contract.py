@@ -6,7 +6,8 @@ import unittest
 
 from harness import ORIGIN, Stack
 from mutis import codec, db, items, ootle_addr, quota
-from mutis.fake_chain import fake_keys
+from mutis.fake_chain import FakeChain, FakeIndexer, fake_keys
+from mutis.indexer import Indexers
 
 V = "/api/v1"
 
@@ -125,9 +126,13 @@ class System(unittest.TestCase):
         after = s.request("GET", f"{V}/stats/wall")[2]["lockers"]
         self.assertEqual(sorted(map(str, before)), sorted(map(str, after)))
         self.assertEqual({tuple(sorted(e)) for e in after}, {("exit", "size")})
-        with db.tx(s.conn):
-            for item in uploads[-3:]:
+        with db.tx(s.conn):                      # one that already left by its rule, and one still stored
+            for item in (uploads[0], uploads[-1]):
                 items.remove(s.conn, s.app.blobs, item["item_id"], s.now)
+        s.app.cache.clear()
+        self.assertEqual(len(s.request("GET", f"{V}/stats/wall")[2]["lockers"]), 8)
+        with db.tx(s.conn):
+            items.remove(s.conn, s.app.blobs, uploads[1]["item_id"], s.now)
         s.app.cache.clear()
         self.assertEqual(s.request("GET", f"{V}/stats/wall")[2], {"lockers": [], "quiet": True, "canary": None})
 
@@ -717,6 +722,24 @@ class ChainReads(unittest.TestCase):
         self.s.app.cache.clear()
         first = self.s.request("GET", f"{V}/chain/tx/{tx}/view")[2]["outputs"][0]
         self.assertEqual((first["amount"], first["owner"], first["sealed_bytes"]), ("hidden", "one-time key", 201))
+
+    def test_tx_view_asks_every_indexer_and_caches_no_miss(self):
+        """A transaction committed seconds ago can reach one indexer before the other: the view asks each,
+        and "not known yet" isn't cached, so the next request asks again."""
+        stale = FakeIndexer(FakeChain())
+        self.addCleanup(stale.server_close)
+        self.addCleanup(stale.shutdown)
+        app, live = self.s.app, self.s.indexer
+        self.addCleanup(setattr, app, "indexers", app.indexers)
+        app.cache.clear()
+        app.indexers = Indexers([stale.url, live.url], rate=1000)
+        view = self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[2]
+        self.assertEqual((view["status"], view["_source"]), ("Commit", "indexer-2"))
+        app.cache.clear()
+        app.indexers = Indexers([stale.url], rate=1000)
+        self.assertEqual(self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[0], 404)
+        stale.chain = self.s.chain                # the stale indexer catches up
+        self.assertEqual(self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[0], 200)
 
 
 class CanaryAbuseSeal(unittest.TestCase):
