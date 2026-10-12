@@ -67,11 +67,13 @@ def unlink(conn: sqlite3.Connection, blobs: Blobs, item_id: str, final_state: st
 
 
 def remove(conn: sqlite3.Connection, blobs: Blobs, item_id: str, now: int) -> None:
-    """Abuse takedown: end every link with reason `removed` and delete the blob at once."""
+    """Abuse takedown: end every link with reason `removed` and delete the blob at once. An item that
+    already left by its rule is marked removed too (its exit receipt stays), so it leaves the wall."""
     for row in conn.execute("SELECT id FROM shares WHERE item_id = ? AND state = 'active'", (item_id,)).fetchall():
         end_share(conn, row["id"], "removed", now)
     conn.execute("UPDATE tickets SET done = 1 WHERE item_id = ?", (item_id,))
     unlink(conn, blobs, item_id, "removed", now)
+    conn.execute("UPDATE items SET state = 'removed' WHERE id = ? AND state = 'deleted'", (item_id,))
 
 
 def unlink_if_unreferenced(conn: sqlite3.Connection, blobs: Blobs, item_id: str, now: int) -> bool:

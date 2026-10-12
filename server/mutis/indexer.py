@@ -100,8 +100,8 @@ class Indexers:
         status, data = self._request(upstream, method, path, None, "application/json", MAX_JSON)
         return status, data, upstream[1]
 
-    def get_json(self, path: str) -> tuple[int, object, str]:
-        status, data, source = self.call("GET", path)
+    def get_json(self, path: str, only: int | None = None) -> tuple[int, object, str]:
+        status, data, source = self.call("GET", path, only=only)
         try:
             return status, json.loads(data), source
         except ValueError:

@@ -112,14 +112,28 @@ def tx_view(ctx, tx_id: str):
     return json_response(200, view, "public, max-age=60")
 
 
+def _receipt(ctx, tx_id: str) -> tuple[dict, str] | None:
+    """The committed receipt from the first indexer that has it: a transaction committed seconds ago
+    can reach one indexer before the other."""
+    answered = False
+    for position in range(len(ctx.app.indexers.upstreams)):
+        try:
+            status, obj, source = ctx.app.indexers.get_json(f"/transaction-receipts/{tx_id}", only=position)
+        except IndexerError:
+            continue
+        answered = True
+        if status == 200 and isinstance(obj, dict) and isinstance(obj.get("receipt"), dict):
+            return obj["receipt"], source
+    if not answered:
+        raise ApiError(503, "chain_unavailable", "The Tari indexers aren't answering.")
+    return None
+
+
 def _build_view(ctx, tx_id: str) -> dict | None:
-    try:
-        status, obj, source = ctx.app.indexers.get_json(f"/transaction-receipts/{tx_id}")
-    except IndexerError as e:
-        raise ApiError(503, "chain_unavailable", "The Tari indexers aren't answering.") from e
-    if status != 200 or not isinstance(obj, dict) or not isinstance(obj.get("receipt"), dict):
+    found = _receipt(ctx, tx_id)
+    if found is None:
         return None
-    receipt = obj["receipt"]
+    receipt, source = found
     diff = receipt.get("diff_summary") or {}
     upped = [u.get("substate_id") for u in diff.get("upped", []) if isinstance(u, dict)]
     downed = [d.get("substate_id") for d in diff.get("downed", []) if isinstance(d, dict)]

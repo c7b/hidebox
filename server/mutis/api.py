@@ -116,6 +116,8 @@ class App:
         if hit and now - hit[0] < ttl:
             return hit[1]
         value = make()
+        if value is None:           # nothing found yet (a transaction the indexers haven't seen): ask again next time
+            return None
         if len(self.cache) > 5000:
             self.cache.clear()
         self.cache[key] = (now, value)
