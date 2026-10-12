@@ -320,6 +320,7 @@ class Page:
             self.click(testid, value)
 
     def fill(self, testid: str, text: str) -> None:
+        self.wait(f"!!document.querySelector({self.sel(testid)})", 30)
         self.eval(f"(() => {{ const e = document.querySelector({self.sel(testid)}); e.focus(); e.select?.(); }})()")
         self.cmd("Input.insertText", {"text": text})
 
