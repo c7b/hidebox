@@ -53,8 +53,10 @@ def tx_view(t: T, page, tx: str) -> None:
     t.check(amounts and set(amounts) == {"hidden"}, f"every output amount is hidden ({amounts})")
 
 
-def send_to_address(t: T, page, text: str, address: str, safety: list[str]) -> str:
-    """Sender side of a send to a Tari address (/send); returns the delivery transaction id."""
+def send_to_address(t: T, page, text: str, address: str, safety: list[str], direct: bool = False) -> str:
+    """Sender side of a send to a Tari address (/send); returns the delivery transaction id. In direct
+    mode it does what /judges B3 says: reads the line above Send and waits until this send goes from
+    the browser's wallet, then checks that the browser posted the transaction itself."""
     page.goto(t.origin + "/send")
     page.wait_for("drop-input")
     flows.lock_text(page, text)
@@ -62,10 +64,20 @@ def send_to_address(t: T, page, text: str, address: str, safety: list[str]) -> s
     page.fill("send-recipient", address)
     page.wait_for("send-safety")
     t.check(safety_emoji(page, "send-safety") == safety, "the send screen shows the recipient's safety code")
+    if direct:
+        own = page.wait("document.querySelector('[data-testid=\"send-path\"]')?.dataset.path === 'direct'", 240)
+        t.check(own, "direct mode: the line above Send says this send goes from the browser's wallet (within 4 minutes)")
+        page.collect()
+        before = len(page.requests)
     page.click("send-submit")
     t.check(page.wait_state("send-status", ("delivered", "failed"), 420) == "delivered", "Delivered privately")
     tx = page.attr("send-tx", "data-tx")
     t.check(tx and TX.match(tx), "the send has a transaction id")
+    if direct:
+        page.collect()
+        t.check(any(r["method"] == "POST" and r["url"].endswith("/api/v1/chain/ix/transactions") for r in page.requests[before:]),
+                "direct mode: the browser built and submitted the send itself")
+        t.check("built and paid" in page.text("send-status"), "the sentence after the send says the browser paid for it (C8)")
     tx_view(t, page, tx)
     return tx
 
@@ -296,11 +308,16 @@ def ej(t: T) -> None:
     safety, address = locker_identity(phone)
     t.check(len(safety) == 12 and address.startswith("otl_esm_1"), "B1: a locker with a 12-emoji safety code and a Tari address")
     t.shot(phone, "B1-locker")
+    if direct:
+        # /judges B1, direct mode: the computer opens its locker now, so by B3 it holds the grant it sends from.
+        make_drop_link(t, desk, "Council computer")
+        if desk.exists("key-later"):
+            desk.click("key-later")
     done("B1")
     leave_photo(t, desk, drop_url, safety)
     t.shot(desk, "B2-chain-sees")
     done("B2")
-    send_to_address(t, desk, "E2E E-J sent to the phone", address, safety)
+    send_to_address(t, desk, "E2E E-J sent to the phone", address, safety, direct=bool(direct))
     done("B3")
     t.check(open_inbox_item(t, phone, "drop") == "opened", "B4 (and B2): the phone's inbox opens what was left in its drop")
     t.check(open_inbox_item(t, phone, "send") == "opened", "B4: the phone's inbox opens what the computer sent")
