@@ -54,14 +54,23 @@ class _Bucket:
             time.sleep(0.05)
 
 
+def _lanes(rate: float) -> dict[str, _Bucket]:
+    return {"read": _Bucket(rate * 0.8), "send": _Bucket(rate * 0.2)}
+
+
 class Indexers:
+    """`rate` is the whole budget per upstream; a fifth of it is a lane of its own for submitting
+    transactions, so a flood of reads (random substate or transaction ids from one network) can empty
+    the read lane without stalling a browser's send (security review, finding 2)."""
+
     def __init__(self, urls: list[str], timeout: float = 10, rate: float = 5):
-        self.upstreams = [(u.rstrip("/"), source_name(u, i), _Bucket(rate)) for i, u in enumerate(urls)]
+        self.upstreams = [(u.rstrip("/"), source_name(u, i), _lanes(rate)) for i, u in enumerate(urls)]
         self.timeout = timeout
 
-    def _request(self, upstream, method: str, path: str, body: bytes | None, accept: str, cap: int):
-        base, _, bucket = upstream
-        bucket.take()
+    def _request(self, upstream, method: str, path: str, body: bytes | None, accept: str, cap: int,
+                 lane: str = "read"):
+        base, _, buckets = upstream
+        buckets[lane].take()
         headers = {"Accept": accept, "User-Agent": "mutis"}
         if body is not None:
             headers["Content-Type"] = "application/json"
@@ -80,13 +89,13 @@ class Indexers:
         return status, data
 
     def call(self, method: str, path: str, body: bytes | None = None, accept: str = "application/json",
-             cap: int = MAX_JSON, only: int | None = None) -> tuple[int, bytes, str]:
+             cap: int = MAX_JSON, only: int | None = None, lane: str = "read") -> tuple[int, bytes, str]:
         """First upstream that answers (any HTTP status below 500); falls back on errors and 5xx. `only`
-        asks the upstream at that position and no other."""
+        asks the upstream at that position and no other; `lane` picks the rate budget it draws on."""
         last = IndexerError(503, "chain_unavailable")
         for upstream in self.upstreams if only is None else self.upstreams[only:only + 1]:
             try:
-                status, data = self._request(upstream, method, path, body, accept, cap)
+                status, data = self._request(upstream, method, path, body, accept, cap, lane)
             except IndexerError as e:
                 last = e
                 continue

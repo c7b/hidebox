@@ -209,7 +209,9 @@ def link_rules(cls: str, max_views, expires_at, item, now: int) -> tuple[int | N
     if expires_at is None:
         if item["retention"] == "kept":
             return max_views, None          # "Never": a kept file's link may have no expiry
-        expires_at = item["expires_at"] or now + limits["default_expiry_s"]
+        if item["expires_at"] is not None:  # the file's own expiry passed this check when it was uploaded
+            return max_views, item["expires_at"]
+        expires_at = now + limits["default_expiry_s"]
     if expires_at <= now or expires_at > now + limits["max_expiry_s"] + 60 \
             or (item["expires_at"] is not None and expires_at > item["expires_at"]):
         raise invalid("expires_at")

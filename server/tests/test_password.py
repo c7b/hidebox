@@ -118,7 +118,7 @@ class PasswordOnly(unittest.TestCase):
         status, _, body = s.request("POST", self.path, {"pow": s.solve("password", ip="198.51.100.20")},
                                     headers=self.link["access"], ip="198.51.100.20")
         self.assertEqual((status, body["error"]["code"]), (428, "pow_invalid"))     # a 1-bit solution isn't enough
-        _, _, ch = s.request("POST", "/api/v1/pow", {"purpose": "password", "min_difficulty": 20})
+        _, _, ch = s.request("POST", "/api/v1/pow", {"purpose": "password", "min_difficulty": 20}, ip="198.51.100.20")
         self.assertEqual(ch["difficulty"], 20)
         challenge = codec.unb64u(ch["challenge"])
         n = 0
