@@ -11,3 +11,16 @@ target/
 *.seed
 secrets/
 film/
+# Key-shaped files that must never be committed, whatever folder they land in.
+keys/
+credentials/
+*.pem
+id_*
+*passes*.txt
+robot*.json
+receiver*.json
+*keyring*
+*.sqlite
+*.db
+.env.*
+*.tar
