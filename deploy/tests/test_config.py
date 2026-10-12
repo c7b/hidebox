@@ -86,6 +86,13 @@ class CaddyfileTest(unittest.TestCase):
         self.assertIn('respond `{"error":{"code":"too_large","message":"Request body too large.","details":{"max_bytes":5242880}}}` 413', api)
         self.assertLess(api.index("handle @too_large"), api.index("reverse_proxy"), "refused before the proxy reads it")
 
+    def test_pages_and_files_take_only_get_and_head(self):
+        """Security review: a TRACE or PUT on a page answered 200 with the page."""
+        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
+        self.assertRegex(site, r"(?s)@notread not method GET HEAD\s*handle @notread \{\s*import site_csp\s*header Allow \"GET, HEAD\"\s*header Cache-Control \"no-store\"\s*respond 405\s*\}")
+        self.assertLess(site.index("handle @api"), site.index("handle @notread"), "the API keeps its own methods")
+        self.assertLess(site.index("handle @notread"), site.index("handle @viewer"), "before every page route")
+
     def test_any_other_host_gets_a_421_with_the_headers(self):
         """Claims review item 23: no bare 200 and no redirect to a made-up Host, on either port."""
         self.assertRegex(self.text, r"(?s)\(misdirected\) \{\s*import security_headers\s*import site_csp\s*header Cache-Control \"no-store\"\s*respond 421\s*\}")
