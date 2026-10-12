@@ -54,7 +54,7 @@ connected and never writes them to a log. The send mode is `send_mode` in
   wallet sends when a locker opens, the browser builds and pays for the send itself and we pass it to
   the network, so we see that your locker sent a transaction, not to whom. The chain links those sends
   to the sponsor wallet and to each other. Dead-drop deliveries, and any send made before the grant is
-  spendable (about a minute), go through our relay, which learns the destination while the send is
+  spendable (a minute or two), go through our relay, which learns the destination while the send is
   queued and then scrubs it.
 - **Relay**: our wallet posts every send; we learn the address while it is queued, then scrub it.
   Anyone watching the Ootle sees that our wallet paid a fee; the amount, the recipient and the key
@@ -134,16 +134,20 @@ checks that the live SealLog runs `template/dist/seal_log.wasm` byte for byte. P
 Each directory's `ACCEPTANCE*.md` lists its acceptance criteria with evidence, and each
 `REVIEW-devil.md` is an adversarial review of that part with the builder's response and fixes.
 
+## How it's built
+
+Built with AI coding agents under the author's direction. The design, threat model and crypto choices
+were reviewed by the author; the verification evidence is linked below.
+
+The parts and their trust boundaries are drawn in [docs/architecture.md](docs/architecture.md); how to
+report a vulnerability is in [SECURITY.md](SECURITY.md); the reviews of the live site and what each
+one changed are in [docs/review/fix-log.md](docs/review/fix-log.md).
+
 ## Evidence
 
 Our own test transactions only, never a user's: the hourly canary delivery and the daily demo payment
 in [`/evidence.json`](https://srv2052606.hstgr.cloud/evidence.json), the SealLog checkpoints, and the
 go-live record in [docs/evidence](docs/evidence).
-
-## How it was made
-
-Built with AI coding agents under the author's direction. The design, threat model and crypto choices
-were reviewed by the author; the verification evidence is linked above.
 
 mutis is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari
 Council, or the Tari project. "Tari" is a trademark of Tari Labs. Made in Mexico.
