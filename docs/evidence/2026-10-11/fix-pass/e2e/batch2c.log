@@ -1,0 +1,3 @@
+PASS E-12     29.9s  A view key sees the delivery and can open no file
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → reports/batch2c-20261011-234154.json
+exit 0

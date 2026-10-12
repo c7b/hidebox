@@ -1,0 +1,86 @@
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=0
+INFO route=invoices.sponsor status=202 ms=1
+INFO route=invoices.create status=201 ms=1
+INFO route=invoices.demo_pay status=202 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=1
+INFO route=invoices.sponsor status=202 ms=1
+INFO route=invoices.create status=201 ms=1
+INFO route=invoices.demo_pay status=202 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=invoices.sponsor status=202 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=invoices.sponsor status=202 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=invoices.sponsor status=429 ms=0
+...INFO route=system.health status=200 ms=0
+INFO route=uploads.create status=201 ms=1
+INFO route=uploads.chunk status=204 ms=0
+INFO route=uploads.complete status=200 ms=0
+INFO route=shares.create status=201 ms=0
+INFO route=courier.send status=202 ms=1
+INFO event=chain.canary_sealed
+INFO event=chain.reconcile_ok
+INFO event=chain.job_done
+INFO event=chain.job_done
+INFO route=shares.open status=200 ms=1
+INFO event=chain.canary_verified
+INFO route=invoices.get status=200 ms=0
+..INFO route=system.pow status=200 ms=0
+INFO route=uploads.create status=503 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=uploads.create status=201 ms=1
+INFO route=drops.create status=503 ms=0
+.INFO route=drops.create status=201 ms=1
+INFO route=drops.create status=201 ms=1
+INFO route=drops.create status=201 ms=1
+INFO route=drops.create status=403 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=drops.create status=201 ms=1
+INFO route=courier.send status=429 ms=1
+INFO route=courier.send status=202 ms=0
+INFO route=courier.send status=202 ms=1
+INFO route=courier.send status=403 ms=1
+INFO route=courier.send status=428 ms=0
+.INFO route=drops.create status=403 ms=2
+.INFO route=shares.status status=410 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=drops.create status=201 ms=1
+INFO route=drops.get status=410 ms=0
+........event=chain.sidecar_restart
+......................................................event=chain.job_failed
+......event=chain.job_interrupted n=1
+........event=chain.job_failed
+event=chain.job_failed
+event=chain.job_failed
+...event=chain.job_failed
+event=chain.job_failed
+event=chain.job_failed
+.event=chain.job_failed
+...........................................event=chain.reconcile_unknown
+event=chain.credit_freeze
+.event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+....event=chain.job_failed
+......event=chain.credit_freeze
+event=chain.credit_freeze
+.............sss......event=chain.seal_failed
+.event=chain.seal_failed
+event=chain.walletd_down
+..........event=chain.sidecar_restart
+.event=chain.sidecar_hash_mismatch
+.event=chain.sidecar_restart
+...s................
+----------------------------------------------------------------------
+Ran 197 tests in 35.669s
+
+OK (skipped=4)

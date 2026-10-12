@@ -1,0 +1,18 @@
+Purge of the fix pass's E2E data, 2026-10-12 00:21 CST, by id from a read-only diff against the 22:21 snapshot (the ids an E2E run can create):
+plan: items 22, drops 12, forged payments 1, their invoices 2, extra judge passes 4; kept: 2 credited invoices (the two E-13 purchases paid on chain), 18 test lockers (identities), the owner's locker, the security dead drop, the robot's canary items, the 20 judge passes
+takedown: 34 removed, 0 not found            (sudo mutis-admin takedown item|drop --note e2e-purge -- <id>)
+{"payments": 1, "invoices": 2, "passes": 4}  (rows deleted as mutis: payments and invoices only where status != 'credited')
+after: passes 20, security drop /d/3w7m8k2v5t active, live non-canary items 0, active drops 2 (both older than the snapshot)
+/config carries no e2e_expiry_s (removed 23:28, before batch2a)
+
+00:33 the eight burned items of the 20:00 CST hour (02:00 UTC): the judge-run and claims reviews' own test data from before the 22:21 snapshot (three named in the claims probe's created.json, two the walk's locker items, the rest sealed in the same minutes); already deleted, they still counted as exits on the wall for 7 days; taken down by id so they leave it:
+  _V7RytMdU4OcdlMtxxCsOQ review hour, untraced link
+  2gtPa1e7-3VbG3IKcamsrA claims probe (created.json)
+  lnP2cJ189PyzeHNa-ZgzpA review hour, untraced link
+  Z29yr3PqHpfCBmo9SiYP4g review walk (walk A1)
+  akzgFVv8vNInMXWdQiuSvg review walk (walk B)
+  Jlj8kuq984kGOKv_eHQZVw review walk (probe)
+  PjpGGVeH4QCRLDKzt03omQ claims probe (created.json)
+  2LAxWZQ7FsY1QhjEsjWgFQ claims probe (created.json)
+  takedown: 8 removed
+left alone: the unlabeled active drop amt54… (created on the 12th UTC, during the review hour, no trace in the review logs): the owner decides (open item)
