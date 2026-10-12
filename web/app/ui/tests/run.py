@@ -53,6 +53,7 @@ DYNAMIC = {
     "dur": ["minute", "hour", "day"],
     "seal": ["pow", "stripping", "finishing"],
     "send.step": ["sealing", "waiting", "sending", "delivered"],
+    "send.path": ["direct", "relay"],
     "upgrade.status": ["pending", "seen", "credited", "underpaid", "expired"],
     "upgrade.step": ["waiting", "seen", "proven", "added", "seen_wallet", "exists"],
     "watch.kind": ["payment", "sealed_file", "file_link"],

@@ -2,7 +2,7 @@
 import { randomBytes } from '../lib/crypto.js';
 import { identityFromSeed } from '../lib/identity.js';
 import { newRandomKeys, ready } from '../lib/ootle.js';
-import { idbPut } from '../lib/store.js';
+import { idbPut, set } from '../lib/store.js';
 import { inboxState } from '../lib/scan.js';
 import { FEE_UT, WalletError, balance, deliver, send } from '../lib/wallet.js';
 import { ApiError } from '../lib/api.js';
@@ -12,9 +12,11 @@ import { eq, ok, rejects } from './harness.js';
 
 export const env = 'any';
 
-// A locker whose browser wallet holds one output of `value` µT, in this browser's inbox state.
+// A locker whose browser wallet holds one output of `value` µT, in this browser's inbox state, with
+// a session (the submit proxy wants one).
 async function funded(value) {
   await ready();
+  set('session', { token: 'wallet-test' });
   const me = await identityFromSeed(randomBytes(32), { createdSeq: 0 });
   const funding = outputTo(me.wallet, value);
   await idbPut('inbox', 'current', { identityId: me.id, cursor: 0, deliveries: [], receipts: [], wallet: [{ utxoId: funding.id, value: String(value), spent: false, pending: null }] });
@@ -25,8 +27,9 @@ const DIRECT = { send_mode: 'direct', features: { relay_send: true, direct_send:
 
 // Offline regression test of the direct-mode transaction; the live run on Esmeralda is gate G1.
 export default [
-  ['direct send: builds a valid stealth transfer from the wallet output, submits one envelope, spends the input', async () => {
+  ['direct send: builds a valid stealth transfer from the wallet output, submits one envelope with the locker session, spends the input', async () => {
     await ready();
+    set('session', { token: 'wallet-test' });
     const me = await identityFromSeed(randomBytes(32), { createdSeq: 0 });
     const funding = outputTo(me.wallet, 2000000);
     await idbPut('inbox', 'current', { identityId: me.id, cursor: 0, deliveries: [], receipts: [], wallet: [{ utxoId: funding.id, value: '2000000', spent: false }] });

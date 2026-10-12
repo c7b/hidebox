@@ -13,6 +13,7 @@ import { errorBanner } from './errors.js';
 import { setTitle } from './shell.js';
 
 const STEPS = ['sealing', 'waiting', 'sending', 'delivered'];
+const PATH_REFRESH_MS = 10000;
 const now = () => Math.floor(Date.now() / 1000);
 
 function radios(legend, name, options, onChange, row = false) {
@@ -39,6 +40,7 @@ export function sendStep(container, opts) {
   const safety = h('div', { class: 'a-send-safety', hidden: true });
   const kindWarn = h('p', { class: 'a-warn', hidden: true }, icon('warning'), h('span', {}, t('send.kind4_warn')));
   const submit = h('button', { type: 'button', class: 'a-btn a-btn--primary', 'data-testid': 'send-submit', disabled: true }, t('send.submit'));
+  const path = h('p', { class: 'a-caption a-send-path', 'data-testid': 'send-path', 'aria-live': 'polite', hidden: true });
   const status = h('div', { class: 'a-send-status', 'data-testid': 'send-status', hidden: true });
   const errors = h('div', {});
 
@@ -86,10 +88,30 @@ export function sendStep(container, opts) {
   const direct = cfg.send_mode === 'direct' && cfg.features?.direct_send;
   submit.addEventListener('click', () => go());
 
+  // Direct mode: which way the next send goes, decided as deliver() will (a fresh look at this
+  // browser's wallet), refreshed while the panel is on screen, so a judge can wait for the grant.
+  let pathTimer = null;
+  async function refreshPath() {
+    clearTimeout(pathTimer);
+    try {
+      const [{ canSendDirect }, locker] = await Promise.all([import('../lib/wallet.js'), opts.getLocker()]);
+      const own = await canSendDirect(locker.identity, cfg);
+      path.dataset.path = own ? 'direct' : 'relay';
+      path.textContent = t(`send.path.${path.dataset.path}`);
+      path.hidden = false;
+    } catch {
+      path.hidden = true;
+    }
+    if (path.isConnected) pathTimer = setTimeout(refreshPath, PATH_REFRESH_MS);
+  }
+  if (direct) refreshPath();
+
   async function go() {
     errors.replaceChildren();
     submit.disabled = true;
     field.readOnly = true;
+    clearTimeout(pathTimer);
+    path.hidden = true;
     show('sealing');
     try {
       const locker = await opts.getLocker();
@@ -110,6 +132,7 @@ export function sendStep(container, opts) {
       errors.replaceChildren(errorBanner(e, { params: { network: cfg.network } }));
       submit.disabled = !state.address;
       field.readOnly = false;
+      if (direct) refreshPath();
     }
   }
 
@@ -121,7 +144,7 @@ export function sendStep(container, opts) {
     if (ready?.choices === choices) return ready.job;
     const item = opts.item();
     const link = await createLink(item, { mode: 'link', maxViews: state.count, expiresAt: Math.min(now() + state.expiry, item.expiresAt ?? Infinity) });
-    addRecentDrop({ share_id: link.shareId, item_id: item.itemId, manage_token: item.manageToken, ct_hash: item.ctHash, expires: link.expiresAt });
+    addRecentDrop({ share_id: link.shareId, item_id: item.itemId, manage_token: item.manageToken, ct_hash: item.ctHash, expires: link.expiresAt, to: state.address });
     const { sealDelivery } = await import('../lib/courier.js');
     ready = { choices, job: { link, blob: await sealDelivery(state.address, { shareId: link.shareId, s: link.s }, state.kind) } };
     return ready.job;
@@ -164,7 +187,7 @@ export function sendStep(container, opts) {
     field, message, safety, kinds, kindWarn, counts, afters,
     h('p', { class: 'a-caption' }, t(direct ? 'send.how_direct' : 'send.how_relay', { fee: formatTari(cfg.courier.max_fee_ut) }),
       direct ? [' ', t('claim.c9_direct')] : null),
-    submit, errors, status, testnetLine(cfg)));
+    path, submit, errors, status, testnetLine(cfg)));
   field.focus();
 }
 

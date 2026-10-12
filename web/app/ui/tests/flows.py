@@ -458,6 +458,15 @@ def safety(t):
     b = t.actor()
     t.check(open_link(b, url) == "program-warning", "the viewer shows the program warning")
     t.check(b.exists("view-save-anyway") and not b.exists("view-image"), "no preview; Save anyway is offered")
+    # A chunk the server (or the web server in front of it) refuses as too large (claims review item 24):
+    # its own sentence with the limit, not "our server tripped".
+    c = t.actor()
+    home(t, c)
+    Intercept(c).add("*/api/v1/uploads/*/chunks/*", "Request",
+                     lambda _p: (413, {"error": {"code": "too_large", "message": "Request body too large.", "details": {"max_bytes": 5242880}}}))
+    c.set_files("drop-input", [t.fixture("notes.txt")])
+    c.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'too_large_request'", 60)
+    t.check("5 MB" in c.text("error-banner") and not c.exists("offer-locker"), "a 413 from the server reads as too large, with the server's limit")
     t.shot(b, "view-1440-program")
 
     # A sender whose client skips the checks: the viewer goes by the name the file would be saved under.

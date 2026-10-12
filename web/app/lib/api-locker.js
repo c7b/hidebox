@@ -23,7 +23,7 @@ export const getJob = (jobId) => request('GET', `/jobs/${enc(jobId)}`);
 // Chain
 export const chainUtxos = (after, limit = 1000, signal) => request('GET', `/chain/utxos?after=${after}&limit=${limit}`, { signal, timeoutMs: 30000 });
 export const chainSeq = (epoch) => request('GET', `/chain/seq?epoch=${epoch}`);
-export const chainIx = (method, path, json) => request(method, `/chain/ix/${path}`, { json });
+export const chainIx = (method, path, json, headers) => request(method, `/chain/ix/${path}`, { json, headers });
 export const txView = (txId) => request('GET', `/chain/tx/${enc(txId)}/view`);
 
 // Payments

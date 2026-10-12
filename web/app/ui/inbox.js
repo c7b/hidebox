@@ -3,7 +3,7 @@
 // the same mirror of all TARI outputs and tries to open each one with its own view key, so our
 // server never learns which outputs are yours. Nothing opens by itself; Open runs the viewer here.
 import { h } from '../lib/dom.js';
-import { t } from '../lib/i18n.js';
+import { formatRelative, t } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { icon } from './core.js';
 import { formatTari } from './marks.js';
@@ -25,7 +25,7 @@ export async function render(main) {
     return root.replaceChildren(h('p', { class: 'a-lede' }, t('inbox.no_locker')),
       h('a', { class: 'a-btn a-btn--primary', href: '/locker' }, t('nav.open_locker')));
   }
-  const { deliverySecret, inboxState, scan } = await import('../lib/scan.js');
+  const { deliverySecret, inboxState, scan, updateDelivery } = await import('../lib/scan.js');
 
   const scanLine = h('p', { class: 'a-scanline mono', 'data-testid': 'inbox-scan', 'aria-live': 'polite' }, t('inbox.scanning'));
   const drops = h('ul', { class: 'a-items' });
@@ -41,6 +41,12 @@ export async function render(main) {
   const again = h('button', { type: 'button', class: 'a-btn', disabled: true }, t('inbox.again'));
   root.replaceChildren(scanLine, problems, empty, sections.drop, sections.send, sections.receipt, again);
 
+  // When this browser found the output (the chain epoch in the tooltip); records from before this
+  // field existed show the epoch.
+  const when = (r) => h('span', { class: 'a-caption mono', title: t('inbox.epoch', { epoch: r.epoch ?? '—' }) },
+    r.found ? t('inbox.found', { relative: formatRelative(r.found * 1000) }) : t('inbox.epoch', { epoch: r.epoch ?? '—' }));
+  const exitedNote = () => h('span', { class: 'a-caption' }, t('inbox.exited'));
+
   let found = 0;
   function delivery(d) {
     found++;
@@ -49,11 +55,11 @@ export async function render(main) {
       : t('inbox.sent_item');
     const slot = h('div', { class: 'a-item-view' });
     const open = h('button', { type: 'button', class: 'a-btn a-btn--primary', disabled: !d.openable }, t('inbox.open'));
-    const li = h('li', { class: 'a-item', 'data-testid': 'inbox-item', 'data-source': d.source, 'data-state': d.openable ? 'ready' : 'unreadable' },
+    const li = h('li', { class: 'a-item', 'data-testid': 'inbox-item', 'data-source': d.source, 'data-state': d.exited ? 'exited' : d.openable ? 'ready' : 'unreadable' },
       h('div', { class: 'a-item-row' },
         h('span', { class: 'a-item-what' }, icon(d.source === 'drop' ? 'drop' : 'send'), h('span', {}, label)),
-        h('span', { class: 'a-caption mono' }, t('inbox.epoch', { epoch: d.epoch ?? '—' })),
-        d.openable ? open : h('span', { class: 'a-caption' }, t('inbox.unreadable'))),
+        when(d),
+        d.exited ? exitedNote() : d.openable ? open : h('span', { class: 'a-caption' }, t('inbox.unreadable'))),
       slot);
     open.addEventListener('click', async () => {
       open.disabled = true;
@@ -62,6 +68,12 @@ export async function render(main) {
       viewer(slot, {
         cfg, shareId: inner.shareId, secrets: { s: inner.s }, delivery: d, autoOpen: true, clearKey: false,
         locker: () => openLocker(),
+        // Its link ended (opened for the last time, expired or removed): the row says so from now on.
+        onEnded: () => {
+          li.dataset.state = 'exited';
+          open.replaceWith(exitedNote());
+          updateDelivery(identity, d.utxoId, { exited: true });
+        },
       });
     });
     (d.source === 'drop' ? drops : sends).append(li);
@@ -73,7 +85,7 @@ export async function render(main) {
     receipts.append(h('li', { class: 'a-item a-item-row' },
       h('span', {}, t('inbox.received', { x: formatTari(r.value) })),
       r.text ? h('span', { class: 'a-memo' }, t('inbox.message'), ' ', h('q', { class: 'mono' }, r.text)) : null,
-      h('span', { class: 'a-caption mono' }, t('inbox.epoch', { epoch: r.epoch ?? '—' }))));
+      when(r)));
     sections.receipt.hidden = false;
     empty.hidden = true;
   }

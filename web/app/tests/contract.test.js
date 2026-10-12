@@ -18,6 +18,7 @@ import { deliver } from '../lib/wallet.js';
 import { inboxState, scan, watch } from '../lib/scan.js';
 import { hasJudgePass, setJudgePass } from '../lib/pow.js';
 import { set } from '../lib/store.js';
+import { coarseExpiry } from '../../shared/dates.js';
 import { eq, ok, rejects } from './harness.js';
 
 export const env = 'contract';
@@ -59,13 +60,13 @@ export default [
     eq(cfg.text_max_chars, TEXT_MAX_CHARS);
     return `send_mode=${cfg.send_mode} amount_proof=${cfg.amount_proof}`;
   }],
-  ['anonymous text, Once: the item keeps its 20 h expiry and the link inherits it; opens once, then burned', async () => {
+  ['anonymous text, Once: the item keeps its 20 h expiry (rounded up to the hour) and the link inherits it; opens once, then burned', async () => {
     const expiresAt = now() + 20 * 3600;
     const item = await sealItem({ text: 'hello mutis ✓' }, { anonymous: true, expiresAt });
     eq(item.expiresAt, expiresAt);
     ok(item.uploadExpiresAt <= now() + 7200 + 5, 'the 2 h upload session is reported separately');
     const link = await createLink(item, { origin: await origin() });
-    eq(link.expiresAt, expiresAt, 'link expiry = item expiry');
+    eq(link.expiresAt, coarseExpiry(expiresAt), 'link expiry = item expiry, stored to the hour');
     const access = await accessFor(await linkStatus(link.shareId), { s: link.s });
     const { opened, parts } = await receive(link, access);
     eq(text(parts), 'hello mutis ✓');
@@ -127,7 +128,7 @@ export default [
     const expiresAt = now() + 7 * 86400;
     const item = await sealItem({ text: 'locker text' }, { headers: authHeaders(), expiresAt });
     const link = await createLink(item, { origin: await origin(), maxViews: 5 });
-    eq(link.expiresAt, expiresAt);
+    eq(link.expiresAt, coarseExpiry(expiresAt), 'stored to the hour');
     return `link lasts ${((link.expiresAt - now()) / 86400).toFixed(2)} days; createdSeq ${me.createdSeq}`;
   }],
   ['an anonymous item adopted into the locker with its manage token', async () => {

@@ -9,7 +9,7 @@ import { b64uDecode, unhex } from '../lib/b64.js';
 import { config, exitReceipt } from '../lib/api.js';
 import { recentDrops } from '../lib/store.js';
 import { icon } from './core.js';
-import { formatTari } from './marks.js';
+import { formatTari, shortAddress } from './marks.js';
 import { errorBanner } from './errors.js';
 import { setTitle } from './shell.js';
 
@@ -77,6 +77,14 @@ export async function renderTx(main, { txId }) {
 
 // --- /verify: SealLog receipts (P1) ------------------------------------------------------------------
 
+// What this device remembers about a link (never sent anywhere): when it locked the file, and the
+// Tari address it sent it to, if it did.
+function label(d) {
+  const date = d.at ? formatDate(d.at * 1000, { dateStyle: 'medium', timeStyle: 'short' }) : null;
+  if (d.to) return t('verify.sent_to', { address: shortAddress(d.to), date });
+  return date ? t('verify.locked_at', { date }) : t('verify.from_link');
+}
+
 export async function renderVerify(main) {
   setTitle('verify.title');
   const cfg = await config();
@@ -116,6 +124,7 @@ export async function renderVerify(main) {
       const res = await sealProof(itemId);
       stored.textContent = `${t('verify.stored')} ${await check(() => seallog.storedLeaf(b64uDecode(itemId), b64uDecode(d.ct_hash)), res)}`;
     })().catch((e) => stored.replaceWith(errorBanner(e)));
-    return h('li', { class: 'a-item', 'data-testid': 'verify-item' }, h('p', { class: 'mono' }, t('recent.link', { tail: d.share_id.slice(-4) })), stored, exit);
+    return h('li', { class: 'a-item', 'data-testid': 'verify-item' }, h('p', { class: 'mono' }, t('recent.link', { tail: d.share_id.slice(-4) })),
+      h('p', { class: 'a-caption' }, label(d)), stored, exit);
   })), about);
 }

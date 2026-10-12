@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // The app's only shared state: a small in-memory store with subscriptions, the IndexedDB records
-// (the locker and the inbox state, nothing else), per-device conveniences in localStorage and the
-// judge pass in sessionStorage. Every storage call survives blocked storage: IndexedDB falls back to
-// memory for the tab.
+// (the locker and the inbox state, nothing else), and per-device conveniences in localStorage (the
+// language, recent drops, the judge pass). Every storage call survives blocked storage: IndexedDB
+// falls back to memory for the tab.
 
 const state = new Map();
 const watchers = new Map();
@@ -114,37 +114,34 @@ export function localSet(key, value) {
 
 const RECENT = 'mutis.recent';
 
-// {share_id, item_id, manage_token, ct_hash, expires}: the manage token can delete the item, not open
-// it; ct_hash is the ciphertext hash this browser computed, for /verify.
+// {share_id, item_id, manage_token, ct_hash, expires, at, to}: the manage token can delete the item,
+// not open it; ct_hash is the ciphertext hash this browser computed, for /verify; `at` is when this
+// browser locked it and `to` the Tari address it was sent to (if any), both only for its own labels.
 export function recentDrops(now = Date.now()) {
   return localGet(RECENT, []).filter((d) => d.expires * 1000 > now);
 }
 
 export function addRecentDrop(drop) {
-  localSet(RECENT, [drop, ...recentDrops().filter((d) => d.share_id !== drop.share_id)].slice(0, 20));
+  const others = recentDrops().filter((d) => d.share_id !== drop.share_id);
+  const before = recentDrops().find((d) => d.share_id === drop.share_id);
+  localSet(RECENT, [{ at: Math.floor(Date.now() / 1000), ...before, ...drop }, ...others].slice(0, 20));
 }
 
 export function removeRecentDrop(shareId) {
   localSet(RECENT, recentDrops().filter((d) => d.share_id !== shareId));
 }
 
-// --- sessionStorage: the judge pass (P-12), kept for this tab while it moves between pages --------
+// --- localStorage: the judge pass (P-12), kept on this device for a week, so a drop link or the home
+// page opened in another tab still carries it --------------------------------------------------------
 
 const JUDGE = 'mutis.judge';
+const JUDGE_MS = 7 * 86400000;
 
-export function savedJudgePass() {
-  try {
-    return globalThis.sessionStorage?.getItem(JUDGE) ?? null;
-  } catch {
-    return null;
-  }
+export function savedJudgePass(now = Date.now()) {
+  const saved = localGet(JUDGE);
+  return saved && typeof saved.code === 'string' && saved.until > now ? saved.code : null;
 }
 
 export function saveJudgePass(code) {
-  try {
-    if (code === null) globalThis.sessionStorage?.removeItem(JUDGE);
-    else globalThis.sessionStorage?.setItem(JUDGE, code);
-  } catch {
-    // Storage blocked: the pass then lasts until this page is left.
-  }
+  localSet(JUDGE, code === null ? null : { code, until: Date.now() + JUDGE_MS });
 }
