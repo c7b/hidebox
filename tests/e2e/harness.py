@@ -147,14 +147,15 @@ class T:
 
     def actor(self, device: str = "desktop", reduced_motion: bool = False, jitless: bool = False,
               judge_pass: str | None = None) -> cdp.Page:
-        """A fresh browser context. `judge_pass`: the tab holds it as /judges would keep it (P-12)."""
+        """A fresh browser context. `judge_pass`: the device holds it as a /judges#pass= link saves it
+        (P-12): `localStorage` `mutis.judge` = `{code, until}`, a week from now (store.saveJudgePass)."""
         ctx = self.browser(jitless).context()
         ctx.downloads_to(f"{REMOTE_DIR}/downloads/{self.sid}-{len(self.contexts)}")
         self.contexts.append(ctx)
         page = ctx.page(device, reduced_motion)
         if judge_pass:
-            page.cmd("Page.addScriptToEvaluateOnNewDocument",
-                     {"source": f"sessionStorage.setItem('mutis.judge', {json.dumps(judge_pass)});"})
+            saved = f"JSON.stringify({{code: {json.dumps(judge_pass)}, until: Date.now() + 7 * 86400000}})"
+            page.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": f"localStorage.setItem('mutis.judge', {saved});"})
         return page
 
     def fixture(self, name: str) -> str:
