@@ -2,11 +2,12 @@
 """Gate G3: the UTXO mirror. Parsing is checked against responses recorded from ootle-indexer-b on
 2026-10-11 (public chain data, tests/fixtures/), and the worker's cursor logic against the fake indexer."""
 import json
+import os
 import unittest
 from pathlib import Path
 
 from harness import Stack
-from mutis import chain_worker, db, indexer
+from mutis import chain_worker, codec, db, indexer
 from mutis.fake_chain import FakeChain, FakeIndexer, fake_keys
 from mutis.indexer import Indexers
 
@@ -102,6 +103,24 @@ class Mirror(unittest.TestCase):
         with self.assertRaises(indexer.IndexerError):            # none answers: the mirror is not current
             self.w.mirror(self.s.now + 10)
         self.assertEqual(self.w.status["mirror_ok_at"], self.s.now)
+
+    def test_our_own_outputs_are_mirrored_when_they_commit(self):
+        """The indexers stream an output only once the network's consensus epoch reaches it; the outputs of
+        a transaction we sent (the delivery and its change) are in the mirror as soon as it commits."""
+        s = self.s
+        s.worker.setup()
+        s.quiet_chain()
+        drop = s.drop()
+        status, _, body = s.request("POST", "/api/v1/courier", {"to": "drop", "drop_id": drop["drop_id"], "kind": 3,
+                                                               "blob": codec.b64u(os.urandom(125)), "pow": s.solve("courier")})
+        self.assertEqual(status, 202, body)
+        s.now += 46
+        s.worker.run_jobs(s.now)                  # no stream poll in between
+        outputs = s.chain.transfers[-1]["outputs"]
+        mirrored = {r[0] for r in s.conn.execute("SELECT id FROM chain_utxos")}
+        self.assertEqual(len(outputs), 2)
+        self.assertTrue(set(outputs) <= mirrored)
+        self.assertEqual(self.w.mirror(s.now), 0)  # the stream brings them again later: nothing doubles
 
     def test_output_spent_before_fetch_is_skipped(self):
         self.s.chain.add_output(fake_keys()["address"], 1, None)
