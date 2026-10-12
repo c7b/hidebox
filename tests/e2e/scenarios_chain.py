@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 """E2E scenarios that make real Esmeralda transactions (@chain, spec §17.2) and the judge script E-J
-(spec §18.2). Their transaction ids are never published; public evidence comes only from the canary
+(the /judges page). Their transaction ids are never published; public evidence comes only from the canary
 and the daily evidence payment (spec §8.4)."""
 import json
 import re
@@ -53,9 +53,25 @@ def tx_view(t: T, page, tx: str) -> None:
     t.check(page.exists("tx-fee"), "the fee is shown (public)")
 
 
+def send_to_address(t: T, page, text: str, address: str, safety: list[str]) -> str:
+    """Sender side of a send to a Tari address (/send); returns the delivery transaction id."""
+    page.goto(t.origin + "/send")
+    page.wait_for("drop-input")
+    flows.seal_text(page, text)
+    page.fill("send-recipient", address)
+    page.wait_for("send-safety")
+    t.check(safety_emoji(page, "send-safety") == safety, "the send screen shows the recipient's safety code")
+    page.click("send-submit")
+    t.check(page.wait_state("send-status", ("delivered", "failed"), 420) == "delivered", "Delivered privately")
+    tx = page.attr("send-tx", "data-tx")
+    t.check(tx and TX.match(tx), "the send has a transaction id")
+    tx_view(t, page, tx)
+    return tx
+
+
 @scenario("E-09", "Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it", CHAIN)
 def e09(t: T) -> None:
-    a = t.actor("iphone")
+    a = t.actor("android")
     drop_url = make_drop_link(t, a, "E2E E-09")
     if a.exists("key-later"):
         a.click("key-later")
@@ -84,17 +100,7 @@ def e10(t: T) -> None:
     a.wait_for("locker-address")
     safety, address = locker_identity(a)
     b = t.actor()
-    b.goto(t.origin + "/send")
-    b.wait_for("drop-input")
-    flows.seal_text(b, "E2E E-10 sent to an address")
-    b.fill("send-recipient", address)
-    b.wait_for("send-safety")
-    t.check(safety_emoji(b, "send-safety") == safety, "the send screen shows the recipient's safety code")
-    b.click("send-submit")
-    t.check(b.wait_state("send-status", ("delivered", "failed"), 420) == "delivered", "Delivered privately")
-    tx = b.attr("send-tx", "data-tx")
-    t.check(tx and TX.match(tx), "the send has a transaction id")
-    tx_view(t, b, tx)
+    send_to_address(t, b, "E2E E-10 sent to an address", address, safety)
     t.check(open_inbox_item(t, a, "send") == "opened", "the recipient's inbox opens it")
     if t.env.config().get("send_mode") == "relay":
         left = t.env.remote.sql("SELECT COUNT(*) FROM jobs WHERE payload IS NOT NULL AND state IN ('done', 'failed')")[0][0]
@@ -238,55 +244,96 @@ def wallet_ut(page) -> int:
                          " return String(await balance(identity)); })()", await_promise=True, timeout=180))
 
 
-@scenario("E-J", "The judge script (spec §18.2) with a phone and a desktop, in under 6 minutes", CHAIN)
+@scenario("E-J", "The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed", CHAIN)
 def ej(t: T) -> None:
     cfg = t.env.config()
     direct = cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")
     # Direct mode: both contexts share one /64 (ultron's), like two judges in one office, and earlier
     # lockers of this run took that network's daily sponsor grant; so, like a judge, they use a pass.
     judge = t.env.remote.admin("judge-pass", "new", "--uses", "3").strip() if direct else None
-    started = time.monotonic()
     phone, desk = t.actor("iphone", judge_pass=judge), t.actor("desktop", judge_pass=judge)
-    drop_url = make_drop_link(t, phone, "Council")                                          # step 1
+    started = mark = time.monotonic()
+    seconds: dict[str, float] = {}
+
+    def done(step: str) -> None:
+        nonlocal mark
+        seconds[step], mark = time.monotonic() - mark, time.monotonic()
+        t.note(f"{step}: {seconds[step]:.0f} s")
+
+    # Track A · 60 seconds, no wallet
+    flows.home(desk, t.origin)
+    flows.seal_file(desk, t.fixture("notes.txt"))
+    url = flows.wait_link(desk)
+    t.check("#" in url, "A1: a link whose part after # is the key")
+    done("A1")
+    t.check(flows.open_link(phone, url) == "opened", "A2: the phone opens the file")
+    done("A2")
+    phone.reload()
+    t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "A3: reload → This secret already made its exit")
+    t.shot(phone, "A3-exit")
+    done("A3")
+    size = apiclient.Client(t.origin).call("GET", "/canary")[1]["size_stored"]
+    flows.home(phone, t.origin)
+    phone.eval("document.querySelector('a[href=\"/api/v1/canary/raw\"]').click()")
+    stored = int(t.env.remote.as_build(f"stat -c %s {shlex.quote(t.downloaded(phone))}"))
+    t.check(stored == size, f"A4: Download the stored bytes saves our latest canary as stored ({stored} bytes)")
+    done("A4")
+    track_a = time.monotonic() - started
+
+    # Track B · 5 minutes, the Tari part
+    drop_url = make_drop_link(t, phone, "Council")
     opened = time.monotonic()
     phone.click("key-later")
     phone.goto(t.origin + "/locker")
     phone.wait_for("locker-safety")
-    safety, _ = locker_identity(phone)
-    t.shot(phone, "1-drop-link")
-    tx = leave_photo(t, desk, drop_url, safety)                                             # step 2
-    tx_view(t, desk, tx)
-    t.shot(desk, "2-chain-sees")
-    t.check(open_inbox_item(t, phone, "drop") == "opened", "step 3: the phone opens what was left")  # step 3
-    t.shot(phone, "3-inbox-opened")
-    phone.goto(t.origin + "/locker")                                                         # step 4
+    safety, address = locker_identity(phone)
+    t.check(len(safety) == 12 and address.startswith("otl_esm_1"), "B1: a locker with a 12-emoji safety code and a Tari address")
+    t.shot(phone, "B1-locker")
+    done("B1")
+    leave_photo(t, desk, drop_url, safety)
+    t.shot(desk, "B2-chain-sees")
+    done("B2")
+    send_to_address(t, desk, "E2E E-J sent to the phone", address, safety)
+    done("B3")
+    t.check(open_inbox_item(t, phone, "drop") == "opened", "B4 (and B2): the phone's inbox opens what was left in its drop")
+    t.check(open_inbox_item(t, phone, "send") == "opened", "B4: the phone's inbox opens what the computer sent")
+    t.shot(phone, "B4-inbox-opened")
+    done("B4")
+    phone.goto(t.origin + "/locker")
     phone.click("watch-mine")
-    phone.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 1", 600)
-    t.check(phone.attr("watch-summary", "data-readable") == "0", "step 4: 0 files readable with the view key")
-    phone.goto(t.origin + "/upgrade")                                                        # step 5
+    phone.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 2", 600)
+    t.check(phone.attr("watch-summary", "data-readable") == "0", "B5: 0 files readable with the view key")
+    done("B5")
+    phone.goto(t.origin + "/upgrade")
     if direct:
         price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
         funded = poll(lambda: wallet_ut(phone) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10)
         cold = time.monotonic() - opened
         t.note(f"cold start: the sponsor grant was spendable {cold:.0f} s after the locker opened")
         t.check(funded, "direct mode: the phone's browser wallet received its sponsor grant")
-        t.check(cold <= 195, f"cold start {cold:.0f} s: the grant is there by step 5 of the judge script (3:15)")
+        t.check(cold <= 195, f"cold start {cold:.0f} s: the grant is there within 3:15 (spec §18.2 step 5)")
     phone.click("pack-s30")
     phone.wait_for("invoice-address", 60)
     phone.click("pay-browser" if direct else "demo-pay")
     t.check(phone.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 300),
-            "step 5: Amount proven → Added")
+            "B6: Amount proven → Added")
     if direct:
         phone.collect()
         t.check(any(r["method"] == "POST" and r["url"].endswith("/api/v1/chain/ix/transactions") for r in phone.requests),
-                "step 5: the browser built and submitted the payment itself (direct)")
-    flows.home(desk, t.origin)                                                               # step 6
-    flows.seal_file(desk, t.fixture("notes.txt"))
-    url = flows.wait_link(desk)
-    t.check(flows.open_link(phone, url) == "opened", "step 6: the phone opens the file once")
-    phone.reload()
-    t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "step 6: reload → made its exit")
-    _, raw = apiclient.Client(t.origin).call("GET", "/canary/raw")                           # step 7
-    t.check(len(raw) > 0, "step 7: the stored bytes of our canary download")
+                "B6: the browser built and submitted the payment itself (direct)")
+    done("B6")
+    if (cfg.get("features") or {}).get("seallog"):
+        desk.goto(t.origin + "/verify")
+        desk.wait("document.querySelectorAll('[data-testid=\"verify-item\"]').length >= 2 && ![...document.querySelectorAll("
+                  "'[data-testid=\"verify-stored\"], [data-testid=\"verify-exit\"]')].some((e) => /Checking/.test(e.textContent))", 120)
+        items = desk.eval("[...document.querySelectorAll('[data-testid=\"verify-item\"]')].map((e) => e.textContent)")
+        receipts = re.compile(r"included at checkpoint #\d+ \(epoch \d+\)|not on the record yet")
+        t.check(all(receipts.search(i) for i in items), f"B7: each receipt is on the record or waits for the next checkpoint ({items})")
+        t.check(any("Exit:" in i for i in items), "B7: the exit receipt from A3 is listed")
+        t.check("has no owner" in desk.text("verify-log"), "B7: the page says the log has no owner and names its writer")
+        t.shot(desk, "B7-verify")
+        done("B7")
+    t.note("seconds per step: " + json.dumps({k: round(v) for k, v in seconds.items()}))
+    t.note(f"track A {track_a:.0f} s, track B {time.monotonic() - started - track_a:.0f} s")
     minutes = (time.monotonic() - started) / 60
-    t.check(minutes <= 6, f"the whole script took {minutes:.1f} minutes (≤ 6)")
+    t.check(minutes <= 6, f"both tracks took {minutes:.1f} minutes (≤ 6)")

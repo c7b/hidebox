@@ -284,9 +284,10 @@ def e18(t: T) -> None:
         t.check(not violations, f"{device}: no CSP or Trusted Types violation ({violations[:2]})")
 
 
-@scenario("E-19", "Phone: E-01 at 390×844; reduced motion; no horizontal scroll at 360 px")
+@scenario("E-19", "Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px")
 def e19(t: T) -> None:
     text_once(t, "iphone")
+    text_once(t, "android")
     calm = t.actor("iphone", reduced_motion=True)
     flows.home(calm, t.origin)
     t.check(calm.eval("matchMedia('(prefers-reduced-motion: reduce)').matches"), "reduced motion is on")
