@@ -40,3 +40,29 @@ the server's tests: `integration-gate.txt`). Repository lint `tools/lint.py` →
 | The film (spec §18.5, 11-brand §12.6) | Pipeline **PASS**; the story **PENDING-INTEGRATION** | `python3 -I tools/film.py --demo` recorded both devices with CDP screencasts, retimed the shots, composed on the server (1920×1080, 30 fps, H.264, +faststart, no audio), burned in the captions and ended on the lockup card (`film-demo-poster.png`). The 40-second story needs the app. |
 | walletd under systemd, zero data loss | **PASS** | first pass (`../2026-10-11/provision-run1.txt`, `walletd-after-migration.txt`); every balance unchanged |
 | Holding page (design, CSP, phones) | **PASS** | `../2026-10-11/holding-*.png`; 0 CSP violations, no horizontal scroll at 390/412/1440 |
+
+## Go-live results (2026-10-11, evening)
+
+The app went live the same day: fresh database, SealLog 2.0.0, every step of README "Turning the app
+on". Evidence: [`docs/evidence/2026-10-11/`](../docs/evidence/2026-10-11/) (its README indexes the
+files). Live release at the end of the day: `68cd712…-c88c6fb32`, `send_mode = "direct"`,
+`amount_proof = "sidecar"`, `features.seallog = true`.
+
+| Id | Status | Evidence (paths under `docs/evidence/2026-10-11/`) |
+|---|---|---|
+| **D-01** | **PASS** | E-21 in the final run (`e2e/reports/final-*.json`); `deploy/d01-test_headers.txt` |
+| **D-02** | **PASS** | `deploy/d02-test_logs-relay.txt`: after a real relay send through mutis-chain, 0 visitor hits in Caddy, the API, journald, `/var/log` and walletd's database and backups |
+| **D-03** | **PASS** | E-21 in the final run; `deploy/d03-test_privileges.txt` 46/46 |
+| **D-04** | **PASS** | `deploy/d04-reboot-*.txt`: reboot 19:35:43 CST, `/api/v1/health` 200 by 19:35:59, walletd, caddy, mutis-api and mutis-chain active, every timer scheduled, balances identical before and after, `smoke.py --api --chain` PASS, the L1 wallet's tmux session restarted |
+| **D-05** | **PASS** | six deploys today; `deploy/deploy-seallog-on.txt` and the final `deploy/d05-redeploy-idempotent.txt`: the same ref again is "already live with the same files: nothing to switch" and "already notarized"; rollback drills in `deploy/evidence/2026-10-11/` |
+| **D-06** | restore drill **PASS**; three days **PENDING** (time) | both backup units run by hand (`deploy/d06-backups-run.txt`), `restore-drill` PASS as mutis and as drive (`deploy/d06-restore-drill.txt`); the timers are enabled |
+| **D-07** | **PASS** | `deploy/d07-health-drill.txt`: the API stopped → `api_down`, mutis-chain stopped 70 s → `chain_worker_stale`, restored → green |
+| **D-08** | **PASS** (the daily `@chain` run is not scheduled, see open items) | one consolidated `run.py --chain --final` run, 21 of 21 (`e2e/final.log`): E-01…E-08, E-11, E-13…E-22, E-24, E-25, E-03; E-09, E-10, E-12 in `e2e/batch2c.log`; E-J relay 2.1 min (`e2e/batch5.log`) and direct 1.8 min, cold start 82 s (`e2e/direct.log`); E-23 `deploy/e23-griefer.txt` |
+| **D-09** | **PASS** | `deploy/d09-verify-deploy-final.txt`: 0 differences across 143 files for `68cd712`, and the live log runs the tag's `seal_log.wasm` byte for byte |
+| **D-10** | **PASS** | rehearsed in the first pass; the go-live fresh database followed the reset playbook's database step (`/var/backups/mutis/pre-golive-*`) |
+| **D-11** | **PASS** | `deploy/d03-test_privileges.txt` (npm and npx absent) |
+| **D-12** | **WAIVED** (G5 fallback: `service` publishes and writes) | `seallog/`: template 2.0.0 published raw (`template_40c5f1cf…0a47`, byte for byte `seal_log.wasm` sha256 `9af71aa2…d6f2`), the log `component_b7d21215…fdf2`, its header; both in the config and in `/evidence.json` (`public/json/evidence.json`) |
+| P-18 fonts | **PASS** | `deploy/p18-test_fonts.txt` |
+
+E-11 failed twice before it passed: the test, not the product, was wrong (`needs-locker` is also a
+`VIEW_END` state, so the wait returned before the view key had been used); fixed in `tests/e2e`.

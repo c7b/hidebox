@@ -1,0 +1,15 @@
+{
+    "free_quota_bytes": 2080374784,
+    "last_sealed_min": 14,
+    "lockers_active_30d": null,
+    "disk_used_pct": 32,
+    "disk_total_bytes": 105441446724,
+    "disk_free_bytes": 71403831030,
+    "uploads_frozen": "none",
+    "chain_ok": true,
+    "seal_log": {
+        "tree_size": 640,
+        "epoch": 12153
+    },
+    "updated_at": 1791770352
+}

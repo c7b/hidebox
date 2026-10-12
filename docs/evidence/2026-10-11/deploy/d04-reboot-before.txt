@@ -1,0 +1,62 @@
+== 2026-10-11T19:35:31-06:00 before reboot
+ 19:35:31 up 17:23,  5 users,  load average: 0.53, 0.60, 0.33
+active
+active
+active
+active
+Sun 2026-10-11 19:35:44 CST     13s Sun 2026-10-11 19:34:44 CST      46s ago mutis-cleanup.timer       mutis-cleanup.service
+Sun 2026-10-11 19:36:40 CST 1min 9s Sun 2026-10-11 19:31:40 CST 3min 50s ago mutis-health.timer        mutis-health.service
+Sun 2026-10-11 20:00:41 CST   25min Sun 2026-10-11 17:38:09 CST 1h 57min ago mutis-evidence.timer      mutis-evidence.service
+Mon 2026-10-12 03:30:00 CST      7h -                                      - mutis-backup.timer        mutis-backup.service
+Mon 2026-10-12 03:35:00 CST      7h -                                      - mutis-backup-wallet.timer mutis-backup-wallet.service
+l1: 1 windows (created Sun Oct 11 03:57:20 2026)
+{
+ "accounts": [
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "3500000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d8700ed82d425312b298d9867b8acefeb4b7d345de5dec388f0bb12e6c4755bb",
+   "name": "buyer-demo"
+  },
+  {
+   "balances": [
+    {
+     "balance": "13940",
+     "confidential_balance": "0",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_9cc28c3d40aed687fcf991cac3bbdad4a263dac6fc769202e3fa13ae643e47ff",
+   "name": "operator"
+  },
+  {
+   "balances": [
+    {
+     "balance": "17779864",
+     "confidential_balance": "72268000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71",
+   "name": "service"
+  },
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "8897387000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d5614f51c39ff8a0ec5dcd2bb274f4f850cb83ec357a30b539f7a44d6883ddaf",
+   "name": "sponsor"
+  }
+ ],
+ "network": "esmeralda",
+ "version": "0.45.0"
+}

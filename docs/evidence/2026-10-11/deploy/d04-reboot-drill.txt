@@ -1,0 +1,96 @@
+== 2026-10-11T19:35:43-06:00 reboot issued
+2026-10-11T19:35:59-06:00 /api/v1/health 200 after 8 s (reboot issued 19:35:43)
+{"ok":true,"version":"b493564d0f156e69fea6972231324f100501400b","time":1791768960}== 2026-10-11T19:36:30-06:00 after reboot
+ 19:36:30 up 0 min,  1 user,  load average: 0.00, 0.00, 0.00
+         system boot  2026-10-11 19:35
+active
+active
+active
+active
+Sun 2026-10-11 19:36:51 CST      20s -                                - mutis-cleanup.timer       mutis-cleanup.service
+Sun 2026-10-11 19:37:51 CST 1min 20s -                                - mutis-health.timer        mutis-health.service
+Sun 2026-10-11 19:40:51 CST 4min 20s -                                - mutis-evidence.timer      mutis-evidence.service
+Mon 2026-10-12 03:30:00 CST       7h Sun 2026-10-11 09:46:14 CST      - mutis-backup.timer        mutis-backup.service
+Mon 2026-10-12 03:35:00 CST       7h Sun 2026-10-11 09:46:14 CST      - mutis-backup-wallet.timer mutis-backup-wallet.service
+tmux:
+error connecting to /tmp/tmux-1002/default (No such file or directory)
+{
+ "attention": false,
+ "checks": {
+  "api": "green",
+  "budgets": "green",
+  "canary": "green",
+  "chain_worker": "green",
+  "credits": "amber",
+  "disk": "green",
+  "https": "green",
+  "mirror": "green",
+  "sponsor_balance": "green",
+  "walletd": "green"
+ },
+ "overall": "amber",
+ "phase": "pre",
+ "reasons": [],
+ "updated_at": 1791768990
+}
+
+{
+ "accounts": [
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "3500000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d8700ed82d425312b298d9867b8acefeb4b7d345de5dec388f0bb12e6c4755bb",
+   "name": "buyer-demo"
+  },
+  {
+   "balances": [
+    {
+     "balance": "13940",
+     "confidential_balance": "0",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_9cc28c3d40aed687fcf991cac3bbdad4a263dac6fc769202e3fa13ae643e47ff",
+   "name": "operator"
+  },
+  {
+   "balances": [
+    {
+     "balance": "17779864",
+     "confidential_balance": "72268000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_ae57fb3f8deb34cef1ed966bbe33934cae9c2509c073155b9ca0231f6eabca71",
+   "name": "service"
+  },
+  {
+   "balances": [
+    {
+     "balance": "0",
+     "confidential_balance": "8897387000",
+     "resource_address": "resource_0101010101010101010101010101010101010101010101010101010101010101"
+    }
+   ],
+   "component": "component_d5614f51c39ff8a0ec5dcd2bb274f4f850cb83ec357a30b539f7a44d6883ddaf",
+   "name": "sponsor"
+  }
+ ],
+ "network": "esmeralda",
+ "version": "0.45.0"
+}
+== 2026-10-11T19:37:11-06:00 smoke.py --api --chain (manifest from a local build of b493564, content e403dd3c)
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+exit 0
+== 2026-10-11T19:37:17-06:00 L1 wallet tmux restarted
+l1: 1 windows (created Sun Oct 11 19:37:13 2026)
+    890       00:16 /opt/tari/l1/minotari_console_wallet --network esmeralda -b /home/drive/l1wallet --burn-proof-out /h
+890 /opt/tari/l1/minotari_console_wallet --network esmeralda -b /home/drive/l1wallet --burn-proof-out /home/drive/.local

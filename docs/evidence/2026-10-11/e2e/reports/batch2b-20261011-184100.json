@@ -1,0 +1,63 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-09",
+   "title": "Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it",
+   "status": "FAIL",
+   "detail": "What the chain sees: the transaction, with its fee (public)",
+   "seconds": 84.0,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id"
+   ]
+  },
+  {
+   "id": "E-10",
+   "title": "Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it",
+   "status": "FAIL",
+   "detail": "What the chain sees: the transaction, with its fee (public)",
+   "seconds": 59.5,
+   "notes": [
+    "ok: the send screen shows the recipient's safety code",
+    "ok: Delivered privately",
+    "ok: the send has a transaction id"
+   ]
+  },
+  {
+   "id": "E-11",
+   "title": "Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone",
+   "status": "FAIL",
+   "detail": "the output's memo, read with the view key alone, is a /t#4 link",
+   "seconds": 614.6,
+   "notes": [
+    "ok: Delivered"
+   ]
+  },
+  {
+   "id": "E-12",
+   "title": "A view key sees the delivery and can open no file",
+   "status": "FAIL",
+   "detail": "page script failed: {\"exceptionId\": 1, \"text\": \"Uncaught\", \"lineNumber\": 0, \"columnNumber\": 80, \"scriptId\": \"28\", \"stackTrace\": {\"callFrames\": [{\"functionName\": \"\", \"scriptId\": \"28\", \"url\": \"\", \"lineNumber\": 0, \"columnNumber\": 80}, {\"functionName\": \"\", \"scriptId\": \"28\", \"url\": \"\", \"lineNumber\": 0, \"columnNumber\": 105}]",
+   "seconds": 31.1,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "SKIP",
+   "detail": "none of the instrumented scenarios ran in this session",
+   "seconds": 0.0,
+   "notes": []
+  }
+ ]
+}

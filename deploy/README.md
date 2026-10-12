@@ -129,7 +129,8 @@ refuses a newer schema (it says so in the journal; the healthcheck turns red).
 
 1. **Config** (`sudo editor /etc/mutis/mutis.toml`; keep a copy in `/var/backups/mutis/`):
    `gates.send_mode = "relay"` (§7.5: `"direct"`, with `features.direct_send` and `features.sponsor`,
-   only after E-J passes in direct mode, tests/e2e/README.md) and `gates.amount_proof = "sidecar"`
+   only after E-J passes in direct mode, tests/e2e/README.md; production switched to `direct` on
+   2026-10-11 after that run, cold start 82 s: docs/evidence/2026-10-11/) and `gates.amount_proof = "sidecar"`
    (§7.6). `[seal_log] checkpoint_interval_s = 900` is the default (§7.2). Keep
    `sidecar.command = ["/usr/local/lib/mutis/run-sidecar.sh"]` (the server resolves `sidecar.dir`
    through the `current` symlink as well now; the wrapper is what mutis-chain's sandbox was proven

@@ -1,0 +1,8 @@
+20:e2e_expiry_s = 60          # E2E run only (tests/e2e/README.md); remove after E-05
+28:send_mode = "direct"
+35:direct_send = true
+37:sponsor = true
+ok
+active
+active
+config backup: /var/backups/mutis/mutis.toml-20261012T014427Z

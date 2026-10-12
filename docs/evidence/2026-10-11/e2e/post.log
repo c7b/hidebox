@@ -1,0 +1,3 @@
+PASS E-18     13.6s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-21     45.1s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+e2e: PASS {'PASS': 2, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/golive/e2e/post/20261011-201057/report.json

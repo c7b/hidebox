@@ -1,0 +1,32 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-11",
+   "title": "Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 20.3,
+   "notes": [
+    "ok: Delivered",
+    "ok: the output's memo, read with the view key alone, is a /t#4 link",
+    "ok: a browser without a locker is asked for a key",
+    "ok: the view key alone unlocks the link (got ready)",
+    "ok: the view key alone opens a kind-4 file",
+    "ok: it is the text that was sent",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-14",
+   "title": "Payment forgery: a payment row for a UTXO that doesn't exist is never credited",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 1.4,
+   "notes": [
+    "ok: health counts the unconfirmed payment",
+    "ok: the forged payment was never credited"
+   ]
+  }
+ ]
+}

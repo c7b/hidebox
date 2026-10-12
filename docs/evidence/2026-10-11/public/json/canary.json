@@ -1,0 +1,11 @@
+{
+    "n": 4,
+    "sealed_at": 1791769410,
+    "size_stored": 4112,
+    "header": "TVRTMQEWAAAAAAABAAAAALHJcJhL-DXNlgTsqwNQGHs",
+    "meta_ct": "QoSJC9eoZ_vGPJJM-_SWT0HINnqpeJ0OhutntAIcxxve0c4c-hqNxxYVBooRydPYR2Xb2juHLR6vpS08mQvai9ODuWN9irap47j44PZWtTX56F-mVH6SA2oljYHVxklf8GEq0Tm5PANAJzjwTFJlzKgsceyoRA5feIlrVgnxILcZ2CFTJLt1B218glu1-_wASylYSjXvgU3T4j9A-9s3CXK8OGREJjex3a3lLz0rsSTx4BDZsQll-Y70qZciulR9p3RYIJP7822leFHsiy51blQiZXTdEZ3Q-ze3aj54rCZSvZ-dQjU61Tp95wU10xo2pi8WYo6f60PJv7Eb0e8eTRxtytktysmV7ol0GekEfm7xdYKeT65ZdpWbjlk",
+    "ct_hash": "vEA_2lwIP4ipSJpvs0Q6CYB32LcETaKxWEQ6btyMuX8",
+    "raw": "/api/v1/canary/raw",
+    "delivery_tx": "c03d3617b97b00177f732f372b871c993952668c4b9b4de46f94a7ec2f2f55a6",
+    "revealed": []
+}

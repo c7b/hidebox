@@ -1,0 +1,21 @@
+== 2026-10-11T19:59:12-06:00 /api/v1/config
+False send_mode direct amount_proof sidecar features {'drops': True, 'relay_send': True, 'direct_send': True, 'demo_pay': True, 'sponsor': True, 'decoys': True, 'kept': True, 'seallog': True}
+== wall
+{"lockers":[],"quiet":true,"canary":{"sealed_min":15,"size_stored":4112}}
+== stats
+{"free_quota_bytes":2080374784,"last_sealed_min":14,"lockers_active_30d":null,"disk_used_pct":32,"disk_total_bytes":105441446724,"disk_free_bytes":71403831030,"uploads_frozen":"none","chain_ok":true,"seal_log":{"tree_size":640,"epoch":12153},"updated_at":1791770352}
+== health
+{"ok":true,"version":"68cd71222dd17999a8d346fdc7c0686862291d55","time":1791770352}
+== status.json
+green {'api': 'green', 'budgets': 'green', 'canary': 'green', 'chain_worker': 'green', 'credits': 'green', 'disk': 'green', 'https': 'green', 'mirror': 'green', 'sponsor_balance': 'green', 'walletd': 'green'} []
+== variants
+/              shown {'relay': 0, 'direct': 5} hidden {'relay': 4, 'direct': 0}
+/es/           shown {'relay': 0, 'direct': 5} hidden {'relay': 4, 'direct': 0}
+/how           shown {'relay': 0, 'direct': 6} hidden {'relay': 2, 'direct': 0}
+/security      shown {'relay': 0, 'direct': 3} hidden {'relay': 2, 'direct': 0}
+/judges        shown {'relay': 0, 'direct': 0} hidden {'relay': 0, 'direct': 0}
+/es/security   shown {'relay': 0, 'direct': 3} hidden {'relay': 2, 'direct': 0}
+/faq           shown {'relay': 0, 'direct': 0} hidden {'relay': 0, 'direct': 0}
+/privacy       shown {'relay': 0, 'direct': 0} hidden {'relay': 0, 'direct': 0}
+== releases.json last
+{'release': '68cd71222dd17999a8d346fdc7c0686862291d55-c88c6fb32', 'manifest_sha256': 'b6597bd8e68865bff0021ad822f7ea88219a0b5a51df53e4f83266b62ba1d8b4', 'tx_id': 'c2ac2616e90b504413e89b6d9f42ca969212ebea66425b84a2765d4a3d08d8e8', 'at': '2026-10-12T01:49:23Z'}

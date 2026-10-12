@@ -1,0 +1,23 @@
+2026-10-11T19:32:19-06:00 srv2052606 systemd[1]: Starting mutis-backup.service - mutis database backup...
+2026-10-11T19:32:19-06:00 srv2052606 systemd[1]: Starting mutis-backup-wallet.service - mutis wallet and key backup...
+2026-10-11T19:32:20-06:00 srv2052606 mutis-backup[483697]: backup db: wrote mutis-20261012.sqlite3
+2026-10-11T19:32:20-06:00 srv2052606 systemd[1]: mutis-backup.service: Deactivated successfully.
+2026-10-11T19:32:20-06:00 srv2052606 systemd[1]: Finished mutis-backup.service - mutis database backup.
+2026-10-11T19:32:20-06:00 srv2052606 mutis-backup-wallet[483698]: backup wallet: wrote wallet-20261012.sqlite, receiver-20261012.json, robot-20261012.json
+2026-10-11T19:32:20-06:00 srv2052606 systemd[1]: mutis-backup-wallet.service: Deactivated successfully.
+2026-10-11T19:32:20-06:00 srv2052606 systemd[1]: Finished mutis-backup-wallet.service - mutis wallet and key backup.
+== db backups
+total 372
+drwx--S--- 2 mutis mutis   4096 Oct 11 19:32 .
+drwxrws--- 5 mutis mutis   4096 Oct 11 19:31 ..
+-rw------- 1 mutis mutis 372736 Oct 11 19:32 mutis-20261012.sqlite3
+== wallet backups
+total 8384
+drwx------ 2 drive drive    4096 Oct 11 19:32 .
+drwx------ 6 drive drive    4096 Oct 11 09:17 ..
+-rw------- 1 drive drive     452 Oct 11 12:45 receiver-20261011.json
+-rw------- 1 drive drive     452 Oct 11 19:32 receiver-20261012.json
+-rw------- 1 drive drive     452 Oct 11 12:45 robot-20261011.json
+-rw------- 1 drive drive     452 Oct 11 19:32 robot-20261012.json
+-rw------- 1 drive drive 2502656 Oct 11 12:45 wallet-20261011.sqlite
+-rw------- 1 drive drive 6057984 Oct 11 19:32 wallet-20261012.sqlite

@@ -1,0 +1,46 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-01",
+   "title": "Text secret, Once: B reads it; reload and C see burned; item deleted",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 8.0,
+   "notes": [
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-04",
+   "title": "Link + password and password-only; path-only attempts never lock a link",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 26.2,
+   "notes": [
+    "ok: 60 path-only attempts answer bad_link, then rate_limited; never locked (got ['bad_link', 'rate_limited'])",
+    "ok: the link is still active after them",
+    "ok: 'wrong one' is refused with \"That's not it\"",
+    "ok: 'wrong two' is refused with \"That's not it\"",
+    "ok: the right password opens it",
+    "ok: a password-only link opens without a fragment"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 0.0,
+   "notes": [
+    "ok: E-01: no secret in any URL, header or body ()"
+   ]
+  }
+ ]
+}

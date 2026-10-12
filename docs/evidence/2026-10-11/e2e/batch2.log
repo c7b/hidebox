@@ -1,0 +1,13 @@
+FAIL E-09     34.6s  Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it
+           the fee is shown (public)
+FAIL E-10    186.4s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+           timed out after 180 s waiting for: (() => { const e = document.querySelector('[data-testid="sealed-link"]'); const v = e && e.value; return v && v.startsWith('http') && v !== "" ? v : ''; })()
+FAIL E-11    183.8s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+           timed out after 180 s waiting for: (() => { const e = document.querySelector('[data-testid="sealed-link"]'); const v = e && e.value; return v && v.startsWith('http') && v !== "" ? v : ''; })()
+FAIL E-12     30.0s  A view key sees the delivery and can open no file
+           page script failed: {"exceptionId": 1, "text": "Uncaught", "lineNumber": 0, "columnNumber": 82, "scriptId": "89", "stackTrace": {"callFrames": [{"functionName": "", "scriptId": "89", "url": "", "lineNumber": 0, "columnNumber": 82}, {"functionName": "", "scriptId": "89", "url": "", "lineNumber": 0, "columnNumber": 263}]
+PASS E-25     41.6s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+           none of the instrumented scenarios ran in this session
+e2e: FAIL {'PASS': 1, 'FAIL': 4, 'SKIP': 1} → $TMPDIR/golive/e2e/batch2/20261011-182341/report.json
+exit 1

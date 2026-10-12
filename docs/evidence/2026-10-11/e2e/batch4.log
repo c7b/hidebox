@@ -1,0 +1,3 @@
+PASS E-11     20.3s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+PASS E-14      1.4s  Payment forgery: a payment row for a UTXO that doesn't exist is never credited
+e2e: PASS {'PASS': 2, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/golive/e2e/batch4/20261011-193035/report.json

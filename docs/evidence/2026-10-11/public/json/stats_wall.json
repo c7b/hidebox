@@ -1,0 +1,8 @@
+{
+    "lockers": [],
+    "quiet": true,
+    "canary": {
+        "sealed_min": 15,
+        "size_stored": 4112
+    }
+}

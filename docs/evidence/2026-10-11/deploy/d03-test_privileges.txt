@@ -1,0 +1,47 @@
+PASS mutis cannot connect to 127.0.0.1:5100
+PASS build cannot connect to 127.0.0.1:5100
+PASS caddy cannot connect to 127.0.0.1:5100
+PASS drive can connect to 127.0.0.1:5100
+PASS mutis cannot connect to 127.0.0.1:18143
+PASS build cannot connect to 127.0.0.1:18143
+PASS caddy cannot connect to 127.0.0.1:18143
+PASS drive can connect to 127.0.0.1:18143
+PASS build cannot connect to 127.0.0.1:8787 (the API)
+PASS mutis cannot connect to 127.0.0.1:8787 (the API)
+PASS caddy can connect to 127.0.0.1:8787 (the API)
+PASS drive can connect to 127.0.0.1:8787 (the API)
+PASS nothing listens on Caddy's default admin port 2019
+PASS Caddy's admin socket exists
+PASS mutis cannot use Caddy's admin socket
+PASS build cannot use Caddy's admin socket
+PASS drive cannot use Caddy's admin socket
+PASS mutis cannot read /home/drive
+PASS build cannot read /srv/mutis/data
+PASS caddy cannot read /srv/mutis/data
+PASS build cannot read /etc/mutis/secret.key
+PASS mutis can read /etc/mutis/secret.key
+PASS mutis cannot read the walletd keyring credential
+PASS drive cannot read the walletd keyring credential
+PASS build cannot read the walletd keyring credential
+PASS mutis cannot write the served release
+PASS drive cannot write the served release
+PASS caddy can read the served release
+PASS build cannot read /home/drive/mutis keys
+PASS the database and its -wal/-shm files are 0660
+PASS drive (group mutis) can write the database
+PASS walletd's keyring password is on no process command line
+PASS npm is not installed
+PASS npx is not installed
+PASS port 5100 is closed from outside (IPv4 179.236.70.195)
+PASS port 8787 is closed from outside (IPv4 179.236.70.195)
+PASS port 18143 is closed from outside (IPv4 179.236.70.195)
+PASS port 2019 is closed from outside (IPv4 179.236.70.195)
+PASS port 9000 is closed from outside (IPv4 179.236.70.195)
+PASS port 9100 is closed from outside (IPv4 179.236.70.195)
+PASS port 5100 is closed from outside (IPv6 2a02:4780:95:64c5::1)
+PASS port 8787 is closed from outside (IPv6 2a02:4780:95:64c5::1)
+PASS port 18143 is closed from outside (IPv6 2a02:4780:95:64c5::1)
+PASS port 2019 is closed from outside (IPv6 2a02:4780:95:64c5::1)
+PASS port 9000 is closed from outside (IPv6 2a02:4780:95:64c5::1)
+PASS port 9100 is closed from outside (IPv6 2a02:4780:95:64c5::1)
+test_privileges: PASS (46/46)

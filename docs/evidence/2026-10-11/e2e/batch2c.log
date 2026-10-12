@@ -1,0 +1,9 @@
+PASS E-09     27.4s  Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it
+PASS E-10     21.9s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+FAIL E-11     18.8s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+           the view key alone opens a kind-4 file
+PASS E-12     41.6s  A view key sees the delivery and can open no file
+PASS E-25     41.7s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+e2e: FAIL {'PASS': 5, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/golive/e2e/batch2c/20261011-185806/report.json
+exit 1

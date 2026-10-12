@@ -1,0 +1,15 @@
+== baseline
+green {}
+== api stopped
+red {'api': ('red', 'api_down (HTTPError)')}
+== chain stopped 70 s
+red {'chain_worker': ('red', 'chain_worker_stale')}
+== restored
+green {}
+Oct 11 18:32:52 srv2052606 mutis-health[459876]: health: red: api_down
+Oct 11 18:34:04 srv2052606 mutis-health[461671]: health: red: chain_worker_stale
+== walletd stopped 40 s
+green {}
+== restored
+green {}
+active

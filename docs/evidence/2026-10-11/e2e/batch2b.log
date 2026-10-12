@@ -1,0 +1,12 @@
+FAIL E-09     84.0s  Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it
+           What the chain sees: the transaction, with its fee (public)
+FAIL E-10     59.5s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+           What the chain sees: the transaction, with its fee (public)
+FAIL E-11    614.6s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+           the output's memo, read with the view key alone, is a /t#4 link
+FAIL E-12     31.1s  A view key sees the delivery and can open no file
+           page script failed: {"exceptionId": 1, "text": "Uncaught", "lineNumber": 0, "columnNumber": 80, "scriptId": "28", "stackTrace": {"callFrames": [{"functionName": "", "scriptId": "28", "url": "", "lineNumber": 0, "columnNumber": 80}, {"functionName": "", "scriptId": "28", "url": "", "lineNumber": 0, "columnNumber": 105}]
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+           none of the instrumented scenarios ran in this session
+e2e: FAIL {'PASS': 0, 'FAIL': 4, 'SKIP': 1} → $TMPDIR/golive/e2e/batch2b/20261011-184100/report.json
+exit 1
