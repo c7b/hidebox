@@ -367,5 +367,5 @@ def e24(t: T) -> None:
     page = t.actor(jitless=True)
     for path in ("/locker", "/d/" + "0" * 10):
         page.goto(t.origin + path)
-        page.b.drain(3)
-        t.check(page.eval("!!document.querySelector('[data-code=\"needs_wasm\"]')"), f"{path} shows needs_wasm")
+        page.wait("!!document.querySelector('[data-code=\"needs_wasm\"]')")
+        t.check(True, f"{path} shows needs_wasm")
