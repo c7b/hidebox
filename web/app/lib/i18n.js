@@ -48,7 +48,9 @@ export function currentLanguage() {
   return lang;
 }
 
-const numberFormat = (n) => new Intl.NumberFormat(lang).format(n);
+// Formats follow the site's locales (site.js): Mexican Spanish writes 1.9 GB and 10,000, as the site does.
+const locale = () => (lang === 'es' ? 'es-MX' : 'en-US');
+const numberFormat = (n) => new Intl.NumberFormat(locale()).format(n);
 
 export function t(key, params = {}) {
   let v = dict[key] ?? english[key];
@@ -74,11 +76,11 @@ export function formatBytes(n) {
     v /= 1024;
     i++;
   }
-  return `${new Intl.NumberFormat(lang, { maximumFractionDigits: v < 10 && i > 0 ? 1 : 0 }).format(v)} ${UNITS[i]}`;
+  return `${new Intl.NumberFormat(locale(), { maximumFractionDigits: v < 10 && i > 0 ? 1 : 0 }).format(v)} ${UNITS[i]}`;
 }
 
 export function formatDate(ms, options = { dateStyle: 'medium', timeStyle: 'short' }) {
-  return new Intl.DateTimeFormat(lang, options).format(new Date(ms));
+  return new Intl.DateTimeFormat(locale(), options).format(new Date(ms));
 }
 
 const STEPS = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]];
@@ -87,5 +89,5 @@ const STEPS = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 
 export function formatRelative(ms, now = Date.now()) {
   const s = Math.round((ms - now) / 1000);
   const [unit, size] = STEPS.find(([, size]) => Math.abs(s) >= size) ?? STEPS[STEPS.length - 1];
-  return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(Math.round(s / size), unit);
+  return new Intl.RelativeTimeFormat(locale(), { numeric: 'auto' }).format(Math.round(s / size), unit);
 }

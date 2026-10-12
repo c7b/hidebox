@@ -13,10 +13,12 @@ export const NOISE_BYTES = 9216;
 
 // The name is stored as a recipient's browser will save it (lib/filetype.js's sanitizeFileName), so
 // the program check below and the viewer's both see the extension that ends up on disk:
-// "invoice.b\u200Bat" is checked, shown and stored as "invoice.bat".
+// "invoice.b\u200Bat" is checked, shown and stored as "invoice.bat". The file's modification time
+// stays out of the sealed metadata: nothing shows it, and for a photo it is close to the moment it
+// was taken, which the viewer says was removed with the camera data.
 export async function fileSource(file) {
   const { sanitizeFileName } = await import('../lib/filetype.js');
-  return { file, name: sanitizeFileName(file.name), type: file.type, mtime: file.lastModified || null, stripped: false };
+  return { file, name: sanitizeFileName(file.name), type: file.type, mtime: null, stripped: false };
 }
 
 export const textSource = (text) => ({ text });

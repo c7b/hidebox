@@ -29,7 +29,7 @@
 :is(.md-root, .a-page) .a-btn svg { width: 18px; height: 18px; flex: none; }
 
 :is(.md-root, .a-page) .a-linkbtn {
-  display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); padding: 0 var(--s-1);
+  display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); padding: 0;
   background: none; border: 0; color: var(--fg); font: var(--t-ui); cursor: pointer;
   text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .18em;
 }

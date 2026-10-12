@@ -42,8 +42,10 @@ export async function render(main, { dropId }) {
   try {
     drop = await getDrop(dropId);
   } catch (e) {
-    if (e?.code === 'drop_closed') return set('closed', h('h1', { class: 'a-h1' }, t('drop.closed')));
-    if (e?.code === 'drop_not_found') return set('not-found', h('h1', { class: 'a-h1' }, t('drop.not_found')));
+    const ways = () => h('p', { class: 'a-links' }, h('a', { class: 'a-more', href: '/how' }, t('viewer.what')),
+      h('a', { class: 'a-more', href: '/' }, t('gone.lock_own')));
+    if (e?.code === 'drop_closed') return set('closed', h('h1', { class: 'a-h1' }, t('drop.closed')), ways());
+    if (e?.code === 'drop_not_found') return set('not-found', h('h1', { class: 'a-h1' }, t('drop.not_found')), ways());
     return set('error', errorBanner(e, { action: { label: t('viewer.retry'), onClick: () => render(main, { dropId }) } }));
   }
   prefetchPow('upload');
