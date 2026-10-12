@@ -1,0 +1,22 @@
+PASS E-01      9.3s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     12.9s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     26.9s  Link + password and password-only; path-only attempts never lock a link
+PASS E-05     70.8s  Expiry 60 s: after 65 s the link is expired
+PASS E-06      4.8s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      4.2s  A link without its #key shows incomplete
+PASS E-08      7.3s  Locker: lazy creation from Leave me a file; key saved; restored in a clean browser
+PASS E-11     44.2s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+PASS E-13     10.9s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+PASS E-14      2.1s  Payment forgery: a payment row for a UTXO that doesn't exist is never credited
+PASS E-15     10.9s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      2.7s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-17      9.5s  Abuse: a reported link and drop are taken down by id
+PASS E-18     13.4s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19     61.8s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20      7.1s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-21     45.1s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-22      4.8s  Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning
+PASS E-24      9.2s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm
+PASS E-25     41.5s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+e2e: PASS {'PASS': 21, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/golive/e2e/final/20261011-193727/report.json

@@ -1,0 +1,2 @@
+PASS E-J     113.3s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/golive/e2e/direct/20261011-194436/report.json

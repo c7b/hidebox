@@ -1,0 +1,3 @@
+FAIL E-11     22.9s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+           the view key alone unlocks the link
+PASS E-13     11.2s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB

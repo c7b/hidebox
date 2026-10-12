@@ -1,0 +1,56 @@
+[
+    {
+        "release": "379c7b35a6897a59649d673510f81c4d05f98312-c0997c4aa",
+        "manifest_sha256": "51ef0bac200630a9e322ab6a1217b20c33431e23daef964be78a8de2d68a29fb",
+        "tx_id": "8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+        "at": "2026-10-11T23:42:49Z"
+    },
+    {
+        "release": "f0f0db7c4d4edfe2f9268111701b72cc900c18b9-c05cad179",
+        "manifest_sha256": "aa8953c580097e6b3537a1c04cb75939eda9c0a84bbfae01b28f178878f639e2",
+        "tx_id": "bbeb46bd26decfd48b8513f4ee346bc27644578ee7d481d53b6ba996a77e4246",
+        "at": "2026-10-11T23:45:18Z"
+    },
+    {
+        "release": "f0f0db7c4d4edfe2f9268111701b72cc900c18b9-cd994c64e",
+        "manifest_sha256": "c86e9dd9f8911028e7e2d52698ad5e60121ef03999c9f8993ad075f9033aba10",
+        "tx_id": "098a1c8ee4be42534c9c90996ddc57e7e120fb7261b533122b96e48f428e3355",
+        "at": "2026-10-11T23:47:02Z"
+    },
+    {
+        "release": "c60717fe6a4583186e28957eaa6855262a2ea553-c15a76ca0",
+        "manifest_sha256": "01bc01e5c532dd882e8ba76951dab2f4b0dcf1c9671be0b06189d31f90817f07",
+        "tx_id": "9fa78b47a76c40699adb8952840e2259ee41e6f29e956aeca7be0926a858ec7d",
+        "at": "2026-10-11T23:55:28Z"
+    },
+    {
+        "release": "1761749e4f62a8bb072e114c3fb453ea42b61d7b-cfc6cc3be",
+        "manifest_sha256": "6230b0d646d81d4169d45e2f8a1df725cb3c1670780fc6d7a54748852b5eb6cc",
+        "tx_id": "9fa4f40c1857b7b417073538479bdf96ef03908b3a1a57831dbdc458cb3ab07a",
+        "at": "2026-10-12T00:03:52Z"
+    },
+    {
+        "release": "059332a868f3a85b5e8c8d7db1857f745c581082-c6c5a6d9a",
+        "manifest_sha256": "b7ebdda93ebca932a996800c35baee576cdb94392cf68baf604e1ad52dd32da6",
+        "tx_id": "3f213e1d75ee0242d5285974f132f79d24e693045d5b494d293b804db8435da9",
+        "at": "2026-10-12T00:41:00Z"
+    },
+    {
+        "release": "d2f619793bd49667910c393baa277720be146516-cb765aadf",
+        "manifest_sha256": "74fd146c753e5f62fcb98ddeb18df452375892c05cad8e9cb3da7c33bbf84fea",
+        "tx_id": "33bac689397eed921b805c67c9b39b9a1f34dd4049ed9d1ba7915c3b4a662ecd",
+        "at": "2026-10-12T00:58:02Z"
+    },
+    {
+        "release": "b493564d0f156e69fea6972231324f100501400b-ce403dd3c",
+        "manifest_sha256": "36f44edde2cc0694befb0c4ed639479d3305382a798245ad5063eec6a7c2c77c",
+        "tx_id": "6ac9b9e386515f73ab99a761e6a501c6313d02e15663f8ef58e2979f6801951c",
+        "at": "2026-10-12T01:02:35Z"
+    },
+    {
+        "release": "68cd71222dd17999a8d346fdc7c0686862291d55-c88c6fb32",
+        "manifest_sha256": "b6597bd8e68865bff0021ad822f7ea88219a0b5a51df53e4f83266b62ba1d8b4",
+        "tx_id": "c2ac2616e90b504413e89b6d9f42ca969212ebea66425b84a2765d4a3d08d8e8",
+        "at": "2026-10-12T01:49:23Z"
+    }
+]

@@ -1,0 +1,99 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-09",
+   "title": "Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 27.4,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: the inbox lists a delivery from drop",
+    "ok: the scan line says how many outputs it checked",
+    "ok: the phone opens the delivery",
+    "ok: it shows the photo and What the chain saw",
+    "ok: the decrypted photo has no GPS",
+    "ok: the decrypted photo keeps its orientation",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-10",
+   "title": "Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 21.9,
+   "notes": [
+    "ok: the send screen shows the recipient's safety code",
+    "ok: Delivered privately",
+    "ok: the send has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: the inbox lists a delivery from send",
+    "ok: the scan line says how many outputs it checked",
+    "ok: the recipient's inbox opens it",
+    "ok: relay mode: no finished job keeps its payload (the address is forgotten)",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-11",
+   "title": "Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone",
+   "status": "FAIL",
+   "detail": "the view key alone opens a kind-4 file",
+   "seconds": 18.8,
+   "notes": [
+    "ok: Delivered",
+    "ok: the output's memo, read with the view key alone, is a /t#4 link",
+    "ok: a browser without a locker is asked for a key"
+   ]
+  },
+  {
+   "id": "E-12",
+   "title": "A view key sees the delivery and can open no file",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 41.6,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id",
+    "ok: 0 files readable with the view key",
+    "ok: the view key never left the tab (E-03)"
+   ]
+  },
+  {
+   "id": "E-25",
+   "title": "Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 41.7,
+   "notes": [
+    "ok: within 15 minutes the delivery is in the mirror and opens with the robot keys",
+    "ok: /api/v1/canary shows the delivery",
+    "ok: /evidence.json lists the delivery"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 0.0,
+   "notes": [
+    "ok: E-09: no secret in any URL, header or body ()",
+    "ok: E-10: no secret in any URL, header or body ()",
+    "ok: E-12: no secret in any URL, header or body ()"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,3 @@
+items 74, drops 21, forged payments 3, their invoices 3, extra judge passes 1; kept passes 20, security drop ['active']
+takedown: 95 removed, 0 not found
+{"payments_deleted": 3, "invoices_deleted": 3, "passes_deleted": 1}

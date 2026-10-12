@@ -1,0 +1,5 @@
+PASS E-01      8.0s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-04     26.2s  Link + password and password-only; path-only attempts never lock a link
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+e2e: PASS {'PASS': 3, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/golive/e2e/batch1d/20261011-182230/report.json
+exit 0

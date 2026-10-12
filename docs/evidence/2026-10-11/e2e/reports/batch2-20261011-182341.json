@@ -1,0 +1,70 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-09",
+   "title": "Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it",
+   "status": "FAIL",
+   "detail": "the fee is shown (public)",
+   "seconds": 34.6,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id",
+    "ok: What the chain sees: every output amount is hidden"
+   ]
+  },
+  {
+   "id": "E-10",
+   "title": "Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it",
+   "status": "FAIL",
+   "detail": "timed out after 180 s waiting for: (() => { const e = document.querySelector('[data-testid=\"sealed-link\"]'); const v = e && e.value; return v && v.startsWith('http') && v !== \"\" ? v : ''; })()",
+   "seconds": 186.4,
+   "notes": []
+  },
+  {
+   "id": "E-11",
+   "title": "Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone",
+   "status": "FAIL",
+   "detail": "timed out after 180 s waiting for: (() => { const e = document.querySelector('[data-testid=\"sealed-link\"]'); const v = e && e.value; return v && v.startsWith('http') && v !== \"\" ? v : ''; })()",
+   "seconds": 183.8,
+   "notes": []
+  },
+  {
+   "id": "E-12",
+   "title": "A view key sees the delivery and can open no file",
+   "status": "FAIL",
+   "detail": "page script failed: {\"exceptionId\": 1, \"text\": \"Uncaught\", \"lineNumber\": 0, \"columnNumber\": 82, \"scriptId\": \"89\", \"stackTrace\": {\"callFrames\": [{\"functionName\": \"\", \"scriptId\": \"89\", \"url\": \"\", \"lineNumber\": 0, \"columnNumber\": 82}, {\"functionName\": \"\", \"scriptId\": \"89\", \"url\": \"\", \"lineNumber\": 0, \"columnNumber\": 263}]",
+   "seconds": 30.0,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id"
+   ]
+  },
+  {
+   "id": "E-25",
+   "title": "Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 41.6,
+   "notes": [
+    "ok: within 15 minutes the delivery is in the mirror and opens with the robot keys",
+    "ok: /api/v1/canary shows the delivery",
+    "ok: /evidence.json lists the delivery"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "SKIP",
+   "detail": "none of the instrumented scenarios ran in this session",
+   "seconds": 0.0,
+   "notes": []
+  }
+ ]
+}

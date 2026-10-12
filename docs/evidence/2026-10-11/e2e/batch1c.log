@@ -1,0 +1,7 @@
+FAIL E-04     64.2s  Link + password and password-only; path-only attempts never lock a link
+           no Page.loadEventFired in 45 s
+PASS E-22      5.1s  Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+           none of the instrumented scenarios ran in this session
+e2e: FAIL {'PASS': 1, 'FAIL': 1, 'SKIP': 1} → /tmp/claude-1000/golive/e2e/batch1c/20261011-182038/report.json
+exit 1

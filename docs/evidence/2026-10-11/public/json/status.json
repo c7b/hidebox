@@ -1,0 +1,19 @@
+{
+    "attention": false,
+    "checks": {
+        "api": "green",
+        "budgets": "green",
+        "canary": "green",
+        "chain_worker": "green",
+        "credits": "green",
+        "disk": "green",
+        "https": "green",
+        "mirror": "green",
+        "sponsor_balance": "green",
+        "walletd": "green"
+    },
+    "overall": "green",
+    "phase": "pre",
+    "reasons": [],
+    "updated_at": 1791770302
+}

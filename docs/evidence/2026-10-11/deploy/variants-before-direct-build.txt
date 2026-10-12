@@ -1,0 +1,8 @@
+/              shown {'relay': 4, 'direct': 0} hidden {'relay': 0, 'direct': 5}
+/es/           shown {'relay': 4, 'direct': 0} hidden {'relay': 0, 'direct': 5}
+/how           shown {'relay': 2, 'direct': 0} hidden {'relay': 0, 'direct': 6}
+/security      shown {'relay': 2, 'direct': 0} hidden {'relay': 0, 'direct': 3}
+/judges        shown {'relay': 0, 'direct': 0} hidden {'relay': 0, 'direct': 0}
+/es/security   shown {'relay': 2, 'direct': 0} hidden {'relay': 0, 'direct': 3}
+/faq           shown {'relay': 0, 'direct': 0} hidden {'relay': 0, 'direct': 0}
+/privacy       shown {'relay': 0, 'direct': 0} hidden {'relay': 0, 'direct': 0}

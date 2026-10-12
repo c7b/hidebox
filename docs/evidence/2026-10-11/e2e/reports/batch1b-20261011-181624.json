@@ -1,0 +1,73 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-02",
+   "title": "10 MB file, 3 views: B, C, D save identical files; E sees burned",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 12.5,
+   "notes": [
+    "ok: B opens the file",
+    "ok: B's saved file has the original SHA-256",
+    "ok: C opens the file",
+    "ok: C's saved file has the original SHA-256",
+    "ok: D opens the file",
+    "ok: D's saved file has the original SHA-256",
+    "ok: E sees burned after three views",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-04",
+   "title": "Link + password and password-only; path-only attempts never lock a link",
+   "status": "FAIL",
+   "detail": "timed out after 30 s waiting for: (() => { const e = document.querySelector(\"[data-testid=\\\"who\\\"]\"); return !!e && e.getClientRects().length > 0; })()",
+   "seconds": 34.0,
+   "notes": []
+  },
+  {
+   "id": "E-06",
+   "title": "Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 10.0,
+   "notes": [
+    "ok: the link's item is in the database",
+    "ok: B gets integrity-error",
+    "ok: nothing was saved"
+   ]
+  },
+  {
+   "id": "E-16",
+   "title": "Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 2.9,
+   "notes": [
+    "ok: the browser offered a locker without uploading",
+    "ok: the API answers 413 too_large (got 413 too_large)"
+   ]
+  },
+  {
+   "id": "E-22",
+   "title": "Programs: an anonymous .exe is refused; a locker's .exe opens behind the program warning",
+   "status": "SKIP",
+   "detail": "the locker page has no drop widget to seal a program as a locker",
+   "seconds": 3.7,
+   "notes": [
+    "ok: the widget refuses the program before upload (banner program)"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 0.0,
+   "notes": [
+    "ok: E-02: no secret in any URL, header or body ()"
+   ]
+  }
+ ]
+}

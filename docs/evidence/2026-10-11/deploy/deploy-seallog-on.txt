@@ -1,0 +1,16 @@
+build: OK {"content_id": "0997c4aa", "files": 143, "git_sha": "379c7b35a6897a59649d673510f81c4d05f98312", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 22, "vendored_checked": 6, "version": "379c7b3"}
+== upload and activate 379c7b35a6897a59649d673510f81c4d05f98312-c0997c4aa
+sidecar: hello ok, pinned ootle-wasm
+schema version 3
+switched current → releases/379c7b35a6897a59649d673510f81c4d05f98312-c0997c4aa
+restarted mutis-api
+restarted mutis-chain
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: 379c7b35a6897a59649d673510f81c4d05f98312-c0997c4aa manifest 51ef0bac2006… in tx 8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b
+== deployed 379c7b35a6897a59649d673510f81c4d05f98312-c0997c4aa to https://srv2052606.hstgr.cloud

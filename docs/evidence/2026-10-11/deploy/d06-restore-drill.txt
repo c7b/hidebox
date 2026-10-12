@@ -1,0 +1,22 @@
+== as mutis
+[
+ {
+  "backup": "mutis-20261012.sqlite3",
+  "integrity": "ok",
+  "tables": 21,
+  "rows": 1000,
+  "copies": 1
+ }
+]
+restore-drill: PASS
+== as drive
+[
+ {
+  "backup": "wallet-20261012.sqlite",
+  "integrity": "ok",
+  "tables": 26,
+  "rows": 2112,
+  "copies": 2
+ }
+]
+restore-drill: PASS

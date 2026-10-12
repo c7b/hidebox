@@ -1,0 +1,37 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-04",
+   "title": "Link + password and password-only; path-only attempts never lock a link",
+   "status": "FAIL",
+   "detail": "no Page.loadEventFired in 45 s",
+   "seconds": 64.2,
+   "notes": [
+    "ok: 60 path-only attempts answer bad_link, then rate_limited; never locked (got ['bad_link', 'rate_limited'])",
+    "ok: the link is still active after them",
+    "ok: 'wrong one' is refused with \"That's not it\""
+   ]
+  },
+  {
+   "id": "E-22",
+   "title": "Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 5.1,
+   "notes": [
+    "ok: the widget refuses the program before upload (banner program)",
+    "ok: the viewer shows the program warning (got program-warning)",
+    "ok: no preview, Save anyway offered"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "SKIP",
+   "detail": "none of the instrumented scenarios ran in this session",
+   "seconds": 0.0,
+   "notes": []
+  }
+ ]
+}
