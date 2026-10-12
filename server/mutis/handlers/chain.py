@@ -5,6 +5,10 @@ Everyone downloads the same mirror, so the server never learns which outputs a b
 The proxy forwards no client header and only paths on the allowlist. Submitting a transaction takes
 a locker session and relays only a transaction shaped like the ones wallet.js builds, so the proxy
 can't serve as an address-hiding relay for any other Esmeralda transaction (claims review, item 21).
+
+The indexers' budget is shared by every visitor, so reads that reach them are limited per /64 and
+per /48, an unknown transaction id (up to four upstream calls) draws on a small budget of its own, and
+a submit goes out on the indexer client's send lane, which no read can empty (security review, 2).
 """
 import base64
 import binascii
@@ -76,7 +80,7 @@ def _with_source(data: bytes, source: str) -> bytes:
 
 def proxy(ctx, rest: str):
     if ctx.req.method == "GET":
-        ctx.limit(("chain64", ctx.ip64, 120, 60, 1))
+        ctx.limit(("chain64", ctx.ip64, 120, 60, 1), ("chain48", ctx.ip48, 360, 60, 1))
         for pattern, target in _GET_ALLOW:
             m = pattern.match(rest)
             if m:
@@ -106,7 +110,8 @@ def proxy(ctx, rest: str):
     body = ctx.req.json()
     envelope = _own_send_envelope(body, ctx.cfg["ootle"]["max_fee_transfer_ut"])
     try:
-        status, data, source = ctx.app.indexers.call("POST", _POST_ALLOW[rest], json.dumps({"transaction": envelope}).encode())
+        status, data, source = ctx.app.indexers.call("POST", _POST_ALLOW[rest], json.dumps({"transaction": envelope}).encode(),
+                                                     lane="send")
     except IndexerError as e:
         raise ApiError(503, "chain_unavailable", "The Tari indexers aren't answering.") from e
     return Response(status, _with_source(data, source), {"Content-Type": "application/json; charset=utf-8"})
@@ -151,11 +156,22 @@ def _mirror_if_committed(ctx, body: bytes) -> bool | None:
 def tx_view(ctx, tx_id: str):
     """The "What the chain sees" model: the transaction as an indexer holds it, and for each output what
     it reveals, read from our mirror or the indexer, never assumed."""
-    ctx.limit(("chain64", ctx.ip64, 120, 60, 1))
-    view = ctx.app.cached("txview:" + tx_id, 60, lambda: _build_view(ctx, tx_id))
+    ctx.limit(("chain64", ctx.ip64, 120, 60, 1), ("chain48", ctx.ip48, 360, 60, 1))
+    view = ctx.app.cached("txview:" + tx_id, 60, lambda: _lookup(ctx, tx_id))
     if view is None:
         raise ApiError(404, "not_found", "The indexers don't know this transaction.")
     return json_response(200, view, "public, max-age=60")
+
+
+def _lookup(ctx, tx_id: str) -> dict | None:
+    """A miss is never cached (a transaction committed seconds ago reaches the indexers at different
+    times), so misses draw on a budget of their own per network; a hit gives it back."""
+    miss = ("txmiss64", ctx.ip64, 10, 60, 1)
+    ctx.limit(miss, message="Too many unknown transaction ids. Try again in a minute.")
+    view = _build_view(ctx, tx_id)
+    if view is not None:
+        ctx.app.limiter.refund(miss, ctx.now)
+    return view
 
 
 def _ask_each(ctx, path: str, parse):

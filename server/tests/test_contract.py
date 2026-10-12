@@ -12,7 +12,7 @@ from harness import ORIGIN, Stack
 import cbor_fixture  # noqa: E402  (harness puts server/ on the path)
 from mutis import codec, db, items, ootle_addr, quota
 from mutis.fake_chain import FakeChain, FakeIndexer, fake_keys
-from mutis.indexer import Indexers
+from mutis.indexer import IndexerError, Indexers
 
 V = "/api/v1"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -286,6 +286,18 @@ class Links(unittest.TestCase):
         self.assertEqual(short["expires_at"], s.now + 60)
         capped = s.share(item, expires_at=stored - 30)
         self.assertEqual(capped["expires_at"], stored)
+
+    def test_a_link_without_an_expiry_takes_the_files_own(self):
+        """Security review, finding 6: an anonymous file's default expiry (a day, rounded up to the hour)
+        is above the link class's bound plus a minute, so a link that defaults to it was refused."""
+        s = self.s
+        s.now += 1800                        # off the hour, so the rounding up shows
+        item = s.upload(1000)
+        file_expiry = s.conn.execute("SELECT expires_at FROM items WHERE id = ?", (item["item_id"],)).fetchone()[0]
+        self.assertGreater(file_expiry, s.now + quota.CLASSES["anon"]["max_expiry_s"] + 60)
+        link = s.share(item, expires_at=None)
+        self.assertEqual(s.conn.execute("SELECT expires_at FROM shares WHERE id = ?", (link["share_id"],)).fetchone()[0],
+                         file_expiry)
 
     def test_create_status_peek_open_once(self):
         s = self.s
@@ -822,6 +834,25 @@ class ChainReads(unittest.TestCase):
         self.assertEqual(self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[0], 404)
         stale.chain = self.s.chain                # the stale indexer catches up
         self.assertEqual(self.s.request("GET", f"{V}/chain/tx/{self.tx}/view")[0], 200)
+
+    def test_unknown_ids_have_a_budget_of_their_own_and_never_empty_the_send_lane(self):
+        """Security review, finding 2: an unknown transaction id costs the indexers up to four calls and
+        is never cached, so one network gets ten of them a minute, then a 429 (never a 503), and the
+        indexer client submits transactions on a lane no read can empty."""
+        s, app = self.s, self.s.app
+        self.addCleanup(setattr, app, "indexers", app.indexers)
+        app.indexers = Indexers([s.indexer.url], rate=1000)
+        ip = "203.0.113.9"
+        for i in range(10):
+            self.assertEqual(s.request("GET", f"{V}/chain/tx/{i:064x}/view", ip=ip)[0], 404)
+        status, _, body = s.request("GET", f"{V}/chain/tx/{10:064x}/view", ip=ip)
+        self.assertEqual((status, body["error"]["code"]), (429, "rate_limited"))
+        self.assertEqual(s.request("GET", f"{V}/chain/tx/{self.tx}/view", ip="203.0.113.10")[0], 200)
+        ix = Indexers([s.indexer.url], rate=5)
+        ix.upstreams[0][2]["read"].tokens = -10          # reads owed for seconds to come
+        self.assertEqual(ix.call("GET", "/epoch-manager/stats", lane="send")[0], 200)
+        with self.assertRaises(IndexerError):
+            ix.call("GET", "/epoch-manager/stats")
 
     def test_tx_view_before_the_receipt_is_filed(self):
         """Indexers file a transaction's receipt minutes after it is final; until then the view comes from

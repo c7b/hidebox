@@ -98,7 +98,7 @@ class Logs(unittest.TestCase):
                 drop = s.drop()
                 raw = os.urandom(125)
                 job = s.request("POST", "/api/v1/courier", {"to": "drop", "drop_id": drop["drop_id"], "kind": 3,
-                                                            "blob": codec.b64u(raw), "pow": s.solve("courier")}, ip=ip)[2]
+                                                            "blob": codec.b64u(raw), "pow": s.solve("courier", ip)}, ip=ip)[2]
                 address = fake_keys()["address"]
                 s.request("POST", "/api/v1/courier", {"to": "address", "address": address, "kind": 3,
                                                       "blob": codec.b64u(raw)}, headers=locker["auth"], ip=ip)

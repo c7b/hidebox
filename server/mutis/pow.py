@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: MIT
-"""Proof of work (spec §4.12): stateless HMAC'd challenges, single use, per-IP-key escalation."""
+"""Proof of work (spec §4.12): stateless HMAC'd challenges, single use, per-IP-key escalation.
+
+A challenge is bound to the network key it was issued to (the key is part of the MAC, nothing is
+stored), and a solution counts only if its difficulty is within two bits of what that key is asked
+for now: a stockpile of easy challenges, or challenges fetched from a network that isn't escalated,
+can't skip the escalation (security review, finding 3). The network key changes at UTC midnight, so
+a challenge issued in the last minutes of a day fails after it; the app then solves a fresh one.
+"""
 import hashlib
 import hmac
 import math
@@ -50,18 +57,19 @@ def leading_zero_bits(digest: bytes) -> int:
     return bits
 
 
-def make_challenge(k_pow: bytes, purpose: str, difficulty: int, expiry: int, rand: bytes | None = None) -> bytes:
+def make_challenge(k_pow: bytes, purpose: str, difficulty: int, expiry: int, rand: bytes | None = None,
+                   ip64: bytes = b"") -> bytes:
     code = PURPOSES[purpose][0]
     head = struct.pack(">BBBBI", VERSION, code, difficulty, 0, expiry) + (rand or secrets.token_bytes(12))
-    return head + hmac.new(k_pow, head, hashlib.sha256).digest()[:16]
+    return head + hmac.new(k_pow, head + ip64, hashlib.sha256).digest()[:16]
 
 
-def parse_challenge(k_pow: bytes, challenge: bytes) -> tuple[str, int, int]:
-    """Authenticate a challenge and return (purpose, difficulty, expiry). Raises PowError."""
+def parse_challenge(k_pow: bytes, challenge: bytes, ip64: bytes = b"") -> tuple[str, int, int]:
+    """Authenticate a challenge issued to `ip64` and return (purpose, difficulty, expiry). Raises PowError."""
     if len(challenge) != CHALLENGE_LEN:
         raise PowError("pow_invalid")
     head, tag = challenge[:20], challenge[20:]
-    if not hmac.compare_digest(hmac.new(k_pow, head, hashlib.sha256).digest()[:16], tag):
+    if not hmac.compare_digest(hmac.new(k_pow, head + ip64, hashlib.sha256).digest()[:16], tag):
         raise PowError("pow_invalid")
     version, code, difficulty, zero, expiry = struct.unpack(">BBBBI", head[:8])
     if version != VERSION or zero != 0 or code not in _BY_CODE:
@@ -117,7 +125,7 @@ class Pow:
     def issue(self, purpose: str, ip64: bytes, now: int, min_difficulty: int = 0) -> dict:
         bits = max(self.difficulty(purpose, ip64, now), min(min_difficulty, MAX_BITS))
         expiry = now + VALID_S
-        challenge = make_challenge(self.k_pow, purpose, bits, expiry)
+        challenge = make_challenge(self.k_pow, purpose, bits, expiry, ip64=ip64)
         return {"challenge": codec.b64u(challenge), "difficulty": bits, "expires_at": expiry}
 
     def _spent(self, purpose: str, ip64: bytes, now: int) -> None:
@@ -133,24 +141,31 @@ class Pow:
 
     def verify(self, conn: sqlite3.Connection, solution, purpose: str, ip64: bytes, now: int,
                min_difficulty: int = 0) -> None:
-        """Check a {challenge, nonce} solution and burn it. Raises PowError(pow_required|pow_invalid)."""
-        needed = max(self.base(purpose), min_difficulty)
+        """Check a {challenge, nonce} solution issued to `ip64` and burn it. Raises PowError(pow_required|pow_invalid).
+
+        The solution's difficulty may trail what the key is asked for now by two bits (one escalation
+        step, for a challenge issued just before it), never more."""
+        asked = max(self.difficulty(purpose, ip64, now), min_difficulty)
+        needed = max(self.base(purpose), min_difficulty, asked - 2)
         if not isinstance(solution, dict):
-            raise PowError("pow_required", needed)
+            raise PowError("pow_required", asked)
         try:
             challenge = codec.unb64u(solution.get("challenge"), CHALLENGE_LEN)
             nonce = codec.unb64u(solution.get("nonce"), NONCE_LEN)
         except (ValueError, TypeError):
-            raise PowError("pow_invalid", needed) from None
-        got_purpose, difficulty, expiry = parse_challenge(self.k_pow, challenge)
+            raise PowError("pow_invalid", asked) from None
+        try:
+            got_purpose, difficulty, expiry = parse_challenge(self.k_pow, challenge, ip64)
+        except PowError:
+            raise PowError("pow_invalid", asked) from None
         if got_purpose != purpose or expiry < now or difficulty < needed or not solved(challenge, nonce, difficulty):
-            raise PowError("pow_invalid", needed)
+            raise PowError("pow_invalid", asked)
         try:
             with db.tx(conn):
                 conn.execute("INSERT INTO used_nonces(nonce_hash, expires_at) VALUES (?, ?)",
                              (codec.sha256(challenge), expiry))
         except sqlite3.IntegrityError:
-            raise PowError("pow_invalid", needed) from None
+            raise PowError("pow_invalid", asked) from None
         self._spent(purpose, ip64, now)
 
     def reset(self) -> None:
