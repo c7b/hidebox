@@ -567,8 +567,11 @@ class Worker:
     # --- status for the healthcheck ----------------------------------------------------------------
 
     def write_status(self, now: int) -> None:
-        sponsor = self.walletd.stealth_balance_ut(self.cfg["ootle"]["sponsor_account"])
-        self.status.update({"walletd_ok": True, "sponsor_balance_ut": sponsor})
+        try:          # a walletd that doesn't answer is written down too, so the healthcheck sees it at once
+            sponsor = self.walletd.stealth_balance_ut(self.cfg["ootle"]["sponsor_account"])
+            self.status.update({"walletd_ok": True, "sponsor_balance_ut": sponsor})
+        except WalletdError:
+            self.status["walletd_ok"] = False
         try:          # scans are rare on a quiet day, so ask the verifier itself (it starts it if needed)
             self.sidecar.request("hello")
             self.status["sidecar_ok"] = True
