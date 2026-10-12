@@ -28,7 +28,7 @@ mutis is built on the Tari™ Ootle testnet. This page is the long version: the 
 Our server counts opens, watches the clock, and deletes the ciphertext when the rule says so. Opening always takes a click, so link previews in chat apps don't use up a view.
 We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish. We keep a note that the link existed, so we can tell you why it's gone. We never had the key, so any leftover bytes are noise.
 Our database (never files) is backed up daily. It holds the rows our “What we know” page prints, and the wrapped key of every link still open when the copy was made, which opens nothing without the link's secret.
-Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.
+Our host (Hostinger) can take weekly snapshots of the whole server. We haven't switched them off, and we haven't yet confirmed in its panel how long it keeps them. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.
 Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. Without the key it's noise.
 
 ## Two locks
@@ -48,7 +48,7 @@ The Ootle is Tari's layer for applications, where payments are private by defaul
 | Stealth outputs (amount and owner hidden) | Sending a file to a Tari address, dead-drop deliveries, renting space | /verify/tx/<id>: amount hidden, owner a one-time key, memo encrypted, fee public
 | Encrypted memo (XChaCha20-Poly1305) | Carries a file's sealed key to one Tari address | Only the recipient's keys open it; any other key fails to decrypt
 | View keys, separate from spending | Your inbox scans the chain in your browser; /watch shows what a view key sees | A view key reads arrivals and amounts. It can't spend, and it can't open files sealed to your locker
-| Invoice addresses with a reference | Matching a payment to its invoice without accounts | The payment's memo carries the invoice id; nothing on chain links it to you
+| Invoice addresses with a reference | Matching a payment to its invoice without accounts | Our receiving address with the invoice's reference inside it; the reference travels in the payment's encrypted memo, so nothing on chain shows which invoice was paid, or by whom
 | Payments checked against chain state | Crediting rented space | Our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads. The code ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 | Keypair identity | Your locker and its Tari address | There is no email field anywhere
 Why not an escrow template? On the Ootle, TARI held by a template reveals its amount. Native stealth outputs keep it hidden, so that's what we use.
@@ -79,7 +79,7 @@ File names, types, contents and real sizes; file keys, link secrets, passwords, 
 - A network observer
 That you talk to mutis, timing, and padded transfer sizes. Nothing inside TLS.
 - Someone with only the link's path (no #)
-That a link exists, whether it needs a password, and its state. Not the key, the contents or the metadata.
+That a link exists, whether it needs a password, and its state; once it has ended, why and on what day. Not the key, the contents, the name, the real size or the open count.
 - A view-key holder
 Every delivery and payment to that address: amount, time and the memo's link text. Not the files sealed to the locker, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.
 - The public, through our live numbers
@@ -94,7 +94,7 @@ Everything our server stores, plus the disk and any snapshots it keeps; in princ
 - Your own browser. Your browser history, and any history sync, can keep the full link, key included. We clear the key from the address bar once it's opened, but we can't reach your history. Extensions allowed to read your tabs can see the link. Clipboard history (and cloud clipboards) can keep a copied link.
 - A compromised device or extension. Encryption in the browser can't beat malware in the browser.
 - A malicious version of this website. It's the known weak spot of all web encryption: if our server were compromised, it could serve code that leaks keys. SRI only pins files to this page; it can't protect you from us. What can: our verify-deploy script and running your own copy.
-- Metadata. We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, its exit rule and how often it's opened. Not the name, the type, the contents or the key. Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. A VPN or Tor hides your IP from us; links without a locker work in Tor Browser's Safer mode, and Tari features need WebAssembly.
+- Metadata. We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, when it leaves (rounded up to the hour; “midnight” is your own local midnight, which shows your time zone), its exit rule and how often it's opened. Not the name, the type, the contents or the key. Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. A VPN or Tor hides your IP from us; links without a locker work in Tor Browser's Safer mode, and Tari features need WebAssembly.
 - On-chain facts. The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. The fee is public. Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as “sent by mutis”, but not see to whom.
 - Deletion you can't see. We delete on cue, and nothing can prove we kept no copy. Snapshots and free disk blocks are described above.
 - Testnet resets. Esmeralda can be reset. Payments and on-chain records from before a reset are archived in our repository; files on our server are not affected.
@@ -144,7 +144,7 @@ Who could attack a mutis link, what they could do, what stops them, and what sti
 | Phishing through our relay | make our wallet send a link | the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address | someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working
 | Someone hosting abuse | upload and share | small and short-lived anonymous files, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, noindex, the report form (/abuse), removal by id | we can't scan encrypted content, by design
-| Script injection or a poisoned dependency | run code in our origin | no third-party code; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash; SRI on every script and stylesheet | browser extensions (out of scope)
+| Script injection or a poisoned dependency | run code in our origin | no third-party code; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash; SRI on each page's top-level scripts and stylesheets, and the hash manifest for the modules they import | browser extensions (out of scope)
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet; jobs are validated; daily budget slices; a firewall rule per user on the wallet port | at most the daily budgets
 
 ## Cryptography
@@ -171,7 +171,7 @@ We credit a payment only after our wallet sees it and a Tari-run public indexer 
 Read the code that does it ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 
 ## What never touches a disk
-Our server and web server never write your IP address, your links or your files' ids to disk.
+Our server and web server never write your IP address, your links or your files' ids to a log. The database holds file and link ids, never keys; Privacy (/privacy#inventory) lists every table.
 - Web server: no access log, and the error log drops addresses, paths, hosts and headers.
 - API: logs only the route's name, the status and how long it took.
 - Rate limits: a keyed hash of your network prefix, kept in memory, with a key that changes every day.

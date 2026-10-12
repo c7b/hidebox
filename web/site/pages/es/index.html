@@ -54,7 +54,7 @@
       <noscript><p class="noscript">mutis cifra en tu navegador, así que necesita JavaScript.</p></noscript>
       <script type="module" src="/app/drop-widget.js" integrity="{{SRI}}"></script>
       <p class="hero-sub">Gratis. Sin registro. No podemos abrirlo.</p>
-      <p class="hero-built">Construido sobre la testnet de Tari™ Ootle: <a class="more" href="#send">la llave de un archivo puede viajar sellada dentro de un pago stealth<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+      <p class="hero-built">Construido sobre la testnet de Tari™ Ootle. <a class="more" href="/send">O envíalo a una dirección de Tari: la llave viaja sellada dentro de un pago stealth<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
     </div>
   </section>
 
@@ -154,10 +154,10 @@
               <dt>comisión</dt><dd class="v"><span data-chain="fee"></span> tTARI</dd><dd>pública</dd>
             </dl>
             <p class="caption">Nuestra entrega de prueba de cada hora, tal como la muestra la cadena.</p>
-            <p class="links"><a class="more" data-chain="verify" href="/verify">Lo que ve la cadena<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a><a class="more" data-chain="indexer" href="https://ootle-indexer-b.tari.com/">Compruébalo en el indexador de Tari<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+            <p class="links"><a class="more" data-chain="verify" href="/verify">Lo que ve la cadena<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a><a class="more" data-chain="indexer" href="/verify">Compruébalo en el indexador de Tari<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
           </figure>
           <p class="footnote" data-when="send_mode=relay">Nuestro relay publica el pago por ti, así que sabemos a qué dirección envías, nunca la llave.</p>
-          <p class="footnote" data-when="send_mode=direct" hidden>Tu navegador arma y paga el pago por su cuenta. Nosotros lo pasamos a la red, así que vemos que tu casillero envió una transacción, no para quién.</p>
+          <p class="footnote" data-when="send_mode=direct" hidden>Cuando la cartera de tu navegador ya tiene su saldo de testnet (más o menos un minuto después de abrir tu casillero), tu navegador arma y paga el pago por su cuenta y nosotros lo pasamos a la red: vemos que tu casillero envió una transacción, no para quién. Antes de eso, nuestro relay lo publica y sabe la dirección, nunca la llave.</p>
           <p class="footnote">La cadena muestra una salida con monto oculto, dueño oculto y memo cifrado. La comisión es pública. Los pagos que envía nuestro relay salen de una sola cartera con la misma comisión, así que alguien que observe podría agruparlos como “enviados por mutis”, pero no ver a quién.</p>
           <p class="footnote" data-when="send_mode=direct" hidden>Los envíos desde tu navegador gastan el saldo que le asigna nuestra cartera patrocinadora, y luego el cambio de cada envío. Cualquiera que lea el Ootle puede vincular tus envíos entre sí y con nuestra cartera patrocinadora, pero no ver a quién ni cuánto.</p>
         </div>

@@ -49,7 +49,7 @@
    "name": "What do you actually store?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "A random id, the ciphertext, a padded size, the hour it arrived, its rule and its open count, plus a few technical columns. Each link's “What we know” page prints every column, and our privacy page lists every table."
+    "text": "A random id, the ciphertext, a padded size, the hour it arrived, when it leaves (rounded up to the hour), its rule and its open count, plus a few technical columns. Each link's “What we know” page prints every column, and our privacy page lists every table."
    }
   },
   {
@@ -145,7 +145,7 @@
    "name": "Can you scan files for viruses?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "We can't see inside, so we can't scan it either. Only open files you expected. Programs get a warning before you can save them, and people without a locker can't send them at all."
+    "text": "We can't see inside, so we can't scan it either. Only open files you expected. Every viewer warns before saving a program, and our app won't send one without a locker. That rule lives in the app: our server can't see what kind of file it holds, so it can't enforce it."
    }
   },
   {
@@ -200,7 +200,7 @@
   </div>
   <div class="faq-item" id="store">
     <dt>What do you actually store?</dt>
-    <dd><p>A random id, the ciphertext, a padded size, the hour it arrived, its rule and its open count, plus a few technical columns. Each link's “What we know” page prints every column, and <a href="/privacy#inventory">our privacy page</a> lists every table.</p></dd>
+    <dd><p>A random id, the ciphertext, a padded size, the hour it arrived, when it leaves (rounded up to the hour), its rule and its open count, plus a few technical columns. Each link's “What we know” page prints every column, and <a href="/privacy#inventory">our privacy page</a> lists every table.</p></dd>
   </div>
   <div class="faq-item" id="once">
     <dt>What happens when a once-only link is opened?</dt>
@@ -208,7 +208,7 @@
   </div>
   <div class="faq-item" id="back">
     <dt>Can I get a deleted file back?</dt>
-    <dd><p>No. We keep no backups of files, and we never had the key.</p><p data-when="snapshots=weekly">Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</p></dd>
+    <dd><p>No. We keep no backups of files, and we never had the key.</p><p data-when="snapshots=weekly">Our host (Hostinger) can take weekly snapshots of the whole server. We haven't switched them off, and we haven't yet confirmed in its panel how long it keeps them. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</p></dd>
   </div>
   <div class="faq-item" id="preview">
     <dt>Will a link preview in WhatsApp or Slack use up my one view?</dt>
@@ -260,7 +260,7 @@
   </div>
   <div class="faq-item" id="scan">
     <dt>Can you scan files for viruses?</dt>
-    <dd><p>We can't see inside, so we can't scan it either. Only open files you expected. Programs get a warning before you can save them, and people without a locker can't send them at all.</p></dd>
+    <dd><p>We can't see inside, so we can't scan it either. Only open files you expected. Every viewer warns before saving a program, and our app won't send one without a locker. That rule lives in the app: our server can't see what kind of file it holds, so it can't enforce it.</p></dd>
   </div>
   <div class="faq-item" id="trust-js">
     <dt>Why should I trust your JavaScript?</dt>

@@ -2,6 +2,7 @@
 """Checks that need only the files: licence headers, CSP-safe markup, banned words, numbers that
 must come from /config, SEO metadata, trademark rules, contrast, partials, the privacy inventory.
 Each check returns a list of problems (empty = pass). Python standard library only."""
+import itertools
 import json
 import re
 import struct
@@ -413,10 +414,14 @@ def check_static():
     if "Sitemap: {{ORIGIN}}/sitemap.xml" not in robots:
         problems.append("robots.txt: no Sitemap line")
     sec = (s / ".well-known" / "security.txt").read_text()
-    for field in ("Contact: {{SECURITY_DROP_URL}}", "Contact: {{REPO_URL}}/security/advisories/new", "Expires: ",
+    # One contact, the dead drop: a GitHub advisory link would only work once the repository is public
+    # and private reporting is switched on, and RFC 9116 wants every Contact to work.
+    for field in ("Contact: {{SECURITY_DROP_URL}}", "Expires: ",
                   "Preferred-Languages: en, es", "Policy: {{ORIGIN}}/security", "Canonical: {{ORIGIN}}/.well-known/security.txt"):
         if field not in sec:
             problems.append(f"security.txt: missing {field!r}")
+    if "advisories" in sec:
+        problems.append("security.txt: names a GitHub contact (dead while the repository is private)")
     manifest = json.loads((s / "manifest.webmanifest").read_text())
     for icon in manifest["icons"]:
         if not (s / icon["src"].lstrip("/")).is_file():
@@ -508,11 +513,12 @@ HIDDEN_SPAN = re.compile(r"<span[^>]*\shidden[\s>][^<]*</span>")
 
 
 def check_ui_strings():
-    """/judges quotes the app's own words (NOTES §2.7). The page is read in each amount-proof mode, as
-    tools/variants.py builds it. Each phrase in bold in a step must be one of the app's i18n strings
-    ({placeholders} match anything) unless the site's own home page says it, and a bold arrow sequence
-    with the payment steps must be exactly the app's upgrade.step labels for that mode, so a label the
-    app shows only in the other mode fails. SKIP until the app-ui builder writes web/app/i18n/."""
+    """/judges quotes the app's own words (NOTES §2.7). The page is read in each amount-proof mode and
+    each send mode, as tools/variants.py builds it. Each phrase in bold in a step must be one of the
+    app's i18n strings ({placeholders} match anything) unless the site's own home page says it, and a
+    bold arrow sequence with the payment steps must be exactly the app's upgrade.step labels for that
+    mode, so a label the app shows only in the other mode (or only in the other send mode, like the
+    demo-pay button) fails. SKIP until the app-ui builder writes web/app/i18n/."""
     problems = []
     for lang, page, home in (("en", "judges.html", "index.html"), ("es", "es/judges.html", "es/index.html")):
         i18n = WEB / "app" / "i18n" / f"{lang}.json"
@@ -521,18 +527,18 @@ def check_ui_strings():
         strings = json.loads(i18n.read_text())
         patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".*", re.escape(s.strip())) + "$") for s in _strings(strings)]
         own = " ".join(parse(SITE / "pages" / home).text)
-        for proof, keys in PAY_STEPS.items():
-            text = variants.resolve((SITE / "pages" / page).read_text(), {"proof": proof})
+        for (proof, keys), mode in itertools.product(PAY_STEPS.items(), ("relay", "direct")):
+            text = variants.resolve((SITE / "pages" / page).read_text(), {"proof": proof, "send_mode": mode})
             steps = re.findall(r'<li[^>]*><span class="n">.*?</li>', text)
             pay = [strings.get(f"upgrade.step.{k}") for k in keys]
             for bold in re.findall(r"<strong>(.*?)</strong>", " ".join(steps)):
                 phrases = [p.strip() for p in re.sub(r"<[^>]+>|[“”✓]", "", HIDDEN_SPAN.sub("", bold)).split("→")]
                 if pay[0] in phrases and phrases != pay:
-                    problems.append(f"pages/{page} ({proof}): payment steps “{' → '.join(phrases)}”, the app shows "
+                    problems.append(f"pages/{page} ({proof}, {mode}): payment steps “{' → '.join(phrases)}”, the app shows "
                                     f"“{' → '.join(str(s) for s in pay)}”")
                 for phrase in phrases:
                     if phrase and phrase not in own and not any(p.match(phrase) for p in patterns):
-                        problems.append(f"pages/{page}: quotes “{phrase}”, which web/app/i18n/{lang}.json doesn't say")
+                        problems.append(f"pages/{page} ({mode}): quotes “{phrase}”, which web/app/i18n/{lang}.json doesn't say")
     return problems
 
 

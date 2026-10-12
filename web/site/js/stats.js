@@ -64,6 +64,7 @@ const VARIABLES = {
   pack_m30_price: ['config', (c) => pack(c, 'm30')?.price_ut, formatTari],
   pack_m30_days: ['config', (c) => pack(c, 'm30') && days(pack(c, 'm30').days), formatDuration],
   courier_amount: ['config', (c) => c.courier.amount_ut, formatTari],
+  sponsor_grant: ['config', (c) => c.sponsor_grant_ut, formatTari],
   courier_fee: ['config', (c) => c.courier.max_fee_ut, formatTari],
   pbkdf2_iter: ['config', (c) => c.kdf.min_iter, formatCount],
   ootle_wasm_version: ['config', (c) => c.ootle.wasm_version, String],

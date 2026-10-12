@@ -419,7 +419,8 @@ def check_reveal(browser):
 
 def check_interactions(browser):
     """Lights off persists across a reload; EN · ES points at this page's translation; the judge pass is
-    validated, lower-cased and kept where the app reads it (sessionStorage 'mutis.judge', app-core store.js);
+    validated, lower-cased and kept where the app reads it (localStorage 'mutis.judge' with its expiry, app-core
+    store.js), and a /judges#pass=… link saves it on opening;
     the hero's line 2 steps aside while the widget's card shows (NOTES-ui, site 3)."""
     problems = []
     with server() as origin:
@@ -446,11 +447,17 @@ def check_interactions(browser):
         if "judge pass" not in page.eval("document.getElementById('judge-status').textContent"):
             problems.append("an invalid judge pass isn't refused")
         page.eval("document.getElementById('judge-code').value = ' JUDGE-0123456789ABCDEFGHJKMNPQ '; document.querySelector('[data-judge-pass] [type=submit]').click()")
-        if page.eval("sessionStorage.getItem('mutis.judge')") != "judge-0123456789abcdefghjkmnpq":
+        saved = "JSON.parse(localStorage.getItem('mutis.judge') || 'null')"
+        if page.eval(f"{saved}?.code") != "judge-0123456789abcdefghjkmnpq":
             problems.append("a valid judge pass isn't saved for the app, lower-cased")
+        if not page.eval(f"{saved}?.until > Date.now() + 6 * 86400000"):
+            problems.append("the saved judge pass doesn't expire about a week on")
         page.goto(origin + "/judges")
         if page.eval("document.getElementById('judge-code').value") != "judge-0123456789abcdefghjkmnpq":
-            problems.append("the saved judge pass isn't shown again on this tab")
+            problems.append("the saved judge pass isn't shown again on this device")
+        page.goto(origin + "/judges#pass=judge-zzzzzzzzzzzzzzzzzzzzzzzz", settle=1)
+        if page.eval(f"{saved}?.code") != "judge-zzzzzzzzzzzzzzzzzzzzzzzz" or page.eval("location.hash") != "":
+            problems.append("a /judges#pass=… link doesn't save the pass and clear the hash")
     return problems
 
 
