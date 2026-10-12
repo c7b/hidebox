@@ -6,6 +6,7 @@ import unittest
 
 from harness import Stack
 from mutis import codec, db
+from mutis.walletd import Walletd
 
 
 class Canary(unittest.TestCase):
@@ -92,6 +93,18 @@ class Canary(unittest.TestCase):
         self.w.sidecar.argv = [str(s.tmp / "no-such-sidecar")]
         self.w.write_status(s.now)
         self.assertFalse(db.get_meta_json(s.conn, "chain_status")["sidecar_ok"])
+
+    def test_status_says_when_walletd_stops_answering(self):
+        """The healthcheck reads walletd's state from the status, so a walletd that doesn't answer must be
+        written down at the next status, not left as the last good one until the status goes stale."""
+        s = self.s
+        self.w.write_status(s.now)
+        self.assertTrue(db.get_meta_json(s.conn, "chain_status")["walletd_ok"])
+        self.w.walletd = Walletd("http://127.0.0.1:9/json_rpc")
+        s.now += 20
+        self.w.write_status(s.now)
+        status = db.get_meta_json(s.conn, "chain_status")
+        self.assertEqual((status["walletd_ok"], status["updated_at"]), (False, s.now))
 
     def test_hourly_cadence(self):
         self.w.tick()
