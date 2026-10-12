@@ -10,6 +10,9 @@ html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
 .a-main > * { min-width: 0; }
 @media (min-width: 1200px) { .a-main { max-width: calc(960px + 2 * var(--gutter)); } }   /* one column, centred like the site's sections */
 .a-h1 { font: var(--t-display); font-size: clamp(36px, 5.2vw, 64px); letter-spacing: -.02em; }
+.a-notfound { display: grid; gap: var(--s-5); justify-items: start; }
+.a-notfound .a-scene { font: var(--t-scene); text-transform: uppercase; color: var(--fg-2); }
+.a-links { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
 .a-h2 { font: var(--t-h3); }
 .a-lede { font: var(--t-body); font-size: clamp(17px, 1.4vw, 19px); color: var(--fg-2); max-width: 60ch; }
 .a-section { display: grid; gap: var(--s-4); padding-top: var(--s-6); border-top: 1px solid var(--hair); max-width: 760px; }
@@ -158,6 +161,7 @@ html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
 @media (min-width: 760px) { .a-plans { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); } }
 .a-plan { display: grid; gap: var(--s-3); align-content: start; padding: var(--s-5); border: 1px solid var(--line); }
 .a-plan .a-btn { justify-self: start; }
+.a-plan .a-card-h { min-height: 2.6em; }   /* a title that wraps doesn't push its price below the others' */
 .a-plan-price { font: var(--t-h3); }
 .a-pay-text { color: var(--pay-text); }
 .a-invoice { display: grid; gap: var(--s-3); padding: var(--s-5); border: 1.5px solid var(--fg); max-width: 640px; }

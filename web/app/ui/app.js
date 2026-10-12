@@ -24,8 +24,12 @@ await startPage({ bottomBar: TABBED.has(route.name), current: route.name });
 const main = document.getElementById('main');
 const page = PAGES[route.name];
 if (!page) {
-  setTitle('gone.notfound');
-  main.replaceChildren(h('h1', { class: 'a-h1' }, t('gone.notfound')), h('a', { class: 'a-btn', href: '/' }, t('gone.lock_own')));
+  setTitle('notfound.h');
+  main.replaceChildren(h('div', { class: 'a-notfound' },
+    h('p', { class: 'a-scene' }, t('notfound.scene')),
+    h('h1', { class: 'a-h1' }, t('notfound.h')),
+    h('p', { class: 'a-lede' }, t('notfound.body')),
+    h('a', { class: 'a-btn a-btn--primary', href: '/#drop' }, t('notfound.back'))));
 } else {
   try {
     await (await page())(main, route.params);
