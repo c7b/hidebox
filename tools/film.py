@@ -7,7 +7,8 @@ Script, no voice, no music. Python stdlib here; Chromium and ffmpeg run on the s
   python3 -I tools/film.py --demo        the pipeline alone, on the pages live now (no app needed)
 
 1. Two browser contexts on the server through the E2E harness (tests/e2e/): a 1440×900 desktop and a
-   390×844 phone with touch and 4× CPU throttle, each recorded with CDP Page.startScreencast.
+   390×844 phone with touch and 4× CPU throttle, each recorded with CDP Page.startScreencast. In direct
+   mode both hold a judge pass, as E-J does, so the desktop's wallet gets the sponsor grant it sends from.
 2. The story of 11-brand §12.6 runs on the real site. Each shot is marked with the page clock;
    waiting between shots is cut, and each shot's real time is retimed to its slot in the film.
 3. On the server, as build, Debian's ffmpeg places the two tracks on the stage colour, burns in the
@@ -39,7 +40,7 @@ FPS = 30
 WORK = "/home/build/work/deploy/film"
 FONT = "/usr/share/fonts/opentype/courier-prime/Courier Prime.otf"
 STAGE, STAGE_FG, STAGE_FG_2 = "0x0E0D0B", "0xEEE9DE", "0xA39C8F"       # web/shared/tokens.css
-DESK_BOX, PHONE_BOX = (40, 70, 1280, 800), (1435, 70, 370, 800)       # x, y, width, height on 1920×1080
+DESK_BOX, PHONE_BOX = (95, 70, 1280, 800), (1455, 70, 370, 800)       # x, y, width, height on 1920×1080
 END_CARD_S = 3
 MAX_BYTES = 25 * 1024 * 1024
 
@@ -88,19 +89,30 @@ class Take:
         return {name: page.stop_recording() for name, page in (("desk", self.desk), ("phone", self.phone))}
 
 
+def direct_mode(t: T) -> bool:
+    cfg = t.env.config()
+    return cfg.get("send_mode") == "direct" and bool((cfg.get("features") or {}).get("direct_send"))
+
+
 def story(t: T, take: Take) -> None:
     desk, phone = take.desk, take.phone
-    make_drop_link(t, phone, "Film")                     # off camera: the phone gets a locker to send to
+    # Off camera: the phone gets a locker to send to and, in direct mode, the desktop opens its own now so
+    # that its sponsor grant is there by the send (E-J does the same at B1).
+    make_drop_link(t, phone, "Film")
     if phone.exists("key-later"):
         phone.click("key-later")
     phone.goto(t.origin + "/locker")
     phone.wait_for("locker-address")
     _, address = locker_identity(phone)
+    if direct_mode(t):
+        make_drop_link(t, desk, "Film computer")
+        if desk.exists("key-later"):
+            desk.click("key-later")
     flows.home(desk, t.origin)
     flows.home(phone, t.origin)
     with take.shot(DROP, 5):
         desk.set_files("drop-input", [t.fixture("photo-gps.jpg")])
-        desk.wait("!!document.querySelector('[data-testid=\"seal-progress\"]')", 30)
+        desk.wait("!!document.querySelector('[data-testid=\"seal-progress\"], [data-testid=\"sealed-link\"]')", 30)
     with take.shot(NOISE, 5):
         link = flows.wait_link(desk)
         take.hold(1.5)
@@ -112,13 +124,19 @@ def story(t: T, take: Take) -> None:
         phone.reload()
         t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "the reload says it made its exit")
         take.hold(1.5)
-    with take.shot(SEND, 5):
+    with take.shot(SEND, 3):
         desk.goto(t.origin + "/send")
         desk.wait_for("drop-input")
-        flows.seal_text(desk, "Stage door, nine o'clock.")
+        flows.lock_text(desk, "Stage door, nine o'clock.")
+        desk.wait_for("send-recipient", 120)
         desk.fill("send-recipient", address)
         desk.wait_for("send-safety")
+    if direct_mode(t):
+        t.check(desk.wait("document.querySelector('[data-testid=\"send-path\"]')?.dataset.path === 'direct'", 300),
+                "direct mode: the desktop's wallet holds its grant, so this send goes from the browser")
+    with take.shot(SEND, 2):
         desk.click("send-submit")
+        take.hold(1.0)
     t.check(desk.wait_state("send-status", ("delivered", "failed"), 420) == "delivered", "Delivered")
     with take.shot(SEND, 2):
         take.hold(1.5)
@@ -267,9 +285,12 @@ def main() -> int:
     env = Env(args.origin.rstrip("/"), Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-film-"))), args.out)
     env.stage()
     t = T(env, "FILM")
+    # Direct mode: a sponsor grant is two a day per network and the server's may be spent on tests, so
+    # both contexts hold a judge pass, like E-J.
+    judge = env.remote.admin("judge-pass", "new", "--uses", "3").strip() if not args.demo and direct_mode(t) else None
     with tempfile.TemporaryDirectory(prefix="mutis-frames-") as frames:
         try:
-            take = Take(t.actor("desktop"), t.actor("iphone"), Path(frames))
+            take = Take(t.actor("desktop", judge_pass=judge), t.actor("iphone", judge_pass=judge), Path(frames))
             (demo if args.demo else story)(t, take)
             recordings = take.stop()
         finally:
