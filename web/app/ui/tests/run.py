@@ -87,10 +87,6 @@ def static_checks(r):
         res = subprocess.run([sys.executable, "-I", *cmd], cwd=ROOT, capture_output=True, text=True)
         r.check(res.returncode == 0, f"{cmd[0]}: {res.stdout.strip().splitlines()[-1] if res.stdout.strip() else res.stderr[-200:]}")
     en = json.load(open(os.path.join(APP, "i18n", "en.json"), encoding="utf-8"))
-    es = json.load(open(os.path.join(APP, "i18n", "es.json"), encoding="utf-8"))
-    r.check(set(en) == set(es), f"en.json and es.json have the same {len(en)} keys ({sorted(set(en) ^ set(es))[:5]})")
-    plural = [k for k in en if isinstance(en[k], dict) != isinstance(es[k], dict)]
-    r.check(not plural, f"plural forms agree between languages ({plural[:5]})")
     used = set()
     sources = {}
     for name in sorted(os.listdir(UI)):

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // The app's only shared state: a small in-memory store with subscriptions and per-device conveniences
-// in localStorage (the language, recent drops, the judge pass); every storage call survives blocked
-// storage. The locker's IndexedDB records live in idb.js.
+// in localStorage (recent drops, the judge pass); every storage call survives blocked storage. The
+// locker's IndexedDB records live in idb.js.
 
 const state = new Map();
 const watchers = new Map();
@@ -21,7 +21,7 @@ export function subscribe(key, fn) {
   return () => watchers.get(key).delete(fn);
 }
 
-// --- localStorage: remembered language and "your recent drops" (no secrets) ----------------------
+// --- localStorage: "your recent drops" and the judge pass (no secrets) ----------------------------
 
 export function localGet(key, otherwise = null) {
   try {
