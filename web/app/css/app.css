@@ -64,8 +64,8 @@
   color: var(--fg); font: var(--t-code); font-size: clamp(15px, 2.4vw, 19px);
 }
 .a-inline-form { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 1px solid var(--hair); }
-.a-inline-form .a-row { flex-wrap: nowrap; }
-.a-inline-form .a-input { flex: 1 1 auto; min-width: 0; }
+.a-inline-form .a-row { flex-wrap: wrap; }
+.a-inline-form .a-input { flex: 1 1 14em; min-width: 0; }
 .a-inline-form .a-btn { flex: none; white-space: nowrap; }
 .a-zone { max-width: 720px; }
 .a-zone .md-root { margin-inline: 0; }
@@ -144,14 +144,14 @@
 .a-alarm { display: flex; gap: var(--s-3); align-items: center; }
 .a-alarm .a-icon { width: 32px; height: 32px; color: var(--exit-text); }
 .a-filename { font: var(--t-code); overflow-wrap: anywhere; }
-.a-filecard { display: grid; place-items: center; gap: var(--s-2); aspect-ratio: 4 / 3; max-width: 320px; border: 1px solid var(--line); background: var(--bg-raised); padding: var(--s-4); }
+.a-filecard { display: grid; place-items: center; gap: var(--s-2); aspect-ratio: 4 / 3; max-width: 320px; border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); padding: var(--s-4); }
 .a-filecard .a-icon { width: 40px; height: 40px; }
 .a-meta { font: var(--t-small); color: var(--fg-2); overflow-wrap: anywhere; }
 .a-what-you-see { display: grid; gap: var(--s-3); min-width: 0; }
-.a-what-you-see img, .a-what-you-see video { max-height: 70svh; width: auto; min-width: min(100%, 240px); border: 1px solid var(--hair); }
+.a-what-you-see img, .a-what-you-see video { max-height: 70svh; width: auto; min-width: min(100%, 240px); border-radius: var(--r-input); }
 .a-what-you-see audio { width: 100%; }
 .a-what-you-see pre {
-  max-height: 60svh; overflow: auto; padding: var(--s-4); border: 1px solid var(--line); background: var(--bg-raised);
+  max-height: 60svh; overflow: auto; padding: var(--s-4); border-radius: var(--r-input); background: var(--bg-raised); box-shadow: var(--shadow);
   font: var(--t-code); white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .a-split { display: grid; gap: var(--s-5); }
