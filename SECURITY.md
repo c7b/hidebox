@@ -15,10 +15,11 @@ Please tell us privately before you tell anyone else.
    report is readable by us alone, and nothing on our server or on the chain says who left it. A
    drop takes a fixed number of files a day (`DROP_FILES_PER_DAY` in `server/mutis/handlers/uploads.py`);
    if it answers "took all it can today", try again after midnight UTC, or use the next channel.
-2. **A GitHub private security advisory** on `c7b/mutis` (*Security → Report a vulnerability*). This
-   path works once the repository is public and private reporting is switched on; `/security` links
-   it, and `security.txt` will list it as a second `Contact` on the day it works, because RFC 9116
-   wants every listed contact to be live.
+2. **A GitHub private security advisory** on `c7b/mutis`:
+   [Report a vulnerability](https://github.com/c7b/mutis/security/advisories/new) (*Security →
+   Report a vulnerability*; it needs a GitHub account). Only you and the maintainer see the advisory.
+   `security.txt` lists it as the second `Contact`, and `/security` links it; the site's test suite
+   checks, as a visitor who isn't signed in, that the form answers and that private reporting is on.
 
 Please include what you saw, how to reproduce it, and which part of the site or the repository it
 touches. A proof of concept against the live site is fine when it stays within your own files,
