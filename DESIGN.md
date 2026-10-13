@@ -1,5 +1,5 @@
 ---
-name: shushbox
+name: hidebox
 description: Your private drive. Locked here. Shared your way.
 colors:
   background: "oklch(1 0 0)"
@@ -36,7 +36,7 @@ colors:
   border-dark: "oklch(1 0 0 / 10%)"
   input-dark: "oklch(1 0 0 / 15%)"
   sidebar-dark: "oklch(0.205 0 0)"
-  sidebar-primary-dark: "oklch(0.488 0.243 264.376)"
+  sidebar-primary-dark: "oklch(0.488 0.243 264.376)"   # shadcn's value; the brand tile does NOT use it (pinned to primary)
   tari-dark: "oklch(0.811 0.111 293.571)"
   success-dark: "oklch(0.845 0.143 164.978)"
   warning-dark: "oklch(0.879 0.169 91.605)"
@@ -164,10 +164,11 @@ components:
     padding: "0.25rem"
 ---
 
-# Design System: shushbox
+# Design System: hidebox
 
 > Written in Phase 6A, second run (2026-10-13), from the built prototype in `research/design/drive/`
-> (jarvis side): `ui/tokens.css`, `ui/components.css`, `ui/behaviors.js`, `app.css`. It replaces the
+> (jarvis side): `ui/tokens.css`, `ui/components.css`, `ui/behaviors.js`, `app.css`; updated the same day by the
+> fix pass after the critique (`research/16-drive-design.md` §8, §14). It replaces the
 > "bye" ghost system. Phase 6B moves these files into `web/shared/` and `web/app/ui/`. The tokens are
 > shadcn/ui's, copied exactly; the frontmatter is normative. The sidecar with shadows, motion and
 > breakpoints lives beside the prototype (`research/design/drive/.impeccable/design.json`), because this
@@ -176,13 +177,14 @@ components:
 ## Overview
 
 **Creative north star: a drive you already know how to use, where every file wears its rule.** The
-layout is Google Drive's (sidebar with New, My drive, Received, Shared, Recent, Starred, Trash and a
-storage meter; a header with search; folder cards; a file table with a menu on each row). The atoms are
+layout is Google Drive's (sidebar with New, My drive, Received, Shared, Activity, Trash and a storage
+meter; a header with search and Upgrade; folder cards; a file table with a menu on each row). The atoms are
 shadcn/ui's "new-york" components, ported to plain CSS and about four hundred lines of our own
 JavaScript, so the product reads as a careful modern app and not as a vibe-coded page. The one signature
 is the **rule badge**: a small named pill with a Lucide icon (Once, 3 opens, Until Oct 14, Secret word,
-Pay 0.5 tTARI, Sent by Tari, Public link, Private, Link ended) on every file row, folder card, share
-step, activity sheet and on the home page's slice of a drive.
+Pay 0.1 tTARI, Sent by Tari, Public link, Private, Link ended, Getting ready) on every file row, folder card,
+share step, activity sheet and on the home page's slice of a drive, with a second outline badge when a file
+is set to leave ("Leaves Oct 20").
 
 The mood is calm, bright and exact: neutral greys, near-black ink, one violet that only ever means
 Tari. Anti-references: the retired ghost (mascot, indigo night, phosphor), crypto dashboards (neon on
@@ -195,18 +197,22 @@ something.
 
 ### Primary
 - **Ink** (`primary`): primary buttons, the checked radio card ring, the active switch, the progress
-  fill, the brand square. In dark mode it flips to near-white (`primary-dark`) with dark text.
+  fill, the brand square (pinned to `primary` in both themes, never shadcn's blue dark `sidebar-primary`). In
+  dark mode it flips to near-white (`primary-dark`) with dark text. One filled primary per screen: the sidebar
+  New and the phone's floating New are white bordered buttons, like Google's.
 
 ### Secondary
 - **Tari Violet** (`tari`, from shadcn's own "violet" theme; `tari-dark` on dark): only for things that
   are Tari: the Pay to open and Sent by Tari badges, the Tari choices in the share dialog, tTARI
-  amounts, chain receipts and the "What the chain shows" note.
+  amounts, chain receipts, the "What the chain shows" note, the Tari address row, and the tail of the storage
+  bar that is paid space.
 
 ### Tertiary
 - **Done green** (`success`, shadcn "emerald"): link ready, paid and checked, delivered, upload done.
-- **Soon amber** (`warning`, shadcn "amber"): space nearly full, starred files.
+- **Soon amber** (`warning`, shadcn "amber"): space nearly full, the "This shares it too" warning on Move.
 - **Destructive red** (`destructive`): Move to trash, Delete my drive, failed sends.
-- **Chart 1 to 4**: the storage breakdown bar only (Photos, Videos, Music, Papers).
+- **Storage ramp**: the breakdown bar is one neutral ramp (ink at 82, 58, 38 and 22 %); shadcn's chart
+  colours are not used anywhere.
 
 ### Neutral
 - `background`, `card`, `popover` (white / near-black), `muted` and `accent` (hover and quiet fills),
@@ -243,14 +249,17 @@ sans as fallback. Addresses, links and keys use the system monospace. Product UI
 
 ## Layout
 
-- **App shell (drive, received, storage):** a 16rem sidebar (fixed, collapsible with Ctrl/Cmd + B) and
-  an inset main area with a 3.5rem header (sidebar toggle, search that opens the command palette, Get
-  more space, theme, help). Page padding 1rem on phones, 1.5rem from 768px.
-- **Phones:** the sidebar becomes an 18rem sheet from the left; the file table becomes a list (icon,
-  name, then the rule badge and its state on a second line); a floating New button sits bottom right;
-  dialogs fill the width minus 1rem gutters with stacked footers (primary on top); the QR code is
-  hidden and Share becomes the primary action.
-- **Folder cards** flow in an auto-fill grid (min 15rem). **Reading pages** keep a 44rem column.
+- **App shell (drive, received, storage, activity):** a 16rem sidebar (fixed, collapsible with Ctrl/Cmd + B)
+  and an inset main area with a 3.5rem header (sidebar toggle, search that filters the current view in the
+  browser, Upgrade, theme, help). Page padding 1rem on phones, 1.5rem from 768px.
+- **Phones:** the sidebar becomes an 18rem sheet from the left; folders become a two-column compact grid so
+  files show in the first screen; the file table becomes a list (icon, name, then the badges and the state on
+  a second line that wraps); a white floating New button sits bottom right and the page pads its end by the
+  button's height; dialogs fill the width minus 1rem gutters with stacked footers (primary on top); the QR
+  code is hidden and Share becomes the primary action.
+- **Folder cards** flow in an auto-fill grid (min 15rem) on computers. **Reading pages** keep a 44rem column.
+- **Empty drive:** the brand moment (the ink tile taking in two Lucide file icons), one primary (Upload a
+  folder on computers, Upload files on phones), and the Tari address row with Copy.
 - **Home:** a two-column hero from 1024px (copy left, a slice of a drive right), then the quick-share
   band, the rules grouped the way the share dialog asks, the Tari rows and the footer.
 
@@ -274,8 +283,10 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 
 ### Buttons
 - Variants default (ink), outline, secondary, ghost, destructive, link; sizes sm, default, lg and icon.
-- Height 2.25rem with a mouse, **2.75rem on touch** (project rule, the one deliberate size change).
-- Focus: border in `ring` plus a 3px ring at 50%. Press: a half-pixel drop. Disabled: 50% opacity.
+- Height 2.25rem with a mouse, **2.75rem on touch** (project rule, the one deliberate size change), icon
+  buttons included (row menus, folder icons, the dialog close).
+- Focus: border in `ring` plus a 3px ring at 50%, on buttons, links, link-buttons and disclosures alike (never
+  the browser's outline). Press: a half-pixel drop. Disabled: 50% opacity.
 
 ### Chips (if used)
 - **Rule badges** are the chip: caption type, full radius, a 12px Lucide icon first. Neutral rules use
@@ -291,24 +302,28 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 
 ### Navigation
 - Sidebar menu buttons (2rem, 2.75rem on touch) with an icon and label; the current page fills
-  `accent` and turns medium weight; Received carries a count badge. Breadcrumbs inside folders.
-  Command palette on Ctrl/Cmd + K (files, folders, places).
+  `accent` and turns medium weight; Received carries a count badge. Breadcrumbs inside folders. No command
+  palette and no list/grid toggle (cut; the components stay available).
 
 ### The share dialog (signature component)
 - One question per step, at most three choices, each a radio card (icon tile, title, one-line
   description, radio on the right): **Who can open it?** (Anyone with the link / Someone who pays you /
-  One Tari address) then, for links, **How many times can it open?** (Once / A few times with a count
-  select / No limit) then **Until when?** (Until a time / Until I stop it). "Ask for a secret word" is a
-  switch on the last link step. Pay to open asks the price (three named amounts) and whether buyers see
-  names first; Send by Tari asks the address and shows the safety code. The result shows the rule
-  sentence, the link with Copy, the QR on computers, and the key note.
+  One Tari address) then, for links, **How many times can it open?** (Once / A few times / No limit) with a
+  defaulted line **It ends** (Tomorrow / In a week / When I stop it), the switch "Ask for a secret word" and,
+  on files, the switch "Delete it from my drive after". Pay to open shows the three prices from `/config` as
+  "0.1 tTARI" (no adjectives), the switch "Show the name before they pay" and, the first time, the sealed
+  sales-view-key notice; Send by Tari asks the address, shows the safety code, the switch "They use another
+  Ootle wallet" and the relay-or-direct line. The result shows the rule sentence, the link with Copy, the QR
+  on computers, and the key note (pay links: the split-key sentence and its boundary).
 - A file that already has a link opens on two tabs: New link and Links (state, Copy, Stop this link).
 
 ### Rows, menus and sheets
 - Every row and folder ends in a kebab menu: Share, Copy a once link, See activity, Download, Rename,
-  Move, Add to starred, Move to trash (destructive, last, after a separator).
-- See activity opens a right sheet with a timeline (opened, paid, delivered, ended, the chain receipt)
-  and links to What our server knows and Check it on chain.
+  Move, Delete it after…, Move to trash (destructive, last, after a separator).
+- See activity opens a right sheet with a timeline (opened, paid, made, uploaded, link ended) and a button
+  to **What our server knows**, a second sheet (the glass box). The drive-wide **Activity** view lists the
+  same events newest first, including files that left, with their chain receipt and tx.
+- Move into a folder that has a link shows a `warning` alert inside the dialog ("This shares it too.").
 - Toasts follow Sonner: bottom right (full width on phones), 4 seconds, an Undo action where it applies.
 
 ## Do's and Don'ts
@@ -322,7 +337,9 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
   allowed, focus return) and every icon from the Lucide sprite.
 
 ### Don't:
-- **Don't** bring back a mascot or any illustration beyond Lucide line icons in empty states.
+- **Don't** bring back a mascot or any illustration beyond Lucide line icons in empty states (the empty
+  drive's tile with two file icons is the one composed moment).
+- **Don't** say a link's end goes on the chain: only a file that leaves gets a receipt.
 - **Don't** add gradients, glows, glass panels or coloured section backgrounds.
 - **Don't** use an eyebrow or kicker label above a heading; the heading speaks alone.
 - **Don't** put an em dash or en dash in visible text; empty table cells stay empty (with a hidden

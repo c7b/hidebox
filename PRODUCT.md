@@ -8,6 +8,8 @@
 > `server/mutis/cleanup.py`). It replaces the "bye" ghost record. No interview was possible (the brief
 > rules out questions to the owner and this run has no question tool), so facts from the brief are
 > marked **[brief]**, facts from code or config **[code]**, and inferences **[inferred]**.
+> Updated the same day by the fix pass after the critique (`research/16-drive-design.md`, the merged design of
+> record, §14): the name, pay to open's release gate, folders as a key tree, activity per hour, Delete it after.
 
 ## Platform
 
@@ -72,23 +74,38 @@ Everything the server and library do today stays reachable; new server work is a
 - Today [code]: anonymous drop and link (once, a few opens, a time, a password), lockers (keypair
   identity, kept files, drop links, inbox by chain scan, view key), send to a Tari address (kind 3 and
   kind 4), packs bought with tTARI (s30, m30) with demo pay, `/verify` of SealLog proofs, abuse reports.
-- New, decided at architecture [brief]: folders (manifest and wrapped keys), pay to open (the trust
-  model is the architect's: split key, owner-published key or escrow), per-file activity, a trash.
+- New, decided at architecture and settled in the merge [code-checked]: folders as a key tree (each file's
+  key wrapped under its folder's; the server sees the tree's shape, never a name); pay to open as a split key
+  with a per-buyer claim (the money goes to the owner's sales address; our server holds half the key and
+  releases it once the chain shows the payment; only test money our wallet built releases at once, any other
+  payment waits for the owner's drive to check it is the owner's to spend, because a view key can't prove
+  that); activity as opens per hour per link (never who or an IP); a trash; "Delete it after…" per file
+  (the owner's "deleted after X time"). Refunds are not promised: the locked payment (an Ootle HTLC) is the
+  named next step.
 - Space rules, true to the code [code]: the free quota is `clamp(overcommit x free pool / active
   drives, floor, ceiling)`, smoothed hourly; a drive inactive for `{inactive_days}` days loses its files;
   after a pack lapses, nothing is deleted for `{lapse_grace_days}` days, then the oldest kept files go
-  until the drive fits. The owner's idea "files nobody opens in X time" is not in the code [open].
+  until the drive fits (files in the trash first). Any file can be set to delete itself after a day, a
+  week or `{max_days}` days; that is the only time rule per file. Deleting files nobody opened in X days is
+  not built: it needs a last-read day per file, and it is the owner's call [open].
+- **A receipt on the Tari chain only when a file leaves** [code]: an exit leaf is written when a file's
+  ciphertext is deleted (`items.unlink`); a link that ends on a file kept in the drive gets none, and no
+  sentence may say otherwise.
 - Rules that bind every change [brief]: English only; no third-party code, requests, fonts, CDN or
   analytics; no npm, pip, React or Tailwind at runtime; Python standard library for builds; CSP,
   Trusted Types, SRI and the no-innerHTML rule; every privacy sentence from the claim registry
-  (`research/11-brand.md` §8, `research/14-ghost-design.md` §10.3, `research/16-drive-design.md` §5);
+  (`research/11-brand.md` §8, `research/14-ghost-design.md` §10.3, `research/16-drive-design.md` §9.3:
+  C32 to C47; C12 and the old C7-d retired);
   every number in copy is a `{variable}` from `/api/v1/config`; test ids change only with their tests.
 - The public name lives in one brand constant; the codename mutis stays in code and paths [brief].
 
 ## Brand Commitments
 
-- **The name is "shushbox"** [decided in Phase 6A run 2 on evidence; the owner can override it with one
-  word]. Tagline: "Locked here. Shared your way." The ghost and the name "bye" are retired [brief].
+- **The name is "hidebox"** [recommended in the fix pass on evidence; the owner can override it with one
+  word]. "shushbox", the earlier pick, is not to be published: shushbox.com is a live wellness platform for
+  survivors of sexual trauma and abuse. "snugbox" is a cannabis lockbox brand. Tagline: "Locked here.
+  Shared your way." Copy says "locked", never "hidden" alone, because the files are encrypted, not merely
+  hidden. The ghost and the name "bye" are retired [brief].
 - **No mascot** [brief]. The ghost's one good idea survives as the rule badge: every file and folder
   shows its rule as a named badge with an icon.
 - **Google Drive's layout, shadcn/ui's clothes** [brief]: the owner's reference is Google Drive's web app;
