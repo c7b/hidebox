@@ -333,7 +333,9 @@ def e20(t: T) -> None:
     a.cmd("Input.dispatchKeyEvent", {"type": "keyDown", "key": "Enter", "code": "Enter", "modifiers": 2, "windowsVirtualKeyCode": 13})
     a.cmd("Input.dispatchKeyEvent", {"type": "keyUp", "key": "Enter", "code": "Enter", "modifiers": 2, "windowsVirtualKeyCode": 13})
     flows.wait_link(a)
-    t.check(a.eval("(document.querySelector('.md-live,[role=status]')?.textContent || '').trim().length > 0"),
+    # announce() fills the region on the next animation frame (web/app/lib/dom.js), which can trail the
+    # link by a moment on a busy page.
+    t.check(bool(a.wait("(document.querySelector('.md-live,[role=status]')?.textContent || '').trim().length > 0", 5)),
             "the live region announces the sealed state")
     t.check(not unnamed_controls(a), "sealed card: every control has an accessible name")
     owner = apiclient.Client(t.origin)
