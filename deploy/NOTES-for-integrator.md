@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # NOTES for the integrator (deploy builder)
 
+> Historical record (2026-10-11). The site and app also had Spanish pages then; the owner had them
+> removed on 2026-10-12 (CHANGELOG), so mentions of `/es/`, `es.json` and the language switch below
+> describe code that is now only in the git history. The current layout is in this directory's README.
+
 Everything below ran on 2026-10-11 from the workstation and on the server (as operator with sudo, `build`
 for the browser, `drive` for walletd, `mutis` for the database). Nothing from the workstation was
 copied to the server except this repository's code; every key and secret on the server was made there.
