@@ -2,11 +2,12 @@
 
 <!-- impeccable:product-schema 1 -->
 
-> Written by the Phase 6A design lead on 2026-10-13 (fix pass the same day, after the design
-> critique) from the owner's brief
-> (`research/13-ghost-brief.md`, owner's words of 2026-10-12 and 2026-10-13), the behaviour spec and
-> the live deployment. No interview was possible (the brief rules out questions to the owner), so
-> facts taken from the brief are marked **[brief]** and inferences are marked **[inferred]**.
+> Rewritten by the Phase 6A design lead on 2026-10-13 (second run, "the drive") from the owner's words of
+> 2026-10-13 and his first mandate of 2026-10-11 (`research/15-drive-brief.md`), the behaviour spec
+> (`research/10-spec.md`), the live `/api/v1/config` and the code (`server/mutis/quota.py`,
+> `server/mutis/cleanup.py`). It replaces the "bye" ghost record. No interview was possible (the brief
+> rules out questions to the owner and this run has no question tool), so facts from the brief are
+> marked **[brief]**, facts from code or config **[code]**, and inferences **[inferred]**.
 
 ## Platform
 
@@ -14,112 +15,112 @@ web
 
 ## Users
 
-- **Anyone who has to pass one secret to one person, now** [brief]: a password, a photo of an ID, a
-  note with a door code. On a phone or a laptop, often in the middle of a chat, with no account and no
-  wish to learn anything. The bar is an eight-year-old who gets it at a glance [brief].
-- **The Tari Council judging the October 2026 contest "Spooky Secrets"** [brief]: seven people who
-  vote on "the best demonstration of Tari's privacy capabilities". Some read every claim with a
-  cryptographer's precision (Fox, Kinkajou); one votes on the first ten seconds (BoredElon); one judges
-  pixels and motion (Naveen); one wants a real use case, "not the theatrical kind" (Solix78).
+- **People who want a private place for their files, and to share them their way** [brief]: they
+  upload photos, papers, notes, music and video into a drive, then share one file or a whole folder
+  once, a few times, until a time, behind a secret word, for a price in tTARI, to a Tari address, or as
+  a public link. They want to see what happened afterwards: who opened, who paid, what was delivered,
+  what others sent them. Phones first, then laptops. The bar is a child who gets it at a glance
+  [brief: "like google.com or uniswap.org"].
+- **Strangers who only want to pass one thing, now** [brief]: no drive, no key, no decisions; today's
+  anonymous drop widget, kept as the secondary path on the home ("Just share one thing").
 - **People who receive a link** [inferred]: they did not choose the product. They need to know what
-  they are about to open, that it opens once, and what happened when it is gone.
-- **Self-hosters and reviewers** [brief]: they need one grown-up page with the threat model, who sees
-  what, the Tari capability map and the verification steps.
+  they are about to open, what it costs if it is pay-to-open, and what happens when it is gone.
+- **The Tari Council judging the October 2026 contest "Spooky Secrets"** [brief]: "the best
+  demonstration of Tari's privacy capabilities". Fox and Kinkajou read claims with a cryptographer's
+  precision; Naveen judges pixels and motion; Solix78 wants a real use case; BoredElon votes on the
+  first ten seconds; coin_artist values worlds and stories.
+- **Self-hosters and reviewers** [brief]: one grown-up page ("How it was made") with the threat model,
+  who sees what, the Tari capability map and how to verify.
 
 ## Product Purpose
 
-Give the ghost a secret; your friend sees it once; then it's gone, and its goodbye is written on the
-Tari chain. The browser encrypts the file before upload, the key travels in the link (or sealed to a
-Tari address inside a stealth payment), and the server holds only ciphertext and the clock.
+A hosted, privacy-first drive on the Tari Ootle. Your drive opens only with your key (generated in your
+browser, no email). Every file is encrypted in the browser before upload; a folder means every file in
+it is encrypted and hidden. Sharing is a rule on a file or a folder; Tari does the private parts: pay to
+open with stealth payments, the key sent inside a stealth output's encrypted memo, view keys that see
+arrivals without spending, payments checked against chain state, and every exit written to SealLog.
+Space is a product: a free share of one real disk that adapts as people join, and more space bought with
+tTARI [brief].
 
-Success means: a stranger has a link within ten seconds of landing, with zero decisions (copied where
-the browser allows it, otherwise one tap on Copy or Share away); a
-judge finishes the one-device script in about a minute and the two-device Tari script in about five;
-nothing on the first screen needs cryptography to be understood [brief].
+Success means: a stranger makes a drive and has a link in under a minute, or shares one thing without a
+drive in ten seconds; the owner always sees each share's state (opens left, ends, paid, delivered); a
+judge finishes each script (one device, two devices) in six steps or fewer; every privacy sentence is
+true with its condition [brief].
 
 ## Positioning
 
-The only entry in this contest that is a hosted consumer product a non-crypto person can use in ten
-seconds, and where Tari's privacy does real work behind that simplicity: the file key can ride to a
-Tari address inside a stealth output's encrypted memo, view keys show arrivals and amounts without
-opening the files sealed to a locker, payments are credited only after the chain confirms them, and every exit is notarized in our
-own SealLog template on the Ootle [brief]. The rivals are a CLI toolkit, a sell-a-secret template,
-claimable stealth links, a public message board and a game [brief].
+The only entry that is a finished, hosted drive a non-crypto person can use, where Tari's privacy does
+the work behind the simplicity: pay to open with hidden amounts and owners, a file key delivered to an
+address inside a stealth output, view keys separate from spending, credits proven against the chain,
+receipts on SealLog, and keypair identity [brief]. The rivals are a CLI toolkit (GhostKey), a
+sell-a-secret template (Crypt), claimable stealth links (Phantom Drop), a public board (Hauntboard),
+a game, and Skydrop (tTARI to a Bluesky handle) [brief].
 
 ## Operating Context
 
-- A phone first (390 and 360 wide), then a desktop (1440); headless Chromium on the server is the test
-  browser, real devices are the owner's [brief].
-- The judge path: `/judges`, a short script with what each step should show; a QR code next to the
-  link on desktop carries the link to the second device [brief].
-- Testnet only (Esmeralda); tTARI is worth nothing; Ootle mainnet is due on the date in `/config`.
-- The forum post, the film and the share links are how most people first meet the product [inferred
-  from 01-contest-strategy §6].
+- Phones at 390 and 360 wide, laptops at 1440; headless Chromium on the server is the test browser [brief].
+- The judge path lives at `/judges`: two tracks of at most six steps, now through the drive; a QR code on
+  the computer carries links to the phone [brief].
+- Testnet only (Esmeralda); tTARI is worth nothing; Ootle mainnet is due on `{mainnet_date}` [code].
+- The chain worker can fail (it did on 2026-10-13); the drive must say so in words, and the anonymous
+  path must keep working without it [inferred].
 
 ## Capabilities and Constraints
 
-Functionality stays; only the surface changes [brief]:
+Everything the server and library do today stays reachable; new server work is additive [brief]:
 
-- Drop a file or text and get a link; rules: once (default), a secret word, a few opens, a time,
-  kept in a locker; delete now.
-- Send to a Tari address (key in a stealth payment's encrypted memo); a dead drop ("get a file from
-  someone"); an inbox found by scanning the chain in the browser; a view key that sees arrivals and
-  amounts and opens no file sealed to a locker (files sent "to another Ootle wallet" do open with
-  that wallet's view key, claim C15); packs of more room paid in tTARI, with a demo pay; `/verify` of SealLog proofs; abuse
-  reports; judge passes.
-- Rules that bind every change: English only; no third-party code, requests, fonts, CDN or analytics;
-  no npm, pip or new packages; Python standard library for builds; CSP, Trusted Types and SRI as
-  today; every privacy sentence comes from the claim registry (`research/11-brand.md` §8 and its
-  additions in `research/14-ghost-design.md`); every number in copy is a `{variable}` filled from
-  `/api/v1/config` (`tools/check-copy.py`); test ids change only together with their tests [brief].
-- The name is decided at the end of Phase 6A and the owner can override it with one word, so the
-  public name lives in one brand constant, the logo files and the repository name [brief].
+- Today [code]: anonymous drop and link (once, a few opens, a time, a password), lockers (keypair
+  identity, kept files, drop links, inbox by chain scan, view key), send to a Tari address (kind 3 and
+  kind 4), packs bought with tTARI (s30, m30) with demo pay, `/verify` of SealLog proofs, abuse reports.
+- New, decided at architecture [brief]: folders (manifest and wrapped keys), pay to open (the trust
+  model is the architect's: split key, owner-published key or escrow), per-file activity, a trash.
+- Space rules, true to the code [code]: the free quota is `clamp(overcommit x free pool / active
+  drives, floor, ceiling)`, smoothed hourly; a drive inactive for `{inactive_days}` days loses its files;
+  after a pack lapses, nothing is deleted for `{lapse_grace_days}` days, then the oldest kept files go
+  until the drive fits. The owner's idea "files nobody opens in X time" is not in the code [open].
+- Rules that bind every change [brief]: English only; no third-party code, requests, fonts, CDN or
+  analytics; no npm, pip, React or Tailwind at runtime; Python standard library for builds; CSP,
+  Trusted Types, SRI and the no-innerHTML rule; every privacy sentence from the claim registry
+  (`research/11-brand.md` §8, `research/14-ghost-design.md` §10.3, `research/16-drive-design.md` §5);
+  every number in copy is a `{variable}` from `/api/v1/config`; test ids change only with their tests.
+- The public name lives in one brand constant; the codename mutis stays in code and paths [brief].
 
 ## Brand Commitments
 
-- **The figure is a little ghost** that sits in the middle of the drop zone and acts out the rule:
-  one finger up and a wink for "once", mittens over its eyes for a secret word, an hourglass for "a
-  few times", an envelope and a Tari coin for a send, an open bag for a dead drop, a dashed outline
-  waving bye when the secret is gone [brief, chosen over a bubble, a burning note and a safe in
-  `research/14-ghost-design.md` §2].
-- **The name is "bye"** [settled at the end of Phase 6A on evidence (finalists bye, byebye, whoosh)
-  and confirmed by the design critic; the owner can override it with one word]. Tagline: "Show it
-  once. Then bye." Where the name sits mid-sentence it is set in bold, so "sent by **bye**" never
-  reads as a typo.
-- **Google, not Yahoo**: one thing to do on the home page; everything else one deliberate tap away
-  [brief].
-- **Words an eight-year-old reads in one breath** on the home, the product and "how it works"
-  (Flesch-Kincaid grade 4 or lower); grown-up precision lives on "how it was made" (grade 8 or lower)
-  [brief].
-- **Tari stays visible in the first ten seconds**, in a child's words, with "Tari™" marked on its
-  first prominent mention per page [brief].
-- **Precision over poetry** in any sentence about what we see, store, delete or prove [brief, from
-  `research/11-brand.md` §7].
+- **The name is "shushbox"** [decided in Phase 6A run 2 on evidence; the owner can override it with one
+  word]. Tagline: "Locked here. Shared your way." The ghost and the name "bye" are retired [brief].
+- **No mascot** [brief]. The ghost's one good idea survives as the rule badge: every file and folder
+  shows its rule as a named badge with an icon.
+- **Google Drive's layout, shadcn/ui's clothes** [brief]: the owner's reference is Google Drive's web app;
+  the components are a faithful vanilla port of shadcn/ui (new-york), with Lucide icons and Geist.
+- **Words a child reads in one breath** [brief]: product strings at Flesch-Kincaid grade 5 or lower; how
+  it was made at grade 8 or lower; three named choices at most per decision; one primary action per
+  screen; no numeric field where names do.
+- **Tari visible, in a child's words**, with "Tari™" on its first prominent mention per page [brief].
+- **Precision over poetry** in any sentence about what we see, store, delete or prove [brief].
 
 ## Evidence on Hand
 
-- The live deployment: <https://srv2052606.hstgr.cloud> (release 6fa84fd), `/api/v1/config`,
-  `/status.json`, `/evidence.json` (our own test transactions).
-- Test suites: server 203 tests, site 28, UI 220 flows, app 9 steps, E2E 25 scenarios against
-  production [brief].
-- The SealLog component on the Ootle (address in `/config`); the public repository with its threat
-  model and review records.
-- Absent, and never to be invented: user counts, testimonials, press, audits by third parties.
+- The live deployment <https://srv2052606.hstgr.cloud> (still the ghost release until the drive ships),
+  `/api/v1/config`, `/status.json`, `/evidence.json` [code].
+- Test suites: server 204, site 29, UI flows, app 9 steps, deploy 77, E2E 25 scenarios [brief].
+- The SealLog component on the Ootle (address in `/config`); the public repository with its threat model.
+- The drive prototype and its screenshots (outside this repository, `research/design/drive/`, `drive-shots/`).
+- Absent, and never to be invented: user counts, testimonials, press, third-party audits.
 
 ## Product Principles
 
-1. **One thing to do.** The first screen asks for a secret and nothing else; the right default means
-   no decision before the link exists.
-2. **Pictures for people, text for machines.** Explanations are scenes in motion with one short
-   caption; the long text lives on one page for grown-ups.
-3. **Say exactly what we do, and what we don't.** Every privacy claim carries its condition and a way
-   to check it.
-4. **Delete before adding.** A page, option or sentence that repeats another goes; a choice that the
-   default already makes right for nine people in ten becomes the default.
+1. **It's a drive first.** Your things live in one place; sharing is a rule you put on a thing, never a
+   separate product.
+2. **You always see what happened.** Every share shows its state; nothing leaves silently.
+3. **Say exactly what we do, and what we don't.** Every privacy claim carries its condition and a way to
+   check it on the chain or in the code.
+4. **Delete before adding.** A screen, option or sentence that repeats another goes; the right default
+   replaces a question.
 5. **Nothing from anyone else.** No third-party code, font, tracker or request, ever.
 
 ## Accessibility & Inclusion
 
-WCAG 2.2 AA: every control named, keyboard-only use works (including drop, paste and type-to-start),
-`prefers-reduced-motion` turns every animation into a cut that still tells the story, no horizontal
-scroll at 360 px, contrast AA in both themes [brief].
+WCAG 2.2 AA: named controls, keyboard-only use (including drag-and-drop alternatives, menus, dialogs and
+the command palette), `prefers-reduced-motion`, contrast AA in both themes, 44 px touch targets, no
+horizontal scroll at 360 px [brief].
