@@ -1,0 +1,114 @@
+walletd on ultron, read-only, 2026-10-13 (times UTC). Calls: deploy/ootle/walletd-rpc.py as drive on the
+loopback port; journal: journalctl -u walletd. Hashes are cut to 8 hex digits.
+
+$ /opt/tari/bin/tari_ootle_walletd --version; sha256sum /opt/tari/bin/tari_ootle_walletd
+tari_ootle_walletd 0.45.0
+8cfdae03cc7dc7987752b2f1ae94046fc5c15258e1e26e0587977f7230712fae  (docs/self-host.md step 4: the same)
+walletd.service active since 2026-10-12 01:35:59 UTC (never restarted in this incident); 77 MB of 2 GB
+
+$ journalctl -u walletd --since '2026-10-13 00:00 UTC'   (lines per hour and message)
+07h     1  WARN wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+07h     1  WARN wallet_services::transaction_service Transaction finalization stream disconnected. Polling every 5s until it reconnects
+08h     1  WARN wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+08h     1  WARN wallet_services::transaction_service Transaction finalization stream disconnected. Polling every 5s until it reconnects
+10h   724  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+10h     1  WARN wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+10h     1  WARN wallet_services::transaction_service Transaction finalization stream disconnected. Polling every 5s until it reconnects
+10h     1  WARN wallet_services::transaction_service::finalized_watch Failed to subscribe to transaction finalization stream, retrying in 5s: Indexer client error: Server returned a
+10h     1  WARN wallet_daemon::json_rpc JSON-RPC error: Substate API error: Network interface error: Indexer client error: Server returned an error: HTTP status server error (521 <u
+10h     1  ERROR wallet_services::account_monitor Error refreshing all accounts: Substate API error: Network interface error: Indexer client error: Server returned an error: HTTP st
+10h     1  WARN wallet_daemon::json_rpc JSON-RPC error: Substate API error: Network interface error: Indexer client error: Server returned an error: HTTP status server error (500 In
+10h   247  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+10h     1  ERROR wallet_services::transaction_service Error checking finalized transaction 2749858a…: Transaction API error: Network interface error: Indexer client error: Failed to
+10h     1  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+10h     1  ERROR wallet_services::transaction_service Error checking finalized transaction 46c76419…: Transaction API error: Network interface error: Indexer client error: Failed to
+10h     3  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+11h   721  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+11h   721  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+11h     6  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+11h     5  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+11h     1  ERROR wallet_services::transaction_service Error checking finalized transaction 8bfac242…: Transaction API error: Network interface error: Indexer client error: Failed to
+11h     1  ERROR wallet_services::transaction_service Error checking finalized transaction 1ecdcf01…: Transaction API error: Network interface error: Indexer client error: Failed to
+11h     1  ERROR wallet_services::transaction_service Error checking finalized transaction 4541a3fb…: Transaction API error: Network interface error: Indexer client error: Failed to
+11h     6  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 1030000
+11h     1  ERROR wallet_services::transaction_service Error checking finalized transaction fbea753e…: Transaction API error: Network interface error: Indexer client error: Failed to
+12h     3  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 530000
+12h   722  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+12h   722  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+12h     9  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+12h     1  WARN wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+12h     1  WARN wallet_services::transaction_service Transaction finalization stream disconnected. Polling every 5s until it reconnects
+12h     3  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+12h     1  ERROR wallet_services::transaction_service Error checking finalized transaction 48a5cad8…: Transaction API error: Network interface error: Indexer client error: Failed to
+12h     1  ERROR wallet_services::transaction_service Error checking finalized transaction d32cd042…: Transaction API error: Network interface error: Indexer client error: Failed to
+12h     6  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 1030000
+13h   721  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+13h   673  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+13h     9  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+13h     3  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+13h   528  WARN wallet_sdk::apis::transaction Transaction result not found for transaction with hash <one of 11 ids>. Will check again later.
+13h     6  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 1030000
+14h   721  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+14h   460  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+14h     3  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+14h    18  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+14h  3915  WARN wallet_sdk::apis::transaction Transaction result not found for transaction with hash <one of 15 ids>. Will check again later.
+15h   721  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+15h   721  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+15h    18  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+15h     2  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+16h   721  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+16h   699  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+16h    12  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+16h     3  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+16h   420  WARN wallet_sdk::apis::transaction Transaction result not found for transaction with hash <one of 19 ids>. Will check again later.
+17h   652  ERROR wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry ru
+17h   652  ERROR wallet_services::transaction_service Error checking pending transactions: Transaction API error: Network interface error: Indexer client error: Failed to deserializ
+17h     9  WARN wallet_daemon::json_rpc JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+17h     2  WARN wallet_daemon::handlers::transaction Manifest dry run failed, declaring every input a write: Transaction API error: Network interface error: Indexer client error: Fa
+17h     1  WARN wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+17h     1  WARN wallet_services::transaction_service Transaction finalization stream disconnected. Polling every 5s until it reconnects
+(The stored dry run's resubmit line is left out for 00h to 09h: about 725 an hour, every 5 s since
+ 2026-10-11 23:06 (docs/review/fix-log.md), the same rate before and after 10:30. Nothing else was
+ logged from 00h to 10:30 but the two stream reconnects at 07h and 08h.)
+
+$ walletd-rpc.py call transactions.get_all '{"status": null, "component": null}'
+462 transactions: Accepted 438, New 1, Pending 23
+not Accepted, oldest first (id, status, dry run, last update, instructions, inputs):
+  a599a962…  New      dry  2026-10-11 23:06:51  PublishTemplate  3
+  2749858a…  Pending       2026-10-13 10:39:22  stealth transfer 2
+  46c76419…  Pending       2026-10-13 10:43:12  CallMethod       4
+  8bfac242…  Pending       2026-10-13 11:08:11  CallMethod       4
+  1ecdcf01…  Pending       2026-10-13 11:11:45  CallMethod       4
+  4541a3fb…  Pending       2026-10-13 11:13:55  CallMethod       4
+  fbea753e…  Pending       2026-10-13 11:33:13  CallMethod       4
+  d5a2f922…  Pending       2026-10-13 11:58:13  CallMethod       4
+  48a5cad8…  Pending       2026-10-13 12:23:14  CallMethod       4
+  d32cd042…  Pending       2026-10-13 12:39:13  CallMethod       4
+  d19afab8…  Pending       2026-10-13 12:48:15  CallMethod       4
+  f3d21f0c…  Pending       2026-10-13 13:13:16  CallMethod       4
+  f9f992aa…  Pending       2026-10-13 13:35:36  CallMethod       4
+  0cbb998c…  Pending       2026-10-13 13:38:19  CallMethod       4
+  ca7e2e37…  Pending       2026-10-13 14:03:18  CallMethod       4
+  b127b17a…  Pending       2026-10-13 14:28:20  CallMethod       4
+  7dd75d59…  Pending       2026-10-13 14:53:20  CallMethod       4
+  e46db43e…  Pending       2026-10-13 15:18:20  CallMethod       4
+  d1752525…  Pending       2026-10-13 15:43:22  CallMethod       4
+  3eb658ba…  Pending       2026-10-13 16:08:23  CallMethod       4
+  b224ecd3…  Pending       2026-10-13 16:33:24  CallMethod       4
+  e1692b2a…  Pending       2026-10-13 16:58:25  CallMethod       4
+  f5ee8431…  Pending       2026-10-13 17:23:27  CallMethod       4
+  d20aab61…  Pending       2026-10-13 17:48:28  CallMethod       4
+last Accepted: 2e455002… at 2026-10-13 10:28:09 (checkpoint #140)
+
+$ walletd-rpc.py call stealth_utxos.list '{"resource_address": <TARI>, "account_address": <sponsor>, "filter_by_status": null}'
+262 outputs: LockedUnconfirmed (on chain False) 1, Spent (on chain True) 261
+  the only unspent one: commitment 3ee453ab…, LockedUnconfirmed, is_on_chain False, value 8851452000 µT
+  the same output on the indexers: GET /substates/utxo_<TARI>_<commitment> → 200, a Utxo substate on
+  both; in mutis's mirror (chain_utxos) since epoch 12214, first seen 10:39:32
+
+$ walletd-rpc.py balances   (18:00)
+  buyer-demo revealed 0, confidential 3500000 µT
+  operator   revealed 13940, confidential 0 µT
+  service    revealed 17103279, confidential 72268000 µT
+  sponsor    no balances listed
