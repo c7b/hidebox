@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// /inbox (spec §12.3.3): deliveries found on the Ootle by this browser alone. Every browser downloads
+// /inbox, "See what came" (spec §12.3.3): deliveries found on the Ootle by this browser alone. Every browser downloads
 // the same mirror of all TARI outputs and tries to open each one with its own view key, so our
 // server never learns which outputs are yours. Nothing opens by itself; Open runs the viewer here.
 import { h } from '../lib/dom.js';
@@ -10,6 +10,7 @@ import { formatTari } from './marks.js';
 import { errorBanner } from './errors.js';
 import { NeedsWasm, openLocker, storedLocker, wasmOk } from './locker-ctx.js';
 import { maybeAskForKey } from './keyflow.js';
+import { scene } from './scene.js';
 import { setTitle } from './shell.js';
 
 const RESCAN_MS = 15000;
@@ -18,7 +19,7 @@ export async function render(main) {
   setTitle('inbox.title');
   const cfg = await config();
   const root = h('div', { class: 'a-inbox', 'data-testid': 'inbox-root' });
-  main.replaceChildren(h('h1', { class: 'a-h1' }, t('nav.inbox')), root);
+  main.replaceChildren(scene({ state: 'keep', title: t('inbox.cta'), say: t('locker.inbox_card') }).head, root);
   if (!(await wasmOk())) return root.replaceChildren(errorBanner(new NeedsWasm()));
   const identity = await storedLocker();
   if (!identity) {
@@ -39,7 +40,10 @@ export async function render(main) {
   const empty = h('p', { class: 'a-lede', 'data-testid': 'inbox-empty', hidden: true }, t('inbox.empty'));
   const problems = h('div', {});
   const again = h('button', { type: 'button', class: 'a-btn', disabled: true }, t('inbox.again'));
-  root.replaceChildren(scanLine, problems, empty, sections.drop, sections.send, sections.receipt, again);
+  // What the same browser sees with only the view key (judge track two, step 5).
+  const peek = h('p', { class: 'a-peek-link' },
+    h('a', { class: 'a-btn', href: '/watch#mine', 'data-testid': 'watch-mine' }, t('viewkey.see')));
+  root.replaceChildren(scanLine, problems, empty, sections.drop, sections.send, sections.receipt, h('div', { class: 'a-row' }, again, peek));
 
   // When this browser found the output (the chain epoch in the tooltip); records from before this
   // field existed show the epoch.

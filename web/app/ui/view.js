@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
-// The viewer (spec §12.3.2, 11-brand §10.6–10.7): a link (/s/<id>#…) or a delivery (/t#3…, /t#4…)
-// becomes a file in this tab. Nothing uses a view until the visitor presses Open it (the reveal
+// The viewer (spec §12.3.2, 14-ghost-design §4.3 and §10.2): a link (/s/<id>#…) or a delivery (/t#3…,
+// /t#4…) becomes a file in this tab. Nothing uses a view until the visitor presses Open it (the reveal
 // gate); the key leaves the address bar only after a successful open; every state carries the
-// report link. Previews follow the allowlist of §12.3.4.
+// report link. Each screen starts with the ghost in the pose of its rule; an ended link is the gone
+// page: the dashed ghost waving, the reason, and its goodbye on the Tari chain (or when it lands
+// there). Previews follow the allowlist of §12.3.4.
 import { h } from '../lib/dom.js';
-import { formatBytes, formatDate, formatRelative, t } from '../lib/i18n.js';
+import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
 import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';
 import { parseFragment } from '../lib/share.js';
@@ -17,20 +19,17 @@ import { copyButton, formatDuration, icon } from './core.js';
 import { formatTari, safetyGrid } from './marks.js';
 import { errorBanner, mmss } from './errors.js';
 import { knownPanel } from './known.js';
+import { goodbye, scene, tariText } from './scene.js';
 import { abuseHref, setTitle, startPage } from './shell.js';
 
 const REASON_STATE = { burned: 'burned', expired: 'expired', revoked: 'revoked', owner_deleted: 'revoked', removed: 'removed' };
 
-// Every state ends with these two links (11-brand §10.6). `link` (without its key) fills in the report.
-function footer(link = null) {
+// Under every state: report this link (`link`, without its key, fills in the form) and, unless the
+// screen already offers it, "Make your own".
+function footer(link = null, own = true) {
   return h('p', { class: 'a-view-foot' },
     h('a', { href: abuseHref(link) }, icon('report'), h('span', {}, t('viewer.report'))),
-    h('a', { href: '/' }, t('viewer.what')));
-}
-
-// The empty locker of the gone states: an outline with a dark keyhole (11-brand §10.7).
-function emptyLocker() {
-  return h('div', { class: 'a-empty-locker', 'aria-hidden': 'true' }, icon('keyhole', 'a-empty-keyhole'));
+    own ? h('a', { href: '/' }, t('viewer.own')) : null);
 }
 
 function head(parts) {
@@ -44,64 +43,77 @@ function head(parts) {
   return concat(...out);
 }
 
+// The receipt of an ended link (C7-k): once its exit is in a SealLog checkpoint, "We wrote its goodbye
+// on the Tari chain" and See the goodbye (/verify checks it in this browser); before that, when it
+// lands, and one goodbye we already wrote. Nothing when receipts are off.
+function receiptPanel(cfg, shareId) {
+  if (!cfg.features?.seallog) return null;
+  const box = h('div', { class: 'a-receipt', 'data-testid': 'gone-receipt', 'aria-live': 'polite' });
+  exitReceipt(shareId).then((r) => {
+    const done = r.leaf_index !== null && r.checkpoint;
+    box.dataset.receipt = done ? 'done' : 'pending';
+    const other = cfg.judge_demo_gone && cfg.judge_demo_gone !== shareId ? `/verify#${cfg.judge_demo_gone}` : '/verify#latest';
+    box.replaceChildren(
+      h('p', {}, tariText(done ? t('gone.done') : t('gone.pending', { checkpoint_min: Math.ceil(cfg.seal_log.checkpoint_interval_s / 60) }))),
+      h('a', { class: 'a-btn a-btn--tari', href: done ? `/verify#${shareId}` : other, 'data-testid': 'gone-see' },
+        t(done ? 'gone.see' : 'gone.see_one')));
+  }, () => box.remove());
+  return box;
+}
+
 // Renders the whole open flow for one link into `root` (data-testid view-root).
 // opts: {cfg, shareId, secrets ({s} | {s0} | null), delivery (inbox context: {epoch, utxoId, value,
 //        dropLabel}) | null, autoOpen (the click that brought us here was the gesture), clearKey}
 export function viewer(root, opts) {
   const { cfg, shareId } = opts;
+  const small = !!opts.delivery; // inside an inbox row
   let status = null;
   let access = null;
   root.setAttribute('data-testid', 'view-root');
   root.classList.add('a-view');
 
-  function set(state, ...children) {
+  function set(state, children, own = true) {
     root.dataset.state = state;
-    root.replaceChildren(...children.flat().filter(Boolean), footer(`${location.origin}/s/${shareId}`));
+    root.replaceChildren(...[children].flat(Infinity).filter(Boolean), small ? null : footer(`${location.origin}/s/${shareId}`, own));
+    if (!small) root.querySelector('.a-scene-h')?.focus({ preventScroll: true });
   }
+
+  const sceneOf = (pose, title, say = null) => scene({ state: pose, title, say, small });
 
   function fail(e) {
     if (e instanceof ApiError && e.code === 'gone') return ended(e.details.reason, e.details);
-    if (e instanceof ApiError && e.code === 'not_found') return simple('not-found', 'gone.notfound', 'gone.notfound_body', { tombstone_days: cfg.retention.tombstone_days });
-    if (e?.name === 'IntegrityError') return simple('integrity-error', 'gone.integrity', 'gone.integrity_body');
+    if (e instanceof ApiError && e.code === 'not_found') return oops('not-found', 'gone.notfound', 'gone.notfound_body', { tombstone_days: cfg.retention.tombstone_days });
+    if (e?.name === 'IntegrityError') return oops('integrity-error', 'gone.integrity', 'gone.integrity_body');
     if (e instanceof ApiError && e.code === 'locked') return locked(e);
-    set('error', h('h1', { class: 'a-view-h' }, t('viewer.error_h')),
-      errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: start } }));
+    set('error', [sceneOf('oops', t('viewer.error_h')).head,
+      errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: start } })]);
   }
 
-  function simple(state, titleKey, bodyKey, params = {}, extra = null) {
-    set(state, emptyLocker(), h('h1', { class: 'a-view-h' }, t(titleKey)), h('p', { class: 'a-view-body' }, t(bodyKey, params)), extra,
-      h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.lock_own')));
+  // A link that can't be opened here (lost key, unknown id, a check that failed): the worried ghost.
+  function oops(state, titleKey, bodyKey, params = {}) {
+    set(state, [sceneOf('oops', t(titleKey), t(bodyKey, params)).head,
+      h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'))], false);
   }
 
+  // The gone page: the ghost waves and fades to its dashed outline; one reason; the receipt.
   function ended(reason, details = {}) {
     const state = REASON_STATE[reason] ?? 'revoked';
     opts.onEnded?.(reason);
-    const receipt = cfg.features?.seallog ? h('p', { class: 'a-receipt' }) : null;
-    if (receipt) {
-      exitReceipt(shareId).then((r) => {
-        receipt.textContent = r.leaf_index === null
-          ? t('gone.receipt_pending', { wait: formatDuration(cfg.seal_log.checkpoint_interval_s) })
-          : r.checkpoint?.index == null ? t('gone.receipt_on') : t('gone.receipt', { seal_checkpoint: r.checkpoint.index });
-        if (r.leaf_index !== null) receipt.append(' · ', h('a', { href: `/verify#${shareId}` }, t('verify.link')));
-      }, () => receipt.remove());
-    }
     const date = details.ended_day ? formatDate(Date.parse(`${details.ended_day}T12:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' }) : '';
-    if (state === 'burned') {
-      return set('burned', emptyLocker(), h('h1', { class: 'a-view-h' }, t('gone.burned')),
-        h('p', { class: 'a-direction' }, t('gone.direction')),
-        h('p', { class: 'a-view-body' }, t('gone.burned_body')), receipt,
-        h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.lock_own')));
-    }
-    return simple(state, `gone.${state}`, `gone.${state}_body`, { date }, receipt);
+    const say = h('span', {}, h('span', { class: 'a-bye' }, t('gone.bye')), ' ', t(`gone.${state}`, { date }));
+    const { head: top, ghost } = sceneOf('keep', t('gone.h'), say);
+    set(state, [top, receiptPanel(cfg, shareId), h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'))], false);
+    goodbye(ghost);
   }
 
   function locked(e) {
-    if (e.details?.permanent || !e.retryAfter) return simple('locked', 'viewer.locked_h', 'viewer.locked_body');
+    if (e.details?.permanent || !e.retryAfter) return oops('locked', 'viewer.locked_h', 'viewer.locked_body');
     return passwordState(t('viewer.wait', { wait: mmss(e.retryAfter) }));
   }
 
   async function start() {
-    set('loading', h('p', { class: 'a-working mono' }, t('viewer.checking')));
+    root.dataset.state = 'loading';
+    root.replaceChildren(h('p', { class: 'a-working' }, t('viewer.checking')));
     try {
       status = await linkStatus(shareId);
     } catch (e) {
@@ -109,13 +121,14 @@ export function viewer(root, opts) {
     }
     const s = opts.secrets ?? {};
     if ((status.mode === 'link' && !s.s) || (status.mode === 'link_password' && !s.s0)) {
-      return simple('incomplete', 'gone.nokey', 'gone.nokey_body');
+      return oops('incomplete', 'gone.nokey', 'gone.nokey_body');
     }
     if (status.mode !== 'link') return passwordState();
     access = await accessFor(status, { s: s.s });
     return ready();
   }
 
+  // A secret word (link + password, or password only): the ghost covers its eyes.
   function passwordState(note = null) {
     const field = h('input', { type: 'password', id: 'a-view-pw', class: 'a-input', 'data-testid': 'view-password', autocomplete: 'off', spellcheck: 'false', 'aria-describedby': 'a-view-pw-msg' });
     const msg = h('p', { id: 'a-view-pw-msg', class: 'a-field-msg', 'aria-live': 'polite' }, note ?? '');
@@ -148,42 +161,42 @@ export function viewer(root, opts) {
         fail(err);
       }
     });
-    set('password', h('h1', { class: 'a-view-h' }, t('viewer.pw_h')), form);
+    set('password', [sceneOf('word', t('viewer.pw_h'), t('viewer.pw_say')).head, form]);
     field.focus();
   }
 
+  // The first screen: the rule in the ghost's hands and in one sentence, C18, and Open it. The glass
+  // box, the report link and "Make your own" wait under the button.
   async function ready(info = null) {
     if (!info) {
       try {
         info = await peek(shareId, access);
       } catch (e) {
-        if (e instanceof ApiError && e.code === 'bad_access') return simple('wrong-key', 'gone.badkey', 'gone.badkey_body');
+        if (e instanceof ApiError && e.code === 'bad_access') return oops('wrong-key', 'gone.badkey', 'gone.badkey_body');
         return fail(e);
       }
     }
     if (opts.autoOpen) return open();
-    const { share, item } = info;
+    const { share } = info;
     const left = share.views_left;
-    const known = knownPanel({ cfg, load: async () => peek(shareId, access), access: async () => access.headers, kdf: status.kdf, toggleTestid: 'view-known', id: 'a-view-known' });
+    const once = left === 1 && share.max_views === 1;
     const until = share.expires_at ? formatDate(share.expires_at * 1000, { dateStyle: 'medium', timeStyle: 'short' }) : null;
-    set('ready',
-      h('h1', { class: 'a-view-h' }, t('viewer.h')),
-      h('ul', { class: 'a-chips' },
-        h('li', { class: 'a-chip mono' }, t('viewer.stored_size', { size: formatBytes(item.size_stored) })),
-        h('li', { class: 'a-chip', 'data-testid': 'view-views-left', 'data-left': left ?? '' },
-          left === 1 && share.max_views === 1 ? t('viewer.once') : left === null ? t('viewer.unlimited') : t('viewer.left', { count: left })),
-        share.expires_at ? h('li', { class: 'a-chip a-chip--exit' }, t('viewer.gone', { relative: formatRelative(share.expires_at * 1000) })) : null),
-      left === 1 && share.max_views === 1 ? h('p', { class: 'a-view-body' }, t('viewer.once_body')) : null,
+    const rule = once ? t('viewer.once') : left !== null ? t('viewer.few', { count: left })
+      : until ? t('viewer.until', { date: until }) : t('viewer.until_taken');
+    const known = knownPanel({ cfg, load: async () => peek(shareId, access), access: async () => access.headers, kdf: status.kdf, toggleTestid: 'view-known', id: 'a-view-known' });
+    const { head: top } = sceneOf(once ? 'once' : left !== null ? 'few' : 'keep', t('viewer.h'),
+      h('span', { 'data-testid': 'view-views-left', 'data-left': left ?? '' }, rule));
+    set('ready', [top,
       h('p', { class: 'a-scan' }, icon('warning'), h('span', {}, t('viewer.scan'))),
-      h('div', { class: 'a-row' }, h('button', { type: 'button', class: 'a-btn a-btn--primary', 'data-testid': 'view-open', onclick: open }, t('viewer.open'))),
-      until ? h('p', { class: 'a-caption' }, t('viewer.not_now', { date: until })) : null,
-      known.toggle, known.panel);
+      h('div', { class: 'a-row a-row--center' }, h('button', { type: 'button', class: 'a-btn a-btn--primary a-btn--big', 'data-testid': 'view-open', onclick: open }, t('viewer.open'))),
+      until && left !== null ? h('p', { class: 'a-caption a-center' }, t('viewer.not_now', { date: until })) : null,
+      h('div', { class: 'a-view-more' }, known.toggle), known.panel]);
     root.querySelector('[data-testid="view-open"]').focus({ preventScroll: true });
   }
 
   async function open() {
-    const progress = h('p', { class: 'a-view-h a-opening' }, t('viewer.opening', { n: 0 }));
-    set('opening', progress, h('p', { class: 'a-micro mono' }, t('viewer.opening_micro')));
+    const progress = h('span', { class: 'a-opening' }, t('viewer.opening', { n: 0 }));
+    set('opening', sceneOf('busy', t('viewer.opening_h'), progress).head);
     const onProgress = (f) => { progress.textContent = t('viewer.opening', { n: Math.floor(f * 100) }); };
     let opened;
     let parts;
@@ -191,8 +204,8 @@ export function viewer(root, opts) {
       opened = await openItem(shareId, access, {});
       parts = await fetchContent(opened, { onProgress });
     } catch (e) {
-      if (opened && !(e?.name === 'IntegrityError')) return set('error', h('h1', { class: 'a-view-h' }, t('viewer.fetch_error_h')),
-        errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: () => retryFetch(opened) } }));
+      if (opened && !(e?.name === 'IntegrityError')) return set('error', [sceneOf('oops', t('viewer.fetch_error_h')).head,
+        errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: () => retryFetch(opened) } })]);
       return fail(e);
     }
     shown(opened, parts);
@@ -230,21 +243,21 @@ export function viewer(root, opts) {
       confirm.hidden = false;
       confirm.querySelector('button').focus();
     });
-    set('program-warning',
-      h('div', { class: 'a-alarm' }, icon('warning'), h('h1', { class: 'a-view-h' }, t('viewer.program_h', { ext: ext || '?' }))),
-      h('p', { class: 'a-view-body' }, t('viewer.program_body')),
+    set('program-warning', [
+      sceneOf('oops', t('viewer.program_h', { ext: ext || '?' }), t('viewer.program_body')).head,
       h('p', { class: 'a-filename mono', 'data-testid': 'view-filename' }, name),
-      h('div', { class: 'a-row' },
+      h('div', { class: 'a-row a-row--center' },
         h('button', { type: 'button', class: 'a-btn a-btn--primary', onclick: dontSave }, t('viewer.dont_save')),
         anyway),
-      confirm);
+      confirm]);
 
     function dontSave() {
-      root.querySelector('.a-row').replaceWith(h('p', { class: 'a-view-body' }, t('viewer.not_saved')));
+      root.querySelector('.a-row').replaceWith(h('p', { class: 'a-say' }, t('viewer.not_saved')));
       confirm.remove();
     }
   }
 
+  // The secret itself: content first, then Save; under the rule Once, "This was its only look".
   function openedState(opened, name, parts, risk) {
     const { meta } = opened;
     const label = meta.kind === 'text' ? t('viewer.note_label') : name;
@@ -257,20 +270,21 @@ export function viewer(root, opts) {
       warnLargeOnPhone(meta.size) ? h('p', { class: 'a-warn' }, icon('warning'), h('span', {}, t('viewer.large'))) : null,
     ];
     const what = h('div', { class: 'a-what-you-see' },
-      opts.delivery ? h('h2', { class: 'a-split-h' }, t('viewer.you_see')) : null,
+      opts.delivery ? h('h3', { class: 'a-split-h' }, t('viewer.you_see')) : null,
       preview?.el ?? h('div', { class: 'a-filecard' }, icon('lock'), h('p', { class: 'a-filename' }, label)),
       h('p', { class: 'a-meta' }, meta.kind === 'text' ? t('viewer.note_label') : h('span', { 'data-testid': 'view-filename' }, name), ' · ', h('span', { class: 'mono' }, formatBytes(meta.size))));
-    set('opened',
-      h('h1', { class: 'a-view-h' }, t('viewer.opened')),
+    const after = once ? t('viewer.burn_line') : opened.viewsLeft === null ? '' : t('viewer.left', { count: opened.viewsLeft });
+    set('opened', [
+      h(small ? 'h3' : 'h1', { class: 'a-opened-h', tabindex: '-1' }, t('viewer.opened')),
       notices,
       opts.delivery ? h('div', { class: 'a-split' }, what, chainSaw(opts.delivery)) : what,
       h('div', { class: 'a-row' },
         saveButton(name, parts),
         meta.kind === 'text' ? copyButton({ label: t('viewer.copy'), getText: () => new TextDecoder().decode(concat(...parts)), cls: 'a-btn' }) : null,
         keepButton(opened, name, parts)),
-      h('p', { class: 'a-view-body' }, once ? t('viewer.burn_line', { ticket_min: Math.ceil(cfg.retention.ticket_s / 60) })
-        : opened.viewsLeft === null ? '' : t('viewer.left', { count: opened.viewsLeft })),
-      h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { count: opened.chunkCount }))));
+      after ? h('p', { class: ['a-after', once ? 'a-after--once' : null] }, after) : null,
+      h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { count: opened.chunkCount })))]);
+    if (!small) root.querySelector('.a-opened-h')?.focus({ preventScroll: true });
   }
 
   // What the chain saw for a delivery found in this browser's inbox: built only from the mirror row
@@ -322,7 +336,7 @@ async function delivery(root, cfg, fragment) {
     root.replaceChildren(...children.filter(Boolean), footer());
   };
   if (!parsed || (parsed.kind !== 3 && parsed.kind !== 4)) {
-    return say('incomplete', h('h1', { class: 'a-view-h' }, t('gone.nokey')), h('p', { class: 'a-view-body' }, t('gone.nokey_body')));
+    return say('incomplete', scene({ state: 'oops', title: t('gone.nokey'), say: t('gone.nokey_body') }).head);
   }
   const { NeedsWasm, storedLocker, openLocker } = await import('./locker-ctx.js');
   let identity;
@@ -330,7 +344,7 @@ async function delivery(root, cfg, fragment) {
     identity = await storedLocker();
   } catch (e) {
     if (!(e instanceof NeedsWasm)) throw e;
-    return say('error', errorBanner(e));
+    return say('error', scene({ state: 'oops', title: t('viewer.error_h') }).head, errorBanner(e));
   }
   const { decodeInner } = await import('../lib/courier.js');
   const { unwrapBlob, viewPublicKey } = await import('../lib/ootle.js');
@@ -344,8 +358,7 @@ async function delivery(root, cfg, fragment) {
       return go(decodeInner(await unwrapBlob(identity, parsed.blob, parsed.kind)), true);
     } catch {
       return say('wrong-key',
-        h('h1', { class: 'a-view-h' }, t('viewer.wrong_h')),
-        h('p', { class: 'a-view-body' }, t('viewer.wrong_body')),
+        scene({ state: 'oops', title: t('viewer.wrong_h'), say: t('viewer.wrong_body') }).head,
         safetyGrid(identity.safetyCode, { testid: 'view-my-safety' }),
         h('a', { class: 'a-btn', href: '/locker' }, t('viewer.switch')));
     }
@@ -358,19 +371,21 @@ async function delivery(root, cfg, fragment) {
   }) : null;
   const { restorePanel } = await import('./keyflow.js');
   say('needs-locker',
-    h('h1', { class: 'a-view-h' }, t('viewer.needs_h')),
-    h('p', { class: 'a-view-body' }, t('viewer.needs_body')),
+    scene({ state: 'courier', title: t('viewer.needs_h'), say: t('viewer.needs_body') }).head,
     h('details', { class: 'a-disclose' }, h('summary', {}, t('viewer.have_key')), restorePanel({ onRestored: () => location.reload() })),
     viewKey);
 }
 
+// Kind 4 ("another Ootle wallet"): that address's view key opens it. A view-key screen, so C15 sits
+// under the field.
 function viewKeyForm(onKey) {
   const field = h('input', { type: 'password', id: 'a-t-vk', class: 'a-input mono', 'data-testid': 't-viewkey', autocomplete: 'off', spellcheck: 'false', 'aria-describedby': 'a-t-vk-note' });
   const msg = h('p', { class: 'a-field-msg', 'aria-live': 'polite' });
   const form = h('form', { class: 'a-pw-form' },
     h('label', { for: 'a-t-vk', class: 'a-label' }, t('viewer.viewkey_label')), field,
     h('p', { id: 'a-t-vk-note', class: 'a-caption' }, t('viewer.viewkey_note')), msg,
-    h('button', { type: 'submit', class: 'a-btn a-btn--primary', 'data-testid': 't-viewkey-submit' }, t('viewer.pw_open')));
+    h('button', { type: 'submit', class: 'a-btn a-btn--primary', 'data-testid': 't-viewkey-submit' }, t('viewer.pw_open')),
+    h('p', { class: 'a-caption', 'data-testid': 'c15' }, t('claim.c15')));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const { unhex } = await import('../lib/b64.js');
@@ -403,7 +418,7 @@ export async function main() {
     delivery(root, cfg, location.hash);
   } else {
     root.dataset.state = 'not-found';
-    root.replaceChildren(h('h1', { class: 'a-view-h' }, t('gone.notfound')));
+    root.replaceChildren(scene({ state: 'oops', title: t('gone.notfound') }).head, footer());
   }
 }
 

@@ -25,11 +25,10 @@ const main = document.getElementById('main');
 const page = PAGES[route.name];
 if (!page) {
   setTitle('notfound.h');
+  const { scene } = await import('./scene.js');
   main.replaceChildren(h('div', { class: 'a-notfound' },
-    h('p', { class: 'a-scene' }, t('notfound.scene')),
-    h('h1', { class: 'a-h1' }, t('notfound.h')),
-    h('p', { class: 'a-lede' }, t('notfound.body')),
-    h('a', { class: 'a-btn a-btn--primary', href: '/#drop' }, t('notfound.back'))));
+    scene({ state: 'oops', title: t('notfound.h'), say: t('notfound.body') }).head,
+    h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('notfound.back'))));
 } else {
   try {
     await (await page())(main, route.params);

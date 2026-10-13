@@ -3,7 +3,7 @@ import { b64uDecode, b64uEncode } from '../lib/b64.js';
 import { randomBytes } from '../lib/crypto.js';
 import { identityFromSeed } from '../lib/identity.js';
 import { authHeaders, ensureSession } from '../lib/session.js';
-import { closeDrop, createDrop, getDrop, leaveInDrop } from '../lib/drop.js';
+import { closeDrop, createDrop, getDrop, leaveInDrop, renameDrop } from '../lib/drop.js';
 import { decodeInner, parseMemo } from '../lib/courier.js';
 import { unwrapBlob } from '../lib/ootle.js';
 import { set } from '../lib/store.js';
@@ -52,6 +52,9 @@ export default [
       eq(inner.shareId, link.shareId);
       ok(inner.isDeadDrop);
       eq(b64uEncode(inner.ref16), drop.tag);
+      await renameDrop(owner, 0, 'Council');
+      eq(owner.drops[0].label, 'Council');
+      eq((await getDrop(made.drop_id)).label, 'Council');
       await closeDrop(owner, 0);
       eq(owner.drops[0].state, 'closed');
       await rejects(() => getDrop(made.drop_id), (e) => e.code === 'drop_closed');

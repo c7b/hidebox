@@ -583,10 +583,10 @@ def _strings(value):
             yield from _strings(v)
 
 
-# 14-ghost-design §9 names buttons the app gets in Phase 6B steps 7 and 8 (the locker's three named
-# choices, the gone page's receipt link). Until a label is in web/app/i18n/en.json it is listed here;
-# once it is, it must leave this list (the check says so), so the script can't drift from the app.
-PENDING_LABELS = {"See the goodbye", "See what came", "Get a file from someone"}
+# A button /judges names before the app has it would be listed here; once it is in
+# web/app/i18n/en.json it must leave this list (the check says so), so the script can't drift from the
+# app. Empty since Phase 6B step 8 gave the app every label of 14-ghost-design §9.
+PENDING_LABELS: set[str] = set()
 
 
 def check_ui_strings():

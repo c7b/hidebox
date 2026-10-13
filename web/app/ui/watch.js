@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// /watch, "See without opening" (spec §12.3.3): a Tari address and its view key show every delivery
+// /watch, "See what a view key sees" (spec §12.3.3): a Tari address and its view key show every delivery
 // and payment to that address, and how many of those files the view key could open (none sealed to a
 // locker; kind-4 "other wallet" sends are the labelled exception). The key stays in this tab.
 import { h } from '../lib/dom.js';
@@ -10,14 +10,16 @@ import { icon } from './core.js';
 import { formatTari } from './marks.js';
 import { errorBanner, uiError } from './errors.js';
 import { NeedsWasm, storedLocker, wasmOk } from './locker-ctx.js';
+import { scene } from './scene.js';
 import { setTitle } from './shell.js';
 
 export async function render(main) {
   setTitle('watch.title');
   const cfg = await config();
   const root = h('div', { class: 'a-watch' });
-  main.replaceChildren(h('h1', { class: 'a-h1' }, t('watch.h')), root);
-  const banner = h('p', { class: 'a-note' }, icon('watch'), h('span', {}, t('watch.banner')));
+  // A view-key screen: the peek ghost, C15-k (files sent to a locker), and C15 under it, always.
+  main.replaceChildren(scene({ state: 'peek', title: t('viewkey.see'), say: t('viewkey.intro') }).head, root);
+  const banner = h('p', { class: 'a-note', 'data-testid': 'c15' }, icon('watch'), h('span', {}, t('claim.c15')));
   if (!(await wasmOk())) return root.replaceChildren(banner, errorBanner(new NeedsWasm()));
   const mine = await storedLocker();
   const ootle = await import('../lib/ootle.js');

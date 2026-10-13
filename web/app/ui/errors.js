@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Every error the app can meet, mapped to one sentence of copy (spec §6.4, §12.4.2; 11-brand §10.8):
+// Every error the app can meet, mapped to one sentence of copy (spec §6.4, §12.4.2; 14-ghost-design §10.2):
 // what happened, what did not happen, what to do. The server's English `message` only ever appears
 // inside "Technical details".
 import { h } from '../lib/dom.js';
 import { formatBytes, t } from '../lib/i18n.js';
 import { icon } from './core.js';
+import { cloneGhost } from '/shared/ghost.js';
 
 // API and client codes that share one sentence.
 const SAME = {
@@ -79,8 +80,10 @@ export function mmss(seconds) {
 export function errorBanner(e, { params = {}, action = null, live = null, key = null } = {}) {
   const info = describe(e);
   const text = key ? t(key, params) : errorText(e, params);
+  // The worried ghost (its oops pose) where the page has one to clone; the plain glyph elsewhere.
+  const ghost = cloneGhost('oops');
   const banner = h('div', { class: 'a-banner', role: 'alert', 'data-testid': 'error-banner', 'data-code': info.code },
-    icon('warning'),
+    ghost ? h('span', { class: 'a-banner-ghost', 'aria-hidden': 'true' }, ghost) : icon('warning'),
     h('div', { class: 'a-banner-body' },
       h('p', {}, text),
       action && h('button', { type: 'button', class: 'a-btn', 'data-testid': action.testid, onclick: action.onClick }, action.label),

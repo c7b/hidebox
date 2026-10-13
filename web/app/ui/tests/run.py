@@ -61,7 +61,7 @@ DYNAMIC = {
     "known.never": ["name", "contents", "key", "password", "email", "ip", "browser"],
     "nav": ["locker", "inbox", "send"],
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
-    "gone": ["expired", "expired_body", "revoked", "revoked_body", "removed", "removed_body"],
+    "gone": ["burned", "expired", "revoked", "removed"],
 }
 
 

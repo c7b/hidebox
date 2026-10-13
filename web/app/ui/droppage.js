@@ -11,6 +11,7 @@ import { formatDuration, icon } from './core.js';
 import { safetyGrid } from './marks.js';
 import { errorBanner } from './errors.js';
 import { wasmOk } from './locker-ctx.js';
+import { scene } from './scene.js';
 import { abuseHref, setTitle } from './shell.js';
 import { createZone } from './zone.js';
 
@@ -42,19 +43,20 @@ export async function render(main, { dropId }) {
   try {
     drop = await getDrop(dropId);
   } catch (e) {
-    const ways = () => h('p', { class: 'a-links' }, h('a', { class: 'a-more', href: '/how' }, t('viewer.what')),
-      h('a', { class: 'a-more', href: '/' }, t('gone.lock_own')));
-    if (e?.code === 'drop_closed') return set('closed', h('h1', { class: 'a-h1' }, t('drop.closed')), ways());
-    if (e?.code === 'drop_not_found') return set('not-found', h('h1', { class: 'a-h1' }, t('drop.not_found')), ways());
+    const ways = () => h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'));
+    if (e?.code === 'drop_closed') return set('closed', scene({ state: 'gone', title: t('drop.closed') }).head, ways());
+    if (e?.code === 'drop_not_found') return set('not-found', scene({ state: 'oops', title: t('drop.not_found') }).head, ways());
     return set('error', errorBanner(e, { action: { label: t('viewer.retry'), onClick: () => render(main, { dropId }) } }));
   }
   prefetchPow('upload');
   const code = await safetyCodeForAddress(drop.address);
-  const heading = h('h1', { class: 'a-h1', 'data-testid': 'dd-label' }, drop.label ? labelled(drop.label) : t('drop.page_h_plain'));
+  // The open bag: anyone can drop a file in; only the locker behind this link can open it.
+  const { head: top } = scene({ state: 'bag', title: drop.label ? labelled(drop.label) : t('drop.page_h_plain'), say: t('drop.page_say') });
+  top.querySelector('.a-scene-h').dataset.testid = 'dd-label';
   const intro = [
-    heading,
-    drop.label ? h('p', { class: 'a-caption' }, t('drop.label_note')) : null,
-    h('p', { class: 'a-lede' }, t('drop.page_body')),
+    top,
+    drop.label ? h('p', { class: 'a-caption a-center' }, t('drop.label_note')) : null,
+    h('p', { class: 'a-caption a-center' }, t('drop.page_body')),
     h('div', { class: 'a-dd-safety' },
       h('p', { class: 'a-label' }, t('drop.safety_h')),
       safetyGrid(code, { testid: 'dd-safety' }),
@@ -131,8 +133,7 @@ export async function render(main, { dropId }) {
     const tx = job.result?.tx_id ?? '';
     live.textContent = t('drop.delivered');
     set('delivered',
-      h('h1', { class: 'a-h1' }, t('drop.delivered')),
-      h('p', { class: 'a-lede' }, t('drop.delivered_body')),
+      scene({ state: 'courier', title: t('drop.delivered'), say: t('drop.delivered_body') }).head,
       chip,
       h('p', { class: 'a-onchain' }, icon('check'), h('span', {}, t('onchain'))),
       h('p', { class: 'mono a-tx', 'data-testid': 'dd-tx', 'data-tx': tx }, t('send.tx', { tx: `${tx.slice(0, 8)}…${tx.slice(-8)}` })),
