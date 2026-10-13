@@ -326,3 +326,43 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .md-qr figcaption { font-size: var(--text-xs); color: var(--muted-foreground); max-width: 28ch; }
 .setting-row .stack { --gap: 0.5rem; margin-top: 0.5rem; }
 .trash-cell { white-space: nowrap; }
+
+/* ======================= lane app2: share dialog, folder viewer, Received (Phase 6B) ======================= */
+.field-error { color: var(--destructive); }
+.links-list { gap: 0.5rem; }
+.links-list .item-actions { display: flex; gap: 0.25rem; margin-left: auto; }
+/* Tables without a picking column (a shared folder, Received): the first cell is the name. */
+.files[data-plain] .table th:first-child, .files[data-plain] .table td:first-child { width: auto; }
+.files[data-plain] .table td:last-child, .files[data-plain] .table th:last-child { width: 1%; white-space: nowrap; }
+@media (max-width: 767px) {
+  .files[data-plain] .table td:first-child { display: table-cell; padding-left: 1rem; }
+  .files[data-plain] .table td:nth-child(2) { padding-left: 0.5rem; }
+  .files[data-plain] .file-name { max-width: calc(100vw - 9rem); }
+}
+.files[hidden] { display: none; }
+/* The folder viewer: on the link page it takes the whole page; in Received it sits in a dialog. */
+.fv-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: var(--background); }
+@media (min-width: 768px) { .fv-top { padding-inline: 1.5rem; } }
+.fv-page { display: grid; gap: 1.5rem; width: min(100%, 60rem); margin-inline: auto; padding: 1.5rem 1rem 4rem; min-width: 0; }
+@media (min-width: 768px) { .fv-page { padding: 2.5rem 1.5rem 4rem; } }
+.fv-page:focus { outline: none; }
+.fv { --gap: 1rem; min-width: 0; }
+.fv-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.fv-title { --gap: 0.25rem; min-width: 0; }
+.fv-title :is(h1, h2, h3) { overflow-wrap: anywhere; }
+.fv-title :is(h1, h2, h3):focus { outline: none; }
+.fv-actions { justify-content: flex-end; }
+.fv-status { --gap: 1rem; }
+.fv-status .visit .icon { width: 0.875rem; height: 0.875rem; }
+.fv[data-state="ended"] .visit { color: var(--foreground); font-weight: 500; }
+.fv-warn { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--warning); }
+.fv-warn .icon { width: 0.875rem; height: 0.875rem; color: var(--warning); }
+.fv-media { display: grid; place-items: center; border-radius: var(--radius-lg); background: var(--muted); overflow: hidden; }
+.fv-media :is(img, video) { max-width: 100%; max-height: min(60vh, 32rem); object-fit: contain; }
+.fv-media audio { width: 100%; margin: 1rem; }
+.fv-media pre { width: 100%; max-height: min(60vh, 32rem); overflow: auto; margin: 0; padding: 1rem; font-family: var(--font-mono); font-size: 0.8125rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fv-card { width: min(100%, 32rem); margin-inline: auto; }
+.fv-card .card-footer .btn { width: 100%; }
+#rec-open .fv .files { max-height: min(50vh, 28rem); overflow: auto; }
+/* Received: the sender column says who can't be named; the scan line breathes under the drop card. */
+.drop-card + .scanline { margin-top: -0.5rem; }

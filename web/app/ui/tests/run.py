@@ -139,10 +139,11 @@ def build(out, origin):
     return os.path.join(out, "dist")
 
 
-def serve(dist, data, port, amount_proof=None):
+def serve(dist, data, port, amount_proof=None, features=()):
     os.makedirs(data, exist_ok=True)
     log = open(os.path.join(data, "server.log"), "w")
-    cmd = ["server/bin/mutis-api", "--dev"] if amount_proof is None else ["web/app/ui/tests/devserver.py", "--amount-proof", amount_proof]
+    cmd = ["server/bin/mutis-api", "--dev"] if amount_proof is None and not features else \
+        ["web/app/ui/tests/devserver.py", "--amount-proof", amount_proof or "sidecar", *(["--features", ",".join(features)] if features else [])]
     proc = subprocess.Popen([sys.executable, "-I", *cmd, "--data", os.path.join(data, "srv"),
                              "--dist", dist, "--port", str(port), "--pow-bits", "8"], cwd=ROOT, stdout=log, stderr=log)
     for _ in range(100):
@@ -230,6 +231,7 @@ def main():
     args = ap.parse_args()
     import flows  # noqa: E402 (after sys.path)
     import flows_drive  # noqa: E402,F401 (lane app1: the drive's flows register themselves)
+    import flows_share  # noqa: E402,F401 (lane app2: the share dialog, the folder viewer and Received)
 
     r = Results()
     static_checks(r)
@@ -240,12 +242,15 @@ def main():
     dist = build(work, f"http://127.0.0.1:{port}")
     servers = {None: (serve(dist, os.path.join(work, "data"), port), f"http://127.0.0.1:{port}")}
 
-    def origin_for(amount_proof):
-        if amount_proof not in servers:
+    def origin_for(amount_proof, features=()):
+        # lane app2: a flow may ask for features that config.py keeps off (opts "features"); its server's
+        # data sits in data-<amount_proof or sidecar>[-<features>] (flows_share.py reads its database).
+        key = amount_proof if not features else (amount_proof, tuple(features))
+        if key not in servers:
             other = free_port()
-            servers[amount_proof] = (serve(dist, os.path.join(work, f"data-{amount_proof}"), other, amount_proof),
-                                     f"http://127.0.0.1:{other}")
-        return servers[amount_proof][1]
+            name = f"data-{amount_proof or 'sidecar'}" + (f"-{'-'.join(features)}" if features else "")
+            servers[key] = (serve(dist, os.path.join(work, name), other, amount_proof, features), f"http://127.0.0.1:{other}")
+        return servers[key][1]
 
     make_fixtures(os.path.join(work, "fixtures"))
     shots = os.path.join(APP, "shots") if args.shots else None
@@ -256,7 +261,7 @@ def main():
             r.current = sid
             print(f"--- {sid} {title}", flush=True)
             browser = Browser(opts.get("args", ()))
-            t = T(r, browser, origin_for(opts.get("amount_proof")), work, shots)
+            t = T(r, browser, origin_for(opts.get("amount_proof"), opts.get("features", ())), work, shots)
             try:
                 fn(t)
                 r.check(not t.violations(), f"no CSP or Trusted Types violation ({t.violations()[:2]})")
