@@ -457,8 +457,10 @@ const spinner = () => {
   return s;
 };
 
+// The rows wear the new link's badge, also when the dialog closed before the reload came back.
 function refreshDrive() {
-  S.drive.reload().then(() => S && S.drive.render()).catch(() => null);
+  const { drive } = S;
+  drive.reload().then(() => drive.render()).catch(() => null);
 }
 
 function render() {
