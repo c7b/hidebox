@@ -48,9 +48,14 @@ async function scanBench() {
   const all = Array.from({ length: 10 }, () => rows).flat();
   const rates = [];
   for (let round = 0; round < 3; round++) {
-    const t0 = performance.now();
-    for (const r of all) await tryDecryptUtxo(me.viewSk, r);
-    rates.push(all.length / ((performance.now() - t0) / 1000));
+    let busy = 0;
+    for (let i = 0; i < all.length; i += 100) {
+      const t0 = performance.now();
+      for (const r of all.slice(i, i + 100)) await tryDecryptUtxo(me.viewSk, r);
+      busy += performance.now() - t0;
+      await new Promise((r) => setTimeout(r)); // a macrotask turn, so the test driver's polls get answers
+    }
+    rates.push(all.length / (busy / 1000));
   }
   log('SCAN_ROWS_PER_S median', Math.round(median(rates)), 'rounds', rates.map(Math.round).join(','), 'ROWS', all.length, 'floor', SCAN_FLOOR);
   return median(rates) >= SCAN_FLOOR;

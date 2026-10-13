@@ -85,7 +85,7 @@ export function viewer(root, opts) {
         if (r.leaf_index !== null) receipt.append(' · ', h('a', { href: `/verify#${shareId}` }, t('verify.link')));
       }, () => receipt.remove());
     }
-    const date = details.ended_day ? formatDate(Date.parse(`${details.ended_day}T12:00:00Z`), { dateStyle: 'medium' }) : '';
+    const date = details.ended_day ? formatDate(Date.parse(`${details.ended_day}T12:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' }) : '';
     if (state === 'burned') {
       return set('burned', emptyLocker(), h('h1', { class: 'a-view-h' }, t('gone.burned')),
         h('p', { class: 'a-direction' }, t('gone.direction')),
