@@ -1,0 +1,41 @@
+Final scan of the repository as GitHub serves it, after this pass's commits (head 7684a40), from a
+signed-out mirror clone. The scanner and its search list are the ones in secrets-gate.txt, step 3.
+
+2026-10-13T05:07:43Z
+$ git -c credential.helper= clone --mirror https://github.com/c7b/mutis.git served.git   (signed out: no credentials, empty home, no git config)
+exit 0
+$ git -C served.git for-each-ref
+refs/heads/main 7684a40aa709f2d0dd5ac9873a0772ac077630c6
+$ git -C served.git rev-list main | sort  vs  git rev-list main | sort (local): identical (89 commits)
+$ git -C served.git rev-list --objects --all | wc -l: 2016; cat-file --batch-all-objects: 2016
+$ python3 -I scan.py served.git <the owner keys directory>
+judge-passes.txt: 20 judge codes loaded
+owner-locker-key.txt: 5 lines, 2 tokens loaded
+owner-locker-passphrase.txt: 2 lines, 1 tokens loaded
+owner-security-drop.txt: 7 lines, 4 tokens loaded
+objects: 2016 (1416 blobs, 89 commits, 511 trees, 0 tags)
+secret values loaded: 41; patterns: 16
+scanned: 1505 commits and blobs
+HIT owner-locker-key.txt line 0: 2 objects
+    206731215d blob web/app/lib/identity.js (match length 102)
+    8267590ebf blob web/app/lib/identity.js (match length 102)
+HIT owner-security-drop.txt token 1: 3 objects
+    296c3f3ec1 blob docs/evidence/2026-10-12/public/links/crawl.txt (match length 43)
+    64eb300e8c blob docs/evidence/2026-10-11/public/json/config.json (match length 43)
+    cd1ba15908 blob docs/evidence/2026-10-12/fix-3/links/crawl.txt (match length 43)
+HIT owner-security-drop.txt token 2: 3 objects
+    296c3f3ec1 blob docs/evidence/2026-10-12/public/links/crawl.txt (match length 37)
+    cd1ba15908 blob docs/evidence/2026-10-12/fix-3/links/crawl.txt (match length 37)
+    fe39296a42 blob docs/evidence/2026-10-12/public/gate/secrets-gate.txt (match length 37)
+HIT sudoers line: 2 objects
+    838ef1de58 blob docs/evidence/2026-10-12/fix-3/gate/secrets-gate.txt (match length 8)
+    fe39296a42 blob docs/evidence/2026-10-12/public/gate/secrets-gate.txt (match length 8)
+HIT tailnet IPv4 range: 2 objects
+    838ef1de58 blob docs/evidence/2026-10-12/fix-3/gate/secrets-gate.txt (match length 10)
+    fe39296a42 blob docs/evidence/2026-10-12/public/gate/secrets-gate.txt (match length 10)
+hits: 5
+
+Classification: the same 5 labels as before the public step, all public strings. The new objects are
+this folder's links/crawl.txt (the security drop's public URL and https://srv2052606.hstgr.cloud/locker)
+and gate/secrets-gate.txt (that /locker URL, and its own description of the sudoers and tailnet-range
+patterns). Verdict: PASS.
