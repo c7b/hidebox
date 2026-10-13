@@ -48,10 +48,10 @@ class CaddyfileTest(unittest.TestCase):
             self.assertTrue(re.search(rf'^\s*{name}\s+"{re.escape(value)}"$', self.text, re.I | re.M), name)
         self.assertIn("header -Server", self.text)
 
-    def test_both_home_pages_get_the_app_policy(self):
+    def test_the_home_page_gets_the_app_policy(self):
         home = re.search(r"(?m)^\t@home path (.+)$", self.text).group(1).split()
-        self.assertEqual(sorted(home), ["/", "/es", "/es/", "/es/index.html", "/index.html"])
-        self.assertIs(headers_spec.ROUTES["/es/"][0], headers_spec.APP_CSP, "the drop widget runs on /es/ too")
+        self.assertEqual(sorted(home), ["/", "/index.html"])
+        self.assertIs(headers_spec.ROUTES["/"][0], headers_spec.APP_CSP, "the drop widget runs on /")
 
     def test_no_access_log_and_filtered_errors(self):
         site = self.text.split("{$MUTIS_HOST} {", 1)[1]
