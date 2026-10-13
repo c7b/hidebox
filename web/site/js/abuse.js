@@ -8,7 +8,7 @@ import { config } from './site.js';
 const T = {
   working: 'A few seconds of math instead of a captcha…',
   sent: (id) => `Thanks. Report ${id} received. We read every report and usually disable the link first and ask questions later.`,
-  notLink: 'Paste a mutis link: it has /s/ or /d/ in it.',
+  notLink: 'Paste a link from this site: it has /s/ or /d/ in it.',
   wait: (s) => `You can send another report in ${s} seconds.`,
   offline: 'We couldn\'t reach our server. Nothing was sent. Try again.',
   failed: 'Our server failed. Nothing was sent. Try again in a minute.',
@@ -68,11 +68,13 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-// The app's "Report this link" and "Report this drop" open /abuse#link=<the link without its key>.
-// The fragment is cleared at once; the field takes the link only as the form would send it.
+// The app's "Report this link" and "Report this drop" open /fine-print#link=<the link without its key>.
+// The fragment is cleared at once; the field takes the link only as the form would send it, and the
+// page goes to the form (it sits below the privacy and terms text).
 const prefill = new URLSearchParams(location.hash.slice(1)).get('link');
 if (prefill !== null) {
   history.replaceState(null, '', location.pathname + location.search);
+  (document.getElementById('report') ?? form).scrollIntoView({ block: 'start' });
   config.then((c) => {
     const link = cleanLink(prefill, false, c?.memo_origins ?? null);
     if (link && !linkInput.value) linkInput.value = link;

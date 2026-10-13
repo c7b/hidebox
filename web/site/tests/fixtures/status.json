@@ -1,6 +1,6 @@
 {
  "updated_at": 1760000000,
- "attention": false,
+ "attention": true,
  "phase": "pre",
  "checks": {
   "https": "green",
@@ -13,5 +13,9 @@
   "credits": "green",
   "disk": "green",
   "budgets": "amber"
- }
+ },
+ "overall": "amber",
+ "reasons": [
+  "budget.sponsor.evidence.90"
+ ]
 }

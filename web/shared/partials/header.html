@@ -1,32 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 <header class="site-header">
-  <div class="container header-bar">
-    <a class="brand" href="/" aria-label="mutis, home"><svg class="wordmark" viewBox="0 16 232.5 84" aria-hidden="true" focusable="false"><path d="M9 40 V100 M9 58.5 A14 14 0 0 1 37 58.5 V100 M37 58.5 A14 14 0 0 1 65 58.5 V100 M0 44.5 L9 44.5 M0 95.5 L18 95.5 M28 95.5 L46 95.5 M56 95.5 L74 95.5 M90 40 V81.5 A14 14 0 0 0 118 81.5 M118 40 V100 M81 44.5 L90 44.5 M109 44.5 L118 44.5 M118 95.5 L127 95.5 M144 24 V85.5 A10 10 0 0 0 154 95.5 H161 M133 44.5 L158 44.5 M228 57.25 A15.25 12.75 0 1 0 212.75 70 A15.25 12.75 0 1 1 197.5 82.75 M228 40 V57.25 M197.5 82.75 V100" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="butt" stroke-linejoin="miter"/><path fill="currentColor" d="M168 25 A9 9 0 1 0 186 25 A9 9 0 1 0 168 25 Z M174 40 L180 40 L184 100 L170 100 Z"/></svg></a>
-    <nav class="nav" aria-label="Main">
-      <ul class="nav-links">
-        <li><a href="/how">How it works</a></li>
-        <li><a href="/pricing">Pricing</a></li>
-        <li><a href="{{REPO_URL}}">Open source</a></li>
-      </ul>
-      <details class="testnet">
-        <summary>Testnet</summary>
-        <div class="testnet-panel">
-          <p class="status-line"><span data-phase-show="pre">Esmeralda testnet · tTARI has no monetary value · Ootle mainnet: <time datetime="2026-11-11" data-v="mainnet_date">Nov 11, 2026</time>.</span><span data-phase-show="mainnet" hidden>Esmeralda testnet · tTARI has no monetary value · the Ootle mainnet is live; mutis stays on the testnet until our code is reviewed.</span></p>
-        </div>
-      </details>
-      <span class="judge-chip" data-judge-active hidden>Judge pass</span>
-      <a class="nav-cta" href="/locker">Open my locker</a>
-      <details class="menu">
-        <summary><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#menu"/></svg><span>Menu</span></summary>
-        <div class="menu-panel">
-          <ul>
-            <li><a href="/how">How it works</a></li>
-            <li><a href="/pricing">Pricing</a></li>
-            <li><a href="/faq">FAQ</a></li>
-            <li><a href="{{REPO_URL}}">Open source</a></li>
-          </ul>
-        </div>
-      </details>
-    </nav>
+  <div class="wrap top">
+    <a class="wm" href="/" aria-label="{{BRAND}}, home"><svg viewBox="0 0 80 46" aria-hidden="true" focusable="false"><path d="M6 3v30"/><circle cx="15" cy="24" r="9"/><path d="M32 15l8 16M48 15l-11 23q-2 4-6 4"/><path d="M54 24h18a9 9 0 1 0-2.6 6.4"/></svg></a>
+    <button type="button" class="lights" data-theme-toggle aria-label="Lights" aria-pressed="true" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="bulb" d="M12 2.8a6.6 6.6 0 0 0-3.9 11.9c.7.5 1.1 1.3 1.1 2.1v.7h5.6v-.7c0-.8.4-1.6 1.1-2.1A6.6 6.6 0 0 0 12 2.8z"/><path d="M9.6 20.2h4.8M10.6 22.6h2.8"/></svg></button>
   </div>
 </header>

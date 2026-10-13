@@ -1,0 +1,232 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The fine print · {{BRAND}}</title>
+<meta name="description" content="Privacy, terms and the form to report a link: what we keep, table by table, how long each thing lasts, and what you may not do with it.">
+<link rel="canonical" href="{{ORIGIN}}/fine-print">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{BRAND}}">
+<meta property="og:title" content="The fine print · {{BRAND}}">
+<meta property="og:description" content="Privacy, terms and the form to report a link: what we keep, table by table, how long each thing lasts, and what you may not do with it.">
+<meta property="og:url" content="{{ORIGIN}}/fine-print">
+<meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A glowing ghost holds up one finger and winks. Show it once. Then bye.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F4F5FC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#13183A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/ghost.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/abuse.js" integrity="{{SRI}}"></script>
+</head>
+<body class="reading">
+<a class="skip-link" href="#main">Skip to the content</a>
+<!--#include header-->
+<main id="main" class="wrap page">
+  <div class="page-head-figure">
+    <span class="head-ghost" data-ghost="keep" aria-hidden="true"><!--#include ghost.svg--></span>
+    <div class="page-head">
+      <h1>The fine print</h1>
+      <p class="lede">Privacy, terms, and how to report a link, together on one page.</p>
+      <nav class="toc" aria-label="On this page"><a href="#privacy">Privacy</a><a href="#inventory">Every table we keep</a><a href="#terms">Terms</a><a href="#report">Report a link</a></nav>
+    </div>
+  </div>
+
+  <div class="doc">
+    <section id="privacy" aria-labelledby="privacy-h" class="wide">
+      <h2 id="privacy-h">Privacy</h2>
+      <p class="muted"><b class="brand">{{BRAND}}</b> runs on the Tari™ Ootle testnet. What we collect, what we can't, every table in our database, and how long each thing lasts.</p>
+<div class="prose">
+  <h3 id="short">The short version</h3>
+  <ul>
+    <li><strong>We collect</strong> ciphertext, padded sizes, hours, rules, open counts, your locker's random id and a hash of its login key (if you use one), and invoices for space you rent. The full list is below.</li>
+    <li><strong>We don't collect</strong> names, emails, phone numbers, file names, file contents, keys, passwords, analytics or tracking cookies.</li>
+    <li><strong>Your IP:</strong> our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. Our web server keeps no access logs.</li>
+    <li><strong>Third parties:</strong> our host, Hostinger, which can see what our server stores; Let's Encrypt, for our certificate; Tari's indexer, only when you press “Check it on Tari's indexer”. No analytics, no trackers, no third-party scripts or fonts.</li>
+  </ul>
+
+  <h3 id="ip">Your IP address</h3>
+  <p>We need your IP address to answer you, and we see it while you're connected. We don't write it to disk. To rate-limit, we keep a keyed hash of your network prefix in memory, with a key that is regenerated every day at 00:00 UTC and never stored. Our web server writes no access log, and its error log drops addresses, paths and headers. A VPN or Tor hides your IP from us.</p>
+
+  <h3 id="inventory">Every table in our database</h3>
+  <p>This is the complete list, from our schema. Each link also has a “What we know” page that prints its own rows.</p>
+</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th scope="col">Table</th><th scope="col">What it holds</th><th scope="col">How long</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><code>items</code></th><td>One row per stored file: a random id; the locker that owns it, if any; a hash of the uploader's manage token; whether it's a link or kept; its lane; its state; the clear 32-byte header (format, chunk count, a random salt); the encrypted name, type and size; for kept files, the file key locked to your locker; chunk count and padded size; the ciphertext's hash; the hour it arrived; when it expires and when it left; today's download volume.</td><td>The ciphertext is deleted within a minute of the exit. The row stays as a note<span data-needs="config" hidden> for <span data-v="tombstone_days"></span></span>, so we can tell a visitor why a link is gone.</td></tr>
+      <tr><th scope="row"><code>chunks</code></th><td>The SHA-256 of each encrypted chunk.</td><td>With its file.</td></tr>
+      <tr><th scope="row"><code>uploads</code></th><td>An upload in progress: its id, its file, its lane, the space reserved for it.</td><td>Until it finishes or expires (two hours).</td></tr>
+      <tr><th scope="row"><code>shares</code></th><td>One row per link: its mode (link, link + password, password only); the file key wrapped by the link's secret; the SHA-256 of its access token and, for link + password, of its link proof; the password's stretching parameters (never the password); opens allowed and used; expiry; state; the hour it was made and when it ended; wrong-password counters; opens in the current hour; the minute of its first open, shown only to its owner.</td><td>The wrapped key and the hashes are erased at the exit; the rest stays as the note above.</td></tr>
+      <tr><th scope="row"><code>tickets</code></th><td>A download in progress: the SHA-256 of its token, the link and file, a byte cap.</td><td>Until the download ends<span data-needs="config" hidden> (at most <span data-v="ticket"></span>)</span>.</td></tr>
+      <tr><th scope="row"><code>identities</code></th><td>One row per locker: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; when rented space ends; today's send count.</td><td>Until you delete your locker.</td></tr>
+      <tr><th scope="row"><code>sessions</code></th><td>The SHA-256 of a sign-in token, its locker, when it was made and expires, the last day it was used.</td><td>Until it expires.</td></tr>
+      <tr><th scope="row"><code>drops</code></th><td>One row per drop link: its id; its Tari address and tag (public by design); its label; a hash of its manage token; its state; the day it opened and closed; today's file and byte counts.</td><td>While it's open, then<span data-needs="config" hidden> <span data-v="tombstone_days"></span></span> after you close it or it's removed.</td></tr>
+      <tr><th scope="row"><code>jobs</code></th><td>Deliveries and payments waiting to go out on the Ootle. While a relay send waits, it holds the destination address and the sealed 125-byte blob.</td><td>The address and blob are erased once it's sent; the job is deleted a day after it ends. Our own test jobs are kept<span data-needs="config" hidden> for <span data-v="tombstone_days"></span></span> as evidence.</td></tr>
+      <tr><th scope="row"><code>invoices</code></th><td>For rented space: the pack, its price, our receiving address with the invoice's reference inside it, status, amount received, times, and the locker it's for.</td><td>For our books.</td></tr>
+      <tr><th scope="row"><code>payments</code></th><td>Each chain output that paid an invoice: its id, the invoice, its value, when we saw it, and the results of our checks.</td><td>For our books.</td></tr>
+      <tr><th scope="row"><code>chain_utxos</code></th><td>A copy of the public TARI outputs on the Ootle, so your browser can look for its own deliveries without telling us which.</td><td>Public data; kept while useful.</td></tr>
+      <tr><th scope="row"><code>abuse_reports</code></th><td>A report: the reported link's id, the category, your details, a contact if you gave one, and the link's key only if you chose to include it.</td><td>Kept with what we did about it, as our record of what we removed and why.</td></tr>
+      <tr><th scope="row"><code>budgets</code></th><td>Daily totals per kind of action (sends, demo payments). Nothing per person.</td><td>Daily.</td></tr>
+      <tr><th scope="row"><code>used_nonces</code></th><td>The SHA-256 of each spent anti-bot challenge, so it can't be reused.</td><td>Five minutes.</td></tr>
+      <tr><th scope="row"><code>seal_leaves</code>, <code>seal_checkpoints</code></th><td>SealLog: hashes of stored files and exits, and the checkpoints written to the Ootle.</td><td>Permanent, like the chain.</td></tr>
+      <tr><th scope="row"><code>judge_passes</code></th><td>The SHA-256 of each one-time pass we gave the Council, and its uses left.</td><td>For the contest. They hold nothing about a person.</td></tr>
+      <tr><th scope="row"><code>meta</code></th><td>Server settings and counters, such as when the last file was locked and which file is our hourly test.</td><td>Overwritten as they change.</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="prose">
+  <h3 id="public">What we publish</h3>
+  <p>Our live numbers (<code>/api/v1/stats</code>) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them;<span data-when="seallog=on" hidden> SealLog's latest checkpoint;</span> and how many minutes ago the latest file finished uploading, to the minute.</p>
+  <p>Our public endpoint <code>/api/v1/stats/wall</code> lists, for up to 24 recent files at least an hour old, a coarse size and an exit rule, only when at least 8 exist in the last week: never a name, an id or whether a file was opened. Someone who knows a file's size and rule may still recognise it there. Our hourly test file and our own test transactions are public too; never a visitor's.</p>
+
+  <h3 id="retention">How long things last</h3>
+  <p>We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish. We never had the key, so any leftover bytes are noise.</p>
+  <p>Our database (never files) is backed up daily<span data-needs="config" hidden>, and each copy is deleted after <span data-v="db_backup_days"></span></span>. It holds the rows listed above, including the wrapped key of every link still open when the copy was made; a wrapped key opens nothing without the link's secret. What we erase from the database is overwritten, but an older copy of it can sit in the database's write-ahead log until that space is reused, and in the backups until they're deleted.</p>
+  <p data-when="snapshots=weekly">Our host (Hostinger) can take weekly snapshots of the whole server. We haven't switched them off, and we haven't yet confirmed in its panel how long it keeps them. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</p>
+  <p data-when="snapshots=off" hidden>Our host doesn't keep snapshots of the server.</p>
+  <p>Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. Without the key it's noise.</p>
+
+  <h3 id="delete">Deleting everything</h3>
+  <p>Delete a link at any time from the card you got when you made it, or from your locker. <strong>Delete my locker</strong>, in your locker, removes its record, its files and every link to them; it asks for your key first.</p>
+
+  <h3 id="browser">Your browser</h3>
+  <p>We set no cookies. Your locker key lives in your browser's own storage (IndexedDB), and small preferences, like Lights off, in localStorage. Nothing in them is sent to us except what each action needs.</p>
+  <p>Your browser history, and any history sync, can keep the full link, key included. We clear the key from the address bar once it's opened, but we can't reach your history.</p>
+
+  <h3 id="third-parties">Third parties</h3>
+  <ul>
+    <li><strong>Hostinger</strong> rents us the server. It can see everything our server stores, and its snapshots are described above.</li>
+    <li><strong>Let's Encrypt</strong> issues our certificate. It never sees our visitors.</li>
+    <li><strong>Tari's public indexer</strong>, only when you press “Check it on Tari's indexer”. It then sees your IP address. Otherwise your browser talks only to this site.</li>
+  </ul>
+
+  <h3 id="contact">Contact</h3>
+  <p><a class="more" href="#report">Report a link<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a> · <a class="more" href="/made#disclosure">Report a vulnerability<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+</div>
+    </section>
+
+    <section id="terms" aria-labelledby="terms-h">
+      <h2 id="terms-h">Terms</h2>
+      <p class="muted">Plain English, for a service on the Tari™ Ootle testnet. Last changed in October 2026; every change is in the repository's history.</p>
+<div class="prose">
+  <h3 id="terms-short">The short version</h3>
+  <ul>
+    <li>Your files are yours. We host ciphertext we can't read, for as long as the rule you chose (or your rental) allows.</li>
+    <li>Don't use <b class="brand">{{BRAND}}</b> to hurt people. No child sexual abuse material (zero tolerance; reported to the authorities), no malware, no phishing, no harassment, no illegal content, nothing you don't have the right to share.</li>
+    <li>Programs and installers can only be sent from a locker. We can remove any link, file or drop that's reported or abusing limits, by id, without seeing inside.</li>
+    <li>This is a testnet service in active development, with no warranty. It's not a backup service. Files can be lost, the testnet can reset, and tTARI has no monetary value.</li>
+    <li>Free space changes hourly. Rented space lasts the period you paid for, then a grace period<span data-needs="config" hidden> of <span data-v="lapse_grace_days"></span></span>. Kept files of lockers unused<span data-needs="config" hidden> for <span data-v="inactive_days"></span></span> are deleted.</li>
+    <li>If you lose your locker key, we can't help, by design.</li>
+  </ul>
+
+  <h3 id="terms-use">Using <b class="brand">{{BRAND}}</b></h3>
+  <p>You may use <b class="brand">{{BRAND}}</b> to share files and notes you have the right to share. You may not use it to:</p>
+  <ul>
+    <li>share child sexual abuse material, in any form. We remove it and report it to the authorities;</li>
+    <li>spread malware, or host pages or files meant to steal passwords, money or identities;</li>
+    <li>harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or drop link;</li>
+    <li>share anything illegal where you or the recipient are, or anything that infringes someone else's rights;</li>
+    <li>attack <b class="brand">{{BRAND}}</b>, its users or the Tari testnet, or get around our limits with many networks, lockers or scripts.</li>
+  </ul>
+  <p>We can't see inside files, so we rely on reports. Anyone can <a href="#report">report a link</a>.</p>
+
+  <h3 id="terms-testnet">A testnet service, with no warranty</h3>
+  <p><b class="brand">{{BRAND}}</b> runs on the Esmeralda testnet of the Tari Ootle. tTARI has no monetary value, payments use play money, and the testnet can be reset. The service is provided as is, without warranty of any kind, and may change or stop. It is not a backup: keep your own copy of anything you can't lose.</p>
+
+  <h3 id="terms-limits">Limits and space</h3>
+  <p>Free space is a fair share of one real disk, recalculated every hour, and it can go down. When it does, nothing of yours is deleted, but you can't add more until you're under it again. If the disk truly fills, new uploads pause for everyone. Rented space adds to your share for the period you paid for. The live limits are on <a class="more" href="/made#limits">Pricing and limits<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+
+  <h3 id="terms-key">Your locker and its key</h3>
+  <p>A locker is a key your browser makes; there is no email and no password with us. Your recovery code or key file is the only way back into it. If you lose it, nobody, including us, can let you back in, and your kept files are lost with it. Anyone who has it can open your locker, so keep it private.</p>
+
+  <h3 id="terms-deletion">Deletion, expiry and the end of rented space</h3>
+  <p>A link leaves when its rule says so: after its opens, at its time, or when you delete it. We then delete the ciphertext within a minute (after a download in progress finishes). When rented space ends, your limit goes back to the free share; nothing is deleted<span data-needs="config" hidden> for <span data-v="lapse_grace_days"></span></span>, and after that, if you're still over, your oldest kept files are removed until you fit. Files kept by a locker that hasn't signed in<span data-needs="config" hidden> for <span data-v="inactive_days"></span></span> are deleted.</p>
+
+  <h3 id="terms-removal">Removal</h3>
+  <p>We can remove any link, file or drop by its id, without seeing inside, when it's reported and we believe it breaks these terms, or when it's abusing limits. We usually disable first and ask questions later.</p>
+
+  <h3 id="terms-requests">What we can hand over</h3>
+  <p>If compelled by law, we can hand over what we have: ciphertext, the columns listed on our <a href="#inventory">privacy page</a>, and invoices. We can't hand over contents or keys, because we never have them.</p>
+
+  <h3 id="terms-changes">Changes</h3>
+  <p>If these terms change, the new version appears on this page and in the repository, with the date. Using <b class="brand">{{BRAND}}</b> after a change means you accept it.</p>
+
+  <h3 id="terms-contact">Contact</h3>
+  <p>To report a link: <a class="more" href="#report">Report a link<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a> · For security issues: <a class="more" href="/made#disclosure">Report a vulnerability<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
+</div>
+    </section>
+
+    <section id="report" aria-labelledby="report-h">
+      <h2 id="report-h">Report a link</h2>
+      <p class="muted">Paste the link. <strong>You can leave out everything after the #</strong>: we don't need the key to take a link down.</p>
+<div>
+  <form class="form" data-abuse novalidate hidden>
+    <div class="field">
+      <label for="abuse-link">Link</label>
+      <input type="url" id="abuse-link" name="link" required autocomplete="off" spellcheck="false" aria-describedby="abuse-link-hint abuse-status">
+      <p class="hint" id="abuse-link-hint">A link to a file (<code>/s/…</code>) or to a drop (<code>/d/…</code>).</p>
+    </div>
+    <div class="field">
+      <label for="abuse-category">What's wrong</label>
+      <select id="abuse-category" name="category" required>
+        <option value="" disabled selected>Choose one</option>
+        <option value="csam">Child sexual abuse material</option>
+        <option value="malware">Malware</option>
+        <option value="phishing">Phishing</option>
+        <option value="harassment">Harassment</option>
+        <option value="copyright">Copyright</option>
+        <option value="other">Something else</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="abuse-details">Anything else (optional)</label>
+      <textarea id="abuse-details" name="details" maxlength="2000"></textarea>
+    </div>
+    <div class="field">
+      <label for="abuse-contact">Contact (optional)</label>
+      <input type="text" id="abuse-contact" name="contact" maxlength="200" autocomplete="off" aria-describedby="abuse-contact-hint">
+      <p class="hint" id="abuse-contact-hint">Only if you want an answer. We use it for this report and nothing else.</p>
+    </div>
+    <div class="check">
+      <input type="checkbox" id="abuse-key" name="include_key">
+      <label for="abuse-key">Include the key so we can check the content. We'll see the file.</label>
+    </div>
+    <p><button type="submit" class="btn btn-primary">Report</button></p>
+    <p class="form-status" id="abuse-status" role="status"></p>
+  </form>
+  <noscript><p class="box-note">This form needs JavaScript for its anti-bot check, which runs in your browser instead of a captcha.</p></noscript>
+
+  <div class="prose">
+    <h3 id="report-next">What happens next</h3>
+    <p>We read every report. We usually disable the link first and ask questions later.</p>
+    <p>For child sexual abuse material, also report it to <a href="https://report.cybertip.org/">NCMEC's CyberTipline</a> or <a href="https://www.inhope.org/EN">your national INHOPE hotline</a>.</p>
+
+    <h3 id="report-can">What we can and can't do</h3>
+    <p>We can delete any link, file or drop by id. We can't see what's inside, and we keep no IP logs that would identify who uploaded it.</p>
+    <p>If you leave the key out, your report never contains it: your browser removes everything after the <code>#</code> before sending.</p>
+
+    <h3 id="report-legal">Legal requests</h3>
+    <p>If compelled, we can hand over what we have: ciphertext, the columns on our <a href="#inventory">privacy page</a>, invoices. Not contents. Not keys.</p>
+
+    <p data-when="security_drop=on" hidden><strong>Something confidential?</strong> <a data-href="security_drop" href="#report">Leave us a file in our own dead drop</a>: it's encrypted in your browser and reaches only our locker.</p>
+  </div>
+</div>
+    </section>
+  </div>
+</main>
+<!--#include footer-->
+</body>
+</html>

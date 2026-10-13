@@ -38,17 +38,26 @@ ROUTES = {
     "/upgrade": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
-    "/security": (SITE_CSP, {}),
-    "/pricing": (SITE_CSP, {}),
-    "/faq": (SITE_CSP, {}),
+    "/made": (SITE_CSP, {}),
     "/judges": (SITE_CSP, {}),
-    "/terms": (SITE_CSP, {}),
-    "/privacy": (SITE_CSP, {}),
-    "/abuse": (SITE_CSP, {}),
+    "/fine-print": (SITE_CSP, {}),
     "/robots.txt": (SITE_CSP, {}),
     "/.well-known/security.txt": (SITE_CSP, {}),
     "/.well-known/mutis-manifest.json": (SITE_CSP, {}),
     "/this-page-does-not-exist": (SITE_CSP, {}),
+}
+
+# The pages the ghost folded together (14-ghost-design §4.1, §17 step 4): each old address answers 301
+# to its new place, with or without a trailing slash. deploy/caddy/Caddyfile must say exactly this
+# (deploy/tests/test_config.py), and every target page and anchor must exist (the site suite).
+REDIRECTS = {
+    "/security": "/made#locks",
+    "/privacy": "/fine-print#privacy",
+    "/terms": "/fine-print#terms",
+    "/abuse": "/fine-print#report",
+    "/pricing": "/made#limits",
+    "/faq": "/made",
+    "/status": "/made#check",
 }
 
 # Caching (deploy/caddy/Caddyfile): pages, app files and status files revalidate on every visit; an

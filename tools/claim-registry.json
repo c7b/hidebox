@@ -1,5 +1,5 @@
 {
- "_comment": "The claim registry additions of 14-ghost-design §10.3 (11-brand §8 holds C1 to C23). tools/check-copy.py check (4): a copy sentence that carries one of a claim's markers must be one of its registered sentences ({variables} match their value, or nothing where a page binds it with data-v); a claim with `requires` needs that sentence on the same page. `labels` are buttons and headings that carry a marker without making a claim.",
+ "_comment": "The claim registry additions of 14-ghost-design §10.3 (11-brand §8 holds C1 to C23). tools/check-copy.py check (4): a copy sentence that carries one of a claim's markers must be one of its registered sentences ({variables} match their value, or nothing where a page binds it with data-v); a claim with `requires` needs that sentence on the same page, or a link to where it is stated (`requires_link`). `labels` are buttons and headings that carry a marker without making a claim.",
  "claims": [
   {
    "id": "C1-k",
@@ -133,7 +133,8 @@
     "For files sent to your locker: you see that something came, and how much. Not the file.",
     "What came, and how much. No file sent to your locker opens with it.",
     "For files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key."
-   ]
+   ],
+   "requires_link": "/made#who"
   },
   {
    "id": "C29",
@@ -166,7 +167,8 @@
     "test money"
    ],
    "sentences": [
-    "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet_date}."
+    "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet_date}.",
+    "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} stays on the testnet until our code is reviewed."
    ]
   },
   {

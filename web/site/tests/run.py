@@ -41,7 +41,7 @@ def llms_full():
 def main() -> int:
     started = time.time()
     results = [(name, fn()) for name, fn in static_checks.CHECKS]
-    results.append(("llms-full.txt matches /how and /security", llms_full()))
+    results.append(("llms-full.txt matches /how, /made and /fine-print", llms_full()))
     dates = node_dates()
     results.append(("dates.js in two time zones (M-08)", dates))
     notes = []

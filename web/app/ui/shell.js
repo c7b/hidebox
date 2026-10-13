@@ -31,7 +31,7 @@ export async function startPage({ bottomBar = false, current = null } = {}) {
 }
 
 // The report form, filled in with a link (never its key) when the page has one.
-export const abuseHref = (link) => (link ? `/abuse#link=${encodeURIComponent(link)}` : '/abuse');
+export const abuseHref = (link) => (link ? `/fine-print#link=${encodeURIComponent(link)}` : '/fine-print#report');
 
 export function setTitle(key, params) {
   document.title = `${t(key, params)} · ${BRAND}`;
