@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: MIT -->
-# Firewall (ufw) on ultron
+# Firewall (ufw)
 
 `deploy/scripts/provision.sh` sets and checks all of this; the table is what it leaves in place.
 
@@ -8,9 +8,9 @@
 | `limit 22/tcp` (IPv4 and IPv6) | SSH, rate-limited: more than 6 new connections in 30 s from one address are dropped, so every tool here uses one multiplexed connection (`ControlMaster`) |
 | `allow 80/tcp`, `allow 443/tcp` | Caddy: HTTPS, and HTTP only for the redirect and Let's Encrypt |
 | `ufw logging off` | blocked packets would otherwise be logged with their source IP (spec §14.3) |
-| owner-match guard on `lo` port **5100** | walletd runs with `--authentication none`: only uids 0 (root), 1000 (lcam) and 1002 (drive) may connect; `mutis`, `build`, `caddy` and everyone else get a TCP reset |
+| owner-match guard on `lo` port **5100** | walletd runs with `--authentication none`: only root, the operator (the login that ran provision.sh with sudo, or `MUTIS_OPERATOR`; `lcam`, uid 1000, on ultron) and `drive` (1002 on ultron) may connect; `mutis`, `build`, `caddy` and everyone else get a TCP reset |
 | owner-match guard on `lo` port **18143** | the L1 console wallet's gRPC has no authentication either; same three uids |
-| owner-match guard on `lo` port **8787** | mutis-api believes `X-Real-IP` from loopback (Caddy sets it): only `caddy`, `drive` (the sidecar uploads the hourly canary), root and lcam may connect. `build` runs third-party build scripts when it compiles crates, and could otherwise claim any client address and walk past every per-IP limit and the PoW escalation |
+| owner-match guard on `lo` port **8787** | mutis-api believes `X-Real-IP` from loopback (Caddy sets it): only `caddy`, `drive` (the sidecar uploads the hourly canary), root and the operator may connect. `build` runs third-party build scripts when it compiles crates, and could otherwise claim any client address and walk past every per-IP limit and the PoW escalation |
 
 The guards live in `/etc/ufw/before.rules` and `before6.rules`, before the loopback `ACCEPT`:
 
@@ -21,9 +21,10 @@ The guards live in `/etc/ufw/before.rules` and `before6.rules`, before the loopb
 -A ufw-before-output -o lo -p tcp --dport 5100 -j REJECT --reject-with tcp-reset
 ```
 
-The 5100 lines date from the research phase (backups `*.bak-walletguard`). provision.sh adds the
-same lines for 18143 and for 8787 (with the caddy uid as a fourth) after the 5100 block (backups
-`*.bak-mutis`) and reloads ufw.
+On ultron the 5100 lines date from the research phase (backups `*.bak-walletguard`). provision.sh
+adds whichever of the three guards is missing (8787 with the caddy uid as a fourth) just before ufw's
+own loopback `ACCEPT` (backups `*.bak-mutis`) and reloads ufw; it refuses to run while ufw is
+inactive.
 
 Everything else that listens is on loopback only: Caddy's admin API on a socket in `/run/caddy`
 (0700, caddy only; no TCP port) and systemd-resolved. The griefer (E-23) never needs 8787: it runs

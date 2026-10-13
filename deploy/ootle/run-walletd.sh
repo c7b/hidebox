@@ -9,7 +9,7 @@
 # bash builtins touch the password, so it never appears in any command line either.
 #
 # auth=none: any local process that reaches 127.0.0.1:5100 could spend, so the port is limited to
-# uids 0, 1000 and 1002 by owner-match rules in /etc/ufw/before.rules and before6.rules.
+# root, the operator and drive by owner-match rules in /etc/ufw/before.rules and before6.rules.
 #
 # WALLETD_BASE, WALLETD_LISTEN and WALLETD_BIN exist for the upgrade drill, which runs a new binary
 # against a copy of the data directory (deploy/ootle/upgrade-drill.md).

@@ -1,8 +1,10 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Provision ultron for mutis, idempotently (spec §15.1). Run as root from any copy of deploy/:
+# Provision ultron for mutis, idempotently (spec §15.1). Run with sudo from your own login, from any
+# copy of deploy/ (docs/self-host.md walks a new server through it):
 #   sudo bash deploy/scripts/provision.sh
-# Re-running is safe. It never overwrites /etc/mutis/mutis.toml or any key, and never moves, deletes
+# Your login is the operator: with root, the only account besides drive that may reach walletd and the
+# API port (MUTIS_OPERATOR=<login> names another one). Re-running is safe. It never overwrites /etc/mutis/mutis.toml or any key, and never moves, deletes
 # or re-initialises /home/drive/wallet or /home/drive/l1wallet. The one-time move of walletd from its
 # tmux session into walletd.service backs the wallet up first (root-only tar) and stops if the
 # balances walletd reports afterwards differ from before.
@@ -13,6 +15,7 @@ DEPLOY=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 WALLET=/home/drive/wallet
 BACKUPS=/var/backups/mutis
 CREDENTIAL=/etc/mutis/credentials/walletd-keyring-pass
+OPERATOR=${MUTIS_OPERATOR:-${SUDO_USER:-}}
 PACKAGES=(caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg)
 
 step() { printf '\n== %s\n' "$*"; }
@@ -20,6 +23,8 @@ die() { printf 'provision: %s\n' "$*" >&2; exit 1; }
 stamp() { date -u +%Y%m%dT%H%M%SZ; }
 
 [ "$(id -u)" = 0 ] || die "run as root"
+[ -n "$OPERATOR" ] && [ "$OPERATOR" != root ] && getent passwd "$OPERATOR" >/dev/null ||
+  die "run it with sudo from your own login, or set MUTIS_OPERATOR=<login>"
 
 check_packages() {
   step "Debian packages (installed by the owner; this script installs nothing)"
@@ -36,16 +41,23 @@ users_and_dirs() {
   step "users and directories (spec §8.1)"
   getent passwd mutis >/dev/null ||
     useradd --system --user-group --home-dir /srv/mutis --no-create-home --shell /usr/sbin/nologin mutis
+  # drive runs walletd, the chain worker and the sidecar; build runs the tests and compiles, and
+  # holds no secret. Both are ordinary accounts with a home and no password (sudo -u, runuser).
+  local user
+  for user in drive build; do
+    getent passwd "$user" >/dev/null || useradd --user-group --create-home --shell /bin/bash "$user"
+  done
+  chmod 0700 /home/drive /home/build
   id -nG drive | tr ' ' '\n' | grep -qx mutis || usermod -aG mutis drive
   install -d -m 0755 -o root -g root /srv/mutis /srv/mutis/app /srv/mutis/app/releases
   install -d -m 2770 -o mutis -g mutis /srv/mutis/data /srv/mutis/data/db
   install -d -m 0700 -o mutis -g mutis /srv/mutis/data/blobs /srv/mutis/data/backup
   install -d -m 2775 -o mutis -g mutis /srv/mutis/status
-  install -d -m 0700 -o drive -g drive /home/drive/mutis "$WALLET/backup"
+  install -d -m 0700 -o drive -g drive /home/drive/mutis "$WALLET" "$WALLET/backup"
   install -d -m 0750 -o root -g mutis /etc/mutis
   install -d -m 0700 -o root -g root /etc/mutis/credentials "$BACKUPS"
   install -d -m 0755 -o root -g root /usr/local/lib/mutis /etc/caddy/mutis.d
-  echo "ok: mutis user ($(id mutis)); tree under /srv/mutis"
+  echo "ok: users mutis, drive, build; operator $OPERATOR; tree under /srv/mutis"
 }
 
 config_and_secrets() {
@@ -61,7 +73,7 @@ config_and_secrets() {
     mv /etc/mutis/secret.key.new /etc/mutis/secret.key
     echo "generated /etc/mutis/secret.key"
   fi
-  if [ ! -f "$CREDENTIAL" ]; then
+  if [ ! -f "$CREDENTIAL" ] && [ -f "$WALLET/.keyring-pass" ]; then
     install -m 0600 -o root -g root "$WALLET/.keyring-pass" "$CREDENTIAL"
     echo "copied walletd's keyring password into $CREDENTIAL (root only)"
   fi
@@ -94,30 +106,35 @@ install_files() {
 
 firewall() {
   step "ufw: web ports open, logging off, loopback ports guarded by owner"
+  ufw status | grep -q '^Status: active' ||
+    die "ufw is inactive: allow your SSH port first (ufw limit 22/tcp), then ufw enable, and run this again"
   ufw allow 80/tcp comment 'mutis http' >/dev/null
   ufw allow 443/tcp comment 'mutis https' >/dev/null
   ufw logging off >/dev/null
-  local f changed=0
-  # 18143: the L1 console wallet's gRPC, no authentication, like walletd on 5100: root, lcam, drive.
-  # 8787: mutis-api trusts X-Real-IP from loopback; only Caddy (which sets it), the chain worker's
-  # sidecar (drive, the canary), root and lcam may connect, so `build`, which runs third-party
-  # build scripts when it compiles, can't forge client addresses past the per-IP limits.
-  local guards=("18143 0 $(id -u lcam) $(id -u drive)" "8787 0 $(id -u lcam) $(id -u drive) $(id -u caddy)")
+  local f guard changed=0 op drive
+  # Owner-match guards on loopback, before ufw's loopback ACCEPT: the listed uids connect, everyone
+  # else gets a TCP reset. 5100: walletd runs with --authentication none, so whoever reaches it could
+  # spend. 18143: an L1 console wallet's gRPC (if one runs), no authentication either. 8787: mutis-api
+  # trusts X-Real-IP from loopback; only Caddy (which sets it), the chain worker's sidecar (drive, the
+  # canary), root and the operator may connect, so `build`, which runs third-party build scripts when
+  # it compiles, can't forge client addresses past the per-IP limits.
+  op=$(id -u "$OPERATOR")
+  drive=$(id -u drive)
+  local guards=("5100 0 $op $drive" "18143 0 $op $drive" "8787 0 $op $drive $(id -u caddy)")
   for f in /etc/ufw/before.rules /etc/ufw/before6.rules; do
-    grep -q -- '--dport 5100 -j REJECT' "$f" || die "the walletd guard (port 5100) is missing from $f"
-    local guard
+    grep -qE -- '^-A ufw6?-before-output -o lo -j ACCEPT$' "$f" || die "$f has no loopback ACCEPT line to guard"
     for guard in "${guards[@]}"; do
       if ! grep -q -- "--dport ${guard%% *} -j REJECT" "$f"; then
         [ -e "$f.bak-mutis" ] || cp -p "$f" "$f.bak-mutis"
         python3 -I - "$f" $guard <<'PY'
-import sys
+import re, sys
 path, port, *uids = sys.argv[1:]
 lines = open(path).read().split("\n")
-at = next(i for i, l in enumerate(lines) if "--dport 5100 -j REJECT" in l)
+at = next(i for i, l in enumerate(lines) if re.fullmatch(r"-A ufw6?-before-output -o lo -j ACCEPT", l))
 chain = lines[at].split()[1]
 guard = [f"-A {chain} -o lo -p tcp --dport {port} -m owner --uid-owner {uid} -j ACCEPT" for uid in uids]
 guard.append(f"-A {chain} -o lo -p tcp --dport {port} -j REJECT --reject-with tcp-reset")
-open(path, "w").write("\n".join(lines[:at + 1] + guard + lines[at + 1:]))
+open(path, "w").write("\n".join(lines[:at] + guard + lines[at:]))
 PY
         changed=1
       fi
@@ -157,6 +174,10 @@ walletd_listening() {
 
 walletd_service() {
   step "walletd as a systemd unit"
+  if [ ! -f "$CREDENTIAL" ]; then
+    echo "skipped: walletd isn't set up (no $WALLET/.keyring-pass; docs/self-host.md step 4); chain features stay off"
+    return
+  fi
   if systemctl is-active --quiet walletd; then
     systemctl enable walletd >/dev/null 2>&1
     echo "ok: walletd.service already active"
