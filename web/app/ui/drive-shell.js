@@ -133,9 +133,10 @@ export function mountShell({ folders }) {
     root,
     search: search.querySelector('input'),
     setView(view) {
-      for (const a of document.querySelectorAll('.sidebar-menu-button[data-view]')) a.setAttribute('aria-current', a.dataset.view === view ? 'page' : 'false');
-      for (const a of document.querySelectorAll('.sidebar-menu-button[aria-current="false"]')) a.removeAttribute('aria-current');
-      search.hidden = view === 'storage';
+      for (const a of document.querySelectorAll('.sidebar-menu-button[data-view]')) {
+        if (a.dataset.view === view) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      }
     },
     setMeter(me) {
       const q = me.quota;
