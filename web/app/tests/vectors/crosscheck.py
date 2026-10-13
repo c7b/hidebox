@@ -6,15 +6,18 @@
 
 Checks every HKDF row, the mod-ℓ reductions, Padmé, the header, verifiers, link fragments, the stored
 file's chunk hashes and ct_hash, identity id, auth verifier, recovery code, safety code, key-file text,
-bech32m addresses and PoW cases. AES-GCM and ristretto255 aren't in the stdlib; the JS KATs cover them.
+bech32m addresses, PoW cases and the ZIP of Download all (zipfile). AES-GCM and ristretto255 aren't in the stdlib; the JS KATs cover them.
 """
 import base64
+import binascii
 import hashlib
 import hmac
+import io
 import json
 import os
 import re
 import sys
+import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ELL = 2**252 + 27742317777372353535851937790883648493
@@ -170,6 +173,23 @@ def main():
         for origin, memo in w[kind]["memos"].items():
             check(f"{kind} memo {origin}", memo == f"{origin}/t#{kind[-1]}{b64u(blob)}" and len(memo.encode()) <= 253)
     check("memo bytes mutis.sh", w["memo_bytes"]["https://mutis.sh"] == 187)
+
+    # lane app2: Download all's ZIP (lib/zip.js), opened by Python's zipfile, CRC-32 by binascii.
+    z = json.load(open(os.path.join(HERE, "zip-v1.json"), encoding="utf-8"))
+    for text, want in z["crc32"]:
+        check(f"crc32 {text[:12]!r}", f"{binascii.crc32(text.encode()):08x}" == want)
+    raw = base64.b64decode(z["archive_b64"])
+    check("zip sha256", hashlib.sha256(raw).hexdigest() == z["sha256"])
+    with zipfile.ZipFile(io.BytesIO(raw)) as arc:
+        infos = arc.infolist()
+        check("zip testzip (every CRC)", arc.testzip() is None)
+        check("zip names in order", [i.filename for i in infos] == z["names"])
+        check("zip stored, UTF-8 names", all(i.compress_type == zipfile.ZIP_STORED and i.flag_bits & 0x800 for i in infos))
+        check("zip dates", all(i.date_time == (2026, 10, 13, 12, 0, 0) for i in infos))
+        check("zip folders", sorted(i.filename for i in infos if i.is_dir()) == z["dirs"])
+        check("zip files", all(arc.read(n) == body.encode() for n, body in z["files"].items()))
+        check("zip bytes file", arc.read(z["seq_file"]) == bytes((i * 7) & 255 for i in range(300)))
+        check("zip paths stay inside", all(not i.filename.startswith("/") and ".." not in i.filename.split("/") for i in infos))
 
     print(f"crosscheck: {len(checked) - len(failures)}/{len(checked)} checks passed")
     for name in failures:
