@@ -159,12 +159,14 @@ function later(drive, item) {
   const errors = h('div', {});
   const set = async (expiresAt) => {
     const { patchItem } = await api();
-    await patchItem(item.id, { expires_at: expiresAt }, drive.headers());
-    item.row = { ...item.row, expires_at: expiresAt };
+    const res = await patchItem(item.id, { expires_at: expiresAt }, drive.headers());
+    item.row = { ...item.row, expires_at: res && 'expires_at' in res ? res.expires_at : expiresAt };
   };
   const go = primary(t('drive.later.go'), async () => {
     const before = item.row.expires_at ?? null;
-    const at = Math.floor(Date.now() / 1000) + days * 86400;
+    // The server takes at most max_days ahead by its own clock (and rounds up to the hour), so the
+    // longest choice keeps a few minutes in hand for a clock that runs a little fast here.
+    const at = Math.floor(Date.now() / 1000) + days * 86400 - (max && days >= max ? 300 : 0);
     await set(at);
     closeModal('later');
     toast(t('drive.later.set', { date: formatDate(at * 1000, { month: 'short', day: 'numeric' }) }), { type: 'success',
