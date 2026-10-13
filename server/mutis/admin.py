@@ -108,6 +108,7 @@ def cmd_budget(cfg, conn, args) -> None:
 def cmd_unfreeze_credits(cfg, conn, args) -> None:
     with db.tx(conn):
         db.del_meta(conn, "credit_freeze")
+        db.del_meta(conn, "reconcile_mismatch")
     print("credits unfrozen")
 
 

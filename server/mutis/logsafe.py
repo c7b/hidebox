@@ -21,7 +21,7 @@ EVENTS = frozenset({
     "chain.sidecar_hash_mismatch", "chain.job_failed", "chain.job_done", "chain.budget_50",
     "chain.budget_90", "chain.credit_freeze", "chain.reconcile_ok", "chain.canary_sealed",
     "chain.canary_failed", "chain.canary_verified", "chain.seal_checkpoint", "chain.seal_failed",
-    "chain.config_missing", "chain.job_interrupted", "chain.reconcile_unknown",
+    "chain.config_missing", "chain.job_interrupted", "chain.reconcile_unknown", "chain.reconcile_mismatch",
     # cleanup
     "cleanup.run", "cleanup.error",
 })
