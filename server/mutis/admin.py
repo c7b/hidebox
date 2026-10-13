@@ -14,7 +14,8 @@ from .chain_worker import notarize_manifest
 from .storage import Blobs
 from .walletd import Walletd
 
-FEATURES = ("drops", "relay_send", "direct_send", "demo_pay", "sponsor", "decoys", "kept", "seallog")
+FEATURES = ("drops", "relay_send", "direct_send", "demo_pay", "sponsor", "decoys", "kept", "seallog",
+            "folders", "pay_to_open")
 
 
 def _backup(cfg: config.Config) -> Path | None:

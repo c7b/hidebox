@@ -11,6 +11,7 @@ from .storage import Blobs
 ENDED_REASON = {"exhausted": "burned", "expired": "expired", "revoked": "revoked", "removed": "removed",
                 "owner_deleted": "owner_deleted"}
 TICKET_S = 1800              # a download ticket lives 30 minutes (spec §5.3)
+MAX_DELETE_AFTER_DAYS = 30    # Delete it after… on a kept file: at most this far ahead (16-drive-design §7)
 
 
 def end_share(conn: sqlite3.Connection, share_id: str, state: str, now: int) -> None:

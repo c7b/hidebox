@@ -38,7 +38,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | Route | Who | What |
 |---|---|---|
 | `GET /health` | anyone | `{"ok", "version", "time"}` |
-| `GET /config` | anyone | origins, network, `send_mode`, `amount_proof`, limits, KDF bounds, pricing, `features`, courier and SealLog settings (`seal_log.checkpoint_interval_s`, `seal_log.component`), retention, the security drop. Copy variants follow it |
+| `GET /config` | anyone | origins, network, `send_mode`, `amount_proof`, limits (with `links_per_item`), KDF bounds, pricing, `features` (`folders` and `pay_to_open` are off until the drive's routes ship), courier and SealLog settings (`seal_log.checkpoint_interval_s`, `seal_log.component`), retention (with `trash_days`), the security drop, and the drive's numbers: `folders` (`max_depth`, `max_children`, `max_tree`, `max_items`, `max_upload_files`, `zip_max_bytes`, `zip_max_bytes_phone`), `items.max_delete_after_days`, `send` (`views`, `expiry_s` of a link sent by Tari), `pay_to_open` (`prices_ut`, `fee_ut`, `buyer_views`, `buyer_window_s`, `claim_ttl_s`, `late_grace_s`, `demo_max_ut`, `watch_address`, `max_open_claims_per_share`). Copy variants follow it |
 | `POST /pow` | anyone | a proof-of-work challenge for one purpose |
 | `GET /stats` | anyone | free quota, minutes since the last upload, disk use, `uploads_frozen`, `chain_ok`, the latest SealLog tree size and epoch |
 | `GET /stats/wall` | anyone | up to 24 recent items as `{size, exit}` classes (none until 8 exist), and the latest canary's age and size |

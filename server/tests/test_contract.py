@@ -68,6 +68,29 @@ class System(unittest.TestCase):
         self.assertNotIn("e2e_expiry_s", c)                   # only where the deployment turns it on
         self.assertIsNone(c["judge_demo_gone"])               # until the release burns its demo secret
 
+    def test_config_drive_blocks(self):
+        """16-drive-design §15 step 1: the drive's numbers are published before its routes; the features
+        are off by default (config.py) and on in these tests."""
+        from mutis.config import DEFAULTS
+        self.assertEqual((DEFAULTS["features"]["folders"], DEFAULTS["features"]["pay_to_open"]), (False, False))
+        c = self.s.request("GET", f"{V}/config")[2]
+        self.assertEqual((c["features"]["folders"], c["features"]["pay_to_open"]), (True, True))
+        self.assertEqual(c["folders"], {"max_depth": 16, "max_children": 1000, "max_tree": 1000, "max_items": 10000,
+                                        "max_upload_files": 500, "zip_max_bytes": 2 << 30,
+                                        "zip_max_bytes_phone": 500 << 20})
+        self.assertEqual(c["retention"]["trash_days"], 30)
+        self.assertEqual(c["items"], {"max_delete_after_days": 30})
+        self.assertEqual(c["send"], {"views": 3, "expiry_s": 2592000})
+        pay = c["pay_to_open"]
+        self.assertEqual(pay["prices_ut"], ["100000", "250000", "500000"])
+        self.assertEqual((pay["fee_ut"], pay["buyer_views"], pay["buyer_window_s"], pay["claim_ttl_s"],
+                          pay["late_grace_s"], pay["demo_max_ut"], pay["max_open_claims_per_share"]),
+                         ("30000", 3, 604800, 3600, 86400, "500000", 20))
+        self.assertIn("watch_address", pay)
+        self.assertTrue(all(int(p) >= 3 * int(pay["fee_ut"]) for p in pay["prices_ut"]))   # C19: ≥ 3 fees
+        for cls in ("anon", "probation", "locker", "paid"):
+            self.assertIn("links_per_item", c["limits"][cls])
+
     def test_e2e_expiry_preset_only_when_configured(self):
         s = Stack({"e2e_expiry_s": 60})
         self.addCleanup(s.close)
