@@ -125,3 +125,16 @@
 .md-own-ext { display: grid; place-items: center; font: var(--t-h2); text-align: center; }
 .md-own-text { font: var(--t-data); white-space: pre-wrap; }
 .md-strip-cap { font: var(--t-small); color: var(--fg-2); max-width: 56ch; }
+
+/* --- the secret word on the result (its confirm and its box show after this file loads) ----------- */
+.md-confirm, .md-word { display: grid; gap: var(--s-2); padding: var(--s-4); border-radius: var(--r-input); background: var(--bg-sunken); }
+.md-confirm p { font: var(--t-ui); }
+.md-word { background: var(--mark); color: var(--on-mark); }
+.md-code { display: block; margin-top: 4px; font: var(--t-code); font-size: 18px; overflow-wrap: anywhere; }
+.md-muted { font: var(--t-small); opacity: .85; }
+
+/* the send step's summary on /send */
+.md-stage:has(> .md-summary) { min-height: 0; }
+.md-summary { display: grid; gap: var(--s-1); align-content: center; padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.md-locked { font: var(--t-h3); }
+.md-card-meta { font: var(--t-small); color: var(--fg-2); overflow-wrap: anywhere; }
