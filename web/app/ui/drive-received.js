@@ -295,11 +295,12 @@ export async function render(drive, page) {
         },
       });
       problems.replaceChildren();
+      scanLine.hidden = false;
       scanLine.dataset.checked = String(checked);
       scanLine.replaceChildren(icon('circle-check'), h('span', {}, t('rec.scan', { count: checked })));
     } catch (e) {
-      // The chain mirror or our server can't be reached: say so, keep what was found before.
-      scanLine.replaceChildren(icon('cloud'), h('span', {}, t('rec.offline_h')));
+      // The chain mirror or our server can't be reached: say so once, keep what was found before.
+      scanLine.hidden = true;
       problems.replaceChildren(alert({ glyph: 'info', title: t('rec.offline_h'), description: t('rec.offline'), role: 'status', testid: 'received-offline' }));
     } finally {
       running = false;
