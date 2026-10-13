@@ -1,36 +1,40 @@
 <!-- SPDX-License-Identifier: MIT -->
-# mutis
+# bye
 
-**Every secret leaves on cue.** Files that travel like private payments.
+**Show it once. Then bye.** A one-time secret drop on the Tari™ Ootle.
 
-mutis is a place to drop a file and share it without the server ever holding its key. Your browser
-encrypts the file before upload; the key lives after the `#` in the link, behind a password, in your
-locker, or sealed inside a stealth payment on the [Tari™ Ootle](https://ootle.tari.com) testnet to one
-Tari address. You write the exit (once, a number of opens, a time, or until you delete it); the
-server keeps the clock, deletes the ciphertext on cue, and writes every exit to a public log on the
-Ootle.
+**bye** is a place to give a secret to one person. Drop a file or a note on the ghost. You get a link.
+Your friend sees it once. Then it's gone. Your browser encrypts the file before upload; the key
+lives after the `#` in the link, behind a secret word, in your locker, or sealed inside a stealth
+payment on the [Tari™ Ootle](https://ootle.tari.com) testnet to one Tari address. You can change the
+rule (once, a few times, a time, or until you delete it); the server keeps the clock, deletes the
+ciphertext when the rule says so, and writes every exit to a public log on the Ootle.
+
+The internal codename is **mutis**: it stays in the code, the paths, the services, the CLI and this
+repository's address.
 
 - Live: <https://srv2052606.hstgr.cloud> (Esmeralda testnet; tTARI has no monetary value)
 - The judges' guide, with what each step should show: [/judges](https://srv2052606.hstgr.cloud/judges)
-- How it works and who sees what: [/how](https://srv2052606.hstgr.cloud/how) ·
-  threat model and cryptography: [/security](https://srv2052606.hstgr.cloud/security) and
+- How it works, in pictures: [/how](https://srv2052606.hstgr.cloud/how) · how it was made, who sees
+  what and the threat model: [/made](https://srv2052606.hstgr.cloud/made) and
   [docs/threat-model.md](docs/threat-model.md)
 
 Built for the Tari Ootle October 2026 contest, "Spooky Secrets". MIT licensed.
 
 ## Try it
 
-1. On a computer, open the home page and drop any file. Keep **Opens once**. Press **Copy link**.
-2. Open the link on your phone and press **Open it**. Reload: "This secret already made its exit."
-3. On the phone: **Open my locker** → **Make my drop link**. Open that link on the computer and drop a
-   photo: location data is removed in the browser, the file's key travels to the phone's locker inside a
-   stealth payment, and the phone's inbox finds it by scanning the chain in the browser.
+1. On a computer, open the home page and drop any file on the ghost. A link and a code come out.
+2. Scan the code with your phone and press **Open it**. Reload: "It's gone. It said bye."
+3. On the computer: **My locker** → **Make my drop link** → **Later**. Scan the drop link's code with
+   the phone and pick a photo: location data is removed in the browser, the file's key travels to the
+   computer's locker inside a stealth payment, and **See what came** finds it by scanning the chain in
+   the browser.
 
 The full two-device script, with every expected screen, is on `/judges`.
 
 ## Where Tari comes in
 
-| Tari capability | What it does in mutis | How you check it |
+| Tari capability | What it does in **bye** | How you check it |
 |---|---|---|
 | Stealth outputs (amount and owner hidden) | Sending a file to a Tari address, dead-drop deliveries, renting space | `/verify/tx/<id>`: amount hidden, owner a one-time key, memo encrypted, fee public |
 | Encrypted memo | Carries a file's key, sealed to one Tari address's owner and view keys (125 bytes) | Only the recipient's keys open it; any other key fails |
@@ -41,7 +45,7 @@ The full two-device script, with every expected screen, is on `/judges`.
 | Keypair identity | Your locker and its Tari address, made in your browser | There is no email field anywhere |
 
 Why not an escrow template: TARI held by a template reveals its amount on the Ootle, while native
-stealth outputs keep it hidden, so mutis uses those.
+stealth outputs keep it hidden, so **bye** uses those.
 
 ## What the server sees
 
@@ -60,8 +64,8 @@ connected and never writes them to a log. The send mode is `send_mode` in
   Anyone watching the Ootle sees that our wallet paid a fee; the amount, the recipient and the key
   stay hidden.
 
-The complete tables, party by party, are on `/how`; what we can't protect you from is on `/how` and
-`/security`.
+The complete tables, party by party, are on `/made#who`; what we can't protect you from is on
+`/made#cant`.
 
 ## Cryptography, in short
 
@@ -149,5 +153,5 @@ Our own test transactions only, never a user's: the hourly canary delivery and t
 in [`/evidence.json`](https://srv2052606.hstgr.cloud/evidence.json), the SealLog checkpoints, and the
 go-live record in [docs/evidence](docs/evidence).
 
-mutis is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari
+**bye** is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari
 Council, or the Tari project. "Tari" is a trademark of Tari Labs. Made in Mexico.
