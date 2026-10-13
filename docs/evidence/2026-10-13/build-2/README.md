@@ -21,4 +21,8 @@ loads there), **43,289 B on a computer** with the encoder (≤ `QR_CEILING` = 43
 decided in step 0), 45,360 B after a photo on a phone (≤ 48 KB). After the purge: 20 judge passes, the
 security drop active, no `e2e_expiry_s`, `/status.json` amber with the one reason
 `budget.sponsor.evidence.90`; among its checks `sponsor_balance` read `sponsor_low` and `canary` read
-`canary_in_flight` (a canary sealed and not yet verified).
+`canary_in_flight`. About ten minutes later `canary` turned red (`canary_unverified`): canary #39's
+delivery job (sealed 11:03:31) had failed with `walletd_error` after three attempts at 11:04:51, seven
+minutes before this deploy restarted the chain worker (11:11:42); #34 to #38 were verified, and two
+sponsor jobs and three decoy jobs of the last six hours failed the same way. The wallet daemon belongs
+to the drive user and was not touched; the next hourly canary shows whether it recovered.
