@@ -10,6 +10,14 @@ amount proof and then ignored the result. Here a credit needs two separate facts
 walletd never decides a credit. In the G4 fallback (`amount_proof = "wallet"`) step 1 comes from
 walletd's own list and the API reports `checks.amount_proven: false` ("Seen by our wallet").
 
+R1 (2026-10-13, research 16-drive-architecture §1.1): a view key proves an output's amount and memo,
+not who can spend it. A payer can build an output that opens with our receiver's view key while its
+one-time key is the payer's own, get a pack and keep the money (and spending it back would make the
+hourly reconcile freeze every credit). So, in sidecar mode, a third fact is needed:
+  3. ownership: the one-time key the indexer shows for the output equals the one our receiver's owner
+     key derives from the output's nonce (`stealthDhSecret`, the sidecar's `oneTimeKey`). A mismatch
+     marks the payment `rejected`; it is never credited.
+
 An invoice goes pending → seen → credited; the spec's `proven` step happens inside the crediting
 transaction, so the UI's stepper reads `payments[].checks` instead of waiting for that status.
 """
@@ -18,7 +26,7 @@ import re
 import sqlite3
 
 from . import db, logsafe, quota
-from .indexer import IndexerError
+from .indexer import IndexerError, substate_output
 
 INVOICE_TTL_S = 3600
 UNDERPAID_GRACE_DAYS = 7
@@ -65,30 +73,38 @@ def record_found(conn: sqlite3.Connection, found: list[dict], proven: bool, now:
     return added
 
 
-def committed_on_indexer(indexers, utxo_id: str, position: int) -> str:
-    """One indexer's answer about a UTXO id: `ok`, `missing` or `unknown`.
+def utxo_on_indexer(indexers, utxo_id: str, position: int) -> tuple[str, dict]:
+    """One indexer's answer about a UTXO id: (`ok` | `missing` | `unknown`, {"auth_key", "nonce"}).
 
     ok: HTTP 200, verified == true and a Utxo substate at exactly that id. missing: the indexer says
     so (its JSON 404 "… not found", or "… is down" for a spent output, or a 200 that isn't a verified
     Utxo). unknown: anything about the indexer rather than the output (5xx, 429, a 404 or 200 that isn't
-    the indexer's JSON, such as a gateway's page while it deploys, a timeout).
+    the indexer's JSON, such as a gateway's page while it deploys, a timeout). With `ok` come the
+    output's one-time key and public nonce as the indexer shows them (None when absent), for R1.
     """
+    none = {"auth_key": None, "nonce": None}
     try:
         status, data, _ = indexers.call_one(position, "GET", f"/substates/{utxo_id}?include_proof=true")
     except IndexerError:
-        return "unknown"
+        return "unknown", none
     if status not in (200, 404):
-        return "unknown"
+        return "unknown", none
     try:
         obj = json.loads(data)
     except ValueError:
-        return "unknown"
+        return "unknown", none
     if status == 404:
-        return "missing" if isinstance(obj, dict) and isinstance(obj.get("error"), str) else "unknown"
+        return ("missing" if isinstance(obj, dict) and isinstance(obj.get("error"), str) else "unknown"), none
     if isinstance(obj, dict) and obj.get("verified") is True and isinstance(obj.get("substate"), dict) \
             and "Utxo" in obj["substate"]:
-        return "ok"
-    return "missing"
+        auth_key, nonce = substate_output(obj)
+        return "ok", {"auth_key": auth_key, "nonce": nonce}
+    return "missing", none
+
+
+def committed_on_indexer(indexers, utxo_id: str, position: int) -> str:
+    """`utxo_on_indexer`'s verdict alone: `ok`, `missing` or `unknown`."""
+    return utxo_on_indexer(indexers, utxo_id, position)[0]
 
 
 def committed_anywhere(indexers, utxo_id: str) -> str:
@@ -99,21 +115,40 @@ def committed_anywhere(indexers, utxo_id: str) -> str:
     return "missing" if all(a == "missing" for a in answers) else "unknown"
 
 
-def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int) -> int:
-    """Step 3: confirm each pending payment on indexer-b (indexer-a after 3 failures); credit it."""
+def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int, owns=None) -> int:
+    """Step 3: confirm each pending payment on indexer-b (indexer-a after 3 failures); credit it.
+
+    `owns(nonce_hex, auth_key_hex)` → True | False | None is the R1 ownership check (sidecar mode): True
+    credits, False rejects the payment for good, None (the check couldn't run) waits for the next tick
+    like an indexer failure. Without it (the walletd fallback) ownership is walletd's own listing.
+    """
     if db.get_meta(conn, "credit_freeze") == "1" or db.get_meta(conn, "reconcile_mismatch") is not None:
         return 0                                 # frozen, or held until a mismatch is checked again
     credited = 0
     for row in conn.execute("SELECT * FROM payments WHERE status = 'pending_check'").fetchall():
         position = 1 if failures.get(row["utxo_id"], 0) >= INDEXER_FAILOVER_AFTER and len(indexers.upstreams) > 1 \
             else 0
-        if committed_on_indexer(indexers, row["utxo_id"], position) != "ok":   # never a credit without proof
+        verdict, seen = utxo_on_indexer(indexers, row["utxo_id"], position)
+        ours = None if verdict != "ok" else True if owns is None else owns(seen["nonce"], seen["auth_key"])
+        if ours is None:                         # never a credit without proof
             failures[row["utxo_id"]] = failures.get(row["utxo_id"], 0) + 1
             continue
         failures.pop(row["utxo_id"], None)
-        credit(conn, row["utxo_id"], now)
-        credited += 1
+        if ours:
+            credit(conn, row["utxo_id"], now)
+            credited += 1
+        else:
+            reject(conn, row["utxo_id"])
     return credited
+
+
+def reject(conn: sqlite3.Connection, utxo_id: str) -> None:
+    """R1: an output that opens with our view key but that our owner key can't spend is not a payment.
+    It stays recorded (a UTXO counts once, ever) as `rejected` and is never credited."""
+    with db.tx(conn):
+        conn.execute("UPDATE payments SET status = 'rejected' WHERE utxo_id = ? AND status = 'pending_check'",
+                     (utxo_id,))
+    logsafe.event("chain.payment_not_ours", "warning")
 
 
 def credit(conn: sqlite3.Connection, utxo_id: str, now: int) -> None:

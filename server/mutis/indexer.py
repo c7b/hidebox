@@ -195,14 +195,40 @@ def parse_fetched(entry) -> dict | None:
 def reveals(output: dict) -> dict:
     """What an output shows everyone: {"promise": the public minimum value (µT), "viewable": 1 when a
     viewable balance is attached for a resource view key, "auth": "key" (a stealth one-time key) or
-    the other spend-rule variant}. A field the indexer didn't send is None (unknown)."""
+    the other spend-rule variant, "auth_key": that one-time public key (hex) when the rule is a key}.
+    A field the indexer didn't send is None (unknown)."""
     inner = output.get("output") if isinstance(output.get("output"), dict) else {}
     promise = inner.get("minimum_value_promise")
     auth = output.get("auth")
     name = next(iter(auth), None) if isinstance(auth, dict) and len(auth) == 1 else None
     return {"promise": promise if type(promise) is int and promise >= 0 else None,
             "viewable": int(inner["viewable_balance"] is not None) if "viewable_balance" in inner else None,
-            "auth": name.lower() if isinstance(name, str) and re.fullmatch(r"[A-Za-z]{1,32}", name) else None}
+            "auth": name.lower() if isinstance(name, str) and re.fullmatch(r"[A-Za-z]{1,32}", name) else None,
+            "auth_key": one_time_key(output)}
+
+
+_HEX32 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def one_time_key(output: dict) -> str | None:
+    """The public key that alone can spend a stealth output (`auth: {"Key": hex}`), or None for any
+    other spend rule. R1 (16-drive-architecture §1.1): a view key proves an output's amount and memo,
+    never who can spend it; this key does, compared with the one our owner key derives."""
+    auth = output.get("auth") if isinstance(output, dict) else None
+    key = auth.get("Key") if isinstance(auth, dict) and len(auth) == 1 else None
+    return key if isinstance(key, str) and _HEX32.match(key) else None
+
+
+def substate_output(obj) -> tuple[str | None, str | None]:
+    """(one-time key, public nonce) of a verified `GET /substates/{utxo}` answer's Utxo, each None when
+    the indexer didn't send it in the expected shape (`substate.Utxo.output.{auth, output.public_nonce}`)."""
+    utxo = (obj.get("substate") or {}).get("Utxo") if isinstance(obj, dict) else None
+    output = utxo.get("output") if isinstance(utxo, dict) else None
+    if not isinstance(output, dict):
+        return None, None
+    inner = output.get("output") if isinstance(output.get("output"), dict) else {}
+    nonce = inner.get("public_nonce")
+    return one_time_key(output), nonce if isinstance(nonce, str) and _HEX32.match(nonce) else None
 
 
 def utxo_id(commitment_hex: str) -> str:
