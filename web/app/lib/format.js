@@ -69,14 +69,15 @@ const META_AAD = utf8('meta');
 // Control characters are dropped so JSON escaping can't push the record past its 2,048-byte cap.
 const clean = (v, max) => truncateUtf8(String(v ?? '').replace(/\p{Cc}/gu, ''), max);
 
+// A folder (16-drive-architecture §2.1) is named like a file, with no type of its own and no size.
 function normalizeMeta(m) {
-  if (m.kind !== 'file' && m.kind !== 'text') throw new TypeError('meta.kind must be file or text');
-  if (!Number.isSafeInteger(m.size) || m.size < 0) throw new TypeError('meta.size must be a byte count');
+  if (m.kind !== 'file' && m.kind !== 'text' && m.kind !== 'folder') throw new TypeError('meta.kind must be file, text or folder');
+  if (!Number.isSafeInteger(m.size) || m.size < 0 || (m.kind === 'folder' && m.size !== 0)) throw new TypeError('meta.size must be a byte count');
   return {
     v: 1,
     kind: m.kind,
     name: m.kind === 'text' ? '' : clean(m.name, 255),
-    type: m.kind === 'text' ? 'text/plain;charset=utf-8' : clean(m.type, 127),
+    type: m.kind === 'text' ? 'text/plain;charset=utf-8' : m.kind === 'folder' ? 'inode/directory' : clean(m.type, 127),
     size: m.size,
     mtime: Number.isSafeInteger(m.mtime) ? m.mtime : null,
     stripped: Boolean(m.stripped),

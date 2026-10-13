@@ -36,6 +36,8 @@ ROUTES = {
     "/send": (APP_CSP, NOINDEX),
     "/watch": (APP_CSP, NOINDEX),
     "/upgrade": (APP_CSP, NOINDEX),
+    "/drive": (APP_CSP, NOINDEX),                       # lane app1
+    "/drive/storage": (APP_CSP, NOINDEX),               # lane app1
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
@@ -61,8 +63,8 @@ REDIRECTS = {
 }
 
 # Caching (deploy/caddy/Caddyfile): pages, app files and status files revalidate on every visit; an
-# error response is never stored. No font is served (DESIGN.md: system faces only); the fonts route
-# answers 404 like any missing file (MISSING below).
+# error response is never stored. The one font served is the drive's Geist (DESIGN.md "Typography",
+# pinned in tools/build.py); any other font path answers 404 like any missing file (MISSING below).
 REVALIDATE = {"cache-control": "no-cache"}
 ERROR_CACHE = {"cache-control": "no-store"}
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
