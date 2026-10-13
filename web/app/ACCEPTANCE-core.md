@@ -1,22 +1,22 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Acceptance: app-core (web/app/lib, sidecar, vendor, tests)
 
-Spec §16.2, for the parts this builder owns. Run on 2026-10-11 on ultron (Debian 13, Node 20.19.2,
-Chromium 154) as `build`, last after the integration pass (`NOTES-for-integrator.md` §4), from a fresh
-copy of the whole repository. One command reruns all of it:
+Spec §16.2, for the parts this builder owns. Last run on 2026-10-12 on ultron (Debian 13, Node 20.19.2,
+Chromium 154) as `build`, in the English-only pass, from a `git archive` of commit `fd2706f`
+(`docs/evidence/2026-10-12/english/suites/core.log`). One command reruns all of it:
 `python3 -I web/app/tests/run_all.py` → `ALL PASS (9 steps)`. Step 9 runs the library against the real
 API (`server/bin/mutis-api --dev --pow-bits 8` from the same checkout), not only against the fake.
 
 ```
-PASS  lint (A-08)                                             0.1s  LINT PASS 824/824 checks, 77 files
+PASS  lint (A-08)                                             0.1s  LINT PASS 836/836 checks, 78 files
 PASS  vectors, independent Python cross-check                 0.1s  crosscheck: 80/80 checks passed
-PASS  KATs under Node 20 (A-01)                              17.1s  NODE PASS 118/118 (node v20.19.2)
-PASS  KATs in headless Chromium, app CSP (A-01, A-05)        17.7s  title: TESTS PASS 118/118  (16.8s)
-PASS  no WebAssembly, V8 --jitless (A-09)                    19.7s  title: TESTS PASS 75/75  (18.7s, jitless)
-PASS  sidecar protocol, permissions, G4 (A-12)                5.4s  SIDECAR PASS 16/16
-PASS  18-bit PoW at 6x CPU throttling (A-13)                  6.7s  title: BENCH PASS  (6.0s, 6.0x CPU)
-PASS  in-browser scan, phone emulation at 4x (report)        48.6s  title: BENCH PASS  (47.7s, 4.0x CPU)
-PASS  contract: the library against mutis-api --dev          93.4s  CONTRACT PASS 12/12 (node v20.19.2)
+PASS  KATs under Node 20 (A-01)                              16.4s  NODE PASS 118/118 (node v20.19.2)
+PASS  KATs in headless Chromium, app CSP (A-01, A-05)        18.0s  title: TESTS PASS 118/118  (17.1s)
+PASS  no WebAssembly, V8 --jitless (A-09)                    21.3s  title: TESTS PASS 75/75  (20.2s, jitless)
+PASS  sidecar protocol, permissions, G4 (A-12)                5.5s  SIDECAR PASS 16/16
+PASS  18-bit PoW at 6x CPU throttling (A-13)                  7.7s  title: BENCH PASS  (6.9s, 6.0x CPU)
+PASS  in-browser scan, phone emulation at 4x (report)        47.9s  title: BENCH PASS  (46.9s, 4.0x CPU)
+PASS  contract: the library against mutis-api --dev         101.7s  CONTRACT PASS 12/12 (node v20.19.2)
 
 ALL PASS (9 steps)
 ```
@@ -138,7 +138,7 @@ statically) never imports `ootle.js`, the wasm shim, `exif.js`, `password.js` or
 the lint fails if one appears. `exif.js` and `password.js` load with `import()` when a photo or a
 password is involved; ootle-wasm loads only through `ootle.ready()` (lazy, hash-checked). The library
 leaves app-ui **12,807 B** of the 40 KB budget (9,304 B before the fix pass). localStorage holds
-only "recent drops" (`share_id, item_id, manage_token, expires`) and the language; sessionStorage only
+only "recent drops" (`share_id, item_id, manage_token, expires`); sessionStorage only
 the judge pass, if one was entered; IndexedDB only the locker record (§4.8.1) and the inbox state
 (sealed blobs, cursor, wallet outputs).
 
