@@ -24,7 +24,7 @@ const SAME = {
 };
 
 const KNOWN = new Set(`bad_request auth_required bad_auth identity_exists forbidden bad_link bad_origin not_found
-drop_not_found drop_closed conflict upload_broken upload_expired already_opened sold_out gone too_large
+drop_not_found drop_closed conflict upload_broken upload_expired already_opened opened_count links_full sold_out gone too_large
 too_large_locker too_large_drop too_large_request program_drop locked pow_required rate_limited byte_cap uploads_frozen uploads_frozen_all lane_full quota_exceeded
 probation_limit chain_unavailable feature_disabled budget_exhausted bad_address mainnet_address l1_address bad_blob
 unknown_pack internal client network crypto memory clipboard empty folder many text_long program needs_wasm needs_wasm_drop
@@ -50,6 +50,8 @@ export function describe(e) {
   if (code === 'uploads_frozen' && e.details?.scope === 'all') code = 'uploads_frozen_all';
   // A 413 from our server or the web server in front of it (details.max_bytes), not the app's own size check.
   if (code === 'too_large' && api) code = 'too_large_request';
+  // A file that already has every link its class allows (an anonymous file: three, spec §9.4).
+  if (code === 'conflict' && (e?.details ?? api?.details)?.max_links) code = 'links_full';
   code = SAME[code] ?? code;
   return {
     code: KNOWN.has(code) ? code : name === 'ApiError' ? 'internal' : 'client',

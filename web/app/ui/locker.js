@@ -79,6 +79,15 @@ async function makeDrop(ctx, label) {
 
 // --- the locker ------------------------------------------------------------------------------------
 
+// On a fine pointer (a computer) the locker's address and its drop link are also codes a phone scans
+// (14-ghost-design §9, track two): the address opens the phone's home with it filled in (/#to=…, a
+// fragment our server never sees); the drop link opens the drop page.
+function scanCode(holder, text, caption, testid) {
+  if (!matchMedia('(hover: hover) and (pointer: fine), (min-width: 900px) and (not (pointer: coarse))').matches) return holder;
+  import('./qr.js').then(({ qrFigure }) => holder.replaceChildren(qrFigure(text, { label: t('qr.label'), caption, testid })));
+  return holder;
+}
+
 function full(root, cfg, ctx) {
   const { identity, me } = ctx;
   root.dataset.probation = String(me.identity.probation);
@@ -102,7 +111,8 @@ function full(root, cfg, ctx) {
       h('p', { class: 'a-address mono', 'data-testid': 'locker-address' }, identity.locker.address),
       h('div', { class: 'a-row' },
         copyButton({ label: t('locker.copy_address'), testid: 'copy-address', getText: () => identity.locker.address }),
-        h('span', { class: 'a-chip' }, t('locker.network', { network })))));
+        h('span', { class: 'a-chip' }, t('locker.network', { network }))),
+      scanCode(h('div', {}), `${cfg.origin}/#to=${identity.locker.address}`, t('locker.qr'), 'locker-qr')));
   const uses = h('div', { class: 'a-locker-main' },
     dropSection(cfg, ctx),
     h('section', { class: 'a-section', 'aria-labelledby': 'a-lock-h' },
@@ -164,6 +174,7 @@ function dropSection(cfg, ctx) {
         h('button', { type: 'button', class: 'a-btn', onclick: act(async () => (await lib).rotateDrop(ctx.identity, active.i)) }, t('drop.new')),
         h('button', { type: 'button', class: 'a-btn', 'data-testid': 'drop-close', onclick: act(async () => (await lib).closeDrop(ctx.identity, active.i)) }, t('drop.close'))),
       h('p', { class: 'a-caption' }, t('drop.after', { count: cfg.limits.drop.views, dur: formatDuration(cfg.limits.drop.expiry_s) })),
+      scanCode(h('div', {}), url, t('drop.qr'), 'drop-qr'),
       errors);
   };
   draw();

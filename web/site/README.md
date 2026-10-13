@@ -34,7 +34,7 @@ each amount-proof mode, with `web/app/i18n/en.json`. Last run on ultron: see `AC
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how security pricing faq judges terms privacy abuse status 404`, and `es/` |
-| `js/` | `site.js` (every page), `stats.js` (numbers from `/config` and `/stats`), `home.js`, and what it loads as each section comes near: `wall.js` with its words in `wall-en.js`, `noise.js`, `canary.js` (then `reveal.js` on a click), `evidence.js`; `abuse.js`, `judges.js`, `status.js` |
+| `js/` | `site.js` (every page; on `/` the drop widget, `/app/drop-widget.js`, drives the ghost and the page's phase), `stats.js` (numbers from `/config` and `/stats`), `how.js`, `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js` |
 | `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |

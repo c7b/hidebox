@@ -28,7 +28,7 @@ function radios(legend, name, options, onChange, row = false) {
 
 // The recipient field, its safety code, the kind, the rule and the Send button.
 // opts: {cfg, getLocker: () => locker context, item: () => the sealed item (adopted if needed),
-//        onSent({txId, address})}
+//        onSent({txId, address}), recipient (an address to fill in: a locker's scanned code)}
 export function sendStep(container, opts) {
   const { cfg } = opts;
   const state = { kind: 3, count: 1, expiry: 604800, address: null };
@@ -71,7 +71,13 @@ export function sendStep(container, opts) {
       h('p', { class: 'a-caption' }, h('span', { class: 'mono' }, shortAddress(value)), ' · ', t('send.compare', { count: code12.emoji.length })));
     safety.hidden = false;
     submit.disabled = false;
+    if (value === opts.recipient) submit.focus();
   });
+
+  if (opts.recipient) {
+    field.value = opts.recipient;
+    queueMicrotask(() => field.dispatchEvent(new Event('input')));
+  }
 
   const kinds = radios(t('send.kind_h'), 'a-kind', [
     { value: '3', label: t('send.kind3'), hint: t('send.kind3_hint'), testid: 'send-kind', checked: true },
@@ -215,7 +221,7 @@ export async function sendFromCard(slot, st, hooks) {
     }
     hooks.onSent(t('send.instead', { address: shortAddress(address) }));
   }
-  sendStep(slot, { cfg: st.cfg, getLocker: () => st.locker, item: () => st.item, onSent: ({ address }) => endOldLink(address) });
+  sendStep(slot, { cfg: st.cfg, getLocker: () => st.locker, item: () => st.item, recipient: hooks.recipient, onSent: ({ address }) => endOldLink(address) });
   slot.append(notice);
 }
 

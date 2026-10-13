@@ -58,7 +58,8 @@ def main():
                     page.screenshot(str(out / f"home-{w}-{'dark' if dark else 'light'}.{ext}"))
                 page = browser.page(w, h, mobile=mobile)
                 page.goto(origin + "/", settle=2)
-                page.eval("document.dispatchEvent(new CustomEvent('mutis:drag', {detail: {active: true}}))")
+                page.cmd("Input.dispatchDragEvent", {"type": "dragEnter", "x": 300, "y": 500, "data": {
+                    "items": [], "files": [str(Path(__file__).resolve().parent / "fixtures" / "canary.json")], "dragOperationsMask": 1}})
                 browser.pump(0.6)
                 page.screenshot(str(out / f"home-{w}-catch.{ext}"))
             if "how" in only:

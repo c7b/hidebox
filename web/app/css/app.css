@@ -192,3 +192,7 @@
   .a-bottom-icon { width: 24px; height: 24px; }
   .a-main { padding-top: var(--s-6); }
 }
+
+/* the locker's codes to scan (its address, its drop link): bigger than the card's, for longer text */
+.a-page .md-qr { justify-items: start; text-align: left; margin-top: var(--s-3); }
+.a-page .md-qr svg { width: 240px; height: 240px; }

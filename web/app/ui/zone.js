@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-// The drop zone itself (11-brand §9.2): a native file input behind a real label, "or paste text",
-// the text composer, and drag and drop. It only collects what the visitor chose; sealing happens
-// elsewhere. Several files or a folder are refused here, before anything is read.
-import { h, announce } from '../lib/dom.js';
+// The drop zone (14-ghost-design §5, §6.2): it only collects. On the home page (`windowDrops`) the
+// window takes a drop at every moment but while busy, a paste brings a file in (or opens the note,
+// written, Lock it focused), and typing starts a note. Elsewhere: a box with a real file input.
+import { h } from '../lib/dom.js';
 import { t } from '../lib/i18n.js';
 
-// Touch screens get the touch copy; anything else (a mouse, a pen, or no pointer at all) the pointer copy.
 const fine = () => !matchMedia('(pointer: coarse)').matches;
 
 function dropped(dataTransfer) {
@@ -16,40 +15,46 @@ function dropped(dataTransfer) {
   return files.length ? { file: files[0] } : null;
 }
 
-// opts: {inputTestid, hint (bool: show "drop it here" on pointer devices), windowDrops (bool),
-//        textMax (code points), onFile(file), onText(text), onRefuse(code), onState(state), live}
+// opts: {inputTestid, hint, windowDrops, textMax, onFile(file, at), onText, onRefuse(code), onState,
+//        and with windowDrops: busy(), typing(), onCatch(active, landed), onCancel()}
 export function createZone(opts) {
+  const big = Boolean(opts.windowDrops);
   const root = h('div', { class: 'md-zone', 'data-state': 'idle' });
-  const input = h('input', { type: 'file', class: 'md-file', 'data-testid': opts.inputTestid ?? 'drop-input' });
+  // On the home page the ghost presses this input: it stays out of the tab order and the tree.
+  const input = h('input', {
+    type: 'file', class: 'md-file', 'data-testid': opts.inputTestid ?? 'drop-input',
+    tabindex: big ? '-1' : null, 'aria-hidden': big ? 'true' : null,
+  });
   input.addEventListener('change', () => {
     const files = [...input.files];
     input.value = '';
     if (files.length > 1) opts.onRefuse('many');
-    else if (files.length) opts.onFile(files[0]);
+    else if (files.length) opts.onFile(files[0], null);
   });
+  const show = (view) => root.replaceChildren(...(big ? [input] : []), view);
 
   function idle() {
     root.dataset.state = 'idle';
-    root.replaceChildren(
-      h('div', { class: 'md-idle' },
-        opts.hint && fine() ? h('p', { class: 'md-hint' }, t('zone.hint')) : null,
-        h('label', { class: 'a-btn a-btn--primary md-choose' }, input, h('span', {}, t('hero.choose'))),
-        h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'drop-write', onclick: compose },
-          t(fine() ? 'hero.paste' : 'hero.paste_touch'))));
+    show(h('div', { class: 'md-idle' },
+      opts.hint && fine() ? h('p', { class: 'md-hint' }, t('zone.hint')) : null,
+      big ? null : h('label', { class: 'a-btn a-btn--primary md-choose' }, input, h('span', {}, t('hero.choose'))),
+      h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'drop-write', onclick: () => compose() }, t('hero.paste'))));
     opts.onState?.('idle');
   }
 
-  function compose() {
+  // The note; pasted text is shown, not sent: Lock it takes the focus.
+  function compose(first = '', pasted = false) {
     root.dataset.state = 'composing';
     const area = h('textarea', {
-      id: 'md-text', class: 'md-textarea', 'data-testid': 'drop-textarea', rows: 6, spellcheck: 'false',
-      autocomplete: 'off', placeholder: t('compose.placeholder'), 'aria-describedby': 'md-count',
+      id: 'md-text', class: 'md-textarea', 'data-testid': 'drop-textarea', rows: big ? 4 : 6, spellcheck: 'false',
+      autocomplete: 'off', 'aria-describedby': 'md-count',
     });
-    const count = h('p', { id: 'md-count', class: 'md-count mono', 'aria-live': 'off' });
+    const count = h('p', { id: 'md-count', class: 'md-count mono' });
     const lock = h('button', { type: 'button', class: 'a-btn a-btn--primary', 'data-testid': 'drop-seal-text' }, t('compose.lock'));
     const update = () => {
       const used = Array.from(area.value).length;
       count.textContent = t('compose.count', { used, max: opts.textMax });
+      count.hidden = used < opts.textMax * 0.9; // the limit shows only as it comes near
       count.classList.toggle('md-over', used > opts.textMax);
       lock.disabled = used === 0;
     };
@@ -66,49 +71,76 @@ export function createZone(opts) {
       }
     });
     lock.addEventListener('click', submit);
-    root.replaceChildren(h('div', { class: 'md-compose' },
-      h('label', { class: 'sr-only', for: 'md-text' }, t('compose.label')),
+    const cancel = () => {
+      idle();
+      if (opts.onCancel) opts.onCancel();
+      else root.querySelector('[data-testid="drop-write"]')?.focus();
+    };
+    const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+    show(h('div', { class: 'md-compose' },
+      h('label', { class: 'md-say', for: 'md-text' }, t('compose.label')),
       area, count,
       h('div', { class: 'a-row' },
         lock,
-        h('label', { class: 'a-linkbtn md-choose-alt' }, input, h('span', {}, t('compose.or_file'))),
-        h('button', { type: 'button', class: 'a-linkbtn', onclick: () => { idle(); root.querySelector('[data-testid="drop-write"]')?.focus(); } }, t('compose.cancel')))));
+        big ? null : h('label', { class: 'a-linkbtn md-choose-alt' }, input, h('span', {}, t('compose.or_file'))),
+        h('button', { type: 'button', class: 'a-linkbtn', onclick: cancel }, t('compose.cancel')),
+        fine() ? h('span', { class: 'md-keys' }, t('compose.keys', { key: mac ? '⌘' : 'Ctrl' })) : null)));
+    area.value = first;
     update();
     opts.onState?.('composing');
-    area.focus();
+    if (pasted) lock.focus();
+    else {
+      area.focus();
+      area.setSelectionRange(first.length, first.length);
+    }
   }
 
-  // Drag and drop on the zone, or (home page) anywhere in the window.
-  let depth = 0;
-  const target = opts.windowDrops ? window : root;
-  const setDrag = (active) => {
-    root.classList.toggle('md-drag', active);
-    root.dataset.dragText = active ? t('hero.drag') : '';
-    if (active) announce(opts.live, t('hero.drag'));
-    document.dispatchEvent(new CustomEvent('mutis:drag', { detail: { active } }));
-  };
+  const target = big ? window : root;
+  const open = () => (big ? !opts.busy() : root.dataset.state === 'idle');
   const carriesFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+  const catching = (active, landed = false) => (big ? opts.onCatch(active, landed) : root.classList.toggle('md-drag', active));
+  let depth = 0;
   target.addEventListener('dragenter', (e) => {
-    if (!carriesFiles(e) || root.dataset.state !== 'idle') return;
+    if (!carriesFiles(e) || !open()) return;
     e.preventDefault();
-    if (depth++ === 0) setDrag(true);
+    if (depth++ === 0) catching(true);
   });
   target.addEventListener('dragover', (e) => {
-    if (carriesFiles(e) && root.dataset.state === 'idle') e.preventDefault();
+    if (carriesFiles(e) && (big || open())) e.preventDefault(); // a file let go anywhere never opens in the tab
   });
   target.addEventListener('dragleave', () => {
-    if (depth > 0 && --depth === 0) setDrag(false);
+    if (depth > 0 && --depth === 0) catching(false);
   });
   target.addEventListener('drop', (e) => {
-    if (!carriesFiles(e) || root.dataset.state !== 'idle') return;
+    if (!carriesFiles(e)) return;
     e.preventDefault();
+    const was = depth;
     depth = 0;
-    setDrag(false);
+    if (!open()) return was && catching(false);
     const got = dropped(e.dataTransfer);
+    catching(false, Boolean(got?.file));
     if (got?.error) opts.onRefuse(got.error);
-    else if (got) opts.onFile(got.file);
+    else if (got) opts.onFile(got.file, { x: e.clientX, y: e.clientY });
   });
 
+  if (big) {
+    document.addEventListener('paste', (e) => {
+      if (e.target.closest?.('textarea, input') || opts.busy()) return;
+      const file = e.clipboardData?.files?.[0];
+      const text = e.clipboardData?.getData('text/plain');
+      if (file) opts.onFile(file, null);
+      else if (text) compose(text, true);
+      else return;
+      e.preventDefault();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing || e.key.length !== 1 || e.key === ' ' || opts.busy() || !opts.typing()) return;
+      if (e.target.closest?.('textarea, input, select, button, a, summary, [contenteditable]') && !e.target.closest?.('.figure')) return;
+      e.preventDefault();
+      compose(e.key);
+    });
+  }
+
   idle();
-  return { el: root, idle, compose, focus: () => root.querySelector('input, textarea')?.focus() };
+  return { el: root, input, idle, compose, focus: () => root.querySelector('input:not([tabindex="-1"]), textarea')?.focus() };
 }
