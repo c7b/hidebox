@@ -11,7 +11,7 @@ import { ApiError } from '../lib/api.js';
 import { FLAG_FOLDER } from '../lib/links.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import { h, icon, init, openModal, toast } from './behaviors.js';
-import { alert, button, errorAlert, formatBytes } from './drive-parts.js';
+import { alert, button, errorAlert, formatBytes, formatTari } from './drive-parts.js';
 import { tariRow } from './drive-list.js';
 
 const RESCAN_MS = 15000;
@@ -26,7 +26,7 @@ function statusOf(d) {
 function statusBadge(state) {
   const [variant, key] = {
     new: [null, 'rec.new'], opened: ['secondary', 'rec.opened'], saved: ['success', 'rec.saved'],
-    gone: ['outline', 'rec.gone'], unreadable: ['outline', 'rec.unreadable'],
+    gone: ['outline', 'rec.gone'], unreadable: ['outline', 'rec.unreadable'], waiting: ['outline', 'rec.waiting'],
   }[state];
   return h('span', { class: 'badge', 'data-variant': variant, 'data-testid': 'received-status', 'data-state': state }, t(key));
 }
@@ -151,11 +151,31 @@ export async function render(drive, page) {
       h('td', {}, open));
   }
 
+  // Purchases (pay to open): the claims this browser made, kept on this device (lib/purchases.js).
+  let bought = [];
+  function purchaseRow(p) {
+    const state = p.state === 'waiting' ? 'waiting' : p.state === 'gone' ? 'gone' : p.state === 'opened' ? 'opened' : 'new';
+    const what = p.name ? sanitizeFileName(p.name) : t('rec.bought_item');
+    const price = p.price_ut ? t('rec.via_bought', { price: formatTari(p.price_ut) }) : t('rec.via_bought_n');
+    const money = p.demo ? h('span', { class: 'badge', 'data-variant': 'tari' }, icon('coins'), t('rec.test_money')) : null;
+    const came = p.at ? formatRelative(p.at * 1000) : '';
+    const open = state === 'gone' || !p.url ? null
+      : h('a', { class: 'btn', 'data-variant': 'outline', 'data-size': 'sm', href: p.url, 'data-testid': 'received-open-purchase' }, t('rec.open'));
+    return h('tr', { 'data-testid': 'received-row', 'data-source': 'purchase', 'data-state': state, 'data-share': p.shareId },
+      h('td', {}, h('div', { class: 'file-name' }, icon('coins'),
+        h('div', { class: 'file-text' }, h('span', { class: 'name' }, what),
+          h('span', { class: 'file-meta' }, h('span', {}, price), came ? h('span', {}, `· ${came}`) : null, money, statusBadge(state))))),
+      h('td', { class: 'col-wide num-cell' }, h('span', { class: 'row' }, price, money)),
+      h('td', { class: 'col-wide num-cell' }, came),
+      h('td', { class: 'col-wide' }, statusBadge(state)),
+      h('td', {}, open));
+  }
+
   function draw() {
     const all = [...rows.values()].sort((a, b) => (b.seq ?? 0) - (a.seq ?? 0));
-    list.replaceChildren(...all.map(row));
-    table.hidden = !all.length;
-    empty.hidden = Boolean(all.length);
+    list.replaceChildren(...all.map(row), ...bought.map(purchaseRow));
+    table.hidden = !all.length && !bought.length;
+    empty.hidden = Boolean(all.length || bought.length);
   }
 
   async function add(d) {
@@ -253,6 +273,7 @@ export async function render(drive, page) {
 
   // ---------- the scan ----------
 
+  bought = await (await import('../lib/purchases.js')).purchases(identity);
   const stored = await lib.inboxState(identity);
   for (const d of stored.deliveries) await folderFlag(d);
   for (const d of stored.deliveries) rows.set(d.utxoId, d);
