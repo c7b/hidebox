@@ -130,7 +130,8 @@ refuses a newer schema (it says so in the journal; the healthcheck turns red).
 
 Every restart of `mutis-api` (a deploy, a rollback, a reboot) forgets the in-memory counters: rate
 limits, each network's and each locker's daily caps (sponsor grants, demo payments, registrations,
-drop uploads), proof-of-work escalation and wrong-password counts. They are keyed with a day key
+drop uploads), proof-of-work escalation and wrong-password tries per network on password-only
+links (a link's own failure count and lock are database rows and survive). They are keyed with a day key
 that is never written, which is why they live only in memory (`server/mutis/ipkeys.py`,
 `ratelimit.py`). The daily budgets (sponsor µT, deliveries, demo payments, decoys per slice) are rows
 in the database and survive, so a restart can't raise what the wallet spends in a day; it only gives
@@ -186,6 +187,7 @@ day key, which the privacy design rules out.
 |---|---|
 | Health | `https://srv2052606.hstgr.cloud/status.json` (the checks `/status` labels: https, api, chain_worker with its verifier, walletd, sponsor_balance, mirror, canary, credits, disk, budgets); full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
 | Takedown | `sudo mutis-admin takedown share|item|drop <id>`; `sudo mutis-admin reports --new` |
+| Packs "sold out" | paid space is capped at 40 % of the pool (`server/mutis/quota.py`); count active packs with `SELECT COUNT(*), SUM(paid_bytes) FROM identities WHERE paid_until > strftime('%s','now')` (read-only, as mutis); end a test locker's pack with `sudo mutis-admin release-pack -- <locker id>` (never a visitor's) |
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |
 | Features, budgets | `sudo mutis-admin feature <name> on|off|clear` (at once for the app and for pages read with JavaScript; the built pages follow the TOML at the next deploy); `sudo mutis-admin budget show` |
 | Canary, evidence | `sudo mutis-admin canary-now`; `sudo systemctl start mutis-evidence` |

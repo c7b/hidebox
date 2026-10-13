@@ -208,6 +208,14 @@ def wallet_ut(page) -> int:
                          " return String(await balance(identity)); })()", await_promise=True, timeout=180))
 
 
+def release_pack(t: T, page) -> None:
+    """Ends the pack this page's locker bought: paid space is capped (40 % of the pool), and a test pack
+    would hold its 2 GiB for 30 days and leave the next visitor's B6 "sold out"."""
+    locker = page.eval("import('/app/lib/identity.js').then(async ({ loadIdentity }) => (await loadIdentity()).id)",
+                       await_promise=True)
+    t.check(t.env.remote.admin("release-pack", "--", locker).strip() == "released", "the test pack is released")
+
+
 @scenario("E-13", "Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB", CHAIN)
 def e13(t: T) -> None:
     cfg = t.env.config()
@@ -237,6 +245,7 @@ def e13(t: T) -> None:
     a.goto(t.origin + "/locker")
     a.wait_for("quota-bar", 60)
     t.check(int(a.attr("quota-bar", "data-limit") or 0) >= before + 2 * 1024 ** 3, "the quota grew by 2 GiB")
+    release_pack(t, a)
 
 
 @scenario("E-14", "Payment forgery: a payment row for a UTXO that doesn't exist is never credited", CHAIN)
@@ -370,3 +379,4 @@ def ej(t: T) -> None:
     t.note(f"track A {track_a:.0f} s, track B {time.monotonic() - started - track_a:.0f} s")
     minutes = (time.monotonic() - started) / 60
     t.check(minutes <= 6, f"both tracks took {minutes:.1f} minutes (≤ 6)")
+    release_pack(t, phone)

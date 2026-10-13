@@ -63,6 +63,19 @@ def cmd_takedown(cfg, conn, args) -> None:
         sys.exit(1)
 
 
+def cmd_release_pack(cfg, conn, args) -> None:
+    """Ends a locker's pack now, for the lockers an end-to-end run buys packs with: paid space is capped
+    (quota.PAID_CAP_FRACTION) and a test pack would hold its share for 30 days. The lapse policy of
+    spec §9.6 then runs as for a pack that ran out."""
+    now = codec.now()
+    with db.tx(conn):
+        released = conn.execute("UPDATE identities SET paid_bytes = 0, paid_until = ? WHERE id = ? AND paid_until > ?",
+                                (now, args.id, now)).rowcount == 1
+    print("released" if released else "no active pack")
+    if not released:
+        sys.exit(1)
+
+
 def cmd_reports(cfg, conn, args) -> None:
     sql = "SELECT * FROM abuse_reports" + (" WHERE state = 'new'" if args.new else "") + " ORDER BY created_at"
     for r in conn.execute(sql):
@@ -183,6 +196,9 @@ def parser() -> argparse.ArgumentParser:
     t.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
     t.add_argument("--note")
     t.set_defaults(fn=cmd_takedown)
+    rp = sub.add_parser("release-pack", usage="mutis-admin release-pack -- identity_id")
+    rp.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
+    rp.set_defaults(fn=cmd_release_pack)
     r = sub.add_parser("reports")
     r.add_argument("--new", action="store_true")
     r.set_defaults(fn=cmd_reports)
