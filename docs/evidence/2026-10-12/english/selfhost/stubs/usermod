@@ -1,0 +1,4 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+. "$(dirname "$0")/_common"
+log "usermod $*"; [ "$1" = -aG ] || exit 1; sed -i "s/^\($3:[0-9]*:.*\)$/\1,$2/" "$PW"

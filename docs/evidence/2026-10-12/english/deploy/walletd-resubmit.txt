@@ -1,0 +1,25 @@
+The walletd journal line of the second pass's open item 3, looked at read-only on 2026-10-12 ~20:05 CST.
+Nothing in /home/drive/wallet was touched; the calls are walletd JSON-RPC reads as `drive`
+(deploy/ootle/walletd-rpc.py `call`).
+
+$ sudo journalctl -u walletd --since -1min -o cat | grep -c resubmit
+12
+ERROR tari::ootle::wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry run and cannot be submitted
+
+$ walletd-rpc.py call transactions.get_all '{"status": null, "component": null}'   (counted by status)
+337 transactions: Accepted 336, New 1
+
+$ walletd-rpc.py call transactions.get_all '{"status": "New", "component": null}'   (fields)
+id                a599a962ec012c9160b5cd512345ea3266352c838e23cc3de20cabc8c787be37
+is_dry_run        True
+status            New
+last_update_time  2026-10-11 23:06:51.0 (UTC)
+body.dry_run      True
+instructions      [PublishTemplate {binary: 0}]
+fee_instructions  [CallMethod pay_fee 3,000,000 µT on component_ae57…ca71 (the service account)]
+
+Reading: the dry run of deploy/ootle/publish-template.sh (transactions.submit_dry_run, the SealLog 2.0.0
+template publish of 2026-10-11) is stored by walletd 0.45 as a New transaction, and its resubmit loop
+retries it every 5 s, refused each time because it is a dry run. Nothing is sent; balances, sends,
+grants, the canary and the checkpoints are unaffected. Left as it is (the wallet's store is not ours to
+edit); publish-template.sh's header now says so.

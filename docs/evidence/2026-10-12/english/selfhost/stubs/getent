@@ -1,0 +1,4 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+. "$(dirname "$0")/_common"
+[ "$1" = passwd ] && grep -q "^$2:" "$PW" && { echo "$2:x"; exit 0; }; exit 2

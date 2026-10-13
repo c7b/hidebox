@@ -82,6 +82,12 @@ is live at the end of the pass (later commits change only `docs/` and `CHANGELOG
   B6: credits frozen since 15:37, the product, fixed in `47cfbb0`), `batch2d` (E-J PASS in 106 s on
   `47cfbb0`); a few screenshots in `shots/` (none shows a link with its key or a transaction id).
 
+## Third pass (English only, 2026-10-12, 19:40–21:05)
+
+In [`../2026-10-12/english/`](../2026-10-12/english/README.md): Spanish removed, the self-hosting guide followed
+from a clean clone, the suites, release `abc5d71…-cc6fca59c`, E-J and the scenarios without chain
+transactions against production, and the purge.
+
 ## Files
 
 - `seallog/`: publish dry run, publish, instantiate, `check --onchain`, the component header from the indexer, the `service` top-up.

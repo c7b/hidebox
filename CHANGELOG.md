@@ -1,6 +1,27 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+## 2026-10-12: English only, and the architecture leftovers (docs/review/fix-log.md, "Third pass")
+
+- Spanish removed by the owner's decision: the site and the app are English only. The `/es/` pages,
+  the Spanish partials, dictionaries, exit-wall words and Open Graph card, the hreflang links, the
+  EN · ES switch and the translation offer are gone, and any path under `/es/` answers 404. All of
+  it is restorable from the git history (the commits before `ba883ab`).
+- App: one dictionary (`i18n/en.json`) with en-US formats; no stored language and no language
+  script before first paint.
+- Self-hosting: `provision.sh` now creates the `drive` and `build` accounts, takes the operator from
+  the sudo login instead of a fixed account, adds every loopback guard (walletd's included) and skips
+  walletd until it is set up; `docs/self-host.md` walks a new server through every step, walletd's
+  first start included, and was followed from a clean clone (dry where it would touch a server).
+- Docs: what an API restart forgets (the in-memory rate limits and daily per-network caps, keyed by a
+  day key that is never written) and what it keeps (the daily budgets, in SQLite), in
+  `docs/architecture.md` and `deploy/README.md`; test counts in the READMEs match this pass's runs.
+- Operations: the walletd journal's resubmit error every 5 s is one stored dry run of the 2026-10-11
+  template publish (harmless; `publish-template.sh` says so). E-20 waits for the live region instead of
+  reading it the moment the link shows.
+- Released as `abc5d71…-cc6fca59c` (verify-deploy: 0 differences across 129 files); E-J in direct mode
+  and every scenario without chain transactions pass against production (`docs/evidence/2026-10-12/english/`).
+
 ## 2026-10-12: second pass, after the security, anti-slop, SEO and docs reviews (docs/review/fix-log.md, "Second pass")
 
 - History: an evidence log named the operator's own machine; the addresses were redacted and every

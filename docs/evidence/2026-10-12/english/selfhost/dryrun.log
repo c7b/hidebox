@@ -1,0 +1,111 @@
+$ git clone <repository> clone && dryrun.sh clone <fake root> <Debian's ufw rules>   # commit abc5d71
+### step 2: the config, public_origin set
+### step 3: provision without walletd
+
+== Debian packages (installed by the owner; this script installs nothing)
+ok: caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg present; npm and npx absent
+
+== users and directories (spec §8.1)
+ok: users mutis, drive, build; operator alice; tree under <fake root>/srv/mutis
+
+== configuration and secrets (generated here; nothing comes from another machine)
+generated <fake root>/etc/mutis/secret.key
+ok: MUTIS_HOST=drive.example.org
+
+== scripts, units and logging configuration
+ok
+
+== ufw: web ports open, logging off, loopback ports guarded by owner
+  22/tcp LIMIT Anywhere
+  80/tcp ALLOW Anywhere
+  443/tcp ALLOW Anywhere
+
+== Caddy
+ok: 
+
+== walletd as a systemd unit
+skipped: walletd isn't set up (no <fake root>/home/drive/wallet/.keyring-pass; docs/self-host.md step 4); chain features stay off
+
+== timers that don't need the API: wallet backups always, database backups once a database exists
+  NEXT LEFT LAST PASSED UNIT ACTIVATES
+
+== receiver and robot-locker keys
+skipped: no release deployed yet (deploy.sh runs this step after the first release)
+
+== privilege self-test (spec §15.1 step 9)
+(dry run: privilege-check.sh is not run)
+exit 0
+### step 4: walletd initialised as drive, provision again
+
+== Debian packages (installed by the owner; this script installs nothing)
+ok: caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg present; npm and npx absent
+
+== users and directories (spec §8.1)
+ok: users mutis, drive, build; operator alice; tree under <fake root>/srv/mutis
+
+== configuration and secrets (generated here; nothing comes from another machine)
+copied walletd's keyring password into <fake root>/etc/mutis/credentials/walletd-keyring-pass (root only)
+ok: MUTIS_HOST=drive.example.org
+
+== scripts, units and logging configuration
+ok
+
+== ufw: web ports open, logging off, loopback ports guarded by owner
+  22/tcp LIMIT Anywhere
+  80/tcp ALLOW Anywhere
+  443/tcp ALLOW Anywhere
+
+== Caddy
+ok: 
+
+== walletd as a systemd unit
+ok: walletd.service already active
+
+== timers that don't need the API: wallet backups always, database backups once a database exists
+  NEXT LEFT LAST PASSED UNIT ACTIVATES
+
+== receiver and robot-locker keys
+skipped: no release deployed yet (deploy.sh runs this step after the first release)
+
+== privilege self-test (spec §15.1 step 9)
+(dry run: privilege-check.sh is not run)
+exit 0
+### refusals: ufw inactive, then no operator
+provision: ufw is inactive: allow your SSH port first (ufw limit 22/tcp), then ufw enable, and run this again
+provision: run it with sudo from your own login, or set MUTIS_OPERATOR=<login>
+### the guards it left, before ufw's loopback ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 5100 -j REJECT --reject-with tcp-reset
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 0 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1000 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1002 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 18143 -j REJECT --reject-with tcp-reset
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 0 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1000 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1002 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 999 -j ACCEPT
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -p tcp --dport 8787 -j REJECT --reject-with tcp-reset
+<fake root>/etc/ufw/before.rules:-A ufw-before-output -o lo -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 5100 -j REJECT --reject-with tcp-reset
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 0 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1000 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1002 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 18143 -j REJECT --reject-with tcp-reset
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 0 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1000 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1002 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 999 -j ACCEPT
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -p tcp --dport 8787 -j REJECT --reject-with tcp-reset
+<fake root>/etc/ufw/before6.rules:-A ufw6-before-output -o lo -j ACCEPT
+### accounts
+root:0:root
+caddy:999:caddy
+alice:1000:alice,sudo
+mutis:1001:mutis
+drive:1002:drive,mutis
+build:1003:build

@@ -1,0 +1,5 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+. "$(dirname "$0")/_common"
+args=(); while [ $# -gt 0 ]; do case $1 in -o|-g) log "install: would set owner/group $2"; shift 2 ;; *) args+=("$1"); shift ;; esac; done
+log "install ${args[*]}"; exec /usr/bin/install "${args[@]}"

@@ -187,8 +187,8 @@ garbage collection: an owner item below.
 | A3 | The Spanish hero's two-line H1 touches the "FUNDIDO DE ENTRADA:" line at 390 px (medium) | **Confirmed.** | The hero keeps a row gap on phones. | `web/site/css/home.css` |
 | A4 | A wall label that wraps lifts its keyhole; the promise's forced break makes four ragged lines on phones (medium) | **Confirmed.** | Every label reserves two lines, text at the bottom, so keyholes stay level; on phones the promise's `<br>` is hidden and the line balances. | `web/site/css/home.css`; `docs/review/antislop/home-1440-wall-label-wrap.webp`, `home-390-wall-promise-wrap.webp` (before) |
 | A5 | Four word-pairs for four things: drop / dead drop, sealed to / locked to, view / open, room / space (medium) | **Partly accepted.** | "Locked to your locker" on `/faq`, `/how`, `/security` and `/judges` ("sealed" stays only for the key inside a payment, 11-brand §7.2); the count is "open" (the viewer's burn line, the bad-key and wrong-key bodies, the FAQ, `/how`, `/privacy`); the device list is "Your recent links". Kept: "dead drop" on the site and in the docs (the feature's name in the spec, the API and the threat model; the app's "drop" is its short form, and "Drop a file" is the hero's verb), and "Get more room" (the brand's own CTA; "space" is the noun for the quota, and Spanish says "espacio" for both). | `web/app/i18n/en.json`, pages listed |
-| A6 | Spanish gender and verb drift in the app and "punto de control" vs "checkpoint" on the site; "sellados a" (medium) | **Confirmed.** | "Abrir" on the inbox row (and `/judges` B4 quotes it); "cifrado el", "al cifrarlo" on `/verify`; "checkpoint" everywhere on the Spanish site, as the app already said; "cifrados para tu casillero" and "sellada para nuestro casillero". | `web/app/i18n/es.json`, `es/faq.html`, `es/how.html`, `es/judges.html`, `es/security.html`, `es/privacy.html`, `es/index.html` |
-| A7 | Fourteen Spanish sentences that read as translated (medium) | **Confirmed.** | Every rewrite in the review applied (home: "Solo una es nuestra", "La otra persona necesita…", "O que cualquiera te deje uno"; privacy "(si tienes casillero)"; security "llave de inicio de sesión"; abuse "Motivo"; FAQ "una dirección de Tari normal, sin casillero"; 404 "Volver a soltar un archivo"; the app's password hint, "Te espera hasta el…", "Se fue en su señal", "Tus enlaces recientes"). The home page's skip link reads "Ir a la zona de archivos"; the other pages keep "Saltar al contenido", the same on all ten. | `es/*.html`, `web/app/i18n/es.json` |
+| A6 | Spanish gender and verb drift in the app, two Spanish words for "checkpoint" on the site, and a wrong preposition for "sealed to" (medium) | **Confirmed.** | The inbox row's open button, the `/verify` lines about encryption, and the locker phrases took the right gender and verb; the Spanish site used the app's one word for "checkpoint" everywhere, and `/judges` B4 quoted the corrected button. (The Spanish localization was removed on 2026-10-12; these files are in the git history.) | `web/app/i18n/es.json`, `es/faq.html`, `es/how.html`, `es/judges.html`, `es/security.html`, `es/privacy.html`, `es/index.html` |
+| A7 | Fourteen Spanish sentences that read as translated (medium) | **Confirmed.** | Every rewrite in the review applied: three lines on the home page, one each on `/privacy`, `/security`, `/abuse`, the FAQ and the 404, and four in the app (the password hint, the drop's wait line, the exit line, the recent-links heading). The home page's skip link named the file zone; the other pages kept one wording, the same on all ten. (The Spanish localization was removed on 2026-10-12.) | `es/*.html`, `web/app/i18n/es.json` |
 | A8 | `/status` says "Something needs our attention" while every check is green (medium) | **Confirmed** (`attention` is the operator's signal). | The line shows only when a check isn't green, and under it the reasons in words (a budget's kind, slice and share; new abuse reports), in both languages. | `web/site/js/status.js`, `status.html`, `es/status.html`, `pages.css`; `docs/review/antislop/status-390-attention-all-green.webp` (before) |
 | A9 | The three pack cards on `/upgrade` don't align (medium) | **Confirmed.** | A pack's title reserves two lines, so every price and Buy sit level. The cards stay: the page offers a choice between three packs and a free plan, which a table of prices would not make clearer. | `web/app/css/app.css`; `docs/review/antislop/upgrade-1440-pack-cards-misaligned.webp` (before) |
 | A10 | An unknown app path borrows the gone-link copy; "No drop here." offers no way out (medium) | **Confirmed.** | An unknown app path shows the site's 404 scene (INT. NOWHERE — NIGHT) with its button sized to its words; a closed or unknown drop lists "What is mutis?" and "Lock a file of your own". | `web/app/ui/app.js`, `droppage.js`, `app.css`, `i18n/*.json`; `docs/review/antislop/app-notfound-1440.webp` (before) |
@@ -196,7 +196,7 @@ garbage collection: an owner item below.
 | A12 | The whole "Do this" column of `/judges` is bold (low) | **Confirmed.** | Only the UI names it already marks with `<strong>` are bold. | `web/site/css/pages.css` |
 | A13 | Straight quotes in one home footnote (low) | **Confirmed.** | “sent by mutis”. | `index.html` |
 | A14 | Layout nits: the "Two locks" block, `.more` arrows pushed to the far right, static-wall cells drawn tall, an orphaned "#)", stretched buttons, the known-panel toggle inset (low) | **Partly accepted.** | A gap above the locks block; `.more` links are inline, so the arrow follows the last word (a 3 px vertical padding keeps the target); "(no #)" never breaks; the inbox's "Check again" and the not-found button take their words' width; the toggle sits flush with the content. Rejected: squares for the static wall, which shows every locker's fate under its label, so its cells grow with their text; a square would clip the fate on a phone. | `web/site/css/site.css`, `home.css`, `web/app/css/app.css`, `widget.css`, `how.html` (+ES) |
-| A15 | "Questions, answered short."; six label-colon paragraphs on `/pricing`; the abuse form files "Something else" untouched (low) | **Confirmed.** | "Questions, short answers."; the pricing rules are small headings with a paragraph each (the send-mode variant pair kept); the category starts at "Choose one" / "Elige una", required. | `faq.html`, `pricing.html`, `abuse.html` and the `es/` twins |
+| A15 | "Questions, answered short."; six label-colon paragraphs on `/pricing`; the abuse form files "Something else" untouched (low) | **Confirmed.** | "Questions, short answers."; the pricing rules are small headings with a paragraph each (the send-mode variant pair kept); the category starts at "Choose one" (in both languages at the time), required. | `faq.html`, `pricing.html`, `abuse.html` and the `es/` twins |
 
 ### SEO and GEO review
 
@@ -207,7 +207,7 @@ garbage collection: an owner item below.
 | E3 | `llms.txt` is a static template that hedges and omits SealLog, direct sends and view keys (medium) | **Confirmed.** | `llms.txt` leads with Tari and carries one line per deployment fact (`{when:send_mode=direct}`, `seallog=on`, `proof=proven`…); `tools/variants.py` keeps the lines true for the deployment and drops the marker, as it already resolves the pages' variants, so the served file says what the site runs (direct sends, SealLog, the sidecar proof). Links to `/privacy`, `/faq`, `/es/` and `/releases.json` added. | `web/site/static/llms.txt`, `web/site/tools/variants.py`, `web/site/tests/static_checks.py` |
 | E4 | No limit or price in crawlable HTML, and `robots.txt` blocks the `/api/v1/config` the pages fill from (medium) | **Partly accepted.** | `robots.txt` allows `/api/v1/config` and `/api/v1/stats` exactly (longest match; `/stats/wall`, `/canary` and the rest stay blocked), so a crawler that renders the pages may read the numbers, and `llms.txt` points at them. Writing the numbers into the HTML at build time was rejected: the pages' numbers are variables filled from `/config` by one formatter (11-brand P-20); a second formatter in the build would drift from it. | `web/site/static/robots.txt`, `static_checks.py` |
 | E5 | Share links and drop pages unfurl with no card (medium) | **Confirmed.** | The viewer page carries the locked-file card (`og-s.png`, made for it) with a description; the app pages carry the site's card. Static tags, the same for every link: no id, no fragment, no `og:url`. A drop-specific card was rejected: one page serves every app route, and a page of its own for `/d/` is a route change; the drop page keeps its runtime title "Leave a file · mutis". | `web/app/view.html`, `web/app/app.html` |
-| E6 | The Spanish pages share the English card and describe it in Spanish (medium) | **Confirmed.** | `og-es.html` rendered with the site's own tool to `og-es.png` (Cada secreto sabe cuándo hacer mutis.), every Spanish page points at it, and the alt text now describes what the image shows. | `web/site/og/og-es.html`, `web/site/static/og-es.png`, `web/site/tools/render-images.py`, `es/*.html` |
+| E6 | The Spanish pages share the English card and describe it in Spanish (medium) | **Confirmed.** | `og-es.html` rendered with the site's own tool to `og-es.png` (the tagline in Spanish), every Spanish page points at it, and the alt text now describes what the image shows. (Removed with the Spanish pages on 2026-10-12.) | `web/site/og/og-es.html`, `web/site/static/og-es.png`, `web/site/tools/render-images.py`, `es/*.html` |
 | E7 | Hidden variants are in the served HTML: "Drop a file.Choose a file.", both status-line phases, the relay footnote (low) | **Partly accepted.** | A space between the fine- and coarse-pointer spans (no visual change). Rejected: emitting one phase of the status line and deleting the other send-mode variants in the build. The runtime switch from `/config` is a documented feature (an admin flips a flag without a rebuild and the copy stays true), and the mainnet rebuild is planned (spec §15.6). | `index.html`, `es/index.html` |
 | E8 | The language offer bar shifts the page (CLS 0.04) and sits before the skip link (low) | **Partly accepted.** | The offer follows the skip link, so "Skip to…" stays the first Tab stop. A fixed overlay was rejected: the app pages have a bottom bar, a fixed top bar would cover the header, and the measured shift is under the 0.1 threshold. | `web/site/js/site.js` |
 | E9 | The JSON-LD is thin (low) | **Confirmed.** | An `@graph` with a `WebSite` and the `SoftwareApplication`: a Tari-first description, `featureList`, `image`, `softwareHelp`, the SPDX license; `sameAs` waits for the repository to be public. | `index.html`, `es/index.html` |
@@ -365,3 +365,103 @@ is the check for what is served.
    account, Tier 3).
 5. **A leftover judge pass (done).** One pass made at 04:29 on the 12th by the film run was not one of
    the twenty; this pass's purge deleted it with its own test passes.
+
+## Third pass (2026-10-12): English only, and the architecture leftovers
+
+The owner ordered two things for this pass: function and architecture first, and everything in
+English (a rebrand and restyle come next, so nothing here changes the look). Spanish was removed from
+the product completely (CHANGELOG; 12-integration §7.8): the `/es/` pages, the Spanish partials,
+dictionaries, exit-wall words and Open Graph card, the hreflang links, the EN · ES switch, the
+translation offer, the language picker in the app, and the checks, flows and screenshots that covered
+them. `/es/` and anything under it answer 404 (`tests/e2e/headers_spec.py` checks `/es/` and
+`/es/how`). It is all in the git history (the commits before `ba883ab`).
+
+Three things were kept on purpose. The common-password list in `web/app/lib/password.js` still holds
+Spanish passwords: it is a security check, not copy, and people type the passwords they know. The
+"Why mutis?" scene on `/how` (and `llms-full.txt`) still explains the Spanish word the product is
+named after, in English; the name and its story belong to the rebrand. The evidence folders and the
+review screenshots from before this pass are records and stay as they were, Spanish pages included.
+
+### Every leftover of the earlier passes, and what this pass did
+
+Rows whose verdict was partly accepted, not reproduced, the owner's, deferred or rejected, plus the
+documentation review's finding and the second pass's open items that are code or docs.
+
+| From | Finding | Verdict now | What changed |
+|---|---|---|---|
+| Docs review | A stranger can't follow `docs/self-host.md`: `provision.sh` created only `mutis`, assumed `drive`, `build` and the owner's login, required a walletd guard set by hand, and couldn't run without walletd | **Fixed.** | `provision.sh` creates `drive` and `build`, takes the operator from the sudo login (or `MUTIS_OPERATOR`), adds all three loopback guards before ufw's loopback `ACCEPT` (and refuses an inactive ufw), skips walletd until it is set up, and restarts a tmux walletd only if it stopped one. `self-host.md` has every step: packages and the firewall, the config before provisioning (the example names our host), provision, walletd's first start (tested with a throwaway wallet as `build` on ultron, port 5198, removed after), configure, deploy from a workstation, SealLog, checks. Followed from a clean clone: the local build and dev server for real, provisioning as a dry run with stand-in commands on a simulated Debian 13 root (`docs/evidence/2026-10-12/english/selfhost/`), which also found the tmux restart on a new server. |
+| Docs review | Test counts in the READMEs don't match the suites | **Fixed.** | `server/README.md` (202 tests), `web/site/README.md` (15 file checks), `web/app/tests/README.md` and the `ACCEPTANCE` files carry this pass's runs. |
+| Task (architecture) | The API's in-memory rate limits and daily per-network caps are lost on restart | **Documented; persistence rejected.** | `docs/architecture.md` and `deploy/README.md` say what a restart forgets (rate limits, per-network and per-locker daily caps, PoW escalation, wrong-password counts) and what it keeps (the daily budgets, rows in SQLite, so a restart can't raise what the wallet spends). Persisting the counters would mean writing the day key that hashes visitors' networks, which the privacy design never writes. |
+| Second pass, open item 1 | A judge whose sponsor grant is refused waits silently for a direct send (`ui/locker-ctx.js`) | **Deferred to fix 3**, as the second pass planned. | Not touched here: it is chain-facing UI and needs its own E2E run in direct mode. |
+| Second pass, open item 3 | walletd logs "Error resubmitting new transactions: … Dry run transaction mismatch" every 5 s | **Explained; left alone.** | One stored transaction, `a599a962…be37`, status `New`, `is_dry_run: true`, last updated 2026-10-11 23:06:51 UTC: the `PublishTemplate` dry run of `publish-template.sh` (fee instruction 3,000,000 µT from `service`), which walletd 0.45 keeps and retries. Read through walletd's RPC as `drive`; nothing in `/home/drive/wallet` was touched. Harmless (nothing is sent); the script's header now says so. |
+| Second pass S4 | One security channel with a daily cap | **Stands.** | The second channel (GitHub private reporting) waits for the repository to be public (owner, Tier 3); the cap stays. |
+| Second pass S5 | No allowlist for evidence images | **Stands (rejected).** | Unchanged reason: the lint catches the leak an image's text could carry. |
+| Second pass A5 | Four word pairs for four things | **Left for the rebrand.** | Copy and naming are the owner's next pass. |
+| Second pass A14 | Layout nits | **Left for the restyle.** | Visual only. |
+| Second pass E1 / first pass 1 | The repository is private | **Owner (Tier 3).** | The rewritten history is on GitHub; making it public (and asking GitHub to drop the old unreferenced commits first) is the owner's. |
+| Second pass E4 | No limits or prices in crawlable HTML | **Stands (partly accepted).** | One formatter for every number (11-brand P-20); `robots.txt` lets crawlers read `/config`. |
+| Second pass E7 | Hidden variants in the served HTML | **Stands (partly accepted).** | The runtime switch from `/config` is a documented feature. |
+| Second pass E8 | The language offer bar shifts the page | **Resolved by removal.** | The offer is gone with Spanish. |
+| Second pass E13 | Truncated finding | **Not received.** | Nothing to act on. |
+| First pass 4, 11 | Page length and S3's footnotes, no Testnet chip in the phone header, no hidden "delight" | **Left for the rebrand.** | Design items. |
+| First pass 6, 26 | `/judges` links the forum's root | **Owner (Tier 3).** | The thread is the owner's post; the link changes after it exists. |
+| First pass 7 | zh-CN gets English with no hint; es-MX lands on English | **Superseded.** | English only; zh-CN stays out. |
+| First pass 10 | The static wall's tiles | **Not reproduced** (unchanged). | — |
+| First pass 13 | 💊/💣 and repeats in safety codes | **Stands (rejected).** | The alphabet is Tari's RFC-0155 address alphabet; changing it would change every existing locker's code. |
+
+### Suites, deploy, end-to-end runs and the purge (`docs/evidence/2026-10-12/english/`)
+
+On ultron as `build` from a `git archive` of `fd2706f`, all green on the first run: server 202 tests
+OK (4 opt-in skips), site 27 of 27 (15 file checks, `dates.js`, 11 browser checks; `check_translations`
+is gone), app-ui UI PASS 220/220 (20 flows; the widget is lighter without the language code: 23,287 B
+at load, 39,572 B after a drop), app-core ALL PASS in 9 steps; locally the deploy tests (67 OK), the
+lint and the copy check against the live `/config`.
+
+Deployed as release `abc5d71f33d05bca462c76b9169e70e52bb2f2b6-cc6fca59c` at 20:29 CST (`deploy.sh HEAD`:
+the gate on ultron, build, activation with the new Caddyfile validated and reloaded, smoke PASS,
+manifest `412d99c44366…` notarized in tx `1a9212e1…d348`). `verify-deploy`: 0 differences across 129
+files (145 before: the Spanish pages and card are gone), and the chain runs the SealLog template byte
+for byte. D-01 against production: 40 PASS, `/es/` and `/es/how` answer the 404 page with every
+header. `/config` unchanged (direct sends, the sidecar proof, SealLog every 900 s, no `e2e_expiry_s`),
+`/status.json` green, the sitemap 9 URLs. HEAD after it differs only in `docs/`, `CHANGELOG.md` and
+one E2E test (below).
+
+End to end against production on that release, with `run.py --final` (no chain code changed in this
+pass, so the chain scenarios other than E-J were not rerun):
+
+| Run | Scenarios | Result |
+|---|---|---|
+| ej, 20:39 | E-J, direct mode | PASS, 75 s: track A 5 s, track B 67 s; cold start 43 s (within 3:15); the send and the pack payment built and submitted by the browser |
+| batch1, 20:49–21:00 | every scenario without chain transactions (E-01, E-02, E-04 to E-08, E-15 to E-22, E-24, E-03), `e2e_expiry_s = 60` from 20:49:17 to 21:00:13 | 16 of 17; E-20 failed "the live region announces the sealed state" |
+| batch1b, 21:00 | E-20, unchanged | PASS |
+| batch1c, 21:01 | E-20, waiting up to 5 s for the live region | PASS |
+
+E-20 failed in the test: it read the live region the moment the link showed, and `announce()`
+(`web/app/lib/dom.js`) fills it on the next animation frame. The scenario now waits for it
+(`2f0302f`), as E-24 already waits for its banner.
+
+**Purge (21:02).** By id, from a read-only diff against a 20:19 snapshot taken before the deploy:
+19 items and 6 drops taken down (25 of 25 found), E-J's judge pass deleted. Every item was made in the
+run's UTC hours (02:00 and 03:00 on the 13th) and none belongs to an identity older than the
+snapshot; every drop carries a label the runs type and none shares a locker address with an older
+drop. Kept, as before: E-J's credited pack invoice and the 9 test lockers. Afterwards: 20 judge passes,
+the security drop `/d/3w7m8k2v5t` active, no `e2e_expiry_s` in `/config` or `/etc/mutis/mutis.toml`,
+`/status.json` green, the wall quiet.
+
+### Open items after the third pass
+
+1. **Sponsor grants on a shared network or a busy day (fix 3).** Unchanged from the second pass's item
+   1: the UI must say when a grant is refused and offer the relay path (`web/app/ui/locker-ctx.js`).
+   This pass's E-J spent two of today's ten evidence-slice grants (UTC day of the 13th).
+2. **Owner (Tier 3), as before:** make the repository public (ask GitHub Support first to drop the old
+   unreferenced commits), post the forum thread and then point `/judges` at it, hand out the judge
+   passes, check the Hostinger snapshots, decide on the unlabeled dead drop, and create the contest
+   tag after the rebrand.
+3. **walletd's stored dry run.** Harmless; the journal line stays until walletd drops the transaction
+   (`docs/evidence/2026-10-12/english/deploy/walletd-resubmit.txt`). The wallet's store was not touched.
+4. **A real install from the guide.** `docs/self-host.md` was followed from a clean clone with
+   provisioning as a dry run; a run on a throwaway Debian 13 server (a VPS the owner pays for) would
+   close it.
+5. **For the restyle:** the screenshots in `web/site/shots/` and `web/app/shots/` predate this pass
+   (their footers still show the EN · ES switch); the "Why mutis?" scene on `/how` explains the Spanish
+   name; the common-password list keeps its Spanish entries on purpose.

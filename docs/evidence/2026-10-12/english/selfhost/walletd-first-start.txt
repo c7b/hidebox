@@ -1,0 +1,26 @@
+walletd's first start, as docs/self-host.md step 4 describes it, tried on ultron on 2026-10-12 19:49 CST
+with a throwaway wallet as `build` (never /home/drive/wallet; port 5198, not 5100), removed afterwards.
+
+1. First foreground run, no password:
+$ T=/home/build/work/english/wd; mkdir -p $T/wallet
+$ timeout 30 /opt/tari/bin/tari_ootle_walletd --network esme --base-path $T/wallet --listen-on 127.0.0.1:5198 --authentication none run
+exit=1
+written: wallet/esmeralda/config/config.toml, wallet/esmeralda/config/ootle_wallet_daemon/log4rs.yml,
+         wallet/esmeralda/data/wallet.sqlite, wallet/esmeralda/log/
+INFO  🟢 Starting wallet on esmeralda connected to indexer https://ootle-indexer-b.tari.com/ (one of 2 configured)
+Error: Password manager error: OS keyring not supported on this device. You may have to specify an encryption password by using the `--password` cli option.
+
+2. The written config has the table run-walletd.sh inserts the password into:
+$ grep -n '^\[esmeralda.ootle_wallet_daemon\]' $T/wallet/esmeralda/config/config.toml
+272:[esmeralda.ootle_wallet_daemon]
+
+3. deploy/ootle/run-walletd.sh, the way walletd.service starts it (credential and runtime directories
+   stood in for systemd's; a random 40-character password):
+$ CREDENTIALS_DIRECTORY=$T/cred RUNTIME_DIRECTORY=$T/run WALLETD_BASE=$T/wallet WALLETD_LISTEN=127.0.0.1:5198 \
+    WALLETD_LOG_CONFIG=$T/wallet/esmeralda/config/ootle_wallet_daemon/log4rs.yml timeout 40 bash /usr/local/lib/mutis/run-walletd.sh
+LISTENING (127.0.0.1:5198 accepted a connection after 30 s)
+INFO  🌐 JSON-RPC listening on 127.0.0.1:5198
+INFO  Subscribed to transaction finalization stream
+
+4. Cleanup: $T and build's ~/.local/share/tari (walletd's burn_proofs directory, made by this run) removed;
+   no walletd process left running as build.

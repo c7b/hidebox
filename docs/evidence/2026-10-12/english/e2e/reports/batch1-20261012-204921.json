@@ -1,0 +1,326 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-01",
+   "title": "Text secret, Once: B reads it; reload and C see burned; item deleted",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 8.0,
+   "notes": [
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-02",
+   "title": "10 MB file, 3 views: B, C, D save identical files; E sees burned",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 13.2,
+   "notes": [
+    "ok: B opens the file",
+    "ok: B's saved file has the original SHA-256",
+    "ok: C opens the file",
+    "ok: C's saved file has the original SHA-256",
+    "ok: D opens the file",
+    "ok: D's saved file has the original SHA-256",
+    "ok: E sees burned after three views",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-04",
+   "title": "Link + password and password-only; path-only attempts never lock a link",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 28.8,
+   "notes": [
+    "ok: 60 path-only attempts answer bad_link, then rate_limited; never locked (got ['bad_link', 'rate_limited'])",
+    "ok: the link is still active after them",
+    "ok: 'wrong one' is refused with \"That's not it\"",
+    "ok: 'wrong two' is refused with \"That's not it\"",
+    "ok: the right password opens it",
+    "ok: a password-only link opens without a fragment"
+   ]
+  },
+  {
+   "id": "E-05",
+   "title": "Expiry 60 s: after 65 s the link is expired",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 71.1,
+   "notes": [
+    "ok: the link is expired",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-06",
+   "title": "Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 9.9,
+   "notes": [
+    "ok: the link's item is in the database",
+    "ok: B gets integrity-error",
+    "ok: nothing was saved"
+   ]
+  },
+  {
+   "id": "E-07",
+   "title": "A link without its #key shows incomplete",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 4.3,
+   "notes": [
+    "ok: the viewer says the key is missing"
+   ]
+  },
+  {
+   "id": "E-08",
+   "title": "Locker: lazy creation from Leave me a file; key saved; restored in a clean browser",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 7.5,
+   "notes": [
+    "ok: the key file is locked with the passphrase",
+    "ok: the locker shows its 12-emoji safety code and Tari address (12 emoji)",
+    "ok: the restored locker has the same safety code and address",
+    "ok: /me answers for the restored locker (quota shown)",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-15",
+   "title": "Burn race: five browsers press Open it together; exactly one opens",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 10.5,
+   "notes": [
+    "ok: a racer reaches ready",
+    "ok: a racer reaches ready",
+    "ok: a racer reaches ready",
+    "ok: a racer reaches ready",
+    "ok: a racer reaches ready",
+    "ok: one opened, four burned (got ['opened', 'burned', 'burned', 'burned', 'burned'])"
+   ]
+  },
+  {
+   "id": "E-16",
+   "title": "Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 2.8,
+   "notes": [
+    "ok: the browser offered a locker without uploading",
+    "ok: the API answers 413 too_large (got 413 too_large)"
+   ]
+  },
+  {
+   "id": "E-17",
+   "title": "Abuse: a reported link and drop are taken down by id",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 8.6,
+   "notes": [
+    "ok: report accepted for s/T9OIx61vr31_7DXQyUCkWQ",
+    "ok: report accepted for hstgr.cloud/d/20kzdm8pma",
+    "ok: the link shows removed",
+    "ok: the drop page shows closed"
+   ]
+  },
+  {
+   "id": "E-18",
+   "title": "Every page: only same-origin requests and no CSP or Trusted Types violation",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 12.6,
+   "notes": [
+    "ok: desktop: no third-party request ([])",
+    "ok: desktop: no CSP or Trusted Types violation ([])",
+    "ok: iphone: no third-party request ([])",
+    "ok: iphone: no CSP or Trusted Types violation ([])"
+   ]
+  },
+  {
+   "id": "E-19",
+   "title": "Phones: E-01 at 390\u00d7844 and 412\u00d7915; reduced motion; no horizontal scroll at 360 px",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 59.9,
+   "notes": [
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: reduced motion is on",
+    "ok: no horizontal scroll at 360 px ([])"
+   ]
+  },
+  {
+   "id": "E-20",
+   "title": "Accessibility: every control named; keyboard-only seal and copy; the live region speaks",
+   "status": "FAIL",
+   "detail": "the live region announces the sealed state",
+   "seconds": 5.6,
+   "notes": [
+    "ok: home: every control has an accessible name ([])",
+    "ok: Tab reaches 'or paste text'"
+   ]
+  },
+  {
+   "id": "E-21",
+   "title": "Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 45.8,
+   "notes": [
+    "ok: D-01 GET / \u2192 200 []",
+    "ok: D-01 GET /s/AAAAAAAAAAAAAAAAAAAAAA \u2192 200 []",
+    "ok: D-01 GET /t \u2192 200 []",
+    "ok: D-01 GET /d/7kq2x9mdh4 \u2192 200 []",
+    "ok: D-01 GET /locker \u2192 200 []",
+    "ok: D-01 GET /inbox \u2192 200 []",
+    "ok: D-01 GET /send \u2192 200 []",
+    "ok: D-01 GET /watch \u2192 200 []",
+    "ok: D-01 GET /upgrade \u2192 200 []",
+    "ok: D-01 GET /verify/tx/0000000000000000000000000000000000000000000000000000000000000000 \u2192 200 []",
+    "ok: D-01 GET /how \u2192 200 []",
+    "ok: D-01 GET /security \u2192 200 []",
+    "ok: D-01 GET /pricing \u2192 200 []",
+    "ok: D-01 GET /faq \u2192 200 []",
+    "ok: D-01 GET /judges \u2192 200 []",
+    "ok: D-01 GET /terms \u2192 200 []",
+    "ok: D-01 GET /privacy \u2192 200 []",
+    "ok: D-01 GET /abuse \u2192 200 []",
+    "ok: D-01 GET /robots.txt \u2192 200 []",
+    "ok: D-01 GET /.well-known/security.txt \u2192 200 []",
+    "ok: D-01 GET /.well-known/mutis-manifest.json \u2192 200 []",
+    "ok: D-01 GET /this-page-does-not-exist \u2192 404 []",
+    "ok: D-01 GET /status.json \u2192 200 []",
+    "ok: D-01 GET /evidence.json \u2192 200 []",
+    "ok: D-01 GET /releases.json \u2192 200 []",
+    "ok: D-01 GET /evidence-archive-x.json \u2192 404 (an error page through another route) []",
+    "ok: D-01 GET /shared/fonts/x.woff2 \u2192 404 (an error page through another route) []",
+    "ok: D-01 GET /app/nope.js \u2192 404 (an error page through another route) []",
+    "ok: D-01 GET /es/ \u2192 404 (an error page through another route) []",
+    "ok: D-01 GET /es/how \u2192 404 (an error page through another route) []",
+    "ok: D-01 GET /shared/fonts/MutisScript-Regular.woff2 \u2192 200 []",
+    "ok: D-01 GET /api/v1/health \u2192 200 (security headers on API responses) []",
+    "ok: D-01 HEAD /app/vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm is application/wasm []",
+    "ok: D-01 PUT 6 MB to /api/v1/uploads/\u2026/chunks/0 \u2192 413 (413 in the API's error shape, not a bare 502) []",
+    "ok: D-01 TRACE /how \u2192 405 (405 with Allow: GET, HEAD, the headers, no body) []",
+    "ok: D-01 PUT /how \u2192 405 (405 with Allow: GET, HEAD, the headers, no body) []",
+    "ok: D-01 http://srv2052606.hstgr.cloud/how?x=1 \u2192 308 https://srv2052606.hstgr.cloud/how?x=1 []",
+    "ok: D-01 https://srv2052606.hstgr.cloud/how with Host: not-this-site.example \u2192 421 (421, the security headers, nothing reflected) []",
+    "ok: D-01 http://srv2052606.hstgr.cloud/how with Host: not-this-site.example \u2192 421 (421, the security headers, nothing reflected) []",
+    "ok: D-01 certificate for srv2052606.hstgr.cloud verifies, 88 days left []",
+    "ok: D-03 PASS mutis cannot connect to 127.0.0.1:5100",
+    "ok: D-03 PASS build cannot connect to 127.0.0.1:5100",
+    "ok: D-03 PASS caddy cannot connect to 127.0.0.1:5100",
+    "ok: D-03 PASS drive can connect to 127.0.0.1:5100",
+    "ok: D-03 PASS mutis cannot connect to 127.0.0.1:18143",
+    "ok: D-03 PASS build cannot connect to 127.0.0.1:18143",
+    "ok: D-03 PASS caddy cannot connect to 127.0.0.1:18143",
+    "ok: D-03 PASS drive can connect to 127.0.0.1:18143",
+    "ok: D-03 PASS build cannot connect to 127.0.0.1:8787 (the API)",
+    "ok: D-03 PASS mutis cannot connect to 127.0.0.1:8787 (the API)",
+    "ok: D-03 PASS caddy can connect to 127.0.0.1:8787 (the API)",
+    "ok: D-03 PASS drive can connect to 127.0.0.1:8787 (the API)",
+    "ok: D-03 PASS nothing listens on Caddy's default admin port 2019",
+    "ok: D-03 PASS Caddy's admin socket exists",
+    "ok: D-03 PASS mutis cannot use Caddy's admin socket",
+    "ok: D-03 PASS build cannot use Caddy's admin socket",
+    "ok: D-03 PASS drive cannot use Caddy's admin socket",
+    "ok: D-03 PASS mutis cannot read /home/drive",
+    "ok: D-03 PASS build cannot read /srv/mutis/data",
+    "ok: D-03 PASS caddy cannot read /srv/mutis/data",
+    "ok: D-03 PASS build cannot read /etc/mutis/secret.key",
+    "ok: D-03 PASS mutis can read /etc/mutis/secret.key",
+    "ok: D-03 PASS mutis cannot read the walletd keyring credential",
+    "ok: D-03 PASS drive cannot read the walletd keyring credential",
+    "ok: D-03 PASS build cannot read the walletd keyring credential",
+    "ok: D-03 PASS mutis cannot write the served release",
+    "ok: D-03 PASS drive cannot write the served release",
+    "ok: D-03 PASS caddy can read the served release",
+    "ok: D-03 PASS build cannot read /home/drive/mutis keys",
+    "ok: D-03 PASS the database and its -wal/-shm files are 0660",
+    "ok: D-03 PASS drive (group mutis) can write the database",
+    "ok: D-03 PASS walletd's keyring password is on no process command line",
+    "ok: D-03 PASS npm is not installed",
+    "ok: D-03 PASS npx is not installed",
+    "ok: D-03 PASS pnpm is not installed",
+    "ok: D-03 PASS yarn is not installed",
+    "ok: D-03 PASS pip is not installed",
+    "ok: D-03 PASS port 5100 is closed from outside (IPv4 179.236.70.195)",
+    "ok: D-03 PASS port 8787 is closed from outside (IPv4 179.236.70.195)",
+    "ok: D-03 PASS port 18143 is closed from outside (IPv4 179.236.70.195)",
+    "ok: D-03 PASS port 2019 is closed from outside (IPv4 179.236.70.195)",
+    "ok: D-03 PASS port 9000 is closed from outside (IPv4 179.236.70.195)",
+    "ok: D-03 PASS port 9100 is closed from outside (IPv4 179.236.70.195)",
+    "ok: D-03 PASS port 5100 is closed from outside (IPv6 2a02:4780:95:64c5::1)",
+    "ok: D-03 PASS port 8787 is closed from outside (IPv6 2a02:4780:95:64c5::1)",
+    "ok: D-03 PASS port 18143 is closed from outside (IPv6 2a02:4780:95:64c5::1)",
+    "ok: D-03 PASS port 2019 is closed from outside (IPv6 2a02:4780:95:64c5::1)",
+    "ok: D-03 PASS port 9000 is closed from outside (IPv6 2a02:4780:95:64c5::1)",
+    "ok: D-03 PASS port 9100 is closed from outside (IPv6 2a02:4780:95:64c5::1)"
+   ]
+  },
+  {
+   "id": "E-22",
+   "title": "Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 5.2,
+   "notes": [
+    "ok: the widget refuses the program before upload (banner program)",
+    "ok: the viewer shows the program warning (got program-warning)",
+    "ok: no preview, Save anyway offered"
+   ]
+  },
+  {
+   "id": "E-24",
+   "title": "Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 9.7,
+   "notes": [
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: /locker shows needs_wasm",
+    "ok: /d/0000000000 shows needs_wasm"
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 0.0,
+   "notes": [
+    "ok: E-01: no secret in any URL, header or body ()",
+    "ok: E-02: no secret in any URL, header or body ()",
+    "ok: E-05: no secret in any URL, header or body ()",
+    "ok: E-08: no secret in any URL, header or body ()"
+   ]
+  }
+ ]
+}
