@@ -1,6 +1,19 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+## 2026-10-13: the function review's fixes (docs/review/fix-log.md, "The function review")
+
+- Packs: `mutis-admin release-pack -- <locker id>` ends a pack; E-13 and E-J end theirs, and the 11
+  test packs that had filled the paid-space cap (so `/upgrade` said sold out to everyone) were ended.
+- Sponsor grants: asked for whenever the browser wallet is short of the next spend, at most once a
+  UTC day per locker (once more after a judge pass is saved); a refusal is said on the send line, and
+  `/upgrade` in direct mode offers the demo payment when the wallet is short.
+- `/watch` treats an invalid view key as a key error; the expired page names its UTC day; a replaced
+  link no longer says its file was deleted; the scan bench no longer starves the test driver.
+- `/judges` B3, B5, B6 and B7, `/pricing`, the architecture, the threat model and the self-hosting
+  guide (walletd 0.45.0's asset and SHA-256) corrected; expiry rounding stated exactly everywhere.
+- The repository stays private: GitHub still serves the commits from before the history rewrite.
+
 ## 2026-10-12: English only, and the architecture leftovers (docs/review/fix-log.md, "Third pass")
 
 - Spanish removed by the owner's decision: the site and the app are English only. The `/es/` pages,
