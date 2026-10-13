@@ -151,7 +151,14 @@ function wireMenus(drive) {
     const m = await import('./drive-upload.js');
     m.newAction(drive, e.detail);
   });
-  document.addEventListener('drive:search', (e) => {
+  // Search filters the view in place; from a view without a list it takes the words to My drive.
+  document.addEventListener('drive:search', async (e) => {
+    if (!['mine', 'shared', 'trash', 'activity'].includes(drive.route.view) && e.detail) {
+      const words = drive.shell.search.value;
+      await drive.go('/drive');
+      drive.shell.search.value = words;
+      drive.shell.search.focus();
+    }
     drive.query = e.detail;
     document.dispatchEvent(new CustomEvent('drive:filter', { detail: e.detail }));
   });

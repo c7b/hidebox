@@ -75,13 +75,13 @@ class BuildTest(unittest.TestCase):
         (self.web / "app" / "drive.html").write_text(PAGE)
         with self.assertRaisesRegex(build.BuildError, "font file missing"):
             self.build()
-        fonts = self.web / "shared" / "fonts"
-        fonts.mkdir()
-        shutil.copyfile(ROOT / "web" / "shared" / "fonts" / "OFL-Geist.txt", fonts / "OFL-Geist.txt")
-        data = bytearray((ROOT / "web" / "shared" / "fonts" / "Geist-Variable.woff2").read_bytes())
+        fonts = self.web / "shared" / "fonts" / "geist"
+        fonts.mkdir(parents=True)
+        shutil.copyfile(ROOT / "web" / "shared" / "fonts" / "geist" / "OFL.txt", fonts / "OFL.txt")
+        data = bytearray((ROOT / "web" / "shared" / "fonts" / "geist" / "Geist-Variable.woff2").read_bytes())
         (fonts / "Geist-Variable.woff2").write_bytes(data)
         self.build()
-        self.assertEqual((self.tmp / "dist" / "shared" / "fonts" / "Geist-Variable.woff2").read_bytes(), data)
+        self.assertEqual((self.tmp / "dist" / "shared" / "fonts" / "geist" / "Geist-Variable.woff2").read_bytes(), data)
         data[100] ^= 1
         (fonts / "Geist-Variable.woff2").write_bytes(data)
         with self.assertRaisesRegex(build.BuildError, "font hash mismatch"):

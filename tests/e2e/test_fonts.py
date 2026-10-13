@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """11-brand P-18, for the drive (DESIGN.md "Typography": one family, Geist, vendored and pinned): the
-live hash manifest lists exactly one font file, /shared/fonts/Geist-Variable.woff2, with the hash
+live hash manifest lists exactly one font file, /shared/fonts/geist/Geist-Variable.woff2, with the hash
 tools/build.py pins, and the bytes the origin serves have that hash too. It must load in Chromium with
 no `OTS parsing error`.
 
@@ -23,14 +23,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cdp  # noqa: E402
 from harness import Env, Remote  # noqa: E402
 
-GEIST = "/shared/fonts/Geist-Variable.woff2"
+GEIST = "/shared/fonts/geist/Geist-Variable.woff2"
 
 
 def build_pin() -> str:
     """The hash tools/build.py refuses to build without."""
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
     import build
-    return build.FONTS["Geist-Variable.woff2"]
+    return build.FONTS["geist/Geist-Variable.woff2"]
 
 
 LOAD = """Promise.all(%s.map((u, i) => new FontFace('probe' + i, 'url(' + u + ')').load()
