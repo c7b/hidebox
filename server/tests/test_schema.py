@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
-"""Schema 2 (migrations/002): a deployed schema-1 database migrates to exactly the schema a fresh
-install gets, and keeps its rows the way the review fixes need them."""
+"""Schema migrations: a deployed schema-1 database migrates (002, 003, 004) to exactly the schema a fresh
+install gets, and keeps its rows the way the review fixes and the drive need them."""
 import os
 import re
 import shutil
@@ -100,6 +100,58 @@ class Migration(unittest.TestCase):
                              "VALUES ('x', 'seal', 'evidence', 'queued', 0, 0, 0)")
             conn.execute("INSERT INTO jobs(id, kind, slice, state, not_before, created_at, updated_at) "
                          "VALUES ('y', 'courier', 'evidence', 'queued', 0, 0, 0)")
+        finally:
+            conn.close()
+
+    def v3_database(self) -> Path:
+        """The deployed schema 3 with data in it: the v1 fixture through migrations 002 and 003 only."""
+        path = self.v1_database()
+        only = self.tmp / "to-v3"
+        only.mkdir()
+        for file in sorted(db.MIGRATIONS.glob("00[23]_*.sql")):
+            (only / file.name).write_text(file.read_text())
+        self.assertEqual(db.migrate(path, only), 3)
+        conn = db.connect(path)
+        with db.tx(conn):
+            conn.execute("INSERT INTO identities(id, auth_verifier, created_day, last_seen_day, used_bytes) "
+                         "VALUES ('drive-a', x'01', '2026-10-01', '2026-10-13', 2048)")
+            conn.execute("INSERT INTO items(id, owner_id, manage_hash, retention, lane, state, header, meta_ct, "
+                         "owner_wrap, chunk_count, size_stored, created_hour) VALUES ('item-a', 'drive-a', x'02', "
+                         "'kept', 'locker', 'ready', x'03', x'04', x'05', 1, 2048, ?)", (START,))
+            conn.execute("INSERT INTO shares(id, item_id, mode, wrapped_key, access_hash, max_views, created_hour) "
+                         "VALUES ('share-a', 'item-a', 'link', x'06', x'07', 3, ?)", (START,))
+            conn.execute("INSERT INTO tickets(token_hash, share_id, item_id, expires_at, max_bytes) "
+                         "VALUES (x'08', 'share-a', 'item-a', ?, 6144)", (START + 1800,))
+        conn.close()
+        return path
+
+    def test_upgrade_from_v3_with_data(self):
+        """Migration 004 (16-drive-design §15 step 1) is additive: every row of a schema-3 database keeps
+        working as a file at the drive's root, outside the Trash, with an item ticket; the new tables start
+        empty and the foreign keys hold."""
+        path = self.v3_database()
+        self.assertEqual(db.migrate(path), 4)
+        conn = db.connect(path)
+        try:
+            item = conn.execute("SELECT kind, parent_id, parent_wrap, trashed_at, items.state, used_bytes FROM items "
+                                "JOIN identities ON identities.id = items.owner_id").fetchone()
+            self.assertEqual(tuple(item), ("file", None, None, None, "ready", 2048))
+            self.assertEqual(conn.execute("SELECT scope FROM tickets").fetchone()[0], "item")
+            self.assertEqual(conn.execute("SELECT state, max_views FROM shares").fetchone()[:], ("active", 3))
+            for table in ("share_opens", "sellers", "paid_shares", "claims", "sale_payments"):
+                self.assertEqual(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0], 0, table)
+            self.assertEqual(conn.execute("PRAGMA foreign_key_check").fetchall(), [])
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("UPDATE items SET kind = 'link' WHERE id = 'item-a'")
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("UPDATE tickets SET scope = 'drive'")
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("INSERT INTO claims(id, share_id, token_hash, address, price_ut, status, owner_check, "
+                             "created_at, created_seq, expires_at) VALUES ('clm_x', 'share-a', x'09', 'a', 1, "
+                             "'pending', 'maybe', 0, 0, 0)")
+            conn.execute("INSERT INTO share_opens(share_id, hour, n) VALUES ('share-a', ?, 2)", (START,))
+            conn.execute("DELETE FROM shares WHERE id = 'share-a'")       # the tombstone purge cascades
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM share_opens").fetchone()[0], 0)
         finally:
             conn.close()
 

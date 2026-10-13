@@ -14,6 +14,7 @@ from .storage import Blobs
 TOMBSTONE_DAYS = 30
 INACTIVE_DAYS = 180
 LAPSE_GRACE_DAYS = 30
+TRASH_DAYS = 30             # the Trash empties itself after this (16-drive-design §7, C47)
 DB_BACKUP_DAYS = 7          # kept by deploy/scripts/backup.py; published in /config
 UNSHARED_GRACE_S = 2 * 3600
 JOB_KEEP_S = 86400          # finished jobs (tx ids of user deliveries) are forgotten after a day
