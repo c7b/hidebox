@@ -28,7 +28,6 @@ ABSENT = ("server", "x-powered-by", "access-control-allow-origin")
 NOINDEX = {"x-robots-tag": "noindex, nofollow"}
 ROUTES = {
     "/": (APP_CSP, {}),
-    "/es/": (APP_CSP, {}),
     "/s/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),
     "/t": (APP_CSP, NOINDEX),
     "/d/7kq2x9mdh4": (APP_CSP, NOINDEX),
@@ -39,7 +38,6 @@ ROUTES = {
     "/upgrade": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
-    "/es/how": (SITE_CSP, {}),
     "/security": (SITE_CSP, {}),
     "/pricing": (SITE_CSP, {}),
     "/faq": (SITE_CSP, {}),
@@ -61,6 +59,7 @@ ERROR_CACHE = {"cache-control": "no-store"}
 FONT = "/shared/fonts/MutisScript-Regular.woff2"
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
 STATUS_FILES = ("/status.json", "/evidence.json", "/releases.json")
-# Always 404, each through a different route of the Caddyfile (a nested error once leaked Server: Caddy).
-MISSING = ("/evidence-archive-x.json", "/shared/fonts/x.woff2", "/es/nope", "/app/nope.js")
+# Always 404, each through a different route of the Caddyfile (a nested error once leaked Server: Caddy),
+# and the Spanish pages the site no longer has (removed 2026-10-12).
+MISSING = ("/evidence-archive-x.json", "/shared/fonts/x.woff2", "/app/nope.js", "/es/", "/es/how")
 
