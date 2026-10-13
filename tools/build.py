@@ -149,6 +149,9 @@ FONTS = {"Geist-Variable.woff2": "2ffebe993e969069a9789d15164b7715d42491b5835516
 
 
 def copy_fonts(web: Path, dist: Path) -> None:
+    """A tree with the drive (web/app/drive.html) serves its font, and only these exact bytes."""
+    if not (web / "app" / "drive.html").is_file():
+        return
     for name, expected in FONTS.items():
         src = web / "shared" / "fonts" / name
         if not src.is_file():
