@@ -353,6 +353,7 @@ def share_send_tari(t):
     a.wait_for("link-row", 10)
     t.check("Sent by Tari" in a.text("link-row"), "the Links tab says Sent by Tari")
     close_dialog(a)
+    t.check(wait_rule(a, "for-b.txt", "sent"), "the row wears the Tari badge: Sent by Tari")
     # Kind 4: for another Ootle wallet.
     open_share(a, "for-wallet.txt")
     a.click("share-choice", "tari")
