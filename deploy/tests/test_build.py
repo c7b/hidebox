@@ -41,12 +41,10 @@ class BuildTest(unittest.TestCase):
         (web / "shared" / "brand" / "favicon.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"/>\n')
         for css in ("tokens.css", "base.css"):
             (web / "shared" / css).write_text("/* SPDX-License-Identifier: MIT */\n:root { --x: 1; }\n")
-        (web / "site" / "pages" / "es").mkdir(parents=True)
+        (web / "site" / "pages").mkdir(parents=True)
         (web / "site" / "pages" / "how.html").write_text(PAGE)
         (web / "site" / "pages" / "index.html").write_text(PAGE)
         (web / "site" / "pages" / "404.html").write_text(PAGE)
-        (web / "site" / "pages" / "es" / "how.html").write_text(PAGE)
-        (web / "site" / "pages" / "es" / "index.html").write_text(PAGE)
         (web / "site" / "pages" / "security.html").write_text(PAGE)
         (web / "site" / "pages" / "status.html").write_text(PAGE.replace("<title>", '<meta name="robots" content="noindex"><title>'))
         (web / "site" / "css").mkdir()
@@ -79,7 +77,7 @@ class BuildTest(unittest.TestCase):
         self.assertNotIn("<!--#include", how)
         self.assertEqual(how.count("SPDX"), 1, "the partial's own license comment is not repeated")
         self.assertIn("Esmeralda · " + "a" * 40 + " · 2025-10-09", how)
-        for path in ("index.html", "404.html", "es/how/index.html", "status/index.html", "shared/tokens.css",
+        for path in ("index.html", "404.html", "how/index.html", "status/index.html", "shared/tokens.css",
                      "site/js/site.js", "vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm",
                      "app/vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm"):
             self.assertTrue((dist / path).is_file(), path)
@@ -153,8 +151,6 @@ class BuildTest(unittest.TestCase):
         sitemap = (self.tmp / "dist" / "sitemap.xml").read_text()
         self.assertIn("<loc>https://example.test/</loc>", sitemap)
         self.assertIn("<loc>https://example.test/how</loc>", sitemap)
-        self.assertIn("<loc>https://example.test/es/how</loc>", sitemap)
-        self.assertIn("<loc>https://example.test/es/</loc>", sitemap, "the Spanish home, as its canonical says")
         self.assertNotIn("404", sitemap)
         self.assertNotIn("/status", sitemap)
 
