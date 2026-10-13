@@ -3,9 +3,10 @@ import { randomBytes } from '../lib/crypto.js';
 import { identityFromSeed } from '../lib/identity.js';
 import { newRandomKeys, ready } from '../lib/ootle.js';
 import { idbPut } from '../lib/idb.js';
-import { set } from '../lib/store.js';
+import { localGet, localSet, set } from '../lib/store.js';
 import { inboxState } from '../lib/scan.js';
-import { FEE_UT, WalletError, balance, deliver, send } from '../lib/wallet.js';
+import { FEE_UT, WalletError, balance, deliver, ensureGrant, send } from '../lib/wallet.js';
+import { setJudgePass } from '../lib/pow.js';
 import { ApiError } from '../lib/api.js';
 import { installFakeApi } from './fake-api.js';
 import { outputTo } from './outputs.js';
@@ -25,6 +26,23 @@ async function funded(value) {
 }
 
 const DIRECT = { send_mode: 'direct', features: { relay_send: true, direct_send: true } };
+const SPONSORED = { send_mode: 'direct', features: { relay_send: true, direct_send: true, sponsor: true }, courier: { amount_ut: '1000' } };
+const PASS = 'judge-7kq2x9mdh4ab7kq2x9mdh4ab';
+
+// A localStorage for the grant tests where the runtime has none (Node); either way the grant's key
+// starts and ends empty.
+function grantStorage() {
+  const own = globalThis.localStorage;
+  if (!own) {
+    const m = new Map();
+    globalThis.localStorage = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  }
+  localSet('mutis.grant', null);
+  return () => {
+    localSet('mutis.grant', null);
+    if (!own) delete globalThis.localStorage;
+  };
+}
 
 // Offline regression test of the direct-mode transaction; the live run on Esmeralda is gate G1.
 export default [
@@ -146,6 +164,51 @@ export default [
       eq(api.state.submitted.length, 0);
     } finally {
       api.restore();
+    }
+  }],
+  ['ensureGrant(): a funded wallet asks for nothing; a short one asks once a day, and pages asking at once share the request', async () => {
+    const done = grantStorage();
+    const { me, funding } = await funded(2000000);
+    const api = installFakeApi({ substates: new Map([[funding.id, funding]]), config: SPONSORED });
+    try {
+      eq(await ensureGrant(me, SPONSORED), 'funded');
+      eq(api.state.sponsored.length, 0);
+      eq(await ensureGrant(me, SPONSORED, { need: 3000000n }), 'pending', 'short of a pack: asks');
+      eq(await ensureGrant(me, { ...SPONSORED, features: { ...SPONSORED.features, sponsor: false } }), null, 'no sponsor, no grant');
+      eq((await Promise.all([ensureGrant(me, SPONSORED, { need: 3000000n }), ensureGrant(me, SPONSORED, { need: 3000000n })])).join(), 'pending,pending');
+      eq(api.state.sponsored.length, 1, 'one request a day');
+      eq(api.state.sponsored[0], me.wallet.address);
+      const kept = localGet('mutis.grant');
+      localSet('mutis.grant', { ...kept, at: kept.at - 11 * 60000 });
+      eq(await ensureGrant(me, SPONSORED, { need: 3000000n }), 'refused', 'asked ten minutes ago and still short: no grant today');
+      eq(api.state.sponsored.length, 1);
+    } finally {
+      api.restore();
+      done();
+    }
+  }],
+  ['ensureGrant(): a refusal is said and kept for the day; a judge pass saved later asks once more', async () => {
+    const done = grantStorage();
+    const { me } = await funded(1000);
+    const refusing = installFakeApi({ config: SPONSORED, sponsorStatus: 429 });
+    try {
+      eq(await ensureGrant(me, SPONSORED), 'refused');
+      eq(await ensureGrant(me, SPONSORED), 'refused');
+      eq(refusing.state.sponsored.length, 1, 'not asked again the same day');
+    } finally {
+      refusing.restore();
+    }
+    const api = installFakeApi({ config: SPONSORED, judgePasses: new Map([[PASS, 1]]) });
+    try {
+      setJudgePass(PASS);
+      eq(await ensureGrant(me, SPONSORED), 'pending', 'the pass lifts the network limit');
+      eq(api.state.judged.join(), '/api/v1/sponsor');
+      eq(await ensureGrant(me, SPONSORED), 'pending');
+      eq(api.state.sponsored.length, 1);
+    } finally {
+      setJudgePass(null);
+      api.restore();
+      done();
     }
   }],
   ['deliver(): direct from a funded wallet with a memo our server never sees; relay when the wallet is short', async () => {

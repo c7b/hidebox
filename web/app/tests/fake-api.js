@@ -25,7 +25,7 @@ const fail = (status, code, details = {}) => json(status, { error: { code, messa
 // `substates` maps utxo ids to {nonce, enc} for the indexer pass-through (chain/ix) used by wallet.js.
 // `judgePasses` maps pass codes to uses left. `txDecision`: what transactions/{id}/result answers
 // ('Commit', a {Reject: …} object, or null for "not final yet").
-export function installFakeApi({ mirror = [], config = {}, powDifficulty = 2, substates = new Map(), judgePasses = new Map(), txDecision = 'Commit', epoch = 12000 } = {}) {
+export function installFakeApi({ mirror = [], config = {}, powDifficulty = 2, substates = new Map(), judgePasses = new Map(), txDecision = 'Commit', epoch = 12000, sponsorStatus = 202 } = {}) {
   const realFetch = globalThis.fetch;
   const state = { uploads: new Map(), items: new Map(), shares: new Map(), tickets: new Map(), drops: new Map(), jobs: new Map(), requests: [], courier: [], submitted: [], judged: [], sponsored: [] };
 
@@ -220,7 +220,7 @@ export function installFakeApi({ mirror = [], config = {}, powDifficulty = 2, su
       const denied = powGate(req, b, { spend: true, purpose: 'sponsor' });
       if (denied) return denied;
       state.sponsored.push(b.wallet_address);
-      return json(202, { job_id: id22() });
+      return sponsorStatus === 202 ? json(202, { job_id: id22() }) : fail(sponsorStatus, 'rate_limited');
     }],
     ['GET', /^\/chain\/utxos$/, (req) => {
       const u = new URL(req.url);
