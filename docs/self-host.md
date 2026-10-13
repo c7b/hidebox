@@ -32,29 +32,49 @@ What runs in production (Debian 13, one VPS), in [`deploy/README.md`](../deploy/
 | walletd | `tari_ootle_walletd` 0.45.0 on `127.0.0.1:5100`, as user `drive` | the official release binary |
 | timers | cleanup (every minute), health, evidence, database and wallet backups | `deploy/systemd/` |
 
-Steps, as root on the server (each script says what it changes and is safe to re-run):
+Steps on a fresh Debian 13 server, from your own login with sudo (each script says what it changes
+and is safe to re-run). That login is the operator: with root, the only account besides `drive` that
+may reach walletd and the API port.
 
-1. **Packages:** `caddy`, `nodejs` (no npm), `python3`; `chromium` only for the browser tests.
-2. **walletd:** install the official `tari_ootle_walletd` for the current Esmeralda release, create its
-   accounts (`service`, `sponsor`) and fund them: [`deploy/ootle/setup-accounts.md`](../deploy/ootle/setup-accounts.md).
-   Without walletd, turn the chain features off in the config (`features.drops`, `relay_send`,
-   `demo_pay`, `decoys`, `seallog` = false) and leave `mutis-chain` disabled.
-3. **Provision:** `sudo bash deploy/scripts/provision.sh` creates the users and directories, installs
-   the config only if it is missing, makes `/etc/mutis/secret.key` on the server, installs the units,
-   the Caddyfile and the logging settings, and opens ports 80 and 443.
-4. **Configure** `/etc/mutis/mutis.toml` (every key is in
-   [`deploy/config/mutis.toml.example`](../deploy/config/mutis.toml.example)): `public_origin`,
-   `memo_origins` (every origin you ever served from: courier memos carry it on chain), `gates`
-   (`send_mode`, `amount_proof`), `features`, `ootle.mirror_start_epoch` (an epoch of the current
-   chain, so the mirror doesn't scan its whole history). Then `sudo mutis-admin check-config`.
-5. **Deploy** from a checkout: `deploy/scripts/deploy.sh <git-ref>` runs the tests on the server,
-   builds, uploads one tarball, migrates the database, switches the release atomically and runs a
-   smoke test (it rolls back if that fails). Then
-   `sudo systemctl enable --now mutis-api mutis-chain mutis-cleanup.timer mutis-health.timer mutis-evidence.timer`.
-6. **SealLog (optional):** publish the template's exact bytes and create your own log with
+1. **Packages and the firewall:** `sudo apt-get install --no-install-recommends caddy nodejs python3 ufw
+   chromium fonttools python3-brotli woff2 ffmpeg` (provision checks for every one of them; Chromium,
+   fonttools, woff2 and ffmpeg serve the test and asset tools). No npm, npx, pnpm, yarn or pip:
+   provision and its privilege self-test fail while any is present. Then `sudo ufw limit 22/tcp && sudo ufw enable` (your SSH port, if it isn't 22).
+2. **A copy of the repository and the config:** `git clone https://github.com/c7b/mutis` on the server,
+   then `sudo install -d /etc/mutis && sudo cp mutis/deploy/config/mutis.toml.example /etc/mutis/mutis.toml`
+   and set `public_origin` (the example names our server; Caddy gets a certificate for the host you
+   write) and `memo_origins` (every origin you ever served from: courier memos carry it on chain).
+3. **Provision:** `sudo bash mutis/deploy/scripts/provision.sh` creates the accounts (`mutis` runs the
+   API; `drive` runs walletd and the chain worker; `build` runs the tests and compiles, and can read no
+   secret), the directories, `/etc/mutis/secret.key`, the units, the Caddyfile and the logging
+   settings; it opens ports 80 and 443 and adds loopback guards (only root, you and `drive` reach
+   walletd's port 5100; only those and Caddy reach the API's 8787), then runs the privilege self-test.
+   Without walletd it says so and skips it: set `features.drops`, `relay_send`, `demo_pay`, `decoys`
+   and `seallog` to false and leave `mutis-chain` disabled.
+4. **walletd (for the Tari features):** put the official `tari_ootle_walletd` for the current Esmeralda
+   release at `/opt/tari/bin/tari_ootle_walletd` (check its hash against the release). As `drive`
+   (`sudo -iu drive`): write a random keyring password,
+   `(umask 077 && head -c 30 /dev/urandom | base64 | tr -d '/+=' > ~/wallet/.keyring-pass)`, and start
+   walletd once in the foreground so it writes its default config:
+   `/opt/tari/bin/tari_ootle_walletd --network esme --base-path ~/wallet --authentication none run`.
+   It stops with "OS keyring not supported on this device"; that is expected. Run provision again: it
+   copies the password into a root-only credential and starts `walletd.service`, which hands it over
+   on every start (`deploy/ootle/run-walletd.sh`). Then create and fund the accounts (`service`,
+   `sponsor`): [`deploy/ootle/setup-accounts.md`](../deploy/ootle/setup-accounts.md).
+5. **Configure** the rest of `/etc/mutis/mutis.toml` (every key is in
+   [`deploy/config/mutis.toml.example`](../deploy/config/mutis.toml.example)): `gates` (`send_mode`,
+   `amount_proof`), `features`, `ootle.mirror_start_epoch` (an epoch of the current chain, so the
+   mirror doesn't scan its whole history). Then `sudo mutis-admin check-config`.
+6. **Deploy** from your workstation's checkout (git and Python 3.13 there; on the server, your SSH
+   login needs sudo without a password prompt): `deploy/scripts/deploy.sh --host <ssh host> <git-ref>`
+   runs the tests on the server as `build`, builds, uploads one tarball, migrates the database,
+   switches the release atomically and runs a smoke test (it rolls back if that fails). Then, on the
+   server, `sudo systemctl enable --now mutis-api mutis-cleanup.timer mutis-health.timer mutis-evidence.timer`,
+   and `mutis-chain` too when walletd runs.
+7. **SealLog (optional):** publish the template's exact bytes and create your own log with
    `deploy/ootle/publish-template.sh check | publish | instantiate <template>`, then set
    `ootle.seallog_component` and `features.seallog = true` and deploy again.
-7. **Check it:** `/status.json` (every check green once the first canary is verified, within the
+8. **Check it:** `/status.json` (every check green once the first canary is verified, within the
    hour), `python3 -I tests/e2e/test_headers.py --origin <yours>`, and
    `python3 -I tools/verify-deploy.py <yours> <commit>`.
 

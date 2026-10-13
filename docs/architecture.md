@@ -62,7 +62,12 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
    transaction shaped like the app's own send.
 4. **Server → visitor's IP.** Seen while connected, hashed with a key that lives one day in memory
    for rate limits, never written: no access log, an error log with every request field removed,
-   fixed event codes in the API's and worker's logs (`server/mutis/logsafe.py`).
+   fixed event codes in the API's and worker's logs (`server/mutis/logsafe.py`). The price of that
+   key never touching disk: a restart of `mutis-api` (a deploy, a reboot, a crash) forgets every
+   per-network and per-locker counter (rate limits, the daily caps on sponsor grants, demo payments,
+   registrations and drop uploads, proof-of-work escalation, wrong-password counts), so a visitor
+   starts that day afresh. The money ceilings don't reset: the daily budgets every grant, delivery
+   and demo payment draws on are rows in SQLite (`server/mutis/budgets.py`).
 
 ## Who sees what
 
