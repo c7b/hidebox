@@ -1,0 +1,19 @@
+== purge 2026-10-13T09:09:42Z (build-1 stage, after E-18/E-19/E-21 on 67fdb06)
+plan (by id, from a read-only diff against the pre-E2E snapshot): 3 new items, 0 drops, 0 invoices, 0 payments, 0 identities; passes 20 -> 20
+check before the purge:
+[{"id": "CtDy7LBIelOrzasFLeBG2w", "hour_utc": "2026-10-13 09:00", "anonymous": true, "state": "deleted", "named_in_meta": false}, {"id": "c8te3X36riM-P4zUbEGEmg", "hour_utc": "2026-10-13 09:00", "anonymous": true, "state": "deleted", "named_in_meta": false}, {"id": "mVDhH6qh5_slsq3FLJj_uQ", "hour_utc": "2026-10-13 09:00", "anonymous": true, "state": "ready", "named_in_meta": true}]
+decision: take down the two E-19 items (anonymous, already burned); keep mVDhH6qh5_slsq3FLJj_uQ, the hourly test file the server names in meta (made by the canary between the snapshots)
+removed
+removed
+== post-purge 2026-10-13T09:09:49Z
+judge passes 20
+security drop 3w7m8k2v5t active
+items 226 -> 229 (rows stay; two marked removed); drops 70 -> 70 ; identities 102 -> 102
+== /api/v1/config e2e_expiry_s
+0
+== /status.json
+overall amber ['budget.sponsor.evidence.90'] updated 1791882431
+== /api/v1/stats/wall
+{"lockers":[{"size":1,"exit":"once"},{"size":0,"exit":"time"},{"size":0,"exit":"views"},{"size":0,"exit":"time"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":1,"exit":"once"}],"quiet":false,"canary":{"sealed_min":6,"size_stored":4112}}
+== /api/v1/health
+{"ok":true,"version":"67fdb06e2bde2eb0ef3098e4e2d5271a99a8086b","time":1791882590}

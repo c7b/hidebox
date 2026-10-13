@@ -1,0 +1,27 @@
+== checks on the server as build (the server's Python)
+Ran 200 tests in 47.098s
+
+OK (skipped=5)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 0 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "112bb50f", "files": 122, "git_sha": "67fdb06e2bde2eb0ef3098e4e2d5271a99a8086b", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 6, "vendored_checked": 6, "version": "67fdb06"}
+== upload and activate 67fdb06e2bde2eb0ef3098e4e2d5271a99a8086b-c112bb50f
+sidecar: hello ok, pinned ootle-wasm
+schema version 3
+switched current → releases/67fdb06e2bde2eb0ef3098e4e2d5271a99a8086b-c112bb50f
+restarted mutis-api
+restarted mutis-chain
+Caddyfile changed: validated and reloaded
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: 67fdb06e2bde2eb0ef3098e4e2d5271a99a8086b-c112bb50f manifest 84860d2fcdfd… in tx 93f45f014067adc63392c4b27e41869356d03663083e19dd38d55095a20c63f5
+== deployed 67fdb06e2bde2eb0ef3098e4e2d5271a99a8086b-c112bb50f to https://srv2052606.hstgr.cloud
