@@ -1,0 +1,11 @@
+core:0
+sidecar:0
+gate-chain:0
+server:0
+deploy:0
+lint:0
+copy:0
+site:0
+ui:1
+all-finished
+ui-receipts:0   (the receipts flow again, after copying template/seal_log/tests/vectors into the workspace)

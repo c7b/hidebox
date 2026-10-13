@@ -1,0 +1,9 @@
+== gate-chain: python3 -I web/app/tests/headless.py --page /app/tests/gates/chain.html --indexer --fragment mode=addr
+LOCKER otl_esm_1lj9zka6z93z… (throwaway keys made by the gate)
+WALLET otl_esm_152skud3j34d… (throwaway keys made by the gate)
+SAFETY 🚑🎻💎🎪🎷🚑🍈📎🗽🎰🐽🐊 f05c b34f 58f0 19c9 e053 916d
+MEMO https://srv2052606.hstgr.cloud/t#<redacted: the gate's throwaway link key>
+MEMO_BYTES 201
+EXPECT_SHARE z0z49cMZGUvoSRBltZpspw
+EXPECT_S <redacted>
+title: GATE PASS  (0.7s)
