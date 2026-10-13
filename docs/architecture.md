@@ -51,8 +51,8 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
    key, the per-link secret after the `#`, the password, the locker seed and everything derived from
    it never cross this line. The server receives ciphertext, hashes (of access tokens and login
    keys), padded sizes, exit rules and a locker id. See "Who sees what" below.
-2. **API → chain worker.** They share one SQLite database (group `mutis`, mode 0660) and nothing
-   else. The API queues work (a relay send, an invoice to watch); the worker performs it with the
+2. **API → chain worker.** They share one SQLite database (group `mutis`, mode 0660) and one
+   HTTP path: the worker uploads the hourly canary through the API's loopback port, like any client. The API queues work (a relay send, an invoice to watch); the worker performs it with the
    wallet and writes the result back. The API can't reach the wallet, so a compromised API can at
    most queue the jobs the handlers already allow (bounded by the daily budgets).
 3. **Server → Tari.** The chain worker and the API talk to the two Tari-run public indexers over
@@ -65,9 +65,10 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
    fixed event codes in the API's and worker's logs (`server/mutis/logsafe.py`). The price of that
    key never touching disk: a restart of `mutis-api` (a deploy, a reboot, a crash) forgets every
    per-network and per-locker counter (rate limits, the daily caps on sponsor grants, demo payments,
-   registrations and drop uploads, proof-of-work escalation, wrong-password counts), so a visitor
-   starts that day afresh. The money ceilings don't reset: the daily budgets every grant, delivery
-   and demo payment draws on are rows in SQLite (`server/mutis/budgets.py`).
+   registrations and drop uploads, proof-of-work escalation, wrong-password tries per network on
+   password-only links), so a visitor starts that day afresh. A link's own wrong-password count and
+   lock are rows in SQLite and survive. The money ceilings don't reset either: the daily budgets every
+   grant, delivery and demo payment draws on are rows in SQLite (`server/mutis/budgets.py`).
 
 ## Who sees what
 
@@ -98,7 +99,7 @@ The long form, with every party and every column the database keeps, is on `/how
    ├─► recipient opens: GET /s/{id} (state) → POST /s/{id}/open with X-Mutis-Access (derived from the
    │   secret) → wrapped key + ciphertext (or a short-lived download ticket) → decrypts in the browser
    │
-   └─► exit: the last open, the expiry (stored rounded up to the hour), a deletion or a takedown
+   └─► exit: the last open, the expiry (stored rounded up to the hour when it's an hour or more away), a deletion or a takedown
          → the ciphertext is deleted within a minute (after a download in progress ends)
          → a note (state, day) stays for the published number of days
          → the exit record goes into the next SealLog checkpoint; GET /s/{id}/exit returns its proof

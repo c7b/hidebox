@@ -51,8 +51,12 @@ may reach walletd and the API port.
    walletd's port 5100; only those and Caddy reach the API's 8787), then runs the privilege self-test.
    Without walletd it says so and skips it: set `features.drops`, `relay_send`, `demo_pay`, `decoys`
    and `seallog` to false and leave `mutis-chain` disabled.
-4. **walletd (for the Tari features):** put the official `tari_ootle_walletd` for the current Esmeralda
-   release at `/opt/tari/bin/tari_ootle_walletd` (check its hash against the release). As `drive`
+4. **walletd (for the Tari features):** put the official `tari_ootle_walletd` 0.45.0, the version this
+   release runs, at `/opt/tari/bin/tari_ootle_walletd`: download
+   `tari_ootle_walletd-0.45.0-9c62606-linux-x86_64` from
+   <https://github.com/tari-project/tari-ootle/releases/tag/v0.45.0>, check that `sha256sum` prints
+   `8cfdae03cc7dc7987752b2f1ae94046fc5c15258e1e26e0587977f7230712fae` (the release's own `.sha256`
+   file says the same), then `sudo install -D -m 0755 <file> /opt/tari/bin/tari_ootle_walletd`. As `drive`
    (`sudo -iu drive`): write a random keyring password,
    `(umask 077 && head -c 30 /dev/urandom | base64 | tr -d '/+=' > ~/wallet/.keyring-pass)`, and start
    walletd once in the foreground so it writes its default config:

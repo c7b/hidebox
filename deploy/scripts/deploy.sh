@@ -1,11 +1,12 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Deploy a git ref to the server (spec §15.5). Runs on the workstation, from the repository:
+# Deploy a git ref to the server (spec §15.5). Runs on your workstation, from the repository:
 #   deploy/scripts/deploy.sh <git-ref>             a committed ref, built from `git archive` (clean);
 #                                                  release id <sha>-c<content id>
 #   deploy/scripts/deploy.sh --working-tree        the working tree as it is (staging; release id
 #                                                  <sha12>-dirty-<time>, not verifiable by verify-deploy)
-# Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default the server).
+# Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default the server,
+# this deployment's SSH alias for its server).
 #
 # Steps: unit tests, lint and copy check on the server as `build` with the server's Python 3.13 → build
 # (here) → upload one tarball over one multiplexed SSH connection → on the server, activate-release.sh
