@@ -54,9 +54,10 @@ viewer, is the product code unchanged.
 | `drop-widget.js` | the home page's entry: mounts the widget into `#mutis-drop` (spec §3.4.4) with its first dictionary and stylesheet |
 | `app.html`, `view.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`) |
 | `ui/widget.js`, `zone.js`, `sealing.js`, `card.js`, `rules.js`, `noise.js`, `recent.js` | the drop widget: zone, sealing progress (the ¡ mark), the locked card with its noise strip, the Change panel, recent drops |
-| `ui/view.js` | the viewer: every state of spec §12.3.2, previews (lib/preview.js), the program warning, `/t` deliveries |
+| `ui/scene.js` | the head of every app screen: the ghost in the pose of its rule (cloned from the page's `#ghost-tpl`), the screen's line and the ghost's sentence; Tari™ words in Tari purple |
+| `ui/view.js` | the viewer and the gone page: every state of spec §12.3.2 on the ghost, the goodbye receipt (on chain or pending), previews (lib/preview.js), the program warning, `/t` deliveries |
 | `ui/known.js` | "What we know about this link", the glass box |
-| `ui/locker.js`, `keyflow.js`, `locker-ctx.js` | `/locker`, the key (save, restore, the one-time prompt), opening a locker only when something needs it |
+| `ui/locker.js`, `keyflow.js`, `locker-ctx.js` | `/locker` (first screen: its three things by name; a drop link asks nothing first), the key (save, restore one tap away, the one-time prompt with Later), opening a locker only when something needs it |
 | `ui/droppage.js`, `inbox.js`, `send.js`, `watch.js`, `upgrade.js`, `verify.js` | the other app pages |
 | `ui/core.js`, `marks.js`, `errors.js`, `shell.js`, `more.js` | shared pieces: icons, durations, toasts; amounts, addresses, safety codes; every error code's copy; page start-up; loading the rest of the strings and styles |
 | `css/widget.css`, `css/parts.css`, `css/app.css` | what a first drop needs; the components beyond it; app pages. Shared tokens only; `md-` for the widget, `a-` for app pages and shared components |

@@ -237,8 +237,8 @@
  "viewer.pw_working": "Checking the word in this tab…",
  "viewer.pw_wrong": "That's not it. It stays locked.",
  "viewer.pw_wrong_left": {
-  "one": "That's not it. One more try, then a wait of {wait}.",
-  "other": "That's not it. {count} more tries, then a wait of {wait}."
+  "one": "That's not it. One try left, then a wait of {wait}.",
+  "other": "That's not it. {count} tries left, then a wait of {wait}."
  },
  "viewer.pw_wrong_pause": "That's not it. The next try has to wait a little.",
  "viewer.wait": "Too many tries. Wait {wait}.",
