@@ -173,7 +173,7 @@ def locker_identity(page) -> tuple[list[str], str]:
     return safety_emoji(page, "locker-safety"), address
 
 
-@scenario("E-08", "Locker: lazy creation from Leave me a file; key saved; restored in a clean browser")
+@scenario("E-08", "Locker: lazy creation from Make my drop link (Get a file from someone); key saved; restored in a clean browser")
 def e08(t: T) -> None:
     a = t.actor()
     make_drop_link(t, a, "E2E E-08")
