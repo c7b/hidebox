@@ -346,6 +346,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
   .files[data-plain] .table td:first-child { display: table-cell; padding-left: 1rem; }
   .files[data-plain] .table td:nth-child(2) { padding-left: 0.5rem; }
   .files[data-plain] .file-name { max-width: calc(100vw - 9rem); }
+  .files[data-plain] .table td:last-child { padding-right: 1rem; }
 }
 .files[hidden] { display: none; }
 /* The folder viewer: on the link page it takes the whole page; in Received it sits in a dialog. */

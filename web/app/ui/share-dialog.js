@@ -454,7 +454,7 @@ function linksPanel(panel) {
   panel.replaceChildren(h('div', { class: 'item-group links-list' }, rows));
 }
 
-function withTabs(body) {
+function withTabs(body, onTab) {
   const count = activeShares(S.item).length;
   const newId = id('tab-new');
   const linksId = id('tab-links');
@@ -465,7 +465,10 @@ function withTabs(body) {
   const list = h('div', { class: 'tabs-list', 'data-stretch': '' },
     h('button', { class: 'tabs-trigger', type: 'button', 'aria-controls': newId, 'data-state': on ? 'inactive' : 'active', 'data-testid': 'share-tab-new' }, t('share.tab_new')),
     h('button', { class: 'tabs-trigger', type: 'button', 'aria-controls': linksId, 'data-state': on ? 'active' : 'inactive', 'data-testid': 'share-tab-links' }, t('share.tab_links', { count })));
-  list.addEventListener('sh:tab', (e) => { S.tab = e.detail.tab.getAttribute('aria-controls') === linksId ? 'links' : 'new'; });
+  list.addEventListener('sh:tab', (e) => {
+    S.tab = e.detail.tab.getAttribute('aria-controls') === linksId ? 'links' : 'new';
+    onTab();
+  });
   return h('div', { class: 'tabs' }, list, panelNew, panelLinks);
 }
 
@@ -493,7 +496,13 @@ function render() {
   steps[S.step](body, footer);
   if (S.error) body.append(S.error.e ? errorAlert(S.error.e) : alert({ glyph: 'triangle-alert', variant: 'destructive', title: S.error.text, role: 'alert' }));
   const description = { who: t('share.who'), opens: t('share.opens'), tari: t('share.who.tari_d'), sending: t('tari.sending'), result: null }[S.step];
-  const tabs = S.step === 'who' && activeShares(S.item).length ? withTabs(body) : null;
+  // On the Links tab, Next (to a new link's rule) steps aside; Cancel closes.
+  const syncFooter = () => {
+    const next = footer.querySelector('[data-testid="share-next"]');
+    if (next) next.hidden = S.tab === 'links';
+  };
+  const tabs = S.step === 'who' && activeShares(S.item).length ? withTabs(body, syncFooter) : null;
+  if (tabs) syncFooter();
   box.dataset.step = S.step;
   box.replaceChildren(
     h('div', { class: 'dialog-header' },
