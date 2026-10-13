@@ -36,20 +36,26 @@ What lane app1 (16-drive-design §15 steps 3, 5, 7, 9) built, and what the other
 `restore-text`, `restore-passphrase`, `restore-submit` (Open my drive), `drive-make`, `drive-open`,
 `invoice-address`, `invoice-status`, `pay-step`, `demo-pay`, `pay-browser`, `pack-<id>` (Storage).
 
-## What the client expects from the server lane (step 4 and 6)
+## What the client uses of the server lane (steps 4 and 6)
 
 The UI flows run against `server --dev` with `ui/tests/drivefake.py` in front of it, which fakes
-exactly these shapes; it switches itself off once `/config` reports `features.folders`.
+exactly lane S's shapes (`docs/api.md`, the lane S block); it leaves everything to the server once
+`/config` reports `features.folders`, except SealLog's exit receipts (dev runs with SealLog off).
+Checked on 2026-10-13 against `lane/server` 9ed264b with folders on in `dev.py`: the drive's flows pass
+there too (see the lane's PROGRESS).
 
 - `/config`: `features.folders`, `folders.max_upload_files`, `retention.trash_days`,
   `items.max_delete_after_days`.
+- `GET /me`: `quota.trash_bytes` (Storage shows "In the trash" so the parts add up to what's used).
 - `GET /me/items?view=all` lists every kept item flat with `kind`, `parent_id`, `parent_wrap`,
-  `trashed_at`; items under a trashed folder may be listed or not (the client hides an item whose
-  folder it doesn't hold). `view=trash` lists trashed items; `view=gone` lists items that left with
-  `meta_ct`, `header`, `owner_wrap`, `exit_hour` and, please, `exit` in the shape of
-  `/s/{id}/exit` (`checkpoint.tx_id` once committed, or `proof.pending`); without it the client asks
-  `/s/{id}/exit` of the item's first link, which only items that had a link have.
-- `POST /folders`, `PATCH /items/{id}` with `parent_id`/`parent_wrap`, `meta_ct`, `trashed`,
-  `expires_at` (null clears it), `POST /uploads` with `parent_id`/`parent_wrap`.
+  `trashed_at`; the client hides an item whose folder it doesn't hold. `view=trash` lists trashed items;
+  `view=gone` lists items that left with `header`, `meta_ct`, `owner_wrap`, `exit_hour`, `reason` and
+  `exit_receipt` (files only); for those, Activity asks `GET /seallog/proof/{id}?kind=exit` once per
+  page load and shows "We wrote that on the Tari chain." with the checkpoint's tx, or the wait (C42).
+- `POST /folders`, `PATCH /items/{id}` with `parent_id`/`parent_wrap`, `meta_ct`, `trashed` (alone),
+  `expires_at` (null clears it), `DELETE /items/{id}` on a folder, `POST /uploads` with
+  `parent_id`/`parent_wrap`.
 - Shares in `/me/items`: `opens` as `[[hour, n], …]` (step 6) is shown per hour when present;
   `ended_at` or `ended_hour` dates a link's end in Activity; `paid.claims[].paid_hour` lists payments.
+- After the merge, `server/mutis/dev.py` should turn on `features.folders` (and `pay_to_open`) for the
+  UI flows, so they run against the real routes; the fake then steps aside by itself.

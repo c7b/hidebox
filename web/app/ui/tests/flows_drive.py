@@ -26,6 +26,14 @@ def make_drive(t, device="desktop", fake=None, **kw):
     return page, fake
 
 
+def eventually(page, expr, timeout=5):
+    """A check on something the page does a moment later (focus after a dialog opens): its value, or False."""
+    try:
+        return page.wait(expr, timeout)
+    except TimeoutError:
+        return False
+
+
 def table_names(page):
     return page.eval("[...document.querySelectorAll('[data-testid=\"file-row\"], [data-testid=\"folder-card\"]')]"
                      ".filter((e) => !e.hidden).map((e) => e.dataset.name)")
@@ -409,7 +417,20 @@ def drive_move_rename(t):
         a.click("folder-create")
         a.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === {json.dumps(name)})", 30)
     shared = a.eval("[...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === 'Shared box').dataset.id")
-    if not fake.native:   # the folder's link is lane A2's dialog and lane S's folder shares; here, a link the server lists
+    if fake.native:       # lane S's folder links: one made with the product's own lib (lane A2's dialog does the same)
+        a.eval("""(async () => {
+          const { loadIdentity } = await import('/app/lib/identity.js');
+          const session = await import('/app/lib/session.js');
+          const { listAll } = await import('/app/lib/api-drive.js');
+          const { openRow } = await import('/app/lib/folder.js');
+          const { createLink } = await import('/app/lib/seal.js');
+          const identity = await loadIdentity({ lazy: true });
+          await session.ensureSession(identity);
+          const rows = await listAll({ view: 'all' }, session.authHeaders());
+          const it = await openRow(identity.vaultKey, rows.find((r) => r.item_id === %s));
+          await createLink({ itemId: it.id, headerHash: it.headerHash, fk: it.fk, headers: session.authHeaders() }, { maxViews: 3 });
+          return true; })()""" % json.dumps(shared), timeout=60)
+    else:                 # the fake: a link the server lists
         fake.folders[shared]["shares"] = [{"id": "Q" * 22, "mode": "link", "state": "active", "created_hour": 0, "expires_at": None,
                                            "max_views": 3, "views_used": 0, "views_left": 3}]
     a.goto(t.origin + "/drive")
@@ -453,9 +474,13 @@ def drive_trash_restore(t):
     a.wait_for("trash-dialog", 10)
     desc = a.text("trash-dialog")
     t.check("Its links stop working now. You can bring it back for 30 days." in desc, f"C47 before it goes ({desc[:120]})")
-    t.check(a.eval("document.activeElement?.dataset.cancel !== undefined"), "the alert focuses Cancel first")
+    t.check(eventually(a, "document.activeElement?.dataset.cancel !== undefined"), "the alert focuses Cancel first")
     a.click("trash-go")
     a.wait("![...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === 'notes.txt')", 30)
+    a.click("nav-storage")
+    a.wait_for("storage-meter", 30)
+    legend = a.eval("document.querySelector('.legend')?.textContent || ''")
+    t.check("In the trash" in legend, f"Storage counts the trash until it empties ({legend[:100]})")
     a.click("nav-trash")
     a.wait_for("trash-row", 30)
     t.check(a.text("trash-row").startswith("notes.txt") and "Leaves" in a.text("trash-row"), "the trash lists it, with the day it leaves")

@@ -22,6 +22,23 @@
 - Self-hosting guide, architecture and the upgrade drill name walletd 0.46.0; the drill says to
   upgrade before pending results age out (about one or two epochs).
 
+<!-- lane app1 -->
+## 2026-10-13: the drive's app, steps 3, 5, 7 and 9 (research 16-drive-design §15)
+
+- The shadcn/ui (new-york) port in `web/shared/ui/` (tokens, components, the Lucide sprite) and
+  `web/app/ui/behaviors.js`, with Geist self-hosted (`web/shared/fonts/geist/`, OFL) and pinned by its
+  hash; the font test now asks for Geist only on `/drive`.
+- `/drive` (`app/drive.html`): the shell (sidebar, search in this browser, Upgrade, theme), Make my drive
+  (the key at once, the Ootle keys made only when something needs them) and Open my drive (key file or
+  pasted key), folders with breadcrumbs, the storage meter with Get more space (today's packs and invoice,
+  restyled), and the empty drive with its Tari address.
+- Uploads of files and folders (the picker and dropped folders, every batch read), Move (with "This
+  shares it too."), Rename, the Trash with Undo and Bring back, and Delete it after… with its Leaves badge.
+- Activity per file and for the whole drive (opens per hour, links made and ended, files that left with
+  their exit receipt from `/seallog/proof/{id}?kind=exit`), and What our server knows. Folders, the Trash
+  and Delete it after stay behind `features.folders`.
+<!-- /lane app1 -->
+
 ## 2026-10-13: the repository is public (docs/review/fix-log.md, "The public step, done")
 
 - `c7b/mutis` is public, recreated from the rewritten history: the commits from before the rewrite

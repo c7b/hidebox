@@ -29,3 +29,6 @@ export async function listAll(opts, headers, { maxPages = 400 } = {}) {
 export const createFolder = (body, headers) => request('POST', '/folders', { json: body, headers });
 // {parent_id?, parent_wrap?, meta_ct?, trashed?, expires_at?}
 export const patchItem = (itemId, body, headers) => request('PATCH', `/items/${enc(itemId)}`, { json: body, headers });
+// The exit receipt of a file that left (`view=gone` rows with exit_receipt): {leaf_index, proof, checkpoint}
+// against the newest committed root, or {proof: {pending: true}} until the next checkpoint.
+export const exitProof = (itemId) => request('GET', `/seallog/proof/${enc(itemId)}?kind=exit`);

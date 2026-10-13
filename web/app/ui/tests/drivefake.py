@@ -8,7 +8,8 @@ Fetch, Request stage), forwards what the dev server knows, and keeps the rest in
 annex's shapes: POST /folders, PATCH /items/{id} {parent_id, parent_wrap, meta_ct, trashed, expires_at},
 GET /me/items?view=all|trash|gone&parent=, uploads with parent_id/parent_wrap, /config with
 features.folders on. Every byte the page encrypts is the product code's; only the server's bookkeeping of
-the tree is faked. When the dev server itself reports features.folders, attach() does nothing.
+the tree is faked. When the dev server itself reports features.folders, attach() leaves it all to the
+server, except SealLog's exit receipts for a fake built with seallog=True (dev runs with SealLog off).
 """
 import base64
 import json
@@ -28,7 +29,7 @@ def _b64id():
 class DriveFake:
     def __init__(self, origin, trash_days=30, max_days=30, seallog=False):
         self.origin = origin.rstrip("/")
-        self.seallog = seallog       # receipts on (dev runs with SealLog off): gone rows carry `exit`
+        self.seallog = seallog       # receipts on (dev runs with SealLog off): /seallog/proof/{id}?kind=exit answers
         self.exit_tx = None          # None: every exit waits for the next checkpoint; a tx id: committed in it
         self.trash_days, self.max_days = trash_days, max_days
         self.folders = {}      # id -> row
@@ -47,11 +48,16 @@ class DriveFake:
         return self.native
 
     def attach(self, page):
-        """Proxy this page's API calls (all pages of one drive share one fake)."""
+        """Proxy this page's API calls (all pages of one drive share one fake). Once the dev server has
+        folders, only SealLog's exit receipts stay faked (dev runs with SealLog off), when asked for."""
         if self.server_has_folders():
-            return self
+            if not self.seallog:
+                return self
+            patterns = [f"{self.origin}{API}/config", f"{self.origin}{API}/seallog/proof/*"]
+        else:
+            patterns = [f"{self.origin}{API}/*"]
         page.on("Fetch.requestPaused", lambda p: self._paused(page, p))
-        page.cmd("Fetch.enable", {"patterns": [{"urlPattern": f"{self.origin}{API}/*", "requestStage": "Request"}]})
+        page.cmd("Fetch.enable", {"patterns": [{"urlPattern": u, "requestStage": "Request"} for u in patterns]})
         return self
 
     def _forward(self, req, path=None, body=None):
@@ -95,9 +101,15 @@ class DriveFake:
             body = json.loads(req["postData"]) if req.get("postData") else {}
         except ValueError:
             body = {}
+        if self.native and not (path == "/config" or path.startswith("/seallog/proof/")):
+            return None
         if method == "GET" and path == "/config":
             status, raw, headers = self._forward(req)
             cfg = json.loads(raw)
+            if self.native:   # the server's own folders block; SealLog receipts on
+                cfg["features"]["seallog"] = True
+                cfg["seal_log"] = {**cfg.get("seal_log", {}), "component": "component_" + "fd" * 32}
+                return status, cfg, {"Content-Type": "application/json"}
             cfg.setdefault("features", {})["folders"] = True
             cfg["folders"] = {"max_depth": 16, "max_children": 1000, "max_tree": 1000, "max_items": 10000,
                               "max_upload_files": 500, "zip_max_bytes": 2 << 30, "zip_max_bytes_phone": 500 << 20}
@@ -148,6 +160,25 @@ class DriveFake:
             return status, raw, headers
         if method == "GET" and path == "/me/items":
             return self._list(req, query)
+        if method == "GET" and path == "/me":     # the server lane's quota.trash_bytes: the trash counts until it empties
+            status, raw, headers = self._forward(req)
+            if status != 200:
+                return status, raw, headers
+            me = json.loads(raw)
+            me["quota"]["trash_bytes"] = sum(self.known.get(i, {}).get("size_stored", 0) for i, o in self.over.items() if o.get("trashed_at"))
+            return 200, me, {"Content-Type": "application/json"}
+        if method == "GET" and path.startswith("/seallog/proof/") and (query.get("kind") or [""])[0] == "exit":
+            self.calls.append((method, path))
+            item = path.split("/")[3]
+            if not self.seallog or (item not in self.gone and not self.native):
+                return 404, {"error": {"code": "not_found", "message": "This file hasn't left.", "details": {}}}, None
+            if self.exit_tx:   # committed: the shape of handlers/seallog.py _proof() with checkpoint_json()
+                proof = {"leaf_index": 7, "proof": ["ab" * 32] * 6, "checkpoint": {"index": 3, "tree_size": 64, "tx_id": self.exit_tx}}
+            else:
+                proof = {"leaf_index": None, "proof": {"pending": True, "next_checkpoint_eta": int(time.time()) + 600}, "checkpoint": None}
+            now = int(time.time())
+            hour = self.gone[item]["exit_hour"] if item in self.gone else now - now % 3600
+            return 200, {"item_id": item, "kind": "exit", "exit_hour": hour, "leaf_hash": "cd" * 32, **proof}, None
         return None
 
     def _leave(self, item):
@@ -167,12 +198,10 @@ class DriveFake:
     def _list(self, req, query):
         view = (query.get("view") or ["all"])[0]
         parent = (query.get("parent") or [None])[0]
-        if view == "gone":
-            rows = [dict(r) for r in self.gone.values()]
-            if self.seallog:
-                for r in rows:
-                    r["exit"] = ({"leaf_index": 7, "checkpoint": {"index": 3, "tree_size": 64, "tx_id": self.exit_tx}} if self.exit_tx
-                                 else {"leaf_index": None, "checkpoint": None, "proof": {"pending": True, "next_checkpoint_eta": int(time.time()) + 600}})
+        if view == "gone":     # the server lane's gone_entry(): no links, exit_receipt for files only
+            keep = ("item_id", "kind", "created_hour", "exit_hour", "reason", "header", "meta_ct", "owner_wrap")
+            rows = [{**{k: r.get(k) for k in keep}, "kind": r.get("kind", "file"), "exit_receipt": r.get("kind", "file") == "file"}
+                    for r in self.gone.values()]
             return 200, {"items": rows, "next": None}, None
         q = {k: v[0] for k, v in query.items() if k not in ("view", "parent")}
         status, raw, headers = self._forward(req, path=f"{API}/me/items?{urllib.parse.urlencode(q)}")
