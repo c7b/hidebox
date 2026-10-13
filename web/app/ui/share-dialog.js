@@ -19,6 +19,7 @@ const when = (sec) => formatDate(sec * 1000, { month: 'short', day: 'numeric', h
 const BOX = 'share-dialog';
 // The steps of a send by Tari, as send-status names them (E-10 waits for 'delivered').
 const STEPS = ['sealing', 'waiting', 'sending', 'delivered'];
+const PATH_REFRESH_MS = 15000;
 
 let S = null;
 
@@ -223,7 +224,27 @@ function tariStep(body, footer) {
   };
   field.addEventListener('input', check);
   if (S.tari) queueMicrotask(check);
-  const direct = ctx.cfg.send_mode === 'direct' && Boolean(ctx.cfg.features?.direct_send);
+  // Which way the send goes (C8), decided as wallet.deliver() will: the relay unless this browser's wallet
+  // can pay the courier output itself, looked at again while the step is on screen (send.js does the same).
+  const pathLine = h('p', { class: 'small muted path-line', 'data-testid': 'send-path', 'data-path': 'relay' }, icon('info'),
+    h('span', {}, t('tari.path_relay')));
+  if (ctx.cfg.send_mode === 'direct' && ctx.cfg.features?.direct_send) {
+    const refreshPath = async () => {
+      try {
+        const { withOotle } = await import('../lib/identity.js');
+        const identity = await withOotle(drive.identity);
+        const { canSendDirect, ensureGrant } = await import('../lib/wallet.js');
+        const grant = await ensureGrant(identity, ctx.cfg);
+        const own = grant ? grant === 'funded' : await canSendDirect(identity, ctx.cfg);
+        pathLine.dataset.path = own ? 'direct' : 'relay';
+        pathLine.lastChild.textContent = t(own ? 'tari.path_direct' : 'tari.path_relay');
+      } catch {
+        // The relay line stays: it is what happens when this browser can't send.
+      }
+      if (pathLine.isConnected) setTimeout(refreshPath, PATH_REFRESH_MS);
+    };
+    refreshPath();
+  }
   const views = ctx.cfg.send?.views ?? 3;
   const span = Math.min(ctx.cfg.send?.expiry_s ?? 2592000, ctx.limits?.max_expiry_s ?? 2592000);
   body.append(
@@ -231,8 +252,7 @@ function tariStep(body, footer) {
     code,
     h('p', { class: 'small muted', 'data-testid': 'send-rule' }, t('tari.rule', { count: views, date: when(nowS() + span) })),
     switchRow('kind4', 'wallet', t('tari.kind4'), t('tari.kind4_d'), { testid: 'send-kind' }),
-    h('p', { class: 'small muted path-line', 'data-testid': 'send-path', 'data-path': direct ? 'direct' : 'relay' }, icon('info'),
-      h('span', {}, direct ? t('tari.path_direct') : t('tari.path_relay'))),
+    pathLine,
     alert({ glyph: 'shield-check', variant: 'tari', title: t('tari.shows'), description: t('tari.chain') }));
   S.sendOpts = { views, span };
   send.addEventListener('click', () => sendIt(S.sendOpts));
