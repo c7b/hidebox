@@ -42,7 +42,7 @@ SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".webp", 
               ".webmanifest", ".txt", ".xml", ".json"}
 SERVED_NAMES = re.compile(r"(LICENSE|NOTICE|SHA256SUMS|PROVENANCE\.md|[^/]+\.d\.ts)")
 NEVER_SERVED = re.compile(r"(^|/)package\.json$")
-INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+)-->")
+INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")   # name → partials/name.html; name.svg → partials/name.svg
 PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
 SRI_TAG = re.compile(r"<(script|link)\b[^>]*integrity=\"\{\{SRI\}\}\"[^>]*>", re.I)
 FILLED_EXT = {".html", ".txt", ".webmanifest", ".xml"}
@@ -198,7 +198,8 @@ def copy_sidecar(web: Path, release: Path) -> None:
 
 def expand_includes(text: str, partials: Path, where: str, depth: int = 0) -> str:
     def one(m: re.Match) -> str:
-        path = partials / f"{m.group(1)}.html"
+        name = m.group(1)
+        path = partials / (name if name.endswith(".svg") else f"{name}.html")
         if not path.is_file():
             raise BuildError(f"{where}: unknown include {m.group(1)!r}")
         if depth >= 3:

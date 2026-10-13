@@ -123,8 +123,8 @@ def check_markup():
         for m in re.finditer(r"<script\b([^>]*)>", text):
             if "src=" not in m[1] and 'type="application/ld+json"' not in m[1]:
                 problems.append(f"{name}: inline script")
-        for m in re.finditer(r"<!--#include ([a-z-]+)-->", text):
-            if not (SHARED / "partials" / f"{m[1]}.html").is_file():
+        for m in re.finditer(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->", text):
+            if not (SHARED / "partials" / (m[1] if m[1].endswith(".svg") else f"{m[1]}.html")).is_file():
                 problems.append(f"{name}: include {m[1]} has no partial")
         for m in re.finditer(r"\{\{([A-Z_]+)\}\}", text):
             if m[1] not in PLACEHOLDERS:
@@ -307,6 +307,35 @@ def check_partials():
             problems.append(f"partials/{part}.html: status line differs from status-line.html")
     if (SHARED / "brand" / "favicon.svg").read_bytes() != (SITE / "static" / "favicon.svg").read_bytes():
         problems.append("static/favicon.svg differs from shared/brand/favicon.svg")
+    return problems
+
+
+GHOST_STATES = {"ready", "catch", "busy", "once", "few", "word", "peek", "courier", "bag", "keep", "gone", "oops"}
+GHOST_PARTS = ("sh", "gf", "pp", "bd", "ck", "eo", "el", "er", "wk", "es", "ew", "ex", "ms", "mo", "mh", "mw", "pn", "pg",
+               "pe", "pb", "mt", "ml", "mr", "p1", "hd", "hl", "hr")
+
+
+def check_ghost():
+    """14-ghost-design §3, §17 step 3: the ghost is one static partial with every part; every element that
+    shows a ghost (data-ghost) holds that partial and names a known state; a page that shows one, or
+    keeps it in a template, loads ghost.css. No ids (it is cloned) and nothing that runs."""
+    problems = []
+    svg = (SHARED / "partials" / "ghost.svg").read_text()
+    classes = set(" ".join(re.findall(r'class="([^"]+)"', svg)).split())
+    problems += [f"partials/ghost.svg: no part .{part}" for part in GHOST_PARTS if part not in classes]
+    if re.search(r"\sid=|<script|\son[a-z]+=", svg):
+        problems.append("partials/ghost.svg: an id, a script or a handler (the partial is cloned and inlined)")
+    for f in PAGES + PARTIALS:
+        text = f.read_text()
+        holders = list(re.finditer(r'<(\w+)[^>]*\sdata-ghost="([^"]*)"[^>]*>\s*(<!--#include ghost\.svg-->)?', text))
+        for m in holders:
+            if m[2] not in GHOST_STATES:
+                problems.append(f"{f.relative_to(WEB)}: data-ghost=\"{m[2]}\" is not a ghost state")
+            if not m[3]:
+                problems.append(f"{f.relative_to(WEB)}: a data-ghost={m[2]!r} element doesn't hold <!--#include ghost.svg-->")
+        shows = holders or "<!--#include ghost-templates-->" in text or "<!--#include ghost.svg-->" in text
+        if f in PAGES and shows and 'href="/shared/ghost.css"' not in text:
+            problems.append(f"{f.relative_to(WEB)}: shows the ghost without /shared/ghost.css")
     return problems
 
 
@@ -588,6 +617,7 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
           ("SEO metadata (M-04)", check_seo),
           ("trademark and mandatory lines (M-05)", check_trademark), ("partials in sync", check_partials),
+          ("the ghost partial on every page that shows one", check_ghost),
           ("privacy inventory covers the schema (M-06)", check_privacy_inventory),
           ("contrast table (M-03)", check_contrast), ("static files (M-04)", check_static),
           ("security.txt contacts answer a stranger (needs the network)", check_security_contacts),

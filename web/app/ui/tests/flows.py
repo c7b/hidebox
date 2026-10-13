@@ -1096,3 +1096,76 @@ def states(t):
     e = t.actor()
     t.check(open_link(e, short) == "expired", "65 seconds later the real server answers: expired")
     t.check("left on cue" in e.text("view-root"), "Its time ran out. … It left on cue.")
+
+
+# 14-ghost-design §3: every state's parts. (shown, hidden) as CSS selectors inside the ghost; the
+# merged poses share their drawing (busy and keep hug the note; gone is the dashed outline).
+GHOST_POSES = {
+    "ready": ([".eo", ".ms", ".hl", ".hr"], [".wk", ".mo", ".p1", ".mt", ".pn", ".pp"]),
+    "catch": ([".ew", ".mo"], [".eo", ".ms"]),
+    "busy": ([".es", ".pn"], [".eo", ".ms"]),
+    "once": ([".wk", ".p1", ".el"], [".er", ".hr", ".mt"]),
+    "few": ([".pg"], [".pn", ".pe"]),
+    "word": ([".ml", ".mr"], [".hl", ".hr"]),
+    "peek": ([".ml", ".er"], [".mr", ".hl"]),
+    "courier": ([".pe"], [".pn", ".pg"]),
+    "bag": ([".pb"], [".pe", ".pn"]),
+    "keep": ([".pn", ".eo"], [".es"]),
+    "gone": ([".pp", ".eo"], [".ck"]),
+    "oops": ([".ex", ".mw"], [".eo", ".ms"]),
+}
+SHEET = """(() => {
+  const old = document.getElementById('ghost-sheet');
+  if (old) old.remove();
+  const sheet = document.createElement('section');
+  sheet.id = 'ghost-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:999;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:24px;background:var(--bg);color:var(--fg);font:var(--t-small)';
+  for (const state of %s) {
+    const fig = document.createElement('figure');
+    fig.style.cssText = 'margin:0;display:grid;justify-items:center;gap:4px';
+    const holder = document.createElement('div');
+    holder.style.cssText = 'width:150px;filter:var(--glow)';
+    holder.dataset.ghost = state;
+    holder.append(document.getElementById('ghost-tpl').content.querySelector('svg.ghost').cloneNode(true));
+    const cap = document.createElement('figcaption');
+    cap.textContent = state;
+    fig.append(holder, cap);
+    sheet.append(fig);
+  }
+  document.body.append(sheet);
+  return sheet.querySelectorAll('svg.ghost').length;
+})()"""
+
+
+def ghost_parts(page, state, sel):
+    return page.eval(f"[...document.querySelectorAll('#ghost-sheet [data-ghost=\"{state}\"] svg.ghost {sel}')]"
+                     ".map((e) => Number(getComputedStyle(e).opacity))")
+
+
+@scenario("ghost-states", "The ghost: all twelve states of 14 §3 from the static partial, both themes; reduced motion stills")
+def ghost_states(t):
+    states = json.dumps(list(GHOST_POSES))
+    for dark in (False, True):
+        a = t.actor("desktop", dark=dark)
+        home(t, a)
+        t.check(a.eval("document.getElementById('ghost-tpl')?.content.querySelectorAll('svg.ghost').length") == 1,
+                "the page carries the ghost partial in <template id=ghost-tpl>")
+        t.check(a.eval(SHEET % states) == len(GHOST_POSES), f"{len(GHOST_POSES)} ghosts cloned from the partial")
+        a.b.pump(0.8)  # the 200 ms fades and the 340 ms poses settle
+        for state, (shown, hidden) in GHOST_POSES.items():
+            bad = [f"{sel} hidden" for sel in shown if not any(o > 0.5 for o in ghost_parts(a, state, sel))]
+            bad += [f"{sel} shown" for sel in hidden if any(o > 0.05 for o in ghost_parts(a, state, sel))]
+            t.check(not bad, f"{'dark' if dark else 'light'}: {state} draws its parts ({bad})")
+        dashed = a.eval("getComputedStyle(document.querySelector('#ghost-sheet [data-ghost=\"gone\"] .bd')).strokeDasharray")
+        t.check(dashed not in ("none", ""), f"gone is a dashed outline ({dashed})")
+        glow = a.eval("getComputedStyle(document.querySelector('#ghost-sheet [data-ghost]')).filter")
+        t.check((glow != "none") == dark, f"only the lights-off ghost glows ({glow})")
+        t.shot(a, f"ghost-states-{'dark' if dark else 'light'}")
+    calm = t.actor("iphone", reduced_motion=True)
+    home(t, calm)
+    calm.eval(SHEET % states)
+    calm.b.pump(0.5)
+    running = calm.eval("document.getAnimations().filter((x) => x.playState === 'running' && x.effect?.target?.closest?.('#ghost-sheet')).length")
+    t.check(running == 0, f"reduced motion: every ghost is a still ({running} animations running)")
+    t.check(ghost_parts(calm, "once", ".p1")[0] > 0.5, "reduced motion: the pose is still drawn (once: the finger up)")
+    t.shot(calm, "ghost-states-390-reduced")

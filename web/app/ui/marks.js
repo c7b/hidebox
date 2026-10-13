@@ -5,6 +5,9 @@ import { h } from '../lib/dom.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { phase } from '/shared/dates.js';
 
+// The ghost's states and moves live with its markup and styles in /shared (the site uses them too).
+export { cloneGhost, flyer, ghostOf, gulp, setGhost, STATES } from '/shared/ghost.js';
+
 // µT (decimal string or bigint) -> "0.5", "0.001": tTARI with up to 3 decimals, never rounded up.
 export function formatTari(ut) {
   const v = BigInt(ut);
