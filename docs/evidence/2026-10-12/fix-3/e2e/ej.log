@@ -1,0 +1,2 @@
+PASS E-J     103.6s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → <scratch>/e2e/ej/20261012-222808/report.json

@@ -1,0 +1,3 @@
+e2e_expiry_s = 60 in /etc/mutis/mutis.toml (UTC, 2026-10-13):
+on  04:31:20
+off 04:36:44 (mutis-api restarted; /config and the TOML checked without it)
