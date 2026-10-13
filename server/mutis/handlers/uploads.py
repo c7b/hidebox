@@ -7,7 +7,7 @@ BEGIN IMMEDIATE transaction, so concurrent uploads can never overshoot a limit (
 import os
 import struct
 
-from .. import codec, db, items, lanes, quota, seallog
+from .. import codec, db, items, lanes, quota, seallog, tree
 from ..http_util import ApiError, Response, get_b64, get_enum, get_int, invalid, json_response
 from .drops import active_drop
 
@@ -16,6 +16,7 @@ ANON_SMALL_PER_HOUR = 30          # per ip64, files ≤ 5 MiB (spec §6.2)
 ANON_LARGE_PER_HOUR = 10          # per ip64, files of 5–25 MiB
 META_LENGTHS = {12 + 256 * k + 16 for k in range(1, 9)}
 SMALL_AT_ONCE_PER_48 = 100 * quota.MiB
+DRIVE_PER_HOUR, DRIVE_PER_HOUR_PROBATION, DRIVE_PER_HOUR_64 = 600, 100, 1200   # kept files with folders on
 DROP_FILES_PER_DAY = 50
 DROP_BYTES_PER_DAY = 1 * quota.GiB
 
@@ -75,8 +76,11 @@ def create(ctx):
     _check_header(header, chunk_count)
     owner_wrap = get_b64(body, "owner_wrap", 60, optional=True)
     expires_at = get_int(body, "expires_at", 0, 1 << 40, optional=True)
+    in_folder = body.get("parent_id") is not None or body.get("parent_wrap") is not None
 
     rules, pow_purpose, drop = [], None, None
+    if in_folder and (canary or identity is None or retention != "kept"):
+        raise invalid("parent_id", "Only a drive's kept files go in folders.")
     if canary:
         lane = "small"
         if retention != "ephemeral" or expires_at is None or not now < expires_at <= now + quota.CANARY_MAX_EXPIRY_S:
@@ -112,7 +116,17 @@ def create(ctx):
             expires_at = expires_at or now + quota.CLASSES[cls]["default_expiry_s"]
             if not now < expires_at <= now + quota.CLASSES[cls]["max_expiry_s"] + 60:
                 raise invalid("expires_at")
-        rules = [("up_locker64", ctx.ip64, 120, 3600, 1), ("up_locker", identity["id"], 60, 3600, 1)]
+        if retention == "kept" and ctx.features()["folders"]:
+            # A drive uploads whole folders (16-drive-architecture §2.2): 600 an hour per drive (100 on its
+            # first day) and 1,200 per network.
+            rules = [("up_drive64", ctx.ip64, DRIVE_PER_HOUR_64, 3600, 1),
+                     ("up_drive", identity["id"], DRIVE_PER_HOUR_PROBATION if cls == "probation" else DRIVE_PER_HOUR,
+                      3600, 1)]
+        else:
+            rules = [("up_locker64", ctx.ip64, 120, 3600, 1), ("up_locker", identity["id"], 60, 3600, 1)]
+        if in_folder:
+            ctx.require_feature("folders")
+            tree.parent_fields(body, ctx.db, identity)        # 403, 409 trashed, 422 before any byte
     if not canary and expires_at is not None:
         expires_at = codec.coarse_expiry(expires_at, now)
 
@@ -122,19 +136,29 @@ def create(ctx):
         if pow_purpose:
             ctx.proof_of_work(pow_purpose, body)
         item_id, upload_id, manage = _admit(ctx, lane, canary, identity, drop, size, chunk_count, header, meta_ct,
-                                            owner_wrap, retention, expires_at)
+                                            owner_wrap, retention, expires_at, body if in_folder else None)
     if lane == "small" and not canary:
         _remember_small(ctx, item_id, size)
     return json_response(201, {"upload_id": upload_id, "item_id": item_id, "manage_token": codec.b64u(manage),
                                "expires_at": now + UPLOAD_TTL_S})
 
 
-def _admit(ctx, lane, canary, identity, drop, size, chunk_count, header, meta_ct, owner_wrap, retention, expires_at):
-    """Freeze, lane or quota checks, the byte reservation and the rows, in one write transaction."""
+def _admit(ctx, lane, canary, identity, drop, size, chunk_count, header, meta_ct, owner_wrap, retention, expires_at,
+           placed: dict | None = None):
+    """Freeze, lane or quota checks, the byte reservation and the rows, in one write transaction.
+    `placed`: the request body of an upload into a folder (its parent is checked again here)."""
     conn, now = ctx.db, ctx.now
     item_id, upload_id, manage = codec.new_id(), codec.new_id(), os.urandom(32)
     pool = quota.measure(conn, ctx.app.statvfs, ctx.cfg.data_dir, ctx.cfg["limits"], now)
     with db.tx(conn):
+        parent_id, parent_wrap = None, None
+        if placed is not None:
+            parent_id, parent_wrap = tree.parent_fields(placed, conn, identity)
+            tree.check_room(conn, conn.execute("SELECT * FROM items WHERE id = ?", (parent_id,)).fetchone())
+        if retention == "kept" and identity is not None and ctx.features()["folders"] \
+                and tree.drive_items(conn, identity["id"]) >= tree.MAX_ITEMS:
+            raise ApiError(413, "too_many", "This drive holds as many items as it can.",
+                           details={"max_items": tree.MAX_ITEMS})
         frozen = lanes.freeze_state(conn, pool)
         if identity is not None:
             identity = conn.execute("SELECT * FROM identities WHERE id = ?", (identity["id"],)).fetchone()
@@ -146,10 +170,11 @@ def _admit(ctx, lane, canary, identity, drop, size, chunk_count, header, meta_ct
         if drop is not None:
             _count_drop(conn, drop["id"], size, now)
         conn.execute("INSERT INTO items(id, owner_id, manage_hash, retention, lane, canary, state, header, meta_ct, "
-                     "owner_wrap, chunk_count, size_stored, created_hour, expires_at) "
-                     "VALUES (?, ?, ?, ?, ?, ?, 'uploading', ?, ?, ?, ?, ?, ?, ?)",
+                     "owner_wrap, chunk_count, size_stored, created_hour, expires_at, parent_id, parent_wrap) "
+                     "VALUES (?, ?, ?, ?, ?, ?, 'uploading', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      (item_id, identity["id"] if identity else None, codec.sha256(manage), retention, lane,
-                      int(canary), header, meta_ct, owner_wrap, chunk_count, size, codec.floor_hour(now), expires_at))
+                      int(canary), header, meta_ct, owner_wrap, chunk_count, size, codec.floor_hour(now), expires_at,
+                      parent_id, parent_wrap))
         conn.execute("INSERT INTO uploads(id, item_id, owner_id, lane, reserved, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
                      (upload_id, item_id, identity["id"] if identity else None, lane, size, now + UPLOAD_TTL_S))
         try:

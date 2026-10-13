@@ -81,6 +81,7 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
 | Who you send to | direct sends from your browser: no; relay sends and dead-drop deliveries: yes, while the job is queued, then scrubbed | no (a one-time stealth address) | — | they know it's them |
 | That **bye** sent a payment | yes | relay sends: one wallet, one fee; browser sends trace back to our sponsor wallet's grant and to each other | — | — |
 | Payment amounts | for space rented from us (we're the seller) | no (a Pedersen commitment) | — | — |
+| Folder structure: which files share a folder, how deep, how many | yes (never a name) | no | yes, for the folder the link opens | — |
 
 The long form, with every party and every column the database keeps, is on `/made#who` and `/fine-print#privacy`.
 
@@ -104,6 +105,14 @@ The long form, with every party and every column the database keeps, is on `/mad
          → a note (state, day) stays for the published number of days
          → the exit record goes into the next SealLog checkpoint; GET /s/{id}/exit returns its proof
 ```
+
+In a drive, a file can sit in a **folder**: `POST /folders` makes an item without ciphertext whose own
+random key wraps the keys of what it holds (each child's `parent_wrap`), so a folder key opens its whole
+subtree and nothing above it. A move or a rename is one `PATCH /items/{id}` made in the browser (a new
+wrap under the new folder, a new encrypted name); the ciphertext and its SealLog leaf don't change.
+Deleting a folder deletes everything below it, and each file leaves with its own exit receipt. The
+**Trash** keeps files for `retention.trash_days` (their links end when they go in); **Delete it after**
+sets a date on a kept file, and it leaves then, with its exit receipt.
 
 Where the key travels instead of a link: **send to a Tari address** (the link's secret is sealed to
 the address's owner and view keys with the official library; the 125-byte blob is the memo of a

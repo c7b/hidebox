@@ -78,6 +78,25 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /seallog/checkpoints?after=` | anyone | committed checkpoints, oldest first (`next` is an opaque cursor) |
 | `GET /seallog/proof/{item_id}` | anyone | the stored-file receipt for an item, as for `/s/{id}/exit` |
 
+<!-- lane S: the drive (16-drive-design §15 steps 4 and 6), behind features.folders -->
+| Route | Who | What |
+|---|---|---|
+| `POST /folders` | a drive session | a folder: `{parent_id (null for the root), header, meta_ct, owner_wrap, parent_wrap?}` → 201 `{item_id}`. The header is format v1 with flags `0x0001` and no chunks (uploads refuse that flag). 403 `forbidden` (the parent isn't this drive's folder), 409 `too_deep` (more than `folders.max_depth` folders), `folder_full` (`folders.max_children`), `trashed`, 413 `too_many` (`folders.max_items` in the drive). 600 an hour per drive |
+| `PATCH /items/{id}` | the drive | one change per request (several fields allowed, `trashed` alone): **move** `{parent_id, parent_wrap}` (`parent_id: null` for the root; 409 `cycle`, `too_deep`, `folder_full`), **rename** `{meta_ct}` (new metadata under the same key; the ciphertext and its SealLog leaf don't change), **Delete it after** `{expires_at}` on a kept file (at most `items.max_delete_after_days` ahead, rounded up to the hour, or `null` to clear; the file stays kept and leaves at that time with its exit receipt), **Trash** `{trashed: true}` or `{trashed: false}` (into the Trash with everything below it: every link of those items ends now; out of it with what went in with it, to the root if its folder is gone or still in the Trash; links stay ended). 409 `trashed` for any other change while in the Trash. → the item as `/me/items` lists it |
+| `DELETE /items/{id}` (folder) | the drive | deletes the folder and everything below it in one transaction; each file leaves with its exit receipt |
+| `POST /uploads` (into a folder) | the drive | `parent_id` and `parent_wrap` (60 bytes: the file key wrapped under the folder's) on a kept file; 403, 409 `trashed`, `folder_full`, 413 `too_many`. With folders on, kept uploads are limited to 600 an hour per drive (100 on its first day) and 1,200 per network |
+| `GET /me/items?view=&parent=` | the drive | `view=all` (default): everything outside the Trash, flat, as before; `parent=root` or `parent=<folder id>`: one folder's contents (inside a trashed folder, what it took with it); `view=trash`: what was put in the Trash, latest first; `view=gone`: what left in the last `tombstone_days` days (`item_id`, `kind`, `created_hour`, `exit_hour`, `reason`: `deleted`, `expired`, `trash`, `link_ended` or `removed`, `exit_receipt`, and `header`, `meta_ct`, `owner_wrap` so the browser can read the name). Items carry `kind`, `parent_id`, `parent_wrap`, `trashed_at` |
+| `GET /me` | the drive | adds `quota.trash_bytes` (the Trash still counts in `used_bytes` until it empties, after `retention.trash_days`), and `files`, `folders` (outside the Trash) |
+| `GET /seallog/proof/{item_id}?kind=exit` | anyone | the exit receipt of a file that left, by its id (for files that left without a link: Delete it after, the Trash, a deletion) |
+
+**Folders.** A folder is an item without ciphertext (`kind: "folder"`, size 0, no SealLog leaf) with its
+own key and encrypted name. Each item inside one carries `parent_id` and `parent_wrap`, its own key wrapped
+under the folder's, and keeps its `owner_wrap`, so the drive lists any folder without walking the tree,
+and one folder key opens everything below it and nothing above. Moves and renames are one `PATCH`, made
+in the browser. The server learns which items share a folder, how deep and how many; never a name, a type
+or a real size. Folders cost no space; files in the Trash do until it empties.
+<!-- /lane S -->
+
 Checkpoint objects are `{"index", "component", "tree_size", "root", "epoch", "tx_id", "created_at"}`;
 `index` is the log's own checkpoint number from the chain (null if the worker couldn't read it), and
 `/verify` only counts a proof whose `component` is the one `/config` names.
