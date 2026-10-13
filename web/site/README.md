@@ -1,13 +1,14 @@
 <!-- SPDX-License-Identifier: MIT -->
-# mutis site and shared design system
+# The site of bye (codename mutis) and its shared design system
 
-The marketing site (`web/site/`) and the design system the app shares with it (`web/shared/`): the
-home page around the drop widget, the one pinned scene (the exit wall), every content and legal page
-(English only), SEO and static files, the fonts, the brand marks and the partials.
+The site (`web/site/`) and the design system the app shares with it (`web/shared/`): the six pages of
+14-ghost-design §4.1 (the home with the ghost around the drop widget, how it works in eight scenes, how
+it was made, for judges, the fine print, 404), SEO and static files, the brand marks, the ghost (its
+SVG partial, `ghost.css`, `ghost.js`) and the partials.
 
-No third-party code: our own ES modules and stylesheets, three font files renamed from Courier Prime
-and Courier Prime Code, Python's standard library for every tool and test, Debian's Chromium,
-fonttools and woff2.
+No third-party code: our own ES modules and stylesheets, system faces only (DESIGN.md), Python's
+standard library for every tool and test, Debian's Chromium. The old Mutis Script fonts stay in
+`../shared/fonts/` for one release; the build no longer copies them.
 
 ## Run the tests (one command)
 
@@ -56,26 +57,13 @@ JavaScript, crawlers and `llms-full.txt` get the true ones too, and `stats.js` s
 from `/config` for flags an admin changes later. The one exception is the mainnet date in the status
 line, which spec §3.4.2 pins in the partial and `stats.js` then overwrites from `/config`.
 
-## The exit wall
+## The home and how it works
 
-`index.html` holds the scripted scene of 11-brand §9.3 S1 as plain HTML: 18 lockers (9 on a phone),
-each with its cue label and its fate. Without JavaScript, or with reduced motion, that markup is a
-static grid in which every locker but the lit centre shows how it left. When scripts run and motion
-is allowed, `theme.js` sets `html.motion` before the first paint, so the stage is laid out for the
-scene (sticky, 220 svh on a phone, 260 svh on a desktop) from the start and nothing moves when the
-code arrives. `home.js` loads `js/wall.js` when the wall's top edge comes into view, and it:
-
-1. relabels the lockers from `/api/v1/stats/wall`, if that returned at least 8 items before the
-   lockers come into view (the "data wall"): each locker shows one recent file's exit rule, and its
-   box is as deep as the file's size class. Never an id, a time or whether the file has left; every
-   real item is drawn lit with its rule, and empty slots stay empty;
-2. draws the centre door from the real ciphertext of our hourly test file (`/api/v1/canary/raw`), or
-   from bytes encrypted in the browser under a fresh non-extractable key if that request fails;
-3. turns the scroll into one progress value and writes only what changes with it: `--e` (0 → 1) on
-   the lockers leaving at that moment, `--p` on the closing words, the stage directions, the
-   countdown labels and the `23:59 → 00:00` line. CSS turns `--e` into a locker's light going off
-   (a lit keyhole fading over a dark one), its collapse into a small cube and its drop. A scroll
-   frame restyles about one locker, not the whole stage (`check_wall_frames`).
+`index.html` is one screen: the ghost (a `<button>` that holds the inlined partial, 14-ghost-design
+§3) over the widget that `/app/drop-widget.js` mounts; the widget drives `body[data-phase]` and the
+ghost's poses, and the whole window takes a drop (§6). `/how` pins a stage and plays eight scenes as
+their captions scroll past (`js/how.js`, `css/how.css`); with reduced motion each scene is a still.
+The exit wall of the old site is gone: its live count moved to `/made#record`.
 
 ## Tools (run as `build` on the server)
 
@@ -83,7 +71,7 @@ code arrives. `home.js` loads `js/wall.js` when the wall's top edge comes into v
 |---|---|
 | `sh web/site/tools/subset-fonts.sh` | subsets Debian's Courier Prime and Courier Prime Code, renames them Mutis Script / Mutis Script Code (OFL condition 3), writes WOFF2, `OFL.txt` and `NOTICE`; deterministic |
 | `python3 -I web/site/tools/render-images.py` | renders `og/*.html` to `og.png`, `og-s.png` and the app icons; fails on a card over 150 KB or an OTS error |
-| `python3 -I web/site/tools/llms_full.py` | writes `static/llms-full.txt` from `/how` and `/security` as a reader without JavaScript sees them (`--check` is part of the tests) |
+| `python3 -I web/site/tools/llms_full.py` | writes `static/llms-full.txt` from `/how`, `/made` and `/fine-print` as a reader without JavaScript sees them (`--check` is part of the tests) |
 | `python3 -I web/site/tools/variants.py --config mutis.toml dist` | sets a deployment's copy variants into its built pages and writes its `llms-full.txt` (for `tools/build.py`, before includes and placeholders) |
 | `python3 -I web/site/tests/serve.py` | the pages with includes and placeholders expanded, production CSP headers and the API from fixtures (`--api URL` forwards to a real server, `--dist DIR` serves a built tree) |
 | `python3 -I web/site/tests/shots.py` | rewrites `shots/` |
