@@ -62,6 +62,11 @@ DYNAMIC = {
     "nav": ["locker", "inbox", "send"],
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
     "gone": ["burned", "expired", "revoked", "removed"],
+    # lane app1: the drive's families (ui/drive*.js)
+    "drive.side": ["mine", "received", "shared", "activity", "trash", "storage"],
+    "drive.theme": ["light", "dark", "system"],
+    "drive.sto.kind": ["media", "docs", "other"],
+    "drive.error": ["quota_exceeded", "probation_limit", "too_large_locker", "auth_required", "bad_auth"],
 }
 
 
@@ -224,6 +229,7 @@ def main():
     ap.add_argument("--keep", action="store_true", help="keep the work directory")
     args = ap.parse_args()
     import flows  # noqa: E402 (after sys.path)
+    import flows_drive  # noqa: E402,F401 (lane app1: the drive's flows register themselves)
 
     r = Results()
     static_checks(r)
