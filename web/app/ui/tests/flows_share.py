@@ -416,6 +416,18 @@ def received_list(t):
     t.check(re.fullmatch(re.escape(t.origin) + r"/d/[A-Za-z0-9_-]+", b.value("drop-link") or "") is not None, "Make my drop link: a link anyone can leave a file at")
     b.click("drop-copy")
     t.check(b.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(b.value('drop-link'))})", 10), "Copy puts the drop link on the clipboard")
+    # A purchase this browser made (pay to open's buyer page keeps it on the device): listed with its price.
+    b.eval("""(async () => {
+      const { loadIdentity } = await import('/app/lib/identity.js');
+      const { rememberPurchase } = await import('/app/lib/purchases.js');
+      await rememberPurchase(await loadIdentity({ lazy: true }), 'Pp0123456789abcdefghij',
+        { url: location.origin + '/p/Pp0123456789abcdefghij#5x', price_ut: 100000, state: 'paid', demo: true });
+      return true; })()""")
+    b.reload()
+    b.wait("!!document.querySelector('[data-testid=\"received-row\"][data-source=\"purchase\"]')", 60)
+    bought = b.eval("document.querySelector('[data-testid=\"received-row\"][data-source=\"purchase\"]').textContent")
+    t.check("You paid 0.1 tTARI" in bought and "Test money" in bought and b.exists("received-open-purchase"),
+            f"a purchase kept on this device: what was paid, with test money, and Open ({bought[:90]})")
     # The chain can't be reached: what was found stays, and the page says so.
     c = t.actor("iphone")
     Intercept(c).add("*/api/v1/chain/utxos*", "Request", api_error("chain_unavailable", 503))

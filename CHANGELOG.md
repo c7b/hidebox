@@ -59,6 +59,26 @@
   and Delete it after stay behind `features.folders`.
 <!-- /lane app1 -->
 
+<!-- lane app2 -->
+## 2026-10-13: the drive's sharing, the folder viewer and Received, steps 8 and 10 (research 16-drive-design §15)
+
+- The share dialog on files and folders: one question per step. Anyone with the link: Once, A few times
+  or No limit, a defaulted "It ends" (Tomorrow, In a week, When I stop it from a drive's second day), a
+  secret word, and on files "Delete it from my drive after" (`then_delete`). One Tari address: the
+  address, its safety code, "They use another Ootle wallet" (kind 4) and who sends it (relay or this
+  browser, C8). The result says the rule in one sentence, with Copy, a code to scan on computers and
+  Share on phones. A file with links opens on New link and Links (Copy again from the browser that made
+  it, Stop this link). The row menu's Copy a once link is one tap. Rows wear Sent by Tari for links this
+  browser sent.
+- A folder link opens in the drive's look as one visit with a countdown: names opened in the browser,
+  breadcrumbs, a preview, Save one, and Download all as a ZIP built in the browser (`lib/zip.js`, stored,
+  CRC-32, checked with Python's `zipfile`) up to `folders.zip_max_bytes` (on phones
+  `folders.zip_max_bytes_phone`), else one by one.
+- Received: what came by Tari ("By Tari, sender hidden") or to the drop link, found by this browser's
+  scan; open it here and Save to my drive (locked again as the drive's own); the drop link with Copy;
+  purchases kept on this device; when the chain can't be reached, it says so and keeps what it found.
+<!-- /lane app2 -->
+
 ## 2026-10-13: the repository is public (docs/review/fix-log.md, "The public step, done")
 
 - `c7b/mutis` is public, recreated from the rewritten history: the commits from before the rewrite
