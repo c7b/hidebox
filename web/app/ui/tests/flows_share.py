@@ -7,7 +7,7 @@ code, not app1's fake.
 
 share-once, share-rules (A few times, Until a time, Public link; a drive's first day), share-word-then-delete,
 share-send-tari (+ kind 4), received-list (Tari arrivals, sender hidden, Save to my drive, the drop link,
-offline), folder-zip (Download all, checked with Python's zipfile) and folder-viewer (a visit: countdown,
+purchases, offline), received-folder (a folder by Tari, opened and saved as a tree), folder-zip (Download all, checked with Python's zipfile) and folder-viewer (a visit: countdown,
 phones, one by one, preview)."""
 import glob
 import json
@@ -564,3 +564,45 @@ def folder_viewer(t):
     t.check(state == "ended" and "This visit ended." in d.text("fv-visit") and d.eval("[...document.querySelectorAll('[data-testid=\"fv-save\"]')].every((b) => b.disabled)"),
             "when the visit ends it says so, and Save stops")
     t.shot(d, "folder-1440-ended")
+
+
+@scenario("received-folder", "A folder sent by Tari (steps 8 and 10): it arrives as A locked folder, opens here as a visit, and Save to my drive locks the whole tree again as the drive's own", features=FEATURES)
+def received_folder(t):
+    b = drive_page(t)
+    b_address = b.wait("(() => { const e = document.querySelector('[data-testid=\"locker-address\"]'); return e && e.textContent.startsWith('otl_esm_1') ? e.textContent : ''; })()", 90)
+    t.realizer.addresses.add(b_address)
+    a = drive_page(t)
+    want = folder_with_files(t, a)
+    open_share(a, "Trip")
+    a.click("share-choice", "tari")
+    a.click("share-next")
+    a.wait("document.getElementById('share-dialog')?.dataset.step === 'tari'", 10)
+    a.fill("send-recipient", b_address)
+    a.wait_for("send-safety", 60)
+    a.click("send-submit")
+    t.check(a.wait_state("send-status", ("delivered", "failed"), 180) == "delivered", "a folder goes by Tari like a file")
+    close_dialog(a)
+    t.check(wait_rule(a, "Trip", "sent"), "the folder card wears Sent by Tari")
+    t.realizer.attach(b)
+    b.goto(t.origin + "/drive/received")
+    b.wait("!!document.querySelector('[data-testid=\"received-row\"]')", 180)
+    t.check("A locked folder" in b.text("received-row") and "By Tari, sender hidden" in b.text("received-row"),
+            f"it arrives as a locked folder, sender hidden ({b.text('received-row')[:80]})")
+    b.click("received-open-button")
+    b.wait("document.querySelector('[data-testid=\"received-open\"]')?.dataset.state === 'opened'", 120)
+    names = b.eval("[...document.querySelectorAll('#rec-open [data-testid=\"fv-row\"]')].map((e) => e.dataset.name)")
+    t.check(names == ["Day one", "Later", "map.txt", "photo-gps.jpg", "report.dat"], f"it opens here as a visit, names opened in this browser ({names})")
+    t.check(b.exists("fv-visit") and b.exists("fv-zip"), "with its visit and Download all")
+    t.shot(b, "received-1440-folder")
+    b.click("fv-keep")
+    b.wait("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('Saved to your drive.'))", 180)
+    b.key("Escape")
+    b.goto(t.origin + "/drive")
+    b.wait("[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === 'Trip')", 60)
+    into(b, "Trip")
+    b.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].length === 3", 60)
+    t.check(sorted(table_names(b)) == ["Day one", "Later", "map.txt", "photo-gps.jpg", "report.dat"],
+            f"Save to my drive: the folder and its folders are the drive's own now ({table_names(b)})")
+    into(b, "Day one")
+    b.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].map((e) => e.dataset.name).join() === 'notes.txt'", 60)
+    t.check(len(want) == 3, "the nested file came along")
