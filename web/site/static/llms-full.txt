@@ -56,12 +56,12 @@ Every party, fact by fact
 | Name and type | no (encrypted inside) | no | yes | yes
 | Exact size | no (a padded bucket) | no | yes | yes
 | The key | no | no | yes (the link is the key) | yes
-| That a file exists, its arrival hour, its rule, its opens | yes | no | partly (state, opens left) | —
+| That a file exists, its arrival hour, its rule, its opens | yes | no | partly (state, opens left) | does not apply
 | Your IP address | while you're connected; not written to disk | no (Tari's indexer sees it only if you press “Check it on Tari's indexer”) | no | no
-| Who you send to | yes for every send and dead-drop delivery, while it's sent; then the job is scrubbed | no (a one-time stealth address) | — | they know it's them
-| That we sent a payment | yes | yes for relay sends: one wallet, one fee | — | —
-| Payment amounts | for space rented from us, because we're the seller | no (a Pedersen commitment) | — | —
-| The network fee | — | public | — | —
+| Who you send to | yes for every send and dead-drop delivery, while it's sent; then the job is scrubbed | no (a one-time stealth address) | does not apply | they know it's them
+| That we sent a payment | yes | yes for relay sends: one wallet, one fee | does not apply | does not apply
+| Payment amounts | for space rented from us, because we're the seller | no (a Pedersen commitment) | does not apply | does not apply
+| The network fee | does not apply | public | does not apply | does not apply
 
 ### Our server, in detail
 - Sees and stores
@@ -217,11 +217,11 @@ The limits below come live from our server; they're also at /api/v1/config (/api
 
 ## Limits
 | | No locker | Free locker | Rented space
-| Kept files (only you) | — | until you delete them | until you delete them
+| Kept files (only you) | no | until you delete them | until you delete them
 
 ## More room, rented in tTARI
 | Pack | Price (testnet) |
-| Sold out | — | The disk is finite. We'd rather say no than overbook rented space. Free space still works.
+| Sold out | none | The disk is finite. We'd rather say no than overbook rented space. Free space still works.
 
 ### When rented space ends
 Your limit goes back to the free share. Nothing is deleted. After that, if you're still over, your oldest kept files are removed until you fit.
