@@ -114,16 +114,13 @@ def copy_tree(src: Path, dst: Path, skip=()) -> None:
 
 
 def page_target(rel: str) -> str:
-    """pages/<name>.html → <name>/index.html; index → index.html; 404 → 404.html (also in es/)."""
-    stem, _, name = rel.removesuffix(".html").rpartition("/")
-    prefix = stem + "/" if stem else ""
-    if name in ("index", "404"):
-        return f"{prefix}{name}.html"
-    return f"{prefix}{name}/index.html"
+    """pages/<name>.html → <name>/index.html; index → index.html; 404 → 404.html."""
+    name = rel.removesuffix(".html")
+    return f"{name}.html" if name in ("index", "404") else f"{name}/index.html"
 
 
 def page_url(rel: str) -> str:
-    """The path a page is served at: index → / and /es/ (a directory), <name> → /<name> and /es/<name>."""
+    """The path a page is served at: index → /, <name> → /<name>."""
     return "/" + rel.removesuffix(".html").removesuffix("index")
 
 
@@ -136,11 +133,10 @@ def copy_site(web: Path, dist: Path, with_tests: bool) -> list[str]:
     copy_tree(web / "site" / "js", dist / "site" / "js")
     copy_tree(web / "site" / "css", dist / "site" / "css")
     pages = []
-    for page in sorted((web / "site" / "pages").rglob("*.html")):
-        rel = page.relative_to(web / "site" / "pages").as_posix()
-        (dist / page_target(rel)).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(page, dist / page_target(rel))
-        pages.append(rel)
+    for page in sorted((web / "site" / "pages").glob("*.html")):
+        (dist / page_target(page.name)).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(page, dist / page_target(page.name))
+        pages.append(page.name)
     return pages
 
 

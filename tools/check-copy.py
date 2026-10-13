@@ -8,7 +8,7 @@
     over the visible text of web/**/*.html, the values of web/app/i18n/*.json, README.md and docs/**.
     "simply", "just" and "anonymous" are banned only in some senses; they are listed for a human to
     read (WARN) and never fail the check.
-(2) Digits in i18n values (en.json, es.json) outside {variables}: fail unless every digit is part of
+(2) Digits in i18n values (en.json) outside {variables}: fail unless every digit is part of
     a format constant in tools/copy-allowlist.txt (one phrase per line).
 (3) Numbers that /api/v1/config provides must not be written into site pages: they come from the
     config at runtime. Exempt: elements with a data-v binding (their text is the no-JS fallback), the
@@ -133,16 +133,15 @@ def load_allowlist(path: Path) -> list[str]:
 
 def i18n_digits(root: Path, allowed: list[str]) -> list[str]:
     fails = []
-    for lang in ("en", "es"):
-        path = root / "web" / "app" / "i18n" / f"{lang}.json"
-        if not path.is_file():
-            continue
-        for key, value in i18n_values(json.loads(path.read_text(encoding="utf-8"))):
-            rest = VARIABLE.sub(" ", value)
-            for phrase in allowed:
-                rest = rest.replace(phrase, " ")
-            if re.search(r"\d", rest):
-                fails.append(f"{path.relative_to(root).as_posix()}:{key}: a number outside {{variables}}: {value!r}")
+    path = root / "web" / "app" / "i18n" / "en.json"
+    if not path.is_file():
+        return fails
+    for key, value in i18n_values(json.loads(path.read_text(encoding="utf-8"))):
+        rest = VARIABLE.sub(" ", value)
+        for phrase in allowed:
+            rest = rest.replace(phrase, " ")
+        if re.search(r"\d", rest):
+            fails.append(f"{path.relative_to(root).as_posix()}:{key}: a number outside {{variables}}: {value!r}")
     return fails
 
 
@@ -194,7 +193,7 @@ def unit_family(unit: str) -> str:
 def hardcoded_config_numbers(root: Path, config: dict, allowed: list[str]) -> list[str]:
     served = config_numbers(config)
     fails = []
-    for path in sorted((root / "web" / "site" / "pages").rglob("*.html")):
+    for path in sorted((root / "web" / "site" / "pages").glob("*.html")):
         text, _ = page_text(path.read_text(encoding="utf-8"))
         for phrase in allowed:
             text = text.replace(phrase, " ")
