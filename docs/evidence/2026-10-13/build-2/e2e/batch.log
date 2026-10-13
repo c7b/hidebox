@@ -1,0 +1,13 @@
+PASS E-01      9.6s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     14.0s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     28.8s  Link + password and password-only; path-only attempts never lock a link
+PASS E-06     10.6s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      5.2s  A link without its #key shows incomplete
+PASS E-15     12.2s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      2.8s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-19     72.0s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20      8.2s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-22      6.5s  Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning
+PASS E-24     11.5s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+e2e: PASS {'PASS': 12, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/build-2/e2e/20261013-051717/report.json
