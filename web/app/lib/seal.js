@@ -52,8 +52,7 @@ async function putWithRetry(uploadId, chunk, headers, signal) {
 // opts: {headers (Bearer, X-Mutis-Canary or none), anonymous (solve the upload PoW, or send the judge
 //        pass), expiresAt (unix seconds, required unless the item is kept), dropId, keepFor (P1: an
 //        Identity; the item is kept, its key wrapped under the vault key), headBytes (keep the first
-//        n bytes of the stored ciphertext, for a picture of what our server holds), parent (a drive
-//        folder, opened: {id, fk, salt}; the kept item goes inside it with its parent_wrap),
+//        n bytes of the stored ciphertext, for a picture of what our server holds), parent (a folder),
 //        onPhase(phase, fraction), signal, resume}
 // -> {itemId, uploadId, manageToken, expiresAt (the item's; null when kept), uploadExpiresAt (when
 //     this upload session ends, 2 h after it started), fk, headerHash, sizeStored, chunkCount,
@@ -78,11 +77,7 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
       size_stored: sizeStored, owner_wrap: keepFor ? b64uEncode(await wrapFileKey(keepFor.vaultKey, headerHash, fk)) : null,
       expires_at: keepFor ? null : expiresAt, drop_id: dropId,
     };
-    if (keepFor && parent) {
-      const { wrapForFolder } = await import('./folder.js');
-      body.parent_id = parent.id;
-      body.parent_wrap = b64uEncode(await wrapForFolder(parent, { fk, headerHash }));
-    }
+    if (keepFor && parent) Object.assign(body, await (await import('./folder.js')).parentFields(parent, { fk, headerHash }));
     const res = anonymous
       ? await withPow('upload', (pow, judge) => createUpload({ ...body, pow }, { ...headers, ...judge }), { signal, onProgress: (f) => onPhase?.('pow', f) })
       : await createUpload(body, headers);
