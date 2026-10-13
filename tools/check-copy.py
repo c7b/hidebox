@@ -15,7 +15,13 @@
     exit wall's data-cue locker labels (sample exit rules drawn over by /stats/wall, not limits), and
     the format constants of the allowlist (the file format's "4 MB chunks" is not a limit).
     Runs only with --config (a saved /config JSON or its URL).
-Exit status 1 when (1), (2) or (3) finds anything.
+(4) The claim registry (11-brand §8, and the additions of 14-ghost-design §10.3 in
+    tools/claim-registry.json): a copy sentence that carries a registered claim's marker ("scrambled
+    noise", "goodbye", "only they can open"…) must be one of that claim's registered sentences, with
+    {variables} standing for their values; a claim that names `requires` needs that sentence on the
+    same page (C15 under every view-key sentence). And "public key" in a sentence about what we store
+    or keep must say we store none (C29): we store a random id and a hash of the login key.
+Exit status 1 when (1), (2), (3) or (4) finds anything.
 """
 import argparse
 import html.parser
@@ -27,6 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ALLOWLIST = Path(__file__).resolve().parent / "copy-allowlist.txt"
+REGISTRY = Path(__file__).resolve().parent / "claim-registry.json"
 
 BANNED = [
     r"seamless(ly)?", r"revolutionary", r"game[- ]changers?", r"cutting[- ]edge", r"next[- ]gen",
@@ -37,7 +44,7 @@ BANNED = [
     r"zero[- ]knowledge", r"decentrali[sz]ed storage", r"censorship[- ]resistant", r"your data, your rules",
     r"peace of mind", r"magic(al(ly)?)?(?! (bytes|number))", r"effortless(ly)?", r"robust(ly|ness)?",
     r"world[- ]class", r"web3", r"to the moon", r"lfg", r"wagmi", r"xtr", r"mining tari", r"ootle chain",
-    r"tari l3", r"emoji id", r"ghost(ly|s)?", r"vaults?", r"we see nothing", r"we say nothing",
+    r"tari l3", r"emoji id", r"vaults?", r"we see nothing", r"we say nothing",
     r"nothing left", r"not anywhere", r"no account to hack", r"two independent indexers",
     r"zero third-party runtime dependencies", r"protects you from a malicious", r"instead of through us",
     r"gone forever", r"deleted forever", r"provably deleted", r"vanished", r"sealed files?",
@@ -203,6 +210,64 @@ def hardcoded_config_numbers(root: Path, config: dict, allowed: list[str]) -> li
     return fails
 
 
+def normalize(text: str) -> str:
+    """One line, curly apostrophes straight, the trademark sign dropped, no space before punctuation
+    (the page parser joins text nodes with spaces)."""
+    text = " ".join(text.replace("\u2019", "'").replace("\u2122", "").split())
+    return re.sub(r"\s+([.,!?;:])", r"\1", text)
+
+
+def sentence_rx(sentence: str) -> re.Pattern:
+    """A registered sentence as a pattern: each {variable} matches its value, or nothing (data-v)."""
+    parts = re.split(r"(\s*\{[a-z_]+\}\s*)", normalize(sentence))
+    return re.compile("".join(r"\s*[^.!?]{0,40}?\s*" if VARIABLE.search(p) else re.escape(p) for p in parts), re.I)
+
+
+def load_registry(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"claims": [], "labels": []}
+
+
+STORE_VERB = re.compile(r"\b(store[sd]?|storing|keep(s|ing)?|kept|hold(s|ing)?)\b", re.I)
+NEGATION = re.compile(r"\b(no|not|never|none|nor|without)\b", re.I)
+PUBLIC_KEY = re.compile(r"public[- ]keys?\b", re.I)
+
+
+def claim_problems(name: str, text: str, registry: dict, page: bool) -> list[str]:
+    """Check (4) on one copy text: every marker inside a registered sentence (or a label); `requires`
+    present on the same page; "public key" next to what we store only in a denial (C29)."""
+    text = normalize(text)
+    fails = []
+    covered = []
+    for claim in registry["claims"]:
+        for sentence in claim["sentences"]:
+            covered += [m.span() for m in sentence_rx(sentence).finditer(text)]
+    covered += [m.span() for label in registry["labels"] for m in re.finditer(re.escape(label), text, re.I)]
+    markers: dict[str, list[str]] = {}
+    for claim in registry["claims"]:
+        for marker in claim["markers"]:
+            markers.setdefault(marker.lower(), []).append(claim["id"])
+    for marker, ids in markers.items():
+        for m in re.finditer(re.escape(marker), text, re.I):
+            if not any(a <= m.start() and m.end() <= b for a, b in covered):
+                around = text[max(0, m.start() - 40):m.end() + 40]
+                fails.append(f"{name}: {marker!r} outside its registered sentences ({', '.join(ids)}): …{around}…")
+    for claim in registry["claims"]:
+        if page and claim.get("requires") and any(rx.search(text) for rx in map(sentence_rx, claim["sentences"])) \
+                and normalize(claim["requires"]).lower() not in text.lower():
+            fails.append(f"{name}: {claim['id']} without {claim['requires']!r} on the same page")
+    for sentence in re.split(r"(?<=[.!?;])\s+", text):
+        if PUBLIC_KEY.search(sentence) and STORE_VERB.search(sentence) and not NEGATION.search(sentence):
+            fails.append(f"{name}: {sentence[:100]!r} says we store public keys; C29: we store none")
+    return fails
+
+
+def claims(root: Path, registry: dict) -> list[str]:
+    fails = []
+    for name, text in copy_sources(root):
+        fails += claim_problems(name, text, registry, page=name.endswith(".html"))
+    return fails
+
+
 def load_config(source: str) -> dict:
     if source.startswith("https://") or source.startswith("http://127.0.0.1"):
         with urllib.request.urlopen(urllib.request.Request(source, headers={"User-Agent": "mutis-check-copy"}),
@@ -221,6 +286,7 @@ def main() -> int:
     fails, warns = banned_words(root)
     allowed = load_allowlist(root / "tools" / "copy-allowlist.txt")
     fails += i18n_digits(root, allowed)
+    fails += claims(root, load_registry(root / "tools" / "claim-registry.json"))
     if args.config:
         fails += hardcoded_config_numbers(root, load_config(args.config), allowed)
     for line in fails:

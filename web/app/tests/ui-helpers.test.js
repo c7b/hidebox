@@ -4,7 +4,7 @@ import { h, scriptUrl, svg } from '../lib/dom.js';
 import { makePreview, previewKind } from '../lib/preview.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import { match } from '../lib/router.js';
-import { formatBytes, t, useStrings } from '../lib/i18n.js';
+import { BRAND, formatBytes, t, useStrings } from '../lib/i18n.js';
 import { saveJudgePass, savedJudgePass } from '../lib/store.js';
 import { eq, isNode, ok, rejects } from './harness.js';
 
@@ -79,8 +79,10 @@ export default [
     eq(t('views.left', { count: 3 }), '3 views left');
     eq(t('hello', { name: '<b>Ana</b>' }), 'Hi, <b>Ana</b>');
     eq(t('missing.key'), 'missing.key');
-    useStrings({ size: 'Up to {n}' });
+    useStrings({ size: 'Up to {n}', what: 'What is {brand}?' });
     eq(t('size', { n: 25000 }), 'Up to 25,000');
+    eq(t('what'), `What is ${BRAND}?`); // the public name, tools/build.py BRAND
+    eq(t('what', { brand: 'x' }), 'What is x?');
     eq(formatBytes(2.4 * 1024 * 1024), '2.4 MB');
     eq(formatBytes(512), '512 B');
     eq(formatBytes(25 * 1024 * 1024), '25 MB');

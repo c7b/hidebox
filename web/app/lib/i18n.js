@@ -3,6 +3,9 @@
 // dictionary is flat JSON ({"viewer.ready.title": "…"}); a plural value is an object keyed by Intl
 // plural categories and chosen by params.count. The app is in English and formats for en-US.
 const LOCALE = 'en-US';
+// The public name (tools/build.py BRAND, which the build checks against this line). {brand} in any
+// string is this, unless the caller passes its own.
+export const BRAND = 'bye';
 const plurals = new Intl.PluralRules(LOCALE);
 const numberFormat = (n) => new Intl.NumberFormat(LOCALE).format(n);
 
@@ -25,7 +28,7 @@ export function t(key, params = {}) {
   if (v === undefined) return key;
   if (typeof v === 'object') v = v[plurals.select(Number(params.count ?? 0))] ?? v.other;
   return String(v).replace(/\{(\w+)\}/g, (m, name) => {
-    const p = params[name];
+    const p = name === 'brand' ? params.brand ?? BRAND : params[name];
     if (p === undefined) return m;
     return typeof p === 'number' ? numberFormat(p) : String(p);
   });

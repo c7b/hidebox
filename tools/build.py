@@ -25,6 +25,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lint  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+# The public name (14-ghost-design §2). The owner can swap it here, in one word; the internal codename
+# mutis stays in code, paths, services, the CLI and the database. Pages read it as {{BRAND}}; the app's
+# strings read it as {brand} from web/app/lib/i18n.js, which must say the same (the build checks).
+BRAND = "bye"
 DEFAULT_CONFIG = ROOT / "deploy" / "config" / "mutis.toml.example"
 HOLDING = ROOT / "deploy" / "holding"
 
@@ -93,7 +97,18 @@ def settings(cfg: dict, origin: str | None) -> dict:
         "NETWORK": network.capitalize(),
         "SECURITY_DROP_URL": cfg.get("security_drop_url") or origin + "/abuse",
         "REPO_URL": cfg.get("repo_url", "https://github.com/c7b/mutis").rstrip("/"),
+        "BRAND": BRAND,
     }
+
+
+def check_brand(web: Path) -> None:
+    """The app fills {brand} from lib/i18n.js's BRAND; it must be the build's (a tree without the app has none)."""
+    source = web / "app" / "lib" / "i18n.js"
+    if not source.is_file():
+        return
+    m = re.search(r"^export const BRAND = '([^']*)';", source.read_text(encoding="utf-8"), re.M)
+    if not m or m.group(1) != BRAND:
+        raise BuildError(f"web/app/lib/i18n.js BRAND is {m.group(1) if m else None!r}, tools/build.py BRAND is {BRAND!r}")
 
 
 def served(rel: str) -> bool:
@@ -293,6 +308,7 @@ def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: 
     if problems:
         raise BuildError("lint:\n  " + "\n  ".join(problems))
     vendored = verify_vendored(web)
+    check_brand(web)
     if holding:
         pages, variant_config = copy_holding(web, dist), {}
     else:

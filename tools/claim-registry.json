@@ -1,0 +1,203 @@
+{
+ "_comment": "The claim registry additions of 14-ghost-design §10.3 (11-brand §8 holds C1 to C23). tools/check-copy.py check (4): a copy sentence that carries one of a claim's markers must be one of its registered sentences ({variables} match their value, or nothing where a page binds it with data-v); a claim with `requires` needs that sentence on the same page. `labels` are buttons and headings that carry a marker without making a claim.",
+ "claims": [
+  {
+   "id": "C1-k",
+   "condition": "always (child form of C1)",
+   "backed_by": "spec §4.4, §4.14",
+   "markers": [
+    "locked right here"
+   ],
+   "sentences": [
+    "It gets locked right here, before it goes anywhere."
+   ]
+  },
+  {
+   "id": "C2-k",
+   "condition": "link modes (child form of C2)",
+   "backed_by": "spec §4.6",
+   "markers": [
+    "after the # sign"
+   ],
+   "sentences": [
+    "The key hides in the link, after the # sign."
+   ]
+  },
+  {
+   "id": "C1-n",
+   "condition": "always (child form of C1; the server also sees the C3 and C4 metadata, said on /made#who)",
+   "backed_by": "spec §4.14",
+   "markers": [
+    "scrambled noise"
+   ],
+   "sentences": [
+    "Our server gets scrambled noise. Never the key."
+   ]
+  },
+  {
+   "id": "C24",
+   "condition": "always; downloads in progress delay it up to {ticket_min} minutes; C5-snap and C6 apply",
+   "backed_by": "spec §5.2, §8.2",
+   "markers": [
+    "scrambled copy"
+   ],
+   "sentences": [
+    "We delete our scrambled copy.",
+    "Then it's gone. We delete our scrambled copy."
+   ]
+  },
+  {
+   "id": "C7-k",
+   "condition": "after the exit is in a SealLog checkpoint; before it, the pending form",
+   "backed_by": "spec §4.13",
+   "markers": [
+    "goodbye"
+   ],
+   "sentences": [
+    "Its goodbye is written on the Tari chain, for anyone to check.",
+    "We wrote its goodbye on the Tari chain.",
+    "Its goodbye goes on the Tari chain within {checkpoint_min} minutes."
+   ]
+  },
+  {
+   "id": "C7-h",
+   "condition": "every exit is added to SealLog at the next checkpoint (within {checkpoint_min} minutes); it proves we said we deleted it, not that we kept no copy",
+   "backed_by": "spec §4.13",
+   "markers": [
+    "goodbye"
+   ],
+   "sentences": [
+    "Then it's gone, and its goodbye goes on the Tari chain."
+   ]
+  },
+  {
+   "id": "C31",
+   "condition": "/verify checks the inclusion proof against the SealLog root on chain; the judges' demo secret is burned at least {checkpoint_min} minutes before the tag",
+   "backed_by": "spec §4.13",
+   "markers": [
+    "goodbye"
+   ],
+   "sentences": [
+    "Its goodbye on the Tari chain, checked by your browser."
+   ]
+  },
+  {
+   "id": "C25",
+   "condition": "courier sends; relay mode means we learn the address (C8)",
+   "backed_by": "spec §4.9, §4.10",
+   "markers": [
+    "only they can open"
+   ],
+   "sentences": [
+    "Or send it to a Tari address. Only they can open it.",
+    "It goes by Tari. Only they can open it."
+   ]
+  },
+  {
+   "id": "C26",
+   "condition": "rule Once (the default); gone = the link ends and C24 applies; an unopened link ends at its expiry",
+   "backed_by": "spec §5.2, §5.3",
+   "markers": [
+    "sees it once",
+    "opens one time"
+   ],
+   "sentences": [
+    "You get a link. Your friend sees it once.",
+    "It opens one time in the next {anon_max_expiry}. Then it's gone.",
+    "Same link. Now it opens one time."
+   ]
+  },
+  {
+   "id": "C26-f",
+   "condition": "rule A few times: min(3, max_views), set in place only while views_used = 0",
+   "backed_by": "spec §5.4",
+   "markers": [
+    "opens up to"
+   ],
+   "sentences": [
+    "It opens up to {few} times in the next {anon_max_expiry}. Then it's gone.",
+    "Same link. Now it opens up to {few} times."
+   ]
+  },
+  {
+   "id": "C15-k",
+   "condition": "kind 3 only (the default send and every dead drop); kind 4 files open with that wallet's view key, so C15 sits on every view-key screen; deleted if only kind 4 ships (spec G2)",
+   "backed_by": "spec §4.9.1, §4.9.2, G2",
+   "markers": [
+    "for files sent to",
+    "no file sent to your locker",
+    "lists arrivals and opens no file"
+   ],
+   "requires": "A view key can't spend, but it can read everything sent to this address, including files.",
+   "sentences": [
+    "For files sent to your locker: you see that something came, and how much. Not the file.",
+    "What came, and how much. No file sent to your locker opens with it.",
+    "For files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key."
+   ]
+  },
+  {
+   "id": "C29",
+   "condition": "lockers",
+   "backed_by": "spec D6, §4.8.4",
+   "markers": [
+    "hash of your login key"
+   ],
+   "sentences": [
+    "We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design."
+   ]
+  },
+  {
+   "id": "C30",
+   "condition": "adding or removing a secret word",
+   "backed_by": "spec §5.4 (a password is a new link and the old one is revoked)",
+   "markers": [
+    "old one stop"
+   ],
+   "sentences": [
+    "This makes a new link. The old one stops working.",
+    "New link made. The old one stopped working."
+   ]
+  },
+  {
+   "id": "C19-k",
+   "condition": "every money screen (child form of C19)",
+   "backed_by": "02 §2",
+   "markers": [
+    "test money"
+   ],
+   "sentences": [
+    "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet_date}."
+   ]
+  },
+  {
+   "id": "C17-k",
+   "condition": "locker onboarding (child form of C17)",
+   "backed_by": "spec §4.8",
+   "markers": [
+    "lives in this browser. No email",
+    "nobody can let you back in"
+   ],
+   "sentences": [
+    "It lives in this browser. No email, no password.",
+    "Save your key. If this browser forgets it, nobody can let you back in, not even us."
+   ]
+  },
+  {
+   "id": "C27",
+   "condition": "QR caption under rule Once",
+   "backed_by": "spec §5.3 (the reveal gate burns only on Open it)",
+   "markers": [
+    "one look"
+   ],
+   "sentences": [
+    "Scan it to open it on a phone. That uses its one look."
+   ]
+  }
+ ],
+ "labels": [
+  "See the goodbye",
+  "See one we already wrote",
+  "The goodbye record"
+ ],
+ "public_key": "A sentence about what we store may name public keys only to say we store none (C29)."
+}

@@ -576,7 +576,7 @@ def deaddrop(t):
     t.check(safety_emoji(b, "dd-safety") == safety, "it shows the owner's 12-emoji safety code")
     t.check(b.eval("document.querySelector('[data-testid=\"dd-label\"] bdi')?.textContent") == "Council",
             "the drop's label, isolated in a <bdi> inside the quotes")
-    t.check("doesn't check it" in b.text("dd-root"), "the page says the link's maker wrote the label and mutis doesn't check it")
+    t.check("We don't check it" in b.text("dd-root"), "the page says the link's maker wrote the label and we don't check it")
     report = b.attr("dd-report", "href") or ""
     t.check(b.eval("!!document.querySelector('main [data-testid=\"dd-report\"]')") and report.startswith("/abuse#link=")
             and urllib.parse.unquote(report) == f"/abuse#link={drop}", f"a Report this drop link in the page, filled in ({report[:60]})")

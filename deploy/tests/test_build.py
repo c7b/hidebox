@@ -17,14 +17,14 @@ SOURCE = ["a" * 40, "v1-test", "1760000000"]
 CFG = {"public_origin": "https://example.test", "gates": {"send_mode": "relay", "amount_proof": "wallet"},
        "features": {"seallog": False, "kept": True}, "hosting": {"snapshots": "weekly"}}
 VALUES = {"ORIGIN": "https://example.test", "NETWORK": "Esmeralda", "SECURITY_DROP_URL": "https://example.test/abuse",
-          "REPO_URL": "https://code.example/mutis"}
+          "REPO_URL": "https://code.example/mutis", "BRAND": "bye"}
 PAGE = """<!doctype html>
 <!-- SPDX-License-Identifier: MIT -->
 <html lang="en"><head><title>t</title>
 <link rel="canonical" href="{{ORIGIN}}/how">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
 <script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
-</head><body><!--#include header--><main><p>{{NETWORK}} · {{GIT_SHA}} · {{BUILD_DATE}}</p>
+</head><body><!--#include header--><main><p>{{BRAND}} · {{NETWORK}} · {{GIT_SHA}} · {{BUILD_DATE}}</p>
 <p data-when="send_mode=relay">Our relay posts it.</p><p data-when="send_mode=direct" hidden>Your browser posts it.</p>
 </main></body></html>
 """
@@ -76,7 +76,7 @@ class BuildTest(unittest.TestCase):
         self.assertIn('<header><a href="https://code.example/mutis">code</a></header>', how)
         self.assertNotIn("<!--#include", how)
         self.assertEqual(how.count("SPDX"), 1, "the partial's own license comment is not repeated")
-        self.assertIn("Esmeralda · " + "a" * 40 + " · 2025-10-09", how)
+        self.assertIn("bye · Esmeralda · " + "a" * 40 + " · 2025-10-09", how)
         for path in ("index.html", "404.html", "how/index.html", "status/index.html", "shared/tokens.css",
                      "site/js/site.js", "vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm",
                      "app/vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm"):
@@ -190,6 +190,16 @@ class BuildTest(unittest.TestCase):
                 with self.assertRaisesRegex(build.BuildError, expected):
                     self.build()
                 (self.web / "site" / "pages" / name).write_text(original)
+
+    def test_the_app_names_the_same_brand(self):
+        lib = self.web / "app" / "lib"
+        lib.mkdir(parents=True)
+        (lib / "i18n.js").write_text(f"// SPDX-License-Identifier: MIT\nexport const BRAND = '{build.BRAND}';\n")
+        self.build()
+        (lib / "i18n.js").write_text("// SPDX-License-Identifier: MIT\nexport const BRAND = 'mutis';\n")
+        with self.assertRaisesRegex(build.BuildError, "BRAND"):
+            self.build()
+        self.assertEqual(build.settings({"public_origin": "https://h.example"}, None)["BRAND"], build.BRAND)
 
     def test_vendored_hash_mismatch_stops_the_build(self):
         wasm = self.web / "app" / "vendor" / "ootle-wasm-0.45.0" / "ootle_wasm_bg.wasm"
