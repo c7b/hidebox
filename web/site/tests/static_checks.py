@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: MIT
 """Checks that need only the files: licence headers, CSP-safe markup, banned words, numbers that
-must come from /config, SEO metadata, trademark rules, contrast, partials, the privacy inventory.
-Each check returns a list of problems (empty = pass). Python standard library only."""
+must come from /config, SEO metadata, trademark rules, contrast, partials, the privacy inventory;
+and one that needs the network: security.txt's GitHub contact answers a visitor who isn't signed in.
+Each check returns a list of problems (empty = pass), or None for SKIP. Python standard library only."""
 import itertools
 import json
 import re
 import struct
+import urllib.error
+import urllib.parse
+import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -397,14 +401,15 @@ def check_static():
     if "Sitemap: {{ORIGIN}}/sitemap.xml" not in robots:
         problems.append("robots.txt: no Sitemap line")
     sec = (s / ".well-known" / "security.txt").read_text()
-    # One contact, the dead drop: a GitHub advisory link would only work once the repository is public
-    # and private reporting is switched on, and RFC 9116 wants every Contact to work.
-    for field in ("Contact: {{SECURITY_DROP_URL}}", "Expires: ",
+    # Two contacts, in order of preference (RFC 9116): the dead drop, then GitHub's private advisory form.
+    # RFC 9116 wants every Contact to work; check_security_contacts asks GitHub, as a stranger, that it does.
+    for field in ("Contact: {{SECURITY_DROP_URL}}", f"Contact: {{{{REPO_URL}}}}{ADVISORY_PATH}", "Expires: ",
                   "Preferred-Languages: en", "Policy: {{ORIGIN}}/security", "Canonical: {{ORIGIN}}/.well-known/security.txt"):
         if field not in sec:
             problems.append(f"security.txt: missing {field!r}")
-    if "advisories" in sec:
-        problems.append("security.txt: names a GitHub contact (dead while the repository is private)")
+    contacts = [line.split(":", 1)[1].strip() for line in sec.splitlines() if line.startswith("Contact:")]
+    if contacts != ["{{SECURITY_DROP_URL}}", "{{REPO_URL}}" + ADVISORY_PATH]:
+        problems.append(f"security.txt: Contact lines should be the drop, then the advisory form; found {contacts}")
     manifest = json.loads((s / "manifest.webmanifest").read_text())
     for icon in manifest["icons"]:
         if not (s / icon["src"].lstrip("/")).is_file():
@@ -434,6 +439,56 @@ def check_static():
         problems.append("fonts/OFL.txt: missing the copyright line or the licence")
     if "renamed as the licence requires" not in (fonts / "NOTICE").read_text():
         problems.append("fonts/NOTICE: missing the rename notice")
+    return problems
+
+
+ADVISORY_PATH = "/security/advisories/new"
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def _anonymous_get(url: str):
+    """(status, Location, body) of one GET with no cookies, no credentials and no redirect followed."""
+    request = urllib.request.Request(url, headers={"User-Agent": "mutis-site-check/1", "Accept": "*/*"})
+    try:
+        with urllib.request.build_opener(_NoRedirect).open(request, timeout=20) as r:
+            return r.status, r.headers.get("Location"), r.read(65536)
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers.get("Location"), b""
+
+
+def check_security_contacts():
+    """security.txt's second Contact, GitHub's private advisory form, must work for someone who isn't
+    signed in: the URL answers 200, or a 302 to a github.com page that answers 200 (GitHub's sign-in
+    page, which returns to the form), and GitHub's public API says private vulnerability reporting is on.
+    The repository is the configuration's `repo_url` (the fixture's, which is the default). Needs the
+    network: without it the check is reported as SKIP, never as PASS."""
+    repo = json.loads((SITE / "tests" / "fixtures" / "config.json").read_text())["repo_url"].rstrip("/")
+    parts = urllib.parse.urlsplit(repo)
+    if parts.scheme != "https" or parts.netloc != "github.com" or parts.path.count("/") != 2:
+        return [f"repo_url {repo!r} is not https://github.com/<owner>/<name>; security.txt's advisory Contact needs one"]
+    url, problems = repo + ADVISORY_PATH, []
+    try:
+        status, location, _ = _anonymous_get(url)
+        if status == 302 and location:
+            target = urllib.parse.urljoin(url, location)
+            if urllib.parse.urlsplit(target).netloc != "github.com":
+                problems.append(f"{url}: 302 to {target}, off github.com")
+            else:
+                final, _, _ = _anonymous_get(target)
+                if final != 200:
+                    problems.append(f"{url}: 302 to {target}, which answers {final}")
+        elif status != 200:
+            problems.append(f"{url}: answers {status} to a visitor who isn't signed in (is the repository public?)")
+        status, _, body = _anonymous_get(f"https://api.github.com/repos{parts.path}/private-vulnerability-reporting")
+        enabled = status == 200 and json.loads(body or b"{}").get("enabled") is True
+        if not enabled:
+            problems.append(f"GitHub's API: private vulnerability reporting is not on for {parts.path[1:]} ({status})")
+    except (urllib.error.URLError, OSError):
+        return None
     return problems
 
 
@@ -535,5 +590,6 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("trademark and mandatory lines (M-05)", check_trademark), ("partials in sync", check_partials),
           ("privacy inventory covers the schema (M-06)", check_privacy_inventory),
           ("contrast table (M-03)", check_contrast), ("static files (M-04)", check_static),
+          ("security.txt contacts answer a stranger (needs the network)", check_security_contacts),
           ("copy variants set at build time (M11)", check_build_variants),
           ("/judges quotes the app's words", check_ui_strings)]
