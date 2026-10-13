@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Devil's-advocate review: deploy/, tools/, tests/e2e/ and ultron's state
 
+> Historical record (2026-10-11). The site and app also had Spanish pages then; the owner had them
+> removed on 2026-10-12 (CHANGELOG), so mentions of `/es/`, `es.json` and the language switch below
+> describe code that is now only in the git history. The current layout is in this directory's README.
+
 Reviewed on 2026-10-11 against 12-integration, 10-spec §0, §2, §3, §8, §10, §14–§18 and 11-brand §7, §8,
 §13.3, §16. I didn't trust the report: I re-ran the tests, probed the live host, read every script and
 unit, and checked ultron read-only (as lcam/root `ls`, the walletd *backup* copy opened `immutable=1`).
