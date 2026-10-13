@@ -18,7 +18,7 @@ listening() { ss -Hltn "sport = :$1" | grep -q .; }
 
 [ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 2; }
 
-# walletd (auth=none) on 5100 and the L1 wallet's gRPC on 18143: only root, operator and drive.
+# walletd (auth=none) on 5100 and the L1 wallet's gRPC on 18143: only root, the operator and drive.
 for port in 5100 18143; do
   if listening "$port"; then
     for user in mutis build caddy; do check "$user cannot connect to 127.0.0.1:$port" denied as "$user" bash -c "exec 3<>/dev/tcp/127.0.0.1/$port"; done
@@ -28,8 +28,8 @@ for port in 5100 18143; do
   fi
 done
 
-# mutis-api trusts X-Real-IP from loopback: only caddy, drive (the sidecar's canary), root and operator
-# may connect. While the API is off, a stand-in listener lets the guard itself be tested.
+# mutis-api trusts X-Real-IP from loopback: only caddy, drive (the sidecar's canary), root and the
+# operator may connect. While the API is off, a stand-in listener lets the guard itself be tested.
 stand_in=
 if ! listening 8787; then
   python3 -I -c 'import socket, time

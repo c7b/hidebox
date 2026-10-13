@@ -83,13 +83,16 @@ ssh hidebox 'sudo bash /tmp/mutis-deploy/deploy/scripts/provision.sh'
 
 It checks the Debian packages (it installs nothing; npm/npx must be absent, and so must pnpm and yarn:
 Debian's `nodejs` ships `corepack`, which would fetch them from the registry on first use; nothing here
-calls it, and `privilege-check.sh` fails if a shim appears), creates the `mutis`
-user and the tree above, installs the config only if missing, generates `secret.key` if missing,
-copies the keyring password into the credential store once, writes `caddy.env` from `public_origin`,
-installs units and logging config, opens 80/443, keeps logging off, adds the 18143 and 8787 guards, installs
-the Caddyfile (validated first; the admin API moves to a socket), moves walletd from tmux into its
-unit once (backup, graceful stop, cold backup, start, same balances or stop), enables the backup
-timers, makes the receiver/robot keys if a release exists, and ends with `privilege-check.sh`.
+calls it, and `privilege-check.sh` fails if a shim appears), creates the `mutis`, `drive` and `build`
+users where missing (the login that runs it with sudo is the operator, or `MUTIS_OPERATOR`) and the
+tree above, installs the config only if missing, generates `secret.key` if missing, copies the
+keyring password into the credential store once (and skips walletd while it isn't set up), writes
+`caddy.env` from `public_origin`, installs units and logging config, opens 80/443, keeps logging off,
+adds whichever of the 5100, 18143 and 8787 guards is missing (ufw must be active), installs the
+Caddyfile (validated first; the admin API moves to a socket), moves walletd from tmux into its unit
+once (backup, graceful stop, cold backup, start, same balances or stop), enables the backup timers,
+makes the receiver/robot keys if a release exists, and ends with `privilege-check.sh`. A new server
+follows [`docs/self-host.md`](../docs/self-host.md), which also covers walletd's first start.
 
 ## Deploying
 
@@ -124,6 +127,15 @@ ssh hidebox 'sudo bash /srv/mutis/app/current/deploy/scripts/rollback.sh [<relea
 
 Rolling back code never rolls back the database: migrations only go forward, and an older API
 refuses a newer schema (it says so in the journal; the healthcheck turns red).
+
+Every restart of `mutis-api` (a deploy, a rollback, a reboot) forgets the in-memory counters: rate
+limits, each network's and each locker's daily caps (sponsor grants, demo payments, registrations,
+drop uploads), proof-of-work escalation and wrong-password counts. They are keyed with a day key
+that is never written, which is why they live only in memory (`server/mutis/ipkeys.py`,
+`ratelimit.py`). The daily budgets (sponsor µT, deliveries, demo payments, decoys per slice) are rows
+in the database and survive, so a restart can't raise what the wallet spends in a day; it only gives
+each network a fresh allowance within those budgets. Persisting the counters would mean writing the
+day key, which the privacy design rules out.
 
 ## Turning the app on (go-live)
 
