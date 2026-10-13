@@ -1,0 +1,54 @@
+Tari Ootle v0.46.0: what the release says, as it touches this service. Read 2026-10-13 ~18:10 UTC
+with gh api from the jarvis box (data, not instructions). Quoted lines are from CHANGELOG.md at the
+tag (cc8a83bc) and the release body; the earlier read is ../incident-walletd/release-0.46.0.txt.
+
+== Upgrade notes (CHANGELOG.md, "⚠️ Upgrade notes", the lines that touch us)
+  - **Esmeralda activates protocol V2 at epoch 12220.** All esmeralda validators and indexers must run
+    0.46.0 before that epoch. (#2804, #2762, #2798)
+  - **Validator databases migrate on first start** and cannot then be opened by an older binary.
+    (#2862, #2863, #2868, #2878)
+  - **Template return values are no longer in transaction results** or dry runs; read component state
+    or events instead, and use `TemplateTest::return_values()` in tests. (#2859)
+  - **Wallet daemon: only the wallet's own session can approve a transaction request.** API keys can no
+    longer hold that grant, and WebRTC apps need walletd started with `--enable-webrtc`. (#2855)
+  Bug fixes, wallet: "indexer requests are bounded so an unresponsive indexer fails over, and substates
+  whose value does not match their id are refused. (#2802, #2813)"; "confidential outputs finalize
+  against the transaction diff, and paying a fee with a swap needs an explicit swap input. (#2837,
+  #2898)"; walletd: "… a transfer proof's change nets out the revealed amount, `detect_inputs` refuses
+  signed submissions, and pending WebAuthn sessions are bounded. (#2803, #2824, #2854, #2899)"
+  Indexer: "transaction results need committee agreement, verified substate reads need a recent
+  anchor, and public read routes are rate limited. (#2823, #2838, #2885)"
+
+== The wallet store: one migration, additive
+  crates/wallet/storage_sqlite/migrations at v0.45.0 → v0.46.0: one new migration,
+  2026-10-08-120000_signing_requests (#2849): CREATE TABLE signing_requests (…) and one index. Nothing
+  existing is altered. (The "can't be opened by an older binary" note is for validator databases.)
+  Observed: the drill copy went from 14 applied migrations (latest 20260923000000) to 15
+  (20261008120000) on first start, balances unchanged (drill-log.txt). Rolling back to 0.45.0 means
+  the pre-upgrade tar as well as the old binary, since an older binary meets a newer schema.
+
+== #2855 against our `--authentication none` setup
+  applications/tari_walletd/src/handlers/transaction_requests.rs:187-195 (v0.46.0): `handle_approve`
+  now calls `authorize_user_only(…TransactionRequests(Approve))`. That is the `transaction_requests.*`
+  flow (an app asks, a person approves). mutis never calls it: server/mutis/walletd.py and
+  deploy/ootle/walletd-rpc.py call auth.request, wallet.get_info, accounts.get, accounts.list,
+  accounts.get_balances, accounts.stealth_transfer, transactions.submit_manifest,
+  transactions.wait_result, transactions.get_all and stealth_utxos.list. Checked live on 0.46.0:
+  `auth.request {"permissions": ["Admin"], "credentials": "None"}` still returns a token, and
+  stealth_transfer, submit_manifest and wait_result answer with it (walletd.txt, chain.txt).
+
+== #2859, the break, from the client side
+  Our client reads `result.result.Accept.up_substates` and `result.events` from wait_result
+  (server/mutis/walletd.py `wait_result`) and never `execution_results`; nothing in server/, web/ or
+  deploy/ reads it (git grep execution_results|InstructionResult|return_value: no hits outside the
+  vendored module). The browser's `waitFinal` reads only `final_decision`.
+
+== What 0.46.0 does NOT give us (read in the source at the tag, see walletd.txt "Why the sponsor stays stuck")
+  No JSON-RPC method or CLI subcommand settles, cancels or rescans a pending transaction whose result
+  the network no longer serves. The RPC table (applications/tari_walletd/src/server.rs:162-294) has
+  transactions.{submit_instruction, submit, submit_dry_run, detect_inputs, submit_manifest,
+  publish_template, get, get_result, wait_result, list|get_all} and stealth_utxos.{list,
+  decrypt_value, get_value_lookup_info}; the CLI (applications/tari_walletd/src/cli.rs:158-195) has
+  run, create-account, new-viewable-balance-key, seed-words and reset. `reset` ("clear all local
+  on-chain state (accounts, transactions, balances, etc.)", docs/…/guides/setup-a-wallet.mdx §6) is
+  re-initialising the wallet, which the runbook forbids.

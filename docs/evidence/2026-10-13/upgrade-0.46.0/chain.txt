@@ -1,0 +1,95 @@
+mutis's side of the upgrade, 2026-10-13 (UTC): the chain worker's journal, SealLog checkpoints, the
+three re-notarizations. Database reads as mutis in read-only mode unless said otherwise; indexers
+read from the jarvis box. Hashes cut to 8 hex digits unless the full value is the point.
+
+== journalctl -u mutis-chain, 18:00 to 18:35 (walletd restarted at 18:14:37)
+  18:03:31 WARNING event=chain.seal_failed
+  18:03:38 INFO event=chain.canary_sealed
+  18:03:46 WARNING event=chain.job_failed
+  18:03:56 WARNING event=chain.job_failed
+  18:04:57 WARNING event=chain.job_failed
+  18:09:01 WARNING event=chain.job_failed
+  18:09:11 WARNING event=chain.job_failed
+  18:10:12 WARNING event=chain.job_failed
+  18:13:30 INFO event=chain.seal_checkpoint
+  18:21:39 WARNING event=chain.job_failed
+  18:21:49 WARNING event=chain.job_failed
+  18:22:49 WARNING event=chain.job_failed
+  18:28:30 INFO event=chain.seal_checkpoint
+  18:29:53 WARNING event=chain.job_failed
+  18:03:31 is #158 given up after its 900 s (0.45.0 couldn't read its result). 18:13:30 is #159,
+  submitted by 0.45.0 and read by 0.46.0 after the restart: recorded committed, chain index 158, epoch
+  12227, the first checkpoint mutis recorded since #140 at 10:28. 18:28:30 is #160 (de3ab605…),
+  committed, chain index 159. The job failures are sponsor sends (decoys), "Available: 0".
+
+== checkpoints #141 to #158 against the SealLog component (scripts/cmpseal.py)
+$ curl https://ootle-indexer-{a,b}.tari.com/substates/component_b7d21215…   (18:21; the live log, template 2.0.0)
+  both: version 159, first_index 95, 64 kept, checkpoint_count 159, owner_rule None
+  (the state keeps the newest 64 (epoch, root, leaf_count); indices 140 to 157 are among them)
+  idx  state      tx        tree_size  root(db)  | chain index: epoch  root(a=b)  leaf_count  match
+  #139  committed  d1368d8c    8896  be83faa5…  |  138: 12213  be83faa5…  8896  same   (db epoch 12213, chain_index 138)
+  #140  committed  2e455002    8960  1ef2bfe5…  |  139: 12213  1ef2bfe5…  8960  same   (db epoch 12213, chain_index 139)
+  #141  failed     46c76419    9024  d3504530…  |  140: 12214  d3504530…  9024  same   (db epoch None, chain_index None)
+  #142  failed     8bfac242    9088  9b422596…  |  141: 12215  9b422596…  9088  same   (db epoch None, chain_index None)
+  #143  failed     fbea753e    9152  d7529a2e…  |  142: 12215  d7529a2e…  9152  same   (db epoch None, chain_index None)
+  #144  failed     d5a2f922    9216  cb7dd3a9…  |  143: 12216  cb7dd3a9…  9216  same   (db epoch None, chain_index None)
+  #145  failed     48a5cad8    9280  dcae8b3d…  |  144: 12217  dcae8b3d…  9280  same   (db epoch None, chain_index None)
+  #146  failed     d19afab8    9344  5669a46e…  |  145: 12218  5669a46e…  9344  same   (db epoch None, chain_index None)
+  #147  failed     f3d21f0c    9408  b9c96986…  |  146: 12218  b9c96986…  9408  same   (db epoch None, chain_index None)
+  #148  failed     0cbb998c    9472  28b4780d…  |  147: 12219  28b4780d…  9472  same   (db epoch None, chain_index None)
+  #149  failed     ca7e2e37    9536  30b9135b…  |  148: 12220  30b9135b…  9536  same   (db epoch None, chain_index None)
+  #150  failed     b127b17a    9600  e56119b3…  |  149: 12220  e56119b3…  9600  same   (db epoch None, chain_index None)
+  #151  failed     7dd75d59    9664  2ee9193f…  |  150: 12221  2ee9193f…  9664  same   (db epoch None, chain_index None)
+  #152  failed     e46db43e    9728  842e4dae…  |  151: 12222  842e4dae…  9728  same   (db epoch None, chain_index None)
+  #153  failed     d1752525    9792  b5f07070…  |  152: 12223  b5f07070…  9792  same   (db epoch None, chain_index None)
+  #154  failed     3eb658ba    9856  9b5baf19…  |  153: 12223  9b5baf19…  9856  same   (db epoch None, chain_index None)
+  #155  failed     b224ecd3    9920  acaac240…  |  154: 12224  acaac240…  9920  same   (db epoch None, chain_index None)
+  #156  failed     e1692b2a    9984  b4abc303…  |  155: 12225  b4abc303…  9984  same   (db epoch None, chain_index None)
+  #157  failed     f5ee8431   10048  556a4f9c…  |  156: 12226  556a4f9c…  10048  same   (db epoch None, chain_index None)
+  #158  failed     d20aab61   10112  ef993fcf…  |  157: 12226  ef993fcf…  10112  same   (db epoch None, chain_index None)
+  #159  committed  b09318cf   10176  3e638934…  |  158: 12227  3e638934…  10176  same   (db epoch 12227, chain_index 158)
+  component in db rows == the live log: True
+  ALL 18 MATCH
+  Every one of #141 to #158 is in the log at chain index idx − 1 with the same root and tree size on
+  both indexers; the epochs come from the log itself (the epoch of each append).
+
+== marking them committed: one transaction, after a backup   18:21:23
+  No admin command settles a failed checkpoint (`seallog.settle` only moves `pending` rows, and
+  mutis-admin has no such subcommand), so a single write as mutis (umask 007), scripts/markseal.py:
+  - backup first, as root: sqlite3 backup API → /var/backups/mutis/mutis-20261013T182123Z-pre-checkpoints.sqlite3
+    (root 0600, PRAGMA integrity_check ok, 159 checkpoint rows; a .sqlite3 name, so backup.py
+    prune-root deletes it at the published db_backup_days like the other database copies)
+  - BEGIN IMMEDIATE; for idx 141..158, after asserting the row is `failed` and its tree size, root,
+    component and tx id match both indexers:
+      UPDATE seal_checkpoints SET state='committed', epoch=<log epoch>, chain_index=idx-1
+      WHERE idx=? AND state='failed' AND tree_size=? AND root=? AND component=?     (rowcount 1 each)
+    COMMIT → "committed: 18 rows (#141..#158)"
+  after: (140, committed, 12213, 139) (141, committed, 12214, 140) (142, committed, 12215, 141)
+    (143, committed, 12215, 142) (144, committed, 12216, 143) (145, committed, 12217, 144)
+    (146, committed, 12218, 145) (147, committed, 12218, 146) (148, committed, 12219, 147)
+    (149, committed, 12220, 148) (150, committed, 12220, 149) (151, committed, 12221, 150)
+    (152, committed, 12222, 151) (153, committed, 12223, 152) (154, committed, 12223, 153)
+    (155, committed, 12224, 154) (156, committed, 12225, 155) (157, committed, 12226, 156)
+    (158, committed, 12226, 157) (159, committed, 12227, 158)
+  seal_checkpoints by state now: committed 159 (#1 to #160 at 18:31, #160 by the worker).
+
+== the three releases missing from /releases.json   18:19:28 to 18:20:01
+  27e29462 (live): the runbook's retry, `sudo python3 -I /srv/mutis/app/current/deploy/scripts/notarize-release.py`
+    notarize: 27e29462b1a6922aa3fcc4fa629793fdf4f07f87-ca6894dee manifest 8901f47b3f43… in tx 2131f7c31ad40d4f94ff0c0e565b271ee78edd7e1430ae91e8b3fd2ba20473cb
+  ec2956b4, 612db64f (kept in /srv/mutis/app/releases/, no longer current): the script reads `current`
+    only, and running it from those releases fails on their older config schema ("unknown config key:
+    judge_demo_gone"; nothing was sent). So the same three steps by hand, as root: SHA-256 of
+    releases/<id>/dist/.well-known/mutis-manifest.json, `mutis-admin notarize <sha>` of the live release
+    (as drive), append {release, manifest_sha256, tx_id, at} to /srv/mutis/status/releases.json with the
+    script's atomic write (0644):
+    notarize: ec2956b4ccbac02621f5f88bf772cc1577916c93-c546f93a7 manifest b2c4eda69125… in tx 0cb35b38c384c991c82a091e121d24d1379b0e305b56f2c7a20f1f8477d33265
+    notarize: 612db64ffcab6f30517f21999804ec19c8d69f98-c9afcf945 manifest 4b797bbfed13… in tx 4f12ef3659895b85f45478ec5d72ee2fd690d95733447a1033cc5195bcefd1b4
+  On chain (both indexers, GET /transactions/<tx>/result): Finalized, Commit, fees 1,808 µT each, one
+  SealLog.notarize event each with commitment 8901f47b3f434142…, b2c4eda691258d50…, 4b797bbfed134b8b…
+  (= the manifests' SHA-256), epoch 12227, signer 9c686313… (service). No execution_results key.
+  /releases.json now serves 21 entries; the last three are 27e29462, ec2956b4, 612db64f, in the order
+  they were notarized (each `at` is its notarization time, not its deploy time).
+  The earlier attempts are still Pending in walletd (1ecdcf01… and 4541a3fb… for ec2956b4,
+  d32cd042… for 612db64f, f9f992aa… for 27e29462). They most likely committed, as every checkpoint of
+  those hours did, but notarize writes no state and their results are gone, so nothing shows it; the
+  ledger cites the new transactions.

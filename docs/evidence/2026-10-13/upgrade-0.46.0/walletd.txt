@@ -1,0 +1,144 @@
+walletd on ultron around the upgrade, 2026-10-13 (UTC). RPC as drive on the loopback port with
+scripts/wsum.py (read-only: wallet.get_info, accounts.list, accounts.get_balances without refresh,
+transactions.get_all, stealth_utxos.list for sponsor); journal with journalctl -u walletd. Hashes cut
+to 8 hex digits.
+
+== before: 0.45.0, 18:13:15
+wallet.get_info: {'network': 'esmeralda', 'version': '0.45.0'}
+  buyer-demo  revealed 0, confidential 3500000 µT
+  operator    revealed 13940, confidential 0 µT
+  service     revealed 17103279, confidential 72268000 µT
+  sponsor     no balances listed
+transactions.get_all: 462: Accepted 438, New 1, Pending 23
+  a599a962…  New        2026-10-11 23:06:51
+  2749858a…  Pending    2026-10-13 10:39:22
+  46c76419…  Pending    2026-10-13 10:43:12
+  8bfac242…  Pending    2026-10-13 11:08:11
+  1ecdcf01…  Pending    2026-10-13 11:11:45
+  4541a3fb…  Pending    2026-10-13 11:13:55
+  fbea753e…  Pending    2026-10-13 11:33:13
+  d5a2f922…  Pending    2026-10-13 11:58:13
+  48a5cad8…  Pending    2026-10-13 12:23:14
+  d32cd042…  Pending    2026-10-13 12:39:13
+  d19afab8…  Pending    2026-10-13 12:48:15
+  f3d21f0c…  Pending    2026-10-13 13:13:16
+  f9f992aa…  Pending    2026-10-13 13:35:36
+  0cbb998c…  Pending    2026-10-13 13:38:19
+  ca7e2e37…  Pending    2026-10-13 14:03:18
+  b127b17a…  Pending    2026-10-13 14:28:20
+  7dd75d59…  Pending    2026-10-13 14:53:20
+  e46db43e…  Pending    2026-10-13 15:18:20
+  d1752525…  Pending    2026-10-13 15:43:22
+  3eb658ba…  Pending    2026-10-13 16:08:23
+  b224ecd3…  Pending    2026-10-13 16:33:24
+  e1692b2a…  Pending    2026-10-13 16:58:25
+  f5ee8431…  Pending    2026-10-13 17:23:27
+  d20aab61…  Pending    2026-10-13 17:48:28
+sponsor stealth_utxos.list: 262: LockedUnconfirmed (on chain False) 1, Spent (on chain True) 261
+  commitment 01010101…  LockedUnconfirmed  is_on_chain False  value 8851452000 µT
+
+== after: 0.46.0, 18:31 (walletd active since 18:14:37)
+wallet.get_info: {'network': 'esmeralda', 'version': '0.46.0'}
+  buyer-demo  revealed 0, confidential 3500000 µT
+  operator    revealed 13940, confidential 0 µT
+  service     revealed 17087301, confidential 72268000 µT
+  sponsor     no balances listed
+transactions.get_all: 467: Accepted 445, New 1, Pending 21
+  a599a962…  New        2026-10-11 23:06:51
+  2749858a…  Pending    2026-10-13 10:39:22
+  46c76419…  Pending    2026-10-13 10:43:12
+  8bfac242…  Pending    2026-10-13 11:08:11
+  1ecdcf01…  Pending    2026-10-13 11:11:45
+  4541a3fb…  Pending    2026-10-13 11:13:55
+  fbea753e…  Pending    2026-10-13 11:33:13
+  d5a2f922…  Pending    2026-10-13 11:58:13
+  48a5cad8…  Pending    2026-10-13 12:23:14
+  d32cd042…  Pending    2026-10-13 12:39:13
+  d19afab8…  Pending    2026-10-13 12:48:15
+  f3d21f0c…  Pending    2026-10-13 13:13:16
+  f9f992aa…  Pending    2026-10-13 13:35:36
+  0cbb998c…  Pending    2026-10-13 13:38:19
+  ca7e2e37…  Pending    2026-10-13 14:03:18
+  b127b17a…  Pending    2026-10-13 14:28:20
+  7dd75d59…  Pending    2026-10-13 14:53:20
+  e46db43e…  Pending    2026-10-13 15:18:20
+  d1752525…  Pending    2026-10-13 15:43:22
+  3eb658ba…  Pending    2026-10-13 16:08:23
+  b224ecd3…  Pending    2026-10-13 16:33:24
+  e1692b2a…  Pending    2026-10-13 16:58:25
+sponsor stealth_utxos.list: 262: LockedUnconfirmed (on chain False) 1, Spent (on chain True) 261
+  commitment 3ee453ab…  LockedUnconfirmed  is_on_chain False  value 8851452000 µT
+  Accepted went 438 → 445: #157 f5ee8431…, #158 d20aab61… and #159 b09318cf… on walletd's first poll
+  after the start (their results were still served), then the three notarizations of 18:19 to 18:20
+  and checkpoint #160, which 0.46.0 submitted and read normally.
+  service's revealed balance: 17,103,279 → 17,087,301 µT = #159 (5,287) + three notarizations
+  (3 × 1,808) + #160 (5,267). The confidential balances didn't move; sponsor still lists no balance.
+
+== journal from the start of 0.46.0 to 18:31 (identical lines counted; first – last)
+  The deserialize error of 0.45.0 ("Failed to deserialize response for path transactions/…") is gone.
+    1  18:14:37 – 18:14:37 systemd: Started walletd.service - Ootle wallet daemon for mutis (Esmeralda testnet).
+    1  18:14:37 – 18:14:37  Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+    1  18:14:37 – 18:14:37  WARN common::config ⚠️ The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a
+    1  18:14:37 – 18:14:37  WARN common::config ⚠️ The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/m
+    1  18:14:37 – 18:14:37  WARNING: The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own
+    1  18:14:37 – 18:14:37  WARNING: The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4r
+    1  18:14:37 – 18:14:37  WARN tari::ootle::wallet_daemon ⚠️ Setting auth to none is dangerous. Your wallet has no password and any program on this computer, or anyone who can reach it over the network, can spend your fund
+    3  18:14:37 – 18:14:40  WARN tari::ootle::wallet_daemon::json_rpc 🌐 JSON-RPC error: JWT error: InvalidSignature
+  177  18:14:37 – 18:29:16  ERROR tari::ootle::wallet_services::transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry run and cannot be s
+  177  18:14:38 – 18:29:16  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 3eb658ba…. Will check again later.
+  177  18:14:38 – 18:29:16  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash b224ecd3…. Will check again later.
+  177  18:14:38 – 18:29:16  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash e1692b2a…. Will check again later.
+  177  18:14:38 – 18:29:17  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash d1752525…. Will check again later.
+  177  18:14:38 – 18:29:17  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash e46db43e…. Will check again later.
+  176  18:14:39 – 18:29:12  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 0cbb998c…. Will check again later.
+  176  18:14:39 – 18:29:12  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash d19afab8…. Will check again later.
+  176  18:14:39 – 18:29:12  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash f3d21f0c…. Will check again later.
+  176  18:14:39 – 18:29:12  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash f9f992aa…. Will check again later.
+  176  18:14:39 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 48a5cad8…. Will check again later.
+  176  18:14:39 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash d32cd042…. Will check again later.
+  177  18:14:39 – 18:29:17  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 7dd75d59…. Will check again later.
+  177  18:14:39 – 18:29:17  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash b127b17a…. Will check again later.
+  177  18:14:39 – 18:29:17  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash ca7e2e37…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 1ecdcf01…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 2749858a…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 4541a3fb…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 46c76419…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash 8bfac242…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash d5a2f922…. Will check again later.
+  176  18:14:40 – 18:29:13  WARN tari::ootle::wallet_sdk::apis::transaction Transaction result not found for transaction with hash fbea753e…. Will check again later.
+    3  18:21:39 – 18:22:49  WARN tari::ootle::wallet_daemon::json_rpc 🌐 JSON-RPC error: Insufficient funds: PreferConfidential: Not enough revealed funds to spend.. Available: 0, Required: 31000
+  The three JWT lines at 18:14:37 to 18:14:40 are mutis-chain's cached token from the old process
+  (a new process signs with a new key); the client asks again after 240 s, or at once on its next
+  token. The "Insufficient funds … Available: 0" lines are decoys from the sponsor (job failed with
+  walletd_error after 3 attempts, 18:21:37 to 18:22:49). The dry-run line is the old stored dry run
+  a599a962… (status New since 2026-10-11 23:06), unchanged by the upgrade.
+  Volume: 21 "result not found" lines every 5 s (about 15,000 an hour), one indexer request each,
+  for as long as the 21 stay pending. No 429 or rate-limit answer so far (grep -ciE '429|too many|rate': 0).
+
+== Why the sponsor stays stuck (walletd 0.46.0 source at the tag, cc8a83bc)
+  The sponsor's whole balance is commitment 3ee453abdd3dd93b…, the change of its 10:39 send
+  2749858a…. It is on chain: both indexers answer GET /substates/utxo_…_3ee453ab… 200 (a Utxo
+  substate, version 0, 18:27), and mutis's mirror has it (chain_utxos seq 1463, epoch 12214,
+  first seen 10:39:32). walletd holds it as LockedUnconfirmed, is_on_chain false, under the lock of
+  2749858a…, which stays Pending:
+  1. crates/wallet/sdk/src/apis/transaction.rs:233-243: a 404 for the result is "Transaction result
+     not found … Will check again later" and the transaction stays Pending, with the comment
+     "TODO: if this happens forever we might want to resubmit or mark as invalid".
+  2. The indexer's 404 is final: applications/tari_indexer/src/transaction_manager/mod.rs:179-262
+     asks the transaction's committee first and answers NotFound when the committee has no result
+     (it no longer keeps one for transactions older than about an epoch or two: #156 from 16:58 was
+     already 404 at 18:14).
+  3. crates/wallet/storage_sqlite/src/writer.rs:2497-2517 locks_release_stale: "A lock linked to a
+     transaction is released when that transaction resolves, never by timeout", so the lock of
+     2749858a… is never reaped.
+  4. crates/wallet/sdk/src/apis/stealth_outputs.rs:626-645 upsert_utxo: when the scanner finds an
+     output the wallet already holds, its status changes only if it is Unspent ("If not unspent, don't
+     allow status to be changed"); verify_and_update_outputs (same file, 685-) touches only is_burnt
+     and is_frozen of a known output. So the UTXO scanner can't turn 3ee453ab… back into Unspent.
+  5. There is no RPC or CLI to settle, cancel or rescan (release-notes.txt, last section). The two
+     ways to drop a lock both delete the change: writer.rs:132-163 stealth_outputs_release_by_lock_id
+     ("Remove stealth_outputs that were created by this lock": LockedUnconfirmed rows are deleted), and
+     a Rejected result does the same (transaction.rs:247-258). Resubmitting 2749858a… would abort on
+     its spent input and take that path. `reset` wipes the wallet's local state.
+  So walletd 0.46.0 has no documented way to re-derive this output from chain state, and the store is
+  not edited by hand. Stopped here for the sponsor (README.md, "What remains for the owner").

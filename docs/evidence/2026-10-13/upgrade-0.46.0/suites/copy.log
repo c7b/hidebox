@@ -1,0 +1,2 @@
+== copy: python3 -I tools/check-copy.py --root .
+check-copy: PASS (0 problems, 0 to read, (3) skipped: no --config)

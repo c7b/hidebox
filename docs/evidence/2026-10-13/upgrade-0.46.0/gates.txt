@@ -1,0 +1,57 @@
+The live gates G1 and G2c (web/app/tests/README.md, "Live gates (Esmeralda, by hand)") on the V2 chain,
+2026-10-13, with both browser libraries: production's ootle-wasm 0.45.0 (a `git archive` of 2ede662,
+the live release's vendor files: 57de0088…d4df) and the vendored 0.46.0 (2856d86b…93f2). The pages ran
+on ultron as `build` in headless Chromium under the app CSP; walletd_send.py as lcam. The test identity
+is the gates' fixed seed (SHA-256("mutis gate test seed v1")): WALLET otl_esm_152skud3…ndyafn, LOCKER
+otl_esm_1lj9zka6…dtxt6, the same as on 2026-10-11. Link secrets (EXPECT_S) are redacted. These are the
+chain-facing operations of the browser library; the full scenarios (UI, grants, payments) still need
+a sponsor that can spend (README.md).
+
+== walletd 0.46.0 funds the test wallet from `service` (18:35:42)
+$ python3 -I walletd_send.py service <WALLET> 200000
+  {"tx": "830b009212d9942c71b468c3edad675dfdc4a709a661004ffed11791274977dc", "status": "Accepted", "final_fee": 30000, "timed_out": false,
+   "utxos": ["utxo_0101…01_4c92630ec5d521d0a6b7d0b1528e75ba6e705d062257d30433cd204ba6f44724", "utxo_0101…01_2acd830a1ff80d1c8306ec1793c9c1228457b016b0220f1fdb5a01b372ed0d12"]}
+  (a stealth transfer through walletd 0.46.0, submitted and read back in 6 s)
+
+== ootle-wasm 0.45.0: G1, the browser builds, signs and submits (18:36:00)
+$ headless.py --page /app/tests/gates/chain.html --indexer --fragment 'mode=send&utxos=<the two above>&amount=1000'
+  TX 87007e868cd8fccbc06d4c399c9437a95793795a84419f385aa96a0517960d8b
+  FEE_UT 30000 INPUTS 1
+  SECONDS_TO_FINAL 2.6
+  EXPECT_S <redacted>
+  indexer paths: GET /epoch-manager/stats, GET /substates/{utxo_id}, GET /transactions/{tx_id}/result, POST /transactions
+  title: GATE PASS  (4.0s)
+  both indexers, GET /transactions/87007e86…/result: Finalized, Commit, fees 30,000, down utxo_…4c92630e…,
+  up utxo_…326c346a… and utxo_…267266b6…
+$ … --fragment 'mode=check&utxos=<the two ups>&s=<EXPECT_S>'          (G2c: the delivery opens)
+  UTXO utxo_01010101010101010… verified true locker value 1000 wallet no
+    memo kind 3 share oI5twryv_GrrwH3w5aj2Tg s matches true
+    view key alone on this kind-3 blob: refused
+  UTXO utxo_01010101010101010… verified true locker no wallet value 169000
+    NONCE 56a8982b… ENC fd111468…
+  indexer paths: GET /substates/{utxo_id}
+  title: GATE PASS  (1.0s)
+
+== ootle-wasm 0.46.0: G1 from the change (18:36:26)
+$ … --fragment 'mode=send&utxos=utxo_0101…01_267266b6…&amount=1000'
+  TX 582e089b56a87fe347789d1308b686ed4bee554f47e9f13116a7f0e6b3fe8b01
+  FEE_UT 30000 INPUTS 1
+  SECONDS_TO_FINAL 2.7
+  EXPECT_S <redacted>
+  indexer paths: GET /epoch-manager/stats, GET /substates/{utxo_id}, GET /transactions/{tx_id}/result, POST /transactions
+  title: GATE PASS  (3.7s)
+  both indexers, GET /transactions/582e089b…/result: Finalized, Commit, fees 30,000, down utxo_…267266b6…,
+  up utxo_…bcd4c80b… and utxo_…fa05ea5b…
+$ … --fragment 'mode=check&utxos=<the two ups>&s=<EXPECT_S>'
+  UTXO utxo_01010101010101010… verified true locker value 1000 wallet no
+    memo kind 3 share ojjHjYLMv8-iiENgjnrORg s matches true
+    view key alone on this kind-3 blob: refused
+  UTXO utxo_01010101010101010… verified true locker no wallet value 138000
+    NONCE 3c3ad089… ENC af0a6149…
+  indexer paths: GET /substates/{utxo_id}
+  title: GATE PASS  (0.8s)
+
+Both libraries build a stealth transfer the V2 committee commits (final in 2.6 and 2.7 s), decrypt
+outputs walletd 0.46.0 made, and seal and open a kind-3 courier memo that a view key alone can't open.
+Spent from `service`: 200,000 µT sent to the test wallet + 30,000 µT fee; the test wallet then paid
+2 × 30,000 µT in fees and 2 × 1,000 µT to the test locker, and holds 138,000 µT.

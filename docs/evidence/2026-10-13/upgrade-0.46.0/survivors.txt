@@ -1,0 +1,13 @@
+Read-only counts (scripts/survivors.py as mutis, sqlite mode=ro). No E2E scenario ran and no test item was
+made, so nothing was purged; these show that nothing the brief protects moved.
+
+== 2026-10-13T18:26:10Z (read-only)
+judge passes 20
+security drop 3w7m8k2v5t active
+identities 118 | items 281 | drops 77 | shares 293 | invoices 17 | payments 15
+seal_checkpoints by state {'committed': 159} | latest committed (159, 158, 12227)
+== 2026-10-13T18:46:36Z (read-only)
+judge passes 20
+security drop 3w7m8k2v5t active
+identities 118 | items 281 | drops 77 | shares 293 | invoices 17 | payments 15
+seal_checkpoints by state {'committed': 161} | latest committed (161, 160, 12228)
