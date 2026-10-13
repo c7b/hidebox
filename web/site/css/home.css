@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: MIT — the home page (14-ghost-design §5): one figure, one action. The ghost
-   is the button; the whole window takes a drop. The drop widget (/app/drop-widget.js) mounts under it
-   and keeps its own entry points for now; this file only seats it in the ghost's page. */
+/* SPDX-License-Identifier: MIT — the home page (14-ghost-design §5, §6): one figure, one action. The
+   ghost is the button; the whole window takes a drop. The drop widget (/app/drop-widget.js) mounts
+   under the ghost and drives the page's phase (body[data-phase]): idle (the ghost asks), write (the
+   note), busy (the ghost chews), done (the result). This file seats the widget in that page. */
 .home { display: flex; flex-direction: column; min-height: 100svh; }
 .stage { flex: 1; display: grid; align-content: center; padding-block: var(--s-2) var(--s-6); }
 
@@ -14,8 +15,8 @@
 /* the figure is the button: alive while it waits (float, blink, a breathing shadow in ghost.css) */
 .figure {
   position: relative; display: grid; justify-items: center; gap: var(--s-2); border: 0; padding: 8px 8px 4px;
-  background: transparent; color: var(--fg); border-radius: 36px; inline-size: min(64vw, 270px);
-  transition: scale var(--dur-3) var(--ease-out), inline-size var(--dur-3) var(--ease-out);
+  background: transparent; color: var(--fg); border-radius: 36px; inline-size: min(64vw, 270px); cursor: pointer;
+  transition: scale var(--dur-3) var(--ease-out);
 }
 .figure .ghost { filter: var(--glow); }
 .figure:hover .ghost { scale: 1.03; transition: scale var(--dur-2) var(--ease-out); }
@@ -30,7 +31,7 @@
 }
 @media (max-height: 760px) and (min-width: 900px) { .figure { inline-size: min(28vw, 270px); } }
 
-/* the whole window is the target while a file is over it */
+/* the whole window is the target while a file is over it, at any moment but while busy */
 .catch {
   position: fixed; inset: 0; z-index: var(--z-catch); display: grid; align-items: end; justify-items: center;
   padding: 0 24px 6svh; background: var(--scrim); opacity: 0; pointer-events: none;
@@ -42,24 +43,33 @@
 .catching .figure { z-index: calc(var(--z-catch) + 1); scale: 1.14; }
 .catching .figure .cue { visibility: hidden; }
 .catching .site-footer { opacity: 0; }
+.catching #mutis-drop { visibility: hidden; }
 
-/* the widget, seated under the ghost: its own "Choose a file" stays for scripts and tests, the ghost
-   is the visible way to pick; "Or write one" is the one quiet second action */
+/* the widget, seated under the ghost: "Or write one" is the one quiet second action; the ghost is
+   the visible way to pick a file */
 .home #mutis-drop { max-width: 560px; }
 .home .md-stage { min-height: 0; }
-.home .md-zone[data-state="idle"] { border: 0; padding: 0; background: none; }
-.home .md-zone[data-state="idle"] .md-choose {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-}
-.home .md-zone[data-state="composing"] { border-style: solid; }
-.home .md-zone.md-drag { border: 0; background: none; }
-.home .md-zone.md-drag::after { content: none; }
+.home .md-zone { border: 0; padding: 0; background: none; place-items: stretch; }
+.home .md-idle { justify-items: center; }
+.home .md-banner-slot:empty, .home .md-below:empty { display: none; }
 
-/* after the drop: the ghost holds the rule over the widget's card, the words step aside */
-.home[data-phase="sealing"] .words, .home[data-phase="sealed"] .words { display: none; }
-.home[data-phase="sealed"] .figure, .home[data-phase="sealing"] .figure { inline-size: min(40vw, 168px); }
-/* the cue stays the ghost's name for assistive tech; on screen the ghost alone says it */
-.home[data-phase="sealed"] .cue, .home[data-phase="sealing"] .cue {
+/* a locker's code scanned by a phone (/#to=…): the ghost carries an envelope, and says where it goes */
+.home .md-to { display: grid; justify-items: center; gap: var(--s-1); text-align: center; }
+.home .md-to p:first-child { font: var(--t-say); }
+.home .md-to .mono { font: var(--t-code); color: var(--fg-2); }
+.home:has(.md-to) .drop .say { display: none; }
+.home:not([data-phase="idle"]) .md-to { display: none; }
+
+/* phases: the words step aside after a drop; the note and the result take the ghost's place */
+.home:is([data-phase="write"], [data-phase="busy"], [data-phase="done"]) .words { display: none; }
+.home:is([data-phase="write"], [data-phase="done"]) .drop > .figure { display: none; }
+.home:is([data-phase="busy"], [data-phase="done"]) .cue {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-.home[data-phase="sealed"] .stage { align-content: start; }
+.home[data-phase="done"] #mutis-drop { max-width: var(--content); }
+/* an error: the ghost holds its cheeks, and the banner says what happened instead of the promise */
+.home:has(.md-banner-slot:not(:empty)) .drop .say { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .catch, .figure { transition: none; }
+}

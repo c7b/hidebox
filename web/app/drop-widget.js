@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
-// The home page's drop widget (spec §3.4.4): mounts into #mutis-drop. The site
-// owns everything around the mount; the widget owns its stylesheet, strings, live region and events.
+// The home page's drop widget (spec §3.4.4; 14-ghost-design §5): mounts into #mutis-drop and is handed
+// the page's ghost (#drop), which it drives: the ghost picks a file, the whole window takes a drop,
+// and the page's phase (body[data-phase]) follows the widget. The widget owns its stylesheet,
+// strings, live region and events.
 import { setJudgePass } from './lib/pow.js';
 import { savedJudgePass } from './lib/store.js';
 import { stylesheet, widgetStrings } from './ui/more.js';
@@ -14,5 +16,5 @@ if (root) {
   } catch {
     // A malformed stored pass: the anti-bot check stays on.
   }
-  await mountWidget(root, { variant: root.dataset.variant || 'hero', windowDrops: true });
+  await mountWidget(root, { variant: root.dataset.variant || 'hero', windowDrops: true, figure: document.getElementById('drop') });
 }

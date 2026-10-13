@@ -12,13 +12,14 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-PREFIXES = ("hero.", "zone.", "compose.", "seal.", "exif.", "noise.", "dur.")
-# The first card (Once, a plain link) and what it can say before ui/more.js loads the rest: the
-# Change panel, kept files and passwords bring the full dictionary with them.
-KEYS = {"card.locked", "card.note", "card.strip", "card.key_lead", "card.key_rest", "card.copy", "card.change",
-        "card.send", "card.another", "card.live", "card.rule.once", "toast.copied", "toast.copied_link",
-        "toast.stopped", "toast.stopped_early", "known.toggle", "locker.opening", "locker.offer",
-        "error.clipboard", "recent.h"}
+PREFIXES = ("hero.", "zone.", "compose.", "seal.", "exif.", "dur.")
+# The first result (Once, a plain link) and what it can say before ui/more.js loads the rest: More
+# rules, what our server got, kept files and passwords bring the full dictionary with them
+# (14-ghost-design §17 step 0, cut 4: the noise and the glass box left the first dictionary).
+KEYS = {"card.say.once", "card.say.few", "card.link", "card.ghost", "card.count", "card.once", "card.few",
+        "card.same_once", "card.same_few", "card.word_add", "card.word_remove", "card.qr_once", "card.qr", "qr.label", "card.copy", "card.copied", "card.share", "card.select",
+        "card.send", "card.another", "card.live", "card.live_copied", "card.live_press", "card.more",
+        "toast.stopped", "toast.stopped_early", "locker.opening", "locker.offer", "recent.h"}
 
 
 def subset() -> str:

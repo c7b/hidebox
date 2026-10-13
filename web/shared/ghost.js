@@ -41,3 +41,59 @@ export function gulp(el) {
 export function flyer(doc = document) {
   return doc.getElementById('flyer-tpl')?.content.firstElementChild?.cloneNode(true) ?? null;
 }
+
+const EASE = 'cubic-bezier(.22, 1, .36, 1)';
+
+// The wow, first half (14-ghost-design §6): a blank note (never the secret, never a file's name) arcs
+// from `from` ({x, y} in the viewport; under the ghost when omitted) into the ghost's open mouth
+// (380 ms), then the ghost gulps (320 ms). Resolves 240 ms into the gulp, when the result may start;
+// under reduced motion, at once (a cut). The ghost is left busy, hugging the note.
+export async function swallow(el, from = null) {
+  const svg = ghostOf(el);
+  if (!svg) return;
+  setGhost(el, 'catch');
+  const note = flyer();
+  if (reduced() || !note) return setGhost(el, 'busy');
+  const g = svg.getBoundingClientRect();
+  const mouth = { x: g.left + g.width / 2, y: g.top + g.height * (71 / 120) };
+  const start = from ?? { x: mouth.x, y: g.bottom + 60 };
+  const at = (x, y, rest) => `translate(${x - 32}px, ${y - 39}px) ${rest}`;
+  document.body.append(note);
+  try {
+    await note.animate([
+      { transform: at(start.x, start.y, 'rotate(-8deg) scale(1)') },
+      { transform: at((start.x + mouth.x) / 2, Math.min(start.y, mouth.y) - 110, 'rotate(6deg) scale(.8)'), offset: 0.55 },
+      { transform: at(mouth.x, mouth.y, 'rotate(0) scale(.12)') },
+    ], { duration: 380, easing: 'cubic-bezier(.5, 0, .3, 1)' }).finished;
+  } catch {
+    // cancelled: the note is removed below either way
+  }
+  note.remove();
+  setGhost(el, 'busy');
+  gulp(el);
+  await new Promise((r) => setTimeout(r, 240));
+}
+
+// Takes away a flying note still in the air (an error interrupts the wow).
+export function dropNotes() {
+  for (const n of document.querySelectorAll('body > .flyer')) n.remove();
+}
+
+// The wow, second half: `el` glides from the box `from` (a DOMRect it had before the layout changed)
+// into its place, one FLIP (320 ms); nothing under reduced motion.
+export function glide(el, from) {
+  if (!el || !from || reduced()) return;
+  const to = el.getBoundingClientRect();
+  if (!to.width) return;
+  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+  el.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${from.width / to.width})` }, { transform: 'none' }],
+    { duration: 320, easing: EASE });
+}
+
+// A panel unrolls from its top edge (320 ms) while the ghost glides; nothing under reduced motion.
+export function unroll(el) {
+  if (!el || reduced()) return;
+  el.animate([{ clipPath: 'inset(0 0 100% 0 round 22px)', translate: '0 -12px' }, { clipPath: 'inset(0 0 0 0 round 22px)', translate: '0 0' }],
+    { duration: 320, easing: EASE });
+}

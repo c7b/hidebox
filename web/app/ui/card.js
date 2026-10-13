@@ -1,151 +1,195 @@
 // SPDX-License-Identifier: MIT
-// The locked card (11-brand §10.1, spec P-6): the file and its stored noise side by side, the link
-// with its key part in a second tone, Copy link, one line of rules with Change, one secondary action
-// (the Tari one), the glass box, Delete now and Lock another file. Its actions report their own
-// errors in the card, so the link the visitor hasn't copied yet never leaves the screen.
-import { announce, h } from '../lib/dom.js';
-import { formatBytes, t } from '../lib/i18n.js';
-import { deleteItem, manageShare } from '../lib/api.js';
-import { removeRecentDrop } from '../lib/store.js';
-import { copyButton, fill, formatDuration, icon, toast } from './core.js';
+// The result (14-ghost-design §5): the ghost holds the rule, the card the link. "Copied" only after a
+// write went through; Share leads on touch screens; one live region speaks. The word, More rules and
+// the Tari way load with their first tap (card-more.js).
+import { announce, copyText, h } from '../lib/dom.js';
+import { t } from '../lib/i18n.js';
+import { manageShare, patchShare } from '../lib/api.js';
+import { cloneGhost, glide, gulp, setGhost, unroll } from '/shared/ghost.js';
+import { fill, formatDuration, icon, toast } from './core.js';
 import { more } from './more.js';
-import { noiseFigure, ownFigure } from './noise.js';
 import { exifChip } from './sealing.js';
 
-// The rule as one short line: "Opens once · gone in 24 hours".
-function ruleLine(link, kept) {
-  const count = link.maxViews === 1 ? 'once' : link.maxViews === null ? 'unlimited' : 'n';
-  const left = Math.max(60, (link.expiresAt ?? 0) - Math.floor(Date.now() / 1000));
-  const key = kept && !link.expiresAt ? `card.rule.${count}_kept` : `card.rule.${count}`;
-  const rule = t(key, { count: link.maxViews ?? 0, dur: formatDuration(left) });
-  if (link.mode === 'link') return rule;
-  return `${t(link.mode === 'password' ? 'card.rule.password_only' : 'card.rule.password')} · ${rule}`;
-}
+const now = () => Math.floor(Date.now() / 1000);
+const FINE = matchMedia('(hover: hover) and (pointer: fine), (min-width: 900px) and (not (pointer: coarse))').matches;
 
-// result: the sealed file ({source, meta, item, link, noise, exif, locker}).
-export function renderCard(result, { cfg, live, lockerContext, onAnother }) {
-  const st = { ...result, cfg, live, kept: false, sent: null, link: { ...result.link, mode: result.link.mode ?? 'link' } };
-  const root = h('section', { class: 'md-card', 'aria-labelledby': 'md-card-h' });
-  const strip = h('div', { class: 'md-strip' });
-  const linkArea = h('div', { class: 'md-link-area' });
-  const slot = h('div', { class: 'md-slot' });
-  const change = h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'card-change', 'aria-expanded': 'false', 'aria-controls': 'md-change' }, t('card.change'));
-  let drawnNoise = null;
+// result: the sealed file ({source, meta, item, link, noise, exif, locker, copied: Promise<bool>}).
+export function renderCard(result, { cfg, live, lockerContext, onAnother, to = null }) {
+  const st = { ...result, cfg, live, kept: false, sent: null, word: null, copied: null, left: false, link: { ...result.link, mode: result.link.mode ?? 'link' } };
+  const later = (name) => async () => (await import('./card-more.js'))[name](ui);
+  const ghost = cloneGhost('busy');
+  const figure = h('button', { type: 'button', class: 'md-figure', 'data-testid': 'rule-ghost', 'aria-label': t('card.ghost'), 'aria-describedby': 'md-say' }, ghost);
+  const radios = ['once', 'few'].map((v) => h('input', { type: 'radio', name: 'md-count', value: v, onchange: () => setCount(v) }));
+  const chips = h('div', { class: 'md-counts', role: 'radiogroup', 'aria-label': t('card.count') },
+    radios.map((r) => h('label', { 'data-testid': 'count', 'data-value': r.value }, r, h('span', {}, r.value === 'once' ? t('card.once') : t('card.few')))));
+  const wordLabel = h('span', {});
+  const wordBtn = h('button', { type: 'button', class: 'a-btn md-word-btn', 'data-testid': 'word-toggle', 'aria-pressed': 'false', onclick: later('askWord') }, icon('padlock'), wordLabel);
+  const say = h('p', { class: 'md-say', id: 'md-say' });
+  const field = h('input', {
+    type: 'text', class: 'md-link', readonly: true, spellcheck: 'false', autocomplete: 'off',
+    'aria-label': t('card.link'), 'data-testid': 'sealed-link', oncopy: () => { st.left = true; },
+  });
+  const label = h('span', {}, t('card.copy'));
+  const copy = h('button', { type: 'button', class: 'a-btn md-copy', 'data-testid': 'copy-link', onclick: copyNow }, icon('tick'), label);
+  const share = navigator.share && matchMedia('(pointer: coarse)').matches
+    ? h('button', { type: 'button', class: 'a-btn md-share', 'data-testid': 'share-link', onclick: shareNow }, icon('share'), h('span', {}, t('card.share')))
+    : null;
+  (share ?? copy).classList.add('a-btn--primary');
+  const row = h('div', { class: 'md-link-row' }, field, h('div', { class: 'md-acts' }, share, copy));
+  const exif = st.exif && (st.exif.removed || st.exif.notice) ? exifChip(st.exif, null) : null;
+  const confirm = h('div', { class: 'md-confirm', role: 'group', 'aria-labelledby': 'md-ask', hidden: true });
+  const wordBox = h('div', { class: 'md-word', hidden: true });
+  const note = h('div', {});
+  const code = h('div', { class: 'md-qr-slot' });
+  let coded = null; // the link the code shows
+  const card = h('div', { class: 'md-card', 'data-rule': '0' });
+  const main = h('div', { class: 'md-card-main' });
+  const slot = h('div', { class: 'md-slot', id: 'md-more' });
+  const change = h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'card-change', 'aria-expanded': 'false', 'aria-controls': 'md-more', onclick: later('openMore') }, t('card.more'));
+  const send = h('button', { type: 'button', class: 'a-btn md-tari', 'data-testid': 'card-send-address', onclick: later('sendInstead') }, icon('mail'), h('span', {}, t('card.send')));
+  const side = h('div', { class: 'md-result-figure' });
+  const next = h('div', { class: 'md-next' });
+  const root = h('section', { class: 'md-result', 'aria-labelledby': 'md-card-h' }, side, card, next, slot);
 
-  function linkBlock() {
-    const { url, fragment } = st.link;
-    const base = fragment ? url.slice(0, url.length - fragment.length - 1) : url;
-    const text = h('p', { class: 'md-url mono' }, h('span', {}, base), fragment ? h('span', { class: 'md-url-key' }, `#${fragment}`) : null);
-    const known = h('div', {});
-    return [
-      text,
-      h('input', { type: 'hidden', 'data-testid': 'sealed-link', value: url }),
-      h('p', { class: 'md-keynote' }, fragment ? [h('strong', {}, t('card.key_lead')), ' ', t('card.key_rest')] : t('card.password_only_note')),
-      h('div', { class: 'md-actions' },
-        copyButton({ label: t('card.copy'), testid: 'copy-link', getText: () => st.link.url, fallback: text, done: t('toast.copied_link'), cls: 'a-btn a-btn--primary md-copy' })),
-      h('p', { class: 'md-rule' }, h('span', { class: 'md-rule-text' }, ruleLine(st.link, st.kept)), change),
-      slot,
-      h('div', { class: 'md-secondary' },
-        h('button', { type: 'button', class: 'a-btn', 'data-testid': 'card-send-address', onclick: send }, icon('send', 'a-icon'), h('span', {}, t('card.send')))),
-      h('div', { class: 'md-small' }, knownToggle(known), anotherButton()),
-      known,
-    ];
+  const count = () => (st.link?.maxViews === 1 ? 'once' : 'few');
+  const pose = () => (!st.link ? (st.sent ? 'courier' : 'keep') : st.word ? 'word' : st.kept ? 'keep' : count());
+  // The figure holds the count and the word for a plain link; other rules belong to More rules.
+  const simple = () => Boolean(st.link?.maxViews && st.link.expiresAt && (st.link.mode === 'link' || st.word));
+
+  function setCopied(ok) {
+    st.copied = ok;
+    label.textContent = t(ok ? 'card.copied' : 'card.copy');
+    copy.classList.toggle('md-done', ok === true);
+    if (ok) st.left = true;
   }
 
-  // No link on the card: kept for "Only me", or sent to a Tari address instead (the send's result
-  // stays in the slot below the sentence).
-  function noLinkBlock() {
-    return [
-      h('p', { class: 'md-kept', 'data-testid': st.sent ? 'card-sent' : null }, st.sent ?? t('card.kept_only')),
-      st.sent ? slot : null,
-      h('div', { class: 'md-small' }, st.kept ? h('a', { href: '/locker', class: 'a-linkbtn' }, t('nav.locker')) : null, anotherButton()),
-    ];
+  const speak = (lead = t('card.live')) =>
+    announce(live, [lead, st.copied === true ? t('card.live_copied') : st.copied === false ? t('card.live_press') : ''].join(' ').trim());
+
+  async function copyNow() {
+    try {
+      await copyText(st.link.url);
+      setCopied(true);
+      announce(live, t('card.live_copied'));
+    } catch {
+      setCopied(false);
+      field.focus();
+      field.select();
+      toast(t('card.select'), root);
+    }
   }
 
-  // The glass box loads with its strings the first time it is asked for.
-  function knownToggle(slot) {
-    const button = h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'known-toggle', 'aria-expanded': 'false' }, t('known.toggle'));
-    button.addEventListener('click', async () => {
-      const [, { knownPanel, linkAccess }] = await Promise.all([more(), import('./known.js')]);
-      const k = knownPanel({ cfg, load: () => manageShare(st.link.shareId, st.item.headers), access: () => linkAccess(st.link), id: 'md-known' });
-      button.replaceWith(k.toggle);
-      slot.replaceWith(k.panel);
-      k.toggle.click();
-      k.toggle.focus();
-    }, { once: true });
-    return button;
+  async function shareNow() {
+    try {
+      await navigator.share({ url: st.link.url });
+      st.left = true;
+    } catch {
+      // the share sheet was closed: Copy link is still there
+    }
   }
 
-  const anotherButton = () => h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'seal-another', onclick: onAnother }, t('card.another'));
+  async function problem(e) {
+    const [, { errorBanner }] = await Promise.all([more(), import('./errors.js')]);
+    note.replaceChildren(errorBanner(e));
+  }
 
   function refresh() {
-    if (drawnNoise !== st.noise) {
-      drawnNoise = st.noise;
-      strip.replaceChildren(ownFigure(st.source, st.meta), noiseFigure(st.noise));
+    note.replaceChildren();
+    const another = h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'seal-another', onclick: onAnother }, t('card.another'));
+    const head = h('h2', { class: 'sr-only', id: 'md-card-h' }, t('card.link'));
+    if (st.link) {
+      if (field.value !== st.link.url) {
+        field.value = st.link.url;
+        setCopied(null);
+      }
+      // a link lives to the hour after its time (spec §5.3): a day reads as the day it was given
+      const left = Math.max(60, st.link.expiresAt - now());
+      say.textContent = simple()
+        ? t(count() === 'once' ? 'card.say.once' : 'card.say.few', { count: st.link.maxViews, dur: formatDuration(left < 172800 && left >= 3600 ? left - (left % 3600) : left) })
+        : ui.rare?.(st.link, st.kept, cfg) ?? '';
+      for (const r of radios) r.checked = r.value === count();
+      wordLabel.textContent = t(st.word ? 'card.word_remove' : 'card.word_add');
+      wordBtn.setAttribute('aria-pressed', String(Boolean(st.word)));
+      fill(side, figure, simple() && [chips, wordBtn]);
+      fill(card, head, fill(main, say, row, confirm, wordBox, note, exif), FINE && code);
+      if (FINE) showCode();
+      fill(next, send, another, change);
+    } else {
+      // No link: kept for "Only me", or sent to a Tari address (its result stays below).
+      say.textContent = st.sent ?? t('card.kept_only');
+      say.className = 'md-say md-kept';
+      if (st.sent) say.dataset.testid = 'card-sent';
+      figure.disabled = true;
+      fill(side, figure);
+      fill(card, head, fill(main, say, exif));
+      fill(next, st.kept && h('a', { href: '/locker', class: 'a-linkbtn' }, t('nav.locker')), another);
     }
-    if (!st.sent) closeSlot();
-    fill(linkArea, st.link ? linkBlock() : noLinkBlock());
-    root.dataset.maxViews = String(st.link?.maxViews ?? '');
-    root.dataset.expiresAt = String(st.link?.expiresAt ?? '');
-    root.dataset.rule = String(Number(root.dataset.rule ?? 0) + 1); // changes on every applied rule
+    if (!st.sent) ui.closeSlot();
+    card.dataset.maxViews = String(st.link?.maxViews ?? '');
+    card.dataset.expiresAt = String(st.link?.expiresAt ?? '');
+    card.dataset.rule = String(Number(card.dataset.rule) + 1); // changes on every applied rule
+    setGhost(ghost, pose());
   }
 
-  change.addEventListener('click', async () => {
-    if (slot.firstChild) return closeSlot();
-    const [, { rulesPanel }] = await Promise.all([more(), import('./rules.js')]);
-    slot.replaceChildren(await rulesPanel(st, { lockerContext, onApplied: applied, onDeleted: deleted, onSend: send }));
-    change.setAttribute('aria-expanded', 'true');
-    slot.querySelector('input:checked')?.focus();
-  });
-
-  function closeSlot() {
-    slot.replaceChildren();
-    change.setAttribute('aria-expanded', 'false');
-  }
-
-  function applied(message) {
-    refresh();
-    toast(message, live);
-    (root.querySelector('[data-testid="copy-link"]') ?? root).focus();
-  }
-
-  // Throws when the server didn't confirm the delete; the Change panel shows why.
-  async function deleted() {
+  // Once ⇄ A few times on the same link (spec §5.4). After an open, once would end the link: no tap does that.
+  let counting = false;
+  async function setCount(c) {
+    if (!simple() || c === count() || counting) return refresh();
+    counting = true;
+    const views = c === 'once' ? 1 : Math.min(3, (st.locker?.me.limits ?? cfg.limits.anon).max_views);
     try {
-      await deleteItem(st.item.itemId, st.item.headers);
+      if (views === 1 && (await manageShare(st.link.shareId, st.item.headers)).share.views_used) throw { code: 'opened_count' };
+      const res = await patchShare(st.link.shareId, { max_views: views }, st.item.headers);
+      st.link = { ...st.link, maxViews: res.max_views, expiresAt: res.expires_at };
     } catch (e) {
-      if (e?.code !== 'not_found' && e?.code !== 'gone') throw e;
+      refresh();
+      return problem(e);
+    } finally {
+      counting = false;
     }
-    removeRecentDrop(st.link.shareId);
-    toast(t('toast.deleted'), live);
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return onAnother();
-    root.addEventListener('animationend', onAnother, { once: true });
-    root.classList.add('md-exit');
+    refresh();
+    gulp(ghost);
+    toast(t(c === 'once' ? 'card.same_once' : 'card.same_few', { few: views }), root);
   }
+  figure.addEventListener('click', () => setCount(count() === 'once' ? 'few' : 'once'));
 
-  async function send() {
-    closeSlot();
-    const [, { sendFromCard }] = await Promise.all([more(), import('./send.js')]);
-    sendFromCard(slot, st, {
-      lockerContext,
-      onSent: (sentence) => {
-        st.sent = sentence;
-        st.link = null;
-        refresh();
-        announce(live, sentence);
-      },
+  // On a fine pointer the link is also a code a phone scans (so it may have left the page).
+  function showCode() {
+    const url = st.link.url;
+    const caption = () => code.querySelector('figcaption')?.replaceChildren(t(count() === 'once' ? 'card.qr_once' : 'card.qr'));
+    if (coded === url) return caption();
+    coded = url;
+    import('./qr.js').then(({ qrFigure }) => {
+      if (st.link?.url !== url) return;
+      code.replaceChildren(qrFigure(url, { label: t('qr.label'), caption: '', testid: 'link-qr' }));
+      caption();
+      st.left = true;
     });
   }
 
-  const name = st.meta.kind === 'text' ? t('card.note') : st.meta.name;
-  fill(root,
-    h('header', { class: 'md-card-head' },
-      h('h2', { id: 'md-card-h', class: 'md-locked' }, t('card.locked')),
-      h('p', { class: 'md-card-meta' }, h('span', { class: 'md-card-name' }, name), ' · ', h('span', { class: 'mono' }, formatBytes(st.meta.size)))),
-    strip,
-    h('p', { class: 'md-strip-cap' }, t('card.strip')),
-    st.exif && (st.exif.removed || st.exif.notice) ? exifChip(st.exif, null) : null,
-    linkArea);
+  // What card-more.js works with.
+  const ui = {
+    st, cfg, live, root, field, confirm, wordBox, wordBtn, slot, change, lockerContext, onAnother, refresh, setCopied, speak, problem, to,
+    rare: null, closeSlot: () => { slot.replaceChildren(); change.setAttribute('aria-expanded', 'false'); },
+  };
+
   refresh();
+  setGhost(ghost, 'busy'); // arrive() springs it from the hug to the rule's pose
+  const first = st.link.url;
+  result.copied?.then((ok) => {
+    if (st.link?.url !== first || st.copied !== null) return;
+    setCopied(ok);
+    speak();
+  });
+
+  // The wow's second half: the ghost glides from the home ghost's box (`from`) while the card unrolls.
+  root.arrive = (from = null) => {
+    glide(ghost, from);
+    unroll(card);
+    setTimeout(() => setGhost(ghost, pose()), from && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 140 : 0);
+    speak();
+    (share ?? copy).focus({ preventScroll: true });
+    if (to) later('sendInstead')(); // a scanned locker address: straight to its send step
+  };
   return root;
 }

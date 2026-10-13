@@ -8,6 +8,7 @@ import threading
 import urllib.parse
 import urllib.request
 from contextlib import contextmanager
+from pathlib import Path
 
 import serve
 from cdp import Browser
@@ -322,19 +323,28 @@ def check_interactions(browser):
     problems = []
     with server() as origin:
         page = browser.page()
-        page.goto(origin + "/", settle=1)
-        pose = "[document.querySelector('#drop svg.ghost').dataset.state || 'ready', document.body.dataset.phase, document.querySelector('.words').checkVisibility()]"
-        seen = {}
-        for state in ("sealing", "sealed", "error", "idle"):
-            page.eval(f"document.dispatchEvent(new CustomEvent('mutis:state', {{detail: {{state: '{state}'}}}}))")
-            seen[state] = page.eval(pose)
-        want = {"sealing": ["busy", "sealing", False], "sealed": ["once", "sealed", False], "error": ["oops", "idle", True],
-                "idle": ["ready", "idle", True]}
+        page.goto(origin + "/", settle=1.5)
+        pose = ("[document.querySelector('#drop svg.ghost').dataset.state || 'ready', document.body.dataset.phase,"
+                " document.querySelector('.words').checkVisibility(), document.body.classList.contains('catching')]")
+        seen = {"idle": page.eval(pose)}
+        # A real file over the window, then away again (the drop itself is the app's UI flow window-drop).
+        over = {"items": [], "files": [str(Path(serve.FIX / "canary.json"))], "dragOperationsMask": 1}
+        page.cmd("Input.dispatchDragEvent", {"type": "dragEnter", "x": 300, "y": 500, "data": over})
+        page.b.pump(0.4)
+        seen["catch"] = page.eval(pose)
+        page.cmd("Input.dispatchDragEvent", {"type": "dragCancel", "x": 300, "y": 500, "data": over})
+        page.b.pump(0.4)
+        seen["left"] = page.eval(pose)
+        page.eval("document.querySelector('[data-testid=\"drop-write\"]').click()")
+        page.b.pump(0.3)
+        seen["write"] = page.eval(pose) + [page.eval("document.activeElement?.dataset?.testid")]
+        page.eval("[...document.querySelectorAll('.md-compose button')].find((b) => b.textContent === 'Cancel').click()")
+        page.b.pump(0.3)
+        seen["cancel"] = page.eval(pose) + [page.eval("document.activeElement?.id")]
+        want = {"idle": ["ready", "idle", True, False], "catch": ["catch", "idle", True, True], "left": ["ready", "idle", True, False],
+                "write": ["ready", "write", False, False, "drop-textarea"], "cancel": ["ready", "idle", True, False, "drop"]}
         if seen != want:
-            problems.append(f"the home ghost follows the widget: {seen}")
-        page.eval("document.dispatchEvent(new CustomEvent('mutis:drag', {detail: {active: true}}))")
-        if not page.eval("document.body.classList.contains('catching') && document.querySelector('#drop svg.ghost').dataset.state === 'catch'"):
-            problems.append("a file over the window: no catch")
+            problems.append(f"the home ghost and its phases: {seen}")
         page = browser.page()
         page.goto(origin + "/how")
         switch = "document.querySelector('[data-theme-toggle]')"

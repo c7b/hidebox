@@ -37,6 +37,18 @@ export function midnightSeason(d = new Date()) {
   return (d.getMonth() === 9 && d.getDate() >= 24) || (d.getMonth() === 10 && d.getDate() === 1);
 }
 
+// The rule of a link in one sentence: who can open it, how often, until when (the card shows it for
+// the rules More rules makes: password only, no limit, kept). link: {mode, maxViews, expiresAt}.
+export function ruleSentence(link, kept, cfg) {
+  const who = link.mode === 'password' ? 'password_only' : link.mode === 'link_password' ? 'password' : 'link';
+  const count = link.maxViews === 1 ? 'once' : link.maxViews === null ? 'unlimited' : 'n';
+  const at = link.expiresAt;
+  return t(`rules.sentence.${who}.${count}${at || !kept ? '' : '_kept'}`, {
+    count: link.maxViews ?? 0, inactive_days: cfg.retention.inactive_days,
+    date: at ? formatDate(at * 1000, { dateStyle: 'medium' }) : '', time: at ? formatDate(at * 1000, { timeStyle: 'short' }) : '',
+  });
+}
+
 let groups = 0;
 
 // A group of radio chips. options: [{value, label, testid, disabled, note}]
@@ -132,14 +144,9 @@ export async function rulesPanel(st, hooks) {
     const x = rule();
     const raw = expiryOf(x);
     const at = raw && coarseExpiry(raw); // the hour the server will store (it rounds up)
-    const who = x.who === 'password' ? (x.mode === 'password' ? 'password_only' : 'password') : x.who === 'only_me' ? 'only_me' : 'link';
-    const count = x.maxViews === 1 ? 'once' : x.maxViews === null ? 'unlimited' : 'n';
-    sentence.textContent = who === 'only_me'
+    sentence.textContent = x.who === 'only_me'
       ? t('rules.sentence.only_me', { inactive_days: cfg.retention.inactive_days })
-      : t(`rules.sentence.${who}.${count}${at ? '' : '_kept'}`, {
-        count: x.maxViews ?? 0, inactive_days: cfg.retention.inactive_days,
-        date: at ? formatDate(at * 1000, { dateStyle: 'medium' }) : '', time: at ? formatDate(at * 1000, { timeStyle: 'short' }) : '',
-      });
+      : ruleSentence({ mode: x.who === 'password' ? x.mode : 'link', maxViews: x.maxViews, expiresAt: at }, true, cfg);
   }
 
   function validate(x) {
@@ -271,7 +278,7 @@ export async function adopt(st, locker) {
   st.item = { ...st.item, expiresAt: res.expires_at, headers };
 }
 
-async function replaceLink(st, x, expiresAt) {
+export async function replaceLink(st, x, expiresAt) {
   const link = await createLink(st.item, { mode: x.mode, password: x.password, maxViews: x.maxViews, expiresAt: expiresAt ?? undefined });
   try {
     await revokeLink(st.link.shareId, st.item.headers);

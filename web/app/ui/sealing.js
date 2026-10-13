@@ -2,7 +2,7 @@
 // From a chosen file or text to a stored item: the checks that happen before anything is uploaded
 // (size, empty files, programs from anonymous senders), photo metadata removal, encryption and upload
 // with a progress view. Loaded when the visitor first reaches for the zone.
-import { announce, h, setVar, svg } from '../lib/dom.js';
+import { announce, h } from '../lib/dom.js';
 import { t, formatBytes } from '../lib/i18n.js';
 import { utf8 } from '../lib/bytes.js';
 import { sealItem } from '../lib/seal.js';
@@ -74,48 +74,34 @@ export async function encryptAndUpload(source, opts) {
   return { item, noise: item.head };
 }
 
-// --- the progress view (11-brand §9.2 `sealing`, §13.7 the ¡ progress mark) ---------------------
-
-// The symbol's geometry (11-brand §13.1): a door, the ¡ bore and the slot that fills as bytes leave.
-function progressMark() {
-  return svg('svg', { class: 'md-mark', viewBox: '0 0 100 100', 'aria-hidden': 'true', focusable: 'false' },
-    svg('rect', { class: 'md-mark-door', width: '100', height: '100' }),
-    svg('circle', { class: 'md-mark-bore', cx: '50', cy: '33.5', r: '11.5' }),
-    svg('path', { class: 'md-mark-slot', d: 'M45.25 52H54.75L60.25 80H39.75Z' }));
-}
+// --- the busy view (14-ghost-design §4.2, §6): while the ghost chews, one line; the percent shows only
+// for an upload still running after 1.5 s (the busy ghost covers short ones) ----------------------------
 
 // -> {el, phase(name, fraction), exif(chip info, onKeep), done()}
-export function progressView({ meta, live, onStop }) {
-  const bar = h('div', { class: 'md-bar', 'data-testid': 'seal-progress', 'data-phase': 'pow', role: 'progressbar',
-    'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-label': t('seal.progress') }, h('span', { class: 'md-bar-fill' }));
-  const line = h('p', { class: 'md-progress' }, t('seal.pow'));
-  const mark = progressMark();
+export function progressView({ live, onStop }) {
+  const line = h('p', {
+    class: 'md-progress', 'data-testid': 'seal-progress', 'data-phase': 'pow', role: 'progressbar',
+    'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-label': t('seal.progress'),
+  }, t('seal.busy'));
   const chip = h('div', { class: 'md-exif-slot' });
   const stop = h('button', { type: 'button', class: 'a-linkbtn', onclick: onStop }, t('seal.stop'));
-  const el = h('div', { class: 'md-sealing' },
-    h('div', { class: 'md-filecard' },
-      h('p', { class: 'md-filename' }, meta.kind === 'text' ? t('card.note') : meta.name),
-      h('p', { class: 'md-filesize mono' }, formatBytes(meta.size))),
-    mark, line, bar,
-    h('p', { class: 'md-micro mono' }, t('seal.micro')),
-    chip, stop);
+  const el = h('div', { class: 'md-sealing' }, line, chip, stop);
+  const started = Date.now();
   let sent = 0; // fraction of the ciphertext the server has; encryption runs a little ahead of it
   let lastStep = 0;
 
-  // Phases: pow, stripping, encrypting, uploading, finishing. Only bytes that reached the server
-  // count towards the percentage.
+  // Phases: pow, stripping, encrypting, uploading, finishing. Only bytes that reached the server count.
   function phase(name, fraction = 0) {
-    bar.dataset.phase = name;
+    line.dataset.phase = name;
     if (name === 'uploading') sent = Math.max(sent, fraction);
-    const shown = name === 'pow' ? fraction : sent;
     const pct = Math.min(100, Math.floor(sent * 100));
-    setVar(el, '--n', shown);
-    bar.setAttribute('aria-valuenow', String(Math.floor(shown * 100)));
-    line.textContent = name === 'uploading' || name === 'encrypting' ? t('seal.working', { n: pct }) : t(`seal.${name}`);
+    const slow = Date.now() - started > 1500;
+    line.setAttribute('aria-valuenow', String(pct));
+    line.textContent = name === 'stripping' ? t('seal.stripping') : slow && pct ? t('seal.busy_pct', { n: pct }) : t('seal.busy');
     const step = Math.floor(pct / 25);
-    if (step > lastStep) {
+    if (slow && step > lastStep) {
       lastStep = step;
-      announce(live, t('seal.working', { n: step * 25 }));
+      announce(live, t('seal.busy_pct', { n: step * 25 }));
     }
   }
 
@@ -124,13 +110,7 @@ export function progressView({ meta, live, onStop }) {
     chip.replaceChildren(exifChip(info, onKeep));
   }
 
-  function done() {
-    mark.classList.add('md-mark--locked');
-    setVar(el, '--n', 1);
-    stop.hidden = true;
-  }
-
-  return { el, phase, exif, done };
+  return { el, phase, exif, done: () => { stop.hidden = true; } };
 }
 
 // "Location and camera data removed" · Keep original, or the notice for formats we can't clean.

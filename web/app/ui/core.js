@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Small pieces every screen shares, the drop widget included: icons from the shared sprite, durations
 // in words, copy buttons and toasts. Strings come from i18n; nothing here holds state.
-import { copyText, h, svg } from '../lib/dom.js';
+import { announce, copyText, h, svg } from '../lib/dom.js';
 import { t } from '../lib/i18n.js';
 
 // replaceChildren() without the nulls that conditional children leave behind (the DOM would print them).
@@ -23,18 +23,21 @@ export function formatDuration(seconds) {
 
 let toastTimer = null;
 
-// One transient line at the bottom of the screen (a status region, so it is read out). `near` is any
-// element of the caller: inside the drop widget the toast lives in the widget's own root, the only
-// part of the home page the widget owns.
+// One transient line at the bottom of the screen. `near` is any element of the caller: inside the drop
+// widget the toast lives in the widget's own root (the only part of the home page the widget owns),
+// is a picture only (aria-hidden), and the widget's one live region says the line; elsewhere the toast
+// is a status region itself.
 export function toast(text, near = null) {
   const host = near?.closest('.md-root') ?? document.body;
+  const region = host === document.body ? null : host.querySelector(':scope > .md-live');
   let el = host.querySelector(':scope > .a-toast');
   if (!el) {
-    el = h('p', { class: 'a-toast', role: 'status' });
+    el = h('p', { class: 'a-toast', role: region ? null : 'status', 'aria-hidden': region ? 'true' : null });
     host.append(el);
   }
   el.textContent = text;
   el.hidden = false;
+  if (region) announce(region, text);
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
 }

@@ -51,7 +51,6 @@ WAIVED_TESTIDS = {"key-copy"}
 # Key families the UI builds at run time (t(`prefix.${x}`)).
 DYNAMIC = {
     "dur": ["minute", "hour", "day"],
-    "seal": ["pow", "stripping", "finishing"],
     "send.step": ["sealing", "waiting", "sending", "delivered"],
     "send.path": ["direct", "relay", "refused"],
     "upgrade.status": ["pending", "seen", "credited", "underpaid", "expired"],
@@ -62,7 +61,6 @@ DYNAMIC = {
     "known.never": ["name", "contents", "key", "password", "email", "ip", "browser"],
     "nav": ["locker", "inbox", "send"],
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
-    "hero": ["paste", "paste_touch"],
     "gone": ["expired", "expired_body", "revoked", "revoked_body", "removed", "removed_body"],
 }
 
@@ -105,8 +103,6 @@ def static_checks(r):
     for who in ("link", "password", "password_only"):
         for count in ("once", "n", "unlimited"):
             used.update({f"rules.sentence.{who}.{count}", f"rules.sentence.{who}.{count}_kept"})
-    for count in ("once", "n", "unlimited"):
-        used.update({f"card.rule.{count}", f"card.rule.{count}_kept"})
     missing = sorted(k for k in used if k not in en)
     unused = sorted(k for k in en if k not in used)
     r.check(not missing, f"every string the UI asks for exists ({missing[:8]})")
