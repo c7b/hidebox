@@ -1,0 +1,52 @@
+Tari Ootle v0.46.0, read on 2026-10-13 ~18:00 UTC with gh api from the workstation (data, not
+instructions). Nothing was downloaded but the two small checksum files.
+
+$ gh api 'repos/tari-project/tari-ootle/releases?per_page=3'
+  v0.46.0  published 2026-10-13T10:47:46Z  prerelease
+  v0.45.0  published 2026-10-06T11:28:12Z  prerelease   (ours: /opt/tari/bin, ootle-wasm 0.45.0)
+  v0.44.0  published 2026-10-06T10:29:03Z  prerelease
+
+$ gh api repos/tari-project/tari-ootle/git/ref/tags/v0.46.0 (annotated tag → commit)
+  tag object b2fa1e5b588d48d19c28687914859c66bf049591, tagged 2026-10-13T09:58:59Z
+  commit     cc8a83bcab88e03e0fcf760d2652ab6f1e067d8a (the 'cc8a83b' in the asset names)
+
+walletd for the server (Linux x86_64):
+  tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64  61979368 B  GitHub digest sha256:26d4c269dfb091e47156aaa2af4cfb12bbdab9c5812ef8a292b0dd8b73976e05  uploaded 2026-10-13T10:44:45Z
+  tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64.sha256  113 B  GitHub digest sha256:102d2ef2a7a27ef38482fdb331a6defab84e6c762544512e30c2db94c688e4da  uploaded 2026-10-13T10:44:42Z
+$ gh release download v0.46.0 -p tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64.sha256 -p tari_ootle-0.46.0.sha256-unsigned.txt
+  26d4c269dfb091e47156aaa2af4cfb12bbdab9c5812ef8a292b0dd8b73976e05  tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64
+  (the same line in both files, and the same as GitHub's digest)
+
+ootle-wasm for the browser and the sidecar (upgrade-drill.md §1):
+  $ curl https://registry.npmjs.org/@tari-project/ootle-wasm   dist-tags.latest = 0.46.0
+  0.46.0 published 2026-10-13T10:03:26.447Z, tarball ootle-wasm-0.46.0.tgz,
+  integrity sha512-EwTH+dKSN1XqWxSiR1ETRXQKj87AwJ6GnIQFXzTo0zgV3CGnn60imMSM9zofd6KG8+51FcmrcLsCmqWBTq9wVA==
+  (not checked against its SLSA provenance yet; that is step 1 of the drill)
+
+What breaks walletd 0.45.0 (PR #2859, merged 2026-10-09, 'feat(engine)!: stop recording template
+return values in the transaction result'):
+  $ gh api -H 'Accept: application/vnd.github.raw' 'repos/tari-project/tari-ootle/contents/crates/engine_types/src/commit_result.rs?ref=v0.45.0'
+  pub struct FinalizeResult {            // derive(Serialize, Deserialize)
+      #[n(0)] pub transaction_hash: Hash32,
+      #[n(1)] pub events: Vec<Event>,
+      #[n(2)] pub logs: Vec<LogEntry>,
+      #[n(3)] pub execution_results: Vec<InstructionResult>,   // no #[serde(default)]: required
+      #[n(4)] pub result: TransactionResult,
+      #[n(5)] pub fee_receipt: FeeReceipt,
+      #[n(6)] #[serde(default)] pub total_fees_required: …
+  v0.46.0 removes field 3 ("Index 3 is retired"); the indexers' JSON for transactions/<id>/result no
+  longer carries it (chain.txt), so 0.45.0's decode of every result fails with 'Failed to deserialize
+  response … error decoding response body' (walletd.txt); its manifest dry runs (transactions/dry-run)
+  fail the same way, and walletd then submits them anyway, "declaring every input a write".
+
+Release notes, the lines that touch this service (quoted):
+  - ⚠️ **Protocol V2**: block headers commit to a transaction merkle root, substate proofs bind to their shard, and foreign pledges are authenticated. Esmeralda activates it at **epoch 12220**; every other network starts at V2 and must be reset. (#2804, #2762, #2798, #2867)
+  - ⚠️ **No return values in transaction results**: read component state or events instead. (#2859)
+  - ⚠️🔒 **Approving a transaction request needs the wallet's own session**; WebRTC apps need `--enable-webrtc`. (#2855)
+  - 🐛 **Transfer proof change** nets out the revealed amount. (#2824)
+  - 🐛 **Confidential outputs** finalize against the transaction diff. (#2898)
+  - 🐛 **Paying fees with a swap** needs an explicit swap input. (#2837)
+  - 🔒 **Indexer failover**: bounded requests, and substates that don't match their id are refused. (#2802, #2813)
+  - ⚡ **In-memory locks, block diffs and tree diffs**; databases migrate on first start and can't be opened by an older binary. (#2862, #2863, #2868, #2879)   [validator node section]
+  - 🔒 **Transaction results** need committee agreement. (#2838)
+  - 🔒 **Rate limits** on all public read routes; checkpoint pages capped at 20. (#2823)
