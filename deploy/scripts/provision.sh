@@ -207,8 +207,11 @@ walletd_service() {
   systemctl enable --now walletd >/dev/null 2>&1
   if ! walletd_listening; then
     systemctl disable --now walletd >/dev/null 2>&1
-    runuser -u drive -- tmux new-session -d -s walletd "$WALLET/run-walletd.sh"
-    die "walletd.service did not come up (journalctl -u walletd); the tmux session is running again"
+    if [ -f "$BACKUPS/balances-$ts-before.json" ]; then   # this run stopped the tmux walletd
+      runuser -u drive -- tmux new-session -d -s walletd "$WALLET/run-walletd.sh"
+      die "walletd.service did not come up (journalctl -u walletd); the tmux session is running again"
+    fi
+    die "walletd.service did not come up (journalctl -u walletd)"
   fi
   if [ -f "$BACKUPS/balances-$ts-before.json" ]; then
     (umask 077 && walletd_balances > "$BACKUPS/balances-$ts-after.json")
