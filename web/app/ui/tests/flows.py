@@ -1509,6 +1509,7 @@ def rule_ghost(t):
         for want in ("3", "1"):
             p.click("rule-ghost")
             p.wait(f"document.querySelector('.md-card').dataset.maxViews === '{want}'", 30)
+            p.wait("document.querySelector('.md-live').textContent.startsWith('Same link.')", 10)
             p.b.drain(0.4)
             seen.append(rule_state(p) + [p.eval(SAY), p.eval("navigator.clipboard.readText()")])
         few, once = seen
@@ -1530,7 +1531,7 @@ def rule_ghost(t):
         p.click("word-yes")
         new = p.wait(f"{LINK} !== {json.dumps(url)} && document.querySelector('[data-testid=\"word-value\"]') ? {LINK} : ''", 60)
         word = p.text("word-value")
-        p.b.drain(0.4)
+        p.wait("document.querySelector('.md-live').textContent.startsWith('New link made. The old one stopped working.')", 10)
         words = open(os.path.join(REPO, "web", "app", "lib", "words.txt"), encoding="utf-8").read().split()
         t.check("#2" in new and len(word.split("-")) == 4 and all(w in words for w in word.split("-")),
                 f"{device}: a new link with a word part (#2), and four words from the list ({word})")
@@ -1584,7 +1585,8 @@ def rule_ghost(t):
     url = seal_text(p, "never left this tab")
     p.click("word-toggle")
     new = p.wait(f"{LINK} !== {json.dumps(url)} ? {LINK} : ''", 60)
-    t.check(bool(new) and not p.exists("word-yes") and p.eval("document.querySelector('.md-live').textContent").startswith("New link made."),
+    said = p.wait("(() => { const s = document.querySelector('.md-live').textContent; return s.startsWith('New link made.') ? s : ''; })()", 10)
+    t.check(bool(new) and not p.exists("word-yes") and said == "New link made. Press Copy link.",
             "a link that never left the page: the word makes the new link without asking ('New link made.')")
 
     # Opened once already: the count can't go back to once from a tap (that would end the link).
