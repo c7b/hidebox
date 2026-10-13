@@ -1,6 +1,27 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+## 2026-10-13: Ootle v0.46.0 (docs/evidence/2026-10-13/upgrade-0.46.0/)
+
+- walletd 0.46.0 (`tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64`, SHA-256 `26d4c269…6e05`) runs on
+  the server since 18:14 UTC, after Esmeralda's indexers moved to v0.46.0 at about 10:30 and walletd
+  0.45.0 could no longer read a transaction result (docs/evidence/2026-10-13/incident-walletd/). The
+  store took one additive migration; balances are unchanged; the 0.45.0 binary and a pre-upgrade tar
+  are kept for a rollback. Checkpoints commit again (#159 on), and #141 to #158, which reached the log
+  while walletd couldn't tell, are recorded committed after a check against the log's state on both
+  indexers. The three releases missing from `/releases.json` are notarized.
+- Not fixed: the sponsor's whole balance (8,851.452 tTARI) is the change of a send whose result the
+  network stopped serving before the upgrade, so walletd keeps it locked and every sponsor send
+  (grants, courier canaries, decoys, the evidence payment) still fails with "Available: 0". walletd
+  0.46.0 has no way to settle or rescan it; the owner decides the remedy (the evidence README).
+- ootle-wasm 0.46.0 vendored for the browser and the sidecar (integrity and provenance checked; only
+  the `.wasm` differs from 0.45.0, the JavaScript and types are the same files) with the core, sidecar,
+  server, deploy, site and UI suites passing; production still serves 0.45.0 until the chain scenarios
+  can run (they need a sponsor that can spend). The live gates G1 and G2c pass on the V2 chain with
+  both libraries.
+- Self-hosting guide, architecture and the upgrade drill name walletd 0.46.0; the drill says to
+  upgrade before pending results age out (about one or two epochs).
+
 ## 2026-10-13: the repository is public (docs/review/fix-log.md, "The public step, done")
 
 - `c7b/mutis` is public, recreated from the rewritten history: the commits from before the rewrite
