@@ -14,6 +14,10 @@ import time
 from drivefake import DriveFake
 from flows import downloaded, no_hscroll, same_origin, scenario
 
+# The drive's features (off in config.py until the routes switch over). run.py starts a dev server with
+# them on for a flow that asks (lane app2's run.py); until then the flows run on drivefake.py.
+FEATURES = ("folders",)
+
 
 def make_drive(t, device="desktop", fake=None, **kw):
     """/drive?make: the key is made in this browser at once and the drive opens (the home page's Make my
@@ -58,7 +62,7 @@ def upload_files(t, page, names, count_before=None):
               f" return {json.dumps(names)}.every((x) => n.includes(x)); }})()", 120)
 
 
-@scenario("drive-shell", "The drive's shell (step 3): sidebar, header, search, Upgrade, the look; Geist only, pinned; no ootle-wasm before the list")
+@scenario("drive-shell", "The drive's shell (step 3): sidebar, header, search, Upgrade, the look; Geist only, pinned; no ootle-wasm before the list", features=FEATURES)
 def drive_shell(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -108,7 +112,7 @@ def drive_shell(t):
     t.check(True, "an unknown drive address says so inside the drive")
 
 
-@scenario("drive-make", "Make my drive on a phone (step 5): the key at once, the drive opens, Save key file (locked), reload opens it again")
+@scenario("drive-make", "Make my drive on a phone (step 5): the key at once, the drive opens, Save key file (locked), reload opens it again", features=FEATURES)
 def drive_make(t):
     a = t.actor("iphone")
     DriveFake(t.origin).attach(a)
@@ -157,7 +161,7 @@ def drive_make(t):
     t.check(no_hscroll(n), "no horizontal scroll at 360")
 
 
-@scenario("drive-open-keyfile", "Open my drive with the key file in a clean browser (step 5): the same drive, the same files")
+@scenario("drive-open-keyfile", "Open my drive with the key file in a clean browser (step 5): the same drive, the same files", features=FEATURES)
 def drive_open_keyfile(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -192,7 +196,7 @@ def drive_open_keyfile(t):
             "a wrong key: That key does not open a drive")
 
 
-@scenario("drive-folders", "Folders (step 5): New folder, open it, breadcrumbs, a file inside, counts, search in place")
+@scenario("drive-folders", "Folders (step 5): New folder, open it, breadcrumbs, a file inside, counts, search in place", features=FEATURES)
 def drive_folders(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -231,7 +235,7 @@ def drive_folders(t):
     t.shot(a, "drive-1440-search")
 
 
-@scenario("storage-meter", "Storage (step 5): the meter in padded sizes, Get more space with test money, the rules of space")
+@scenario("storage-meter", "Storage (step 5): the meter in padded sizes, Get more space with test money, the rules of space", features=FEATURES)
 def storage_meter(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -274,7 +278,7 @@ def storage_meter(t):
 A06D_CEILING = 160 * 1024
 
 
-@scenario("drive-budget", "A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it")
+@scenario("drive-budget", "A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it", features=FEATURES)
 def drive_budget(t):
     a, fake = make_drive(t, "iphone")
     a.wait_for("drive-empty", 30)
@@ -325,7 +329,7 @@ def text_of(path):
         return f.read()
 
 
-@scenario("drive-upload-files", "Upload files (step 7): each locks here, then uploads; the panel says so; the owner downloads the same bytes, the photo without its location")
+@scenario("drive-upload-files", "Upload files (step 7): each locks here, then uploads; the panel says so; the owner downloads the same bytes, the photo without its location", features=FEATURES)
 def drive_upload_files(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -355,7 +359,7 @@ def drive_upload_files(t):
     t.shot(p, "drive-390-files", full_page=True)
 
 
-@scenario("drive-upload-folder-input", "Upload a folder with the folder picker (step 7): folders top-down, files inside, names here only")
+@scenario("drive-upload-folder-input", "Upload a folder with the folder picker (step 7): folders top-down, files inside, names here only", features=FEATURES)
 def drive_upload_folder_input(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -380,7 +384,7 @@ def drive_upload_folder_input(t):
     t.check("Trip" not in sent and "map.txt" not in sent, "no folder or file name in any request")
 
 
-@scenario("drive-upload-folder-drop", "Drop a folder (step 7): the entries are read inside the drop, every batch walked, the overlay names the folder")
+@scenario("drive-upload-folder-drop", "Drop a folder (step 7): the entries are read inside the drop, every batch walked, the overlay names the folder", features=FEATURES)
 def drive_upload_folder_drop(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -406,7 +410,7 @@ def drive_upload_folder_drop(t):
     t.check(a.eval("document.querySelector('[data-testid=\"drop-overlay\"]').hidden"), "the overlay goes after the drop")
 
 
-@scenario("drive-move-rename", "Move and rename (step 7): This shares it too, Move here, Undo; a new name sealed here")
+@scenario("drive-move-rename", "Move and rename (step 7): This shares it too, Move here, Undo; a new name sealed here", features=FEATURES)
 def drive_move_rename(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -465,7 +469,7 @@ def drive_move_rename(t):
     t.check("meeting" not in sent, "the new name never travels in clear")
 
 
-@scenario("drive-trash-restore", "Trash and restore (step 7): Move to trash with Undo, the trash view, Bring back, Delete now")
+@scenario("drive-trash-restore", "Trash and restore (step 7): Move to trash with Undo, the trash view, Bring back, Delete now", features=FEATURES)
 def drive_trash_restore(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -502,7 +506,7 @@ def drive_trash_restore(t):
     t.check(any(c[0] == "DELETE" for c in fake.calls) or fake.native, "Delete now deletes it on our server")
 
 
-@scenario("drive-delete-after", "Delete it after… (step 7): a day, a week or the most; the Leaves badge; Keep it")
+@scenario("drive-delete-after", "Delete it after… (step 7): a day, a week or the most; the Leaves badge; Keep it", features=FEATURES)
 def drive_delete_after(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -528,7 +532,7 @@ def drive_delete_after(t):
 
 # --- §15 step 9: Activity and What our server knows ---------------------------------------------------
 
-@scenario("seller-activity", "Activity of a file (step 9): links made, opened, ended; C40; What our server knows, with this file's values")
+@scenario("seller-activity", "Activity of a file (step 9): links made, opened, ended; C40; What our server knows, with this file's values", features=FEATURES)
 def seller_activity(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
@@ -574,7 +578,7 @@ def seller_activity(t):
     t.shot(a, "drive-1440-known")
 
 
-@scenario("activity-gone", "The drive's Activity (step 9): newest first; a file that left: It left your drive, and its chain line (C42)")
+@scenario("activity-gone", "The drive's Activity (step 9): newest first; a file that left: It left your drive, and its chain line (C42)", features=FEATURES)
 def activity_gone(t):
     a, fake = make_drive(t, fake=DriveFake(t.origin, seallog=True))
     a.wait_for("drive-empty", 30)

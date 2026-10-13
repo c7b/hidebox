@@ -36,7 +36,7 @@ function meter(p) {
     h('div', { class: 'progress-indicator' }));
   const used = h('span', { class: 'meta' });
   return h('div', { class: 'sidebar-group' },
-    h('a', { class: 'sidebar-menu-button', href: '/drive/storage', 'data-nav': '', 'data-view': 'storage' }, icon('cloud'), h('span', {}, t('drive.side.storage'))),
+    h('a', { class: 'sidebar-menu-button', href: '/drive/storage', 'data-nav': '', 'data-view': 'storage', 'data-testid': 'nav-storage' }, icon('cloud'), h('span', {}, t('drive.side.storage'))),
     h('div', { class: 'side-meter', 'data-meter': '' }, bar, used,
       h('a', { class: 'btn', 'data-variant': 'outline', 'data-size': 'sm', href: '/drive/storage#more', 'data-nav': '' }, t('drive.side.more'))));
 }
