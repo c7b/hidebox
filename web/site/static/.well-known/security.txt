@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Security contact (RFC 9116). Please report privately first; see {{ORIGIN}}/made#disclosure
+# Security contact for {{BRAND}} (RFC 9116). Please report privately first; see {{ORIGIN}}/made#disclosure
 Contact: {{SECURITY_DROP_URL}}
 Contact: {{REPO_URL}}/security/advisories/new
 Expires: 2027-10-01T00:00:00Z

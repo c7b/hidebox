@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Threat model
 
-What mutis defends against, what it doesn't, and where each guarantee comes from. The live pages
-[/security](https://srv2052606.hstgr.cloud/security) and [/how](https://srv2052606.hstgr.cloud/how)
+What **bye** defends against, what it doesn't, and where each guarantee comes from. The live pages
+[/made](https://srv2052606.hstgr.cloud/made) and [/fine-print](https://srv2052606.hstgr.cloud/fine-print)
 say the same things for this deployment's settings (`send_mode`, `amount_proof` and `features` in
 [`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config)); this file covers both send modes.
 
@@ -16,13 +16,13 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Adversary | Can | What stops them | What remains |
 |---|---|---|---|
 | Network observer | see TLS metadata | HTTPS only, HSTS, Padmé size buckets | timing and volume |
-| A curious or compromised server (including our host) | read the database and the stored files, change responses, watch IP addresses live | everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or locker addresses stored for logins; no sharing graph; each chunk is authenticated together with its header | can serve malicious JavaScript (see "Verify"); can refuse service; sees the metadata listed on `/how`; in relay mode knows each send's destination while it is queued; can ignore a deletion and keep ciphertext, which is useless without the key |
+| A curious or compromised server (including our host) | read the database and the stored files, change responses, watch IP addresses live | everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or locker addresses stored for logins; no sharing graph; each chunk is authenticated together with its header | can serve malicious JavaScript (see "Verify"); can refuse service; sees the metadata listed on `/made#who`; in relay mode knows each send's destination while it is queued; can ignore a deletion and keep ciphertext, which is useless without the key |
 | Someone with only the link's path | ask for its status | the key lives only after the `#`; opening needs an access token derived from it; link + password adds a link proof | learns that a link exists, its state, and once it has ended why and on what day (with SealLog: its exit receipt, so the file's id and which checkpoint windows its arrival and exit fell in); not the open count |
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links |
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets |
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours; direct sends link to our sponsor wallet and to each other |
 | A view-key holder | read arrivals, amounts and memo text | files sealed to a locker need its owner key too | files sent with "The recipient uses another Ootle wallet" open with the view key (labelled at send time) |
-| Phishing through our sends | make someone receive a mutis link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact mutis delivery as plain text | someone can send unwanted mutis deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
+| Phishing through our sends | make someone receive a **bye** link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact **bye** delivery as plain text | someone can send unwanted **bye** deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small files and files without a locker, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts, a cap on requests in flight per network | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working |
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
 | Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash and re-hashed before it runs; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
@@ -33,7 +33,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 - **Relay** (the default): our wallet posts the stealth payment that carries a file's sealed key. The
   server learns the destination address while the job is queued and scrubs it once the job is done; it
   writes the memo itself, so a client can only supply the 125-byte sealed blob. Relay sends all come
-  from one wallet with one fee, so an observer can group them as "sent by mutis", but not see to whom.
+  from one wallet with one fee, so an observer can group them as "sent by **bye**", but not see to whom.
   The chain worker puts the outputs of its own transactions (deliveries, change and decoys alike) into
   the public UTXO mirror as soon as they commit, instead of waiting for the indexers' streams (which
   list an output only once the network's consensus epoch reaches it); the chain already shows those
@@ -53,7 +53,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 ## Payments
 
 A wallet saying "sent" isn't enough (in September 2026 a testnet wallet showed deposits that never
-happened), so mutis credits rented space only after its own checks. With `amount_proof = "sidecar"`
+happened), so **bye** credits rented space only after its own checks. With `amount_proof = "sidecar"`
 the official Tari library (ootle-wasm 0.45.0, in a Node process under the permission model that can
 only read its own directory) opens the output's commitment to the exact amount, and a Tari-run public
 indexer shows the output committed. walletd never decides a credit. With `amount_proof = "wallet"`

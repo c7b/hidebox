@@ -79,10 +79,10 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
 | That a file exists, its arrival hour, rule and opens | yes | counts only, in steps of 64 per checkpoint (SealLog) | partly (state, opens left) | — |
 | Your IP address | while connected; never on disk | no, unless you press "Check it on Tari's indexer" | no | no |
 | Who you send to | direct sends from your browser: no; relay sends and dead-drop deliveries: yes, while the job is queued, then scrubbed | no (a one-time stealth address) | — | they know it's them |
-| That mutis sent a payment | yes | relay sends: one wallet, one fee; browser sends trace back to our sponsor wallet's grant and to each other | — | — |
+| That **bye** sent a payment | yes | relay sends: one wallet, one fee; browser sends trace back to our sponsor wallet's grant and to each other | — | — |
 | Payment amounts | for space rented from us (we're the seller) | no (a Pedersen commitment) | — | — |
 
-The long form, with every party and every column the database keeps, is on `/how` and `/privacy`.
+The long form, with every party and every column the database keeps, is on `/made#who` and `/fine-print#privacy`.
 
 ## The life of a file
 

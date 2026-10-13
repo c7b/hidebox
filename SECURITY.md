@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Security policy
 
-mutis runs on the Tari Ootle **Esmeralda testnet**. tTARI has no monetary value, and the live site
+**bye** runs on the Tari Ootle **Esmeralda testnet**. tTARI has no monetary value, and the live site
 at <https://srv2052606.hstgr.cloud> is a contest entry run by one person. That bounds what a report
 can be worth, not how seriously it is read.
 
@@ -18,7 +18,7 @@ Please tell us privately before you tell anyone else.
 2. **A GitHub private security advisory** on `c7b/mutis`:
    [Report a vulnerability](https://github.com/c7b/mutis/security/advisories/new) (*Security →
    Report a vulnerability*; it needs a GitHub account). Only you and the maintainer see the advisory.
-   `security.txt` lists it as the second `Contact`, and `/security` links it; the site's test suite
+   `security.txt` lists it as the second `Contact`, and `/made#disclosure` links it; the site's test suite
    checks, as a visitor who isn't signed in, that the form answers and that private reporting is on.
 
 Please include what you saw, how to reproduce it, and which part of the site or the repository it
@@ -48,8 +48,8 @@ preview links, and findings that need the server's own keys or a copy of its dat
 
 ## What a finding is measured against
 
-The privacy claims on [`/how`](https://srv2052606.hstgr.cloud/how) and
-[`/security`](https://srv2052606.hstgr.cloud/security) and in [docs/threat-model.md](docs/threat-model.md)
+The privacy claims on [`/made`](https://srv2052606.hstgr.cloud/made) and
+[`/fine-print`](https://srv2052606.hstgr.cloud/fine-print) and in [docs/threat-model.md](docs/threat-model.md)
 are meant to be literally true for the code and configuration that ship. Any sentence there that the
 code doesn't honour is a vulnerability, whether or not it leaks a byte. The reviews already run
 against the live site, their findings and what each one changed are in
