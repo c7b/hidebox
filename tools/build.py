@@ -139,9 +139,14 @@ def page_url(rel: str) -> str:
     return "/" + rel.removesuffix(".html").removesuffix("index")
 
 
+# Never copied from web/shared: the partials are inlined, and the old Mutis Script fonts left the
+# site with the ghost (DESIGN.md: system faces only); their files stay in the repository one release.
+SHARED_SKIP = ("partials", "fonts")
+
+
 def copy_site(web: Path, dist: Path, with_tests: bool) -> list[str]:
     """Returns the pages copied, as paths under web/site/pages."""
-    copy_tree(web / "shared", dist / "shared", skip=("partials",))
+    copy_tree(web / "shared", dist / "shared", skip=SHARED_SKIP)
     copy_tree(web / "app", dist / "app", skip=APP_NEVER_SERVED + (() if with_tests else ("tests",)))
     copy_tree(web / "app" / "vendor", dist / "vendor")
     copy_tree(web / "site" / "static", dist)
@@ -170,7 +175,7 @@ def set_variants(web: Path, dist: Path, cfg: dict) -> None:
 
 def copy_holding(web: Path, dist: Path) -> list[str]:
     """The holding page (deploy/holding/) on the shared tokens, served until the full site builds."""
-    copy_tree(web / "shared", dist / "shared", skip=("partials",))
+    copy_tree(web / "shared", dist / "shared", skip=SHARED_SKIP)
     for target in ("index.html", "404.html"):
         shutil.copyfile(HOLDING / "index.html", dist / target)
     shutil.copyfile(HOLDING / "holding.css", dist / "holding.css")

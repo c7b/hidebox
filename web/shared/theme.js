@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // A classic script loaded in <head>, so what it decides applies before the first paint.
-// "Lights off / Lights on": the choice is a per-browser convenience in localStorage; without it the OS
-// decides, except on Oct 31 from 18:00 local, when the house lights are already down (11-brand §13.11).
-// html.motion: scripts run and the visitor allows motion, so a page may lay out its scroll scene for
-// playing (the home page's exit wall) instead of its static version.
+// The light switch (DESIGN.md): lights on = the light theme, lights off = the dark one, where the ghost
+// glows. It follows the OS until it is pressed, then remembers the choice in this browser (a
+// convenience: storage may be blocked, and then the choice lasts for this page). Its name stays
+// "Lights" and its state is aria-pressed (pressed = lights on). On Oct 31 from 18:00 local the house
+// lights are already down (11-brand §13.11), unless the visitor chose.
+// html.motion: scripts run and the visitor allows motion.
 (() => {
   const KEY = 'mutis.theme';
   const root = document.documentElement;
@@ -17,7 +19,6 @@
       return null;
     }
   };
-  // Oct 31 from 18:00 local. A classic script, so the rule lives here and not in a module that would load after paint.
   const now = new Date();
   const halloweenNight = now.getMonth() === 9 && now.getDate() === 31 && now.getHours() >= 18;
   const chosen = stored();
@@ -25,15 +26,12 @@
   else if (halloweenNight) root.dataset.theme = 'dark';
 
   const isDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : osDark.matches);
-
-  function label(button) {
-    button.textContent = isDark() ? button.dataset.on : button.dataset.off;
-  }
+  const paint = (button) => button.setAttribute('aria-pressed', String(!isDark()));
 
   document.addEventListener('DOMContentLoaded', () => {
     const buttons = document.querySelectorAll('[data-theme-toggle]');
     for (const button of buttons) {
-      label(button);
+      paint(button);
       button.hidden = false;
       button.addEventListener('click', () => {
         const next = isDark() ? 'light' : 'dark';
@@ -43,9 +41,9 @@
         } catch {
           // Private window or blocked storage: the choice lasts for this page only.
         }
-        buttons.forEach(label);
+        buttons.forEach(paint);
       });
     }
-    osDark.addEventListener('change', () => buttons.forEach(label));
+    osDark.addEventListener('change', () => buttons.forEach(paint));
   });
 })();

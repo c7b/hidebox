@@ -107,10 +107,6 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         status, headers, _ = fetch(origin + path)
         problems = ([] if status == 404 else [f"status {status}"]) + header_problems(headers, *error)
         results.append((f"GET {path} → {status} (an error page through another route)", problems))
-    status, headers, _ = fetch(origin + headers_spec.FONT)
-    problems = ([] if status == 200 else [f"status {status}"]) + \
-        header_problems(headers, headers_spec.SITE_CSP, headers_spec.FONT_CACHE)
-    results.append((f"GET {headers_spec.FONT} → {status}", problems))
 
     status, headers, _ = fetch(origin + "/api/v1/health")
     results.append((f"GET /api/v1/health → {status} (security headers on API responses)",

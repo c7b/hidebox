@@ -2,7 +2,7 @@
 // What every app and viewer page does first: its strings, the judge pass carried from /judges, the
 // page title, and on app pages the bottom bar of phones (spec §12.2: Locker · Inbox · Send).
 import { h } from '../lib/dom.js';
-import { loadStrings, t } from '../lib/i18n.js';
+import { BRAND, loadStrings, t } from '../lib/i18n.js';
 import { setJudgePass } from '../lib/pow.js';
 import { idbGet } from '../lib/idb.js';
 import { savedJudgePass } from '../lib/store.js';
@@ -34,5 +34,5 @@ export async function startPage({ bottomBar = false, current = null } = {}) {
 export const abuseHref = (link) => (link ? `/abuse#link=${encodeURIComponent(link)}` : '/abuse');
 
 export function setTitle(key, params) {
-  document.title = `${t(key, params)} · mutis`;
+  document.title = `${t(key, params)} · ${BRAND}`;
 }

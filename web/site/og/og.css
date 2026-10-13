@@ -1,25 +1,32 @@
 /* SPDX-License-Identifier: MIT — OG cards and app icons, rendered to PNG by tools/render-images.py.
-   Colours and type are the tokens of /shared/tokens.css (stage theme); fonts load from the repo. */
-@font-face { font-family: "Mutis Script"; src: url("../../shared/fonts/MutisScript-Regular.woff2") format("woff2"); font-weight: 400; }
-@font-face { font-family: "Mutis Script"; src: url("../../shared/fonts/MutisScript-Bold.woff2") format("woff2"); font-weight: 700; }
+   The lights-off world of /shared/tokens.css (night, moon, phosphor; purple only for Tari) and the
+   system faces only, as on the site: no font files. */
 * { margin: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; }
-.card {
-  background: #0E0D0B; color: #EEE9DE; font-family: "Mutis Script", monospace;
-  display: grid; grid-template-columns: 45% 55%; align-items: center; padding: 0 0 0 72px; overflow: hidden;
+body {
+  background: #13183A; color: #EEF0FF;
+  font-family: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", system-ui, "Noto Sans", sans-serif;
 }
-.copy { display: grid; gap: 28px; align-content: center; }
-.wordmark { height: 56px; width: auto; color: #EEE9DE; }
-.wordmark.small { height: 32px; }
-.tagline { font-weight: 700; font-size: 60px; line-height: 64px; letter-spacing: -.02em; }
-.line { font-size: 22px; line-height: 1.4; color: #A39C8F; }
-.wall { display: grid; grid-template-columns: repeat(6, 84px); gap: 12px; justify-content: center; }
-.locker { display: grid; place-items: center; width: 84px; height: 84px; background: #1A1814; border: 1px solid rgb(238 233 222 / .12); }
-.k { width: 26px; height: auto; fill: #2B2823; }
-.lit .k { fill: #F4E4C1; filter: drop-shadow(0 0 8px rgb(244 228 193 / .6)); }
-.viewer { grid-template-columns: 40% 60%; }
-.viewer .locker.big { width: 300px; height: 300px; justify-self: center; }
-.viewer .big .k { width: 92px; }
-.viewer .tagline { font-size: 56px; line-height: 62px; }
-.icon { background: #F3EFE6; color: #16130E; display: grid; place-items: center; }
-.icon svg { width: 64%; height: 64%; }
+.card { display: grid; grid-template-columns: 1fr 470px; align-items: center; gap: 24px; padding: 0 72px 0 88px; overflow: hidden; }
+.copy { display: grid; gap: 26px; align-content: center; }
+.wm { height: 64px; width: auto; }
+.wm path, .wm circle { fill: none; stroke: #EEF0FF; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.tagline { font-weight: 800; font-size: 76px; line-height: 1.02; letter-spacing: -.02em; max-width: 9.5em; }
+.line { font-size: 27px; font-weight: 600; line-height: 1.35; color: #AEB4DC; max-width: 21em; }
+.tari { color: #B79BFF; }
+.figure { position: relative; display: grid; place-items: center; }
+.figure svg { width: 440px; height: 440px; overflow: visible; }
+.bd, .hd { fill: #DDFADF; stroke: #BDEFC3; stroke-width: 2.4; stroke-linejoin: round; }
+.gf { filter: drop-shadow(0 0 22px rgb(189 239 195 / .38)); }
+.eye { fill: #13183A; }
+.smile, .wink { fill: none; stroke: #13183A; stroke-width: 2.6; stroke-linecap: round; }
+.ck { fill: #FF8FB0; opacity: .55; }
+.sh { fill: rgb(189 239 195 / .18); }
+.note { fill: #FFF3C4; stroke: #BDEFC3; stroke-width: 2; stroke-linejoin: round; }
+.note-l { fill: none; stroke: #BDEFC3; stroke-width: 2; stroke-linecap: round; }
+.hp { fill: #DDFADF; stroke: #BDEFC3; stroke-width: 1.7; stroke-linejoin: round; }
+.hf { fill: none; stroke: #BDEFC3; stroke-width: 1.2; stroke-linecap: round; }
+.viewer { grid-template-columns: 470px 1fr; padding: 0 88px 0 64px; }
+.viewer .tagline { font-size: 68px; }
+.icon { display: grid; place-items: center; }
+.icon svg { width: 76%; height: 76%; overflow: visible; }

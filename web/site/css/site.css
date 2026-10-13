@@ -106,7 +106,13 @@ code, .code { font-family: var(--font-code); font-size: max(12px, .92em); }
 }
 .footer-lines { font: var(--t-caption); color: var(--fg-2); max-width: 80ch; }
 .footer-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-5); }
-.theme-toggle { min-height: var(--tap); padding: 0 var(--s-3); background: none; border: 1px solid var(--line); font: var(--t-ui); }
+/* the light switch: its name stays "Lights", its state is aria-pressed (pressed = lights on) */
+.lights { inline-size: var(--tap); block-size: var(--tap); display: grid; place-items: center; border: 0; padding: 0;
+  background: transparent; border-radius: 50%; color: var(--fg); transition: background-color var(--dur-1) var(--ease-out); }
+.lights:hover { background: var(--hair); }
+.lights svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.lights .bulb { fill: var(--mark); transition: fill var(--dur-2) var(--ease-out); }
+.lights[aria-pressed="false"] .bulb { fill: none; }
 @media (min-width: 720px) {
   .footer-grid { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); }
   .footer-brand { grid-column: auto; }

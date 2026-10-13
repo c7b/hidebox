@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""11-brand P-18: every served WOFF2 loads in Chromium with no `OTS parsing error`.
+"""11-brand P-18, after the ghost (DESIGN.md: system faces only): the live hash manifest lists no font
+file, so a page can't ask for one. Any WOFF2 that comes back still must load in Chromium with no
+`OTS parsing error`.
 
   python3 -I tests/e2e/test_fonts.py [--origin URL] [--host hidebox]
 
-Chromium's font sanitizer (OTS) rejected the Debian Courier Prime OTFs; the renamed Mutis Script
-subsets must pass it. The font list is every .woff2 in the live hash manifest. Each one is loaded
-with the FontFace API in a page of the origin (so the site CSP applies) by headless Chromium on the
-server; any font that fails to load or any OTS message in the console fails the test.
+The font list is every .woff2 in the live hash manifest. None is the expected state and passes. Each
+one listed is loaded with the FontFace API in a page of the origin (so the site CSP applies) by
+headless Chromium on the server; any font that fails to load or any OTS message fails the test.
 """
 import argparse
 import json
@@ -33,6 +34,9 @@ def main() -> int:
     with urllib.request.urlopen(urllib.request.Request(origin + "/.well-known/mutis-manifest.json",
                                                        headers={"User-Agent": "mutis-e2e"}), timeout=20) as res:
         fonts = sorted("/" + path for path in json.load(res)["files"] if path.endswith(".woff2"))
+    if not fonts:
+        print("test_fonts: PASS (no font files served: system faces only)")
+        return 0
     env = Env(origin, Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-fonts-"))), Path("."))
     env.remote.as_build("mkdir -p /home/build/work/deploy/e2e")
     env.remote.as_build("cat > /home/build/work/deploy/e2e/relay.py", (Path(__file__).parent / "relay.py").read_bytes())
@@ -53,8 +57,8 @@ def main() -> int:
     for line in ots:
         print(f"FAIL console: {line[:200]}")
     failures += len(ots)
-    print(f"test_fonts: {'PASS' if not failures and fonts else 'FAIL'} ({len(fonts)} fonts, {len(ots)} OTS messages)")
-    return 1 if failures or not fonts else 0
+    print(f"test_fonts: {'PASS' if not failures else 'FAIL'} ({len(fonts)} fonts, {len(ots)} OTS messages)")
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
