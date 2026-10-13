@@ -69,10 +69,23 @@ on every path out, a failed command included.
 rpc balances > before.json                                   # on the workstation
 u 'sudo systemctl stop walletd'
 u 'sudo tar -C /home/drive -cf /var/backups/mutis/wallet-$(date -u +%Y%m%dT%H%M%SZ)-pre-upgrade.tar wallet'
-# install the new binary (checked against GitHub's and Tari's .sha256) under /opt/tari/bin
+# install the new binary (checked against GitHub's and Tari's .sha256) under /opt/tari/bin:
+#   keep the old one beside it (tari_ootle_walletd-<old version>-<commit>) for a rollback, then
+#   install -m 0755 -o root -g root <new> /opt/tari/bin/tari_ootle_walletd
 u 'sudo systemctl start walletd'
 rpc balances > after.json && diff before.json after.json
 ```
+
+**Do it before the results age out.** When the indexers move to a release this walletd can't read,
+every transaction it submits from then on stays `Pending` in walletd, and its inputs and change stay
+locked, until a walletd that can read the result sees it. The committee keeps a transaction's result
+for about one or two epochs (on Esmeralda an epoch is about 36 minutes): a checkpoint from 16:58 was
+already gone at 18:14 on 2026-10-13. After that, walletd (0.46.0 included) asks for it every 5 s
+forever and never releases the lock: there is no RPC or CLI that settles, cancels or rescans it, and
+the only ways a lock goes away delete the unconfirmed change from the wallet. A send's change is then
+stuck although it is on chain. So when walletd starts logging "Failed to deserialize response", stop
+the sends first (reset playbook §1 pauses the Tari features), then upgrade; a rollback later needs
+the pre-upgrade tar, since the new binary migrates the store.
 
 ## 5. Deploy behind the feature flags
 
@@ -84,3 +97,4 @@ Pause the Tari features (reset playbook §1), `deploy/scripts/deploy.sh <tag>`, 
 | Date | What | Result |
 |---|---|---|
 | 2026-10-11 | Step 3 with the current 0.45.0 binary (the walletd.service migration trial), and the sidecar handshake and selftest of the deployed release (D-10) | pass; see `deploy/ACCEPTANCE.md` D-10 |
+| 2026-10-13 | The live upgrade to 0.46.0, after Esmeralda's indexers moved to it: §3 on a copy (one additive migration, same balances), §4 live; ootle-wasm 0.46.0 vendored and its suites run, not deployed; §5 not run | walletd pass (results read again, checkpoints commit); the sponsor's change from 10:39 stays locked (the note above): `docs/evidence/2026-10-13/upgrade-0.46.0/` |

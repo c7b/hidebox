@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
-"""JSON-RPC client for tari_ootle_walletd 0.45.0 (spec §10.1, §10.3; 03-ootle-integration §4.3–§4.4).
+"""JSON-RPC client for tari_ootle_walletd 0.46.0 (written against 0.45.0, the same calls and shapes;
+spec §10.1, §10.3; 03-ootle-integration §4.3–§4.4).
 
 walletd runs with `--authentication none` behind a uid firewall; a JWT from `auth.request` is
 valid five minutes, so it is cached for 240 s. Only the chain worker (user drive) can reach it.
