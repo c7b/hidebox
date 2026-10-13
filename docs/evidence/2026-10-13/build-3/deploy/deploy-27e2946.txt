@@ -1,0 +1,28 @@
+== checks on ultron as build (the server's Python)
+Ran 201 tests in 47.278s
+
+OK (skipped=5)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 0 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "a6894dee", "files": 126, "git_sha": "27e29462b1a6922aa3fcc4fa629793fdf4f07f87", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 6, "vendored_checked": 6, "version": "27e2946"}
+== upload and activate 27e29462b1a6922aa3fcc4fa629793fdf4f07f87-ca6894dee
+sidecar: hello ok, pinned ootle-wasm
+schema version 3
+switched current → releases/27e29462b1a6922aa3fcc4fa629793fdf4f07f87-ca6894dee
+restarted mutis-api
+restarted mutis-chain
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: FAIL ({'tx_id': 'f9f992aaa5d30749660cbce7f5e23a8f6afb41865daa53a19ad7d8efdaa0b5d3', 'committed': False})
+== notarization failed; the release stays live. Retry: sudo python3 -I /srv/mutis/app/current/deploy/scripts/notarize-release.py
+== deployed 27e29462b1a6922aa3fcc4fa629793fdf4f07f87-ca6894dee to https://srv2052606.hstgr.cloud
+exit:0
