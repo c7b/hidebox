@@ -11,7 +11,18 @@ from .storage import Blobs
 ENDED_REASON = {"exhausted": "burned", "expired": "expired", "revoked": "revoked", "removed": "removed",
                 "owner_deleted": "owner_deleted"}
 TICKET_S = 1800              # a download ticket lives 30 minutes (spec §5.3)
+EGRESS_PER_ITEM_DAY = 10 << 30     # bytes served per item per day, by every link and visit together
 MAX_DELETE_AFTER_DAYS = 30    # Delete it after… on a kept file: at most this far ahead (16-drive-design §7)
+
+
+def egress_ok(conn: sqlite3.Connection, item, now: int, size: int) -> bool:
+    """Count `size` more bytes against an item's daily egress (EGRESS_PER_ITEM_DAY); False when over."""
+    today = codec.day(now)
+    used = item["egress_bytes"] if item["egress_day"] == today else 0
+    if used + size > EGRESS_PER_ITEM_DAY:
+        return False
+    conn.execute("UPDATE items SET egress_day = ?, egress_bytes = ? WHERE id = ?", (today, used + size, item["id"]))
+    return True
 
 
 def end_share(conn: sqlite3.Connection, share_id: str, state: str, now: int) -> None:

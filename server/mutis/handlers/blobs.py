@@ -89,8 +89,19 @@ def download(ctx, ticket: str):
             cur = ctx.db.execute("UPDATE tickets SET bytes_served = bytes_served + ? "
                                  "WHERE token_hash = ? AND bytes_served + ? <= max_bytes",
                                  (length, row["token_hash"], length))
-        if cur.rowcount != 1:
+            capped = cur.rowcount != 1
+            over = False
+            if not capped and row["scope"] == "tree":      # a folder visit counts each file's egress as served
+                fresh = ctx.db.execute("SELECT * FROM items WHERE id = ?", (item["id"],)).fetchone()
+                over = not items.egress_ok(ctx.db, fresh, ctx.now, length)
+                if over:
+                    ctx.db.execute("UPDATE tickets SET bytes_served = bytes_served - ? WHERE token_hash = ?",
+                                   (length, row["token_hash"]))
+        if capped:
             raise ApiError(429, "byte_cap", "This download used its byte allowance.")
+        if over:
+            raise ApiError(429, "rate_limited", "This file was downloaded a lot today.",
+                           retry_after=codec.next_utc_midnight(ctx.now) - ctx.now)
 
     return ranged(ctx, item["id"], item["size_stored"], "sealed.bin", "no-store", charge)
 

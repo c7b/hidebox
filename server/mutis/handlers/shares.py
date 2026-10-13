@@ -27,7 +27,7 @@ PW_PERMANENT_AFTER = 50
 PWONLY_POW_AFTER = 3          # password only: per (link, IP key) failures before PoW and waiting start
 PWONLY_GLOBAL_HARD = 100      # password only: daily failures across everyone before every try needs 20 bits
 PWONLY_HARD_BITS = 20
-EGRESS_PER_ITEM_DAY = 10 * quota.GiB
+EGRESS_PER_ITEM_DAY = items.EGRESS_PER_ITEM_DAY
 UNLIMITED_OPENS_PER_HOUR = 60
 KDF_MIN_ITER, KDF_MAX_ITER = 600_000, 5_000_000
 NOT_KNOWN = ["file_name", "file_type", "file_content", "link_key", "password", "ip_address_on_disk"]
@@ -330,13 +330,7 @@ def peek(ctx, share_id: str):
                                "not_known": NOT_KNOWN})
 
 
-def _egress_ok(conn, item, now: int, size: int) -> bool:
-    today = codec.day(now)
-    used = item["egress_bytes"] if item["egress_day"] == today else 0
-    if used + size > EGRESS_PER_ITEM_DAY:
-        return False
-    conn.execute("UPDATE items SET egress_day = ?, egress_bytes = ? WHERE id = ?", (today, used + size, item["id"]))
-    return True
+_egress_ok = items.egress_ok
 
 
 def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
@@ -370,7 +364,9 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
             return ApiError(429, "rate_limited", "This link was opened many times this hour.",
                             retry_after=hour + 3600 - now)
         conn.execute("UPDATE shares SET opens_hour = ?, opens_in_hour = ? WHERE id = ?", (hour, opens + 1, share_id))
-    if not _egress_ok(conn, item, now, total if folder else item["size_stored"]):
+    # A file's open counts its size against its daily egress; a folder visit counts each file as it is
+    # served (blobs.py), since a visitor may take only some of them.
+    if not folder and not _egress_ok(conn, item, now, item["size_stored"]):
         return ApiError(429, "rate_limited", "This file was downloaded a lot today.",
                         retry_after=codec.next_utc_midnight(now) - now)
     conn.execute("UPDATE shares SET views_used = views_used + 1, first_opened_min = COALESCE(first_opened_min, ?) "
@@ -404,7 +400,8 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
 
 def tree_entry(row) -> dict:
     return {"id": row["id"], "kind": row["kind"], "parent_id": row["parent_id"], "header": codec.b64u(row["header"]),
-            "meta_ct": codec.b64u(row["meta_ct"]), "parent_wrap": codec.b64u(row["parent_wrap"]),
+            "meta_ct": codec.b64u(row["meta_ct"]),
+            "parent_wrap": codec.b64u(row["parent_wrap"]) if row["parent_wrap"] else None,
             "size_stored": row["size_stored"], "chunk_count": row["chunk_count"]}
 
 
