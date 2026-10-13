@@ -82,6 +82,7 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
 | That **bye** sent a payment | yes | relay sends: one wallet, one fee; browser sends trace back to our sponsor wallet's grant and to each other | — | — |
 | Payment amounts | for space rented from us (we're the seller) | no (a Pedersen commitment) | — | — |
 | Folder structure: which files share a folder, how deep, how many | yes (never a name) | no | yes, for the folder the link opens | — |
+| How many times a link opened, per hour | yes (a count per link per UTC hour; never who or from where) | no | no | — |
 
 The long form, with every party and every column the database keeps, is on `/made#who` and `/fine-print#privacy`.
 
@@ -112,7 +113,12 @@ subtree and nothing above it. A move or a rename is one `PATCH /items/{id}` made
 wrap under the new folder, a new encrypted name); the ciphertext and its SealLog leaf don't change.
 Deleting a folder deletes everything below it, and each file leaves with its own exit receipt. The
 **Trash** keeps files for `retention.trash_days` (their links end when they go in); **Delete it after**
-sets a date on a kept file, and it leaves then, with its exit receipt.
+sets a date on a kept file, and it leaves then, with its exit receipt. A **folder link** is an ordinary
+link on the folder: one open is one visit that returns the folder's tree (ids, headers, encrypted names,
+wraps) and a folder ticket; the ticket serves a file only while it is still inside the folder, so a file
+moved out mid-visit is refused at once. A file's link can carry **Delete it from my drive after**
+(`then_delete`): the file then leaves with its last link, with its exit receipt. Each open adds one to
+its link's count for that UTC hour (`share_opens`), which the owner sees in the drive.
 
 Where the key travels instead of a link: **send to a Tari address** (the link's secret is sealed to
 the address's owner and view keys with the official library; the 125-byte blob is the memo of a

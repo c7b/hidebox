@@ -88,13 +88,21 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /me/items?view=&parent=` | the drive | `view=all` (default): everything outside the Trash, flat, as before; `parent=root` or `parent=<folder id>`: one folder's contents (inside a trashed folder, what it took with it); `view=trash`: what was put in the Trash, latest first; `view=gone`: what left in the last `tombstone_days` days (`item_id`, `kind`, `created_hour`, `exit_hour`, `reason`: `deleted`, `expired`, `trash`, `link_ended` or `removed`, `exit_receipt`, and `header`, `meta_ct`, `owner_wrap` so the browser can read the name). Items carry `kind`, `parent_id`, `parent_wrap`, `trashed_at` |
 | `GET /me` | the drive | adds `quota.trash_bytes` (the Trash still counts in `used_bytes` until it empties, after `retention.trash_days`), and `files`, `folders` (outside the Trash) |
 | `GET /seallog/proof/{item_id}?kind=exit` | anyone | the exit receipt of a file that left, by its id (for files that left without a link: Delete it after, the Trash, a deletion) |
+| `POST /items/{id}/shares` (folder) | the drive | a folder link, in any mode: the folder's key wrapped under the link's secret; it shares everything the folder holds when it is opened |
+| `POST /items/{id}/shares` + `then_delete: true` | the drive | "Delete it from my drive after": on a kept file and a link that ends by itself (an expiry is required); the file becomes `ephemeral` with `expires_at` no later than the link's, so it leaves with its last link and gets its exit receipt. The response adds `item_expires_at`. 422 `then_delete` on a folder, without an expiry, or on a file that isn't the drive's own kept file |
+| `POST /s/{id}/open` (folder) | `X-Mutis-Access` | one view is one visit: `kind: "folder"`, the folder's `wrapped_key`, `header`, `meta_ct`, and `tree`: `[{id, kind, parent_id, header, meta_ct, parent_wrap, size_stored, chunk_count}]` for every ready descendant outside the Trash, breadth first (413 `too_many` beyond `folders.max_tree`, before a view is used), and `folder_ticket` with `ticket_expires_at` (`retention.ticket_s`; at most 3 times the tree's stored bytes). Nothing inline. A file's open says `kind: "file"` |
+| `GET /blobs/{ticket}?item={id}` | the folder ticket | the ciphertext of a file that is, when asked for, a ready descendant of the ticket's folder outside the Trash (403 `not_in_folder` otherwise: moved out, trashed or deleted mid-visit); Range supported; the byte cap counts across files. A file's own ticket refuses any other `item` |
+| `POST /s/{id}/peek`, `GET /s/{id}/manage` | as before | `item.kind`, and `item.child_count` for a folder. `GET /s/{id}` (the path alone) doesn't say whether a link opens a file or a folder. `GET /s/{id}/stored` on a folder: 409 `conflict` |
+| `GET /s/{id}/manage`, `GET /me/items` | the owner | each link gains `opens`: `[[hour, n], …]`, how many times it opened in each UTC hour (all of them in `manage`, the last 168 hours in `/me/items`). Never who opened it or from where; the counts go with the link's tombstone |
 
 **Folders.** A folder is an item without ciphertext (`kind: "folder"`, size 0, no SealLog leaf) with its
 own key and encrypted name. Each item inside one carries `parent_id` and `parent_wrap`, its own key wrapped
 under the folder's, and keeps its `owner_wrap`, so the drive lists any folder without walking the tree,
 and one folder key opens everything below it and nothing above. Moves and renames are one `PATCH`, made
 in the browser. The server learns which items share a folder, how deep and how many; never a name, a type
-or a real size. Folders cost no space; files in the Trash do until it empties.
+or a real size. Folders cost no space; files in the Trash do until it empties. A folder link opens the
+subtree as one visit: a Once folder link gives one visit of `retention.ticket_s`, then ends; the files
+stay in the drive.
 <!-- /lane S -->
 
 Checkpoint objects are `{"index", "component", "tree_size", "root", "epoch", "tx_id", "created_at"}`;
