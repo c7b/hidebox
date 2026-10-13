@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""11-brand P-18, after the ghost (DESIGN.md: system faces only): the live hash manifest lists no font
-file, so a page can't ask for one. Any WOFF2 that comes back still must load in Chromium with no
-`OTS parsing error`.
+"""11-brand P-18, for the drive (DESIGN.md "Typography": one family, Geist, vendored and pinned): the
+live hash manifest lists exactly one font file, /shared/fonts/Geist-Variable.woff2, with the hash
+tools/build.py pins, and the bytes the origin serves have that hash too. It must load in Chromium with
+no `OTS parsing error`.
 
   python3 -I tests/e2e/test_fonts.py [--origin URL] [--host ultron]
 
-The font list is every .woff2 in the live hash manifest. None is the expected state and passes. Each
-one listed is loaded with the FontFace API in a page of the origin (so the site CSP applies) by
-headless Chromium on the server; any font that fails to load or any OTS message fails the test.
+The font is loaded with the FontFace API in a page of the origin (so the site CSP applies) by headless
+Chromium on the server; a font that fails to load, any other font file, a hash that differs, or any
+OTS message fails the test.
 """
 import argparse
+import hashlib
 import json
 import sys
 import tempfile
@@ -20,6 +22,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cdp  # noqa: E402
 from harness import Env, Remote  # noqa: E402
+
+GEIST = "/shared/fonts/Geist-Variable.woff2"
+
+
+def build_pin() -> str:
+    """The hash tools/build.py refuses to build without."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+    import build
+    return build.FONTS["Geist-Variable.woff2"]
+
 
 LOAD = """Promise.all(%s.map((u, i) => new FontFace('probe' + i, 'url(' + u + ')').load()
   .then(() => [u, 'ok'], e => [u, String(e)])))"""
@@ -31,12 +43,23 @@ def main() -> int:
     p.add_argument("--host", default="ultron")
     args = p.parse_args()
     origin = args.origin.rstrip("/")
-    with urllib.request.urlopen(urllib.request.Request(origin + "/.well-known/mutis-manifest.json",
-                                                       headers={"User-Agent": "mutis-e2e"}), timeout=20) as res:
-        fonts = sorted("/" + path for path in json.load(res)["files"] if path.endswith(".woff2"))
-    if not fonts:
-        print("test_fonts: PASS (no font files served: system faces only)")
-        return 0
+    def get(path):
+        with urllib.request.urlopen(urllib.request.Request(origin + path, headers={"User-Agent": "mutis-e2e"}), timeout=20) as res:
+            return res.read()
+    files = json.loads(get("/.well-known/mutis-manifest.json"))["files"]
+    fonts = sorted("/" + path for path in files if path.endswith((".woff2", ".woff", ".ttf", ".otf")))
+    pinned = build_pin()
+    if fonts != [GEIST]:
+        print(f"FAIL the manifest lists {fonts}, not only {GEIST}")
+        print("test_fonts: FAIL (Geist only)")
+        return 1
+    listed = files[GEIST.lstrip("/")]
+    served = hashlib.sha256(get(GEIST)).hexdigest()
+    if not listed == served == pinned:
+        print(f"FAIL {GEIST}: pinned {pinned}, manifest {listed}, served {served}")
+        print("test_fonts: FAIL (hash)")
+        return 1
+    print(f"PASS {GEIST}: Geist only, hash matches ({pinned[:12]}…)")
     env = Env(origin, Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-fonts-"))), Path("."))
     env.remote.as_build("mkdir -p /home/build/work/deploy/e2e")
     env.remote.as_build("cat > /home/build/work/deploy/e2e/relay.py", (Path(__file__).parent / "relay.py").read_bytes())
