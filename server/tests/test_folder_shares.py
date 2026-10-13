@@ -143,6 +143,19 @@ class FolderLinks(unittest.TestCase):
         self.assertEqual(self.s.request("POST", f"{V}/blobs/{ticket}/done")[0], 204)
         self.assertEqual(self.fetch(ticket, self.a["item_id"])[0], 404)
 
+    def test_a_visit_counts_each_files_daily_egress_as_it_is_served(self):
+        """A folder bigger than a file's daily egress still opens; each file is counted as it is taken."""
+        self.addCleanup(setattr, items, "EGRESS_PER_ITEM_DAY", items.EGRESS_PER_ITEM_DAY)
+        items.EGRESS_PER_ITEM_DAY = self.b["size"] + 10
+        ticket = self.open(self.link(self.top))["folder_ticket"]
+        self.assertEqual(self.fetch(ticket, self.b["item_id"])[0], 200)
+        status, headers, body = self.fetch(ticket, self.b["item_id"])
+        self.assertEqual((status, body["error"]["code"]), (429, "rate_limited"))
+        self.assertIn("Retry-After", headers)
+        self.assertEqual(self.fetch(ticket, self.a["item_id"])[0], 200)
+        served = self.s.conn.execute("SELECT bytes_served FROM tickets").fetchone()[0]
+        self.assertEqual(served, self.b["size"] + self.a["size"])           # a refused read costs no cap
+
     def test_a_file_ticket_serves_only_its_file(self):
         big = self.file(None, 400_000)
         ticket = self.open(self.link(big["item_id"]))["ticket"]
