@@ -34,7 +34,7 @@ def main() -> None:
     def with_gate(raw, **kw):
         raw["gates"]["amount_proof"] = args.amount_proof
         for name in filter(None, args.features.split(",")):
-            raw["features"][name] = True
+            raw.setdefault("features", {})[name] = True
         return from_dict(raw, **kw)
 
     config.from_dict = with_gate

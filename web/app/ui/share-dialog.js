@@ -426,8 +426,7 @@ function linksPanel(panel) {
     const meta = [opensText(rule), endsText(rule)].filter(Boolean).join(' · ');
     return h('div', { class: 'item', 'data-variant': 'outline', 'data-size': 'sm', 'data-testid': 'link-row', 'data-id': s.id },
       h('div', { class: 'item-content' },
-        h('div', { class: 'item-title' }, h('span', { class: 'badges' }, ruleBadge(rule),
-          mine?.sent ? h('span', { class: 'badge', 'data-variant': 'tari' }, icon('send'), t('share.sent_badge')) : null)),
+        h('div', { class: 'item-title' }, h('span', { class: 'badges' }, ruleBadge(rule))),
         meta ? h('div', { class: 'item-description' }, meta) : null,
         mine?.url ? null : h('div', { class: 'item-description' }, t('share.not_here'))),
       h('div', { class: 'item-actions' }, mine?.url ? copyIt : null, stop));

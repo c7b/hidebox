@@ -9,6 +9,7 @@ import { config } from '../lib/api.js';
 import { setJudgePass } from '../lib/pow.js';
 import { savedJudgePass } from '../lib/store.js';
 import { DriveIndex } from '../lib/drive.js';
+import { knownLinks } from '../lib/links.js';
 import { h, icon, toast } from './behaviors.js';
 import { errorAlert } from './drive-parts.js';
 import { mountShell } from './drive-shell.js';
@@ -61,7 +62,8 @@ class Drive {
 
   // The index, loaded once per page (views re-render from it); reload() after a change elsewhere.
   ready() {
-    this.loaded ??= this.index.load(this.headers()).catch((e) => {
+    // lane app2: with the index, the links this browser sent by Tari (their rows say so).
+    this.loaded ??= Promise.all([this.index.load(this.headers()), knownLinks(this.identity)]).then(([loaded]) => loaded).catch((e) => {
       this.loaded = null;
       throw e;
     });

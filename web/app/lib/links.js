@@ -73,19 +73,27 @@ export const stopLink = (shareId, headers) => deleteShare(shareId, headers);
 
 const key = (identity) => `links:${identity.id}`;
 
+// The links this browser sent by Tari, by share id, so a row can wear "Sent by Tari" (the server can't
+// tell: to it, a sent link is a link). Filled by knownLinks() and rememberLink().
+export const SENT = new Set();
+
 // -> {shareId: {url, at, word?, sent?: {address, kind, tx}}}
 export async function knownLinks(identity) {
+  let all = {};
   try {
-    return (await idbGet('identity', key(identity))) ?? {};
+    all = (await idbGet('identity', key(identity))) ?? {};
   } catch {
-    return {};
+    // Storage blocked: nothing remembered.
   }
+  for (const [id, rec] of Object.entries(all)) if (rec?.sent) SENT.add(id);
+  return all;
 }
 
 export async function rememberLink(identity, shareId, record) {
   try {
     const all = await knownLinks(identity);
     all[shareId] = { ...all[shareId], ...record, at: all[shareId]?.at ?? nowS() };
+    if (record.sent) SENT.add(shareId);
     await idbPut('identity', key(identity), all);
   } catch {
     // Storage blocked: the link still works; this browser just can't copy it again later.
