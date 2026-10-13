@@ -10,7 +10,6 @@ PBKDF2
 all 12
 96 bits
 4 MB chunks
-bloques de 4 MB
 groups of 5
 first and last 6
 0%
