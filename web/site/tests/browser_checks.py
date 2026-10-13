@@ -332,7 +332,7 @@ def check_interactions(browser):
         page.cmd("Input.dispatchDragEvent", {"type": "dragEnter", "x": 300, "y": 500, "data": over})
         page.b.pump(0.4)
         seen["catch"] = page.eval(pose)
-        page.cmd("Input.dispatchDragEvent", {"type": "dragCancel", "x": 300, "y": 500, "data": over})
+        page.eval("window.dispatchEvent(new DragEvent('dragleave'))")  # the file leaves (CDP has no leave event)
         page.b.pump(0.4)
         seen["left"] = page.eval(pose)
         page.eval("document.querySelector('[data-testid=\"drop-write\"]').click()")

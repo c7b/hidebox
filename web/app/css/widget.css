@@ -95,11 +95,6 @@
 .md-counts input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 .md-word-btn { min-height: 44px; padding-inline: 14px 18px; }
 .md-word-btn[aria-pressed="true"] { background: var(--mark); color: var(--on-mark); border-color: transparent; }
-.md-confirm, .md-word { display: grid; gap: var(--s-2); padding: var(--s-4); border-radius: var(--r-input); background: var(--bg-sunken); }
-.md-confirm p { font: var(--t-ui); }
-.md-word { background: var(--mark); color: var(--on-mark); }
-.md-code { display: block; margin-top: 4px; font: var(--t-code); font-size: 18px; overflow-wrap: anywhere; }
-.md-muted { font: var(--t-small); opacity: .85; }
 .md-card {
   width: min(100%, 560px); display: grid; gap: var(--s-3); padding: var(--s-5); min-width: 0;
   border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow);
@@ -146,11 +141,6 @@
   .md-card:has(.md-qr-slot) { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-6); align-items: center; }
 }
 
-/* the send step's summary on /send */
-.md-stage:has(> .md-summary) { min-height: 0; }
-.md-summary { display: grid; gap: var(--s-1); align-content: center; padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
-.md-locked { font: var(--t-h3); }
-.md-card-meta { font: var(--t-small); color: var(--fg-2); overflow-wrap: anywhere; }
 
 /* --- the toast: one line on a phone, never under the thumb's way ------------------------------- */
 :is(.md-root, .a-page) .a-toast {

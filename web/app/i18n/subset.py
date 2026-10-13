@@ -17,7 +17,7 @@ PREFIXES = ("hero.", "zone.", "compose.", "seal.", "exif.", "dur.")
 # rules, what our server got, kept files and passwords bring the full dictionary with them
 # (14-ghost-design §17 step 0, cut 4: the noise and the glass box left the first dictionary).
 KEYS = {"card.say.once", "card.say.few", "card.link", "card.ghost", "card.count", "card.once", "card.few",
-        "card.same_once", "card.same_few", "card.word_add", "card.word_remove", "card.qr_once", "card.qr", "qr.label", "card.copy", "card.copied", "card.share", "card.select",
+        "card.same_once", "card.same_few", "card.word_add", "card.qr_once", "card.qr", "qr.label", "card.copy", "card.copied", "card.share", "card.select",
         "card.send", "card.another", "card.live", "card.live_copied", "card.live_press", "card.more",
         "toast.stopped", "toast.stopped_early", "locker.opening", "locker.offer", "recent.h"}
 

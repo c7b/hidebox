@@ -29,7 +29,6 @@
  "card.same_once": "Same link. Now it opens one time.",
  "card.same_few": "Same link. Now it opens up to {few} times.",
  "card.word_add": "Add a secret word",
- "card.word_remove": "Remove the secret word",
  "card.copy": "Copy link",
  "card.copied": "Copied",
  "card.share": "Share",
