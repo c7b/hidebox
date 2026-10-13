@@ -5,35 +5,28 @@
 |---|---|
 | `english/` | The English-only pass: Spanish removed, the self-hosting guide followed, suites, deploy of `abc5d71`, end-to-end runs and purge. |
 | `fix-3/` | The function review's fixes: suites, deploy of `39bd45c`, the test packs released, end-to-end runs, purge, link crawl and the secrets gate. |
+| `public/` | The public step: the secrets gate on the new repository, going public, `security.txt`'s second contact, the deploy of `6fa84fd`, a stranger's clone and the link crawl. |
 
-## The public step (2026-10-13): stopped at the secrets gate
+## The public step (2026-10-13): stopped at the secrets gate, then done
 
-The plan was to make `c7b/mutis` public once its history passed a secrets gate. The repository's own
-objects passed: every commit and blob was searched for the owner's keys and judge passes, the
-server's own secrets, tokens, private keys, sudoers lines and the operator machine's addresses and
-names, and nothing was found but public strings (`fix-3/gate/secrets-gate.txt`).
+**First attempt (04:4x UTC), stopped.** The repository's own objects passed the secrets gate (every
+commit and blob searched for the owner's keys and judge passes, the server's own secrets, tokens,
+private keys, sudoers lines and the operator machine's addresses and names: only public strings,
+`fix-3/gate/secrets-gate.txt`). GitHub did not: it still served, by id, the commits of the history
+from before the rewrite of 2026-10-12 (docs/review/fix-log.md, "The history rewrite"), and one file in
+them, the D-02 relay log, named the operator machine's public IPv4 and IPv6 addresses. Several of
+those old ids are quoted in the fix-log, this evidence and the live release history, so the repository
+stayed private. Signed in, a fresh clone of GitHub's `main` at `67996ed` still rebuilt the deployed
+commit (`verify-deploy` 0 differences across 129 files for `39bd45c`) and passed the server suite.
 
-GitHub did not pass. It still serves, by id, the commits of the history from before the rewrite of
-2026-10-12 (docs/review/fix-log.md, "The history rewrite"), and one file in them, the D-02 relay log,
-names the operator machine's public IPv4 and IPv6 addresses. Several of those old ids are quoted in
-this repository's fix-log and evidence and in the live site's release history, so making the
-repository public would publish those addresses. The repository stays private, and with it:
+**Resolution (04:46 UTC), by the owner.** Instead of asking GitHub Support, the old repository was
+renamed `c7b/mutis-pre-rewrite-private` (private; the owner may delete it), a new empty `c7b/mutis`
+was created and the rewritten `main` pushed to it. The old commits and the old blob with the
+addresses answer "No commit found" or 404 there.
 
-- the GitHub links on the live site answer 404 to anyone signed out (8 URLs, `fix-3/links/crawl.txt`);
-- `security.txt` keeps one contact (the security drop); GitHub's private vulnerability reporting
-  needs a public repository;
-- `git clone https://github.com/c7b/mutis` in the README and the self-hosting guide fails for
-  strangers, and so does the anonymous `verify-deploy` from a clean clone.
-
-What could run without a public repository did: a fresh clone of GitHub's `main` (signed in, since
-the repository is private) at `67996ed` rebuilt the deployed commit with `verify-deploy` (0 differences
-across 129 files for `39bd45c`, the SealLog template byte for byte) and passed the server suite (203
-tests, 4 opt-in skips).
-
-What clears it is the owner's (Tier 3): ask GitHub Support to remove the unreferenced commits of
-`c7b/mutis` (then check that `https://api.github.com/repos/c7b/mutis/commits/ea20751` answers 404
-for the owner too), or publish the rewritten history as a new repository. Then the remaining steps
-run as planned: visibility, description, homepage and topics; private vulnerability reporting;
-the GitHub advisory line back in `security.txt` with a check that requires its URL to resolve; a clean
-anonymous clone running `verify-deploy` and the server suite; and the link crawl with every GitHub
-link at 200.
+**Second attempt (04:48–05:06 UTC), done** (`public/README.md`): the secrets gate on the new
+repository passed, it went public at 04:52:55 with its description, homepage and topics and with
+private vulnerability reporting on; `security.txt` lists the GitHub advisory form again (deployed in
+`6fa84fd`, with a site check that asks GitHub, signed out, that the form answers); a stranger's clone
+runs README's `verify-deploy` (0 differences) and the server suite; and all 63 links of the live site
+answer 200, the 8 GitHub links included.

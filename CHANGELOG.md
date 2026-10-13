@@ -1,6 +1,17 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+## 2026-10-13: the repository is public (docs/review/fix-log.md, "The public step, done")
+
+- `c7b/mutis` is public, recreated from the rewritten history: the commits from before the rewrite
+  are not served there. It passed a secrets gate first (every commit and blob as GitHub serves it, and
+  the server's secrets checked on the server); description, homepage, topics and private
+  vulnerability reporting are set.
+- `security.txt` lists GitHub's private advisory form as the second contact, after the dead drop; the
+  site suite checks, signed out, that the form answers and that private reporting is on.
+- Deployed as `6fa84fd`. A stranger's clone runs `verify-deploy` (0 differences) and the server suite,
+  and every link on the live site answers 200, the GitHub links included.
+
 ## 2026-10-13: the function review's fixes (docs/review/fix-log.md, "The function review")
 
 - Packs: `mutis-admin release-pack -- <locker id>` ends a pack; E-13 and E-J end theirs, and the 11
