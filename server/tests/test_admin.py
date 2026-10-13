@@ -97,8 +97,9 @@ class Admin(unittest.TestCase):
         self.assertIn("/ 7", self.run_admin("budget", "show"))
         with db.tx(s.conn):
             db.set_meta(s.conn, "credit_freeze", "1")
+            db.set_meta(s.conn, "reconcile_mismatch", "1")
         self.run_admin("unfreeze-credits")
-        self.assertIsNone(s.meta("credit_freeze"))
+        self.assertEqual((s.meta("credit_freeze"), s.meta("reconcile_mismatch")), (None, None))
         self.run_admin("canary-now")
         self.run_admin("seal-now")
         self.assertEqual(db.get_meta_json(s.conn, "force"), {"canary": True, "seal": True})

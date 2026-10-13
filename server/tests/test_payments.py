@@ -9,10 +9,12 @@ import unittest
 
 from harness import Stack
 from mutis import codec, db, ootle_addr, payments
+from mutis.chain_worker import RECONCILE_RECHECK_S
 from mutis.fake_chain import FakeIndexer, fake_keys
 from mutis.indexer import IndexerError, Indexers
 
 VERIFIED = (200, b'{"verified": true, "substate": {"Utxo": {}}}')
+NOT_FOUND = (404, b'{"error": "Substate utxo_x not found"}')
 
 
 class Payments(unittest.TestCase):
@@ -141,12 +143,15 @@ class Payments(unittest.TestCase):
                          ("credited", "500000", "2000000"))
 
     def test_reconcile_mismatch_freezes_credits(self):
-        """A credited row the sidecar can't re-prove (a forged insert, E-14) freezes all crediting (t/402)."""
+        """A credited row the sidecar can't re-prove (a forged insert, E-14) holds all crediting, and the
+        check five minutes later that finds it again freezes it (t/402)."""
         with db.tx(self.s.conn):
             self.s.conn.execute("INSERT INTO payments(utxo_id, value_ut, seen_at, proven, committed, status) "
                                 "VALUES (?, 500000, 0, 1, 1, 'credited')", (f"utxo_{'01' * 32}_{'ab' * 32}",))
         self.w.reconcile(self.s.now)
-        self.assertEqual(self.s.meta("credit_freeze"), "1")
+        self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_mismatch")), (None, str(self.s.now)))
+        self.w.reconcile(self.s.now + RECONCILE_RECHECK_S)
+        self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_mismatch")), ("1", None))
         inv = self.invoice()
         self.pay(inv["address"], 500000)
         self.ticks()
@@ -197,29 +202,55 @@ class Payments(unittest.TestCase):
         self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_unknown")), (None, "0"))
 
     def test_check_outcomes(self):
-        """ok needs a verified Utxo; 404 or an unverified answer is missing; the rest is unknown (t/402)."""
+        """ok needs a verified Utxo; the indexer's own 404 or an unverified answer is missing; the rest,
+        a gateway's 404 page included, is unknown (t/402)."""
         cases = [(VERIFIED, "ok"), ((404, b'{"error": "Substate utxo_x not found"}'), "missing"),
                  ((404, b'{"error": "Input substate utxo_x (v0) is down"}'), "missing"),
                  ((200, b'{"verified": false, "substate": {"Utxo": {}}}'), "missing"),
                  ((200, b'{"verified": true, "substate": {"Component": {}}}'), "missing"),
                  ((502, b""), "unknown"), ((429, b""), "unknown"), ((403, b"error code: 1010"), "unknown"),
+                 ((404, b"<html>404 Not Found</html>"), "unknown"), ((404, b"{}"), "unknown"),
                  (IndexerError(503, "chain_unavailable"), "unknown")]
         for reply, outcome in cases:
             self.answer(reply)
             self.assertEqual(payments.committed_on_indexer(self.w.indexers, "utxo_x", 0), outcome, reply)
 
     def test_a_mismatch_needs_every_indexer_to_agree(self):
-        """Missing on one indexer and proven on the other is no mismatch; missing on both freezes (t/402)."""
+        """Missing on one indexer and proven on the other is no mismatch; missing on both, twice in a row,
+        freezes (t/402)."""
         self.credited_invoice()
-        self.answer((404, b"{}"), VERIFIED)
+        self.answer(NOT_FOUND, VERIFIED)
+        self.w.reconcile(self.s.now)
+        self.assertIsNone(self.s.meta("reconcile_mismatch"))
+        self.answer(NOT_FOUND, (503, b""))
+        self.w.reconcile(self.s.now)
+        self.assertIsNone(self.s.meta("reconcile_mismatch"))
+        self.answer(NOT_FOUND, NOT_FOUND)
         self.w.reconcile(self.s.now)
         self.assertIsNone(self.s.meta("credit_freeze"))
-        self.answer((404, b"{}"), (503, b""))
-        self.w.reconcile(self.s.now)
-        self.assertIsNone(self.s.meta("credit_freeze"))
-        self.answer((404, b"{}"), (404, b"{}"))
-        self.w.reconcile(self.s.now)
+        self.w.reconcile(self.s.now + RECONCILE_RECHECK_S)
         self.assertEqual(self.s.meta("credit_freeze"), "1")
+
+    def test_a_one_off_mismatch_holds_credits_until_the_recheck(self):
+        """2026-10-12 15:37 on production: one hourly round found a mismatch no other round found and
+        froze every pack until a human acted. A mismatch now holds credits, the worker checks again five
+        minutes later, and a round that finds every credit proven releases the hold (t/402)."""
+        self.credited_invoice()
+        self.answer(NOT_FOUND, NOT_FOUND)
+        with self.assertLogs("mutis", "WARNING") as logs:
+            self.w.reconcile(self.s.now)
+        self.assertEqual(logs.records[0].getMessage(), "event=chain.reconcile_mismatch")
+        del self.w.indexers.call_one
+        self.w.indexers.upstreams = self.w.indexers.upstreams[:1]
+        self.w.last["reconcile"] = self.s.now
+        inv = self.invoice()
+        self.pay(inv["address"], 500000)
+        self.ticks()
+        self.assertEqual((self.get(inv)["status"], self.s.meta("credit_freeze")), ("seen", None))
+        self.s.now = self.w.last["reconcile"] + RECONCILE_RECHECK_S
+        self.ticks(2)
+        self.assertEqual((self.s.meta("reconcile_mismatch"), self.s.meta("credit_freeze")), (None, None))
+        self.assertEqual(self.get(inv)["status"], "credited")
 
     def test_demo_payments_go_only_to_our_receiver(self):
         """Review M8: the API can write `meta.receiver_address`; the worker pays only the receiver it

@@ -69,21 +69,22 @@ def committed_on_indexer(indexers, utxo_id: str, position: int) -> str:
     """One indexer's answer about a UTXO id: `ok`, `missing` or `unknown`.
 
     ok: HTTP 200, verified == true and a Utxo substate at exactly that id. missing: the indexer says
-    so (404 "not found", or "… is down" for a spent output, or a 200 that isn't a verified Utxo).
-    unknown: anything about the indexer rather than the output (5xx, 429, a CDN page, a timeout).
+    so (its JSON 404 "… not found", or "… is down" for a spent output, or a 200 that isn't a verified
+    Utxo). unknown: anything about the indexer rather than the output (5xx, 429, a 404 or 200 that isn't
+    the indexer's JSON, such as a gateway's page while it deploys, a timeout).
     """
     try:
         status, data, _ = indexers.call_one(position, "GET", f"/substates/{utxo_id}?include_proof=true")
     except IndexerError:
         return "unknown"
-    if status == 404:
-        return "missing"
-    if status != 200:
+    if status not in (200, 404):
         return "unknown"
     try:
         obj = json.loads(data)
     except ValueError:
         return "unknown"
+    if status == 404:
+        return "missing" if isinstance(obj, dict) and isinstance(obj.get("error"), str) else "unknown"
     if isinstance(obj, dict) and obj.get("verified") is True and isinstance(obj.get("substate"), dict) \
             and "Utxo" in obj["substate"]:
         return "ok"
@@ -100,8 +101,8 @@ def committed_anywhere(indexers, utxo_id: str) -> str:
 
 def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int) -> int:
     """Step 3: confirm each pending payment on indexer-b (indexer-a after 3 failures); credit it."""
-    if db.get_meta(conn, "credit_freeze") == "1":
-        return 0
+    if db.get_meta(conn, "credit_freeze") == "1" or db.get_meta(conn, "reconcile_mismatch") is not None:
+        return 0                                 # frozen, or held until a mismatch is checked again
     credited = 0
     for row in conn.execute("SELECT * FROM payments WHERE status = 'pending_check'").fetchall():
         position = 1 if failures.get(row["utxo_id"], 0) >= INDEXER_FAILOVER_AFTER and len(indexers.upstreams) > 1 \
@@ -154,7 +155,8 @@ def reconcile(conn: sqlite3.Connection, rescan, committed, now: int) -> str:
     still proves the same value for it, and it is still committed.
 
     `rescan(rows)` returns {utxo_id: value_ut} for the mirror rows it can open with the receiver key;
-    `committed(utxo_id)` → ok | missing | unknown (`committed_anywhere`). A mismatch freezes credits;
+    `committed(utxo_id)` → ok | missing | unknown (`committed_anywhere`). A mismatch holds credits until
+    the next round, five minutes later, and a second one in a row freezes them (`_finish_reconcile`);
     an indexer that can't answer only skips the round. Returns `ok`, `mismatch` or `unknown`.
     """
     credited = conn.execute("SELECT utxo_id, value_ut FROM payments WHERE status = 'credited'").fetchall()
@@ -183,17 +185,30 @@ def reconcile_wallet(conn: sqlite3.Connection, wallet_balance_ut: int, now: int)
 
 
 def _finish_reconcile(conn: sqlite3.Connection, verdict: str, now: int) -> None:
+    """A mismatch holds credits (`meta.reconcile_mismatch`) and the worker checks again five minutes
+    later: a second mismatch in a row freezes credits until `mutis-admin unfreeze-credits`, an ok
+    releases the hold. Both indexers can answer wrongly at the same moment (2026-10-12 15:37: one round
+    found a mismatch that no round before or after it found, and every credited output was proven on
+    both indexers), and a freeze stops every pack until a human acts; nothing is credited while a
+    mismatch waits for its second check."""
     with db.tx(conn):
         unknown = int(db.get_meta(conn, "reconcile_unknown", "0")) + 1 if verdict == "unknown" else 0
         db.set_meta(conn, "reconcile_unknown", str(unknown))
+        held = db.get_meta(conn, "reconcile_mismatch") is not None or db.get_meta(conn, "credit_freeze") == "1"
+        # held: a mismatch is waiting for this check, or credits are already frozen (they stay frozen)
         if verdict != "unknown":
             db.set_meta(conn, "last_reconcile", str(now))
-        if verdict == "mismatch":
+            db.del_meta(conn, "reconcile_mismatch")
+        if verdict == "mismatch" and held:
             db.set_meta(conn, "credit_freeze", "1")
+        elif verdict == "mismatch":
+            db.set_meta(conn, "reconcile_mismatch", str(now))
     if verdict == "ok":
         logsafe.event("chain.reconcile_ok")
-    elif verdict == "mismatch":
+    elif verdict == "mismatch" and held:
         logsafe.event("chain.credit_freeze", "critical")
+    elif verdict == "mismatch":
+        logsafe.event("chain.reconcile_mismatch", "warning")
     else:
         logsafe.event("chain.reconcile_unknown", "critical" if unknown >= UNKNOWN_ALERT_AFTER else "warning")
 

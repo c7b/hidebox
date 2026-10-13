@@ -24,6 +24,7 @@ from .walletd import Walletd, WalletdError
 MIRROR_EVERY_S = 3
 PAYMENTS_EVERY_S = 10
 RECONCILE_EVERY_S = 3600
+RECONCILE_RECHECK_S = 300        # after a mismatch, which holds credits until this check (payments.py)
 STATUS_EVERY_S = 15
 REVEAL_AFTER_S = 86400
 EVIDENCE_PAY_HOUR_UTC = 12
@@ -187,7 +188,8 @@ class Worker:
             self._step(self.enqueue_decoy, now)
         self._step(self.canary, now)
         self._step(self.evidence_payment, now)
-        if self._due("reconcile", RECONCILE_EVERY_S, now):
+        held = db.get_meta(self.conn, "reconcile_mismatch") is not None
+        if self._due("reconcile", RECONCILE_RECHECK_S if held else RECONCILE_EVERY_S, now):
             self._step(self.reconcile, now)
         if features["seallog"] and self.cfg["ootle"]["seallog_component"]:
             self._step(self.seal_checkpoint, now)

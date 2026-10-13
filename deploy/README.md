@@ -178,6 +178,7 @@ refuses a newer schema (it says so in the journal; the healthcheck turns red).
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |
 | Features, budgets | `sudo mutis-admin feature <name> on|off|clear` (at once for the app and for pages read with JavaScript; the built pages follow the TOML at the next deploy); `sudo mutis-admin budget show` |
 | Canary, evidence | `sudo mutis-admin canary-now`; `sudo systemctl start mutis-evidence` |
+| Credits frozen (`credits` red, `credit_freeze_on`) | the hourly reconcile found a mismatch twice in a row, five minutes apart (a single one only holds credits until that second check); it keeps running while frozen, so a later `event=chain.reconcile_ok` in `journalctl -u mutis-chain` means every credited output is proven and committed again. Find out what changed, then `sudo mutis-admin unfreeze-credits` |
 | walletd | `systemctl status walletd`; `journalctl -u walletd` (warnings only); restart `sudo systemctl restart walletd` |
 | Balances | `cd /tmp && sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py balances [--refresh]` |
 | Backups | daily 03:30 (root's database copies under `/var/backups/mutis` pruned, then the database, as mutis) and 03:35 (wallet + keys, as drive); restore drill: `cd /tmp && sudo -u mutis python3 -I - restore-drill < …/backup.py` (and as drive) |
