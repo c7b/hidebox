@@ -5,7 +5,8 @@
 // parent_wrap = its own fk wrapped under the folder's childWrapKey (HKDF(fk, header salt,
 // "mutis/v2/child-wrap")), with the SHA-256 of the item's own header as AAD. One folder key opens its
 // whole subtree by walking down; nothing opens upward. Every item also keeps its owner_wrap (fk under
-// the vault key), so the owner's own listing never walks the tree.
+// the vault key), so the owner's own listing never walks the tree. Its metadata is a file's with kind
+// 'folder' (format.js accepts that kind), type inode/directory and size 0.
 import { b64uDecode, b64uEncode } from './b64.js';
 import { concat, readU32be, u32be, utf8 } from './bytes.js';
 import { IntegrityError, hkdf, randomBytes, sha256 } from './crypto.js';
@@ -39,6 +40,12 @@ export async function childWrapKey(folderFk, folderSalt) {
 // parent_wrap of an item (its fk under the folder's childWrapKey), 60 bytes.
 export async function wrapForFolder(folder, item) {
   return wrapFileKey(await childWrapKey(folder.fk, folder.salt), item.headerHash, item.fk);
+}
+
+// An upload into `folder` (an opened folder {id, fk, salt}; sealItem's `parent`): the kept item's
+// parent_id and parent_wrap for POST /uploads. Here, not in seal.js, so the anonymous widget stays small.
+export async function parentFields(folder, item) {
+  return { parent_id: folder.id, parent_wrap: b64uEncode(await wrapForFolder(folder, item)) };
 }
 
 export async function unwrapFromFolder(folderFk, folderSalt, childHeaderHash, parentWrap60) {
