@@ -488,8 +488,8 @@ UTC.
 | 9 | Architecture says API and worker share the database "and nothing else"; the worker also uploads the canary over HTTP (low) | **Fixed.** | Trust boundary 2 names that second path. |
 | 10 | Architecture says a restart forgets wrong-password counts; a link's own count and lock are database rows (low) | **Fixed.** | `docs/architecture.md` and `deploy/README.md`: only per-network tries on password-only links are in memory. |
 | 11 | The expired page shows the stored UTC day as a local date (low) | **Fixed.** | The day is formatted in UTC and the sentence says so: "It left on cue, on Oct 13, 2026 (UTC)." |
-| 12 | The self-host guide gives no walletd URL or hash; `deploy.sh`'s comments use internal names; `git clone` 404s while private (low) | **Fixed, except the clone.** | Step 4 names the release page, the asset `tari_ootle_walletd-0.45.0-9c62606-linux-x86_64` and its SHA-256 `8cfdae03…2fae` (GitHub's asset digest, the release's own `.sha256` and the server's binary agree); `deploy.sh`'s comments say "your workstation" and "the server". The clone works once the repository is public (below). |
-| 13 | The 7 GitHub links 404; `/judges` links the forum's root (low) | **Owner (Tier 3).** | The public step stopped at the secrets gate (below); the forum thread is the owner's post. |
+| 12 | The self-host guide gives no walletd URL or hash; `deploy.sh`'s comments use internal names; `git clone` 404s while private (low) | **Fixed** (the clone since the public step, below). | Step 4 names the release page, the asset `tari_ootle_walletd-0.45.0-9c62606-linux-x86_64` and its SHA-256 `8cfdae03…2fae` (GitHub's asset digest, the release's own `.sha256` and the server's binary agree); `deploy.sh`'s comments say "your workstation" and "the server". The clone works for a stranger since the repository went public (below). |
+| 13 | The 7 GitHub links 404; `/judges` links the forum's root (low) | **GitHub links fixed; the forum is the owner's (Tier 3).** | The public step first stopped at the secrets gate, then went through on a new repository (below); every GitHub link answers 200. The forum thread is the owner's post. |
 | 14 | The only Spanish left is the "Why mutis?" scene and the Reddit draft's name line (low) | **Left for the rebrand.** | As recorded above. |
 
 The review's blind spots stand: no judge pass was used in a browser, no real phone or Tor Browser,
@@ -540,24 +540,77 @@ wait for the repository. The anonymous crawl of the live site found 63 links: ev
 answers 200, and the 8 GitHub links 404 (`links/crawl.txt`). Recorded in
 `docs/evidence/2026-10-12/README.md`.
 
+### The public step, done (2026-10-13, 04:46–05:06 UTC; `docs/evidence/2026-10-12/public/`)
+
+**The old commits.** The owner cleared them without GitHub Support: the old repository was renamed
+`c7b/mutis-pre-rewrite-private` (still private; the owner may delete it), a new empty `c7b/mutis` was
+created and the rewritten `main` (`1b70e0b`) pushed to it. The pre-rewrite commits are no longer served
+at `c7b/mutis`: all 12 pre-rewrite commits missing from the new history (`ea20751`, `88e12e9`,
+`3cd5622`, `7c9e627` and `8da9d74` among them), asked for by full id, answer "No commit found", and
+the old D-02 blob with the addresses answers 404, signed in and signed out. `be9e403` still answers
+because it is a clean commit of the rewritten history.
+
+**The gate, on the new repository** (`public/gate/secrets-gate.txt`). GitHub serves one branch and no
+tags, releases, pull requests, forks, issues, Actions runs or artifacts; its `main` has the same 86
+commits as `git rev-list main`. A fresh mirror clone over HTTPS (1,964 objects, all reachable) was
+scanned commit by commit and blob by blob for the 20 judge passes and every line and long token of the
+owner's key, passphrase and security-drop files, the operator machine's four identifiers and the
+tailnet's, the login password, private keys, token shapes and sudoers lines: only public strings
+matched (the app's key-file header, the security drop's URL, `/locker`, the previous gate's own
+description of its patterns). On the server as root, every file under `/etc/mutis`, `/srv/mutis/data`
+and the `drive` account's wallet and key directories was compared whole (one match, the shipped
+`walletd-log4rs.yml`), and every server secret value searched for: only the public host name and the
+two public Tari addresses matched. **PASS.**
+
+**Public.** At 04:52:55 the repository went public (`gh api -X PATCH … visibility=public`: this
+`gh` 2.46 has no `--accept-visibility-change-consequences` flag), with the description "Every secret
+leaves on cue: browser-encrypted drops, lockers and Tari Ootle payments. Tari Ootle contest entry,
+October 2026.", the live site as homepage, ten topics and private vulnerability reporting on, which
+the API confirms to a caller without credentials.
+
+**`security.txt`** (`6fa84fd`). GitHub's advisory form is back as the second `Contact`, after the dead
+drop. The site suite's static check no longer refuses it; it requires both lines in that order, and a
+new check asks GitHub, signed out, that the form answers (it is a 302 to the sign-in page, which answers
+200) and that the public API reports private reporting on; without a network it says SKIP. The negative
+cases (no line, wrong order, a private or missing repository) fail. `SECURITY.md` says the channel
+works. Site suite 28 of 28 on the server as `build` with Chromium, 18 of 18 on the workstation; lint,
+copy check and deploy tests pass.
+
+**Deploy.** Release `6fa84fd623b5ab3b7a8baa5e8495debd7b86be8b-c9ef33ed0` at 05:00:45 (the server suite
+and checks as `build` first, smoke PASS, manifest notarized in tx `3ad94f0d…2a92`); `verify-deploy` 0
+differences across 129 files with SealLog byte for byte; D-01 40 PASS; `/status.json` at 05:03 amber
+only for `budget.sponsor.evidence.90`. No end-to-end chain run was needed for a static file, so no
+sponsor grant was used.
+
+**A stranger's side.** From a clone made with no credentials, an empty home directory and no git
+configuration: `git clone https://github.com/c7b/mutis` exactly as README and `docs/self-host.md`
+write it works (and the `.git` form); README's `python3 tools/verify-deploy.py
+https://srv2052606.hstgr.cloud 6fa84fd…` gives 0 differences; the server suite passes (203 tests, 4
+opt-in skips), and so do the deploy tests, lint, copy check and site suite. The link crawl of every
+live page, signed out, found 63 links, every one 200, the 8 GitHub links included.
+
+**Limits.** `/releases.json` names three releases built from pre-rewrite commits (`9637a3a`,
+`7c9e627`, `ea20751`); the public repository doesn't hold them, so `verify-deploy` can't rebuild those
+three. Every release from `9e7bc34` on, the live one included, is in the history. Submitting a test
+advisory was not tried: it needs a GitHub account and would file a real report.
+
 ### Open items now
 
-1. **Owner (Tier 3): clear GitHub's old commits, then go public.** Ask GitHub Support to remove the
-   unreferenced commits of `c7b/mutis` (or publish the rewritten history as a new repository), check
-   that the old ids answer 404, then make it public with its description, homepage and topics, turn on
-   private vulnerability reporting, restore the advisory line in `security.txt` (and make its check
-   require the URL to resolve), and rerun the anonymous clone's `verify-deploy`, the server suite and
-   the link crawl. Until then a judge who follows a GitHub link from the site gets a 404.
+1. **Owner (Tier 3): the old repository.** `c7b/mutis-pre-rewrite-private` is private and still holds
+   the pre-rewrite commits with the operator machine's addresses. Delete it, or keep it private; never
+   make it public.
 2. **Owner: the paid-space cap.** At today's free disk the cap holds 11 small packs, and packs are free
    to get on testnet (demo pay, or a grant). Visitors and judges buying B6's pack for 30 days can fill
    it again during judging; `/judges` B6 then points to the evidence payments. Levers: a bigger disk,
    or a different cap or pack length for the testnet (a product decision).
-3. **The judge-pass grant slice today.** 9 of 10 used by test runs (UTC 2026-10-13); a judge with a
-   pass before 00:00 UTC may be refused a grant, and now sees that said, with demo pay offered.
+3. **The judge-pass grant slice today.** 9 of 10 used by test runs (UTC 2026-10-13, back to 10 at
+   00:00 UTC); a judge with a pass before then may be refused a grant, and now sees that said, with
+   demo pay offered.
 4. **Owner (Tier 3), as before:** post the forum thread and point `/judges` at it, hand out the judge
    passes, check the Hostinger snapshots, decide on the unlabeled dead drop, and create the contest tag
    after the rebrand.
 5. **Unchanged:** walletd's stored dry run (harmless journal line); a real install from the guide on a
    throwaway server; the restyle items (old screenshots, the "Why mutis?" scene).
 
-The second pass's open item 1 (a refused grant waits silently) is fixed above (finding 2).
+The previous open item 1 (clear GitHub's old commits, then go public) is done above, and so is the
+second pass's open item 1 (a refused grant waits silently; finding 2).
