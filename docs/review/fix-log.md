@@ -465,3 +465,32 @@ the security drop `/d/3w7m8k2v5t` active, no `e2e_expiry_s` in `/config` or `/et
 5. **For the restyle:** the screenshots in `web/site/shots/` and `web/app/shots/` predate this pass
    (their footers still show the EN · ES switch); the "Why mutis?" scene on `/how` explains the Spanish
    name; the common-password list keeps its Spanish entries on purpose.
+
+### The function review (2026-10-13 UTC), finding by finding
+
+A devil's-advocate run followed `/judges` literally on release `abc5d71` (headless Chromium on the
+server, phone 390×844 and desktop 1440×900, no judge pass, 03:09–03:45 UTC): track A passed in 88 s
+and track B passed every step but B6; it also crawled every link, ran the README's test table from a
+clean clone and read the architecture against the code. Its screenshots are in
+`docs/review/function/` (`893066a`). Each finding was checked against the code first; times below are
+UTC.
+
+| # | Finding (review's severity) | Verdict | What changed |
+|---|---|---|---|
+| 1 | B6 is impossible for everyone: buying the smallest pack answers 409 `sold_out` (high) | **Confirmed and fixed.** A read-only count found 11 active 2 GiB packs (22 GiB of the 24.1 GB cap, 40 % of the pool), all on test lockers that store nothing: 6 bought by the E-13 and E-J runs of the earlier passes (their purges kept the credited invoices and the lockers) and 5 by the earlier judge-run review on 2026-10-12 between 01:03 and 02:25. Nothing could end a pack. | `mutis-admin release-pack -- <locker id>` ends a pack now (`server/mutis/admin.py`, with a test); E-13 and E-J end theirs as their last step (`tests/e2e/scenarios_chain.py`); the runbook (`deploy/README.md`) and `tests/e2e/README.md` say how to count and release test packs; the 11 test packs were released after the deploy (below). `/judges` B6 now says what to do if packs are sold out (the test payments under Live evidence go through the same checks). The cap itself is unchanged (an owner item below). |
+| 2 | The sponsor grant is asked for once, at locker creation, and a refusal is dropped silently; B3's relay line promises a grant that never comes; direct-mode B6 hides demo pay (high) | **Confirmed and fixed.** | `wallet.ensureGrant()` asks whenever the browser wallet is short of the next spend, at most once a UTC day per locker and once more that day after a judge pass is saved; the day's answer is kept on the device. The send line has a third state, `refused`, that says the grant is used up for the locker or network and that the send goes by relay; a grant asked ten minutes ago that still hasn't arrived counts as refused. `/upgrade` in direct mode offers **Pay with demo tTARI** beside the browser payment when the wallet is short, with a line saying why. `/pricing`, `/judges` B3 and B6 and the threat model say the same. Wallet tests cover the funded, once-a-day, shared-request, refused and judge-pass cases. |
+| 3 | B7's "Verify" leads to `/security#verify`, not the receipts (medium) | **Confirmed and fixed.** | B7 now names and links the footer's **Exit receipts** (`/verify`). |
+| 4 | `/watch` crashes on a view key of the right length that isn't a valid scalar (medium) | **Confirmed and fixed.** | `viewPublicKey` failing is the `view_key` error ("That doesn't look like a view key…"), not the tab's generic crash (`web/app/ui/watch.js`). |
+| 5 | The README's app-library command exits 1: the scan bench starves the test driver's polls (medium) | **Confirmed and fixed.** | `scanBench` yields a macrotask after every 100 rows and times only the decrypting, so the driver's title poll is answered (`web/app/tests/bench/bench.js`); this pass's run: BENCH PASS, 47.7 s at 4× CPU, while other suites ran. |
+| 6 | B5 starts from a page that has no "See what a view key sees" (low) | **Fixed.** | "On the phone: **Locker** → **See what a view key sees**". |
+| 7 | A link switched to password-only says its file was deleted (low) | **Fixed.** | `gone.revoked_body`: "The sender withdrew or replaced this link." |
+| 8 | Docs say every expiry is rounded up to the hour; only those an hour or more away are (low) | **Fixed.** | README, `docs/architecture.md`, `/faq` (both copies), `/how`, `llms-full.txt` and the app's "What we know" say "rounded up to the hour when that's an hour or more away". |
+| 9 | Architecture says API and worker share the database "and nothing else"; the worker also uploads the canary over HTTP (low) | **Fixed.** | Trust boundary 2 names that second path. |
+| 10 | Architecture says a restart forgets wrong-password counts; a link's own count and lock are database rows (low) | **Fixed.** | `docs/architecture.md` and `deploy/README.md`: only per-network tries on password-only links are in memory. |
+| 11 | The expired page shows the stored UTC day as a local date (low) | **Fixed.** | The day is formatted in UTC and the sentence says so: "It left on cue, on Oct 13, 2026 (UTC)." |
+| 12 | The self-host guide gives no walletd URL or hash; `deploy.sh`'s comments use internal names; `git clone` 404s while private (low) | **Fixed, except the clone.** | Step 4 names the release page, the asset `tari_ootle_walletd-0.45.0-9c62606-linux-x86_64` and its SHA-256 `8cfdae03…2fae` (GitHub's asset digest, the release's own `.sha256` and the server's binary agree); `deploy.sh`'s comments say "your workstation" and "the server". The clone works once the repository is public (below). |
+| 13 | The 7 GitHub links 404; `/judges` links the forum's root (low) | **Owner (Tier 3).** | The public step stopped at the secrets gate (below); the forum thread is the owner's post. |
+| 14 | The only Spanish left is the "Why mutis?" scene and the Reddit draft's name line (low) | **Left for the rebrand.** | As recorded above. |
+
+The review's blind spots stand: no judge pass was used in a browser, no real phone or Tor Browser,
+every browser ran on the server's own network, and the self-host server steps were read, not run.
