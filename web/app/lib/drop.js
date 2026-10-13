@@ -49,6 +49,15 @@ export async function closeDrop(identity, i) {
   await updateIdentity(identity, { drops: identity.drops.map((d) => (d.i === i ? { ...d, state: 'closed' } : d)) });
 }
 
+// The drop's name ("people see this"): optional, set or changed after the link exists.
+export async function renameDrop(identity, i, label) {
+  if (Array.from(label).length > LABEL_MAX) throw new RangeError('label too long');
+  const drop = identity.drops.find((d) => d.i === i);
+  if (!drop) throw new DropError('unknown');
+  await patchDrop(drop.drop_id, { label }, { 'X-Mutis-Manage': b64uEncode(identity.dropManage(i)) });
+  await updateIdentity(identity, { drops: identity.drops.map((d) => (d.i === i ? { ...d, label } : d)) });
+}
+
 // "New link": closes drop i and opens the next index with the same label. Old deliveries still
 // arrive and keep the old drop's name.
 export async function rotateDrop(identity, i, opts) {

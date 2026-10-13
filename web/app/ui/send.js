@@ -233,10 +233,10 @@ export async function render(main) {
   const { openLocker } = await import('./locker-ctx.js');
   const zone = h('div', { class: 'a-zone' });
   const step2 = h('div', { class: 'a-step2' });
+  const { scene } = await import('./scene.js');
   main.replaceChildren(
-    h('h1', { class: 'a-h1' }, t('send.page_h')),
-    h('p', { class: 'a-lede' }, t('send.page_lede')),
-    zone, step2);
+    scene({ state: 'courier', title: t('send.page_h'), say: t('to.say') }).head,
+    h('div', { class: 'a-send-page' }, zone, step2));
   let item = null;
   await mountWidget(zone, {
     variant: 'send', makeLink: false, locker: () => openLocker(),

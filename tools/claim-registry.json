@@ -104,7 +104,8 @@
    "sentences": [
     "You get a link. Your friend sees it once.",
     "It opens one time in the next {anon_max_expiry}. Then it's gone.",
-    "Same link. Now it opens one time."
+    "Same link. Now it opens one time.",
+    "It opens one time. When you open it, it's gone."
    ]
   },
   {

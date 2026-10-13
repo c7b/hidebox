@@ -5,12 +5,13 @@
 // receipts for this device's links, each proof checked here against the root on the Ootle.
 import { h } from '../lib/dom.js';
 import { formatDate, t } from '../lib/i18n.js';
-import { b64uDecode, unhex } from '../lib/b64.js';
+import { b64uDecode, hex, unhex } from '../lib/b64.js';
 import { config, exitReceipt } from '../lib/api.js';
 import { recentDrops } from '../lib/store.js';
 import { icon } from './core.js';
 import { formatTari, shortAddress } from './marks.js';
 import { errorBanner } from './errors.js';
+import { scene } from './scene.js';
 import { setTitle } from './shell.js';
 
 const short = (id) => (id.length > 24 ? `${id.slice(0, 14)}…${id.slice(-8)}` : id);
@@ -20,7 +21,7 @@ const TX_RETRY_MS = 5000;
 export async function renderTx(main, { txId }) {
   setTitle('chain.sees');
   const root = h('div', { class: 'a-tx-view', 'data-testid': 'tx-root' });
-  main.replaceChildren(h('h1', { class: 'a-h1' }, t('chain.sees_h')), root);
+  main.replaceChildren(scene({ state: 'courier', title: t('chain.sees_h') }).head, root);
   root.replaceChildren(h('p', { class: 'a-working mono' }, t('chain.loading')));
   const { txView } = await import('../lib/api-locker.js');
   let view;
@@ -88,8 +89,13 @@ function label(d) {
 export async function renderVerify(main) {
   setTitle('verify.title');
   const cfg = await config();
+  // /verify#<share id> comes from a gone page's See the goodbye; /verify#latest from See one we
+  // already wrote (the newest checkpoint on chain); plain /verify lists this device's links.
+  const shareFromHash = /^#([A-Za-z0-9_-]{22})$/.exec(location.hash)?.[1];
+  const latest = location.hash === '#latest';
   const root = h('div', { class: 'a-verify' });
-  main.replaceChildren(h('h1', { class: 'a-h1' }, t('verify.h')), h('p', { class: 'a-lede' }, t('verify.lede')), root);
+  main.replaceChildren(scene({ state: 'gone', title: t('verify.title'), say: shareFromHash ? t('verify.say_one') : t('verify.lede') }).head,
+    h('p', { class: 'a-caption a-center a-limit' }, t('verify.limit')), root);
   if (!cfg.features?.seallog || !cfg.seal_log?.component) return root.replaceChildren(h('p', { class: 'a-note' }, t('verify.off')));
   const [{ chainIx, sealProof }, seallog] = await Promise.all([import('../lib/api-locker.js'), import('../lib/seallog.js')]);
   let log;
@@ -97,6 +103,15 @@ export async function renderVerify(main) {
     log = seallog.readSealLog(await chainIx('GET', `substates/${cfg.seal_log.component}`));
   } catch (e) {
     return root.replaceChildren(errorBanner(e, e instanceof TypeError ? { key: 'verify.untrusted' } : {}));
+  }
+  const about = h('p', { class: 'a-caption', 'data-testid': 'verify-log' }, t('verify.log', { template: short(log.template), writer: short(log.writer) }));
+  if (latest) {
+    const last = log.checkpoints.at(-1);
+    return root.replaceChildren(last
+      ? h('div', { class: 'a-receipt a-receipt--left', 'data-testid': 'verify-latest' },
+        h('p', {}, t('verify.latest', { index: last.index, epoch: String(last.epoch), count: last.leafCount })),
+        h('p', { class: 'mono a-wrap' }, hex(last.root)))
+      : h('p', {}, t('verify.none')), about);
   }
   // A proof counts only against a root this component holds on the Ootle, with that checkpoint's size.
   // leaf(): the leaf hash, computed here from what this browser knows about the file.
@@ -107,10 +122,8 @@ export async function renderVerify(main) {
     const ok = onChain && await seallog.verifyInclusion(await leaf(), res.leaf_index, onChain.leafCount, res.proof.map(unhex), onChain.root);
     return ok ? t('verify.ok', { index: onChain.index, epoch: String(onChain.epoch) }) : t('verify.bad');
   }
-  const shareFromHash = /^#([A-Za-z0-9_-]{22})$/.exec(location.hash)?.[1];
   const drops = recentDrops();
   const targets = shareFromHash && !drops.some((d) => d.share_id === shareFromHash) ? [{ share_id: shareFromHash }, ...drops] : drops;
-  const about = h('p', { class: 'a-caption', 'data-testid': 'verify-log' }, t('verify.log', { template: short(log.template), writer: short(log.writer) }));
   if (!targets.length) return root.replaceChildren(h('p', {}, t('verify.none')), about);
   root.replaceChildren(h('ul', { class: 'a-items' }, targets.map((d) => {
     const stored = h('p', { class: 'a-caption', 'data-testid': 'verify-stored' }, t('verify.checking'));
@@ -124,7 +137,7 @@ export async function renderVerify(main) {
       const res = await sealProof(itemId);
       stored.textContent = `${t('verify.stored')} ${await check(() => seallog.storedLeaf(b64uDecode(itemId), b64uDecode(d.ct_hash)), res)}`;
     })().catch((e) => stored.replaceWith(errorBanner(e)));
-    return h('li', { class: 'a-item', 'data-testid': 'verify-item' }, h('p', { class: 'mono' }, t('recent.link', { tail: d.share_id.slice(-4) })),
+    return h('li', { class: ['a-item', d.share_id === shareFromHash ? 'a-item--this' : null], 'data-testid': 'verify-item' }, h('p', { class: 'mono' }, t('recent.link', { tail: d.share_id.slice(-4) })),
       h('p', { class: 'a-caption' }, label(d)), stored, exit);
   })), about);
 }

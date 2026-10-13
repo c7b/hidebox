@@ -16,21 +16,21 @@
 .md-opt:has(.md-radio:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .md-opt--off { opacity: .5; cursor: not-allowed; }
 .md-radio { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.md-opt-note { font: var(--t-caption); color: var(--fg-2); }
+.md-opt-note { font: var(--t-small); color: var(--fg-2); }
 .md-opt:has(.md-radio:checked) .md-opt-note { color: var(--bg); }
 .md-views { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
 .md-num, .md-input {
-  min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--bg-raised); color: var(--fg); font: var(--t-data);
+  min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-input);
+  background: var(--bg-raised); color: var(--fg); font: var(--t-code);
 }
 .md-num { width: 6ch; text-align: center; }
 .md-input { width: 100%; }
 .md-pw { display: grid; gap: var(--s-2); }
 .md-pw-row { display: flex; gap: var(--s-2); }
 .md-label { font: var(--t-ui); }
-.md-hint-line, .md-note { font: var(--t-caption); color: var(--fg-2); }
-.md-sentence { font: var(--t-direction); max-width: 60ch; }
-.md-field-error { font: var(--t-caption); color: var(--exit-text); }
+.md-hint-line, .md-note { font: var(--t-small); color: var(--fg-2); }
+.md-sentence { font: var(--t-body); max-width: 60ch; }
+.md-field-error { font: var(--t-small); color: var(--exit-text); }
 :is(.md-root, .a-page) .a-confirm { display: grid; gap: var(--s-3); padding: var(--s-4); border: 1px solid var(--exit-text); }
 
 /* --- recent drops ------------------------------------------------------------------------------- */
@@ -38,7 +38,7 @@
 .md-recent-list { list-style: none; padding: 0; display: grid; }
 .md-recent-row {
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s-3);
-  padding-block: var(--s-1); border-bottom: 1px solid var(--hair); font: var(--t-caption);
+  padding-block: var(--s-1); border-bottom: 1px solid var(--hair); font: var(--t-small);
 }
 .md-recent-state { color: var(--fg-2); }
 
@@ -49,42 +49,46 @@
 }
 :is(.md-root, .a-page) .a-banner > .a-icon { color: var(--exit-text); }
 :is(.md-root, .a-page) .a-banner > .a-icon { margin-top: 2px; }
+:is(.md-root, .a-page) .a-banner-ghost { display: block; inline-size: 44px; filter: var(--glow); }
+/* on the home the big ghost already shows its oops pose */
+.home .md-root .a-banner-ghost { display: none; }
+.home .md-root .a-banner:has(> .a-banner-ghost) { grid-template-columns: minmax(0, 1fr); }
 :is(.md-root, .a-page) .a-banner-body { display: grid; gap: var(--s-3); justify-items: start; min-width: 0; }
-:is(.md-root, .a-page) .a-tech summary { font: var(--t-caption); cursor: pointer; color: var(--fg-2); }
-:is(.md-root, .a-page) .a-tech p { font: var(--t-caption); font-family: var(--font-code); overflow-wrap: anywhere; }
+:is(.md-root, .a-page) .a-tech summary { font: var(--t-small); cursor: pointer; color: var(--fg-2); }
+:is(.md-root, .a-page) .a-tech p { font: var(--t-small); font-family: var(--font-code); overflow-wrap: anywhere; }
 
 :is(.md-root, .a-page) .a-known { display: grid; gap: var(--s-3); padding: var(--s-5) 0; border-top: 1px solid var(--hair); min-width: 0; }
 :is(.md-root, .a-page) .a-known h3 { font: var(--t-h3); }
-:is(.md-root, .a-page) .a-known h4 { font: var(--t-scene); text-transform: uppercase; margin-top: var(--s-3); }
-:is(.md-root, .a-page) .a-known-sub, :is(.md-root, .a-page) .a-known-what { font: var(--t-caption); color: var(--fg-2); }
+:is(.md-root, .a-page) .a-known h4 { font: var(--t-ui); margin-top: var(--s-3); }
+:is(.md-root, .a-page) .a-known-sub, :is(.md-root, .a-page) .a-known-what { font: var(--t-small); color: var(--fg-2); }
 :is(.md-root, .a-page) .a-known dl { display: grid; }
 :is(.md-root, .a-page) .a-known-row {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-1); padding-block: var(--s-2); border-bottom: 1px solid var(--hair);
 }
 @media (min-width: 640px) { :is(.md-root, .a-page) .a-known-row { grid-template-columns: 14rem minmax(0, 1fr); gap: var(--s-4); } }
-:is(.md-root, .a-page) .a-known-row dt code { font: var(--t-caption); font-family: var(--font-code); }
+:is(.md-root, .a-page) .a-known-row dt code { font: var(--t-small); font-family: var(--font-code); }
 :is(.md-root, .a-page) .a-known-row dd { display: grid; gap: 2px; min-width: 0; }
-:is(.md-root, .a-page) .a-known-value { font: var(--t-data); overflow-wrap: anywhere; }
-:is(.md-root, .a-page) .a-known-never { padding-left: 1.25em; font: var(--t-caption); }
-:is(.md-root, .a-page) .a-known-foot { display: grid; gap: var(--s-2); font: var(--t-caption); color: var(--fg-2); max-width: 70ch; }
-:is(.md-root, .a-page) .a-known-end { font: var(--t-direction); color: var(--fg); }
+:is(.md-root, .a-page) .a-known-value { font: var(--t-code); overflow-wrap: anywhere; }
+:is(.md-root, .a-page) .a-known-never { padding-left: 1.25em; font: var(--t-small); }
+:is(.md-root, .a-page) .a-known-foot { display: grid; gap: var(--s-2); font: var(--t-small); color: var(--fg-2); max-width: 70ch; }
+:is(.md-root, .a-page) .a-known-end { font: var(--t-body); color: var(--fg); }
 :is(.md-root, .a-page) .a-known-stored { display: grid; gap: var(--s-2); justify-items: start; }
 
 :is(.md-root, .a-page) .a-label { font: var(--t-ui); }
-:is(.md-root, .a-page) .a-caption { font: var(--t-caption); color: var(--fg-2); max-width: 70ch; }
+:is(.md-root, .a-page) .a-caption { font: var(--t-small); color: var(--fg-2); max-width: 70ch; }
 :is(.md-root, .a-page) .a-input {
-  width: 100%; min-height: var(--tap); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--radius);
+  width: 100%; min-height: var(--tap); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-input);
   background: var(--bg-raised); color: var(--fg); font: var(--t-body);
 }
-:is(.md-root, .a-page) textarea.a-input { resize: vertical; font: var(--t-data); overflow-wrap: anywhere; }
-:is(.md-root, .a-page) .a-input.mono { font: var(--t-data); }
-:is(.md-root, .a-page) .a-field-msg { font: var(--t-caption); min-height: 1.45em; }
+:is(.md-root, .a-page) textarea.a-input { resize: vertical; font: var(--t-code); overflow-wrap: anywhere; }
+:is(.md-root, .a-page) .a-input.mono { font: var(--t-code); }
+:is(.md-root, .a-page) .a-field-msg { font: var(--t-small); min-height: 1.45em; }
 :is(.md-root, .a-page) .a-field-msg--bad { color: var(--exit-text); }
-:is(.md-root, .a-page) .a-warn { display: flex; gap: var(--s-2); align-items: flex-start; font: var(--t-caption); }
-:is(.md-root, .a-page) .a-working { font: var(--t-data); color: var(--fg-2); }
+:is(.md-root, .a-page) .a-warn { display: flex; gap: var(--s-2); align-items: flex-start; font: var(--t-small); }
+:is(.md-root, .a-page) .a-working { font: var(--t-code); color: var(--fg-2); }
 :is(.md-root, .a-page) .a-more { display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); font: var(--t-ui); }
-:is(.md-root, .a-page) .a-tx { font: var(--t-data); color: var(--fg-2); }
-:is(.md-root, .a-page) .a-testnet { font: var(--t-caption); color: var(--fg-2); }
+:is(.md-root, .a-page) .a-tx { font: var(--t-code); color: var(--fg-2); }
+:is(.md-root, .a-page) .a-testnet { font: var(--t-small); color: var(--fg-2); }
 
 /* The safety code: 12 emoji in a 3 × 4 grid. */
 :is(.md-root, .a-page) .a-safety {
@@ -104,7 +108,7 @@
 :is(.md-root, .a-page) .a-opt { display: flex; align-items: flex-start; gap: var(--s-3); min-height: var(--tap); padding: var(--s-2) 0; cursor: pointer; }
 :is(.md-root, .a-page) .a-radio { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--fg); flex: none; }
 :is(.md-root, .a-page) .a-opt-text { display: grid; gap: 2px; }
-:is(.md-root, .a-page) .a-opt-hint { font: var(--t-caption); color: var(--fg-2); }
+:is(.md-root, .a-page) .a-opt-hint { font: var(--t-small); color: var(--fg-2); }
 :is(.md-root, .a-page) .a-send-status { display: grid; gap: var(--s-3); }
 :is(.md-root, .a-page) .a-sent { display: grid; gap: var(--s-2); justify-items: start; }
 :is(.md-root, .a-page) .a-steps { list-style: none; padding: 0; display: grid; gap: var(--s-1); }
@@ -123,7 +127,7 @@
 .md-own-img { object-fit: cover; }
 .md-own { margin: 0; padding: var(--s-3); background: var(--bg-sunken); overflow: hidden; overflow-wrap: anywhere; }
 .md-own-ext { display: grid; place-items: center; font: var(--t-h2); text-align: center; }
-.md-own-text { font: var(--t-data); white-space: pre-wrap; }
+.md-own-text { font: var(--t-code); white-space: pre-wrap; }
 .md-strip-cap { font: var(--t-small); color: var(--fg-2); max-width: 56ch; }
 
 /* --- the secret word on the result (its confirm and its box show after this file loads) ----------- */

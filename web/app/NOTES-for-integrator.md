@@ -255,7 +255,7 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
 - **Sessions:** `ensureSession(identity, {signal, onProgress})` (registers with a PoW or a judge pass on
   first use), `authHeaders()`, `endSession()`, `deleteLocker(identity)`.
 - **Drops:** `createDrop(identity, label)` → `{drop_id, url}`, `getDrop(id)`, `closeDrop(identity, i)`,
-  `rotateDrop(identity, i)` ("New link"), submitter side `leaveInDrop(drop, link)` → `{job_id}` then
+  `rotateDrop(identity, i)` ("New link"), `renameDrop(identity, i, label)` (its name, after it exists), submitter side `leaveInDrop(drop, link)` → `{job_id}` then
   `courier.waitJob(job_id, {onState})`. `DropError.code` ∈ `limit|unknown`. A drop item's
   `expiresAt` is `now + drop.limits.expiry_s` and its link's `maxViews` is `drop.limits.views`.
 - **Inbox and /watch (changed):** `scan(identity, {onDelivery, onReceipt, onProgress, signal})`,

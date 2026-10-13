@@ -173,12 +173,22 @@ def downloaded(page, before=(), timeout=10):
 
 
 def make_locker_with_drop(t, page, label):
+    """/locker's first screen: Make my drop link (no question first), then Later; the drop's name
+    ("people see this") is set afterwards, as the page offers it."""
     page.goto(t.origin + "/locker")
     page.wait_for("locker-root", 60)
     page.wait_for("drop-create", 60)
-    page.fill("drop-label", label)
+    t.check(not page.exists("drop-label"), "a drop link asks nothing before it exists")
     page.click("drop-create")
     url = page.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]'); return e?.value?.includes('/d/') ? e.value : ''; })()", 120)
+    if label:
+        if page.exists("key-later"):
+            page.click("key-later")
+            page.wait("!document.querySelector('dialog[open]')", 10)
+        page.fill("drop-label", label)
+        page.click("drop-label-save")
+        page.wait(f"document.querySelector('[data-testid=\"drop-label\"]')?.value === {json.dumps(label)} && "
+                  "!document.querySelector('[data-testid=\"drop-label-save\"]')?.disabled", 30)
     return url
 
 
@@ -229,7 +239,9 @@ def home_text(t):
             f"localStorage holds no key and no text, only the recent-drops list ({sorted(json.loads(stored))})")
     b = t.actor("android")
     t.check(open_link(b, url, open_it=False) == "ready", "B sees the ready state, nothing used yet")
-    t.check(b.text("view-views-left") == "Opens once", "the chip says Opens once")
+    t.check(b.text("view-views-left") == "It opens one time. When you open it, it's gone.", "the ghost's sentence says the rule: once")
+    t.check(b.attr("view-root", "data-state") == "ready" and b.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state") == "once",
+            "the ghost holds up one finger: Once")
     t.shot(b, "view-412-ready")
     b.click("view-open")
     t.check(b.wait_state("view-root", VIEW_END, 60) == "opened", "B opens it")
@@ -241,7 +253,9 @@ def home_text(t):
     t.shot(b, "view-412-burned")
     c = t.actor("desktop")
     t.check(open_link(c, url) == "burned", "a second browser sees burned")
-    t.check("made its exit" in c.text("view-root"), "burned copy: This secret already made its exit.")
+    gone_text = c.text("view-root")
+    t.check("It's gone." in gone_text and "It said bye. Someone opened it already." in gone_text, f"the gone page: It's gone. It said bye. ({gone_text[:80]!r})")
+    t.check(c.wait("document.querySelector('.a-figure svg.ghost')?.dataset.state === 'gone'", 5), "the ghost fades to its dashed outline and waves")
     t.shot(c, "view-1440-burned")
 
 
@@ -519,8 +533,13 @@ def locker(t):
     a = t.actor("iphone")
     a.goto(t.origin + "/locker")
     a.wait_for("locker-root", 60)
+    a.wait_for("drop-create", 60)
+    t.check(not a.eval("!!document.querySelector('.a-bottom')"), "no Locker · Inbox · Send tabs before a locker exists")
+    first = a.text("locker-root")
+    t.check(all(w in first for w in ("Get a file from someone", "See what came", "Send to a Tari address", "It lives in this browser. No email, no password.")),
+            "the first screen: what a locker is, and its three things by name")
     t.shot(a, "locker-390-empty", full_page=True)
-    drop = make_locker_with_drop(t, a, "Council")
+    drop = make_locker_with_drop(t, a, None)
     t.check(re.match(rf"^{re.escape(t.origin)}/d/[0-9a-hjkmnp-tv-z]{{10}}$", drop) is not None, f"a short drop link ({drop})")
     a.wait_for("key-save-file", 30)
     t.check(a.eval("!!document.querySelector('dialog[open]')"), "the key modal asks once, now that something persistent exists")
@@ -536,6 +555,11 @@ def locker(t):
     t.check("Locked key:" in key_text and "MUTIS-" not in key_text, "the key file is locked with the passphrase; the plain key isn't in it")
     a.click("key-later")
     a.wait("!document.querySelector('dialog[open]')", 10)
+    a.fill("drop-label", "Council")
+    a.click("drop-label-save")
+    a.wait("document.querySelector('[data-testid=\"drop-label\"]')?.value === 'Council'", 30)
+    t.check(a.eval(f"fetch('/api/v1/drops/{drop.rsplit('/', 1)[1]}').then((r) => r.json()).then((j) => j.label)") == "Council",
+            "the drop's name is set after the link exists (people see it)")
     a.wait_for("locker-safety", 30)
     safety = safety_emoji(a, "locker-safety")
     address = a.text("locker-address").strip()
@@ -553,7 +577,9 @@ def locker(t):
     t.shared.update(drop=drop, safety=safety, address=address)
     b = t.actor()
     b.goto(t.origin + "/locker")
-    b.wait_for("restore-text", 60)
+    b.wait_for("restore-open", 60)
+    b.click("restore-open")
+    b.wait_for("restore-text", 10)
     b.fill("restore-text", key_text)
     b.click("restore-submit")
     b.wait_for("restore-passphrase", 20)
@@ -902,9 +928,7 @@ def keyboard(t):
     o.goto(t.origin + "/locker")
     o.wait_for("drop-create", 60)
     t.check(not o.ax_unnamed(), f"/locker: every control named ({o.ax_unnamed()[:5]})")
-    t.check(o.tab_to("a.dataset.testid === 'drop-label'"), "Tab reaches the drop label")
-    o.type_text("keyboard")
-    o.key("Tab")
+    t.check(o.tab_to("a.dataset.testid === 'drop-create'"), "Tab reaches Make my drop link (nothing is asked first)")
     o.key("Enter", text="\r")
     drop = o.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]'); return e?.value?.includes('/d/') ? e.value : ''; })()", 120)
     o.wait("!!document.querySelector('dialog[open]')", 30)
@@ -1142,7 +1166,7 @@ def states(t):
     time.sleep(max(0, short_at + 65 - time.time()))
     e = t.actor()
     t.check(open_link(e, short) == "expired", "65 seconds later the real server answers: expired")
-    t.check("left on cue" in e.text("view-root"), "Its time ran out. … It left on cue.")
+    t.check("Its time ran out." in e.text("view-root"), "It's gone. It said bye. Its time ran out.")
 
 
 # 14-ghost-design §3: every state's parts. (shown, hidden) as CSS selectors inside the ghost; the
@@ -1600,3 +1624,109 @@ def rule_ghost(t):
     t.check(code == "opened_count" and p.eval("document.querySelector('.md-card').dataset.maxViews") == "3" and p.eval(LINK) == url,
             f"after an open, a tap to Once says so and ends nothing ({code})")
     t.check(open_link(t.actor(), url) == "opened", "the link still opens for the next friend")
+
+
+# --- 14-ghost-design §17 step 8: every app screen on the ghost, at 390 and 1440 ---------------------------
+
+def seallog_on(t, p, share_id, receipt):
+    """Test-only: this page's /config turns receipts on, and the exit receipt of `share_id` is
+    `receipt` ("done": in checkpoint #1 of the template builder's vectors; "pending": waits)."""
+    vectors = os.path.join(REPO, "template", "seal_log", "tests", "vectors")
+    state = json.load(open(os.path.join(vectors, "seallog-state-v1.json"), encoding="utf-8"))
+    v = json.load(open(os.path.join(vectors, "seallog-v1.json"), encoding="utf-8"))
+    exited = v["leaves"][64]
+    cp = next(c for c in v["checkpoints"] if int(c["tree_size"]) == 128)
+    path = {int(x["leaf_index"]): x["path"] for x in cp["proofs"]}
+    component = "component_" + "fd" * 32
+    checkpoint = {"index": 9, "component": component, "tree_size": 128, "epoch": 12128, "root": cp["root"]}
+    body = ({"reason": "burned", "item_id": exited["item_id_b64u"], "exit_hour": int(exited["exit_hour_unix"]),
+             "leaf_hash": exited["leaf_hash"], "leaf_index": 64, "proof": path[64], "checkpoint": checkpoint}
+            if receipt == "done" else
+            {"reason": "burned", "item_id": exited["item_id_b64u"], "exit_hour": None, "leaf_hash": None, "leaf_index": None,
+             "checkpoint": None, "proof": {"pending": True, "next_checkpoint_eta": int(time.time()) + 600}})
+    (Intercept(p)
+     .add("*/api/v1/config", "Response", lambda cfg: {**cfg, "features": {**cfg["features"], "seallog": True},
+                                                       "seal_log": {**cfg["seal_log"], "component": component}})
+     .add("*/api/v1/chain/ix/substates/component_*", "Request", lambda _p: (200, state))
+     .add(f"*/api/v1/s/{share_id}/exit", "Request", lambda _p: (200, body)))
+
+
+@scenario("ghost-screens", "Step 8 on the ghost at 390 and 1440: the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify")
+def ghost_screens(t):
+    for device, w in (("iphone", 390), ("desktop", 1440)):
+        maker = t.actor()
+        home(t, maker)
+        url = seal_text(maker, "The office key is under the plant.")
+        sid = url.split("/s/")[1].split("#")[0]
+        v = t.actor(device)
+        t.check(open_link(v, url, open_it=False) == "ready", f"{w}: the viewer is ready")
+        pose = v.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state")
+        t.check(pose == "once" and v.text("view-views-left") == "It opens one time. When you open it, it's gone."
+                and "Someone sent you a secret." in v.text("view-root") and v.eval("document.activeElement?.dataset?.testid") == "view-open",
+                f"{w}: the viewer's first screen: the ghost's finger up, one sentence, C18, Open it focused ({pose})")
+        t.shot(v, f"viewer-{w}-ready", full_page=True)
+        v.click("view-open")
+        t.check(v.wait_state("view-root", VIEW_END, 60) == "opened" and "This was its only look." in v.text("view-root"), f"{w}: opened, its only look")
+        t.shot(v, f"viewer-{w}-opened", full_page=True)
+        for receipt in ("done", "pending"):
+            g = t.actor(device)
+            seallog_on(t, g, sid, receipt)
+            g.goto(url.split("#")[0])
+            t.check(g.wait_state("view-root", VIEW_ASK, 60) == "burned", f"{w}: the gone page ({receipt})")
+            g.wait(f"document.querySelector('[data-testid=\"gone-receipt\"]')?.dataset.receipt === {json.dumps(receipt)}", 30)
+            g.wait("document.querySelector('.a-figure svg.ghost')?.dataset.state === 'gone'", 5)
+            text, href = g.text("view-root"), g.attr("gone-see", "href")
+            want = ("We wrote its goodbye on the Tari™ chain.", "See the goodbye", f"/verify#{sid}") if receipt == "done" else \
+                   ("Its goodbye goes on the Tari™ chain within 15 minutes.", "See one we already wrote", "/verify#latest")
+            t.check("It's gone." in text and "It said bye. Someone opened it already." in text and want[0] in text
+                    and g.text("gone-see") == want[1] and href == want[2],
+                    f"{w}: gone, {receipt}: the dashed ghost waves; the receipt says {want[0]!r} and links {href}")
+            time.sleep(0.5)                                      # the pose change (340 ms) settles
+            t.shot(g, f"gone-{w}-{receipt}", full_page=True)
+        lo = t.actor(device)
+        lo.goto(t.origin + "/locker")
+        lo.wait_for("drop-create", 60)
+        t.shot(lo, f"locker-{w}-first", full_page=True)
+        lo.click("drop-create")
+        lo.wait_for("key-later", 120)
+        t.check("Save your key. If this browser forgets it, nobody can let you back in, not even us." in lo.eval("document.querySelector('dialog[open]').textContent"),
+                f"{w}: the key question, with Later")
+        t.shot(lo, f"locker-{w}-key")
+        lo.click("key-later")
+        lo.wait("!document.querySelector('dialog[open]')", 10)
+        lo.wait_for("locker-safety", 60)
+        address = lo.text("locker-address").strip()
+        t.check(lo.exists("c15") and "For files sent to your locker: you see that something came, and how much. Not the file." in lo.text("locker-root"),
+                f"{w}: the locker's view key section: C15-k and C15")
+        t.shot(lo, f"locker-{w}-full", full_page=True)
+        lo.goto(t.origin + "/inbox")
+        lo.wait_for("inbox-empty", 120)
+        t.check(lo.exists("watch-mine") and (w == 1440 or lo.eval("!!document.querySelector('.a-bottom')")),
+                f"{w}: See what came, with See what a view key sees (and, on a phone, the tabs once a locker exists)")
+        t.shot(lo, f"inbox-{w}", full_page=True)
+        lo.goto(t.origin + "/send")
+        lo.wait_for("drop-input", 60)
+        lo.click("drop-write")
+        lo.fill("drop-textarea", "Stage door, nine o'clock.")
+        lo.click("drop-seal-text")
+        lo.wait_for("send-recipient", 120)
+        lo.fill("send-recipient", address)
+        lo.wait_for("send-safety", 30)
+        t.check("It goes by Tari. Only they can open it." in lo.eval("document.querySelector('main').textContent")
+                and lo.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state") == "courier", f"{w}: send: the courier ghost and C25")
+        t.shot(lo, f"send-{w}", full_page=True)
+        lo.goto(t.origin + "/watch#mine")
+        lo.wait("!!document.querySelector('[data-testid=\"watch-summary\"]')", 120)
+        t.check(lo.exists("c15") and lo.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state") == "peek",
+                f"{w}: /watch: the peek ghost, C15-k and C15")
+        t.shot(lo, f"watch-{w}", full_page=True)
+        lo.goto(t.origin + "/upgrade")
+        lo.wait_for("pack-s30", 60)
+        t.shot(lo, f"upgrade-{w}", full_page=True)
+        vf = t.actor(device)
+        seallog_on(t, vf, sid, "done")
+        vf.goto(t.origin + f"/verify#{sid}")
+        line = vf.wait("(() => { const s = document.querySelector('.a-item--this [data-testid=\"verify-exit\"]')?.textContent || ''; return /included|match/.test(s) ? s : ''; })()", 60)
+        t.check("Exit: included at checkpoint" in line and "Its goodbye on the Tari™ chain, checked by your browser." in vf.eval("document.querySelector('main').textContent"),
+                f"{w}: See the goodbye: /verify checks this link's exit ({line[:60]})")
+        t.shot(vf, f"verify-{w}", full_page=True)

@@ -88,7 +88,7 @@
   --ease-inout: cubic-bezier(.65, 0, .35, 1);
   --ease-spring: cubic-bezier(.3, 1.3, .6, 1); /* the ghost's hands and mittens only: the one overshoot curve */
 
-  /* compat: the app's stylesheets and the holding page read these names (Phase 6B step 8 retires them) */
+  /* compat: only the holding page (deploy/holding) still reads these names; the app and the site use the ones above */
   --font-script: var(--font); --font-ui: var(--font);
   --t-display: var(--t-hero);
   --t-zone-2: var(--t-say);

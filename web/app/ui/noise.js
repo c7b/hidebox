@@ -9,7 +9,7 @@ import { t } from '../lib/i18n.js';
 const SIDE = 96;
 const RASTER = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif']);
 const LIGHT = [[40, 40, 40], [215, 215, 215]];
-const DARK = [[7, 6, 5], [238, 233, 222]]; // --stage-sunken … --stage-fg
+const DARK = [[7, 6, 5], [238, 233, 222]]; // near black … near white (the noise strip has its own fixed ramp)
 const drawn = new Map(); // canvas -> bytes, redrawn when the theme changes
 
 function dark() {

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """E2E scenarios without chain transactions (spec §17.2). Each one names its spec id; run.py runs them.
 Selectors come only from the data-testid contract (spec §3.4.9)."""
+import json
 import secrets
 import time
 
@@ -148,11 +149,16 @@ def make_drop_link(t: T, page, label: str) -> str:
     """From /locker: open a locker silently by asking for a drop link; return the short URL."""
     page.goto(t.origin + "/locker")
     page.wait_for("locker-root")
-    if page.exists("drop-label"):
-        page.fill("drop-label", label)
     page.click("drop-create")
-    return page.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]');"
-                     " const v = e && (e.value || e.textContent || '').trim(); return v && v.includes('/d/') ? v : ''; })()", 120)
+    url = page.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]');"
+                    " const v = e && (e.value || e.textContent || '').trim(); return v && v.includes('/d/') ? v : ''; })()", 120)
+    # The drop's name comes after it exists (14-ghost-design §4.3); the purge finds test drops by it.
+    # (only when the key question isn't open: the scenarios answer it themselves)
+    if label and page.exists("drop-label") and not page.eval("!!document.querySelector('dialog[open]')"):
+        page.fill("drop-label", label)
+        page.click("drop-label-save")
+        page.wait(f"document.querySelector('[data-testid=\"drop-label\"]')?.value === {json.dumps(label)}", 30)
+    return url
 
 
 def safety_emoji(page, testid: str) -> list[str]:
@@ -190,6 +196,8 @@ def e08(t: T) -> None:
     t.shot(a, "locker")
     b = t.actor()
     b.goto(t.origin + "/locker")
+    b.wait_for("restore-open")
+    b.click("restore-open")               # "I have a key" (14-ghost-design §4.3: one tap away)
     b.wait_for("restore-text")
     b.fill("restore-text", key_text)
     b.click("restore-submit")

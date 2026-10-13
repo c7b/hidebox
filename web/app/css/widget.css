@@ -5,7 +5,7 @@
 
 /* --- the root ----------------------------------------------------------------------------------- */
 .md-root {
-  position: relative; width: 100%; max-width: var(--zone-max); margin-inline: auto;
+  position: relative; width: 100%; max-width: 720px; margin-inline: auto;
   display: grid; gap: var(--s-4); text-align: left; color: var(--fg); font: var(--t-body);
 }
 .md-stage { min-height: 300px; display: grid; min-width: 0; }
@@ -45,7 +45,7 @@
 }
 .md-zone.md-drag { border-style: solid; border-color: var(--fg); background: var(--bg-sunken); }
 .md-idle { display: grid; justify-items: center; gap: var(--s-3); text-align: center; }
-.md-hint { font: var(--t-direction); color: var(--fg-2); }
+.md-hint { font: var(--t-body); color: var(--fg-2); }
 .md-choose, .md-choose-alt { position: relative; }
 .md-choose:focus-within, .md-choose-alt:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* The file input stays focusable for the keyboard where its label is the visible control. */
@@ -59,7 +59,7 @@
   border-radius: var(--r-input); background: var(--bg-raised); color: var(--fg); font: var(--t-body);
 }
 .md-textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-color: transparent; }
-.md-count { font: var(--t-caption); font-family: var(--font-code); color: var(--fg-2); text-align: right; }
+.md-count { font: var(--t-small); font-family: var(--font-code); color: var(--fg-2); text-align: right; }
 .md-count.md-over { color: var(--exit-text); }
 .md-keys { font: var(--t-small); color: var(--fg-2); }
 :is(.md-root, .a-page) .a-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
@@ -146,7 +146,7 @@
 :is(.md-root, .a-page) .a-toast {
   position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: var(--z-toast);
   translate: -50% 0; width: max-content; max-width: calc(100vw - 32px); padding: 12px 20px; text-align: center;
-  border-radius: var(--r-pill); background: var(--act); color: var(--on-act); font: var(--t-ui); box-shadow: var(--shadow-float);
+  border-radius: var(--r-pill); background: var(--act); color: var(--on-act); font: var(--t-ui); box-shadow: var(--shadow);
 }
 @media (max-width: 640px) { .a-page .a-toast { bottom: calc(76px + env(safe-area-inset-bottom)); } }
 

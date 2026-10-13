@@ -10,6 +10,7 @@ import { formatTari, testnetLine } from './marks.js';
 import { errorBanner } from './errors.js';
 import { NeedsWasm, openLocker, storedLocker, wasmOk } from './locker-ctx.js';
 import { maybeAskForKey } from './keyflow.js';
+import { scene } from './scene.js';
 import { setTitle } from './shell.js';
 
 // The four steps and when each one is reached, per proof mode. A new invoice has no payments yet.
@@ -29,7 +30,7 @@ export async function render(main) {
   setTitle('upgrade.title');
   const cfg = await config();
   const root = h('div', { class: 'a-upgrade' });
-  main.replaceChildren(h('h1', { class: 'a-h1' }, t('upgrade.h')), h('p', { class: 'a-lede' }, t('upgrade.lede')), root);
+  main.replaceChildren(scene({ state: 'ready', title: t('upgrade.title'), say: t('upgrade.lede') }).head, root);
   if (!(await wasmOk())) return root.replaceChildren(errorBanner(new NeedsWasm()));
   const mine = await storedLocker();
   const free = h('p', { class: 'a-plan-price' });
