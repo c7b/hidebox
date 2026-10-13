@@ -191,10 +191,19 @@ class Page:
             raise CdpError(res["exceptionDetails"].get("exception", {}).get("description", "evaluation failed")[:300])
         return res["result"].get("value")
 
+    # What an evaluation can meet while the page is navigating (a click that opens another page):
+    # the old document is gone and the new one isn't there yet. A wait asks again; a plain eval doesn't.
+    NAVIGATING = ("navigated or closed", "Execution context was destroyed", "Cannot find context")
+
     def wait(self, expr, timeout=30, interval=0.1):
         end = time.time() + timeout
         while time.time() < end:
-            value = self.eval(expr)
+            try:
+                value = self.eval(expr)
+            except CdpError as e:
+                if not any(n in str(e) for n in self.NAVIGATING):
+                    raise
+                value = None
             if value:
                 return value
             self.b.pump(interval)
