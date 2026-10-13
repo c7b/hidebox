@@ -1,0 +1,366 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 4 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+--- home-text Home: a text secret, Once; copy; open; reload and a second browser see it burned
+PASS home-text: the sealed link has the key after # (G95KQ#10TI1SeoymykMKtAimW7gQtuz0RXkCiMlKQnHZfqlCKo)
+PASS home-text: from text to link in 0.8 s on a 390×844 phone (< 10 s)
+PASS home-text: mutis:state events ['composing', 'sealing', 'sealed']
+PASS home-text: the one live region: 'Link made. Copied.'
+PASS home-text: the copy was made the moment the link existed, and the button says so
+PASS home-text: one sentence says the rule, with its time ("It opens one time in the next 24 hours. Then it's gone.")
+PASS home-text: More rules: what our server got opens the glass box
+PASS home-text: and the noise strip draws real ciphertext bytes (174 grey levels)
+PASS home-text: Copy link puts the full link on the clipboard
+PASS home-text: the home page made no third-party request
+PASS home-text: localStorage holds no key and no text, only the recent-drops list (['mutis.recent'])
+PASS home-text: B sees the ready state, nothing used yet
+PASS home-text: the chip says Opens once
+PASS home-text: B opens it
+PASS home-text: B reads exactly the text
+PASS home-text: the key left the address bar after the open
+PASS home-text: B's reload shows burned
+PASS home-text: a second browser sees burned
+PASS home-text: burned copy: This secret already made its exit.
+PASS home-text: no CSP or Trusted Types violation ([])
+--- viewer-states Viewer: incomplete, not-found, a damaged key, the glass box
+PASS viewer-states: a link without its key: incomplete
+PASS viewer-states: an unknown id: not-found
+PASS viewer-states: a changed key: This key doesn't fit, no view used
+PASS viewer-states: the real link is still ready (no view was used)
+PASS viewer-states: the glass box prints the columns and what is stored nowhere
+PASS viewer-states: no CSP or Trusted Types violation ([])
+--- rules Change panel: 3 opens on the same link; link + password; password only; Delete now
+PASS rules: the progress line names its phase (encrypting)
+PASS rules: a count change keeps the same link (PATCH, spec §5.4)
+PASS rules: the card shows 3 opens
+PASS rules: the card's sentence says up to 3 opens
+PASS rules: B opens the file
+PASS rules: B's Save file downloads it
+PASS rules: C opens the file
+PASS rules: C's Save file downloads it
+PASS rules: D opens the file
+PASS rules: D's Save file downloads it
+PASS rules: the fourth browser sees burned
+PASS rules: a password makes a new link with a #2 key part
+PASS rules: the old link no longer works (revoked)
+PASS rules: a wrong password: That's not it
+PASS rules: the next wrong try says how many are left (That's not it. 3 tries left before a pause of 1 minute.)
+PASS rules: the right password reaches ready
+PASS rules: and opens it
+PASS rules: password only: the link has no key part
+PASS rules: a password-only link opens with the password alone
+PASS rules: a revoke that fails: the card keeps the old link and no toast says it stopped working
+PASS rules: the old link still opens, as the card says
+PASS rules: Delete now: the link answers revoked
+PASS rules: no CSP or Trusted Types violation ([])
+--- card-fresh A first visit: the card's Tari action and locker rules open a locker in place; errors stay in the card
+PASS card-fresh: a locker that can't open: the error is in the result, with the link and Copy link still there
+PASS card-fresh: the locker opens in place and the send step appears
+PASS card-fresh: Sent
+PASS card-fresh: the old link isn't confirmed closed: the card still shows it, and says so
+PASS card-fresh: it still works
+PASS card-fresh: once closed, the card drops the link and Copy link
+PASS card-fresh: and says where the file went (Sent to otl_esm_12sd92q…gxmltw instead. The link no longer works: only)
+PASS card-fresh: the old link answers revoked
+PASS card-fresh: 7 days applies to the same link (7.00 days)
+PASS card-fresh: no CSP or Trusted Types violation ([])
+--- kept P1 kept files: Only me and Until I delete it from a first visit; /locker lists, saves and deletes them
+PASS kept: Only me: kept in the locker, no link
+PASS kept: Until I delete it: a new link whose sentence says it stays
+PASS kept: the link to the anonymous copy no longer works
+PASS kept: the kept file's link opens
+PASS kept: /locker lists both kept files by name
+PASS kept: Save gives back exactly the file that was kept
+PASS kept: Delete removes the kept file on our server: after a reload only notes.txt is listed (1)
+PASS kept: no CSP or Trusted Types violation ([])
+--- safety Programs refused before upload; a too-big file offers a locker; photos lose their GPS
+PASS safety: an anonymous .exe is refused before any upload
+PASS safety: too large: the banner offers a free locker
+PASS safety: nothing was uploaded
+PASS safety: 'invoice.b\u200bat' is refused as the .bat it would be saved as
+PASS safety: 'run.p|s1' is refused as the .ps1 it would be saved as
+PASS safety: none of them was uploaded
+PASS safety: with a locker opened in place, the program is locked as the locker's file
+PASS safety: the viewer shows the program warning
+PASS safety: no preview; Save anyway is offered
+PASS safety: a 413 from the server reads as too large, with the server's limit
+PASS safety: stored as 'invoice.b\u200bat': the program warning, named invoice.bat (program-warning, 'invoice.bat')
+PASS safety: stored as 'run.p|s1': the program warning, named run.ps1 (program-warning, 'run.ps1')
+PASS safety: stored as 'photo\u202egpj.exe': the program warning, named photogpj.exe (program-warning, 'photogpj.exe')
+PASS safety: Save anyway offers the name it showed (['photogpj.exe'])
+PASS safety: the photo chip says location and camera data were removed
+PASS safety: the photo opens with a preview
+PASS safety: no CSP or Trusted Types violation ([])
+--- locker Locker: made silently from Leave me a file; key modal; key file with passphrase; restore
+PASS locker: a short drop link (http://127.0.0.1:47657/d/9kf50jvhyb)
+PASS locker: the key modal asks once, now that something persistent exists
+PASS locker: with the passphrase box ticked (P-15) an empty passphrase stops the download
+PASS locker: the key file is locked with the passphrase; the plain key isn't in it
+PASS locker: the safety code has 12 emoji (12)
+PASS locker: the locker shows its otl_esm_ Tari address
+PASS locker: the key banner stays until the key is saved
+PASS locker: a new locker is on probation
+PASS locker: localStorage holds no key material (the locker's seed lives in IndexedDB, spec §4.8.1)
+PASS locker: IndexedDB holds only the locker record and the inbox state (['identity', 'inbox'])
+PASS locker: the quota bar shows the locker's limit
+PASS locker: restored elsewhere: the same safety code and address
+PASS locker: no CSP or Trusted Types violation ([])
+--- deaddrop Dead drop: a stranger leaves a photo; Delivered; What the chain sees; the inbox opens it
+PASS deaddrop: a phone's locker shows no codes to scan (it is the phone that scans)
+PASS deaddrop: the drop page is ready
+PASS deaddrop: it shows the owner's 12-emoji safety code
+PASS deaddrop: the drop's label, isolated in a <bdi> inside the quotes
+PASS deaddrop: the page says the link's maker wrote the label and we don't check it
+PASS deaddrop: a Report this drop link in the page, filled in (/fine-print#link=http%3A%2F%2F127.0.0.1%3A47657%2Fd%2F07bgbx)
+PASS deaddrop: a program can't be left in a drop; nothing was uploaded
+PASS deaddrop: Delivered
+PASS deaddrop: the delivery has a transaction id
+PASS deaddrop: What the chain sees: no output amount is shown
+PASS deaddrop: the fee is shown, as public
+PASS deaddrop: no request to Tari's indexer before the button is pressed
+PASS deaddrop: the explicit button asks Tari's indexer directly (['https://ootle-indexer-b.tari.com/transaction-receipts/1582cd', 'https://ootle-indexer-b.tari.com/transaction-receipts/1582cd'])
+PASS deaddrop: the scan line says how many outputs it checked
+PASS deaddrop: the owner opens what was left
+PASS deaddrop: the photo and What the chain saw
+PASS deaddrop: What the chain saw: hidden on chain, the locker reads 0.001 tTARI ('Amounthidden on chainyour locker reads 0.001 tTARIOwnera one')
+PASS deaddrop: Keep a copy in my locker: the photo is listed under Kept in your locker
+PASS deaddrop: no CSP or Trusted Types violation ([])
+--- send Send to a Tari address (relay); the locker's codes to scan; a scanned address fills the phone's send step; the recipient's inbox opens it; /watch sees it and opens nothing
+PASS send: a computer's locker shows its address and its drop link as codes a phone reads (ve4wn65d6vrpycw7qphrmz7ccuhvjk, http://127.0.0.1:47657/d/dp6qcarpmw)
+PASS send: the send screen shows the recipient's safety code
+PASS send: Sent
+PASS send: the send has a transaction id
+PASS send: the relay sentence (C8) follows how this send went
+PASS send: the recipient opens what was sent
+PASS send: the scanned address opens the home with the courier ghost and where it goes
+PASS send: after the drop the send step is open with the address filled in, its safety code shown, Send focused
+PASS send: sent from the phone to the scanned address
+PASS send: /watch with the locker's view key: deliveries seen, 0 files readable
+PASS send: another browser with the exported view key: 0 files readable
+PASS send: the rows list the arrivals
+PASS send: a view key of another address is refused
+PASS send: no CSP or Trusted Types violation ([])
+--- kind4 Kind 4: a /t#4 link opens with the address's view key alone; kind 3 refuses it
+PASS kind4: the address check explains it: base-layer
+PASS kind4: the address check explains it: not a testnet
+PASS kind4: the address check explains it: Ootle address
+PASS kind4: kind 4 shows its warning
+PASS kind4: Sent in other-wallet mode
+PASS kind4: the delivery's memo is a /t#4 link
+PASS kind4: a browser without a locker is asked for a key
+PASS kind4: the view key alone unlocks a kind-4 link
+PASS kind4: and it is the text that was sent
+PASS kind4: no CSP or Trusted Types violation ([])
+--- upgrade Upgrade: s30 with demo tTARI; Waiting → Seen on chain → Amount proven → Added
+PASS upgrade: the invoice has a Tari address
+PASS upgrade: the stepper reaches Added (['waiting:true', 'seen:true', 'proven:true', 'added:true'])
+PASS upgrade: the quota grew by the pack's 2 GiB
+PASS upgrade: on Nov 12 the testnet line says the mainnet is live, like the footer (Esmeralda testnet · tTARI has no monetary value · the Ootle mainnet is live; bye)
+PASS upgrade: no CSP or Trusted Types violation ([])
+--- upgrade-wallet Upgrade in production's payment mode (amount_proof = wallet): Waiting → Seen by our wallet → Exists on chain → Added
+PASS upgrade-wallet: the stepper names the checks this mode runs (['Waiting', 'Seen by our wallet', 'Exists on chain', 'Added'])
+PASS upgrade-wallet: the claim under it is the wallet variant (C11)
+PASS upgrade-wallet: paid with demo tTARI, every step is reached (['waiting:true', 'seen_wallet:true', 'exists:true', 'added:true'])
+PASS upgrade-wallet: no CSP or Trusted Types violation ([])
+--- receipts P1 /verify: the locked file's own hash is kept; proofs are checked against the SealLog state on chain; a log with an owner is refused
+PASS receipts: this device keeps the ciphertext hash it computed when locking (equal to our server's)
+PASS receipts: the file's own hash is in the tree on chain, at the log's checkpoint #1 (Link …AAAAThe link you came fromStored: included at checkpoint #1 (epoch 12128); the root matches the SealLog component )
+PASS receipts: its exit too, from the hour our server reports
+PASS receipts: a hash this file didn't have doesn't verify against the same root
+PASS receipts: the page says the log has no owner and names its one writer key (This log has no owner, so nobody, us included, can change its rules or the code behind it )
+PASS receipts: the research log on Esmeralda (it has an owner) is refused; nothing is checked against it
+PASS receipts: no CSP or Trusted Types violation ([])
+--- keyboard Keyboard only: drop and copy; open; make a drop link; leave a file; send; buy; watch
+PASS keyboard: home: every control has an accessible name ([])
+PASS keyboard: Tab reaches 'or paste text'
+PASS keyboard: focus lands on Copy link
+PASS keyboard: Enter copies the link
+PASS keyboard: the locked card: every control named ([])
+PASS keyboard: the viewer focuses Open it
+PASS keyboard: Enter opens it
+PASS keyboard: /locker: every control named ([])
+PASS keyboard: Tab reaches the drop label
+PASS keyboard: the key modal takes the focus
+PASS keyboard: Escape closes the key modal
+PASS keyboard: the locker: every control named ([])
+PASS keyboard: the drop page: every control named ([])
+PASS keyboard: Tab reaches 'or paste text' on the drop page
+PASS keyboard: left in the drop with the keyboard
+PASS keyboard: focus moves to the recipient field
+PASS keyboard: Tab reaches Send
+PASS keyboard: sent with the keyboard
+PASS keyboard: /send: every control named ([])
+PASS keyboard: Tab reaches the s30 pack
+PASS keyboard: Tab reaches Pay with demo tTARI
+PASS keyboard: a pack bought with the keyboard
+PASS keyboard: /upgrade: every control named ([])
+PASS keyboard: Tab reaches Use my locker's view key
+PASS keyboard: Tab reaches Look
+PASS keyboard: watched with the keyboard
+PASS keyboard: /watch: every control named ([])
+PASS keyboard: no CSP or Trusted Types violation ([])
+--- layout Every app page: no horizontal scroll at 360 px, only same-origin requests, no violations
+PASS layout: narrow: no horizontal scroll ([])
+PASS layout: narrow: no third-party request ([])
+PASS layout: iphone: no horizontal scroll ([])
+PASS layout: iphone: no third-party request ([])
+PASS layout: desktop: no horizontal scroll ([])
+PASS layout: desktop: no third-party request ([])
+PASS layout: no CSP or Trusted Types violation ([])
+--- nowasm Without WebAssembly (--jitless): anonymous drop and open work; locker pages say needs_wasm
+PASS nowasm: an anonymous drop opens without WebAssembly
+PASS nowasm: /locker shows needs_wasm
+PASS nowasm: /d/2222222222 shows needs_wasm
+PASS nowasm: /inbox shows needs_wasm
+PASS nowasm: /watch shows needs_wasm
+PASS nowasm: no CSP or Trusted Types violation ([])
+--- dark Dark theme and reduced motion: the card, the viewer, the locker
+PASS dark: the night background in dark mode
+PASS dark: opens in dark mode with reduced motion
+PASS dark: no CSP or Trusted Types violation ([])
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: phone: widget payload compressed: 24873 B at load, 40322 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: computer: 43289 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+PASS budget: phone, after a photo: 45360 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- ten-seconds A first visit on a phone (4× slower CPU): landing to a copied link of a photo in under 10 s
+PASS ten-seconds: landing 0.9 s, then photo to copied link: 2.1 s in all (< 10 s, no human pauses)
+PASS ten-seconds: no CSP or Trusted Types violation ([])
+--- states Every remaining state: expired (a real 60-second link), removed, locked, integrity-error; drop closed and not found; empty inbox
+PASS states: the 60-second preset sets the link to leave within a minute
+PASS states: a link that ended as expired: expired
+PASS states: a link that ended as removed: removed
+PASS states: a link that ended as owner_deleted: revoked
+PASS states: a link locked after too many wrong passwords: locked
+PASS states: one flipped bit in the stored bytes: integrity-error, nothing shown
+PASS states: no plaintext and no Save after an integrity failure
+PASS states: a closed drop: This drop is closed.
+PASS states: an unknown drop: No drop here.
+PASS states: recent drops on this device list the links with their state (Opened Oct 13, 2026, 5:04 AM. Was that them?)
+PASS states: a new locker's inbox: Nothing for you yet
+PASS states: 65 seconds later the real server answers: expired
+PASS states: Its time ran out. … It left on cue.
+PASS states: no CSP or Trusted Types violation ([])
+--- ghost-states The ghost: all twelve states of 14 §3 from the static partial, both themes; reduced motion stills
+PASS ghost-states: the page carries the ghost partial in <template id=ghost-tpl>
+PASS ghost-states: 12 ghosts cloned from the partial
+PASS ghost-states: light: ready draws its parts ([])
+PASS ghost-states: light: catch draws its parts ([])
+PASS ghost-states: light: busy draws its parts ([])
+PASS ghost-states: light: once draws its parts ([])
+PASS ghost-states: light: few draws its parts ([])
+PASS ghost-states: light: word draws its parts ([])
+PASS ghost-states: light: peek draws its parts ([])
+PASS ghost-states: light: courier draws its parts ([])
+PASS ghost-states: light: bag draws its parts ([])
+PASS ghost-states: light: keep draws its parts ([])
+PASS ghost-states: light: gone draws its parts ([])
+PASS ghost-states: light: oops draws its parts ([])
+PASS ghost-states: gone is a dashed outline (5px, 5px)
+PASS ghost-states: only the lights-off ghost glows (none)
+PASS ghost-states: the page carries the ghost partial in <template id=ghost-tpl>
+PASS ghost-states: 12 ghosts cloned from the partial
+PASS ghost-states: dark: ready draws its parts ([])
+PASS ghost-states: dark: catch draws its parts ([])
+PASS ghost-states: dark: busy draws its parts ([])
+PASS ghost-states: dark: once draws its parts ([])
+PASS ghost-states: dark: few draws its parts ([])
+PASS ghost-states: dark: word draws its parts ([])
+PASS ghost-states: dark: peek draws its parts ([])
+PASS ghost-states: dark: courier draws its parts ([])
+PASS ghost-states: dark: bag draws its parts ([])
+PASS ghost-states: dark: keep draws its parts ([])
+PASS ghost-states: dark: gone draws its parts ([])
+PASS ghost-states: dark: oops draws its parts ([])
+PASS ghost-states: gone is a dashed outline (5px, 5px)
+PASS ghost-states: only the lights-off ghost glows (drop-shadow(rgba(189, 239, 195, 0.38) 0px 0px 22px))
+PASS ghost-states: reduced motion: every ghost is a still (0 animations running)
+PASS ghost-states: reduced motion: the pose is still drawn (once: the finger up)
+PASS ghost-states: no CSP or Trusted Types violation ([])
+--- window-drop The window drop: caught before the drop, the blank note, the wow under a second, honest Copy, Share, focus, one live region, paste, typing, the second drop
+PASS window-drop: desktop: a file over the window is caught before the drop (scrim, open mouth, footer away: [True, 'catch', 0])
+PASS window-drop: desktop: the flying note is blank (no text, no name: ['', 0])
+PASS window-drop: desktop: the wow is the flight (380 ms), the gulp, the glide and the unroll (320 ms each), nothing else ([('flyer', 380), ('gf', 320), ('ghost', 320), ('md-card', 320)])
+PASS window-drop: desktop: the copy is tried the moment the link exists, before the result ({'copied_ms': 128, 'result_ms': 676, 'settled_ms': 1015, 'anims': [('flyer', 380), ('gf', 320), ('ghost', 320), ('md-card', 320)]})
+PASS window-drop: desktop: the result starts on the gulp's last frames and settles at once after it ({'copied_ms': 128, 'result_ms': 676, 'settled_ms': 1015, 'anims': [('flyer', 380), ('gf', 320), ('ghost', 320), ('md-card', 320)]})
+PASS window-drop: desktop: Copied only after the write went through; the live region says so ('Copied', 'Link made. Copied.')
+PASS window-drop: desktop: focus lands on Copy link (copy-link)
+PASS window-drop: desktop: Share only where there is a share sheet on a touch screen
+PASS window-drop: desktop: one live region, and it never reads the link (['Link made. Copied.'])
+PASS window-drop: desktop: every control on the result is at least 44 px tall ([])
+PASS window-drop: desktop: every control on the result is named ([])
+PASS window-drop: desktop: no horizontal scroll on the result
+PASS window-drop: desktop: the code beside the link reads back as the link (version 6-M, 4.08 px a module)
+PASS window-drop: desktop: its caption says a scan uses the one look ('Scan it to open it on a phone. That uses its one look.')
+PASS window-drop: desktop: a file over the result is caught too (the big ghost comes back)
+PASS window-drop: desktop: a drop on the result makes a new link
+PASS window-drop: desktop: a refused copy: the label says Copy link and the whole link is selected (['sealed-link', 92])
+PASS window-drop: desktop: the toast fits ([263, 44])
+PASS window-drop: iphone: a file over the window is caught before the drop (scrim, open mouth, footer away: [True, 'catch', 0])
+PASS window-drop: iphone: the flying note is blank (no text, no name: ['', 0])
+PASS window-drop: iphone: the wow is the flight (380 ms), the gulp, the glide and the unroll (320 ms each), nothing else ([('flyer', 380), ('gf', 320), ('ghost', 320), ('md-card', 320)])
+PASS window-drop: iphone: the copy is tried the moment the link exists, before the result ({'copied_ms': 138, 'result_ms': 671, 'settled_ms': 1012, 'anims': [('flyer', 380), ('gf', 320), ('ghost', 320), ('md-card', 320)]})
+PASS window-drop: iphone: the result starts on the gulp's last frames and settles at once after it ({'copied_ms': 138, 'result_ms': 671, 'settled_ms': 1012, 'anims': [('flyer', 380), ('gf', 320), ('ghost', 320), ('md-card', 320)]})
+PASS window-drop: iphone: Copied only after the write went through; the live region says so ('Copied', 'Link made. Copied.')
+PASS window-drop: iphone: focus lands on Share (share-link)
+PASS window-drop: iphone: Share is the primary
+PASS window-drop: iphone: one live region, and it never reads the link (['Link made. Copied.'])
+PASS window-drop: iphone: every control on the result is at least 44 px tall ([])
+PASS window-drop: iphone: every control on the result is named ([])
+PASS window-drop: iphone: no horizontal scroll on the result
+PASS window-drop: phone: no code to scan, and the encoder never loads
+PASS window-drop: phone: Share hands the full link to the share sheet
+PASS window-drop: iphone: a file over the result is caught too (the big ghost comes back)
+PASS window-drop: iphone: a drop on the result makes a new link
+PASS window-drop: iphone: a refused copy: the label says Copy link and the whole link is selected (['sealed-link', 92])
+PASS window-drop: iphone: the toast fits ([263, 44])
+PASS window-drop: clipboard reject: the result shows, the label says Copy link, the live region says 'Link made. Press Copy link.' (['Copy link', 'Link made. Press Copy link.', 'none'])
+PASS window-drop: clipboard hang: the result shows, the label says Copy link, the live region says 'Link made.' (['Copy link', 'Link made.', 'none'])
+PASS window-drop: pasted text opens the note, written, with Lock it focused (['write', 'hunter2 my bank PIN', 'drop-seal-text'])
+PASS window-drop: Enter locks it, and the note that flies is blank ([''])
+PASS window-drop: a pasted image goes straight in and makes a link
+PASS window-drop: a key outside a field starts a note; Ctrl + Enter locks it (['write', 'T'], 'Link made. Copied.')
+PASS window-drop: iphone: one tap on the ghost opens the file picker
+PASS window-drop: desktop: Enter on the ghost opens the file picker
+PASS window-drop: desktop: busy: the ghost chews, 'Locking it up.', the percent after 1.5 s ('Locking it up. 100 percent done.'), a file over the window waits
+PASS window-drop: iphone: busy: the ghost chews, 'Locking it up.', the percent after 1.5 s ('Locking it up. 100 percent done.'), a file over the window waits
+PASS window-drop: iphone: an error is said once (role=alert), the ghost says oops, the promise steps aside (['oops', 'idle', False, ''])
+PASS window-drop: desktop: an error is said once (role=alert), the ghost says oops, the promise steps aside (['oops', 'idle', False, ''])
+PASS window-drop: iphone: reduced motion is a cut (no animation; the result -25 ms after the link)
+PASS window-drop: desktop: reduced motion is a cut (no animation; the result -21 ms after the link)
+PASS window-drop: no CSP or Trusted Types violation ([])
+--- rule-ghost The rule on the figure: a tap and the chips switch Once and A few times on the same link; the secret word asks first, then makes a new link
+PASS rule-ghost: desktop: a tap on the ghost: up to three times, the same link, the clipboard untouched (['http://127.0.0.1:47657/s/mzZvU7I2XKWmKfhqzQ4Paw#17wO6NTnc-6R30RHte62_ZA4eh0FtRTPPLNyr3NA-rBA', '3', 'few', 'few', 'Same link. Now it opens up to 3 times.', "It opens up to 3 times in the next 24 hours. Then it's gone.", 'http://127.0.0.1:47657/s/mzZvU7I2XKWmKfhqzQ4Paw#17wO6NTnc-6R30RHte62_ZA4eh0FtRTPPLNyr3NA-rBA'])
+PASS rule-ghost: desktop: a second tap: once again, the same link (['http://127.0.0.1:47657/s/mzZvU7I2XKWmKfhqzQ4Paw#17wO6NTnc-6R30RHte62_ZA4eh0FtRTPPLNyr3NA-rBA', '1', 'once', 'once', 'Same link. Now it opens one time.', "It opens one time in the next 24 hours. Then it's gone.", 'http://127.0.0.1:47657/s/mzZvU7I2XKWmKfhqzQ4Paw#17wO6NTnc-6R30RHte62_ZA4eh0FtRTPPLNyr3NA-rBA'])
+PASS rule-ghost: desktop: the chips do the same as the ghost
+PASS rule-ghost: desktop: Add a secret word asks first (the link may have left), the link unchanged, Make a new link focused
+PASS rule-ghost: desktop: a new link with a word part (#2), and four words from the list (finch-coral-dive-palace)
+PASS rule-ghost: desktop: the ghost covers its eyes, the count stays, the live region says the old link stopped (['3', 'word', 'few', 'New link made. The old one stopped working. Copied.'])
+PASS rule-ghost: desktop: the new link is copied inside the tap
+PASS rule-ghost: desktop: the code to scan follows the new link, and at three opens says nothing of one look ('Scan it to open it on a phone.')
+PASS rule-ghost: desktop: the old link no longer works (revoked)
+PASS rule-ghost: desktop: the new link needs the word
+PASS rule-ghost: desktop: Remove the secret word: a plain link again (Lww#1vnV1aBFj-UqxB2k9zqp3FsE0iaUmrv-bJbPXNm6nYik)
+PASS rule-ghost: desktop: a fourth link for an anonymous file is refused in plain words, the link unchanged (links_full)
+PASS rule-ghost: iphone: a tap on the ghost: up to three times, the same link, the clipboard untouched (['http://127.0.0.1:47657/s/yiwgJVpQFXA8f6lzI13Sqg#13eLxfbMVLDiZ4NT_FppTllztW_i_MVqu324m1_jFVJ8', '3', 'few', 'few', 'Same link. Now it opens up to 3 times.', "It opens up to 3 times in the next 24 hours. Then it's gone.", 'http://127.0.0.1:47657/s/yiwgJVpQFXA8f6lzI13Sqg#13eLxfbMVLDiZ4NT_FppTllztW_i_MVqu324m1_jFVJ8'])
+PASS rule-ghost: iphone: a second tap: once again, the same link (['http://127.0.0.1:47657/s/yiwgJVpQFXA8f6lzI13Sqg#13eLxfbMVLDiZ4NT_FppTllztW_i_MVqu324m1_jFVJ8', '1', 'once', 'once', 'Same link. Now it opens one time.', "It opens one time in the next 24 hours. Then it's gone.", 'http://127.0.0.1:47657/s/yiwgJVpQFXA8f6lzI13Sqg#13eLxfbMVLDiZ4NT_FppTllztW_i_MVqu324m1_jFVJ8'])
+PASS rule-ghost: iphone: the chips do the same as the ghost
+PASS rule-ghost: iphone: Add a secret word asks first (the link may have left), the link unchanged, Make a new link focused
+PASS rule-ghost: iphone: a new link with a word part (#2), and four words from the list (polite-reindeer-peacock-mosaic)
+PASS rule-ghost: iphone: the ghost covers its eyes, the count stays, the live region says the old link stopped (['3', 'word', 'few', 'New link made. The old one stopped working. Copied.'])
+PASS rule-ghost: iphone: the new link is copied inside the tap
+PASS rule-ghost: iphone: the old link no longer works (revoked)
+PASS rule-ghost: iphone: the new link needs the word
+PASS rule-ghost: iphone: Use my own word: the link opens with that word
+PASS rule-ghost: a link that never left the page: the word makes the new link without asking ('New link made.')
+PASS rule-ghost: a friend opens it once
+PASS rule-ghost: after an open, a tap to Once says so and ends nothing (opened_count)
+PASS rule-ghost: the link still opens for the next friend
+PASS rule-ghost: no CSP or Trusted Types violation ([])
+
+UI PASS 341/341
