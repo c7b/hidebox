@@ -53,11 +53,11 @@ class Site:
         if self.opts.dist:
             f = Path(self.opts.dist) / path.lstrip("/")
             return f / "index.html" if f.is_dir() else f
-        if path in ("/", "/es", "/es/"):
-            return SITE / "pages" / ("es/index.html" if path.startswith("/es") else "index.html")
-        m = re.fullmatch(r"/(es/)?([a-z0-9]+)/?", path)
-        if m and (SITE / "pages" / f"{m[1] or ''}{m[2]}.html").is_file():
-            return SITE / "pages" / f"{m[1] or ''}{m[2]}.html"
+        if path == "/":
+            return SITE / "pages" / "index.html"
+        m = re.fullmatch(r"/([a-z0-9]+)/?", path)
+        if m and (SITE / "pages" / f"{m[1]}.html").is_file():
+            return SITE / "pages" / f"{m[1]}.html"
         for prefix, root in (("/shared/", SHARED), ("/site/js/", SITE / "js"), ("/site/css/", SITE / "css"),
                              ("/app/", WEB / "app")):
             if path.startswith(prefix):
@@ -188,12 +188,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.json(*self.api.get(path, query))
         f = self.site.file_for(path)
         if ".." in path or not f.is_file():
-            f, status = self.site.file_for("/es/404" if path.startswith("/es/") else "/404"), 404
+            f, status = self.site.file_for("/404"), 404
             if self.site.opts.dist:
                 f = Path(self.site.opts.dist) / "404.html"
         else:
             status = 200
-        csp = APP_CSP if path in ("/", "/es", "/es/") else SITE_CSP
+        csp = APP_CSP if path == "/" else SITE_CSP
         body = self.site.render(f, path)
         self.send(status, body, TYPES.get(f.suffix, "application/octet-stream"),
                   [("Content-Security-Policy", csp)] if f.suffix == ".html" else [])

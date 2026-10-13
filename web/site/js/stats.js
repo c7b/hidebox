@@ -26,8 +26,7 @@ export const formatCount = (n, locale) => new Intl.NumberFormat(locale).format(n
 export const formatTari = (ut, locale) => new Intl.NumberFormat(locale, { maximumFractionDigits: 3 }).format(Number(ut) / 1e6);
 
 export function formatDate(isoDay, locale) {
-  const month = locale.startsWith('es') ? 'long' : 'short';
-  return new Intl.DateTimeFormat(locale, { year: 'numeric', month, day: 'numeric', timeZone: 'UTC' })
+  return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
     .format(new Date(`${isoDay}T00:00:00Z`));
 }
 

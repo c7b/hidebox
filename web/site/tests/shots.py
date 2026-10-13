@@ -39,10 +39,10 @@ def wake_wall(page):
     page.scroll_to(page.eval("document.getElementById('exit-wall').offsetTop - innerHeight + 40"), 1.5)
 
 
-def shoot_home(browser, origin, tag, device, lang="", dark=False):
+def shoot_home(browser, origin, tag, device, dark=False):
     w, h, mobile, android = device
     page = browser.page(w, h, mobile=mobile, android=android, dark=dark)
-    page.goto(f"{origin}{lang}/", settle=2.5)
+    page.goto(f"{origin}/", settle=2.5)
     page.screenshot(str(OUT / f"{tag}-hero.webp"))
     wake_wall(page)
     top, height = page.eval("(() => { const r = document.getElementById('exit-wall').getBoundingClientRect(); return [r.top + scrollY, r.height]; })()")
@@ -66,7 +66,6 @@ def main():
         shoot_home(browser, origin, "home-1440", DESKTOP)
         shoot_home(browser, origin, "home-390", IPHONE)
         shoot_home(browser, origin, "home-412", ANDROID)
-        shoot_home(browser, origin, "home-es-390", IPHONE, lang="/es")
         shoot_home(browser, origin, "home-dark-1440", DESKTOP, dark=True)
         for w, h, mobile, _ in (DESKTOP, IPHONE):
             page = browser.page(w, h, mobile=mobile, reduce=True)
@@ -77,10 +76,6 @@ def main():
                 page = browser.page(w, h, mobile=mobile)
                 page.goto(origin + path, settle=1.5)
                 page.screenshot(str(OUT / f"page-{path.strip('/')}-{w}.webp"))
-            for path in ("/es/how", "/es/pricing", "/es/judges"):
-                page = browser.page(w, h, mobile=mobile)
-                page.goto(origin + path, settle=1.5)
-                page.screenshot(str(OUT / f"page-es-{path.split('/')[-1]}-{w}.webp"))
         for scenario in ("quiet", "8"):
             srv, origin = start(["--wall", scenario])
             servers.append(srv)

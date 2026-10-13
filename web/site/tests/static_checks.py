@@ -14,7 +14,7 @@ import variants
 
 WEB = Path(__file__).resolve().parents[2]
 SITE, SHARED = WEB / "site", WEB / "shared"
-PAGES = sorted((SITE / "pages").glob("*.html")) + sorted((SITE / "pages" / "es").glob("*.html"))
+PAGES = sorted((SITE / "pages").glob("*.html"))
 PARTIALS = sorted((SHARED / "partials").glob("*.html"))
 JS = sorted((SITE / "js").glob("*.js")) + sorted(SHARED.glob("*.js"))
 PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI"}
@@ -150,7 +150,7 @@ def check_banned_words():
 
 
 def config_numbers():
-    """Every number /config provides, formatted the ways stats.js prints it (en and es)."""
+    """Every number /config provides, formatted the ways stats.js prints it."""
     c = json.loads((SITE / "tests" / "fixtures" / "config.json").read_text())
     nums, seconds = set(), set()
 
@@ -179,9 +179,9 @@ def config_numbers():
                 out.add(f"{n / size:g} {unit}")
                 break
         if n % 86400 == 0 and n >= 2 * 86400:
-            out |= {f"{n // 86400} days", f"{n // 86400} días"}
+            out.add(f"{n // 86400} days")
         elif n % 3600 == 0 and n >= 3600:
-            out |= {f"{n // 3600} hours", f"{n // 3600} horas"}
+            out.add(f"{n // 3600} hours")
         if n >= 1000:
             out.add(f"{n:,}")
         if n % 1000 == 0 and n < 10_000_000:
@@ -236,8 +236,8 @@ def check_seo():
         titles.setdefault(title, []).append(str(name))
         if not desc or len(desc[0].get("content", "")) > 155:
             problems.append(f"{name}: description missing or over 155 characters")
-        if not html or html[0].get("lang") not in ("en", "es"):
-            problems.append(f"{name}: <html lang> missing")
+        if not html or html[0].get("lang") != "en":
+            problems.append(f"{name}: <html lang> is not en")
         if sum(1 for t, _ in d.tags if t == "h1") != 1:
             problems.append(f"{name}: needs exactly one <h1>")
         for prop in ("og:title", "og:description", "og:image", "og:url", "og:type"):
@@ -251,29 +251,12 @@ def check_seo():
             continue
         if not attr(d, "link", rel="canonical"):
             problems.append(f"{name}: missing canonical")
-        langs = {a.get("hreflang") for a in attr(d, "link", rel="alternate")}
-        if langs != {"en", "es", "x-default"}:
-            problems.append(f"{name}: hreflang set is {sorted(x for x in langs if x)}")
     for title, files in titles.items():
         if len(files) > 1:
             problems.append(f"title {title!r} used by {files}")
     for page in ("index", "faq"):
-        for lang_dir in ("", "es/"):
-            if 'type="application/ld+json"' not in (SITE / "pages" / f"{lang_dir}{page}.html").read_text():
-                problems.append(f"pages/{lang_dir}{page}.html: no JSON-LD")
-    return problems
-
-
-def check_translations():
-    en = {p.name for p in (SITE / "pages").glob("*.html")}
-    es = {p.name for p in (SITE / "pages" / "es").glob("*.html")}
-    problems = [f"pages/es/{n} missing" for n in sorted(en - es)]
-    for f in sorted((SITE / "pages" / "es").glob("*.html")):
-        text = f.read_text()
-        if "<!--#include header-es-->" not in text or "<!--#include footer-es-->" not in text:
-            problems.append(f"{f.relative_to(WEB)}: uses the English header or footer")
-        for m in re.finditer(r'href="/(how|security|pricing|faq|judges|terms|privacy|abuse|status)\b', text):
-            problems.append(f"{f.relative_to(WEB)}: links to the English /{m[1]}")
+        if 'type="application/ld+json"' not in (SITE / "pages" / f"{page}.html").read_text():
+            problems.append(f"pages/{page}.html: no JSON-LD")
     return problems
 
 
@@ -296,20 +279,17 @@ def check_trademark():
         first = re.search(r"\bTari\b(™)?", main)
         if first and not first[1]:
             problems.append(f"{f.relative_to(WEB)}: first mention of Tari in the page has no ™")
-    lines = {"footer.html": ["Built on the Tari™ Ootle testnet.", "It is not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project.", "“Tari” is a trademark of Tari Labs. All rights reserved."],
-             "footer-es.html": ["Construido sobre la testnet de Tari™ Ootle.", "No está afiliado, respaldado ni patrocinado por Tari Labs, el Consejo de Tari ni el proyecto Tari.", "“Tari” es una marca de Tari Labs. Todos los derechos reservados."]}
-    for name, required in lines.items():
-        text = (SHARED / "partials" / name).read_text()
-        problems += [f"partials/{name}: missing mandatory line {line!r}" for line in required if line not in text]
+    required = ["Built on the Tari™ Ootle testnet.", "It is not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project.", "“Tari” is a trademark of Tari Labs. All rights reserved."]
+    text = (SHARED / "partials" / "footer.html").read_text()
+    problems += [f"partials/footer.html: missing mandatory line {line!r}" for line in required if line not in text]
     for f in PAGES:
-        if not re.search(r"<!--#include footer(-es)?-->", f.read_text()):
+        if "<!--#include footer-->" not in f.read_text():
             problems.append(f"{f.relative_to(WEB)}: no footer (mandatory lines)")
     # No claim of official status: every sentence that uses those words must be a question or a denial.
     for f in PAGES + PARTIALS:
         for sentence in re.split(r"(?<=[.?!])\s+", " ".join(" ".join(parse(f).text).split())):
-            if re.search(r"\b(official (partner|project|app|product)|partner(ed)? (of|with)|(endorsed|supported|sponsored) by Tari|"
-                         r"proyecto oficial|socio oficial|(respaldado|patrocinado) por Tari)\b", sentence, re.I) \
-                    and not re.search(r"\?|\bnot\b|\bno\b|\bni\b|^¿", sentence, re.I):
+            if re.search(r"\b(official (partner|project|app|product)|partner(ed)? (of|with)|(endorsed|supported|sponsored) by Tari)\b",
+                         sentence, re.I) and not re.search(r"\?|\bnot\b|\bno\b", sentence, re.I):
                 problems.append(f"{f.relative_to(WEB)}: {sentence[:90]!r} reads as a claim of official status")
     return problems
 
@@ -317,11 +297,10 @@ def check_trademark():
 def check_partials():
     """The header's testnet chip and the footer repeat the status line; they must not drift."""
     problems = []
-    for suffix in ("", "-es"):
-        line = (SHARED / "partials" / f"status-line{suffix}.html").read_text().split("\n", 1)[1].strip()
-        for part in ("header", "footer"):
-            if line not in (SHARED / "partials" / f"{part}{suffix}.html").read_text():
-                problems.append(f"partials/{part}{suffix}.html: status line differs from status-line{suffix}.html")
+    line = (SHARED / "partials" / "status-line.html").read_text().split("\n", 1)[1].strip()
+    for part in ("header", "footer"):
+        if line not in (SHARED / "partials" / f"{part}.html").read_text():
+            problems.append(f"partials/{part}.html: status line differs from status-line.html")
     if (SHARED / "brand" / "favicon.svg").read_bytes() != (SITE / "static" / "favicon.svg").read_bytes():
         problems.append("static/favicon.svg differs from shared/brand/favicon.svg")
     return problems
@@ -333,9 +312,8 @@ def check_privacy_inventory():
         return []
     tables = re.findall(r"CREATE TABLE (\w+)", schema.read_text())
     problems = []
-    for page in (SITE / "pages" / "privacy.html", SITE / "pages" / "es" / "privacy.html"):
-        text = page.read_text()
-        problems += [f"{page.relative_to(WEB)}: table {t} is not listed" for t in tables if f"<code>{t}</code>" not in text]
+    text = (SITE / "pages" / "privacy.html").read_text()
+    problems += [f"pages/privacy.html: table {t} is not listed" for t in tables if f"<code>{t}</code>" not in text]
     return problems
 
 
@@ -422,7 +400,7 @@ def check_static():
     # One contact, the dead drop: a GitHub advisory link would only work once the repository is public
     # and private reporting is switched on, and RFC 9116 wants every Contact to work.
     for field in ("Contact: {{SECURITY_DROP_URL}}", "Expires: ",
-                  "Preferred-Languages: en, es", "Policy: {{ORIGIN}}/security", "Canonical: {{ORIGIN}}/.well-known/security.txt"):
+                  "Preferred-Languages: en", "Policy: {{ORIGIN}}/security", "Canonical: {{ORIGIN}}/.well-known/security.txt"):
         if field not in sec:
             problems.append(f"security.txt: missing {field!r}")
     if "advisories" in sec:
@@ -432,7 +410,6 @@ def check_static():
         if not (s / icon["src"].lstrip("/")).is_file():
             problems.append(f"manifest icon {icon['src']} missing")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
-                              ("og-es.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
                               ("apple-touch-icon.png", (180, 180), None)):
         f = s / name
@@ -479,8 +456,7 @@ def indexable_paths():
     for f in PAGES:
         if f.stem == "404" or attr(parse(f), "meta", name="robots"):
             continue
-        prefix = "/es" if f.parent.name == "es" else ""
-        out.append(prefix + "/" if f.stem == "index" else f"{prefix}/{f.stem}")
+        out.append("/" if f.stem == "index" else f"/{f.stem}")
     return out
 
 
@@ -531,32 +507,31 @@ def check_ui_strings():
     mode, so a label the app shows only in the other mode (or only in the other send mode, like the
     demo-pay button) fails. SKIP until the app-ui builder writes web/app/i18n/."""
     problems = []
-    for lang, page, home in (("en", "judges.html", "index.html"), ("es", "es/judges.html", "es/index.html")):
-        i18n = WEB / "app" / "i18n" / f"{lang}.json"
-        if not i18n.is_file():
-            return None
-        strings = json.loads(i18n.read_text())
-        patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".*", re.escape(s.strip())) + "$") for s in _strings(strings)]
-        own = " ".join(parse(SITE / "pages" / home).text)
-        for (proof, keys), mode in itertools.product(PAY_STEPS.items(), ("relay", "direct")):
-            text = variants.resolve((SITE / "pages" / page).read_text(), {"proof": proof, "send_mode": mode})
-            steps = re.findall(r'<li[^>]*><span class="n">.*?</li>', text)
-            pay = [strings.get(f"upgrade.step.{k}") for k in keys]
-            for bold in re.findall(r"<strong>(.*?)</strong>", " ".join(steps)):
-                phrases = [p.strip() for p in re.sub(r"<[^>]+>|[“”✓]", "", HIDDEN_SPAN.sub("", bold)).split("→")]
-                if pay[0] in phrases and phrases != pay:
-                    problems.append(f"pages/{page} ({proof}, {mode}): payment steps “{' → '.join(phrases)}”, the app shows "
-                                    f"“{' → '.join(str(s) for s in pay)}”")
-                for phrase in phrases:
-                    if phrase and phrase not in own and not any(p.match(phrase) for p in patterns):
-                        problems.append(f"pages/{page} ({mode}): quotes “{phrase}”, which web/app/i18n/{lang}.json doesn't say")
+    i18n = WEB / "app" / "i18n" / "en.json"
+    if not i18n.is_file():
+        return None
+    strings = json.loads(i18n.read_text())
+    patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".*", re.escape(s.strip())) + "$") for s in _strings(strings)]
+    own = " ".join(parse(SITE / "pages" / "index.html").text)
+    for (proof, keys), mode in itertools.product(PAY_STEPS.items(), ("relay", "direct")):
+        text = variants.resolve((SITE / "pages" / "judges.html").read_text(), {"proof": proof, "send_mode": mode})
+        steps = re.findall(r'<li[^>]*><span class="n">.*?</li>', text)
+        pay = [strings.get(f"upgrade.step.{k}") for k in keys]
+        for bold in re.findall(r"<strong>(.*?)</strong>", " ".join(steps)):
+            phrases = [p.strip() for p in re.sub(r"<[^>]+>|[“”✓]", "", HIDDEN_SPAN.sub("", bold)).split("→")]
+            if pay[0] in phrases and phrases != pay:
+                problems.append(f"pages/judges.html ({proof}, {mode}): payment steps “{' → '.join(phrases)}”, the app shows "
+                                f"“{' → '.join(str(s) for s in pay)}”")
+            for phrase in phrases:
+                if phrase and phrase not in own and not any(p.match(phrase) for p in patterns):
+                    problems.append(f"pages/judges.html ({mode}): quotes “{phrase}”, which web/app/i18n/en.json doesn't say")
     return problems
 
 
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
-          ("SEO metadata (M-04)", check_seo), ("Spanish pages", check_translations),
+          ("SEO metadata (M-04)", check_seo),
           ("trademark and mandatory lines (M-05)", check_trademark), ("partials in sync", check_partials),
           ("privacy inventory covers the schema (M-06)", check_privacy_inventory),
           ("contrast table (M-03)", check_contrast), ("static files (M-04)", check_static),

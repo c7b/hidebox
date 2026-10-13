@@ -113,31 +113,20 @@ at the end of `REVIEW-devil.md`. Items marked **(review)** came out of the devil
    keeps it with `saveJudgePass()` from `/app/lib/store.js`, i.e. `sessionStorage['mutis.judge']`,
    for the tab. Please read it with `savedJudgePass()` and hand it to `pow.setJudgePass()`; app-core
    already drops it when the server answers `details.judge = "invalid"`.
-7. **Words the site quotes from your UI** (EN / ES); please use exactly these, or tell me. A static
-   check (`check_ui_strings`) compares every bold phrase in a `/judges` step with
-   `web/app/i18n/{en,es}.json` once those files exist (`{placeholders}` match anything) and fails on
-   a phrase they don't say:
-   - `/judges`: "Opens once" / "Se abre una vez", "Copy link" / "Copiar enlace", "Open it" / "Abrirlo",
-     "This secret already made its exit." / "Este secreto ya hizo mutis.", "What we know about this
-     link" / "Lo que sabemos de este enlace", "Open my locker" / "Abrir mi casillero", "Later" / "Más
-     tarde", "Leave me a file" / "Déjame un archivo", "Make my drop link" / "Crear mi enlace de buzón",
-     "Location and camera data removed" / "Se quitaron los datos de ubicación y de la cámara",
-     "Delivered" / "Entregado", "Left in your drop" / "Dejado en tu buzón", "Send it to a Tari address
-     instead" / "Mejor envíalo a una dirección de Tari", "Send" / "Enviar", "Sent" / "Enviado", "On the
-     Ootle ✓" / "En el Ootle ✓", "What the chain sees" / "Lo que ve la cadena", "Inbox" / "Bandeja",
-     "Open" / "Ábrela", "See what a view key sees" / "Ver lo que ve una llave de vista", "{n} files
-     readable with this key" / "{n} archivos legibles con esta llave", "Get more room" / "Más
-     espacio", "Pay with demo tTARI" / "Pagar con tTARI de demostración", "Waiting → Seen on chain →
-     Amount proven → Added" / "Esperando → Visto en la cadena → Monto probado → Agregado", "Verify" /
-     "Verificar", the 12-emoji safety code. Track B now puts the drop link (typeable) before the
-     send to a Tari address (review M14).
-   - `/how`, `/security`, `/faq`, `/privacy`: "Check it on Tari's indexer" / "Compruébalo en el
-     indexador de Tari", "The recipient uses another Ootle wallet" / "Quien lo recibe usa otra cartera
-     de Ootle", the "What we know" page / "Lo que sabemos", "Delete my locker" / "Borrar mi casillero",
-     keeping the original photo (unstripped), "This secret already made its exit." / "Este secreto ya
-     hizo mutis.".
-   - Vocabulary: locker / casillero, drop link / enlace de buzón, view key / llave de vista, safety
-     code / código de seguridad.
+7. **Words the site quotes from your UI**; please use exactly these, or tell me. A static check
+   (`check_ui_strings`) compares every bold phrase in a `/judges` step with `web/app/i18n/en.json`
+   (`{placeholders}` match anything) and fails on a phrase it doesn't say:
+   - `/judges`: "Opens once", "Copy link", "Open it", "This secret already made its exit.", "What we
+     know about this link", "Open my locker", "Later", "Leave me a file", "Make my drop link",
+     "Location and camera data removed", "Delivered", "Left in your drop", "Send it to a Tari address
+     instead", "Send", "Sent", "On the Ootle ✓", "What the chain sees", "Inbox", "Open", "See what a
+     view key sees", "{n} files readable with this key", "Get more room", "Pay with demo tTARI",
+     "Waiting → Seen on chain → Amount proven → Added", "Verify", the 12-emoji safety code. Track B
+     now puts the drop link (typeable) before the send to a Tari address (review M14).
+   - `/how`, `/security`, `/faq`, `/privacy`: "Check it on Tari's indexer", "The recipient uses
+     another Ootle wallet", the "What we know" page, "Delete my locker", keeping the original photo
+     (unstripped), "This secret already made its exit.".
+   - Vocabulary: locker, drop link, view key, safety code.
 8. **Direct-mode inbox (from app-core's note, now printed on `/security` in direct mode):** "inboxes
    show a memo that isn't exactly a mutis link as plain text, never as a link". Please keep that true
    in the inbox UI.
@@ -266,7 +255,7 @@ what became of them.
 | server §3 | render the tx view as given | the home chain card describes the output that carries the sealed key and shows only when that output reads `amount: "hidden"` and `owner: "one-time key"`; otherwise it stays hidden (it prints "hidden" for both) |
 | server decisions (`/stats`, `/stats/wall`), Integrator 7, review L7, L10 | `/privacy`, `/how` and the glass box | `/privacy` gains "What we publish" (every `/stats` field, the latest upload to the minute, the wall's classes and that someone who knows a file's size and rule may recognise it); backups hold the wrapped key of every link open at backup time; erased rows can sit in the write-ahead log and the backups. `/how`: the live-numbers row (no time-left or state any more), "Sees and stores" (when it left, the first open's time, owner-only), backups. Glass box "Opens": "a count, and the time of the first open". EN and ES |
 | deploy, site 1 (review H4) | remove "Decoy sends today" | gone from `pages/judges.html`, `pages/es/judges.html` and `judges.js`; fixture without `decoys_today` |
-| deploy, site 2 (review M1) | `wasm_sha256` may be `null` | `/judges` shows "not reported yet" / "todavía no reportado" |
+| deploy, site 2 (review M1) | `wasm_sha256` may be `null` | `/judges` shows "not reported yet" |
 | deploy, site 3 (review L5) | verify-deploy needs Python 3.11 | `/security#verify`: "It needs git and Python 3.11 or newer." (EN, ES) |
 | deploy site 4, review M8, 11-brand P-9 | link `/releases.json` once SealLog is on | `/security#verify`, `seallog=on` only: release hashes notarized through SealLog since it went on, `/releases.json`, and only events signed by the log's writer key count (template review M3); C10's sentence gains "release hashes notarized on the Ootle" in the same variant |
 | deploy site 5, site §1.15 (review L14) | font caching | Caddy caches `/shared/fonts/*` for a day; the names stay as 12-integration fixed them. Closed |

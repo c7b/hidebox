@@ -13,7 +13,7 @@ import serve
 from cdp import Browser
 
 ALL_PAGES = ["/", "/how", "/security", "/pricing", "/faq", "/judges", "/terms", "/privacy", "/abuse", "/status"]
-ALL_PAGES += ["/es" + ("/" if p == "/" else p) for p in ALL_PAGES] + ["/no-such-page", "/es/no-such-page"]
+ALL_PAGES += ["/no-such-page"]
 NOTES: list[str] = []
 
 
@@ -322,9 +322,9 @@ def check_variants(browser):
             if f"Waiting → {steps} → Added" not in page.eval("document.body.innerText"):
                 problems.append(f"{args}: /judges B6 doesn't show the app's payment steps for this mode ({steps})")
             if "direct" in args:   # review H2: the sponsor grant's on-chain linkage is disclosed where sends are explained
-                for path in ("/", "/how", "/security", "/es/", "/es/how", "/es/security"):
+                for path in ("/", "/how", "/security"):
                     page.goto(origin + path, settle=1.5)
-                    if not re.search(r"sponsor wallet|cartera patrocinadora", page.eval("document.body.innerText")):
+                    if "sponsor wallet" not in page.eval("document.body.innerText"):
                         problems.append(f"direct mode: {path} doesn't say sends link back to our sponsor wallet")
     return problems
 
@@ -418,10 +418,9 @@ def check_reveal(browser):
 
 
 def check_interactions(browser):
-    """Lights off persists across a reload; EN · ES points at this page's translation; the judge pass is
-    validated, lower-cased and kept where the app reads it (localStorage 'mutis.judge' with its expiry, app-core
-    store.js), and a /judges#pass=… link saves it on opening;
-    the hero's line 2 steps aside while the widget's card shows (NOTES-ui, site 3)."""
+    """Lights off persists across a reload; the judge pass is validated, lower-cased and kept where the
+    app reads it (localStorage 'mutis.judge' with its expiry, app-core store.js), and a /judges#pass=…
+    link saves it on opening; the hero's line 2 steps aside while the widget's card shows (NOTES-ui, site 3)."""
     problems = []
     with server() as origin:
         page = browser.page()
@@ -438,8 +437,6 @@ def check_interactions(browser):
         page.goto(origin + "/how")
         if page.eval("document.documentElement.dataset.theme") != "dark":
             problems.append("Lights off didn't persist")
-        if page.eval("document.querySelector('a[data-lang=\"es\"]').getAttribute('href')") != "/es/how":
-            problems.append("ES link doesn't point at /es/how")
         page.goto(origin + "/judges")
         if page.eval("document.querySelector('[data-judge-pass]').hidden"):
             problems.append("the judge pass box stays hidden")
@@ -466,7 +463,7 @@ CHECKS = [("fonts load, no OTS error", check_fonts), ("every page, desktop and 3
           ("the exit wall (M-02)", check_wall), ("the exit wall at 4x CPU on a phone", check_wall_frames),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
-          ("canary reveal (P1)", check_reveal), ("theme, language, judge pass", check_interactions)]
+          ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions)]
 
 
 def run_all():

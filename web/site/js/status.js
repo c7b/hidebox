@@ -1,27 +1,16 @@
 // SPDX-License-Identifier: MIT
 // /status: the public subset our health check writes to /status.json every five minutes.
-import { getJson, lang, locale } from './site.js';
+import { getJson, locale } from './site.js';
 
 const T = {
-  en: {
-    names: { https: 'Web server and certificate', api: 'API', chain_worker: 'Chain worker', walletd: 'Our wallet',
-      sponsor_balance: 'Demo tTARI in the sponsor wallet', mirror: 'Our copy of the chain', canary: 'Hourly test file',
-      credits: 'Crediting payments', disk: 'Disk space', budgets: 'Daily budgets' },
-    states: { green: 'working', amber: 'slow or near a limit', red: 'broken' },
-    reasons: { budget: (kind, slice, pct) => `${pct}% of today's ${slice} budget for ${kind} is used.`, 'abuse.new_reports': 'New abuse reports are waiting for us.' },
-    kinds: { sponsor: 'sponsor grants', courier: 'deliveries', demo_pay: 'demo payments', decoy: 'decoy sends' },
-    slices: { public: 'public', reserved: 'reserved', evidence: 'test-delivery' },
-  },
-  es: {
-    names: { https: 'Servidor web y certificado', api: 'API', chain_worker: 'Proceso de la cadena', walletd: 'Nuestra cartera',
-      sponsor_balance: 'tTARI de demostración en la cartera patrocinadora', mirror: 'Nuestra copia de la cadena',
-      canary: 'Archivo de prueba de cada hora', credits: 'Abono de pagos', disk: 'Espacio en disco', budgets: 'Presupuestos diarios' },
-    states: { green: 'funciona', amber: 'lento o cerca de un límite', red: 'roto' },
-    reasons: { budget: (kind, slice, pct) => `Se usó el ${pct}% del presupuesto ${slice} de hoy para ${kind}.`, 'abuse.new_reports': 'Hay reportes de abuso nuevos esperándonos.' },
-    kinds: { sponsor: 'saldos patrocinados', courier: 'entregas', demo_pay: 'pagos de demostración', decoy: 'envíos señuelo' },
-    slices: { public: 'público', reserved: 'reservado', evidence: 'de entregas de prueba' },
-  },
-}[lang];
+  names: { https: 'Web server and certificate', api: 'API', chain_worker: 'Chain worker', walletd: 'Our wallet',
+    sponsor_balance: 'Demo tTARI in the sponsor wallet', mirror: 'Our copy of the chain', canary: 'Hourly test file',
+    credits: 'Crediting payments', disk: 'Disk space', budgets: 'Daily budgets' },
+  states: { green: 'working', amber: 'slow or near a limit', red: 'broken' },
+  reasons: { budget: (kind, slice, pct) => `${pct}% of today's ${slice} budget for ${kind} is used.`, 'abuse.new_reports': 'New abuse reports are waiting for us.' },
+  kinds: { sponsor: 'sponsor grants', courier: 'deliveries', demo_pay: 'demo payments', decoy: 'decoy sends' },
+  slices: { public: 'public', reserved: 'reserved', evidence: 'test-delivery' },
+};
 
 // Reason codes are fixed strings from the health check (budget.<kind>.<slice>.<percent>, abuse.new_reports).
 function reasonText(code) {
