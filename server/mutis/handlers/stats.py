@@ -58,8 +58,9 @@ def _size_class(size: int) -> int:
 
 def build_wall(ctx) -> dict:
     conn, now = ctx.db, ctx.now
-    rows = conn.execute("SELECT * FROM items WHERE canary = 0 AND created_hour >= ? AND created_hour <= ? "
-                        "AND state NOT IN ('uploading', 'removed') ORDER BY created_hour DESC LIMIT ?",
+    rows = conn.execute("SELECT * FROM items WHERE canary = 0 AND kind = 'file' AND created_hour >= ? "
+                        "AND created_hour <= ? AND state NOT IN ('uploading', 'removed') "
+                        "ORDER BY created_hour DESC LIMIT ?",
                         (now - 7 * 86400, now - WALL_HOLD_S, WALL_MAX)).fetchall()
     lockers = []
     if len(rows) >= WALL_MIN:

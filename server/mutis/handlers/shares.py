@@ -252,6 +252,10 @@ def create(ctx, item_id: str):
         item = get_item(conn, item_id)
         if item["state"] != "ready":
             raise ApiError(409, "item_not_ready", "Finish the upload first.")
+        if item["trashed_at"] is not None:
+            raise ApiError(409, "trashed", "Bring it back from the Trash first.")
+        if item["kind"] == "folder":
+            raise ApiError(409, "conflict", "Folder links aren't on yet.")
         if conn.execute("SELECT COUNT(*) FROM shares WHERE item_id = ?", (item_id,)).fetchone()[0] >= per_item:
             raise ApiError(409, "conflict", "This file has as many links as it can have.",
                            details={"max_links": per_item})
@@ -465,12 +469,8 @@ def delete_item(ctx, item_id: str):
     item = get_item(conn, item_id)
     require_owner(ctx, item)
     with db.tx(conn):
-        item = get_item(conn, item_id)
-        if item["state"] == "uploading":
-            items.unlink(conn, ctx.app.blobs, item_id, "deleted", ctx.now)
-        else:
-            items.doom_item(conn, item_id, "owner_deleted", ctx.now)
-            items.unlink_if_unreferenced(conn, ctx.app.blobs, item_id, ctx.now)
+        get_item(conn, item_id)
+        items.delete_tree(conn, ctx.app.blobs, item_id, "owner_deleted", ctx.now)   # a folder: its subtree too
     return Response(204)
 
 
