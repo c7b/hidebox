@@ -42,15 +42,18 @@ def real_errors(page):
 
 
 def check_fonts(browser):
-    """No OTS parsing error; all three Mutis faces load (11-brand §13.3 step 5)."""
+    """DESIGN.md: system faces only. No page asks for a font file, none is registered, no OTS error."""
+    problems = []
     with server() as origin:
-        page = browser.page()
-        page.goto(origin + "/security")
-        states = page.eval("Promise.all([...document.fonts].map(f => f.load().then(() => f.family + ' ' + f.weight + ' ' + f.status, () => f.family + ' failed')))", True)
-        problems = [line for line in page.console() if "OTS" in line]
-        problems += [s for s in states if not s.endswith("loaded")]
-        NOTES.append(f"fonts: {', '.join(states)}; OTS errors: {len([l for l in page.console() if 'OTS' in l])}")
-        return problems
+        for path in ("/", "/how"):
+            page = browser.page()
+            page.goto(origin + path, settle=1)
+            fonts = page.eval("[...document.fonts].map((f) => f.family)")
+            files = [r["url"] for r in page.requests() if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))]
+            problems += [f"{path}: font face {f}" for f in fonts] + [f"{path}: requested {u}" for u in files]
+            problems += [f"{path}: {line}" for line in page.console() if "OTS" in line]
+        NOTES.append(f"fonts: none registered or requested on / and /how ({len(problems)} problems)")
+    return problems
 
 
 def check_pages(browser):
@@ -458,7 +461,7 @@ def check_interactions(browser):
     return problems
 
 
-CHECKS = [("fonts load, no OTS error", check_fonts), ("every page, desktop and 360 px", check_pages),
+CHECKS = [("no web fonts (system faces only)", check_fonts), ("every page, desktop and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("the exit wall (M-02)", check_wall), ("the exit wall at 4x CPU on a phone", check_wall_frames),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),

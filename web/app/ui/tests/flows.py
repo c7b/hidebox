@@ -966,7 +966,7 @@ def dark(t):
     a = t.actor("desktop", dark=True, reduced_motion=True)
     home(t, a)
     url = seal_text(a, "in the dark")
-    t.check(a.eval("getComputedStyle(document.body).backgroundColor") == "rgb(14, 13, 11)", "the stage background in dark mode")
+    t.check(a.eval("getComputedStyle(document.body).backgroundColor") == "rgb(19, 24, 58)", "the night background in dark mode")
     t.shot(a, "home-1440-dark-sealed")
     b = t.actor("iphone", dark=True, reduced_motion=True)
     t.check(open_link(b, url) == "opened", "opens in dark mode with reduced motion")

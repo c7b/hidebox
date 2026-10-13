@@ -124,7 +124,7 @@ mutis /ˈmu.tis/ (MOO-tees).
 ### How it's built
 Built with AI coding agents under the author's direction. The design, threat model and crypto choices were reviewed by the author; the verification evidence is in the repository ({{REPO_URL}}/tree/main/docs/evidence).
 In your browser: our own modules, its WebCrypto, and one vendored library, Tari's official ootle-wasm, pinned by its hash. On the server: Python's standard library, Debian's Caddy and Node, and Tari's walletd for the chain. No npm install, anywhere.
-Our script typeface is Mutis Script, a renamed and subset copy of Courier Prime by Quote-Unquote Apps (SIL Open Font License 1.1 (/shared/fonts/OFL.txt)).
+No web fonts: every page uses the faces your system already has.
 
 # Security ({{ORIGIN}}/security)
 
