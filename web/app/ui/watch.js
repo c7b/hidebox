@@ -60,7 +60,8 @@ export async function render(main) {
       throw uiError('view_key');
     }
     const { viewPk } = ootle.decodeAddress(address.value);
-    const derived = await ootle.viewPublicKey(viewSk);
+    // A key of the right length that isn't a valid scalar is a wrong key too, not a crash.
+    const derived = await ootle.viewPublicKey(viewSk).catch(() => { throw uiError('view_key'); });
     if (!equal(derived, viewPk)) throw uiError('address_mismatch');
     return { viewSk, viewPk };
   }
