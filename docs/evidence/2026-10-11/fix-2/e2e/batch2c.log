@@ -1,0 +1,6 @@
+batch2c start 18:03:19 only=E-J
+FAIL E-J     372.5s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
+           timed out after 300 s waiting for: document.querySelector('[data-testid="invoice-status"]')?.dataset.status === 'credited'
+e2e: FAIL {'PASS': 0, 'FAIL': 1, 'SKIP': 0} → e2e/batch2c/20261012-180319/report.json
+exit 1
+batch2c end 18:09:37

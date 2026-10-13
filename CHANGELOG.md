@@ -28,6 +28,13 @@
   drop page carries its own noindex.
 - Docs: `SECURITY.md`, `docs/architecture.md` (parts, users, trust boundaries, who sees what, the life
   of a file, the Tari parts), README's "How it's built".
+- Payments: the hourly reconcile no longer freezes every pack on one round. A mismatch holds credits
+  and is checked again five minutes later; a second one in a row freezes them as before. The
+  indexers serve outputs unverified for about half a minute at some epoch changes, and one such
+  round had frozen production for three hours. A 404 that isn't the indexer's own JSON answer
+  counts as "unknown".
+- App: the locker's IndexedDB records load with the locker (`lib/idb.js`), so a first drop stays
+  inside the widget's 40 KB budget.
 
 ## 2026-10-12: fix pass after the judge-run and claims reviews (docs/review/fix-log.md)
 

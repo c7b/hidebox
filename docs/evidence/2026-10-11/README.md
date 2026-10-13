@@ -60,6 +60,28 @@ scenario and E-J in direct mode (`batch1.log` to `batch2e.log`, `reports/`, a fe
 in `shots/`); the two E-13 failures and E-J's first attempt were the test and the rate limit, not the
 product (the fix-log's "Evidence" section). The E2E data was purged by id (`deploy/purge.txt`); the wall reads quiet, canary only.
 
+## Second pass (`fix-2/`, 2026-10-12, 09:50–19:15)
+
+The second fix pass (the security, anti-slop, SEO and documentation reviews; docs/review/fix-log.md,
+"Second pass") deployed release `9e7bc34…-c47090408` at 10:37 CST and, after E-J found a fault in the
+server's hourly reconcile, release `47cfbb0b7b30c1f947c44da123535fde7e5dae1f-cf21f0fbd` at 18:51, which
+is live at the end of the pass (later commits change only `docs/` and `CHANGELOG.md`).
+
+- `suites/`: the four suites on the server as `build`, from a tarball of `47cfbb0` (server 202 OK, site
+  28/28, app-ui 229/229 with the widget's payload at 40,176 B after a drop, app-core ALL PASS).
+- `deploy/`: for each release, the deploy log, D-09 (`verify-deploy`, 0 differences across 145 files,
+  the SealLog template byte for byte on chain), D-01 against production (the new 405 checks included),
+  the lint, copy check and deploy tests; `post-deploy-9e7bc34.txt`; `credit-freeze-15-37.txt` (the
+  reconcile and health timeline of the freeze, and the indexer probe that caught unverified answers at
+  three epoch changes); `purge.txt` and `post-purge-47cfbb0.txt` (health, status green, config without
+  `e2e_expiry_s`, the wall quiet, 20 judge passes, the security drop active).
+- `e2e/`: `report.json` (the final result of each of the 25 scenarios, all PASS, and every attempt),
+  the batch logs and `reports/`: `batch1` (19 of 20; E-24's check raced a slow `--jitless` page and was
+  fixed in the test), `batch1b` (E-24 PASS), `batch2a` (E-09, E-10, E-12, E-13 PASS), `batch2b` (E-J
+  FAIL: the day's sponsor grants for judge passes were spent, not the product), `batch2c` (E-J FAIL at
+  B6: credits frozen since 15:37, the product, fixed in `47cfbb0`), `batch2d` (E-J PASS in 106 s on
+  `47cfbb0`); a few screenshots in `shots/` (none shows a link with its key or a transaction id).
+
 ## Files
 
 - `seallog/`: publish dry run, publish, instantiate, `check --onchain`, the component header from the indexer, the `service` top-up.
