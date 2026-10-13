@@ -1,0 +1,21 @@
+21:02 CST
+25
+takedown: 25 removed, 0 not found
+{"payments": 0, "invoices": 0, "passes": 1}
+plan (by id, from a read-only diff against the 20:19 CST snapshot): 19 items, 6 drops, 1 judge pass; 0 payments, 0 invoices to delete; 1 credited invoice kept (E-J's B6 pack, paid on chain); 9 new test lockers kept
+check before the purge:
+{"item_hours_utc": ["2026-10-13 02:00", "2026-10-13 03:00"], "items_anonymous": 14, "items_owned_by_new_lockers": 5, "items_owned_by_old_identities": 0, "drops": [{"created_day": "2026-10-13", "label": "E2E E-17", "address_seen_before": false}, {"created_day": "2026-10-13", "label": "Council", "address_seen_before": false}, {"created_day": "2026-10-13", "label": "E2E E-20", "address_seen_before": false}, {"created_day": "2026-10-13", "label": "E2E E-20", "address_seen_before": false}, {"created_day": "2026-10-13", "label": "E2E E-08", "address_seen_before": false}, {"created_day": "2026-10-13", "label": "Council computer", "address_seen_before": false}]}
+
+== post-purge 2026-10-13T03:02:46Z
+judge passes 20
+security drop 3w7m8k2v5t active
+active drops 5
+== /api/v1/config e2e_expiry_s
+absent
+0
+== /status.json
+overall green updated 1791860502
+== /api/v1/stats/wall
+{"lockers":[],"quiet":true,"canary":{"sealed_min":57,"size_stored":4112}}
+== /api/v1/health
+{"ok":true,"version":"abc5d71f33d05bca462c76b9169e70e52bb2f2b6","time":1791860567}

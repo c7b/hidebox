@@ -1,0 +1,6 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+. "$(dirname "$0")/_common"
+log "ufw $*"
+[ "$1" = status ] && { echo "Status: ${DRY_UFW:-active}"; echo "22/tcp LIMIT Anywhere"; echo "80/tcp ALLOW Anywhere"; echo "443/tcp ALLOW Anywhere"; }
+exit 0

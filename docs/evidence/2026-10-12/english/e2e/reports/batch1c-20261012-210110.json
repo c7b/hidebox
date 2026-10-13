@@ -1,0 +1,19 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-20",
+   "title": "Accessibility: every control named; keyboard-only seal and copy; the live region speaks",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 11.0,
+   "notes": [
+    "ok: home: every control has an accessible name ([])",
+    "ok: Tab reaches 'or paste text'",
+    "ok: the live region announces the sealed state",
+    "ok: sealed card: every control has an accessible name",
+    "ok: drop page: every control has an accessible name"
+   ]
+  }
+ ]
+}

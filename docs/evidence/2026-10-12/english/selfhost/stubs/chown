@@ -1,0 +1,4 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+. "$(dirname "$0")/_common"
+log "chown $*"

@@ -1,0 +1,3 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+echo -n "install ok installed"

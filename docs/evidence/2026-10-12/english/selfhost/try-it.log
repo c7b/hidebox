@@ -1,0 +1,13 @@
+$ git clone <repository> mutis && cd mutis   # commit abc5d71
+$ python3 -I tools/build.py --config deploy/config/mutis.toml.example --origin http://127.0.0.1:8797 --web web --out <dist> --release <release>
+build: OK {"content_id": "cc574e92", "files": 129, "git_sha": "abc5d71f33d05bca462c76b9169e70e52bb2f2b6", "holding": false, "origin": "http://127.0.0.1:8797", "pages": 11, "vendored_checked": 6, "version": "abc5d71"}
+$ python3 -I server/bin/mutis-api --dev --data <data> --dist <dist> --port 8797 --pow-bits 10 &
+GET / → 200
+GET /how → 200
+GET /judges → 200
+GET /es/ → 404
+GET /es/how → 404
+GET /api/v1/health → 200
+GET /locker → 200
+GET /sitemap.xml → 200
+sitemap URLs: 9; hreflang or lang="es" on /: 0

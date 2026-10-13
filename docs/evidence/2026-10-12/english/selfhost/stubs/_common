@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: MIT
+LOG="$DRY_ROOT/actions.log"
+PW="$DRY_ROOT/fake-passwd"   # name:uid:groups(comma)
+log() { printf '%s\n' "$*" >> "$LOG"; }
