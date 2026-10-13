@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Devil's-advocate review: site (`web/site/**`, `web/shared/**`)
 
+> Historical record (2026-10-11). The site and app also had Spanish pages then; the owner had them
+> removed on 2026-10-12 (CHANGELOG), so mentions of `/es/`, `es.json` and the language switch below
+> describe code that is now only in the git history. The current layout is in this directory's README.
+
 Reviewer: `review-site`, 2026-10-11. I read every page, partial, script and stylesheet, the README,
 ACCEPTANCE and NOTES, and checked them against 12-integration, 10-spec §0, §1.4, §3, §6, §12–§16, §18 and
 11-brand §7–§13. I re-ran everything myself; nothing below is taken from the builder's report. The probe
