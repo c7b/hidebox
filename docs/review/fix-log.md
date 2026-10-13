@@ -359,7 +359,7 @@ is the check for what is served.
    day; journald keeps 7 days). Sends, grants, the canary and checkpoints are unaffected. Leave
    `/home/drive/wallet` alone; look at walletd's pending transactions in the next pass.
 4. **The rewritten history is on GitHub; the old commits still answer by id.** `main` was force-pushed
-   at 19:40 and lists only the rewritten history (58 commits, none of the 11 old ones), but GitHub keeps
+   at 19:33 and lists only the rewritten history (none of the 11 old commits), but GitHub keeps
    unreferenced commits reachable by their id (checked: the old head still answers). The repository is
    private; before making it public, ask GitHub Support to remove the unreferenced commits (owner's
    account, Tier 3).
