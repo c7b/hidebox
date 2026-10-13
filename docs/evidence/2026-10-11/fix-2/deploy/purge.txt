@@ -1,0 +1,9 @@
+Purge of the second pass's E2E data, 2026-10-12 19:07 CST, by id from a read-only diff against the 10:46 CST snapshot (the ids an E2E run can create):
+plan: {'items': 28, 'drops': 13, 'payments': 1, 'invoices': 1, 'passes': 5, 'kept_credited_invoices': 3} (passes include the 04:29 film-run pass)
+41
+takedown: 41 removed, 0 not found
+rows deleted as mutis (payments and invoices only where status != 'credited'): {"payments": 1, "invoices": 1, "passes": 5}
+after: passes 20, security drop /d/3w7m8k2v5t active, non-canary items 144, active drops 5
+wall: {"lockers":[{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":0,"exit":"once"},{"size":
+/config e2e_expiry_s: None
+(the wall line above is the API's 5-minute cache from before the takedowns; post-purge-47cfbb0.txt reads it after the cache expired)

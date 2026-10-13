@@ -1,0 +1,25 @@
+batch1 start 10:47:05 only=E-01,E-02,E-04,E-05,E-06,E-07,E-08,E-11,E-14,E-15,E-16,E-17,E-18,E-19,E-20,E-21,E-22,E-24,E-25,E-03
+PASS E-01      8.4s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     13.5s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     27.2s  Link + password and password-only; path-only attempts never lock a link
+PASS E-05     71.5s  Expiry 60 s: after 65 s the link is expired
+PASS E-06     10.0s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      4.5s  A link without its #key shows incomplete
+PASS E-08      7.4s  Locker: lazy creation from Leave me a file; key saved; restored in a clean browser
+PASS E-11     22.1s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+PASS E-14    635.9s  Payment forgery: a payment row for a UTXO that doesn't exist is never credited
+PASS E-15     11.1s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      2.9s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-17      7.8s  Abuse: a reported link and drop are taken down by id
+PASS E-18     15.6s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19     61.2s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20      7.1s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-21     46.8s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-22      5.2s  Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning
+FAIL E-24     15.5s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm
+           /locker shows needs_wasm
+PASS E-25     21.3s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12
+e2e: FAIL {'PASS': 19, 'FAIL': 1, 'SKIP': 0} → e2e/batch1/20261012-104706/report.json
+exit 1
+batch1 end 11:03:45

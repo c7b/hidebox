@@ -1,0 +1,3 @@
+WARN web/site/pages/faq.html: check the sense of 'anonymous'
+WARN docs/review/fix-log.md: check the sense of 'anonymous'
+check-copy: PASS (0 problems, 2 to read)

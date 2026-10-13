@@ -1,0 +1,8 @@
+batch2a start 12:05:04 only=E-09,E-10,E-13,E-12
+PASS E-09     23.4s  Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it
+PASS E-10     52.0s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-12     37.7s  A view key sees the delivery and can open no file
+PASS E-13     30.7s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+e2e: PASS {'PASS': 4, 'FAIL': 0, 'SKIP': 0} → e2e/batch2a/20261012-120504/report.json
+exit 0
+batch2a end 12:07:32

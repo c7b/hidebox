@@ -1,0 +1,6 @@
+batch2b start 13:10:14 only=E-J
+FAIL E-J     287.8s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
+           timed out after 240 s waiting for: document.querySelector('[data-testid="send-path"]')?.dataset.path === 'direct'
+e2e: FAIL {'PASS': 0, 'FAIL': 1, 'SKIP': 0} → e2e/batch2b/20261012-131014/report.json
+exit 1
+batch2b end 13:15:06

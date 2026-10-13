@@ -1,0 +1,22 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-24",
+   "title": "Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 11.6,
+   "notes": [
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: /locker shows needs_wasm",
+    "ok: /d/0000000000 shows needs_wasm"
+   ]
+  }
+ ]
+}

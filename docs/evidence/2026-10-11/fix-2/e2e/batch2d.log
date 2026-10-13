@@ -1,0 +1,5 @@
+batch2d start 19:05:11 only=E-J
+PASS E-J     106.1s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → e2e/batch2d/20261012-190511/report.json
+exit 0
+batch2d end 19:07:01

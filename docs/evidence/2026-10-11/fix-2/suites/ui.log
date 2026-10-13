@@ -1,0 +1,252 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 2 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: en.json and es.json have the same 591 keys ([])
+PASS static: plural forms agree between languages ([])
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+--- home-text Home: a text secret, Once; copy; open; reload and a second browser see it burned
+PASS home-text: the sealed link has the key after # (0NKOA#1mA_eCwxCCyNXFO4IMP_NxR1zdWMRB46QkJxeEnXHN9Q)
+PASS home-text: from text to link in 0.4 s on a 390×844 phone (< 10 s)
+PASS home-text: mutis:state events ['composing', 'sealing', 'sealed']
+PASS home-text: the live region announces the locked state
+PASS home-text: the noise strip draws real ciphertext bytes (176 grey levels)
+PASS home-text: the glass box opens on the card
+PASS home-text: Copy link puts the full link on the clipboard
+PASS home-text: the home page made no third-party request
+PASS home-text: localStorage holds no key and no text, only the recent-drops list (['mutis.recent'])
+PASS home-text: B sees the ready state, nothing used yet
+PASS home-text: the chip says Opens once
+PASS home-text: B opens it
+PASS home-text: B reads exactly the text
+PASS home-text: the key left the address bar after the open
+PASS home-text: B's reload shows burned
+PASS home-text: a second browser sees burned
+PASS home-text: burned copy: This secret already made its exit.
+PASS home-text: no CSP or Trusted Types violation ([])
+--- viewer-states Viewer: incomplete, not-found, a damaged key, the glass box
+PASS viewer-states: a link without its key: incomplete
+PASS viewer-states: an unknown id: not-found
+PASS viewer-states: a changed key: This key doesn't fit, no view used
+PASS viewer-states: the real link is still ready (no view was used)
+PASS viewer-states: the glass box prints the columns and what is stored nowhere
+PASS viewer-states: no CSP or Trusted Types violation ([])
+--- rules Change panel: 3 opens on the same link; link + password; password only; Delete now
+PASS rules: the progress line names its phase (encrypting)
+PASS rules: a count change keeps the same link (PATCH, spec §5.4)
+PASS rules: the card shows 3 opens
+PASS rules: the rule line says 3 opens
+PASS rules: B opens the file
+PASS rules: B's Save file downloads it
+PASS rules: C opens the file
+PASS rules: C's Save file downloads it
+PASS rules: D opens the file
+PASS rules: D's Save file downloads it
+PASS rules: the fourth browser sees burned
+PASS rules: a password makes a new link with a #2 key part
+PASS rules: the old link no longer works (revoked)
+PASS rules: a wrong password: That's not it
+PASS rules: the next wrong try says how many are left (That's not it. 3 tries left before a pause of 1 minute.)
+PASS rules: the right password reaches ready
+PASS rules: and opens it
+PASS rules: password only: the link has no key part
+PASS rules: a password-only link opens with the password alone
+PASS rules: a revoke that fails: the card keeps the old link and no toast says it stopped working
+PASS rules: the old link still opens, as the card says
+PASS rules: Delete now: the link answers revoked
+PASS rules: no CSP or Trusted Types violation ([])
+--- card-fresh A first visit: the card's Tari action and locker rules open a locker in place; errors stay in the card
+PASS card-fresh: a locker that can't open: the error is in the card, with the link and Copy link still there
+PASS card-fresh: the locker opens in place and the send step appears
+PASS card-fresh: Sent
+PASS card-fresh: the old link isn't confirmed closed: the card still shows it, and says so
+PASS card-fresh: it still works
+PASS card-fresh: once closed, the card drops the link and Copy link
+PASS card-fresh: and says where the file went (Sent to otl_esm_1kgkqjd…l6pa0j instead. The link no longer works: only)
+PASS card-fresh: the old link answers revoked
+PASS card-fresh: 7 days applies to the same link (7.00 days)
+PASS card-fresh: no CSP or Trusted Types violation ([])
+--- kept P1 kept files: Only me and Until I delete it from a first visit; /locker lists, saves and deletes them
+PASS kept: Only me: kept in the locker, no link
+PASS kept: Until I delete it: a new link whose rule line says it stays
+PASS kept: the link to the anonymous copy no longer works
+PASS kept: the kept file's link opens
+PASS kept: /locker lists both kept files by name
+PASS kept: Save gives back exactly the file that was kept
+PASS kept: Delete removes the kept file on our server: after a reload only notes.txt is listed (1)
+PASS kept: no CSP or Trusted Types violation ([])
+--- safety Programs refused before upload; a too-big file offers a locker; photos lose their GPS
+PASS safety: an anonymous .exe is refused before any upload
+PASS safety: too large: the banner offers a free locker
+PASS safety: nothing was uploaded
+PASS safety: 'invoice.b\u200bat' is refused as the .bat it would be saved as
+PASS safety: 'run.p|s1' is refused as the .ps1 it would be saved as
+PASS safety: none of them was uploaded
+PASS safety: with a locker opened in place, the program is locked as the locker's file
+PASS safety: the viewer shows the program warning
+PASS safety: no preview; Save anyway is offered
+PASS safety: a 413 from the server reads as too large, with the server's limit
+PASS safety: stored as 'invoice.b\u200bat': the program warning, named invoice.bat (program-warning, 'invoice.bat')
+PASS safety: stored as 'run.p|s1': the program warning, named run.ps1 (program-warning, 'run.ps1')
+PASS safety: stored as 'photo\u202egpj.exe': the program warning, named photogpj.exe (program-warning, 'photogpj.exe')
+PASS safety: Save anyway offers the name it showed (['photogpj.exe'])
+PASS safety: the photo chip says location and camera data were removed
+PASS safety: the photo opens with a preview
+PASS safety: no CSP or Trusted Types violation ([])
+--- locker Locker: made silently from Leave me a file; key modal; key file with passphrase; restore
+PASS locker: a short drop link (http://127.0.0.1:48077/d/shvrapv715)
+PASS locker: the key modal asks once, now that something persistent exists
+PASS locker: with the passphrase box ticked (P-15) an empty passphrase stops the download
+PASS locker: the key file is locked with the passphrase; the plain key isn't in it
+PASS locker: the safety code has 12 emoji (12)
+PASS locker: the locker shows its otl_esm_ Tari address
+PASS locker: the key banner stays until the key is saved
+PASS locker: a new locker is on probation
+PASS locker: localStorage holds no key material (the locker's seed lives in IndexedDB, spec §4.8.1)
+PASS locker: IndexedDB holds only the locker record and the inbox state (['identity', 'inbox'])
+PASS locker: the quota bar shows the locker's limit
+PASS locker: restored elsewhere: the same safety code and address
+PASS locker: no CSP or Trusted Types violation ([])
+--- deaddrop Dead drop: a stranger leaves a photo; Delivered; What the chain sees; the inbox opens it
+PASS deaddrop: the drop page is ready
+PASS deaddrop: it shows the owner's 12-emoji safety code
+PASS deaddrop: the drop's label, isolated in a <bdi> inside the quotes
+PASS deaddrop: the page says the link's maker wrote the label and mutis doesn't check it
+PASS deaddrop: a Report this drop link in the page, filled in (/abuse#link=http%3A%2F%2F127.0.0.1%3A48077%2Fd%2Fb117q41hkj)
+PASS deaddrop: a program can't be left in a drop; nothing was uploaded
+PASS deaddrop: Delivered
+PASS deaddrop: the delivery has a transaction id
+PASS deaddrop: What the chain sees: no output amount is shown
+PASS deaddrop: the fee is shown, as public
+PASS deaddrop: no request to Tari's indexer before the button is pressed
+PASS deaddrop: the explicit button asks Tari's indexer directly (['https://ootle-indexer-b.tari.com/transaction-receipts/e7ca4d', 'https://ootle-indexer-b.tari.com/transaction-receipts/e7ca4d'])
+PASS deaddrop: the scan line says how many outputs it checked
+PASS deaddrop: the owner opens what was left
+PASS deaddrop: the photo and What the chain saw
+PASS deaddrop: What the chain saw: hidden on chain, the locker reads 0.001 tTARI ('Amounthidden on chainyour locker reads 0.001 tTARIOwnera one')
+PASS deaddrop: Keep a copy in my locker: the photo is listed under Kept in your locker
+PASS deaddrop: no CSP or Trusted Types violation ([])
+--- send Send to a Tari address (relay); the recipient's inbox opens it; /watch sees it and opens nothing
+PASS send: the send screen shows the recipient's safety code
+PASS send: Sent
+PASS send: the send has a transaction id
+PASS send: the relay sentence (C8) follows how this send went
+PASS send: the recipient opens what was sent
+PASS send: /watch with the locker's view key: deliveries seen, 0 files readable
+PASS send: another browser with the exported view key: 0 files readable
+PASS send: the rows list the arrivals
+PASS send: a view key of another address is refused
+PASS send: no CSP or Trusted Types violation ([])
+--- kind4 Kind 4: a /t#4 link opens with the address's view key alone; kind 3 refuses it
+PASS kind4: the address check explains it: base-layer
+PASS kind4: the address check explains it: not a testnet
+PASS kind4: the address check explains it: Ootle address
+PASS kind4: kind 4 shows its warning
+PASS kind4: Sent in other-wallet mode
+PASS kind4: the delivery's memo is a /t#4 link
+PASS kind4: a browser without a locker is asked for a key
+PASS kind4: the view key alone unlocks a kind-4 link
+PASS kind4: and it is the text that was sent
+PASS kind4: no CSP or Trusted Types violation ([])
+--- upgrade Upgrade: s30 with demo tTARI; Waiting → Seen on chain → Amount proven → Added
+PASS upgrade: the invoice has a Tari address
+PASS upgrade: the stepper reaches Added (['waiting:true', 'seen:true', 'proven:true', 'added:true'])
+PASS upgrade: the quota grew by the pack's 2 GiB
+PASS upgrade: on Nov 12 the testnet line says the mainnet is live, like the footer (Esmeralda testnet · tTARI has no monetary value · the Ootle mainnet is live; mut)
+PASS upgrade: no CSP or Trusted Types violation ([])
+--- upgrade-wallet Upgrade in production's payment mode (amount_proof = wallet): Waiting → Seen by our wallet → Exists on chain → Added
+PASS upgrade-wallet: the stepper names the checks this mode runs (['Waiting', 'Seen by our wallet', 'Exists on chain', 'Added'])
+PASS upgrade-wallet: the claim under it is the wallet variant (C11)
+PASS upgrade-wallet: paid with demo tTARI, every step is reached (['waiting:true', 'seen_wallet:true', 'exists:true', 'added:true'])
+PASS upgrade-wallet: no CSP or Trusted Types violation ([])
+--- receipts P1 /verify: the locked file's own hash is kept; proofs are checked against the SealLog state on chain; a log with an owner is refused
+PASS receipts: this device keeps the ciphertext hash it computed when locking (equal to our server's)
+PASS receipts: the file's own hash is in the tree on chain, at the log's checkpoint #1 (Link …AAAAThe link you came fromStored: included at checkpoint #1 (epoch 12128); the root matches the SealLog component )
+PASS receipts: its exit too, from the hour our server reports
+PASS receipts: a hash this file didn't have doesn't verify against the same root
+PASS receipts: the page says the log has no owner and names its one writer key (This log has no owner, so nobody, us included, can change its rules or the code behind it )
+PASS receipts: the research log on Esmeralda (it has an owner) is refused; nothing is checked against it
+PASS receipts: no CSP or Trusted Types violation ([])
+--- keyboard Keyboard only: drop and copy; open; make a drop link; leave a file; send; buy; watch
+PASS keyboard: home: every control has an accessible name ([])
+PASS keyboard: Tab reaches 'or paste text'
+PASS keyboard: focus lands on Copy link
+PASS keyboard: Enter copies the link
+PASS keyboard: the locked card: every control named ([])
+PASS keyboard: the viewer focuses Open it
+PASS keyboard: Enter opens it
+PASS keyboard: /locker: every control named ([])
+PASS keyboard: Tab reaches the drop label
+PASS keyboard: the key modal takes the focus
+PASS keyboard: Escape closes the key modal
+PASS keyboard: the locker: every control named ([])
+PASS keyboard: the drop page: every control named ([])
+PASS keyboard: Tab reaches 'or paste text' on the drop page
+PASS keyboard: left in the drop with the keyboard
+PASS keyboard: focus moves to the recipient field
+PASS keyboard: Tab reaches Send
+PASS keyboard: sent with the keyboard
+PASS keyboard: /send: every control named ([])
+PASS keyboard: Tab reaches the s30 pack
+PASS keyboard: Tab reaches Pay with demo tTARI
+PASS keyboard: a pack bought with the keyboard
+PASS keyboard: /upgrade: every control named ([])
+PASS keyboard: Tab reaches Use my locker's view key
+PASS keyboard: Tab reaches Look
+PASS keyboard: watched with the keyboard
+PASS keyboard: /watch: every control named ([])
+PASS keyboard: no CSP or Trusted Types violation ([])
+--- layout Every app page: no horizontal scroll at 360 px, only same-origin requests, no violations
+PASS layout: narrow: no horizontal scroll ([])
+PASS layout: narrow: no third-party request ([])
+PASS layout: iphone: no horizontal scroll ([])
+PASS layout: iphone: no third-party request ([])
+PASS layout: desktop: no horizontal scroll ([])
+PASS layout: desktop: no third-party request ([])
+PASS layout: no CSP or Trusted Types violation ([])
+--- nowasm Without WebAssembly (--jitless): anonymous drop and open work; locker pages say needs_wasm
+PASS nowasm: an anonymous drop opens without WebAssembly
+PASS nowasm: /locker shows needs_wasm
+PASS nowasm: /d/2222222222 shows needs_wasm
+PASS nowasm: /inbox shows needs_wasm
+PASS nowasm: /watch shows needs_wasm
+PASS nowasm: no CSP or Trusted Types violation ([])
+--- spanish Spanish: the app follows the chosen language; the /es/ home widget speaks Spanish
+PASS spanish: the /es/ widget says Elegir archivo
+PASS spanish: Listo, cifrado.
+PASS spanish: the viewer opens it
+PASS spanish: burned in Spanish: Este secreto ya hizo mutis.
+PASS spanish: <html lang> is es
+PASS spanish: /locker in Spanish
+PASS spanish: no CSP or Trusted Types violation ([])
+--- dark Dark theme and reduced motion: the card, the viewer, the locker
+PASS dark: the stage background in dark mode
+PASS dark: opens in dark mode with reduced motion
+PASS dark: no CSP or Trusted Types violation ([])
+--- budget A-06: what the home page loads for the widget, before and after a drop
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: widget payload compressed: 23891 B at load, 40176 B after a drop (≤ 40 KB)
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: after a photo too: 46337 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- ten-seconds A first visit on a phone (4× slower CPU): landing to a copied link of a photo in under 10 s
+PASS ten-seconds: landing 1.2 s, then photo to copied link: 2.5 s in all (< 10 s, no human pauses)
+PASS ten-seconds: no CSP or Trusted Types violation ([])
+--- states Every remaining state: expired (a real 60-second link), removed, locked, integrity-error; drop closed and not found; empty inbox
+PASS states: the 60-second preset sets the link to leave within a minute
+PASS states: a link that ended as expired: expired
+PASS states: a link that ended as removed: removed
+PASS states: a link that ended as owner_deleted: revoked
+PASS states: a link locked after too many wrong passwords: locked
+PASS states: one flipped bit in the stored bytes: integrity-error, nothing shown
+PASS states: no plaintext and no Save after an integrity failure
+PASS states: a closed drop: This drop is closed.
+PASS states: an unknown drop: No drop here.
+PASS states: recent drops on this device list the links with their state (Opened Oct 12, 2026, 6:36 PM. Was that them?)
+PASS states: a new locker's inbox: Nothing for you yet
+PASS states: 65 seconds later the real server answers: expired
+PASS states: Its time ran out. … It left on cue.
+PASS states: no CSP or Trusted Types violation ([])
+
+UI PASS 229/229
