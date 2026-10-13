@@ -29,7 +29,7 @@ What runs in production (Debian 13, one VPS), in [`deploy/README.md`](../deploy/
 | `mutis-api` | the HTTP API on `127.0.0.1:8787`, as user `mutis` (it can't reach the wallet) | `server/` (Python 3.13, stdlib) |
 | `mutis-chain` | relay sends, the UTXO mirror, payment proofs, canaries, SealLog checkpoints, as user `drive` | `server/` |
 | the sidecar | the official Tari library under Node's permission model, started by `mutis-chain` | `web/app/sidecar`, `web/app/vendor` (pinned by hash); Debian's `nodejs` 20 |
-| walletd | `tari_ootle_walletd` 0.45.0 on `127.0.0.1:5100`, as user `drive` | the official release binary |
+| walletd | `tari_ootle_walletd` 0.46.0 on `127.0.0.1:5100`, as user `drive` | the official release binary |
 | timers | cleanup (every minute), health, evidence, database and wallet backups | `deploy/systemd/` |
 
 Steps on a fresh Debian 13 server, from your own login with sudo (each script says what it changes
@@ -51,11 +51,11 @@ may reach walletd and the API port.
    walletd's port 5100; only those and Caddy reach the API's 8787), then runs the privilege self-test.
    Without walletd it says so and skips it: set `features.drops`, `relay_send`, `demo_pay`, `decoys`
    and `seallog` to false and leave `mutis-chain` disabled.
-4. **walletd (for the Tari features):** put the official `tari_ootle_walletd` 0.45.0, the version this
+4. **walletd (for the Tari features):** put the official `tari_ootle_walletd` 0.46.0, the version this
    release runs, at `/opt/tari/bin/tari_ootle_walletd`: download
-   `tari_ootle_walletd-0.45.0-9c62606-linux-x86_64` from
-   <https://github.com/tari-project/tari-ootle/releases/tag/v0.45.0>, check that `sha256sum` prints
-   `8cfdae03cc7dc7987752b2f1ae94046fc5c15258e1e26e0587977f7230712fae` (the release's own `.sha256`
+   `tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64` from
+   <https://github.com/tari-project/tari-ootle/releases/tag/v0.46.0>, check that `sha256sum` prints
+   `26d4c269dfb091e47156aaa2af4cfb12bbdab9c5812ef8a292b0dd8b73976e05` (the release's own `.sha256`
    file says the same), then `sudo install -D -m 0755 <file> /opt/tari/bin/tari_ootle_walletd`. As `drive`
    (`sudo -iu drive`): write a random keyring password,
    `(umask 077 && head -c 30 /dev/urandom | base64 | tr -d '/+=' > ~/wallet/.keyring-pass)`, and start
