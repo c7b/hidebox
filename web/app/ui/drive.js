@@ -53,6 +53,7 @@ class Drive {
     this.route = parseRoute(location.pathname);
     this.query = '';
     this.made = false;
+    this.view = null; // the box the current render draws into
   }
 
   headers() {
@@ -101,8 +102,13 @@ class Drive {
     this.shell.setView(view === 'missing' ? null : view);
     this.shell.search.value = '';
     this.query = '';
-    const page = this.shell.page;
-    page.dataset.view = view;
+    // Each render draws into its own box (display: contents, so the page's grid still lays it out): a
+    // slower render that finishes after a newer one only fills a box that is no longer on the page.
+    this.view?.dispatchEvent(new CustomEvent('drive:gone'));
+    const page = h('div', { class: 'view' });
+    this.view = page;
+    this.shell.page.dataset.view = view;
+    this.shell.page.replaceChildren(page);
     if (view === 'missing') {
       this.setTitle(t('drive.missing.title'));
       return page.replaceChildren(h('div', { class: 'empty' },
@@ -117,7 +123,7 @@ class Drive {
     } catch (e) {
       page.replaceChildren(errorAlert(e, { action: { label: t('drive.retry'), onClick: () => this.render() } }));
     }
-    if (location.hash === '#more') document.getElementById('more')?.scrollIntoView();
+    if (location.hash === '#more' && this.view === page) document.getElementById('more')?.scrollIntoView();
   }
 }
 
