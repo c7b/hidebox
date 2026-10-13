@@ -11,7 +11,8 @@ import { ApiError, config } from './api.js';
 import { chainIx, demoPay, postCourier, requestSponsor } from './api-locker.js';
 import { inboxState, scan, updateWallet } from './scan.js';
 import { memoFor } from './courier.js';
-import { withPow } from './pow.js';
+import { hasJudgePass, withPow } from './pow.js';
+import { localGet, localSet } from './store.js';
 import { authHeaders } from './session.js';
 
 // The same flat fee as every relay send (§1.4), so a direct send doesn't stand out by its fee.
@@ -40,7 +41,7 @@ export async function balance(identity) {
 }
 
 // One sponsor grant per locker per UTC day (PoW `sponsor`, or a judge pass). -> {job_id}
-export async function requestGrant(identity, opts = {}) {
+async function requestGrant(identity, opts = {}) {
   return withPow('sponsor', (pow, judge) => requestSponsor(identity.wallet.address, pow, { ...authHeaders(), ...judge }), opts);
 }
 
@@ -174,6 +175,36 @@ export async function canSendDirect(identity, cfg, { signal } = {}) {
   if (!(cfg.send_mode === 'direct' && cfg.features?.direct_send)) return false;
   await scan(identity, { signal }).catch(() => null); // a failed scan only means the balance is as last seen
   return (await balance(identity)) >= courierAmount(cfg) + FEE_UT;
+}
+
+const GRANT = 'mutis.grant';
+const GRANT_WAIT_MS = 10 * 60000;
+let asking = null; // the page's grant request in flight, shared by every caller
+
+// The sponsor grant, asked for whenever the browser wallet can't cover the next spend (`need` µT: a
+// courier send by default, or a pack): at most once a UTC day per locker, and once more that day
+// after a judge pass is saved, since a pass lifts the per-network limit. The day's answer is kept on
+// this device (store.js). -> 'funded' | 'pending' (asked; a scan finds it in a minute or two) | 'refused' (403
+// or 429: this network's grants, this locker's or today's budget are used up, or an asked grant
+// still hasn't arrived after ten minutes) | null when this deployment has no sponsored direct sends.
+export async function ensureGrant(identity, cfg, { need = courierAmount(cfg) + FEE_UT, signal } = {}) {
+  if (!(cfg.send_mode === 'direct' && cfg.features?.direct_send && cfg.features?.sponsor)) return null;
+  await scan(identity, { signal }).catch(() => null); // a failed scan only means the balance is as last seen
+  if ((await balance(identity)) >= BigInt(need)) return 'funded';
+  const day = new Date().toISOString().slice(0, 10);
+  const judge = hasJudgePass();
+  const asked = localGet(GRANT);
+  const today = asked?.id === identity.id && asked.day === day ? asked : null;
+  if (today?.state === 'pending') return Date.now() - today.at < GRANT_WAIT_MS ? 'pending' : 'refused';
+  if (today && (today.judge || !judge)) return today.state;
+  asking ??= requestGrant(identity).then(() => 'pending', (e) => {
+    if (!(e instanceof ApiError && (e.status === 403 || e.status === 429))) throw e;
+    return 'refused';
+  }).then((state) => {
+    localSet(GRANT, { id: identity.id, day, judge, state, at: Date.now() });
+    return state;
+  }).finally(() => { asking = null; });
+  return asking;
 }
 
 // Sends a sealed link (kind 3 or 4, the 125-byte blob) to an Ootle address: from the browser wallet

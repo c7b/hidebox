@@ -89,14 +89,16 @@ export function sendStep(container, opts) {
   submit.addEventListener('click', () => go());
 
   // Direct mode: which way the next send goes, decided as deliver() will (a fresh look at this
-  // browser's wallet), refreshed while the panel is on screen, so a judge can wait for the grant.
+  // browser's wallet), refreshed while the panel is on screen, so a judge can wait for the grant. A
+  // short wallet asks for the day's grant here, and the line says so when it's refused.
   let pathTimer = null;
   async function refreshPath() {
     clearTimeout(pathTimer);
     try {
-      const [{ canSendDirect }, locker] = await Promise.all([import('../lib/wallet.js'), opts.getLocker()]);
-      const own = await canSendDirect(locker.identity, cfg);
-      path.dataset.path = own ? 'direct' : 'relay';
+      const [{ canSendDirect, ensureGrant }, locker] = await Promise.all([import('../lib/wallet.js'), opts.getLocker()]);
+      const grant = await ensureGrant(locker.identity, cfg);
+      const own = grant ? grant === 'funded' : await canSendDirect(locker.identity, cfg);
+      path.dataset.path = own ? 'direct' : grant === 'refused' ? 'refused' : 'relay';
       path.textContent = t(`send.path.${path.dataset.path}`);
       path.hidden = false;
     } catch {

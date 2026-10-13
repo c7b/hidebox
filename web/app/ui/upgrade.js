@@ -66,22 +66,40 @@ export async function render(main) {
     const status = h('p', { class: 'a-invoice-status', 'data-testid': 'invoice-status', 'data-status': invoice.status });
     const stepper = h('ol', { class: 'a-steps a-paysteps' });
     const errors = h('div', {});
+    const buttons = [];
+    function payButton(testid, label, run) {
+      const b = h('button', { type: 'button', class: 'a-btn a-btn--pay', 'data-testid': testid }, label);
+      b.addEventListener('click', async () => {
+        b.disabled = true;
+        errors.replaceChildren();
+        try {
+          await run(await import('../lib/wallet.js'));
+        } catch (e) {
+          b.disabled = false;
+          errors.replaceChildren(errorBanner(e));
+        }
+      });
+      buttons.push(b);
+      return b;
+    }
+    const demo = () => payButton('demo-pay', t('upgrade.pay_demo'), (w) => w.demoPayInvoice(invoice.invoice_id));
     const pay = direct
-      ? h('button', { type: 'button', class: 'a-btn a-btn--pay', 'data-testid': 'pay-browser' }, t('upgrade.pay_browser', { price: formatTari(invoice.amount_ut) }))
-      : cfg.features?.demo_pay
-        ? h('button', { type: 'button', class: 'a-btn a-btn--pay', 'data-testid': 'demo-pay' }, t('upgrade.pay_demo'))
-        : null;
-    pay?.addEventListener('click', async () => {
-      pay.disabled = true;
-      errors.replaceChildren();
-      try {
-        const wallet = await import('../lib/wallet.js');
-        await (direct ? wallet.payInvoice(ctx.identity, invoice) : wallet.demoPayInvoice(invoice.invoice_id));
-      } catch (e) {
-        pay.disabled = false;
-        errors.replaceChildren(errorBanner(e));
-      }
-    });
+      ? payButton('pay-browser', t('upgrade.pay_browser', { price: formatTari(invoice.amount_ut) }), (w) => w.payInvoice(ctx.identity, invoice))
+      : cfg.features?.demo_pay ? demo() : null;
+    const row = h('div', { class: 'a-row' }, copyButton({ label: t('upgrade.copy_address'), getText: () => invoice.address }), pay);
+    // Direct mode: when the browser's wallet is short of the price (its grant is on the way, or there is
+    // none today), our demo wallet can pay instead.
+    const short = h('p', { class: 'a-caption', 'data-testid': 'pay-short', hidden: true });
+    if (direct && cfg.features?.demo_pay) {
+      import('../lib/wallet.js')
+        .then((w) => w.ensureGrant(ctx.identity, cfg, { need: BigInt(invoice.amount_ut) + w.FEE_UT }))
+        .then((grant) => {
+          if (!grant || grant === 'funded' || status.dataset.status === 'credited') return;
+          short.textContent = t(`upgrade.short_${grant}`);
+          short.hidden = false;
+          row.append(demo());
+        }, () => null);
+    }
 
     function draw(inv) {
       status.dataset.status = inv.status;
@@ -96,7 +114,8 @@ export async function render(main) {
         'aria-current': reached[i] && !reached[i + 1] ? 'step' : null,
       }, reached[i] ? icon('check') : null, h('span', {}, t(`upgrade.step.${name}`)))));
       if (inv.status === 'credited') {
-        pay?.remove();
+        for (const b of buttons) b.remove();
+        short.remove();
         stepper.after(h('p', { class: 'a-done' }, t('upgrade.added', { bytes: formatBytes(inv.credited?.bytes ?? pack.bytes), date: formatDate((inv.credited?.until ?? 0) * 1000, { dateStyle: 'medium' }) })));
         maybeAskForKey(ctx.identity);
       }
@@ -107,7 +126,7 @@ export async function render(main) {
       h('p', { class: 'a-pay-text a-plan-price' }, t('upgrade.price', { price: formatTari(invoice.amount_ut) })),
       h('label', { class: 'a-label', for: 'a-inv-addr' }, t('upgrade.address')),
       h('input', { type: 'text', readonly: true, id: 'a-inv-addr', class: 'a-input mono', 'data-testid': 'invoice-address', value: invoice.address }),
-      h('div', { class: 'a-row' }, copyButton({ label: t('upgrade.copy_address'), getText: () => invoice.address }), pay),
+      row, short,
       h('p', { class: 'a-caption' }, t('upgrade.address_note')),
       pay ? h('p', { class: 'a-caption' }, t(direct ? 'pay.browser_note' : 'pay.demo_note')) : null,
       errors, status, stepper,

@@ -50,8 +50,9 @@ async function open({ onStatus, onProgress }) {
   const me = await getMe(session.authHeaders());
   const cfg = await config();
   if (created && cfg.send_mode === 'direct' && cfg.features?.sponsor) {
-    // The browser wallet's daily grant, in the background; a refusal only means sends go by relay.
-    import('../lib/wallet.js').then((w) => w.requestGrant(identity)).catch(() => null);
+    // The browser wallet's grant, in the background; /send and /upgrade ask again on a later day, and
+    // say so when it's refused (sends then go by relay).
+    import('../lib/wallet.js').then((w) => w.ensureGrant(identity, cfg)).catch(() => null);
   }
   return { identity, me, created, headers: session.authHeaders };
 }
