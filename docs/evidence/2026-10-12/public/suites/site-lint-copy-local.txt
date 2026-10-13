@@ -1,0 +1,28 @@
+2026-10-13T05:05:24Z
+$ python3 -I web/site/tests/run.py   (the workstation: Node present, no Chromium, so the browser checks SKIP; the full run with Chromium is site-the server-6fa84fd.log)
+PASS SPDX headers
+PASS no HTML/script sinks in JS
+PASS markup: CSP-safe, includes, placeholders, JSON-LD
+PASS banned words
+PASS no typed /config numbers (P-20)
+PASS variables and conditions
+PASS SEO metadata (M-04)
+PASS trademark and mandatory lines (M-05)
+PASS partials in sync
+PASS privacy inventory covers the schema (M-06)
+PASS contrast table (M-03)
+PASS static files (M-04)
+PASS security.txt contacts answer a stranger (needs the network)
+PASS copy variants set at build time (M11)
+PASS /judges quotes the app's words
+PASS llms-full.txt matches /how and /security
+PASS dates.js in two time zones (M-08)
+SKIP browser checks
+18 of 18 checks without failures, 2 s
+$ python3 -I tools/lint.py
+lint: PASS (0 problems)
+$ python3 -I tools/check-copy.py
+check-copy: PASS (0 problems, 8 to read, (3) skipped: no --config)
+$ python3 -I -m unittest discover -s deploy/tests
+Ran 67 tests in 3.018s
+OK

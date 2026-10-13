@@ -1,0 +1,19 @@
+$ gh api "repos/c7b/mutis/commits?sha=main&per_page=100" --paginate --jq ".[].sha" | sort > gh-commits.txt; wc -l
+86
+$ git rev-list main | sort > local-commits.txt; wc -l
+86
+$ git rev-parse main; gh api repos/c7b/mutis/git/ref/heads/main --jq .object.sha
+1b70e0bf164e56560d2fd9e894b96bac2ef1f28f
+1b70e0bf164e56560d2fd9e894b96bac2ef1f28f
+$ diff local-commits.txt gh-commits.txt && echo IDENTICAL
+IDENTICAL
+$ for id in ea20751 88e12e9 3cd5622 7c9e627 8da9d74 be9e403; do gh api repos/c7b/mutis/commits/$id; done
+ea20751: {"message":"No commit found for SHA: ea20751","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"422"}gh: No commit found for SHA: ea20751 (HTTP 422)
+88e12e9: {"message":"No commit found for SHA: 88e12e9","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"422"}gh: No commit found for SHA: 88e12e9 (HTTP 422)
+3cd5622: {"message":"No commit found for SHA: 3cd5622","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"422"}gh: No commit found for SHA: 3cd5622 (HTTP 422)
+7c9e627: {"message":"No commit found for SHA: 7c9e627","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"422"}gh: No commit found for SHA: 7c9e627 (HTTP 422)
+8da9d74: {"message":"No commit found for SHA: 8da9d74","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"422"}gh: No commit found for SHA: 8da9d74 (HTTP 422)
+be9e403: be9e4036153074c980e2f5cb9834085afa923183
+$ is be9e403 in local main history?
+be9e4036153074c980e2f5cb9834085afa923183
+be9e403 is an ancestor of main

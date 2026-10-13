@@ -1,0 +1,16 @@
+$ gh api repos/c7b/mutis/branches --paginate --jq ".[].name"
+main
+$ gh api repos/c7b/mutis/tags --paginate --jq ".[].name"  (count)
+0
+$ gh api repos/c7b/mutis/git/matching-refs/ --jq ".[].ref"
+refs/heads/main
+$ gh api repos/c7b/mutis/releases --jq length
+0
+$ gh api repos/c7b/mutis/pulls?state=all --jq length
+0
+$ gh api repos/c7b/mutis/forks --jq length
+0
+$ gh api "repos/c7b/mutis/issues?state=all" --jq length
+0
+$ gh api repos/c7b/mutis --jq "{full_name,private,visibility,default_branch,has_wiki,has_pages,has_discussions,has_projects,has_issues,size,created_at}"
+{"created_at":"2026-10-13T04:46:47Z","default_branch":"main","full_name":"c7b/mutis","has_discussions":false,"has_issues":true,"has_pages":false,"has_projects":true,"has_wiki":false,"private":true,"visibility":"private"}
