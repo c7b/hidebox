@@ -494,3 +494,70 @@ UTC.
 
 The review's blind spots stand: no judge pass was used in a browser, no real phone or Tor Browser,
 every browser ran on the server's own network, and the self-host server steps were read, not run.
+
+### Suites, deploy, end-to-end runs and the purge (`docs/evidence/2026-10-12/fix-3/`)
+
+On the server as `build` from a `git archive` of `8959c6f`, all green on the first run: server 203
+tests OK (4 opt-in skips; one more for `release-pack`), site 27 of 27, app-ui UI PASS 220/220,
+app-core ALL PASS in 9 steps (KATs 120/120 with the two grant tests; the 4× scan bench 47.7 s with the
+other suites running); locally the deploy tests, the lint and the copy check.
+
+Deployed as release `39bd45cc439bd835f35effccb05d7536af949008-cb6b8404f` at 04:26 UTC (smoke PASS,
+manifest notarized in tx `60b75600…c707`); `verify-deploy` 0 differences across 129 files with the
+SealLog template byte for byte; D-01 40 PASS. Then the 11 test packs were released (`release-packs.txt`;
+0 active packs afterwards), and against production with `run.py --final`: E-J in direct mode PASS in
+104 s (track A 5 s, track B 95 s, cold start 71 s, its pack released at the end), every scenario
+without chain transactions 17 of 17 with `e2e_expiry_s = 60` from 04:31:20 to 04:36:44, and E-13
+PASS in 37 s (its pack released too). E-J and E-13 were rerun because the browser's grant and payment
+code changed; the server's chain code did not.
+
+**Purge (04:4x UTC).** By id, from a read-only diff against a snapshot taken at 04:16 before the
+deploy: 17 items and 6 drops taken down (23 of 23 found), the two judge passes the scenarios made
+deleted; every item from the 04:00 hour, none owned by an older identity; one drop had no label
+(E-J's phone drop: its address is the phone locker's in E-J's B1 screenshot). Kept: the two credited
+invoices (their packs already ended). Afterwards: 20 judge passes, the security drop active, no active
+pack, no `e2e_expiry_s`, the wall quiet. `/status.json` is amber for `budget.sponsor.evidence.90`
+until 00:00 UTC: the end-to-end runs of this pass and the two before it used 9 of the judge-pass
+slice's 10 grants for the day.
+
+### The secrets gate and the public step
+
+Before making the repository public, every object of the local repository (commits and blobs) was
+searched for the owner's key files and the 20 judge passes, token and private-key shapes, sudoers
+lines and the operator machine's addresses and names, and on the server, as root, for the server's
+own secrets (`gate/secrets-gate.txt`). Only public strings matched. One stale reflog entry still
+held commits of the history before the rewrite, with the old D-02 log; it was never pushable (a push
+sends only reachable objects), and the reflog was expired and the store pruned before the final scan.
+
+**The public step stopped there.** GitHub still serves the pre-rewrite commits by id, to anyone who can
+read the repository: the old head `be9e403` and `8da9d74` answer, and at the old ids `ea20751`,
+`88e12e9`, `3cd5622` and `7c9e627` the D-02 relay log still names the operator machine's IPv4 and IPv6
+addresses. Those ids are quoted in this log, in the evidence and in the live release history, so a
+public repository would hand them out. Nothing was changed on GitHub: no visibility, description,
+topics or vulnerability reporting; `security.txt` keeps the security drop as its one contact (its
+static check still refuses the GitHub line); the clean anonymous clone and the GitHub links' crawl
+wait for the repository. The anonymous crawl of the live site found 63 links: every non-GitHub link
+answers 200, and the 8 GitHub links 404 (`links/crawl.txt`). Recorded in
+`docs/evidence/2026-10-12/README.md`.
+
+### Open items now
+
+1. **Owner (Tier 3): clear GitHub's old commits, then go public.** Ask GitHub Support to remove the
+   unreferenced commits of `c7b/mutis` (or publish the rewritten history as a new repository), check
+   that the old ids answer 404, then make it public with its description, homepage and topics, turn on
+   private vulnerability reporting, restore the advisory line in `security.txt` (and make its check
+   require the URL to resolve), and rerun the anonymous clone's `verify-deploy`, the server suite and
+   the link crawl. Until then a judge who follows a GitHub link from the site gets a 404.
+2. **Owner: the paid-space cap.** At today's free disk the cap holds 11 small packs, and packs are free
+   to get on testnet (demo pay, or a grant). Visitors and judges buying B6's pack for 30 days can fill
+   it again during judging; `/judges` B6 then points to the evidence payments. Levers: a bigger disk,
+   or a different cap or pack length for the testnet (a product decision).
+3. **The judge-pass grant slice today.** 9 of 10 used by test runs (UTC 2026-10-13); a judge with a
+   pass before 00:00 UTC may be refused a grant, and now sees that said, with demo pay offered.
+4. **Owner (Tier 3), as before:** post the forum thread and point `/judges` at it, hand out the judge
+   passes, check the Hostinger snapshots, decide on the unlabeled dead drop, and create the contest tag
+   after the rebrand.
+5. **Unchanged:** walletd's stored dry run (harmless journal line); a real install from the guide on a
+   throwaway server; the restyle items (old screenshots, the "Why mutis?" scene).
+
+The second pass's open item 1 (a refused grant waits silently) is fixed above (finding 2).
