@@ -1,0 +1,111 @@
+/* SPDX-License-Identifier: MIT — the ghost (14-ghost-design §3, DESIGN.md "The figure"). One static
+   SVG (web/shared/partials/ghost.svg, inlined by the build or cloned from a <template>); every part
+   is hidden unless its state shows it, and the two hands move with CSS transforms, so a state change
+   is a short, interruptible transition. The state is `data-state` on the svg, or `data-ghost` on its
+   parent (pages without scripts). States: ready (none), catch, busy, once, few, word, peek, courier,
+   bag, keep, gone, oops. Only the ghost glows, and only with the lights off (--glow). */
+.ghost { display: block; overflow: visible; }
+:not(g) > .ghost { width: 100%; height: auto; }
+.ghost * { transition: opacity var(--dur-2) var(--ease-out); }
+.ghost .bd, .ghost .hd circle, .ghost .fi {
+  fill: var(--ghost-fill); stroke: var(--ghost-line); stroke-width: 2.4; stroke-linejoin: round;
+}
+.ghost .bd { transition: fill var(--dur-2), stroke-dasharray var(--dur-2), opacity var(--dur-2); }
+.ghost .eo, .ghost .ew, .ghost .ex ellipse, .ghost .mo, .ghost .mh { fill: var(--ghost-eye); }
+.ghost .sh { fill: var(--ghost-shadow); transform-box: fill-box; transform-origin: center; }
+.ghost .mp { fill: var(--ghost-fill); stroke: var(--ghost-line); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.ghost .mf { fill: none; stroke: var(--ghost-line); stroke-width: 1.2; stroke-linecap: round; }
+.ghost .hp { fill: var(--ghost-fill); stroke: var(--ghost-line); stroke-width: 1.7; stroke-linejoin: round; }
+.ghost .hf { fill: none; stroke: var(--ghost-line); stroke-width: 1.2; stroke-linecap: round; }
+.ghost :is(.mt, .p1) { translate: 0 22px; transition: opacity var(--dur-2) var(--ease-out), translate var(--dur-3) var(--ease-spring); }
+.ghost .es, .ghost .wk, .ghost .ms, .ghost .mw, .ghost .ex path {
+  fill: none; stroke: var(--ghost-eye); stroke-width: 2.6; stroke-linecap: round;
+}
+.ghost .ck { fill: var(--blush); opacity: .55; transform-box: fill-box; transform-origin: center; }
+.ghost .pn rect, .ghost .pe rect, .ghost .pg > path:first-child, .ghost .pb path {
+  fill: var(--prop); stroke: var(--ghost-line); stroke-width: 2; stroke-linejoin: round;
+}
+.ghost .pn path, .ghost .pe path, .ghost .pg > path:last-child {
+  fill: none; stroke: var(--ghost-line); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.ghost .sd { fill: var(--sand); }
+.ghost .cn { fill: var(--tari); stroke: var(--ghost-line); stroke-width: 2; }
+.ghost .cr { fill: none; stroke: var(--on-tari); stroke-width: 1.6; opacity: .8; }
+.ghost .pb .mouth { fill: var(--ghost-eye); }
+.ghost .pp { fill: var(--ghost-fill); stroke: var(--ghost-line); stroke-width: 1.6; }
+.ghost .fg { fill: none; stroke: var(--ghost-line); stroke-width: 1.5; stroke-linecap: round; opacity: 0; }
+.ghost .pb .nt { fill: var(--prop); stroke: var(--ghost-line); stroke-width: 1.8; }
+
+/* hidden by default */
+.ghost :is(.es, .wk, .ew, .ex, .mo, .mh, .mw, .pn, .pg, .pe, .pb, .pp, .fi, .mt, .p1) { opacity: 0; }
+
+/* hands */
+.ghost .hd { transition: transform var(--dur-3) var(--ease-spring); }
+.ghost .hl { transform: translate(var(--lx, 25px), var(--ly, 70px)) scale(var(--ls, 1)); }
+.ghost .hr { transform: translate(var(--rx, 95px), var(--ry, 70px)) scale(var(--rs, 1)); }
+
+/* catch: a file is over the window */
+:is(.ghost[data-state="catch"], [data-ghost="catch"] > .ghost) { --lx: 15px; --ly: 44px; --rx: 105px; --ry: 44px; }
+:is(.ghost[data-state="catch"], [data-ghost="catch"] > .ghost) :is(.eo, .ms) { opacity: 0; }
+:is(.ghost[data-state="catch"], [data-ghost="catch"] > .ghost) :is(.ew, .mo) { opacity: 1; }
+/* busy and keep: hugging the note */
+:is(.ghost:is([data-state="busy"], [data-state="keep"]), :is([data-ghost="busy"], [data-ghost="keep"]) > .ghost) { --lx: 52px; --ly: 86px; --rx: 68px; --ry: 86px; }
+:is(.ghost:is([data-state="busy"], [data-state="keep"]), :is([data-ghost="busy"], [data-ghost="keep"]) > .ghost) .pn { opacity: 1; }
+:is(.ghost[data-state="busy"], [data-ghost="busy"] > .ghost) :is(.eo, .ms) { opacity: 0; }
+:is(.ghost[data-state="busy"], [data-ghost="busy"] > .ghost) .es { opacity: 1; }
+:is(.ghost[data-state="busy"], [data-ghost="busy"] > .ghost) .ck { transform: scale(1.35); opacity: .8; }
+/* once: one finger up ("one time"), and a wink */
+:is(.ghost[data-state="once"], [data-ghost="once"] > .ghost) { --rx: 101px; --ry: 56px; --rs: 1.3; }
+:is(.ghost[data-state="once"], [data-ghost="once"] > .ghost) :is(.er, .hr) { opacity: 0; }
+:is(.ghost[data-state="once"], [data-ghost="once"] > .ghost) .wk { opacity: 1; }
+:is(.ghost[data-state="once"], [data-ghost="once"] > .ghost) .p1 { opacity: 1; translate: 0 0; }
+/* word: both mittens over the eyes ("I can't look"); the round hands grow into them */
+:is(.ghost[data-state="word"], [data-ghost="word"] > .ghost) { --lx: 47px; --ly: 52px; --ls: 1.6; --rx: 73px; --ry: 52px; --rs: 1.6; }
+:is(.ghost[data-state="word"], [data-ghost="word"] > .ghost) .hd, :is(.ghost[data-state="peek"], [data-ghost="peek"] > .ghost) .hl { opacity: 0; }
+:is(.ghost[data-state="word"], [data-ghost="word"] > .ghost) .mt, :is(.ghost[data-state="peek"], [data-ghost="peek"] > .ghost) .ml { opacity: 1; translate: 0 0; }
+/* peek: one mitten over one eye, the other eye looks */
+:is(.ghost[data-state="peek"], [data-ghost="peek"] > .ghost) { --lx: 47px; --ly: 52px; --ls: 1.6; }
+/* few: an hourglass, and the ghost starts to fade */
+:is(.ghost[data-state="few"], [data-ghost="few"] > .ghost) { --lx: 44px; --ly: 86px; --rx: 76px; --ry: 86px; }
+:is(.ghost[data-state="few"], [data-ghost="few"] > .ghost) .pg { opacity: 1; }
+:is(.ghost[data-state="few"], [data-ghost="few"] > .ghost) .bd { opacity: .72; }
+/* courier: an envelope and a Tari coin */
+:is(.ghost[data-state="courier"], [data-ghost="courier"] > .ghost) { --lx: 45px; --ly: 90px; --rx: 75px; --ry: 90px; }
+:is(.ghost[data-state="courier"], [data-ghost="courier"] > .ghost) .pe { opacity: 1; }
+/* bag: a dead drop */
+:is(.ghost[data-state="bag"], [data-ghost="bag"] > .ghost) { --lx: 41px; --ly: 86px; --rx: 79px; --ry: 86px; }
+:is(.ghost[data-state="bag"], [data-ghost="bag"] > .ghost) .pb { opacity: 1; }
+/* gone: an outline that waves */
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) { --rx: 101px; --ry: 40px; }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .bd { fill: transparent; stroke-dasharray: 5 5; }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .hd circle { fill: transparent; stroke-dasharray: 4 4; }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .ck { opacity: 0; }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .eo { fill: var(--ghost-line); }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .ms { stroke: var(--ghost-line); }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .pp { opacity: .8; }
+:is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .sh { display: none; } /* not opacity: the breathing animation would override it */
+/* oops: hands on the cheeks */
+:is(.ghost[data-state="oops"], [data-ghost="oops"] > .ghost) { --lx: 36px; --ly: 64px; --rx: 84px; --ry: 64px; }
+:is(.ghost[data-state="oops"], [data-ghost="oops"] > .ghost) :is(.eo, .ms) { opacity: 0; }
+:is(.ghost[data-state="oops"], [data-ghost="oops"] > .ghost) :is(.ex, .mw) { opacity: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ghost .gf { animation: g-float 3.4s var(--ease-inout) infinite; transform-origin: 60px 100px; }
+  .ghost .sh { animation: g-shadow 3.4s var(--ease-inout) infinite; }
+  .ghost .eo { transform-box: fill-box; transform-origin: center; animation: g-blink 5.2s linear infinite; }
+  :is(.ghost[data-state="gone"], [data-ghost="gone"] > .ghost) .hr { animation: g-wave 1.1s var(--ease-inout) infinite; }
+  :is(.ghost[data-state="busy"], [data-ghost="busy"] > .ghost) .gf { animation: g-chew .5s var(--ease-inout) infinite; }
+}
+@keyframes g-float { 50% { translate: 0 -5px; } }
+@keyframes g-shadow { 50% { scale: .8 1; opacity: .6; } }
+@keyframes g-blink { 0%, 94%, 100% { scale: 1 1; } 96% { scale: 1 .1; } }
+@property --rx { syntax: "<length>"; inherits: true; initial-value: 95px; }
+@keyframes g-wave { 50% { --rx: 92px; } }
+@keyframes g-chew { 50% { scale: 1.03 .97; } }
+
+/* The flying note of the wow (14-ghost-design §6): always blank, never the secret or a file's name. */
+.flyer { position: fixed; z-index: calc(var(--z-catch) + 2); left: 0; top: 0; width: 64px; height: 78px; pointer-events: none; }
+.flyer svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 10px 14px rgb(21 26 59 / .22)); }
+.flyer .pa { fill: var(--prop); stroke: var(--ink); stroke-width: 2.4; stroke-linejoin: round; }
+.flyer .fo, .flyer .li { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.flyer .li { opacity: .5; }

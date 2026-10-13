@@ -1,0 +1,39 @@
+<!-- SPDX-License-Identifier: MIT -->
+<svg class="ghost" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+<ellipse class="sh" cx="60" cy="118" rx="25" ry="3.4"/>
+<g class="gf">
+<g class="pp"><circle cx="20" cy="104" r="4"/><circle cx="31" cy="111" r="3"/><circle cx="60" cy="113" r="3.4"/><circle cx="91" cy="110" r="3.6"/><circle cx="101" cy="101" r="2.6"/></g>
+<path class="bd" d="M26 96V58C26 31 41 12 60 12s34 19 34 46v38a11.3 11.3 0 0 1-22.7 0a11.3 11.3 0 0 1-22.6 0a11.3 11.3 0 0 1-22.7 0z"/>
+<g class="ck"><ellipse cx="40" cy="63" rx="5.5" ry="3.2"/><ellipse cx="80" cy="63" rx="5.5" ry="3.2"/></g>
+<g class="eo">
+<ellipse class="el" cx="49" cy="50" rx="4.6" ry="6.4"/>
+<ellipse class="er" cx="71" cy="50" rx="4.6" ry="6.4"/></g>
+<path class="wk" d="M66 51q5-5.5 10 0"/>
+<path class="es" d="M44 52q5-6 10 0M66 52q5-6 10 0"/>
+<g class="ew"><ellipse cx="48" cy="48" rx="6" ry="8.2"/><ellipse cx="72" cy="48" rx="6" ry="8.2"/></g>
+<g class="ex"><ellipse cx="49" cy="52" rx="3.6" ry="4.8"/><ellipse cx="71" cy="52" rx="3.6" ry="4.8"/><path d="M42 45l9-3.5M78 45l-9-3.5"/></g>
+<path class="ms" d="M54 66q6 5.5 12 0"/>
+<ellipse class="mo" cx="60" cy="71" rx="7.5" ry="9.5"/>
+<ellipse class="mh" cx="60" cy="68" rx="2.6" ry="3.2"/>
+<path class="mw" d="M51 70q3-3 6 0t6 0t6 0"/>
+<g class="pn"><rect x="50" y="68" width="20" height="25" rx="2.5"/><path d="M54 76h12M54 81h12M54 86h8"/></g>
+<g class="pg"><path d="M50 67c0 11 10 12 10 17s-10 6-10 17h20c0-11-10-12-10-17s10-6 10-17z"/>
+<path class="sd" d="M54 99h12l-6-8z"/><path d="M46 67h28M46 101h28"/></g>
+<g class="pe"><rect x="43" y="74" width="34" height="22" rx="2.5"/><path d="M44 75.5l16 11 16-11"/><circle class="cn" cx="79" cy="73" r="7"/><circle class="cr" cx="79" cy="73" r="3.6"/></g>
+<g class="pb"><path d="M43 81c-5 10-3 23 17 23s22-13 17-23z"/>
+<ellipse class="mouth" cx="60" cy="81.5" rx="17" ry="5"/><rect class="nt" x="55" y="66" width="11" height="13" rx="1.6" transform="rotate(-14 60 72)"/></g>
+<g class="mt ml" transform="translate(46.5 51) rotate(14) scale(1.35)">
+<path class="mp" d="M-8 11C-10 4-10-6-7-11C-4-15 3-15 6-11C9-6 9 4 7 11Z"/>
+<path class="mp" d="M-8.6 3C-13 2-14.5-3-11.5-5.5"/>
+<path class="mf" d="M-3-12.6v6M1-13.6v7M4.6-12v6"/></g>
+<g class="mt mr" transform="translate(73.5 51) rotate(-14) scale(-1.35 1.35)">
+<path class="mp" d="M-8 11C-10 4-10-6-7-11C-4-15 3-15 6-11C9-6 9 4 7 11Z"/>
+<path class="mp" d="M-8.6 3C-13 2-14.5-3-11.5-5.5"/>
+<path class="mf" d="M-3-12.6v6M1-13.6v7M4.6-12v6"/></g>
+<g class="p1" transform="translate(101 50) rotate(8) scale(1.45)">
+<path class="hp" d="M-7 5V-15a2.75 2.75 0 0 1 5.5 0V-4.5Q1-6.5 3.5-4.6Q6-6 7.6-2.8V5Q7.6 10 2.4 10H-2Q-7 10-7 5Z"/>
+<path class="hf" d="M-1.5-4.5V-1M3.5-4.6V-1M-7 2.4Q-2 3.6 1.4 0.6"/></g>
+<g class="hd hl"><circle r="7.5"/>
+<path class="fg" d="M-3.5-6v4M0-7.2v5M3.5-6v4"/></g>
+<g class="hd hr"><rect class="fi" x="-3" y="-19" width="6" height="17" rx="3"/><circle r="7.5"/>
+<path class="fg" d="M-3.5-6v4M0-7.2v5M3.5-6v4"/></g></g></svg>
