@@ -104,6 +104,20 @@ class Admin(unittest.TestCase):
         self.run_admin("seal-now")
         self.assertEqual(db.get_meta_json(s.conn, "force"), {"canary": True, "seal": True})
 
+    def test_release_pack(self):
+        s = self.s
+        locker, other = s.register(), s.register()
+        until = codec.now() + 30 * 86400
+        with db.tx(s.conn):
+            s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ?", (2 << 30, until))
+        paid = lambda: s.conn.execute("SELECT id, paid_bytes FROM identities WHERE paid_until > ? ORDER BY id",
+                                      (codec.now(),)).fetchall()
+        self.assertEqual(len(paid()), 2)
+        self.assertEqual(self.run_admin("release-pack", "--", locker["id"]).strip(), "released")
+        self.assertEqual([tuple(r) for r in paid()], [(other["id"], 2 << 30)])     # only that locker's
+        with self.assertRaises(SystemExit):                                       # nothing left to end
+            self.run_admin("release-pack", "--", locker["id"])
+
     def test_judge_pass(self):
         s = self.s
         code = self.run_admin("judge-pass", "new", "--uses", "2", "--pow-skips", "3").strip()
