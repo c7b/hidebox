@@ -105,7 +105,9 @@
     "You get a link. Your friend sees it once.",
     "It opens one time in the next {anon_max_expiry}. Then it's gone.",
     "Same link. Now it opens one time.",
-    "It opens one time. When you open it, it's gone."
+    "It opens one time. When you open it, it's gone.",
+    "It opens one time, until {date}. Then the link ends.",
+    "It opens one time. Then the link ends."
    ]
   },
   {
@@ -117,7 +119,9 @@
    ],
    "sentences": [
     "It opens up to {few} times in the next {anon_max_expiry}. Then it's gone.",
-    "Same link. Now it opens up to {few} times."
+    "Same link. Now it opens up to {few} times.",
+    "It opens up to {few} times, until {date}. Then the link ends.",
+    "It opens up to {few} times. Then the link ends."
    ]
   },
   {
