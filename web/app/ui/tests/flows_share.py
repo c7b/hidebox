@@ -127,8 +127,10 @@ def stranger(t, url, device="desktop"):
 
 
 def new_folder(page, name):
+    """New folder, waiting out the last one's closing dialog (520 ms) so the steps reach the new one."""
+    page.wait("![...document.querySelectorAll('[data-testid=\"new-folder-dialog\"]')].some((d) => !d.hidden)", 10)
     page.eval("document.dispatchEvent(new CustomEvent('drive:new', { detail: 'folder' }))")
-    page.wait_for("new-folder-dialog", 10)
+    page.wait("[...document.querySelectorAll('[data-testid=\"new-folder-dialog\"]')].some((d) => !d.hidden && d.dataset.state === 'open')", 10)
     page.fill("folder-name", name)
     page.click("folder-create")
     page.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === {json.dumps(name)})", 30)
