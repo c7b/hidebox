@@ -3,26 +3,16 @@
 // ticks the box, and the anti-bot proof of work is the app's own (/app/lib/pow.js), not a captcha.
 // The form ships hidden and appears only once this module runs: a form the browser submitted by
 // itself would put the whole link, key included, in a request to us and in the history.
-import { config, lang } from './site.js';
+import { config } from './site.js';
 
 const T = {
-  en: {
-    working: 'A few seconds of math instead of a captcha…',
-    sent: (id) => `Thanks. Report ${id} received. We read every report and usually disable the link first and ask questions later.`,
-    notLink: 'Paste a mutis link: it has /s/ or /d/ in it.',
-    wait: (s) => `You can send another report in ${s} seconds.`,
-    offline: 'We couldn\'t reach our server. Nothing was sent. Try again.',
-    failed: 'Our server failed. Nothing was sent. Try again in a minute.',
-  },
-  es: {
-    working: 'Unos segundos de cálculo en lugar de un captcha…',
-    sent: (id) => `Gracias. Recibimos el reporte ${id}. Leemos cada reporte y casi siempre primero desactivamos el enlace y luego preguntamos.`,
-    notLink: 'Pega un enlace de mutis: lleva /s/ o /d/.',
-    wait: (s) => `Puedes enviar otro reporte en ${s} segundos.`,
-    offline: 'No pudimos llegar a nuestro servidor. No se envió nada. Intenta de nuevo.',
-    failed: 'Nuestro servidor falló. No se envió nada. Intenta de nuevo en un minuto.',
-  },
-}[lang];
+  working: 'A few seconds of math instead of a captcha…',
+  sent: (id) => `Thanks. Report ${id} received. We read every report and usually disable the link first and ask questions later.`,
+  notLink: 'Paste a mutis link: it has /s/ or /d/ in it.',
+  wait: (s) => `You can send another report in ${s} seconds.`,
+  offline: 'We couldn\'t reach our server. Nothing was sent. Try again.',
+  failed: 'Our server failed. Nothing was sent. Try again in a minute.',
+};
 const PATH = /^\/(s\/[A-Za-z0-9_-]{22}|d\/[0-9a-hjkmnp-tv-z]{10})$/;
 
 const form = document.querySelector('[data-abuse]');

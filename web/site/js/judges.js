@@ -2,15 +2,19 @@
 // The Council guide: the optional judge pass (kept on this device where the app reads it, so it can
 // be sent as X-Mutis-Judge; a /judges#pass=… link saves it on opening) and the live list of our own
 // test transactions from /evidence.json.
-import { isTxId, lang, shortTx } from './site.js';
+import { isTxId, shortTx } from './site.js';
 import { loadEvidence, networkName, txId } from './evidence.js';
 import { saveJudgePass, savedJudgePass } from '/app/lib/store.js';
 
 const PASS = /^judge-[0-9a-hjkmnp-tv-z]{24}$/;
 const T = {
-  en: { saved: 'Saved on this device for a week.', forgot: 'Forgotten.', bad: 'That doesn\'t look like a judge pass: it starts with “judge-” and has 24 more letters and digits.', none: 'none yet', check: 'what the chain sees', unreported: 'not reported yet' },
-  es: { saved: 'Guardado en este dispositivo durante una semana.', forgot: 'Olvidado.', bad: 'Eso no parece un pase de jurado: empieza con “judge-” y tiene 24 letras y números más.', none: 'ninguno todavía', check: 'lo que ve la cadena', unreported: 'todavía no reportado' },
-}[lang];
+  saved: 'Saved on this device for a week.',
+  forgot: 'Forgotten.',
+  bad: 'That doesn\'t look like a judge pass: it starts with “judge-” and has 24 more letters and digits.',
+  none: 'none yet',
+  check: 'what the chain sees',
+  unreported: 'not reported yet',
+};
 
 const box = document.querySelector('[data-judge-pass]');
 const form = box.querySelector('form');

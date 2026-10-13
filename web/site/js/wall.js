@@ -7,7 +7,7 @@
 // The scripted scene starts as soon as this runs. When /api/v1/stats/wall brings at least 8 items before
 // the lockers come into view, each locker becomes one of them: its exit rule and its size class
 // (the box's depth), never an id, a time or whether it has left. The centre locker is always ours.
-// The words come from wall-en.js or wall-es.js, so a page downloads only its own language.
+// The words come from wall-en.js.
 import { drawNoise } from './noise.js';
 
 const EXIT = 0.06;                 // how much of the scroll one locker's exit takes

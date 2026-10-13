@@ -13,7 +13,7 @@ from cdp import Browser  # noqa: E402
 
 SITE = Path(__file__).resolve().parents[1]
 OG_MAX_BYTES = 150 * 1024   # 11-brand §13.10
-JOBS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630), ("og-es.html", "og-es.png", 1200, 630),
+JOBS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630),
         ("icon.html", "icon-512.png", 512, 512), ("icon.html", "icon-192.png", 192, 192),
         ("icon.html", "apple-touch-icon.png", 180, 180))
 

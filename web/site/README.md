@@ -3,7 +3,7 @@
 
 The marketing site (`web/site/`) and the design system the app shares with it (`web/shared/`): the
 home page around the drop widget, the one pinned scene (the exit wall), every content and legal page
-in English and Spanish, SEO and static files, the fonts, the brand marks and the partials.
+(English only), SEO and static files, the fonts, the brand marks and the partials.
 
 No third-party code: our own ES modules and stylesheets, three font files renamed from Courier Prime
 and Courier Prime Code, Python's standard library for every tool and test, Debian's Chromium,
@@ -19,7 +19,7 @@ On the server (as `build`) every check runs: 16 file checks (with `llms-full.txt
 in two time zones, and 11 browser checks in headless Chromium against `tests/serve.py`, which serves
 the app's real widget from `web/app/`. Elsewhere, checks whose tool is missing print `SKIP`, never
 `PASS`; `--static` runs only the file checks. "/judges quotes the app's words" compares `/judges`, in
-each amount-proof mode, with `web/app/i18n/{en,es}.json`. Last run on the server: see `ACCEPTANCE.md`.
+each amount-proof mode, with `web/app/i18n/en.json`. Last run on the server: see `ACCEPTANCE.md`.
 
 ## Layout
 
@@ -34,8 +34,8 @@ each amount-proof mode, with `web/app/i18n/{en,es}.json`. Last run on the server
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how security pricing faq judges terms privacy abuse status 404`, and `es/` |
-| `js/` | `site.js` (every page), `stats.js` (numbers from `/config` and `/stats`), `home.js`, and what it loads as each section comes near: `wall.js` with its words in `wall-en.js` / `wall-es.js`, `noise.js`, `canary.js` (then `reveal.js` on a click), `evidence.js`; `abuse.js`, `judges.js`, `status.js` |
-| `css/` | `site.css` (every page), `home.css` (`/` and `/es/` only, which also link the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
+| `js/` | `site.js` (every page), `stats.js` (numbers from `/config` and `/stats`), `home.js`, and what it loads as each section comes near: `wall.js` with its words in `wall-en.js`, `noise.js`, `canary.js` (then `reveal.js` on a click), `evidence.js`; `abuse.js`, `judges.js`, `status.js` |
+| `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |
 | `tools/` | `subset-fonts.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |

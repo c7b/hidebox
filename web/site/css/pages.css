@@ -60,7 +60,6 @@ main.container h2 { font: 700 clamp(26px, 2.8vw, 38px)/1.1 var(--font-script); l
 .track .do strong { font-weight: 600; }
 .track .see { color: var(--fg-2); }
 .track .see::before { content: "You should see: "; font-family: var(--font-script); color: var(--fg); }
-:lang(es) .track .see::before { content: "Deberías ver: "; }
 @media (min-width: 900px) {
   .track-cols { display: grid; grid-template-columns: 3ch 1fr 1fr; gap: var(--s-5); padding-bottom: var(--s-2); }
   .track-cols span { font: var(--t-scene); text-transform: uppercase; }

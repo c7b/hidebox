@@ -18,7 +18,6 @@ The live limits (file sizes, expiry, opens, prices) are in the public configurat
 - [Pricing and limits]({{ORIGIN}}/pricing): free space, rented space in tTARI
 - [FAQ]({{ORIGIN}}/faq)
 - [Council guide]({{ORIGIN}}/judges): a two-track walkthrough with expected results
-- [Spanish]({{ORIGIN}}/es/)
 - [Full text of How it works and Security]({{ORIGIN}}/llms-full.txt)
 - [Notarized releases]({{ORIGIN}}/releases.json): each release's manifest hash, recorded through SealLog
 

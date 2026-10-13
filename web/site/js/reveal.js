@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // "Yesterday's key": once a test file is a day old its key is published, and this opens it in the
 // visitor's browser with the same format code the viewer uses (/app/lib). Loaded on demand.
-import { lang } from './site.js';
 import { getBytes } from './canary.js';
 
 const T = {
-  en: { first: 'First line', rest: (n) => `(then ${n} random characters of padding)`, fail: 'It didn\'t open: the key or the bytes have changed.' },
-  es: { first: 'Primera línea', rest: (n) => `(y luego ${n} caracteres aleatorios de relleno)`, fail: 'No abrió: la llave o los bytes cambiaron.' },
-}[lang];
+  first: 'First line',
+  rest: (n) => `(then ${n} random characters of padding)`,
+  fail: 'It didn\'t open: the key or the bytes have changed.',
+};
 
 // -> true when it opened; otherwise the caller lets the visitor try again.
 export async function openRevealed(box, entry) {
