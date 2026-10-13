@@ -20,6 +20,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Someone with only the link's path | ask for its status | the key lives only after the `#`; opening needs an access token derived from it; link + password adds a link proof | learns that a link exists, its state, and once it has ended why and on what day (with SealLog: its exit receipt, so the file's id and which checkpoint windows its arrival and exit fell in); not the open count |
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links |
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets |
+| A dishonest payer (packs) | build an output that opens with our receiver's view key but that they can still spend | the one-time key must be the one our receiver's owner key derives ("Ownership" below) | none known |
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours; direct sends link to our sponsor wallet and to each other |
 | A view-key holder | read arrivals, amounts and memo text | files sealed to a locker need its owner key too | files sent with "The recipient uses another Ootle wallet" open with the view key (labelled at send time) |
 | Phishing through our sends | make someone receive a **bye** link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact **bye** delivery as plain text | someone can send unwanted **bye** deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
@@ -59,6 +60,16 @@ only read its own directory) opens the output's commitment to the exact amount, 
 indexer shows the output committed. walletd never decides a credit. With `amount_proof = "wallet"`
 (the fallback when the sidecar can't run) the amount is the one our wallet reads, and the site says
 so.
+
+**Ownership (R1, fixed in October 2026).** A view key proves an output's amount and memo, not who can spend
+it: a payer can build an output that opens with our receiver's view key while its one-time key is the
+payer's own. Before this fix such an output credited a pack and the payer kept the money (spending it
+back would then have frozen every credit at the hourly reconcile). Now the chain worker also derives
+the output's one-time key from our receiver's owner key and the output's nonce (the official library's
+`stealthDhSecret`, the sidecar's `oneTimeKey`) and compares it with the key the indexer shows; a
+mismatch marks the payment `rejected`, never credited. Tested on the fake chain and with an offline
+known-answer test made with the real library (`web/app/sidecar/selftest.json`, `ownership`), never with
+forged outputs on the public testnet. The walletd fallback relies on walletd's own list for ownership.
 
 ## SealLog
 

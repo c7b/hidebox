@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 from . import codec, quota
-from .fake_chain import FAKE_WASM_SHA256, fake_keys, open_output
+from .fake_chain import FAKE_WASM_SHA256, fake_keys, fake_one_time_key, fake_pk, open_output
 
 _MEMO = re.compile(r"/t#3([A-Za-z0-9_-]{167})$")
 _canaries: dict[int, dict] = {}
@@ -93,6 +93,11 @@ def handle(req: dict) -> dict:
         return {"address": fake_keys()["address"]}
     if cmd == "scan":
         return {"found": scan(req["view_sk"], req["utxos"])}
+    if cmd == "oneTimeKey":                  # R1: the key only this owner key can spend with
+        owner_sk, nonce = bytes.fromhex(req["owner_sk"]), bytes.fromhex(req["nonce"])
+        if len(owner_sk) != 32 or len(nonce) != 32:
+            raise ValueError("bad_request")
+        return {"public_key": fake_one_time_key(fake_pk(owner_sk), nonce).hex()}
     if cmd == "selftest":
         return {"passed": True, "cases": 0}
     if cmd == "canary":

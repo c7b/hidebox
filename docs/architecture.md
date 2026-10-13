@@ -121,7 +121,7 @@ the browser, so the server never learns which outputs a browser can open.
 | Dead drops | a public address plus a tag; deliveries sealed to the owner's keys | `server/mutis/handlers/drops.py`, `web/app/ui/droppage.js` |
 | The UTXO mirror | every TARI output since `mirror_start_epoch`, served to every browser alike | `server/mutis/mirror.py`, `GET /chain/utxos` |
 | Direct sends | the browser builds, signs and pays from a sponsor grant; the server relays only that shape | `web/app/lib/wallet.js`, `server/mutis/handlers/chain.py`, `server/mutis/cbor.py` |
-| Pack payments | credited only after the sidecar (official library) opens the commitment to the exact amount and an indexer shows it committed | `server/mutis/payments.py`, `web/app/sidecar/` |
+| Pack payments | credited only after the sidecar (official library) opens the commitment to the exact amount, an indexer shows it committed, and its one-time key is the one our receiver's owner key derives (spendable by us, not only readable with our view key) | `server/mutis/payments.py`, `server/mutis/chain_worker.py`, `web/app/sidecar/` |
 | SealLog | a Merkle root over stored-file hashes and exit records per checkpoint; proofs checked in the browser against the component's state; release manifests notarized | `template/seal_log/`, `server/mutis/seallog.py`, `web/app/lib/seallog.js` |
 
 The template is published from this repository's exact bytes; `template/check.sh --onchain` and
