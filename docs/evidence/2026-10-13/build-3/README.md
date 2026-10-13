@@ -3,7 +3,7 @@
 
 The receipts of the third build stage of the redesign (14-ghost-design §17 steps 8 to 10: the viewer,
 the gone page and the locker on the ghost with the app's strings rewritten to the copy deck; the
-judges' goodbye, `judge_demo_gone` and its release step; the public name in the documents). Times in
+judges' demo secret, `judge_demo_gone` and its release step; the public name in the documents). Times in
 UTC. Nothing here is a secret: no judge pass, no production link with its key; the links in
 `suites/ui.log` belong to a throwaway dev server. The judges' demo secret's id is public by design
 (`/api/v1/config` serves it).
