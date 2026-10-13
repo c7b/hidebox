@@ -38,9 +38,15 @@ Against production (there is no staging; 12-integration §7.7):
 - **E-05** needs the short expiry preset: set `e2e_expiry_s = 60` (top level) in
   `/etc/mutis/mutis.toml`, restart mutis-api, run E-05, then remove the line and restart again. Without
   it E-05 reports SKIP (so `--final` fails), and production never offers the preset.
-- **E-J** follows `/judges` step by step, track A (A1–A4) then track B (B1–B7, B7 when SealLog is on),
-  with the phone at 390×844 and the computer at 1440×900, and times each step (`report.json`, `notes`
-  of E-J); both tracks together must take at most 6 minutes.
+- **E-J** follows `/judges` step by step (14-ghost-design §9): four steps on a computer and a phone
+  (the computer drops a file, the phone opens the link and reloads to "It's gone. It said bye.", then
+  the secret the release burned in advance shows its goodbye already checked on chain: it needs
+  `judge_demo_gone`, from `deploy/scripts/demo-gone.py burn`), then six for the Tari part with the
+  locker on the computer (its drop link made first, Later for the key) and the phone carrying things
+  by its codes (the address code opens the phone's home with the address filled in; the drop code
+  opens the drop page), See what came, See what a view key sees, Get more room. The phone is 390×844
+  and the computer 1440×900; each step is timed (`report.json`, `notes` of E-J); both tracks together
+  must take at most 6 minutes.
 - **E-J in direct mode** (12-integration §7.5, before `send_mode = "direct"` goes public): with
   `send_mode = "direct"`, `features.direct_send` and `features.sponsor` on, E-J makes a judge pass
   (`mutis-admin judge-pass new --uses 3`) and gives it to both of its browser contexts, which share

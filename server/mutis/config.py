@@ -5,6 +5,7 @@ Unknown keys are an error, so a typo in the TOML stops the service instead of be
 """
 import copy
 import os
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,9 @@ DEFAULTS: dict = {
     "repo_url": "https://github.com/c7b/mutis",
     "onion": "",
     "e2e_expiry_s": 0,              # > 0 only on a deployment the E2E suite runs against (spec §17.1)
+    # A share id the release burns at least a checkpoint before the tag (deploy/scripts/demo-gone.py):
+    # /judges, track one, step 4 opens it, so a judge sees a goodbye already on the chain (14 §9).
+    "judge_demo_gone": "",
     "gates": {"send_mode": "relay", "amount_proof": "wallet", "key_bundle": False},
     "features": {"drops": True, "relay_send": True, "direct_send": False, "demo_pay": True, "sponsor": False,
                  "decoys": True, "kept": True, "seallog": False},
@@ -64,6 +68,7 @@ DEFAULTS: dict = {
 }
 
 SEAL_MIN_INTERVAL_S = 600            # with seal-now's own gap: at most one SealLog fee every 10 minutes
+SHARE_ID = re.compile(r"[A-Za-z0-9_-]{22}")
 
 
 class ConfigError(Exception):
@@ -143,6 +148,8 @@ def validate(raw: dict, dev: bool = False) -> None:
         raise ConfigError(f"seal_log.checkpoint_interval_s must be at least {SEAL_MIN_INTERVAL_S}")
     if raw["e2e_expiry_s"] < 0:
         raise ConfigError("e2e_expiry_s must be 0 (off) or a number of seconds")
+    if raw["judge_demo_gone"] and not SHARE_ID.fullmatch(raw["judge_demo_gone"]):
+        raise ConfigError("judge_demo_gone must be empty or a share id (22 base64url characters)")
 
 
 def from_dict(over: dict, dev: bool = False) -> Config:

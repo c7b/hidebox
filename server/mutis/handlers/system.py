@@ -60,6 +60,7 @@ def build_config(ctx) -> dict:
                   "wasm_version": ootle["wasm_version"], "mainnet_date": ootle["mainnet_date"]},
         "security_drop": cfg["security_drop_url"] or None,
         "repo_url": cfg["repo_url"],
+        "judge_demo_gone": cfg["judge_demo_gone"] or None,
         "seal_log": {"checkpoint_interval_s": cfg["seal_log"]["checkpoint_interval_s"],
                      "component": ootle["seallog_component"] or None},
         "retention": {"ticket_s": items.TICKET_S, "tombstone_days": cleanup.TOMBSTONE_DAYS,

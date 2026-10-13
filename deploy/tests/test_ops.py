@@ -28,6 +28,7 @@ def load(name: str, path: Path):
 backup = load("backup", SCRIPTS / "backup.py")
 health = load("healthcheck", SCRIPTS / "healthcheck.py")
 evidence = load("collect_evidence", SCRIPTS / "collect-evidence.py")
+demo_gone = load("demo_gone", SCRIPTS / "demo-gone.py")
 
 
 def mutis_db(path: Path) -> sqlite3.Connection:
@@ -320,3 +321,45 @@ class RunWalletdTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DemoGone(unittest.TestCase):
+    """14-ghost-design §9: the release writes the burned demo secret's id into mutis.toml, at the top
+    level, replacing an older one, and the server's own validation accepts the result."""
+
+    EXAMPLE = (ROOT / "deploy" / "config" / "mutis.toml.example").read_text()
+
+    def test_the_key_lands_at_the_top_level_and_reads_back(self):
+        import tomllib
+        sid = "A" * 21 + "w"
+        out = demo_gone.set_key(self.EXAMPLE, sid)
+        cfg = tomllib.loads(out)
+        self.assertEqual(cfg["judge_demo_gone"], sid)
+        self.assertEqual({k: v for k, v in cfg.items() if k != "judge_demo_gone"},
+                         {k: v for k, v in tomllib.loads(self.EXAMPLE).items() if k != "judge_demo_gone"})
+        again = demo_gone.set_key(out, "B" * 22)
+        self.assertEqual(tomllib.loads(again)["judge_demo_gone"], "B" * 22)
+        self.assertEqual(again.count("judge_demo_gone ="), 1)
+        sys.path.insert(0, str(ROOT / "server"))
+        from mutis.config import from_dict
+        from_dict(tomllib.loads(again), dev=True)
+
+    def test_without_repo_url_it_goes_before_the_first_table(self):
+        import tomllib
+        out = demo_gone.set_key('network = "esmeralda"\n\n[gates]\nsend_mode = "relay"\n', "C" * 22)
+        self.assertEqual(tomllib.loads(out)["judge_demo_gone"], "C" * 22)
+        self.assertNotIn("judge_demo_gone", tomllib.loads(out)["gates"])
+
+    def test_only_a_share_id(self):
+        for bad in ("", "short", "A" * 23, 'A" injected = "x'):
+            with self.assertRaises(ValueError):
+                demo_gone.set_key(self.EXAMPLE, bad)
+
+    def test_write_keeps_owner_and_mode(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "mutis.toml"
+            path.write_text(self.EXAMPLE)
+            os.chmod(path, 0o640)
+            demo_gone.write_config(path, demo_gone.set_key(self.EXAMPLE, "D" * 22))
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o640)
+            self.assertIn('judge_demo_gone = "DDDDDDDDDDDDDDDDDDDDDD"', path.read_text())

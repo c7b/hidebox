@@ -42,7 +42,7 @@ class System(unittest.TestCase):
         self.assertEqual(headers["Cache-Control"], "public, max-age=60")
         for key in ("origin", "memo_origins", "network", "network_byte", "testnet", "send_mode", "amount_proof",
                     "chunk_size", "text_max_chars", "text_max_bytes", "inline_max_stored", "limits", "kdf", "pricing",
-                    "features", "courier", "sponsor_grant_ut", "ootle", "security_drop", "repo_url", "seal_log",
+                    "features", "courier", "sponsor_grant_ut", "ootle", "security_drop", "repo_url", "judge_demo_gone", "seal_log",
                     "retention", "quota", "password", "invoices", "hosting", "onion"):
             self.assertIn(key, c)
         self.assertEqual(c["origin"], ORIGIN)
@@ -66,6 +66,7 @@ class System(unittest.TestCase):
         self.assertEqual(c["password"]["lock_after"], 5)
         self.assertEqual(c["seal_log"], {"checkpoint_interval_s": 900, "component": None})
         self.assertNotIn("e2e_expiry_s", c)                   # only where the deployment turns it on
+        self.assertIsNone(c["judge_demo_gone"])               # until the release burns its demo secret
 
     def test_e2e_expiry_preset_only_when_configured(self):
         s = Stack({"e2e_expiry_s": 60})
@@ -76,6 +77,17 @@ class System(unittest.TestCase):
         s.now += 61
         status, _, body = s.request("GET", f"{V}/s/{link['share_id']}")
         self.assertEqual((status, body["error"]["details"]["reason"]), (410, "expired"))
+
+    def test_judge_demo_gone(self):
+        """14-ghost-design §9: the release's burned demo secret is served for /judges; anything that
+        isn't a share id stops the service."""
+        from mutis.config import ConfigError, from_dict
+        s = Stack({"judge_demo_gone": "A" * 21 + "w"})
+        self.addCleanup(s.close)
+        self.assertEqual(s.request("GET", f"{V}/config")[2]["judge_demo_gone"], "A" * 21 + "w")
+        for bad in ("short", "A" * 23, "A" * 21 + "/", "https://example.com/s/" + "A" * 22):
+            with self.assertRaises(ConfigError):
+                from_dict({"judge_demo_gone": bad}, dev=True)
 
     def test_pow(self):
         status, _, body = self.s.request("POST", f"{V}/pow", {"purpose": "upload"})

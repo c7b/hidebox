@@ -13,8 +13,8 @@ deploy/journald/mutis.conf          7-day journal
 deploy/config/mutis.toml.example    /etc/mutis/mutis.toml (every key the server accepts)
 deploy/holding/                     the page served until the full site builds
 deploy/scripts/                     provision, deploy, activate-release, rollback, notarize-release,
-                                    backup, healthcheck, collect-evidence, init-keys, privilege-check,
-                                    mutis-admin (wrapper)
+                                    demo-gone (the judges' burned demo secret), backup, healthcheck,
+                                    collect-evidence, init-keys, privilege-check, mutis-admin (wrapper)
 deploy/ootle/                       run-walletd.sh, walletd-log4rs.yml, walletd-rpc.py, publish-template.sh,
                                     setup-accounts.md, reset-playbook.md, upgrade-drill.md
 deploy/ufw/README.md                the firewall
@@ -179,7 +179,12 @@ day key, which the privacy design rules out.
    shows no test items: stop mutis-api and mutis-chain, move `/srv/mutis/data/db/mutis.sqlite3*` into
    `/var/backups/mutis/` (root, 0600), run `sudo mutis-admin migrate` (a new, empty database at the
    current schema, mode 0660), start both again, `sudo mutis-admin canary-now`.
-6. **The tag:** `python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>` → 0
+6. **The judges' goodbye** (14-ghost-design §9): at least one checkpoint (15 minutes) before the tag,
+   and after a fresh database, `sudo python3 -I /srv/mutis/app/current/deploy/scripts/demo-gone.py burn`
+   locks a note nobody has a key for, burns its Once link and writes `judge_demo_gone` into the config
+   (/judges, track one, step 4 opens it; its gone page shows the goodbye already on chain). Repeat
+   it if judging runs past 30 days (tombstones). Tag only when `demo-gone.py check` exits 0.
+7. **The tag:** `python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>` → 0
    differences, the SealLog template included.
 
 ## Day to day
