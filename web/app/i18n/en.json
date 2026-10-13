@@ -692,6 +692,7 @@
  "drive.sto.kind.media": "Photos, video and music",
  "drive.sto.kind.docs": "Documents and notes",
  "drive.sto.kind.other": "Other files",
+ "drive.sto.kind.trash": "In the trash",
  "drive.sto.paid": "Space you paid for",
  "drive.sto.paid_until": "{bytes}, until {date}",
  "drive.sto.padded": "Sizes are padded, so the real sizes stay hidden.",

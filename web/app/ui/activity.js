@@ -47,9 +47,11 @@ function sub(e) {
   return null;
 }
 
-// The chain line of a file that left: its exit leaf's checkpoint, or when the next one is due.
+// The chain line of a file that left: its exit leaf's checkpoint (GET /seallog/proof/{id}?kind=exit), or
+// when the next one is due. A folder has no ciphertext, so no exit leaf and no line (`exit_receipt` false).
+// A committed proof never changes, so it is asked once per page load; a pending one on each view.
 function receiptLine(drive, e) {
-  if (!drive.cfg.features?.seallog) return null;
+  if (!drive.cfg.features?.seallog || !e.row.exit_receipt) return null;
   const line = h('span', { class: 't-meta', 'data-testid': 'exit-receipt' });
   const show = (r) => {
     const tx = r?.checkpoint?.tx_id;
@@ -61,13 +63,14 @@ function receiptLine(drive, e) {
     line.dataset.state = 'pending';
     return line.replaceChildren(t('drive.act.record_wait', { checkpoint_min: Math.round(drive.cfg.seal_log.checkpoint_interval_s / 60) }));
   };
-  const known = e.row.exit ?? null;
-  if (known) show(known);
-  else {
-    show(null);
-    const share = (e.row.shares ?? [])[0];
-    if (share) import('../lib/api.js').then(({ exitReceipt }) => exitReceipt(share.id)).then(show, () => null);
-  }
+  const proofs = (drive.exitProofs ??= new Map());
+  const id = e.row.item_id;
+  show(proofs.get(id) ?? null);
+  if (proofs.has(id)) return line;
+  import('../lib/api-drive.js').then(({ exitProof }) => exitProof(id)).then((r) => {
+    if (r?.checkpoint?.tx_id) proofs.set(id, r);
+    show(r);
+  }, () => null);
   return line;
 }
 

@@ -10,7 +10,8 @@ import { alert, button, closeX, errorAlert, formatTari } from './drive-parts.js'
 import { formatDuration } from './core.js';
 import { testnetLine } from './marks.js';
 
-// What fills the drive, by kind (decrypted types, here): padded sizes, like the meter.
+// What fills the drive, by kind (decrypted types, here): padded sizes, like the meter. Files in the
+// trash still count until it empties; /me says how much (`quota.trash_bytes`), so the parts add up.
 function breakdown(drive) {
   const kinds = { media: 0, docs: 0, other: 0 };
   for (const it of drive.index.items.values()) {
@@ -19,6 +20,7 @@ function breakdown(drive) {
     const k = /^(image|video|audio)\//.test(type) ? 'media' : it.meta.kind === 'text' || /^text\/|pdf|document|sheet|presentation/.test(type) ? 'docs' : 'other';
     kinds[k] += it.row.size_stored;
   }
+  kinds.trash = drive.me.quota.trash_bytes ?? 0;
   return Object.entries(kinds).filter(([, b]) => b > 0);
 }
 

@@ -65,7 +65,7 @@ DYNAMIC = {
     # lane app1: the drive's families (ui/drive*.js)
     "drive.side": ["mine", "received", "shared", "activity", "trash", "storage"],
     "drive.theme": ["light", "dark", "system"],
-    "drive.sto.kind": ["media", "docs", "other"],
+    "drive.sto.kind": ["media", "docs", "other", "trash"],
     "drive.error": ["quota_exceeded", "probation_limit", "too_large_locker", "auth_required", "bad_auth"],
 }
 
