@@ -10,6 +10,8 @@ is a release decision (`deploy/ootle/upgrade-drill.md`), so this note stops at t
 decision it needs. Nothing on the server was changed but two stale processes of `build`. Times are UTC.
 The receipts are `walletd.txt` (walletd's journal and RPC answers), `chain.txt` (mutis's database read
 only, the indexers) and `release-0.46.0.txt` (the release, its digests, the field that broke).
+**Fixed in part at 18:14 the same day** (walletd 0.46.0); the sponsor's balance stays locked. See
+"Fix" at the end and `../upgrade-0.46.0/`.
 
 ## Timeline
 
@@ -140,3 +142,35 @@ E-09,E-10,E-13,E-25` (drill §5) with its items purged by id. Re-notarize the th
   `budget.sponsor.evidence.90` is from the day's E2E runs.
 - Tari releases (`gh api repos/tari-project/tari-ootle/releases`): this one went live on the public
   indexers within minutes of publication, with no notice we saw. Mainnet is planned for 2026-11-11.
+
+## Fix (18:14 to 18:35, `../upgrade-0.46.0/`)
+
+The owner decided to upgrade. walletd 0.46.0 (`26d4c269…6e05`, checked against GitHub's digest, the
+asset's `.sha256` and the release's list) went through the drill: §3 on a copy with no network (one
+additive migration, the same balances), §4 live at 18:14:37 after a cold tar of the wallet, with the
+0.45.0 binary kept beside it. What it fixed and what it didn't:
+
+- **Results are read again.** "Failed to deserialize response" stopped. Checkpoints #157, #158 and #159,
+  whose results the indexers still served, settled on walletd's first poll; #159 and #160 are recorded
+  `committed` by mutis-chain the normal way, the first since #140.
+- **#141 to #158 are recorded `committed`.** All 18 are in the live log at indices 140 to 157 with the
+  same root and tree size on both indexers; marked in one transaction after a database backup
+  (`../upgrade-0.46.0/chain.txt`). `/evidence.json` names the latest again.
+- **The three releases are notarized** (`27e29462`, `ec2956b4`, `612db64f`; `/releases.json` has 21).
+- **21 transactions stay `Pending` in walletd and always will:** the sponsor's 10:39 send `2749858a…` and
+  20 manifests from `service` (#141 to #156 and four notarization attempts). The committee keeps a result
+  for about one or two epochs, not four hours: #156 from 16:58 was gone by 18:14. walletd asks for each
+  every 5 s (21 warnings each time) and never gives up.
+- **The sponsor still can't spend.** Its change `3ee453ab…` (8,851.452 tTARI) is on chain and in the
+  mirror, but walletd holds it `LockedUnconfirmed` under the lock of `2749858a…`, which is released only
+  when that transaction resolves. walletd 0.46.0 has no RPC or CLI to settle, cancel or rescan it, its
+  scanner won't change the status of an output it already holds, and every way a lock goes away
+  deletes the unconfirmed change (`../upgrade-0.46.0/walletd.txt`, with the source lines). The store is
+  not edited by hand, so this stops here. Grants, courier canaries, decoys and the evidence payment
+  keep failing with "Available: 0"; `/status.json` stays red on the canary (amber for 20 minutes after
+  each hourly seal) and amber on `sponsor_balance`.
+- **ootle-wasm 0.46.0** is vendored and passes the suites but isn't deployed: the chain scenarios that
+  would prove it in production need a sponsor that can spend. The live gates G1 and G2c pass with
+  both 0.45.0 (production's) and 0.46.0: a browser-built stealth transfer commits under Protocol V2.
+
+What remains is the owner's: how to give the sponsor spendable funds (`../upgrade-0.46.0/README.md`).
