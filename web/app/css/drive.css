@@ -300,7 +300,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 /* ======================= the drive in the app (Phase 6B, lane app1) ======================= */
 /* Booting and the screen of a browser with no drive yet. */
 .drive-boot { min-height: 100dvh; }
-.start { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
+.start { min-height: 100dvh; display: grid; justify-items: center; align-content: start; padding: max(2.5rem, 14vh) 1rem 2rem; }
 .start-card { display: grid; gap: 1.25rem; justify-items: start; width: min(100%, 32rem); }
 .start-card .lead { font-size: var(--text-base); }
 .working { gap: 0.5rem; }
@@ -326,6 +326,14 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .md-qr figcaption { font-size: var(--text-xs); color: var(--muted-foreground); max-width: 28ch; }
 .setting-row .stack { --gap: 0.5rem; margin-top: 0.5rem; }
 .trash-cell { white-space: nowrap; }
+/* Fixes from the first screenshot round (lane app1). */
+.upload-row .stage { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+.uploads { z-index: var(--z-sticky); }
+.rules-read .item-description { display: block; -webkit-line-clamp: unset; overflow: visible; text-wrap: pretty; }
+.legend li.paid { grid-column: 1 / -1; }
+.price-big { display: flex; align-items: baseline; gap: 0.375rem; font-size: var(--text-4xl); font-weight: 600; letter-spacing: var(--tracking-tight); font-variant-numeric: tabular-nums; }
+.price-big small { font-size: var(--text-base); font-weight: 500; color: var(--tari); letter-spacing: 0; }
+.dialog > div:empty:not([class]), .sheet-body > div:empty:not([class]) { display: none; }
 
 /* ======================= lane app2: share dialog, folder viewer, Received (Phase 6B) ======================= */
 .field-error { color: var(--destructive); }

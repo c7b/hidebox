@@ -119,7 +119,8 @@ export async function renderFeed(drive, page) {
       gone = [];
     }
   }
-  const all = [...events, ...gone].sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+  // Newest first; in the same hour, a file leaving comes after (so above) what happened to it before.
+  const all = [...events, ...gone].sort((a, b) => ((b.at ?? 0) - (a.at ?? 0)) || ((b.k === 'left') - (a.k === 'left')));
   const today = Math.floor(Date.now() / 1000) - 24 * HOUR;
   const groups = [[t('drive.act.today'), all.filter((e) => (e.at ?? 0) >= today)], [t('drive.act.earlier'), all.filter((e) => (e.at ?? 0) < today)]]
     .filter(([, list]) => list.length);

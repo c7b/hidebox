@@ -38,7 +38,7 @@ function meterCard(drive) {
   bar.style.setProperty('--free', `${Math.min(100, ((limit - quota.paid_bytes) / limit) * 100)}%`);
   const legend = h('ul', { class: 'legend', role: 'list' },
     parts.map(([k, b], i) => h('li', {}, h('span', { class: `sw c${i + 1}`, 'aria-hidden': 'true' }), h('span', {}, t(`drive.sto.kind.${k}`)), h('b', {}, formatBytes(b)))),
-    quota.paid_bytes ? h('li', {}, h('span', { class: 'sw sw-tari', 'aria-hidden': 'true' }), h('span', {}, t('drive.sto.paid')),
+    quota.paid_bytes ? h('li', { class: 'paid' }, h('span', { class: 'sw sw-tari', 'aria-hidden': 'true' }), h('span', {}, t('drive.sto.paid')),
       h('b', {}, t('drive.sto.paid_until', { bytes: formatBytes(quota.paid_bytes), date: formatDate(quota.paid_until * 1000, { dateStyle: 'medium' }) }))) : null);
   return h('section', { class: 'card', 'aria-labelledby': 'meter-h' },
     h('div', { class: 'card-header' }, h('h2', { class: 'card-title', id: 'meter-h' }, t('drive.sto.space')),
