@@ -45,8 +45,9 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
   one output plus change), so it is no address-hiding relay for other transactions. The chain links those sends to the sponsor
   wallet and to each other. When the browser asks our proxy for its transaction's result and it has
   committed, the server adds its outputs to the mirror; it already passed that transaction on, so it
-  learns nothing new. Until the grant is spendable (a minute or two after the locker opens) a send falls
-  back to the relay, and the send screen says which way the next send goes before Send is pressed.
+  learns nothing new. Until the grant is spendable (a minute or two after the locker opens), or all day
+  when the day's grant is refused, a send falls back to the relay, and the send screen says which way
+  the next send goes, and why, before Send is pressed.
   Dead-drop deliveries still go through the relay, because a drop's address is public by design.
 
 ## Payments

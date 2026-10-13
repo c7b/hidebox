@@ -46,7 +46,7 @@ stealth outputs keep it hidden, so mutis uses those.
 ## What the server sees
 
 Encryption hides contents, not everything. The server stores ciphertext, padded sizes, arrival hours,
-expiries rounded up to the hour, exit rules and open counts. It sees IP addresses while you are
+expiries (rounded up to the hour when an hour or more away), exit rules and open counts. It sees IP addresses while you are
 connected and never writes them to a log. The send mode is `send_mode` in
 [`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config), and the site's copy follows it:
 

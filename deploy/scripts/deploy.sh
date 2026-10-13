@@ -1,14 +1,15 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Deploy a git ref to ultron (spec §15.5). Runs on the jarvis box, from the repository:
+# Deploy a git ref to the server (spec §15.5). Runs on your workstation, from the repository:
 #   deploy/scripts/deploy.sh <git-ref>             a committed ref, built from `git archive` (clean);
 #                                                  release id <sha>-c<content id>
 #   deploy/scripts/deploy.sh --working-tree        the working tree as it is (staging; release id
 #                                                  <sha12>-dirty-<time>, not verifiable by verify-deploy)
-# Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default ultron).
+# Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default ultron,
+# this deployment's SSH alias for its server).
 #
-# Steps: unit tests, lint and copy check on ultron as `build` with the server's Python 3.13 → build
-# (here) → upload one tarball over one multiplexed SSH connection → on ultron, activate-release.sh
+# Steps: unit tests, lint and copy check on the server as `build` with the server's Python 3.13 → build
+# (here) → upload one tarball over one multiplexed SSH connection → on the server, activate-release.sh
 # checks the sidecar, backs up and migrates the database, switches the `current` symlink atomically
 # and restarts what is enabled → smoke test from here (tests/e2e/smoke.py) → automatic rollback if
 # the smoke test fails and this run switched `current` → with SealLog on, the served manifest's hash
