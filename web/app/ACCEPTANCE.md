@@ -9,12 +9,13 @@ against the real API (`server/bin/mutis-api --dev`, fakes for the chain) serving
 ```
 $ python3 -I web/app/ui/tests/run.py --shots
 …
-UI PASS 228/228
+UI PASS 220/220
 ```
 
-The last full run was after the integration pass (`NOTES-for-integrator.md` §4), from a fresh copy of
-the whole repository: 21 flows (the new one is `receipts`); the `states` flow waits 65 s for a real
-link to expire. The screenshots below are from the fix pass's `--shots` run.
+The last full run was the English-only pass's (2026-10-12, a `git archive` of commit `fd2706f` in
+`/home/build/work/english/tree`; log in `docs/evidence/2026-10-12/english/suites/ui.log`): 20 flows
+(the `spanish` flow and the dictionary-parity checks are gone with Spanish); the `states` flow waits
+65 s for a real link to expire. The screenshots below are from the fix pass's `--shots` run.
 
 The other §16.2 ids belong to app-core: A-01, A-02, A-10…A-14 in `ACCEPTANCE-core.md`; A-03 (secret
 hygiene, E-03) is the deploy builder's E2E, with the library-level evidence in `ACCEPTANCE-core.md`
@@ -24,7 +25,7 @@ and the storage checks below.
 |---|---|---|
 | A-04 every state of §12.3 reachable, with the §3.4.9 test ids | **PASS** | static check: all 88 ids of §3.4.9 (plus P-6's `card-change`, `card-send-address`, `noise-canvas`, and `card-sent`, `card-close-link`, `dd-report`, `view-keep`, `kept-row`/`kept-save`/`kept-delete` for the flows below) are in the sources; every state reached in a browser, list below, `expired` from a real 60-second link. `key-copy` is not built: brand P-15 (accepted in 12-integration §2) removes the copy button |
 | A-05 no CSP or Trusted Types violation; no cross-origin request without the explicit click | **PASS** | every flow ends with "no CSP or Trusted Types violation ([])" (production app CSP, `require-trusted-types-for 'script'`); `layout`: no third-party request on 12 app pages × 3 devices; `deaddrop`: no request to Tari's indexer until "Check it on Tari's indexer" is pressed, then only to `ootle-indexer-b.tari.com` |
-| A-06 widget payload ≤ 40 KB compressed; ootle-wasm only where a locker is used; storage contents | **PASS** for a first drop of text: 24,500 B at load, 40,736 B after the drop (≤ 40,960). **WAIVED** for a file or photo: it also loads `lib/filetype.js` and, for a photo, `lib/exif.js` (recipient safety P-14 and metadata removal §4.13), 46,897 B after a photo, asserted against a stated 48 KB ceiling | `budget` (gzip -9 of every `/app/` and `/vendor/` file the page requested): `PASS budget: widget payload compressed: 24500 B at load, 40736 B after a drop (≤ 40 KB)`, `PASS budget: after a photo too: 46897 B (≤ 49152 B; …)`; no `ootle_wasm` request on `/` before a locker action or after an anonymous drop; `home-text`: localStorage holds only `mutis.recent`, without the key or the text; `locker`: no key material in localStorage, IndexedDB stores exactly `identity` and `inbox` |
+| A-06 widget payload ≤ 40 KB compressed; ootle-wasm only where a locker is used; storage contents | **PASS** for a first drop of text: 23,287 B at load, 39,572 B after the drop (≤ 40,960). **WAIVED** for a file or photo: it also loads `lib/filetype.js` and, for a photo, `lib/exif.js` (recipient safety P-14 and metadata removal §4.13), 45,733 B after a photo, asserted against a stated 48 KB ceiling | `budget` (gzip -9 of every `/app/` and `/vendor/` file the page requested): `PASS budget: widget payload compressed: 23287 B at load, 39572 B after a drop (≤ 40 KB)`, `PASS budget: after a photo too: 45733 B (≤ 49152 B; …)`; no `ootle_wasm` request on `/` before a locker action or after an anonymous drop; `home-text`: localStorage holds only `mutis.recent`, without the key or the text; `locker`: no key material in localStorage, IndexedDB stores exactly `identity` and `inbox` |
 | A-07 keyboard-only flows; accessible names from the CDP Accessibility tree | **PASS** | `keyboard`: drop → copy link; open a link; make a drop link (and the key modal: focus inside, Escape closes); leave a file in a drop; send to an address; buy a pack; watch with a view key. The Accessibility tree has no unnamed button, link, textbox, checkbox or radio on home, card, `/locker`, the drop page, `/send`, `/upgrade`, `/watch` |
 | A-08 lint clean (§0.7) | **PASS** | `tools/lint.py --only web/app`: `lint: PASS (0 problems)`; `tools/check-copy.py`: `PASS (0 problems)` (brand §7.4 banned words, no digit outside `{variables}` in either dictionary); no `innerHTML` & co. anywhere: every node comes from `lib/dom.js`'s `h()` |
 | A-09 without WebAssembly, anonymous drop and open work; locker features say `needs_wasm` | **PASS** | `nowasm` (Chromium `--js-flags=--jitless`): a text drop opens; `/locker`, `/d/…`, `/inbox`, `/watch` show `[data-code="needs_wasm"]` (the drop page with the Tor Browser / Lockdown Mode wording of app-core's note M8) |
@@ -77,28 +78,28 @@ deploy builder's `@chain` E2E.
   names the log's one writer key, and refuses the research component on Esmeralda (it has an
   owner). The device's kept hash equals our server's for a real drop.
 
-## Layout, themes, languages
+## Layout and themes
 
-- No horizontal scroll at 360 px on `/`, `/es/`, `/locker`, `/inbox`, `/send`, `/watch`, `/upgrade`,
+- No horizontal scroll at 360 px on `/`, `/locker`, `/inbox`, `/send`, `/watch`, `/upgrade`,
   `/verify`, `/t`, `/verify/tx/…`, `/s/…`, `/d/…` (`layout`, at 360, 390 and 1440).
 - Dark theme with reduced motion: stage background `rgb(14, 13, 11)`; the card and viewer work
   (`dark`).
-- Spanish: `/es/` widget says "Elegir archivo" and "Listo, cifrado."; burned reads "Este secreto ya
-  hizo mutis."; `<html lang="es">`; `/locker` in Spanish (`spanish`). The site's own check of the
-  phrases `/judges` quotes passes against both dictionaries (`web/site/tests/run.py --static`:
-  "/judges quotes the app's words: PASS").
+- English only since 2026-10-12 (the owner's decision; 12-integration §7.8): the `spanish` flow,
+  the Spanish dictionaries and the `es-*` screenshots are gone. The site's own check of the phrases
+  `/judges` quotes passes against `en.json` (`web/site/tests/run.py`: "/judges quotes the app's
+  words: PASS").
 
 ## Screenshots
 
-`web/app/shots/`, 51 WebP files, 3.5 MB, from `run.py --shots`: phones at 390×844 and 412×915,
-desktop at 1440×900, dark mode with reduced motion (`*-dark-*`), Spanish (`es-*`). Full-page phone
+`web/app/shots/`, 48 WebP files, 3.3 MB, from `run.py --shots`: phones at 390×844 and 412×915,
+desktop at 1440×900, dark mode with reduced motion (`*-dark-*`). Full-page phone
 shots are taken at 1.5× and show the sticky bottom bar where the capture caught it.
 
 | Screen | Files |
 |---|---|
-| Home widget | `home-390-idle`, `home-1440-idle`, `home-1440-sealing`, `home-390-sealed`, `home-1440-sealed-file`, `home-390-sealed-photo`, `home-390-change`, `home-1440-change`, `home-1440-password`, `home-390-known`, `home-1440-program`, `home-1440-card-error`, `home-390-sent-instead`, `home-1440-dark-sealed`, `es-home-390-sealed` |
-| Viewer | `view-412-ready`, `view-412-opened-text`, `view-390-opened-photo`, `view-390-password-wrong`, `view-412-burned`, `view-1440-burned`, `view-1440-expired`, `view-1440-incomplete`, `view-1440-integrity`, `view-390-locked`, `view-1440-program`, `view-1440-known`, `view-390-needs-locker`, `view-390-dark-opened`, `es-view-390-burned` |
-| Locker and key | `locker-390-empty`, `locker-390-key-modal`, `locker-390-full`, `locker-1440-restored`, `locker-1440-kept`, `locker-390-dark-empty`, `es-locker-390` |
+| Home widget | `home-390-idle`, `home-1440-idle`, `home-1440-sealing`, `home-390-sealed`, `home-1440-sealed-file`, `home-390-sealed-photo`, `home-390-change`, `home-1440-change`, `home-1440-password`, `home-390-known`, `home-1440-program`, `home-1440-card-error`, `home-390-sent-instead`, `home-1440-dark-sealed` |
+| Viewer | `view-412-ready`, `view-412-opened-text`, `view-390-opened-photo`, `view-390-password-wrong`, `view-412-burned`, `view-1440-burned`, `view-1440-expired`, `view-1440-incomplete`, `view-1440-integrity`, `view-390-locked`, `view-1440-program`, `view-1440-known`, `view-390-needs-locker`, `view-390-dark-opened` |
+| Locker and key | `locker-390-empty`, `locker-390-key-modal`, `locker-390-full`, `locker-1440-restored`, `locker-1440-kept`, `locker-390-dark-empty` |
 | Dead drop, inbox, send, watch | `drop-1440-ready`, `drop-1440-delivered`, `inbox-390`, `inbox-390-opened`, `inbox-1440-empty`, `send-412-recipient`, `send-412-sent`, `watch-1440-mine`, `watch-390-viewkey`, `watch-1440-needs-wasm` |
 | Upgrade, chain | `upgrade-390-plans`, `upgrade-390-credited`, `upgrade-390-credited-wallet`, `verify-1440-tx` |
 

@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # NOTES from the app-ui builder
 
+> Historical record (2026-10-11). The site and app also had Spanish pages then; the owner had them
+> removed on 2026-10-12 (CHANGELOG), so mentions of `/es/`, `es.json` and the language switch below
+> describe code that is now only in the git history. The current layout is in this directory's README.
+
 What I need from other directories, and every decision I made where the documents disagreed or were
 silent. Evidence for each acceptance id is in `ACCEPTANCE.md`.
 

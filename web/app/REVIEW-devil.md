@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Devil's-advocate reviews of web/app
 
+> Historical record (2026-10-11). The site and app also had Spanish pages then; the owner had them
+> removed on 2026-10-12 (CHANGELOG), so mentions of `/es/`, `es.json` and the language switch below
+> describe code that is now only in the git history. The current layout is in this directory's README.
+
 This file holds two reviews. The **app-ui** review (screens, widget, CSS, i18n) comes first. The
 earlier **app-core** review (`lib/`, `sidecar/`, `vendor/`, `tests/`) follows it unchanged. Both
 reviewers were told to write to this path, so the second one kept the first.
