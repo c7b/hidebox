@@ -22,6 +22,8 @@ colors:
   paper: "#FFF6D6"
   sand: "#E2B13C"
   blush: "#FF9EB9"
+  ghost-shadow-light: "rgb(21 26 59 / .16)"
+  ghost-shadow-dark: "rgb(189 239 195 / .18)"
 typography:
   hero:
     fontFamily: "ui-rounded, SF Pro Rounded, Arial Rounded MT Bold, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif"
@@ -105,7 +107,8 @@ components:
 
 # Design System: bye
 
-> Draft written in Phase 6A (2026-10-13) from the prototype in `research/design/proto/` (jarvis side).
+> Draft written in Phase 6A (2026-10-13) from the prototype in `research/design/proto/` (jarvis side),
+> revised the same day in the fix pass after the design critique.
 > It replaces the "mutis" screenplay system. Phase 6B moves these values into `web/shared/tokens.css`.
 
 ## Overview
@@ -141,11 +144,15 @@ only on things that are Tari (the coin, the chain, the "send to a Tari address" 
   on ceiling. All pairs measure 6.6:1 or more.
 - **Paper** (#FFF6D6), **Sand** (#E2B13C), **Blush** (#FF9EB9): the ghost's props (notes, the
   hourglass sand and the key, the cheeks). Never used for text or controls.
+- **Ghost Shadow** (ink at 16% with the lights on, phosphor at 18% with them off): the soft oval under
+  the floating ghost, so the white ghost has a floor on a white ceiling. It breathes with the float
+  and disappears when the ghost is gone.
 
 ### Named Rules
 **The One Glow Rule.** Only the ghost glows (`drop-shadow(0 0 22px rgb(189 239 195 / .38))`, dark
 theme only). No glowing buttons, borders or text.
-**The Tari Is Purple Rule.** Purple means Tari. Nothing else may be purple.
+**The Tari Is Purple Rule.** Purple means Tari. Nothing else may be purple (the "#" of a link is
+ink, not purple: it is not a Tari thing).
 **The QR Is Always Ink On White Rule.** The QR code keeps dark modules on #FFFFFF in both themes so
 every camera reads it.
 
@@ -172,8 +179,9 @@ lower, measured by `research/design/copy/fk.py`; "how it was made" at grade 8 or
 
 Phones first. One centered column for every task screen: the figure, then its sentence, then the one
 action. The home page has nothing below its first screen except the footer. The result splits into two
-columns at 900px and up (the ghost with the rule on the left, the link card with the QR code on the
-right). "How it works" pins a stage (the top 46% of a phone, the right seven twelfths of a desktop)
+columns at 900px and up (the ghost with the rule on the left, the link card on the right). The QR code
+sits in the card wherever the pointer is fine (a laptop at any width), at 200px (4px or more per
+module); phones never show it and get a Share button instead. "How it works" pins a stage (the top 46% of a phone, the right seven twelfths of a desktop)
 and scrolls captions past it. Reading pages keep a 66ch measure. Gutters 16 / 28 / 40px; content max
 1120px.
 
@@ -192,23 +200,36 @@ Round, like the ghost. Buttons and chips are full pills; panels 22px; inputs 14p
 
 ### The figure (signature component)
 - **What it is:** the ghost inside a button. Before a drop, one tap opens the file picker; the whole
-  window is its drop target. After a drop, one tap on it cycles the rule (Once, Secret word, A few
-  times), and the three names sit under it as a radio group.
-- **States:** ready, catch, busy, once, word, while, peek, courier, bag, keep, gone, oops. Each is a
-  set of parts (eyes, mouth, two hands, props) shown by `data-state`; the hands move with a short
-  spring (`cubic-bezier(.3, 1.3, .6, 1)`), the only overshoot in the system.
+  window is its drop target at every phase (a drop on the result screen is "Drop another"). After a
+  drop, one tap on it toggles the count (Once, A few times), and the two names sit under it as a radio
+  group: both keep the same link (spec §5.4 allows it while nobody has opened it). The secret word is
+  its own control under the chips ("Add a secret word"), because a word always makes a new link;
+  once the link may have left the page it asks first: "This makes a new link. The old one stops
+  working."
+- **States:** ready, catch, busy, once, few, word, peek, courier, bag, keep, gone, oops. Each is a set
+  of parts (eyes, a wink, mouth, two round hands, a pointing hand, two mittens, props) shown by
+  `data-state`. Once is one finger up and a wink ("one time"); word is both mittens over the eyes;
+  peek is one mitten over one eye. The hands and mittens move with a short spring
+  (`cubic-bezier(.3, 1.3, .6, 1)`), the only overshoot curve in the system; the gulp is a squash and
+  stretch on an ease-out curve.
+- **Alive while idle:** a 5px float over 3.4s, a blink every 5.2s, and the ground shadow breathing
+  with the float. All three stop under reduced motion.
 - **Size:** min(64vw, 270px) on phones, min(28vw, 340px) on desktop; 128 to 250px on the result.
 
 ### Buttons
-- **Shape:** pill (999px), 48px tall.
+- **Shape:** pill (999px), 48px tall; nothing tappable under 44px (chips, footer links, summaries).
 - **Primary:** Night Ink on light, Phosphor on dark; one per screen.
 - **Quiet:** transparent with a 1.5px line; for the secondary action ("Send it to a Tari address
   instead").
 - **Text links:** underlined, 1.5px, offset .2em.
 - **Press:** scale .97; hover darkens the fill. No glow, no gradient.
+- **Copy link:** says "Copy link" until a clipboard write has succeeded, then "Copied" with a tick.
+  It never claims a copy that has not happened (Safari and Firefox refuse writes without a gesture).
+- **Share** (touch devices with a share sheet): the primary on a phone's result, beside a quiet Copy.
 
-### Chips (the rule switch)
-- **Style:** a sunken pill track holding three pills; the chosen one takes the primary fill.
+### Chips (the count switch)
+- **Style:** a sunken pill track holding two pills (Once, A few times), 44px tall; the chosen one takes
+  the primary fill. "A few times" is three opens (`min(3, max_views)`); exact counts live in More rules.
 
 ### Cards
 - **Corner:** 22px. **Background:** raised ground. **Shadow:** see Elevation. **Padding:** 24px.
@@ -220,19 +241,26 @@ Round, like the ghost. Buttons and chips are full pills; panels 22px; inputs 14p
 
 ### The drop overlay
 - A scrim over the whole window, a dashed phosphor border inset 14px, and one line: "Let go
-  anywhere." The ghost rises above it with its mouth open.
+  anywhere." The ghost rises above it with its mouth open; the footer fades out under it.
+- **The flying note is blank:** a paper glyph, never the secret's text or a file's name.
 
 ### Motion
 - **Durations:** 120ms (press, hover), 200ms (state change), 340ms (reveal), under 1s for the whole
-  drop: the note flies into the ghost (420ms), the ghost gulps (380ms), the card unrolls (340ms).
-- **Easing:** `cubic-bezier(.22, 1, .36, 1)` everywhere; the spring only for the ghost's hands.
+  drop: the note flies into the ghost (380ms), the ghost gulps (320ms; the result starts on its last
+  frames, at 240ms, or as soon as the upload ends), and the card unrolls while the ghost glides from the
+  middle into its place (320ms, one FLIP, no view transition). About 0.94s of motion. The lock and
+  upload start at the drop, in parallel, and the copy is attempted the moment the link exists.
+- **Easing:** `cubic-bezier(.22, 1, .36, 1)` everywhere; the spring only for the ghost's hands and
+  mittens.
 - **Reduced motion:** every animation becomes a cut; the float stops; "how it works" shows each scene
   as a still.
 
 ## Do's and Don'ts
 
-- **Do** let the default be right: the link is made and copied before anyone is asked anything.
+- **Do** let the default be right: the link is made (and copied where the browser allows) before
+  anyone is asked anything.
 - **Do** put new choices behind the ghost (at most three names) or behind "More rules".
+- **Do** ask before anything that ends a link someone may already have; never as a side effect of a tap.
 - **Do** keep every privacy sentence in the claim registry, with its condition.
 - **Don't** add a menu to the header; the header holds the name and the light switch.
 - **Don't** use eyebrow labels, section numbers, gradient text or glowing borders.

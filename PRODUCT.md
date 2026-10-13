@@ -2,7 +2,8 @@
 
 <!-- impeccable:product-schema 1 -->
 
-> Written by the Phase 6A design lead on 2026-10-13 from the owner's brief
+> Written by the Phase 6A design lead on 2026-10-13 (fix pass the same day, after the design
+> critique) from the owner's brief
 > (`research/13-ghost-brief.md`, owner's words of 2026-10-12 and 2026-10-13), the behaviour spec and
 > the live deployment. No interview was possible (the brief rules out questions to the owner), so
 > facts taken from the brief are marked **[brief]** and inferences are marked **[inferred]**.
@@ -31,7 +32,8 @@ Give the ghost a secret; your friend sees it once; then it's gone, and its goodb
 Tari chain. The browser encrypts the file before upload, the key travels in the link (or sealed to a
 Tari address inside a stealth payment), and the server holds only ciphertext and the clock.
 
-Success means: a stranger gets a copied link within ten seconds of landing, with zero decisions; a
+Success means: a stranger has a link within ten seconds of landing, with zero decisions (copied where
+the browser allows it, otherwise one tap on Copy or Share away); a
 judge finishes the one-device script in about a minute and the two-device Tari script in about five;
 nothing on the first screen needs cryptography to be understood [brief].
 
@@ -39,8 +41,8 @@ nothing on the first screen needs cryptography to be understood [brief].
 
 The only entry in this contest that is a hosted consumer product a non-crypto person can use in ten
 seconds, and where Tari's privacy does real work behind that simplicity: the file key can ride to a
-Tari address inside a stealth output's encrypted memo, view keys show arrivals without opening
-anything, payments are credited only after the chain confirms them, and every exit is notarized in our
+Tari address inside a stealth output's encrypted memo, view keys show arrivals and amounts without
+opening the files sealed to a locker, payments are credited only after the chain confirms them, and every exit is notarized in our
 own SealLog template on the Ootle [brief]. The rivals are a CLI toolkit, a sell-a-secret template,
 claimable stealth links, a public message board and a game [brief].
 
@@ -62,7 +64,8 @@ Functionality stays; only the surface changes [brief]:
   kept in a locker; delete now.
 - Send to a Tari address (key in a stealth payment's encrypted memo); a dead drop ("get a file from
   someone"); an inbox found by scanning the chain in the browser; a view key that sees arrivals and
-  opens nothing; packs of more room paid in tTARI, with a demo pay; `/verify` of SealLog proofs; abuse
+  amounts and opens no file sealed to a locker (files sent "to another Ootle wallet" do open with
+  that wallet's view key, claim C15); packs of more room paid in tTARI, with a demo pay; `/verify` of SealLog proofs; abuse
   reports; judge passes.
 - Rules that bind every change: English only; no third-party code, requests, fonts, CDN or analytics;
   no npm, pip or new packages; Python standard library for builds; CSP, Trusted Types and SRI as
@@ -75,11 +78,14 @@ Functionality stays; only the surface changes [brief]:
 ## Brand Commitments
 
 - **The figure is a little ghost** that sits in the middle of the drop zone and acts out the rule:
-  finger on its lips for "once", hands over its eyes for a secret word, an hourglass for "a few
-  times", an envelope and a Tari coin for a send, an open bag for a dead drop, a dashed outline
+  one finger up and a wink for "once", mittens over its eyes for a secret word, an hourglass for "a
+  few times", an envelope and a Tari coin for a send, an open bag for a dead drop, a dashed outline
   waving bye when the secret is gone [brief, chosen over a bubble, a burning note and a safe in
   `research/14-ghost-design.md` §2].
-- **The proposed name is "bye"** [inferred: three finalists with evidence; the owner may override].
+- **The name is "bye"** [settled at the end of Phase 6A on evidence (finalists bye, byebye, whoosh)
+  and confirmed by the design critic; the owner can override it with one word]. Tagline: "Show it
+  once. Then bye." Where the name sits mid-sentence it is set in bold, so "sent by **bye**" never
+  reads as a typo.
 - **Google, not Yahoo**: one thing to do on the home page; everything else one deliberate tap away
   [brief].
 - **Words an eight-year-old reads in one breath** on the home, the product and "how it works"
