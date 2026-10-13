@@ -1,0 +1,20 @@
+judge-passes.txt: 20 judge codes loaded
+owner-locker-key.txt: 5 lines, 2 tokens loaded
+owner-locker-passphrase.txt: 2 lines, 1 tokens loaded
+owner-security-drop.txt: 7 lines, 4 tokens loaded
+objects: 1964 (1389 blobs, 86 commits, 489 trees, 0 tags)
+secret values loaded: 41; patterns: 16
+scanned: 1475 commits and blobs
+HIT owner-locker-key.txt line 0: 2 objects
+    206731215d blob web/app/lib/identity.js (match length 102)
+    8267590ebf blob web/app/lib/identity.js (match length 102)
+HIT owner-security-drop.txt token 1: 2 objects
+    64eb300e8c blob docs/evidence/2026-10-11/public/json/config.json (match length 43)
+    cd1ba15908 blob docs/evidence/2026-10-12/fix-3/links/crawl.txt (match length 43)
+HIT owner-security-drop.txt token 2: 1 objects
+    cd1ba15908 blob docs/evidence/2026-10-12/fix-3/links/crawl.txt (match length 37)
+HIT sudoers line: 1 objects
+    838ef1de58 blob docs/evidence/2026-10-12/fix-3/gate/secrets-gate.txt (match length 8)
+HIT tailnet IPv4 range: 1 objects
+    838ef1de58 blob docs/evidence/2026-10-12/fix-3/gate/secrets-gate.txt (match length 10)
+hits: 5

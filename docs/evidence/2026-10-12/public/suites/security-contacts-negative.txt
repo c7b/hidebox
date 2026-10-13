@@ -1,0 +1,6 @@
+The two security.txt checks against broken inputs (files patched in memory, the repository untouched), 6fa84fd:
+1 no advisory line: ["security.txt: missing 'Contact: {{REPO_URL}}/security/advisories/new'", "security.txt: Contact lines should be the drop, then the advisory form; found ['{{SECURITY_DROP_URL}}']"]
+2 wrong order: ["security.txt: Contact lines should be the drop, then the advisory form; found ['{{REPO_URL}}/security/advisories/new', '{{SECURITY_DROP_URL}}']"]
+3 private repo: ["https://github.com/c7b/mutis-pre-rewrite-private/security/advisories/new: answers 404 to a visitor who isn't signed in (is the repository public?)", "GitHub's API: private vulnerability reporting is not on for c7b/mutis-pre-rewrite-private (404)"]
+4 missing repo: ["https://github.com/c7b/no-such-repo-xyz/security/advisories/new: answers 404 to a visitor who isn't signed in (is the repository public?)", "GitHub's API: private vulnerability reporting is not on for c7b/no-such-repo-xyz (404)"]
+5 offline: None

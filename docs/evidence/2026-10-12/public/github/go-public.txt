@@ -1,0 +1,44 @@
+2026-10-13T04:52:47Z
+$ gh repo edit c7b/mutis --visibility public --accept-visibility-change-consequences
+unknown flag: --accept-visibility-change-consequences
+
+Usage:  gh repo edit [<repository>] [flags]
+
+Flags:
+      --add-topic strings        Add repository topic
+      --allow-forking            Allow forking of an organization repository
+      --allow-update-branch      Allow a pull request head branch that is behind its base branch to be updated
+      --default-branch name      Set the default branch name for the repository
+      --delete-branch-on-merge   Delete head branch when pull requests are merged
+  -d, --description string       Description of the repository
+      --enable-auto-merge        Enable auto-merge functionality
+      --enable-discussions       Enable discussions in the repository
+      --enable-issues            Enable issues in the repository
+      --enable-merge-commit      Enable merging pull requests via merge commit
+      --enable-projects          Enable projects in the repository
+      --enable-rebase-merge      Enable merging pull requests via rebase
+      --enable-squash-merge      Enable merging pull requests via squashed commit
+      --enable-wiki              Enable wiki in the repository
+  -h, --homepage URL             Repository home page URL
+      --remove-topic strings     Remove repository topic
+      --template                 Make the repository available as a template repository
+      --visibility string        Change the visibility of the repository to {public,private,internal}
+  
+exit 1
+$ gh repo edit c7b/mutis --description "..." --homepage https://srv2052606.hstgr.cloud --add-topic ...
+exit 0
+$ gh api -X PUT repos/c7b/mutis/private-vulnerability-reporting
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest","status":"404"}gh: Not Found (HTTP 404)
+exit 1
+$ gh api repos/c7b/mutis/private-vulnerability-reporting
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest","status":"404"}gh: Not Found (HTTP 404)
+
+2026-10-13T04:52:55Z
+# this gh (see version) has no --accept-visibility-change-consequences flag; the same change through the REST API:
+$ gh api -X PATCH repos/c7b/mutis -f visibility=public --jq "{full_name,private,visibility}"
+{"full_name":"c7b/mutis","private":false,"visibility":"public"}
+exit 0
+$ gh api -X PUT repos/c7b/mutis/private-vulnerability-reporting
+exit 0
+$ gh api repos/c7b/mutis/private-vulnerability-reporting
+{"enabled":true}
