@@ -295,8 +295,6 @@ export async function renderTrash(drive, page) {
   if (drive.folders) {
     const { listAll } = await import('../lib/api-drive.js');
     list = await drive.index.openList(await listAll({ view: 'trash' }, drive.headers()));
-    // lane app2: the list came back after the page moved on (Bring back, then My drive): draw nothing.
-    if (drive.route.view !== 'trash') return;
   }
   if (!list.length) {
     page.replaceChildren(head, h('div', { class: 'empty', 'data-testid': 'trash-empty' },
