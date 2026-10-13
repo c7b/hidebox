@@ -8,8 +8,9 @@ import apiclient
 import flows
 from harness import STAGING, T, big_fixture_sha256, poll, scenario
 
-ALL_PAGES = ["/", "/how", "/security", "/pricing", "/faq", "/judges", "/terms", "/privacy", "/abuse", "/locker",
-             "/inbox", "/send", "/watch", "/upgrade", "/t", "/verify/tx/" + "0" * 64, "/no-such-page"]
+# The six pages of the ghost (14-ghost-design §4.1) and the app's; the old pages answer 301 (D-01).
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/t",
+             "/verify/tx/" + "0" * 64, "/no-such-page"]
 INSTRUMENTED = ("E-01", "E-02", "E-05", "E-08", "E-09", "E-10", "E-12")    # E-03 searches their traffic
 
 

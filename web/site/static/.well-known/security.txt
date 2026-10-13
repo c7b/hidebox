@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
-# mutis security contact (RFC 9116). Please report privately first; see {{ORIGIN}}/security#disclosure
+# Security contact (RFC 9116). Please report privately first; see {{ORIGIN}}/made#disclosure
 Contact: {{SECURITY_DROP_URL}}
 Contact: {{REPO_URL}}/security/advisories/new
 Expires: 2027-10-01T00:00:00Z
 Preferred-Languages: en
-Policy: {{ORIGIN}}/security
+Policy: {{ORIGIN}}/made#disclosure
 Canonical: {{ORIGIN}}/.well-known/security.txt

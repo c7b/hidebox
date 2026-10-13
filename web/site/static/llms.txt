@@ -1,6 +1,6 @@
-# mutis
+# {{BRAND}}
 
-> mutis is an encrypted file drop built on Tari Ootle's privacy features (Esmeralda testnet). Your browser encrypts every file (AES-256-GCM, WebCrypto) before upload; the server stores only ciphertext and never receives a key. A file's key can travel to any Tari address sealed inside a stealth tTARI payment: the chain shows a hidden amount, a one-time owner and an encrypted memo, and only the recipient's keys open it. Anyone can leave a file for a mutis user through a dead-drop link; deliveries are sealed to the recipient's owner and view keys, so a view key sees arrivals but opens no file. Each file leaves on its rule (once, a number of opens, a set time, or until deleted) and the server deletes the ciphertext when the rule says so. Rented space is paid in tTARI; tTARI has no monetary value. Open source (MIT). Independent project, not affiliated with Tari Labs.
+> {{BRAND}} is a one-time secret drop built on Tari Ootle's privacy features (Esmeralda testnet). Give the ghost a secret (a note, a photo, any file) and you get a link; your friend sees it once, then it's gone. Your browser encrypts every file (AES-256-GCM, WebCrypto) before upload; the server stores only ciphertext and never receives a key, which travels in the link after the #. A file's key can instead go to any Tari address sealed inside a stealth tTARI payment: the chain shows a hidden amount, a one-time owner and an encrypted memo, and only the recipient's keys open it. Anyone can leave a file for a locker through a dead-drop link; deliveries are sealed to the recipient's owner and view keys, so a view key sees arrivals but opens no file sent to a locker. Each file leaves on its rule (once, a few times, a set time, or until deleted) and the server deletes the ciphertext when the rule says so. Rented space is paid in tTARI; tTARI has no monetary value. Open source (MIT). Independent project, not affiliated with Tari Labs. The internal codename in the code is mutis.
 
 {when:send_mode=direct} Sends: once a locker's testnet grant arrives (a minute or two after it opens), the browser builds and pays for the stealth payment itself and the server only passes it to the network, so the server never learns the destination; before that, and for dead-drop deliveries, the server's relay posts it and learns the address only while it is sent.
 {when:send_mode=relay} Sends: the server's relay posts the stealth payment and learns the destination address only while it is sent, never the key.
@@ -12,13 +12,11 @@ The live limits (file sizes, expiry, opens, prices) are in the public configurat
 
 ## Docs
 
-- [How it works]({{ORIGIN}}/how): the mechanism, who sees what, and what mutis can't protect you from
-- [Security]({{ORIGIN}}/security): threat model, cryptography, logging, verifying a deployment
-- [Privacy]({{ORIGIN}}/privacy): every table the server keeps, column by column
-- [Pricing and limits]({{ORIGIN}}/pricing): free space, rented space in tTARI
-- [FAQ]({{ORIGIN}}/faq)
-- [Council guide]({{ORIGIN}}/judges): a two-track walkthrough with expected results
-- [Full text of How it works and Security]({{ORIGIN}}/llms-full.txt)
+- [How it works]({{ORIGIN}}/how): eight pictures, one caption each
+- [How it was made]({{ORIGIN}}/made): who sees what, the cryptography, where Tari comes in, the goodbye record (SealLog), how to check this deployment, what it can't protect you from, limits and prices
+- [The fine print]({{ORIGIN}}/fine-print): privacy (every table the server keeps), terms, and the form to report a link
+- [For judges]({{ORIGIN}}/judges): two short tracks with what each step should show
+- [Full text of How it works, How it was made and The fine print]({{ORIGIN}}/llms-full.txt)
 - [Notarized releases]({{ORIGIN}}/releases.json): each release's manifest hash, recorded through SealLog
 
 ## API
@@ -31,5 +29,5 @@ The live limits (file sizes, expiry, opens, prices) are in the public configurat
 
 ## Contact
 
-- [Report a link]({{ORIGIN}}/abuse)
-- [Report a vulnerability]({{ORIGIN}}/security#disclosure)
+- [Report a link]({{ORIGIN}}/fine-print#report)
+- [Report a vulnerability]({{ORIGIN}}/made#disclosure)

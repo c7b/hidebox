@@ -41,6 +41,20 @@ class ConfigExampleTest(unittest.TestCase):
 class CaddyfileTest(unittest.TestCase):
     text = (ROOT / "deploy" / "caddy" / "Caddyfile").read_text()
 
+    def test_old_pages_answer_301_to_their_new_place(self):
+        """14-ghost-design §17 step 4: the pages the ghost folded together redirect, with or without a
+        trailing slash, exactly as tests/e2e/headers_spec.py REDIRECTS says (D-01 asks the live site)."""
+        matchers = dict(re.findall(r"^\s*@(old_[a-z]+) path (.+)$", self.text, re.M))
+        found = {}
+        for name, target in re.findall(r'^\s*redir @(old_[a-z]+) "([^"]+)" 301$', self.text, re.M):
+            paths = matchers[name].split()
+            self.assertEqual(len(paths), 2, name)
+            self.assertEqual(paths[1], paths[0] + "/", name)
+            found[paths[0]] = target
+        self.assertEqual(found, headers_spec.REDIRECTS)
+        site = self.text[self.text.index("{$MUTIS_HOST} {"):]
+        self.assertLess(site.index("import security_headers"), site.index("redir @old_"), "the redirects carry the security headers")
+
     def test_csp_and_headers_are_the_spec_text(self):
         self.assertIn(f'header Content-Security-Policy "{headers_spec.SITE_CSP}"', self.text)
         self.assertIn(f'header Content-Security-Policy "{headers_spec.APP_CSP}"', self.text)

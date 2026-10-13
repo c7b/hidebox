@@ -95,7 +95,7 @@ def settings(cfg: dict, origin: str | None) -> dict:
     return {
         "ORIGIN": origin,
         "NETWORK": network.capitalize(),
-        "SECURITY_DROP_URL": cfg.get("security_drop_url") or origin + "/abuse",
+        "SECURITY_DROP_URL": cfg.get("security_drop_url") or origin + "/fine-print#report",
         "REPO_URL": cfg.get("repo_url", "https://github.com/c7b/mutis").rstrip("/"),
         "BRAND": BRAND,
     }

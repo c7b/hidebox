@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: MIT
-"""Writes the curated screenshots in web/site/shots/ (M-02): every home section and every page at
-1440×900, 390×844 (iPhone-class) and 412×915 (Android-class), the exit wall frame by frame, the
-reduced-motion grid, dark mode and Spanish. WebP from headless Chromium; run as `build` on ultron:
+"""Writes the curated screenshots in web/site/shots/: the six pages of the ghost at 1440×900 and
+390×844 (iPhone-class), the home in both themes, every scene of "How it works" on both, and the
+reduced-motion stills. WebP from headless Chromium (PNG with --png); run as `build` on ultron:
 
-  python3 -I web/site/tests/shots.py
+  python3 -I web/site/tests/shots.py [--out DIR] [--png] [--only home,how,pages]
 
-The hero shows the app's own drop widget, served from web/app/ like every other app file.
+The home shows the app's own drop widget, served from web/app/ like every other app file.
 """
+import argparse
 import shutil
 import sys
 import threading
@@ -17,11 +18,9 @@ sys.path[:0] = [str(HERE), str(HERE.parent / "tools")]
 import serve  # noqa: E402
 from cdp import Browser  # noqa: E402
 
-OUT = HERE.parent / "shots"
-DESKTOP, IPHONE, ANDROID = (1440, 900, False, False), (390, 844, True, False), (412, 915, True, True)
-SECTIONS = ["#two-locks", "#send", "#what-we-store", "#try", "#cant-hide", "#free", "#open-source", ".closing"]
-PAGES = ["/how", "/security", "/pricing", "/faq", "/judges", "/terms", "/privacy", "/abuse", "/status", "/no-such-page"]
-WALL_FRAMES = (0.05, 0.22, 0.4, 0.58, 0.74, 1.0)
+DESKTOP, IPHONE = (1440, 900, False), (390, 844, True)
+PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page"]
+NAMES = {"/": "home", "/no-such-page": "404"}
 
 
 def start(args):
@@ -30,72 +29,52 @@ def start(args):
     return srv, origin
 
 
-def section_top(page, selector):
-    return page.eval(f"document.querySelector('{selector}').getBoundingClientRect().top + scrollY")
-
-
-def wake_wall(page):
-    """Like a visitor starting to scroll: the wall's code loads while its lockers are still below the fold."""
-    page.scroll_to(page.eval("document.getElementById('exit-wall').offsetTop - innerHeight + 40"), 1.5)
-
-
-def shoot_home(browser, origin, tag, device, dark=False):
-    w, h, mobile, android = device
-    page = browser.page(w, h, mobile=mobile, android=android, dark=dark)
-    page.goto(f"{origin}/", settle=2.5)
-    page.screenshot(str(OUT / f"{tag}-hero.webp"))
-    wake_wall(page)
-    top, height = page.eval("(() => { const r = document.getElementById('exit-wall').getBoundingClientRect(); return [r.top + scrollY, r.height]; })()")
-    for i, f in enumerate(WALL_FRAMES):
-        page.scroll_to(top + f * (height - h), 0.7)
-        page.screenshot(str(OUT / f"{tag}-wall-{i}.webp"))
-    for selector in SECTIONS:
-        page.scroll_to(section_top(page, selector), 1)
-        page.screenshot(str(OUT / f"{tag}-{selector.strip('#.')}.webp"))
-    page.scroll_to(section_top(page, ".site-footer"), 0.4)
-    page.screenshot(str(OUT / f"{tag}-footer.webp"))
-
-
 def main():
-    shutil.rmtree(OUT, ignore_errors=True)
-    OUT.mkdir()
-    servers = []
+    p = argparse.ArgumentParser()
+    p.add_argument("--out", type=Path, default=HERE.parent / "shots")
+    p.add_argument("--png", action="store_true")
+    p.add_argument("--only", default="home,how,pages")
+    args = p.parse_args()
+    only = set(args.only.split(","))
+    ext = "png" if args.png else "webp"
+    out = args.out
+    if out == HERE.parent / "shots":
+        shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True, exist_ok=True)
+    srv, origin = start(["--mode", "direct", "--seallog"])
     with Browser() as browser:
-        srv, origin = start([])
-        servers.append(srv)
-        shoot_home(browser, origin, "home-1440", DESKTOP)
-        shoot_home(browser, origin, "home-390", IPHONE)
-        shoot_home(browser, origin, "home-412", ANDROID)
-        shoot_home(browser, origin, "home-dark-1440", DESKTOP, dark=True)
-        for w, h, mobile, _ in (DESKTOP, IPHONE):
-            page = browser.page(w, h, mobile=mobile, reduce=True)
-            page.goto(origin + "/", settle=2)
-            wake_wall(page)
-            page.screenshot_element("#exit-wall", str(OUT / f"wall-reduced-{w}.webp"))
-            for path in PAGES:
+        for w, h, mobile in (DESKTOP, IPHONE):
+            if "pages" in only:
+                for path in PAGES:
+                    page = browser.page(w, h, mobile=mobile)
+                    page.goto(origin + path, settle=2)
+                    page.screenshot(str(out / f"{NAMES.get(path, path.strip('/'))}-{w}.{ext}"))
+                    if path in ("/made", "/judges", "/fine-print"):
+                        page.screenshot(str(out / f"{NAMES.get(path, path.strip('/'))}-{w}-full.{ext}"), full=True)
+            if "home" in only:
+                for dark in (False, True):
+                    page = browser.page(w, h, mobile=mobile, dark=dark)
+                    page.goto(origin + "/", settle=2.5)
+                    page.screenshot(str(out / f"home-{w}-{'dark' if dark else 'light'}.{ext}"))
                 page = browser.page(w, h, mobile=mobile)
-                page.goto(origin + path, settle=1.5)
-                page.screenshot(str(OUT / f"page-{path.strip('/')}-{w}.webp"))
-        for scenario in ("quiet", "8"):
-            srv, origin = start(["--wall", scenario])
-            servers.append(srv)
-            page = browser.page(*DESKTOP[:2])
-            page.goto(origin + "/", settle=2.5)
-            wake_wall(page)
-            page.scroll_to(section_top(page, "#exit-wall") + 0.1 * 1800, 0.7)
-            page.screenshot(str(OUT / f"wall-{scenario}-1440.webp"))
-        srv, origin = start(["--mode", "direct", "--seallog"])
-        servers.append(srv)
-        page = browser.page(*DESKTOP[:2])
-        page.goto(origin + "/", settle=2.5)
-        page.scroll_to(section_top(page, "#two-locks"), 0.5)
-        page.screenshot(str(OUT / "variant-direct-seallog-locks-1440.webp"))
-        page.scroll_to(section_top(page, "#cant-hide"), 0.5)
-        page.screenshot(str(OUT / "variant-direct-seallog-cant-hide-1440.webp"))
-    for srv in servers:
-        srv.shutdown()
-    total = sum(f.stat().st_size for f in OUT.iterdir())
-    print(f"{len(list(OUT.iterdir()))} screenshots, {total / 1e6:.2f} MB in {OUT}")
+                page.goto(origin + "/", settle=2)
+                page.eval("document.dispatchEvent(new CustomEvent('mutis:drag', {detail: {active: true}}))")
+                browser.pump(0.6)
+                page.screenshot(str(out / f"home-{w}-catch.{ext}"))
+            if "how" in only:
+                for reduce in (False, True):
+                    page = browser.page(w, h, mobile=mobile, reduce=reduce)
+                    page.goto(origin + "/how", settle=1.5)
+                    for n in range(1, 9):
+                        y = page.eval(f"(() => {{ const li = document.querySelector('.captions li[data-scene=\"{n}\"]');"
+                                      " return li.getBoundingClientRect().top + scrollY + li.offsetHeight / 2 - innerHeight / 2; })()")
+                        page.scroll_to(y, 1.6 if not reduce else 0.6)
+                        if reduce and n not in (4, 5):
+                            continue
+                        page.screenshot(str(out / f"how-{w}-scene{n}{'-reduced' if reduce else ''}.{ext}"))
+    srv.shutdown()
+    files = list(out.iterdir())
+    print(f"{len(files)} screenshots, {sum(f.stat().st_size for f in files) / 1e6:.2f} MB in {out}")
 
 
 if __name__ == "__main__":

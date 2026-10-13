@@ -91,6 +91,24 @@ http://{$MUTIS_HOST} {
 		}
 	}
 
+	# The pages the ghost folded together (14-ghost-design §4.1): every old address keeps working, with
+	# or without a trailing slash. tests/e2e/headers_spec.py REDIRECTS says the same (test_config.py
+	# compares them; test_headers.py asks the live site).
+	@old_security path /security /security/
+	redir @old_security "/made#locks" 301
+	@old_privacy path /privacy /privacy/
+	redir @old_privacy "/fine-print#privacy" 301
+	@old_terms path /terms /terms/
+	redir @old_terms "/fine-print#terms" 301
+	@old_abuse path /abuse /abuse/
+	redir @old_abuse "/fine-print#report" 301
+	@old_pricing path /pricing /pricing/
+	redir @old_pricing "/made#limits" 301
+	@old_faq path /faq /faq/
+	redir @old_faq "/made" 301
+	@old_status path /status /status/
+	redir @old_status "/made#check" 301
+
 	# Types Go's MIME table lacks on Debian (it reads shared-mime-info, not /etc/mime.types).
 	@webmanifest path *.webmanifest
 	header @webmanifest Content-Type "application/manifest+json"

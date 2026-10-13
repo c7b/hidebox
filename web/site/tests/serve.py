@@ -36,7 +36,7 @@ TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
          ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json",
          ".wasm": "application/wasm"}
 TEXT = {".html", ".txt", ".webmanifest"}   # the build expands placeholders in pages and static text only
-INCLUDE = re.compile(r"<!--#include ([a-z-]+)-->")
+INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")
 SRI_TAG = re.compile(r'(<(?:script|link)\b[^>]*?(?:src|href)="(/[^"]+)"[^>]*?) integrity="\{\{SRI\}\}"')
 PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
 
@@ -45,8 +45,8 @@ class Site:
     def __init__(self, opts, origin):
         self.opts, self.origin = opts, origin
         self.values = {"ORIGIN": origin, "GIT_SHA": "0" * 40, "VERSION": "test", "BUILD_DATE": "2026-10-11",
-                       "NETWORK": "esmeralda", "SECURITY_DROP_URL": f"{origin}/abuse",
-                       "REPO_URL": "https://github.com/c7b/mutis"}
+                       "NETWORK": "esmeralda", "SECURITY_DROP_URL": f"{origin}/fine-print#report",
+                       "REPO_URL": "https://github.com/c7b/mutis", "BRAND": "bye"}
 
     def file_for(self, path):
         """URL path → source file, mirroring the dist/ layout of spec §3.3."""
@@ -55,7 +55,7 @@ class Site:
             return f / "index.html" if f.is_dir() else f
         if path == "/":
             return SITE / "pages" / "index.html"
-        m = re.fullmatch(r"/([a-z0-9]+)/?", path)
+        m = re.fullmatch(r"/([a-z0-9-]+)/?", path)
         if m and (SITE / "pages" / f"{m[1]}.html").is_file():
             return SITE / "pages" / f"{m[1]}.html"
         for prefix, root in (("/shared/", SHARED), ("/site/js/", SITE / "js"), ("/site/css/", SITE / "css"),
@@ -67,8 +67,8 @@ class Site:
     def expand(self, text):
         if self.opts.dist:
             return text
-        for _ in range(2):
-            text = INCLUDE.sub(lambda m: (SHARED / "partials" / f"{m[1]}.html").read_text(), text)
+        for _ in range(3):
+            text = INCLUDE.sub(lambda m: (SHARED / "partials" / (m[1] if m[1].endswith(".svg") else f"{m[1]}.html")).read_text(), text)
 
         def sri(m):
             target = self.file_for(m[2])

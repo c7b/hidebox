@@ -12,8 +12,8 @@ from contextlib import contextmanager
 import serve
 from cdp import Browser
 
-ALL_PAGES = ["/", "/how", "/security", "/pricing", "/faq", "/judges", "/terms", "/privacy", "/abuse", "/status"]
-ALL_PAGES += ["/no-such-page"]
+# The six pages of the ghost (14-ghost-design §4.1); the old ones are 301s (deploy/caddy/Caddyfile).
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page"]
 NOTES: list[str] = []
 
 
@@ -118,49 +118,36 @@ HIDDEN_NEEDS = "[...document.querySelectorAll('[data-needs]')].filter(e => e.hid
 
 
 def check_live_numbers(browser):
-    """M-07: numbers come from /config, /stats, /stats/wall, /canary, /evidence.json, and disappear when those fail."""
+    """M-07: numbers come from /config, /stats, /canary, /evidence.json and /status.json, and disappear when
+    those fail. They live on /made since the ghost (the limits table, the status line, the test file)."""
     problems = []
+    blocks = ("[data-canary]", "[data-evidence]", "[data-status-line]")
     with server() as origin:
         page = browser.page(1440, 900)
-        page.goto(origin + "/", settle=2.5)
-        _scroll_through(page, "exit-wall", "send", "what-we-store", "try")
+        page.goto(origin + "/made", settle=2.5)
+        _scroll_through(page, "check", "limits")
         text = page.eval("document.body.innerText")
-        for expected in ("No locker? Files up to 25 MB, gone within 24 hours.", "per locker", "Here's a file we locked"):
-            if expected not in text:
-                problems.append(f"API up: {expected!r} not shown")
-        for sel in ("[data-chain-card]", "[data-canary]", "[data-reveal]"):
+        for expected in ("per locker", "Largest file", "budget for sponsor grants is used", "test deliveries"):
+            if expected.lower() not in text.lower():
+                problems.append(f"API up: {expected!r} not shown on /made")
+        for sel in blocks:
             if page.eval(f"document.querySelector('{sel}').hidden"):
                 problems.append(f"API up: {sel} stays hidden")
-        page = browser.page(1440, 900, block=["*/api/*", "*/evidence.json"])
-        page.goto(origin + "/", settle=2.5)
-        _scroll_through(page, "exit-wall", "send", "what-we-store", "try")
+        page = browser.page(1440, 900, block=["*/api/*", "*/evidence.json", "*/status.json"])
+        page.goto(origin + "/made", settle=2.5)
+        _scroll_through(page, "check", "limits")
         if page.eval(VISIBLE_NEEDS) != 0:
-            problems.append("API blocked: a [data-needs] block is still visible on /")
-        for sel in ("[data-chain-card]", "[data-canary]", "[data-reveal]"):
+            problems.append("API blocked: a [data-needs] block is still visible on /made")
+        for sel in blocks:
             if not page.eval(f"document.querySelector('{sel}').hidden"):
                 problems.append(f"API blocked: {sel} is visible")
         if page.eval("document.querySelector('[data-canary-missing]').hidden"):
             problems.append("API blocked: the 'between takes' line is hidden")
-        if not page.eval("document.querySelector('[data-wall-desc]').textContent.startsWith('A scene')"):
-            problems.append("API blocked: the wall isn't the scripted scene")
-        page.goto(origin + "/pricing", settle=1.5)
-        NOTES.append(f"API blocked: /pricing hides {page.eval(HIDDEN_NEEDS)} [data-needs] blocks, shows "
-                     f"{page.eval(VISIBLE_NEEDS)}; / shows no live number")
-        if page.eval(VISIBLE_NEEDS) != 0:
-            problems.append("API blocked: /pricing still shows a number block")
+        NOTES.append(f"API blocked: /made hides {page.eval(HIDDEN_NEEDS)} [data-needs] blocks, shows {page.eval(VISIBLE_NEEDS)}")
     return problems
 
 
-WAKE_WALL = "document.getElementById('exit-wall').offsetTop - innerHeight + 40"
 GO_TO = "document.getElementById('{}').offsetTop"
-
-
-def _wall(browser, origin, reduce=False, width=1440, height=900, mobile=False):
-    """The home page with the exit wall woken: its top just into view, its lockers still below the fold."""
-    page = browser.page(width, height, mobile=mobile, reduce=reduce)
-    page.goto(origin + "/", settle=1.5)
-    page.scroll_to(page.eval(WAKE_WALL), 1.5)
-    return page
 
 
 def _scroll_through(page, *ids):
@@ -169,143 +156,48 @@ def _scroll_through(page, *ids):
         page.scroll_to(page.eval(GO_TO.format(section)), 1.2)
 
 
-FRAMES = """(async () => {
-  const wall = document.getElementById('exit-wall');
-  const top = wall.offsetTop, span = wall.offsetHeight - innerHeight;
-  scrollTo(0, top - innerHeight + 40);   // wake the wall while its lockers are below the fold
-  await new Promise((r) => setTimeout(r, 1500));
-  scrollTo(0, top - 10);
-  await new Promise((r) => setTimeout(r, 300));
-  const deltas = [];
-  let last = performance.now();
-  const t0 = last;
-  await new Promise((done) => {
-    const step = (now) => {
-      deltas.push(now - last);
-      last = now;
-      const k = (now - t0) / 4000;
-      scrollTo(0, top + Math.min(1, k) * span);
-      if (k < 1) requestAnimationFrame(step); else done();
-    };
-    requestAnimationFrame(step);
-  });
-  deltas.sort((a, b) => a - b);
-  const q = (p) => Math.round(deltas[Math.floor(p * (deltas.length - 1))]);
-  return [deltas.length, q(0.5), q(0.95)];
-})()"""
-FRAME_BUDGET_MS = 1000 / 60
-RESTYLE_MAX = 32   # two leaving lockers' worth of elements; restyling the whole stage is about 145
-TIMELINE = "devtools.timeline,disabled-by-default-devtools.timeline"
+# Visible words: text nodes inside the page that a visitor can see (not clipped to 1 px, not hidden).
+WORDS = """((foldOnly) => {
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let words = 0;
+  for (let n; (n = walk.nextNode());) {
+    const el = n.parentElement;
+    if (!el || el.closest('script, style, template, [aria-hidden="true"], noscript')) continue;
+    if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+    const range = document.createRange();
+    range.selectNodeContents(n);
+    const r = range.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    if (foldOnly && (r.top >= innerHeight || r.bottom <= 0)) continue;
+    words += (n.nodeValue.match(/[A-Za-z0-9\u00C0-\u024F'’™.#-]+/g) || []).filter((w) => /[A-Za-z0-9]/.test(w)).length;
+  }
+  return words;
+})"""
 
 
-def check_wall(browser):
-    """M-02: the wall with quiet data, 8 items and 24, never showing whether a file has left, each box as deep
-    as its size class; reduced motion is the static grid; the scene starts without our canary and never
-    relabels lockers in view; it plays to its end."""
+def check_word_budget(browser):
+    """14-ghost-design §4.4, §17 step 4: the home page says at most 120 words above the fold and 400 in all,
+    on a phone (390 × 844) and a desktop (1440 × 900); one h1, the ghost is the first thing to press."""
     problems = []
-    lockers = "[...document.querySelectorAll('.locker:not(.centre)')]"
-    for scenario, expected in (("quiet", "A scene"), ("8", "A wall of lockers drawn from the last 8"), ("24", "A wall of lockers drawn from the last 24")):
-        with server("--wall", scenario) as origin:
-            page = _wall(browser, origin)
-            desc = page.eval("document.querySelector('[data-wall-desc]').textContent")
-            if not desc.startswith(expected):
-                problems.append(f"wall {scenario}: description is {desc[:60]!r}")
-            empty = page.eval("document.querySelectorAll('.locker[data-cue=\"empty\"]').length")
-            want_empty = {"quiet": 0, "8": 9, "24": 0}[scenario]
-            if empty != want_empty:
-                problems.append(f"wall {scenario}: {empty} empty lockers, expected {want_empty}")
-            if scenario == "quiet":
-                continue
-            unlit = page.eval(f"{lockers}.filter(l => l.dataset.cue !== 'empty' && !l.classList.contains('lit')).length")
-            words = page.eval(f"{lockers}.map(l => l.textContent).join(' ')")
-            if unlit or "gone" in words or "opened" in words:
-                problems.append(f"wall {scenario}: a locker shows whether its file has left")
-            depth = page.eval(f"{lockers}.filter(l => l.style.getPropertyValue('--size')).map(l => "
-                              "[Number(l.style.getPropertyValue('--size')), parseFloat(getComputedStyle(l.querySelector('.side.l')).width)])")
-            by_size = dict(depth)
-            if scenario == "8" and not (by_size.get(0, 0) < by_size.get(2, 0) < by_size.get(4, 0)):
-                problems.append(f"wall 8: side depth by size class is {sorted(by_size.items())}")
-            reduced = _wall(browser, origin, reduce=True)
-            faces = reduced.eval(f"{lockers}.filter(l => l.dataset.cue !== 'empty').map(l => getComputedStyle(l.querySelector('.front')).borderStyle)")
-            if any(style != "solid" for style in faces):
-                problems.append(f"wall {scenario}, reduced motion: data lockers drawn as already gone ({set(faces)})")
     with server() as origin:
-        page = _wall(browser, origin, reduce=True)
-        if page.eval("document.documentElement.classList.contains('motion')"):
-            problems.append("reduced motion: the stage is laid out for the scene")
-        if page.eval("getComputedStyle(document.querySelector('.locker .fate')).display") == "none":
-            problems.append("reduced motion: fates are hidden")
-        page = browser.page(block=["*/api/v1/canary*"])
-        page.goto(origin + "/", settle=1)
-        page.scroll_to(page.eval("document.getElementById('exit-wall').offsetTop + innerHeight * .1"), 1.5)
-        door = page.eval("document.querySelector('.noise-door').width")
-        if not page.eval("document.querySelector('[data-wall-direction]').textContent") or door == 48:
-            problems.append(f"canary unreachable: the scene doesn't play or its door isn't drawn (width {door})")
-        page = _wall(browser, origin)
-        top, height = page.eval("(() => { const r = document.getElementById('exit-wall').getBoundingClientRect(); return [r.top + scrollY, r.height]; })()")
-        directions = set()
-        for f in (0, 0.2, 0.4, 0.55, 0.7, 1):
-            page.scroll_to(top + f * (height - 900), 0.5)
-            directions.add(page.eval("document.querySelector('[data-wall-direction]').textContent"))
-        gone = page.eval("[...document.querySelectorAll('.locker:not(.centre) .front')].filter(e => e.offsetParent).every(e => getComputedStyle(e).opacity === '0')")
-        lit = page.eval("getComputedStyle(document.querySelector('.locker.centre .front')).opacity")
-        end = page.eval("getComputedStyle(document.querySelector('.wall-end')).opacity")
-        cue = page.eval("getComputedStyle(document.querySelector('.wall-direction')).opacity")
-        NOTES.append(f"wall scene: {len(directions)} stage directions over the scroll; at the end every other locker gone: "
-                     f"{gone}, centre opacity {lit}, closing words opacity {end}, last direction opacity {cue}")
-        if not gone or lit != "1" or end != "1" or cue != "0" or len(directions) < 4:
-            problems.append("the scene doesn't play to its end frame")
-    with server("--wall-delay", "3") as origin:
-        page = browser.page()
-        page.goto(origin + "/", settle=0.2)
-        page.scroll_to(page.eval("document.getElementById('exit-wall').offsetTop + innerHeight * .5"), 4)
-        if not page.eval("document.querySelector('[data-wall-desc]').textContent.startsWith('A scene')"):
-            problems.append("late wall data relabelled lockers the visitor was looking at")
-    return problems
-
-
-def _main_thread(events):
-    """Per-task CPU time (ms) on the page's main thread, and the element count of every style recalc."""
-    main = {(e["pid"], e["tid"]) for e in events if e.get("name") == "thread_name" and e["args"]["name"] == "CrRendererMain"}
-    cpu = [e.get("tdur", 0) / 1000 for e in events if e.get("ph") == "X" and e.get("name") == "RunTask" and (e["pid"], e["tid"]) in main]
-    restyled = sorted(e["args"].get("elementCount", 0) for e in events if e.get("ph") == "X" and e.get("name") == "UpdateLayoutTree")
-    return sum(cpu), restyled
-
-
-def check_wall_frames(_):
-    """12-integration §1: the scene on an Android-class phone (412x915, touch) scrolled through in 4 s, in a
-    browser of its own. With the CPU slowed 4x this records frame times (notes only: this box draws with
-    software GL on two shared cores, so they say more about the box than about a phone). Unthrottled it
-    measures the main thread's CPU time per frame, which must fit one 60 Hz frame four times over, and a
-    scroll frame may restyle only the lockers leaving at that moment (review M9)."""
-    problems = []
-    with Browser() as browser:
-        for wall in ("quiet", "24"):
-            with server("--wall", wall) as origin:
-                for rate in (4, 1):
-                    page = browser.page(412, 915, mobile=True, android=True, cpu_throttle=rate)
-                    page.goto(origin + "/", settle=3)
-                    result = {}
-                    events = browser.trace(TIMELINE, lambda: result.update(frames=page.eval(FRAMES, True)))
-                    page.close()
-                    frames, median, p95 = result["frames"]
-                    if rate == 4:
-                        NOTES.append(f"wall frames ({wall}, 412x915, 4x CPU): {frames} frames, median {median} ms, p95 {p95} ms")
-                        continue
-                    cpu, restyled = _main_thread(events)
-                    per_frame = cpu / frames
-                    typical = restyled[len(restyled) // 2] if restyled else 0
-                    NOTES.append(f"wall main thread ({wall}, 412x915): {per_frame:.2f} ms of CPU per frame "
-                                 f"({4 * per_frame:.1f} ms at 4x); {typical} elements restyled per frame (median)")
-                    if 4 * per_frame > FRAME_BUDGET_MS:
-                        problems.append(f"wall {wall}: {4 * per_frame:.1f} ms of main-thread CPU per frame at 4x (budget {FRAME_BUDGET_MS:.1f})")
-                    if typical > RESTYLE_MAX:
-                        problems.append(f"wall {wall}: a scroll frame restyles {typical} elements (median; limit {RESTYLE_MAX})")
+        for width, height, mobile in ((390, 844, True), (1440, 900, False)):
+            page = browser.page(width, height, mobile=mobile)
+            page.goto(origin + "/", settle=2)
+            fold, total = page.eval(f"{WORDS}(true)"), page.eval(f"{WORDS}(false)")
+            NOTES.append(f"home words at {width}: {fold} above the fold, {total} in all")
+            if fold > 120:
+                problems.append(f"home @{width}: {fold} words above the fold (at most 120)")
+            if total > 400:
+                problems.append(f"home @{width}: {total} words in all (at most 400)")
+            first = page.eval("(() => { const b = [...document.querySelectorAll('main button, main a, main input, main textarea')]"
+                              ".find((e) => e.checkVisibility() && e.getBoundingClientRect().width > 2); return b ? b.id : ''; })()")
+            if first != "drop":
+                problems.append(f"home @{width}: the first control in the page is {first!r}, not the ghost")
     return problems
 
 
 def check_variants(browser):
-    """Copy variants follow /config: relay or direct sends, SealLog off or on."""
+    """Copy variants follow /config: relay or direct sends, SealLog off or on, the payment proof."""
     problems = []
     probes = {"relay": "[data-when=\"send_mode=relay\"]", "direct": "[data-when=\"send_mode=direct\"]",
               "seallog": "[data-when=\"seallog=on\"]"}
@@ -313,22 +205,24 @@ def check_variants(browser):
                                 (("--mode", "direct", "--seallog"), ["direct", "seallog"], ["relay"])):
         with server(*args) as origin:
             page = browser.page()
-            page.goto(origin + "/", settle=2)
+            page.goto(origin + "/made", settle=2)
             for key in shown:
                 if page.eval(f"[...document.querySelectorAll('{probes[key]}')].some(e => e.hidden)"):
                     problems.append(f"{args}: a {key} variant stays hidden")
             for key in hidden:
                 if page.eval(f"[...document.querySelectorAll('{probes[key]}')].some(e => !e.hasAttribute('hidden'))"):
                     problems.append(f"{args}: a {key} variant is shown")
+            text = page.eval("document.body.innerText")
+            proof = "the official Tari library opens" if "direct" in args else "our wallet sees it"
+            if proof not in text:
+                problems.append(f"{args}: /made doesn't say how this deployment checks a payment ({proof!r})")
+            # review H2: the sponsor grant's on-chain linkage is disclosed where sends are explained
+            if "direct" in args and "sponsor wallet" not in text:
+                problems.append("direct mode: /made doesn't say sends link back to our sponsor wallet")
             page.goto(origin + "/judges", settle=1.5)
-            steps = "Seen on chain → Amount proven" if "direct" in args else "Seen by our wallet → Exists on chain"
-            if f"Waiting → {steps} → Added" not in page.eval("document.body.innerText"):
-                problems.append(f"{args}: /judges B6 doesn't show the app's payment steps for this mode ({steps})")
-            if "direct" in args:   # review H2: the sponsor grant's on-chain linkage is disclosed where sends are explained
-                for path in ("/", "/how", "/security"):
-                    page.goto(origin + path, settle=1.5)
-                    if "sponsor wallet" not in page.eval("document.body.innerText"):
-                        problems.append(f"direct mode: {path} doesn't say sends link back to our sponsor wallet")
+            pay = "Pay from this browser" if "direct" in args else "Pay with demo tTARI"
+            if pay not in page.eval("document.body.innerText"):
+                problems.append(f"{args}: /judges doesn't name this mode's way to pay ({pay})")
     return problems
 
 
@@ -366,7 +260,7 @@ def check_abuse(browser):
     with server() as origin:
         for include in (False, True):
             page = browser.page()
-            page.goto(origin + "/abuse")
+            page.goto(origin + "/fine-print")
             page.eval(f"document.getElementById('abuse-link').value = '{origin}/s/AAAAAAAAAAAAAAAAAAAAAA#1SECRET'")
             page.eval(f"document.getElementById('abuse-key').checked = {str(include).lower()}")
             page.eval("document.querySelector('[data-abuse] [type=submit]').click()")
@@ -379,24 +273,24 @@ def check_abuse(browser):
         link = f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA#2SECRET"
         page = browser.page()
         page.cmd("Emulation.setScriptExecutionDisabled", {"value": True})
-        page.goto(origin + "/abuse")
+        page.goto(origin + "/fine-print")
         typed = _type_and_enter(page, "#abuse-link", link)
         leaks = [r["url"] for r in page.requests() if "SECRET" in r["url"] or "%23" in r["url"]]
         if typed or leaks:
             problems.append(f"scripts off: the form takes input ({typed}) or a request carries the key: {leaks}")
         page = browser.page(block=["*/site/js/abuse.js"])
-        page.goto(origin + "/abuse")
+        page.goto(origin + "/fine-print")
         typed = _type_and_enter(page, "#abuse-link", link)
         leaks = [r["url"] for r in page.requests() if "SECRET" in r["url"] or "%23" in r["url"]]
         if typed or leaks or "SECRET" in page.eval("location.href"):
             problems.append(f"abuse.js not loaded: the form takes input ({typed}) or the key left the page: {leaks}")
-        # The app's "Report this link" opens /abuse#link=<the link without its key>: the field is filled
+        # The app's "Report this link" opens /fine-print#link=<the link without its key>: the field is filled
         # through cleanLink (our origins only, never a key) and the fragment leaves the address bar.
         for reported, expected in ((f"{origin}/d/0123456789", f"{origin}/d/0123456789"),
                                    (f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA#3SECRET", f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA"),
                                    ("https://elsewhere.example/s/AAAAAAAAAAAAAAAAAAAAAA", "")):
             page = browser.page()
-            page.goto(origin + "/abuse#link=" + urllib.parse.quote(reported, safe=""), settle=1)
+            page.goto(origin + "/fine-print#link=" + urllib.parse.quote(reported, safe=""), settle=1)
             field, hash_ = page.eval("[document.getElementById('abuse-link').value, location.hash]")
             if field != expected or hash_:
                 problems.append(f"prefill {reported!r}: field {field!r}, fragment {hash_!r}")
@@ -407,10 +301,10 @@ def check_reveal(browser):
     """P1 canary reveal: yesterday's test file opens in the browser with its published key (app format code)."""
     with server() as origin:
         page = browser.page()
-        page.goto(origin + "/", settle=1.5)
-        _scroll_through(page, "try")
+        page.goto(origin + "/made", settle=1.5)
+        _scroll_through(page, "check", "try")
         page.eval("document.querySelector('[data-reveal-open]').click()")
-        ok = page.wait_for("document.querySelector('[data-reveal-out]').textContent.includes('mutis canary #788')", 15)
+        ok = page.wait_for("document.querySelector('[data-reveal-out]').textContent.includes('canary #788')", 15)
         out = page.eval("document.querySelector('[data-reveal-out]').textContent").split("\n")[0]
         missed = page.eval("(e => e.hidden ? '' : e.textContent)(document.querySelector('[data-reveal-missed]'))")
         NOTES.append(f"canary reveal: {out[:90]}; {missed}")
@@ -421,24 +315,36 @@ def check_reveal(browser):
 
 
 def check_interactions(browser):
-    """Lights off persists across a reload; the judge pass is validated, lower-cased and kept where the
-    app reads it (localStorage 'mutis.judge' with its expiry, app-core store.js), and a /judges#pass=…
-    link saves it on opening; the hero's line 2 steps aside while the widget's card shows (NOTES-ui, site 3)."""
+    """The light switch: named "Lights", aria-pressed follows the theme, lights off persists across a
+    reload; the judge pass is validated, lower-cased and kept where the app reads it (localStorage
+    'mutis.judge' with its expiry, app-core store.js), and a /judges#pass=… link saves it on opening; the
+    home's ghost acts out the widget's states (14-ghost-design §3) and the words step aside after a drop."""
     problems = []
     with server() as origin:
         page = browser.page()
         page.goto(origin + "/", settle=1)
-        line2 = "document.querySelector('.hero-line2').hidden"
-        page.eval("document.dispatchEvent(new CustomEvent('mutis:state', {detail: {state: 'sealed'}}))")
-        sealed = page.eval(line2)
-        page.eval("document.dispatchEvent(new CustomEvent('mutis:state', {detail: {state: 'idle'}}))")
-        if not sealed or page.eval(line2):
-            problems.append(f"hero line 2: hidden while sealed {sealed}, back on idle {not page.eval(line2)}")
+        pose = "[document.querySelector('#drop svg.ghost').dataset.state || 'ready', document.body.dataset.phase, document.querySelector('.words').checkVisibility()]"
+        seen = {}
+        for state in ("sealing", "sealed", "error", "idle"):
+            page.eval(f"document.dispatchEvent(new CustomEvent('mutis:state', {{detail: {{state: '{state}'}}}}))")
+            seen[state] = page.eval(pose)
+        want = {"sealing": ["busy", "sealing", False], "sealed": ["once", "sealed", False], "error": ["oops", "idle", True],
+                "idle": ["ready", "idle", True]}
+        if seen != want:
+            problems.append(f"the home ghost follows the widget: {seen}")
+        page.eval("document.dispatchEvent(new CustomEvent('mutis:drag', {detail: {active: true}}))")
+        if not page.eval("document.body.classList.contains('catching') && document.querySelector('#drop svg.ghost').dataset.state === 'catch'"):
+            problems.append("a file over the window: no catch")
         page = browser.page()
         page.goto(origin + "/how")
-        page.eval("document.querySelector('[data-theme-toggle]').click()")
+        switch = "document.querySelector('[data-theme-toggle]')"
+        label, before = page.eval(f"[{switch}.getAttribute('aria-label'), {switch}.getAttribute('aria-pressed')]")
+        page.eval(f"{switch}.click()")
+        after = page.eval(f"{switch}.getAttribute('aria-pressed')")
+        if label != "Lights" or (before, after) != ("true", "false"):
+            problems.append(f"the light switch: name {label!r}, pressed {before} then {after}")
         page.goto(origin + "/how")
-        if page.eval("document.documentElement.dataset.theme") != "dark":
+        if page.eval("document.documentElement.dataset.theme") != "dark" or page.eval(f"{switch}.getAttribute('aria-pressed')") != "false":
             problems.append("Lights off didn't persist")
         page.goto(origin + "/judges")
         if page.eval("document.querySelector('[data-judge-pass]').hidden"):
@@ -463,7 +369,7 @@ def check_interactions(browser):
 
 CHECKS = [("no web fonts (system faces only)", check_fonts), ("every page, desktop and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
-          ("the exit wall (M-02)", check_wall), ("the exit wall at 4x CPU on a phone", check_wall_frames),
+          ("home words: 120 above the fold, 400 in all, the ghost first", check_word_budget),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions)]

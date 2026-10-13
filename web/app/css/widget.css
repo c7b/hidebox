@@ -14,13 +14,14 @@
 /* --- buttons and links-as-buttons (shared) ---------------------------------------------------- */
 :is(.md-root, .a-page) .a-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
-  min-height: var(--tap); padding: 0 var(--s-5); border: 1px solid var(--line); border-radius: var(--radius);
+  min-height: var(--tap); padding: 0 var(--s-5); border: 1.5px solid var(--line); border-radius: var(--r-pill);
   background: transparent; color: var(--fg); font: var(--t-ui); text-decoration: none; cursor: pointer;
-  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
 }
-:is(.md-root, .a-page) .a-btn:hover { background: var(--bg-sunken); }
-:is(.md-root, .a-page) .a-btn--primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-:is(.md-root, .a-page) .a-btn--primary:hover { background: var(--bg); color: var(--fg); }
+:is(.md-root, .a-page) .a-btn:hover { background: var(--hair); }
+:is(.md-root, .a-page) .a-btn:active { scale: .97; }
+:is(.md-root, .a-page) .a-btn--primary { background: var(--act); color: var(--on-act); border-color: var(--act); }
+:is(.md-root, .a-page) .a-btn--primary:hover { background: var(--act-hover); color: var(--on-act); }
 :is(.md-root, .a-page) .a-btn--exit { color: var(--exit-text); border-color: currentColor; }
 :is(.md-root, .a-page) .a-btn--exit:hover { background: var(--exit); color: var(--on-exit); border-color: var(--exit); }
 :is(.md-root, .a-page) .a-btn--pay { background: var(--pay); color: var(--on-pay); border-color: var(--pay); }
@@ -31,7 +32,7 @@
 :is(.md-root, .a-page) .a-linkbtn {
   display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); padding: 0;
   background: none; border: 0; color: var(--fg); font: var(--t-ui); cursor: pointer;
-  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .18em;
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: .2em;
 }
 :is(.md-root, .a-page) .a-linkbtn--exit { color: var(--exit-text); }
 
@@ -40,7 +41,7 @@
 /* --- the zone (idle, dragover, composing) ------------------------------------------------------- */
 .md-zone {
   position: relative; min-height: inherit; display: grid; place-items: center; padding: var(--s-6) var(--s-5);
-  border: 1.5px solid var(--line); background: var(--bg);
+  border: 2px dashed var(--line); border-radius: var(--r-panel); background: var(--bg);
   transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
 }
 .md-zone.md-drag { border: 2px solid var(--fg); background: var(--bg-sunken); }

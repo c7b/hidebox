@@ -232,9 +232,10 @@ NEGATION = re.compile(r"\b(no|not|never|none|nor|without)\b", re.I)
 PUBLIC_KEY = re.compile(r"public[- ]keys?\b", re.I)
 
 
-def claim_problems(name: str, text: str, registry: dict, page: bool) -> list[str]:
+def claim_problems(name: str, text: str, registry: dict, page: bool, html: str = "") -> list[str]:
     """Check (4) on one copy text: every marker inside a registered sentence (or a label); `requires`
-    present on the same page; "public key" next to what we store only in a denial (C29)."""
+    present on the same page, or a link to where it is stated (`requires_link`, read in the page's
+    `html`); "public key" next to what we store only in a denial (C29)."""
     text = normalize(text)
     fails = []
     covered = []
@@ -252,8 +253,11 @@ def claim_problems(name: str, text: str, registry: dict, page: bool) -> list[str
                 around = text[max(0, m.start() - 40):m.end() + 40]
                 fails.append(f"{name}: {marker!r} outside its registered sentences ({', '.join(ids)}): …{around}…")
     for claim in registry["claims"]:
+        link = claim.get("requires_link")
+        linked = link and (f'href="{link}"' in html or (name.endswith(link.split("#")[0].strip("/") + ".html")
+                                                         and f'href="#{link.partition("#")[2]}"' in html))
         if page and claim.get("requires") and any(rx.search(text) for rx in map(sentence_rx, claim["sentences"])) \
-                and normalize(claim["requires"]).lower() not in text.lower():
+                and normalize(claim["requires"]).lower() not in text.lower() and not linked:
             fails.append(f"{name}: {claim['id']} without {claim['requires']!r} on the same page")
     for sentence in re.split(r"(?<=[.!?;])\s+", text):
         if PUBLIC_KEY.search(sentence) and STORE_VERB.search(sentence) and not NEGATION.search(sentence):
@@ -264,7 +268,8 @@ def claim_problems(name: str, text: str, registry: dict, page: bool) -> list[str
 def claims(root: Path, registry: dict) -> list[str]:
     fails = []
     for name, text in copy_sources(root):
-        fails += claim_problems(name, text, registry, page=name.endswith(".html"))
+        html = (root / name).read_text(encoding="utf-8") if name.endswith(".html") else ""
+        fails += claim_problems(name, text, registry, page=name.endswith(".html"), html=html)
     return fails
 
 

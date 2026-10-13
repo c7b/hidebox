@@ -98,6 +98,14 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
             problems += header_problems(headers, csp, extra | headers_spec.REVALIDATE)
         results.append((f"GET {path} → {status}", problems))
 
+    for old, new in headers_spec.REDIRECTS.items():
+        for path in (old, old + "/"):
+            status, headers, data = fetch(origin + path)
+            problems = [] if status == 301 and headers.get("location") == new else [f"status {status}, location {headers.get('location')!r}"]
+            problems += [f"missing {k}" for k, v in headers_spec.COMMON.items() if headers.get(k) != v]
+            problems += [f"unexpected {k}" for k in headers_spec.ABSENT if k in headers]
+            results.append((f"GET {path} → {status} {headers.get('location')} (an old page, folded into a new one)", problems))
+
     for path in headers_spec.STATUS_FILES:
         status, headers, _ = fetch(origin + path)
         expected = (headers_spec.SITE_CSP, headers_spec.REVALIDATE) if status == 200 else error

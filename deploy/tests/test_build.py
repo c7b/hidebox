@@ -16,7 +16,7 @@ import build  # noqa: E402
 SOURCE = ["a" * 40, "v1-test", "1760000000"]
 CFG = {"public_origin": "https://example.test", "gates": {"send_mode": "relay", "amount_proof": "wallet"},
        "features": {"seallog": False, "kept": True}, "hosting": {"snapshots": "weekly"}}
-VALUES = {"ORIGIN": "https://example.test", "NETWORK": "Esmeralda", "SECURITY_DROP_URL": "https://example.test/abuse",
+VALUES = {"ORIGIN": "https://example.test", "NETWORK": "Esmeralda", "SECURITY_DROP_URL": "https://example.test/fine-print#report",
           "REPO_URL": "https://code.example/mutis", "BRAND": "bye"}
 PAGE = """<!doctype html>
 <!-- SPDX-License-Identifier: MIT -->
@@ -45,7 +45,8 @@ class BuildTest(unittest.TestCase):
         (web / "site" / "pages" / "how.html").write_text(PAGE)
         (web / "site" / "pages" / "index.html").write_text(PAGE)
         (web / "site" / "pages" / "404.html").write_text(PAGE)
-        (web / "site" / "pages" / "security.html").write_text(PAGE)
+        (web / "site" / "pages" / "made.html").write_text(PAGE)
+        (web / "site" / "pages" / "fine-print.html").write_text(PAGE)
         (web / "site" / "pages" / "status.html").write_text(PAGE.replace("<title>", '<meta name="robots" content="noindex"><title>'))
         (web / "site" / "css").mkdir()
         (web / "site" / "css" / "site.css").write_text("/* SPDX-License-Identifier: MIT */\nbody { margin: 0; }\n")
@@ -83,7 +84,7 @@ class BuildTest(unittest.TestCase):
             self.assertTrue((dist / path).is_file(), path)
         for absent in ("app/tests/run.html", "app/README.md", "shared/partials/header.html"):
             self.assertFalse((dist / absent).exists(), absent)
-        self.assertEqual((dist / ".well-known" / "security.txt").read_text(), "Contact: https://example.test/abuse\n")
+        self.assertEqual((dist / ".well-known" / "security.txt").read_text(), "Contact: https://example.test/fine-print#report\n")
 
     def test_only_served_types_reach_dist(self):
         for name in ("REVIEW-devil.md", "NOTES-ui.md", "notes.txt.bak", "build.py", "draft.ts"):
@@ -212,7 +213,7 @@ class BuildTest(unittest.TestCase):
         config.write_text('public_origin = "https://h.example"\nsecurity_drop_url = ""\n')
         cfg = build.load_config(config)
         values = build.settings(cfg, None)
-        self.assertEqual(values["SECURITY_DROP_URL"], "https://h.example/abuse")
+        self.assertEqual(values["SECURITY_DROP_URL"], "https://h.example/fine-print#report")
         self.assertEqual(build.settings(cfg, "https://other.example/")["ORIGIN"], "https://other.example")
         with self.assertRaises(build.BuildError):
             build.settings(cfg, "http://example.test")

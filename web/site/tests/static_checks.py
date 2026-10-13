@@ -258,7 +258,7 @@ def check_seo():
     for title, files in titles.items():
         if len(files) > 1:
             problems.append(f"title {title!r} used by {files}")
-    for page in ("index", "faq"):
+    for page in ("index",):
         if 'type="application/ld+json"' not in (SITE / "pages" / f"{page}.html").read_text():
             problems.append(f"pages/{page}.html: no JSON-LD")
     return problems
@@ -299,10 +299,14 @@ def check_trademark():
 
 
 def check_partials():
-    """The header's testnet chip and the footer repeat the status line; they must not drift."""
+    """The footer repeats the status line; they must not drift. The header holds the name and the light
+    switch, nothing else (DESIGN.md): no links, no status line."""
     problems = []
     line = (SHARED / "partials" / "status-line.html").read_text().split("\n", 1)[1].strip()
-    for part in ("header", "footer"):
+    header = (SHARED / "partials" / "header.html").read_text()
+    if len(re.findall(r"<a\b", header)) != 1 or "data-theme-toggle" not in header or 'aria-label="Lights"' not in header:
+        problems.append("partials/header.html: the header is the wordmark and the Lights switch, nothing else")
+    for part in ("footer",):
         if line not in (SHARED / "partials" / f"{part}.html").read_text():
             problems.append(f"partials/{part}.html: status line differs from status-line.html")
     if (SHARED / "brand" / "favicon.svg").read_bytes() != (SITE / "static" / "favicon.svg").read_bytes():
@@ -345,8 +349,8 @@ def check_privacy_inventory():
         return []
     tables = re.findall(r"CREATE TABLE (\w+)", schema.read_text())
     problems = []
-    text = (SITE / "pages" / "privacy.html").read_text()
-    problems += [f"pages/privacy.html: table {t} is not listed" for t in tables if f"<code>{t}</code>" not in text]
+    text = (SITE / "pages" / "fine-print.html").read_text()
+    problems += [f"pages/fine-print.html: table {t} is not listed" for t in tables if f"<code>{t}</code>" not in text]
     return problems
 
 
@@ -399,9 +403,10 @@ def check_contrast():
             ratio = contrast(_rgb(tokens[fg], tokens), _rgb(tokens[bg], tokens))
             if ratio < need:
                 problems.append(f"{theme}: {fg} on {bg} is {ratio:.2f}, needs {need}")
-    lamp = contrast(_rgb(light["--lamp"], light), _rgb(light["--stage-raised"], light))
-    if lamp < 3:
-        problems.append(f"lit keyhole on a locker is {lamp:.2f}, needs 3")
+    for theme, tokens in (("light", light), ("dark", dark)):
+        tari = contrast(_rgb(tokens["--tari-text"], tokens), _rgb(tokens["--bg"], tokens))
+        if tari < 4.5:
+            problems.append(f"{theme}: Tari text on the page is {tari:.2f}, needs 4.5")
     return problems
 
 
@@ -433,7 +438,7 @@ def check_static():
     # Two contacts, in order of preference (RFC 9116): the dead drop, then GitHub's private advisory form.
     # RFC 9116 wants every Contact to work; check_security_contacts asks GitHub, as a stranger, that it does.
     for field in ("Contact: {{SECURITY_DROP_URL}}", f"Contact: {{{{REPO_URL}}}}{ADVISORY_PATH}", "Expires: ",
-                  "Preferred-Languages: en", "Policy: {{ORIGIN}}/security", "Canonical: {{ORIGIN}}/.well-known/security.txt"):
+                  "Preferred-Languages: en", "Policy: {{ORIGIN}}/made#disclosure", "Canonical: {{ORIGIN}}/.well-known/security.txt"):
         if field not in sec:
             problems.append(f"security.txt: missing {field!r}")
     contacts = [line.split(":", 1)[1].strip() for line in sec.splitlines() if line.startswith("Contact:")]
@@ -454,7 +459,7 @@ def check_static():
     if not (s / "favicon.ico").is_file() or (s / "favicon.ico").read_bytes()[:4] != b"\0\0\1\0":
         problems.append("favicon.ico: missing or not an ICO (Bing and unfurlers ask for it by name)")
     llms = (s / "llms.txt").read_text()
-    if not llms.startswith("# mutis\n") or "pay-to-open" in llms or "dead-drop" not in llms:
+    if not llms.startswith("# {{BRAND}}\n") or "pay-to-open" in llms or "dead-drop" not in llms:
         problems.append("llms.txt: not the spec §13.4 shape")
     for fact in ("send_mode=direct", "send_mode=relay", "seallog=on"):
         if f"{{when:{fact}}}" not in llms:
@@ -578,37 +583,54 @@ def _strings(value):
             yield from _strings(v)
 
 
-# The payment steps the app shows in each amount-proof mode (web/app/i18n upgrade.step.*).
-PAY_STEPS = {"proven": ("waiting", "seen", "proven", "added"), "wallet": ("waiting", "seen_wallet", "exists", "added")}
-HIDDEN_SPAN = re.compile(r"<span[^>]*\shidden[\s>][^<]*</span>")
+# 14-ghost-design §9 names buttons the app gets in Phase 6B steps 7 and 8 (the locker's three named
+# choices, the gone page's receipt link). Until a label is in web/app/i18n/en.json it is listed here;
+# once it is, it must leave this list (the check says so), so the script can't drift from the app.
+PENDING_LABELS = {"See the goodbye", "See what came", "Get a file from someone"}
 
 
 def check_ui_strings():
-    """/judges quotes the app's own words (NOTES §2.7). The page is read in each amount-proof mode and
-    each send mode, as tools/variants.py builds it. Each phrase in bold in a step must be one of the
-    app's i18n strings ({placeholders} match anything) unless the site's own home page says it, and a
-    bold arrow sequence with the payment steps must be exactly the app's upgrade.step labels for that
-    mode, so a label the app shows only in the other mode (or only in the other send mode, like the
-    demo-pay button) fails. SKIP until the app-ui builder writes web/app/i18n/."""
+    """/judges quotes the app's own words: every button it names (<b class="ui">) is one of the app's
+    i18n strings ({placeholders} match anything), in both send modes as tools/variants.py builds the
+    page, unless it is a label the app gains later in this phase (PENDING_LABELS). SKIP until the app
+    writes web/app/i18n/."""
     problems = []
     i18n = WEB / "app" / "i18n" / "en.json"
     if not i18n.is_file():
         return None
     strings = json.loads(i18n.read_text())
     patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".*", re.escape(s.strip())) + "$") for s in _strings(strings)]
-    own = " ".join(parse(SITE / "pages" / "index.html").text)
-    for (proof, keys), mode in itertools.product(PAY_STEPS.items(), ("relay", "direct")):
-        text = variants.resolve((SITE / "pages" / "judges.html").read_text(), {"proof": proof, "send_mode": mode})
-        steps = re.findall(r'<li[^>]*><span class="n">.*?</li>', text)
-        pay = [strings.get(f"upgrade.step.{k}") for k in keys]
-        for bold in re.findall(r"<strong>(.*?)</strong>", " ".join(steps)):
-            phrases = [p.strip() for p in re.sub(r"<[^>]+>|[“”✓]", "", HIDDEN_SPAN.sub("", bold)).split("→")]
-            if pay[0] in phrases and phrases != pay:
-                problems.append(f"pages/judges.html ({proof}, {mode}): payment steps “{' → '.join(phrases)}”, the app shows "
-                                f"“{' → '.join(str(s) for s in pay)}”")
-            for phrase in phrases:
-                if phrase and phrase not in own and not any(p.match(phrase) for p in patterns):
-                    problems.append(f"pages/judges.html ({mode}): quotes “{phrase}”, which web/app/i18n/en.json doesn't say")
+    known = lambda phrase: any(p.match(phrase) for p in patterns)
+    problems += [f"PENDING_LABELS: “{label}” is in en.json now; take it off the list" for label in PENDING_LABELS if known(label)]
+    for mode in ("relay", "direct"):
+        text = variants.resolve((SITE / "pages" / "judges.html").read_text(), {"send_mode": mode})
+        text = re.sub(r"<span[^>]*\shidden[\s>].*?</span>", "", text)
+        for phrase in re.findall(r'<b class="ui">(.*?)</b>', text):
+            if phrase not in PENDING_LABELS and not known(phrase):
+                problems.append(f"pages/judges.html ({mode}): names the button “{phrase}”, which web/app/i18n/en.json doesn't have")
+    steps = [len(re.findall(r"<li>", ol)) for ol in re.findall(r'<ol class="steps">(.*?)</ol>', (SITE / "pages" / "judges.html").read_text(), re.S)]
+    if len(steps) != 2 or any(n > 6 for n in steps):
+        problems.append(f"pages/judges.html: the script is {steps} steps; at most 6 + 6 (14-ghost-design §9)")
+    return problems
+
+
+def check_redirects():
+    """The 301 map (tests/e2e/headers_spec.py REDIRECTS, the Caddyfile's): every old page is gone from
+    pages/, and every target page and anchor exists."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("headers_spec", WEB.parent / "tests" / "e2e" / "headers_spec.py")
+    headers_spec = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(headers_spec)
+    problems = []
+    for old, new in headers_spec.REDIRECTS.items():
+        if (SITE / "pages" / f"{old.strip('/')}.html").exists():
+            problems.append(f"{old}: still a page, but it redirects to {new}")
+        path, _, anchor = new.partition("#")
+        page = SITE / "pages" / f"{path.strip('/') or 'index'}.html"
+        if not page.is_file():
+            problems.append(f"{old} → {new}: no page {page.name}")
+        elif anchor and f'id="{anchor}"' not in page.read_text():
+            problems.append(f"{old} → {new}: {page.name} has no id=\"{anchor}\"")
     return problems
 
 
@@ -622,4 +644,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("contrast table (M-03)", check_contrast), ("static files (M-04)", check_static),
           ("security.txt contacts answer a stranger (needs the network)", check_security_contacts),
           ("copy variants set at build time (M11)", check_build_variants),
-          ("/judges quotes the app's words", check_ui_strings)]
+          ("/judges quotes the app's words, 6 + 6 steps", check_ui_strings),
+          ("old pages redirect to pages and anchors that exist", check_redirects)]

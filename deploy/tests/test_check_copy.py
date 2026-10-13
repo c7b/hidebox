@@ -74,6 +74,8 @@ class CheckCopyTest(unittest.TestCase):
         self.assertIn("C15-k without", problems[0])
         c15 = " A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those."
         self.assertEqual(check_copy.claim_problems("p", peek + c15, reg, page=True), [])
+        linked = f'<p>{peek} Read <a href="/made#who">who sees what</a>.</p>'
+        self.assertEqual(check_copy.claim_problems("p", check_copy.page_text(linked)[0], reg, page=True, html=linked), [])
 
     def test_public_keys_are_never_stored(self):
         reg = self.registry()

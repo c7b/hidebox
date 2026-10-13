@@ -1,0 +1,95 @@
+/* SPDX-License-Identifier: MIT — How it works (14-ghost-design §7): a pinned stage acts out the caption
+   that crosses the middle of the screen. The same actors stay on stage (the ghost, two phones, our
+   server, the link, the chain), so the story reads as one film. Each scene's pose is CSS; how.js adds
+   a short flourish. Reduced motion: the poses alone, as stills. The "#" is ink: it is not a Tari thing. */
+.story-wrap { padding-bottom: var(--s-8); }
+.intro { padding-block: var(--s-6) var(--s-5); display: grid; gap: var(--s-2); }
+.story-grid { display: grid; position: relative; }
+.stage-box {
+  position: sticky; top: 0; z-index: 2; height: 46svh; min-height: 280px; display: grid; place-items: center;
+  background: var(--bg); padding-block: var(--s-2);
+}
+.story { width: 100%; height: 100%; overflow: visible; }
+.captions { list-style: none; padding: 0; margin: 0; }
+.captions li { min-height: 78svh; display: flex; align-items: flex-start; padding-top: 50svh; }
+.captions p { font: var(--t-h2); max-width: 17ch; color: var(--fg-2); transition: color var(--dur-3) var(--ease-out); }
+.captions li.on p { color: var(--fg); }
+.outro { display: grid; justify-items: start; gap: var(--s-3); padding-top: var(--s-6); }
+
+/* On a desktop the stage takes two thirds of a wider grid, so each scene fills about half the
+   window's height (the drawing's viewBox is cropped to the actors' reach) */
+@media (min-width: 900px) {
+  .story-grid {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: var(--s-6);
+    margin-right: calc(-1 * ((100vw - 100%) / 2 - var(--gutter)));
+  }
+  .stage-box { grid-column: 2; grid-row: 1; top: 7svh; height: 86svh; }
+  .captions { grid-column: 1; grid-row: 1; }
+  .captions li { min-height: 86svh; align-items: center; padding-top: 0; }
+}
+
+/* actors: drawn in their place, shown and moved per scene */
+.story .act { opacity: 0; transition: opacity 450ms var(--ease-out), translate 700ms var(--ease-out), scale 700ms var(--ease-out); }
+.story text { font: 600 13px var(--font); fill: var(--fg-2); text-anchor: middle; }
+.story .phone rect { fill: var(--bg-raised); stroke: var(--fg); stroke-width: 2.5; }
+.story .phone path { stroke: var(--line); stroke-width: 3; stroke-linecap: round; }
+.story .note rect { fill: var(--prop); stroke: var(--ink); stroke-width: 2; }
+.story .note .lines { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; transition: opacity 300ms; }
+.story .note .scr { fill: var(--ink); opacity: 0; transition: opacity 300ms; }
+.story #lock rect { fill: var(--act); }
+.story #lock .shackle { fill: none; stroke: var(--act); stroke-width: 3.2; }
+.story #fly rect, .story #srvnoise rect { fill: var(--fg-2); }
+.story #server rect:first-child { fill: var(--bg-sunken); stroke: var(--fg); stroke-width: 2.5; }
+.story #key { transform-box: fill-box; transform-origin: center; }
+.story #key circle, .story #key path { fill: none; stroke: var(--sand); stroke-width: 3.4; stroke-linecap: round; }
+.story #ticket rect { fill: var(--bg-raised); stroke: var(--fg); stroke-width: 2.5; }
+.story #ticket text { font: 600 13px var(--font-code); fill: var(--fg); text-anchor: start; }
+.story #ticket .hash { fill: var(--fg); font-weight: 800; }
+.story #ticket .slot { fill: none; stroke: var(--line); stroke-width: 2; stroke-dasharray: 3 3; }
+.story #openB rect { fill: var(--act); }
+.story #openB text { fill: var(--on-act); font-size: 12px; }
+.story #chain rect { fill: var(--bg-sunken); stroke: var(--tari-text); stroke-width: 2.5; }
+.story #chain .ln { stroke: var(--tari-text); stroke-width: 3; }
+.story #receipt rect { fill: var(--prop); stroke: var(--ink); stroke-width: 2; }
+.story #receipt .tick { fill: none; stroke: var(--ink); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.story #locker rect { fill: var(--bg-raised); stroke: var(--tari-text); stroke-width: 2.5; }
+.story #locker circle { fill: var(--tari-text); }
+.story #locker path { stroke: var(--tari-text); stroke-width: 4; stroke-linecap: round; }
+.story #locker text { font-size: 11px; font-family: var(--font-code); }
+.story #env rect { fill: var(--prop); stroke: var(--ink); stroke-width: 2; }
+.story #env path { fill: none; stroke: var(--ink); stroke-width: 2; }
+.story #env .coin { fill: var(--tari); stroke: var(--ink); stroke-width: 2; }
+.story #gh { filter: var(--glow); }
+.story #gh .ghost { overflow: visible; }
+.story .ghost .sh { display: none; }
+
+/* scene 1: the ghost catches a note */
+.story[data-scene="1"] #gh { opacity: 1; translate: 86px 34px; scale: 1.9; }
+/* scene 2: locked on your phone */
+.story[data-scene="2"] :is(#phoneA, #noteA, #lock) { opacity: 1; }
+.story[data-scene="2"] #gh { opacity: 1; translate: 168px 116px; scale: .76; }
+.story:is([data-scene="2"], [data-scene="3"], [data-scene="4"]) #noteA .lines { opacity: 0; }
+.story:is([data-scene="2"], [data-scene="3"], [data-scene="4"]) #noteA .scr { opacity: 1; }
+/* scene 3: noise to our server, the key stays */
+.story[data-scene="3"] :is(#phoneA, #noteA, #lock, #key, #server) { opacity: 1; }
+/* scene 4: the key goes into the link */
+.story[data-scene="4"] :is(#phoneA, #noteA, #lock, #server, #ticket, #key) { opacity: 1; }
+.story[data-scene="4"] #key { translate: 176px 52px; } /* the key's head lands on the slot (252, 266) */
+/* scene 5: a friend opens it */
+.story[data-scene="5"] :is(#phoneB, #noteB, #ticket, #key) { opacity: 1; }
+.story[data-scene="5"] #phoneA { opacity: .3; }
+.story[data-scene="5"] #key { translate: 176px 52px; }
+/* scene 6: gone */
+.story[data-scene="6"] :is(#phoneB, #server) { opacity: 1; }
+.story[data-scene="6"] #srvnoise rect { opacity: 0; transition: opacity 300ms; }
+.story[data-scene="6"] #gh { opacity: 1; translate: 24px 104px; scale: .9; }
+.story[data-scene="6"] :is(#phoneB, #noteB) { translate: -110px 50px; }
+/* scene 7: the goodbye on the chain */
+.story[data-scene="7"] :is(#chain, #receipt) { opacity: 1; }
+.story[data-scene="7"] #chain .last { fill: var(--mark); }
+.story[data-scene="7"] #gh { opacity: 1; translate: 40px 92px; scale: .9; }
+/* scene 8: by Tari, to an address */
+.story[data-scene="8"] :is(#chain, #locker, #env) { opacity: 1; }
+.story[data-scene="8"] #env { translate: 262px -84px; scale: 1.05; }
+.story[data-scene="8"] #gh { opacity: 1; translate: 36px 86px; scale: .95; }
+.story[data-scene="8"] #locker rect { fill: var(--mark); }

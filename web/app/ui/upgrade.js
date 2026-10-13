@@ -41,7 +41,7 @@ export async function render(main) {
       h('section', { class: 'a-plan' },
         h('h2', { class: 'a-card-h' }, t('upgrade.free')), free,
         h('p', {}, t('upgrade.free_body')),
-        h('a', { href: '/pricing', class: 'a-more' }, t('upgrade.why'), icon('arrow'))),
+        h('a', { href: '/made#limits', class: 'a-more' }, t('upgrade.why'), icon('arrow'))),
       ...cfg.pricing.packs.map((pack) => h('section', { class: 'a-plan' },
         h('h2', { class: 'a-card-h' }, t('upgrade.pack', { bytes: formatBytes(pack.bytes), dur: formatDuration(pack.days * 86400) })),
         h('p', { class: 'a-plan-price a-pay-text' }, t('upgrade.price', { price: formatTari(pack.price_ut) })),

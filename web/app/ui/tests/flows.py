@@ -578,8 +578,8 @@ def deaddrop(t):
             "the drop's label, isolated in a <bdi> inside the quotes")
     t.check("We don't check it" in b.text("dd-root"), "the page says the link's maker wrote the label and we don't check it")
     report = b.attr("dd-report", "href") or ""
-    t.check(b.eval("!!document.querySelector('main [data-testid=\"dd-report\"]')") and report.startswith("/abuse#link=")
-            and urllib.parse.unquote(report) == f"/abuse#link={drop}", f"a Report this drop link in the page, filled in ({report[:60]})")
+    t.check(b.eval("!!document.querySelector('main [data-testid=\"dd-report\"]')") and report.startswith("/fine-print#link=")
+            and urllib.parse.unquote(report) == f"/fine-print#link={drop}", f"a Report this drop link in the page, filled in ({report[:60]})")
     t.shot(b, "drop-1440-ready")
     b.set_files("dd-input", [t.fixture("setup.exe")])
     b.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'program_drop'", 30)

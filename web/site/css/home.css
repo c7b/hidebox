@@ -1,195 +1,65 @@
-/* SPDX-License-Identifier: MIT — the home page: hero, the exit wall, and the sections around the drop
-   widget. Loaded after site.css, only by / and /es/. */
+/* SPDX-License-Identifier: MIT — the home page (14-ghost-design §5): one figure, one action. The ghost
+   is the button; the whole window takes a drop. The drop widget (/app/drop-widget.js) mounts under it
+   and keeps its own entry points for now; this file only seats it in the ghost's page. */
+.home { display: flex; flex-direction: column; min-height: 100svh; }
+.stage { flex: 1; display: grid; align-content: center; padding-block: var(--s-2) var(--s-6); }
 
-/* The home page loads two font files (spec M-01); its code samples use the script face. */
-.home code, .home .terminal, .home .reveal pre { font-family: var(--font-script); }
+.drop { display: grid; justify-items: center; text-align: center; gap: var(--s-3); }
+.words { display: grid; justify-items: center; gap: var(--s-3); }
+.drop h1 { max-width: 14ch; }
+.drop .say { color: var(--fg-2); max-width: 34ch; }
+.drop .say > span { display: block; text-wrap: balance; }
+.drop .say .then { font: var(--t-ui); font-weight: 600; margin-top: var(--s-2); }
 
-/* ---------- hero ---------- */
-.fade { font: var(--t-scene); color: var(--fg-2); }
-.fade-in { width: min(100%, var(--content-max)); margin-inline: auto; }
-.fade-out { text-align: right; margin-top: var(--s-8); }
-.hero {
-  min-height: calc(100svh - 72px); display: grid; grid-template-rows: auto 1fr;
-  padding: var(--s-4) var(--gutter) var(--s-6);
+/* the figure is the button: alive while it waits (float, blink, a breathing shadow in ghost.css) */
+.figure {
+  position: relative; display: grid; justify-items: center; gap: var(--s-2); border: 0; padding: 8px 8px 4px;
+  background: transparent; color: var(--fg); border-radius: 36px; inline-size: min(64vw, 270px);
+  transition: scale var(--dur-3) var(--ease-out), inline-size var(--dur-3) var(--ease-out);
 }
-.hero-main { align-self: center; display: grid; justify-items: center; text-align: center; padding-bottom: 8svh; }
-.hero-h1 { max-width: 14ch; }
-.hero-line2 { font: var(--t-zone-2); margin-top: var(--s-3); }
-#mutis-drop {
-  width: min(100%, clamp(320px, 52vw, 760px)); max-width: var(--zone-max); min-height: 300px;
-  margin-top: var(--s-6); text-align: left;
+.figure .ghost { filter: var(--glow); }
+.figure:hover .ghost { scale: 1.03; transition: scale var(--dur-2) var(--ease-out); }
+.figure:active { scale: .97; }
+.figure:focus-visible { outline-offset: 0; }
+.cue { font: var(--t-small); font-weight: 650; color: var(--fg-2); }
+.cue-mouse { display: none; }
+@media (hover: hover) and (pointer: fine), (min-width: 900px) and (not (pointer: coarse)) {
+  .cue-touch { display: none; }
+  .cue-mouse { display: inline; }
+  .figure { inline-size: min(28vw, 340px); }
 }
-.noscript { margin-top: var(--s-4); font: var(--t-ui); }
-.hero-sub { margin-top: var(--s-5); font: var(--t-ui); color: var(--fg-2); }
-.hero-built { margin-top: var(--s-3); font: var(--t-ui); color: var(--fg-2); max-width: 44ch; }
-.hero-built .more { color: var(--fg); }
-.if-coarse { display: none; }
-@media (pointer: coarse) { .if-fine { display: none; } .if-coarse { display: inline; } }
-@media (max-width: 639.98px) { #mutis-drop { min-height: 280px; } .hero { row-gap: var(--s-6); } }
+@media (max-height: 760px) and (min-width: 900px) { .figure { inline-size: min(28vw, 270px); } }
 
-/* ---------- the exit wall (stage) ---------- */
-.wall-scene { background: var(--bg); color: var(--fg); padding-block: var(--s-8); }
-.wall-scene .scene-heading { margin-bottom: var(--s-6); }
-.wall-camera { perspective: 900px; perspective-origin: 50% 40%; }
-.wall {
-  --cols: 3; --s: min(26vw, 112px); --gap: clamp(8px, 1.6vw, 20px);
-  list-style: none; padding: 0; margin-inline: auto; display: grid; justify-content: center;
-  grid-template-columns: repeat(var(--cols), var(--s)); grid-auto-rows: var(--s); gap: var(--gap);
+/* the whole window is the target while a file is over it */
+.catch {
+  position: fixed; inset: 0; z-index: var(--z-catch); display: grid; align-items: end; justify-items: center;
+  padding: 0 24px 6svh; background: var(--scrim); opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out);
 }
-/* A data-wall locker is as deep as its file's size class (0-4, set by wall.js); scripted ones sit at 2. */
-.locker { position: relative; --depth: calc(var(--s) * (.3 + var(--size, 2) * .06)); }
-.locker:not(.m) { display: none; }
-.m1 { order: 1; } .m2 { order: 2; } .m3 { order: 3; } .m4 { order: 4; } .m5 { order: 5; }
-.m6 { order: 6; } .m7 { order: 7; } .m8 { order: 8; } .m9 { order: 9; }
-@media (min-width: 900px) {
-  .wall { --cols: 6; --s: clamp(96px, 9.6vw, 148px); }
-  .locker:not(.m) { display: block; }
-  .locker { order: 0; }
-}
-.slot { position: absolute; inset: 0; border: 1px dashed var(--hair); }
-.box { position: absolute; inset: 0; }
-.face { position: absolute; inset: 0; background: var(--stage-raised); border: 1px solid var(--hair); }
-.front { display: grid; grid-template-rows: 1fr auto; justify-items: center; padding: 14% 6% 10%; }
-/* Two keyholes in one cell: the lit one fades over the dark one, so a light going off is only an
-   opacity change (no repaint of a filter or a fill on every scroll frame). */
-.keyhole { position: relative; grid-area: 1 / 1; width: 30%; height: auto; align-self: center; fill: var(--lamp-off); }
-.keyhole.on { fill: var(--lamp); filter: drop-shadow(0 0 6px var(--lamp-glow)); opacity: 0; }
-.locker.lit .keyhole.on { opacity: 1; }
-/* Two lines of room for every label, so "(one address)" wrapping doesn't lift its keyhole. */
-.label {
-  position: relative; grid-row: 2; font: var(--t-cue); color: var(--fg); text-align: center; line-height: 1.15;
-  background: var(--stage-raised); padding: 2px 6px; max-width: 100%; min-height: 2.3em; display: grid; align-content: end;
-}
-.fate { display: none; grid-row: 3; }
-.side, .noise-door { display: none; }
-.wall-clock, .wall-direction { text-align: center; }
-.wall-clock { font: 400 clamp(24px, 3vw, 40px)/1 var(--font-script); }
-.wall-end { margin-top: var(--s-7); padding-inline: var(--gutter); text-align: center; display: grid; gap: var(--s-4); justify-items: center; }
-.wall-promise { font: var(--t-h2); letter-spacing: -.015em; }
-@media (max-width: 639.98px) { .wall-promise br { display: none; } .wall-promise { text-wrap: balance; } }
-.wall-caption { font: var(--t-direction); color: var(--fg-2); max-width: 46ch; }
+.catch::before { content: ""; position: absolute; inset: 14px; border: 3px dashed var(--phosphor); border-radius: 30px; opacity: .8; }
+.catch p { font: var(--t-h2); color: var(--phosphor); }
+.catching .catch { opacity: 1; }
+.catching .figure { z-index: calc(var(--z-catch) + 1); scale: 1.14; }
+.catching .figure .cue { visibility: hidden; }
+.catching .site-footer { opacity: 0; }
 
-/* Static wall (no JavaScript, or reduced motion): every locker shows its fate. */
-:root:not(.motion) .wall-scene .locker:not(.lit) .face { background: transparent; border: 1px dashed var(--line); }
-:root:not(.motion) .wall-scene .fate { display: block; font: var(--t-cue); color: var(--fg-2); text-align: center; margin-top: var(--s-1); }
-:root:not(.motion) .wall-scene .front { padding: 10% 4%; }
-:root:not(.motion) .wall-scene .wall { grid-auto-rows: auto; }
-:root:not(.motion) .wall-scene .locker { min-height: var(--s); }
-:root:not(.motion) .wall-scene .box, :root:not(.motion) .wall-scene .face { position: relative; height: 100%; }
-:root:not(.motion) .wall-scene .slot { display: none; }
-:root:not(.motion) .wall-scene .wall-clock, :root:not(.motion) .wall-scene .wall-direction { display: none; }
+/* the widget, seated under the ghost: its own "Choose a file" stays for scripts and tests, the ghost
+   is the visible way to pick; "Or write one" is the one quiet second action */
+.home #mutis-drop { max-width: 560px; }
+.home .md-stage { min-height: 0; }
+.home .md-zone[data-state="idle"] { border: 0; padding: 0; background: none; }
+.home .md-zone[data-state="idle"] .md-choose {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.home .md-zone[data-state="composing"] { border-style: solid; }
+.home .md-zone.md-drag { border: 0; background: none; }
+.home .md-zone.md-drag::after { content: none; }
 
-/* Live scene (html.motion, from the first paint): native scroll and a sticky stage. wall.js writes each
-   locker's exit progress --e (0 → 1) while it leaves, and the scene's progress --p on the closing words. */
-.motion .wall-scene { height: 220svh; padding: 0; }
-@media (min-width: 900px) { .motion .wall-scene { height: 260svh; } }
-.motion .wall-scene .scene-stage {
-  position: sticky; top: 0; height: 100svh; overflow: clip; contain: layout paint;
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; padding: var(--s-5) var(--gutter) var(--s-6);
+/* after the drop: the ghost holds the rule over the widget's card, the words step aside */
+.home[data-phase="sealing"] .words, .home[data-phase="sealed"] .words { display: none; }
+.home[data-phase="sealed"] .figure, .home[data-phase="sealing"] .figure { inline-size: min(40vw, 168px); }
+/* the cue stays the ghost's name for assistive tech; on screen the ghost alone says it */
+.home[data-phase="sealed"] .cue, .home[data-phase="sealing"] .cue {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-.motion .wall-scene .wall-end, .motion .wall-scene .wall-direction { grid-row: 3; grid-column: 1; align-self: end; }
-.motion .wall-scene .wall-camera { display: grid; align-content: center; }
-.motion .wall-scene .wall { transform-style: preserve-3d; }
-.motion .wall-scene.active .box { will-change: transform; }
-.motion .wall-scene .locker, .motion .wall-scene .box { transform-style: preserve-3d; }
-.motion .wall-scene .locker {
-  --lit: clamp(0, 1 - var(--e, 0) * 5, 1);
-  --c: clamp(0, (var(--e, 0) - .2) / .5, 1);
-  --f: clamp(0, (var(--e, 0) - .7) / .3, 1);
-}
-.motion .wall-scene .box {
-  transform: translateY(calc(var(--f) * 24px)) scale3d(calc(1 - var(--c) * .86), calc(1 - var(--c) * .86), calc(1 - var(--c) * .86));
-}
-.motion .wall-scene .face { opacity: calc(1 - var(--f)); backface-visibility: hidden; }
-.motion .wall-scene .front { transform: translateZ(calc(var(--depth) / 2)); }
-.motion .wall-scene .side { display: block; background: var(--locker-side); }
-.motion .wall-scene .side.l, .motion .wall-scene .side.r { width: var(--depth); left: calc((var(--s) - var(--depth)) / 2); }
-.motion .wall-scene .side.t, .motion .wall-scene .side.b { height: var(--depth); top: calc((var(--s) - var(--depth)) / 2); }
-.motion .wall-scene .side.l { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
-.motion .wall-scene .side.r { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
-.motion .wall-scene .side.t { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); background: var(--locker-top); }
-.motion .wall-scene .side.b { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); background: var(--locker-bottom); }
-.motion .wall-scene .slot { transform: translateZ(calc(var(--depth) / -2)); }
-.motion .wall-scene .locker:not([data-cue="empty"]) .keyhole.on { opacity: var(--lit); }
-.motion .wall-scene .wall-clock { min-height: 1em; }
-.motion .wall-scene .wall-direction { font: var(--t-direction); color: var(--fg-2); min-height: 4.5em; max-width: 52ch; margin-inline: auto; }
-.motion .wall-scene .wall-end { --o: clamp(0, (var(--p, 0) - .82) / .1, 1); opacity: var(--o); margin: 0; }
-.motion .wall-scene .wall-direction { opacity: calc(1 - clamp(0, (var(--p, 0) - .8) / .03, 1)); }
-.motion .wall-scene .noise-door { display: block; position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; opacity: .5; }
-
-/* ---------- the chain card ---------- */
-.chain-card {
-  font-family: var(--font-script); font-size: 15px; background: var(--bg-raised);
-  border: 1px solid var(--line); padding: var(--s-5); display: grid; gap: var(--s-4); max-width: 560px;
-}
-.chain-card figcaption { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-3); align-items: center; color: var(--fg-2); }
-.chain-card dl { display: grid; grid-template-columns: max-content max-content 1fr; gap: var(--s-2) var(--s-4); }
-.chain-card dt { color: var(--fg); }
-.chain-card dd { color: var(--fg-2); }
-.chain-card dd.v { color: var(--fg); }
-.onchain {
-  display: inline-flex; align-items: center; gap: var(--s-1); padding: 2px var(--s-2);
-  background: var(--ok); color: var(--on-ok); border: 1px solid var(--line); font: var(--t-cue);
-}
-.onchain .icon { width: 16px; height: 16px; }
-@media (max-width: 479.98px) {
-  .chain-card dl { grid-template-columns: max-content 1fr; }
-  .chain-card dd:not(.v) { grid-column: 2; margin-top: -6px; }
-}
-
-/* ---------- glass panel (what we store) ---------- */
-.glass { width: 100%; table-layout: fixed; border-top: 1px solid var(--fg); }
-.glass .c-row { width: 9em; }
-.caption.block { display: block; margin-top: var(--s-1); }
-.glass th, .glass td { text-align: left; vertical-align: top; padding: var(--s-4) var(--s-4) var(--s-4) 0; border-bottom: 1px solid var(--hair); }
-.glass thead th { font: var(--t-scene); text-transform: uppercase; padding-block: var(--s-3); }
-.glass tbody th { font-weight: 600; }
-.glass .quote { font-family: var(--font-script); font-size: 19px; }
-.noise {
-  width: 192px; height: 192px; image-rendering: pixelated; image-rendering: crisp-edges;
-  border: 1px solid var(--hair); background: var(--bg-sunken);
-}
-.redact { padding-inline: .2em; margin-right: .35em; }
-@media (max-width: 639.98px) {
-  .glass { table-layout: auto; }
-  .glass thead, .glass colgroup { display: none; }
-  .glass tr { display: grid; grid-template-columns: 1fr; padding-block: var(--s-3); border-bottom: 1px solid var(--hair); }
-  .glass th, .glass td { border: 0; padding: var(--s-1) 0; width: auto; }
-  .glass td::before { content: attr(data-cue); display: block; font: var(--t-scene); text-transform: uppercase; color: var(--fg-2); }
-  .noise { width: 160px; height: 160px; }
-}
-
-/* ---------- try to read it ---------- */
-.canary { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); align-items: start; }
-.canary figure { display: grid; gap: var(--s-3); justify-items: start; }
-@media (min-width: 720px) { .canary:has(> figure:not([hidden])) { grid-template-columns: auto minmax(0, 1fr); gap: var(--s-7); } }
-.canary .actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); justify-items: start; }
-.canary .copy-row { width: 100%; }
-.reveal { margin-top: var(--s-6); padding-top: var(--s-5); border-top: 1px solid var(--hair); display: grid; gap: var(--s-3); }
-.reveal pre {
-  font: var(--t-data); white-space: pre-wrap; word-break: break-all; background: var(--bg-sunken);
-  padding: var(--s-4); max-height: 12em; overflow: auto;
-}
-.missed { margin-top: var(--s-4); }
-.checks-h { margin-top: var(--s-8); }
-.checks { width: 100%; margin-top: var(--s-5); }
-.checks th, .checks td { text-align: left; vertical-align: top; padding: var(--s-4) var(--s-4) var(--s-4) 0; border-top: 1px solid var(--hair); }
-.checks th { font-weight: 600; width: 50%; }
-@media (max-width: 639.98px) {
-  .checks tr { display: grid; }
-  .checks th, .checks td { width: auto; border: 0; padding: var(--s-1) 0; }
-  .checks tr { border-top: 1px solid var(--hair); padding-block: var(--s-3); }
-}
-
-/* ---------- lists of truths ---------- */
-.truths { list-style: none; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--fg); }
-.truths li { padding-block: var(--s-4); border-bottom: 1px solid var(--hair); max-width: 72ch; }
-.truths b { font-family: var(--font-script); font-weight: 700; }
-
-/* ---------- closing ---------- */
-.closing { text-align: center; padding-block: calc(var(--section-pad) * 1.2); }
-.closing blockquote { font-family: var(--font-script); font-size: clamp(20px, 2vw, 26px); max-width: 32ch; margin-inline: auto; }
-.closing cite { display: block; margin-top: var(--s-3); font: var(--t-caption); font-style: normal; color: var(--fg-2); }
-.closing h2 { margin-top: var(--s-7); }
-.closing .btn { margin-top: var(--s-6); }
-.signoff { margin-top: var(--s-6); font: var(--t-direction); }
+.home[data-phase="sealed"] .stage { align-content: start; }

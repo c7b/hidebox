@@ -6,7 +6,7 @@ const MAX_SIDE = 96;
 const drawn = new Map(); // canvas → bytes, to redraw when the theme changes
 
 function palette(canvas) {
-  // Light text means a dark background: use the stage range, otherwise the paper range.
+  // Light text means a dark background: use the night range, otherwise the ceiling range.
   const [r, g, b] = getComputedStyle(canvas).color.match(/\d+/g).map(Number);
   const dark = r + g + b > 382;
   return dark ? { lo: 20, hi: 205, empty: 7 } : { lo: 40, hi: 215, empty: 231 };
@@ -36,11 +36,3 @@ function redrawAll() {
 new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawAll);
 
-// Bytes made in this browser under a fresh key it can never export: honest noise when ours is offline.
-export async function localCiphertext(text, paddedLength) {
-  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt']);
-  const plain = new Uint8Array(paddedLength);
-  plain.set(new TextEncoder().encode(text));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  return new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain));
-}

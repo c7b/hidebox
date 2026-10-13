@@ -3,19 +3,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Council guide · mutis</title>
-<meta name="description" content="mutis in 60 seconds or 5 minutes: a two-track guide for the Tari Council, with what you should see at each step and live on-chain evidence.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{BRAND}} for judges</title>
+<meta name="description" content="Two short tracks for the Tari Council: a computer and a phone, about a minute; then the Tari part on the same two, about five minutes.">
 <link rel="canonical" href="{{ORIGIN}}/judges">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="mutis">
-<meta property="og:title" content="Council guide · mutis">
-<meta property="og:description" content="mutis in 60 seconds or 5 minutes: a two-track guide for the Tari Council, with what you should see at each step and live on-chain evidence.">
+<meta property="og:site_name" content="{{BRAND}}">
+<meta property="og:title" content="{{BRAND}} for judges">
+<meta property="og:description" content="Two short tracks for the Tari Council: a computer and a phone, about a minute; then the Tari part on the same two, about five minutes.">
 <meta property="og:url" content="{{ORIGIN}}/judges">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="mutis. Every secret leaves on cue. A dark wall of lockers with one keyhole still lit.">
+<meta property="og:image:alt" content="A glowing ghost holds up one finger and winks. Show it once. Then bye.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#F4F5FC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#13183A" media="(prefers-color-scheme: dark)">
@@ -25,91 +25,65 @@
 <link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/ghost.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
-<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/judges.js" integrity="{{SRI}}"></script>
 </head>
-<body>
+<body class="reading">
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
-<main id="main" class="container">
-<header class="page-head">
-  <p class="scene-heading"><span class="no" aria-hidden="true">1</span>INT. THE BALCONY — OPENING NIGHT<span class="no" aria-hidden="true">1</span></p>
-  <h1>mutis in 60 seconds, or in 5 minutes.</h1>
-  <p class="lede">The Council guide. No install. Each step says what you should see. If you see something else, it's a bug: please tell us in our thread on the <a href="https://community.tari.com/">Tari™ community forum</a>.</p>
-</header>
-
-<details class="judge-pass" data-judge-pass hidden>
-  <summary>Have a judge pass?</summary>
-  <form class="form">
-    <div class="field">
-      <label for="judge-code">Judge pass (optional)</label>
-      <p class="hint" id="judge-hint">Passes come from us, on request. One skips the anti-bot check and draws on a budget we've set aside, so the demo budget is much less likely to be empty for you. It's kept in this browser for a week. A pass link (<code>/judges#pass=…</code>) saves it when opened: open it on both devices.</p>
-      <input type="text" id="judge-code" name="code" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="judge-hint judge-status">
+<main id="main" class="wrap page">
+  <div class="page-head-figure">
+    <span class="head-ghost" data-ghost="courier" aria-hidden="true"><!--#include ghost.svg--></span>
+    <div class="page-head">
+      <h1>For judges</h1>
+      <p class="lede">Two short tracks. Each step says what you should see. If you see something else, it's a bug: tell us in our thread on the <a href="https://community.tari.com/">Tari™ community forum</a>.</p>
     </div>
-    <p><button type="submit" class="btn">Save pass</button> <button type="button" class="btn" data-judge-forget hidden>Forget it</button></p>
-    <p class="form-status" id="judge-status" role="status"></p>
-  </form>
-</details>
-
-<section class="track" aria-labelledby="track-a">
-  <h2 id="track-a">Track A · 60 seconds, no wallet</h2>
-  <p class="track-cols" aria-hidden="true"><span></span><span>Do this</span><span>You should see</span></p>
-  <ol>
-      <li><span class="n">A1</span><span class="do">On a computer, open the home page and drop any file. Keep <strong>Opens once</strong>. Press <strong>Copy link</strong>.</span><span class="see">Your file and its stored noise side by side, and a link whose part after <code>#</code> is the key.</span></li>
-      <li><span class="n">A2</span><span class="do">Open the link on your phone. Press <strong>Open it</strong>.</span><span class="see">The file.</span></li>
-      <li><span class="n">A3</span><span class="do">Reload the page on the phone.</span><span class="see"><strong>“This secret already made its exit.”</strong><span data-when="seallog=on" hidden> Under it, the exit receipt: it goes on the public record at our next checkpoint.</span></span></li>
-      <li><span class="n">A4</span><span class="do">Optional: home page → <strong>Try to read it</strong> → <strong>Download the stored bytes</strong>.</span><span class="see">A file we locked within the hour, exactly as our disk holds it: noise.</span></li>
-  </ol>
-</section>
-
-<section class="track" aria-labelledby="track-b">
-  <h2 id="track-b">Track B · 5 minutes, the Tari™ part</h2>
-  <p class="direction">Two devices. The phone is the recipient; the computer is everyone else.</p>
-  <p class="track-cols" aria-hidden="true"><span></span><span>Do this</span><span>You should see</span></p>
-  <ol>
-      <li><span class="n">B1</span><span class="do">On your phone, open the home page → <strong>Open my locker</strong> → <strong>Make my drop link</strong>. When asked to save your key, tap <strong>Later</strong>.<span data-when="send_mode=direct" hidden> On the computer, do the same (<strong>Open my locker</strong> → <strong>Make my drop link</strong> → <strong>Later</strong>): by B3 its locker will hold the testnet grant it sends from.</span></span><span class="see">A locker opens in a few seconds, with no email: your drop link, a 12-emoji safety code and an <code>otl_esm_…</code> Tari address.</span></li>
-      <li><span class="n">B2</span><span class="do">On the computer, open that short link and drop a photo.</span><span class="see">The same 12 emoji, “Location and camera data removed”, then <strong>Delivered</strong> in about a minute. The phone's inbox shows it under <strong>Left in your drop</strong>.</span></li>
-      <li><span class="n">B3</span><span class="do">On the computer: drop a file → <strong>Send it to a Tari address instead</strong> → paste the phone's address (copy it on the phone and send it to yourself in any messenger) → <strong>Send</strong>.</span><span class="see"><strong>Sent</strong>, <strong>On the Ootle ✓</strong> and <strong>What the chain sees</strong>: amount hidden, owner hidden, memo encrypted, fee public.<span data-when="send_mode=direct" hidden> Above Send, a line says whether this send goes from your browser's wallet or through our relay. If the grant is on its way, wait a minute or two and it changes; if today's grant for your network is used up, the line says so and the send goes by relay. After the send, a line under Sent says which way it went.</span></span></li>
-      <li><span class="n">B4</span><span class="do">On the phone: <strong>Inbox</strong>.</span><span class="see">A delivery that only the phone's keys could find; the scan line shows how many outputs it checked. <strong>Open</strong> it: your file.</span></li>
-      <li><span class="n">B5</span><span class="do">On the phone: <strong>Locker</strong> → <strong>See what a view key sees</strong>.</span><span class="see">Deliveries and amounts, and <strong>0 files readable with this key</strong>. A view key sees arrivals; it can't spend and can't open the files locked to this locker.</span></li>
-      <li><span class="n">B6</span><span class="do">On either device: <strong>Get more room</strong> → the smallest pack → <span data-when="send_mode=relay"><strong>Pay with demo tTARI</strong></span><span data-when="send_mode=direct" hidden><strong>Pay <span data-needs="config" hidden><span data-v="pack_s30_price"></span> tTARI</span> from this browser</strong></span>.</span><span class="see"><strong>Waiting → <span data-when="proof=proven" hidden>Seen on chain → Amount proven → </span><span data-when="proof=wallet">Seen by our wallet → Exists on chain → </span>Added</strong> within about a minute. <span data-when="send_mode=relay">Our demo wallet pays our own invoice: a real stealth transaction with play money.</span><span data-when="send_mode=direct" hidden>Your browser pays our invoice from the testnet grant our sponsor wallet sent its wallet: a real stealth transaction with play money, built and signed on your device. If your browser's wallet has no grant (B3), <strong>Pay with demo tTARI</strong> appears next to it.</span> If it says rented space is sold out, every pack is taken for now: the test payments under <a href="#evidence">Live evidence</a> go through the same checks, paid to an invoice of ours.</span></li>
-      <li data-when="seallog=on" hidden><span class="n">B7</span><span class="do">On the computer: the footer link <a href="/verify">Exit receipts</a> → the file from B3.</span><span class="see">An inclusion proof, a root that matches the SealLog component on the Ootle, and the exit receipt from A3. Until our next checkpoint<span data-needs="config" hidden>, at most <span data-v="checkpoint"></span> away</span>, each one says it is “not on the record yet”.</span></li>
-  </ol>
-</section>
-
-<div class="prose page-body">
-  <h2 id="trouble">If something's off</h2>
-  <p><strong>Tari features paused?</strong> The testnet is being reset; Track A still works. <strong>A step fails twice?</strong> Wait a minute and retry once, then tell us in the forum thread with the step number.</p>
-
-  <h2 id="map">What each step shows</h2>
-  <ul>
-    <li><strong>Stealth outputs:</strong> B2, B3 and B6 move value with the amount and owner hidden.</li>
-    <li><strong>Encrypted memos:</strong> B2 and B3 carry a file's key sealed to one locker; only that locker's keys open it.</li>
-    <li><strong>View keys separate from files:</strong> B5 sees arrivals but opens nothing.</li>
-    <li><strong>Payments checked against chain state:</strong> <span data-when="proof=proven" hidden>B6 is credited only after the official Tari library proves its amount and a Tari-run indexer shows it on the chain.</span><span data-when="proof=wallet">B6 is credited only after a Tari-run indexer confirms the payment exists on the chain; the amount is the one our wallet reads.</span></li>
-    <li><strong>No server-side keys:</strong> A1 to A4. Our server holds ciphertext; the key stays in the link.</li>
-  </ul>
-  <p>The full map and every observer: <a class="more" href="/how#tari">Where Tari comes in<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a> · <a class="more" href="/how#what-we-store">Who sees what<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
-
-  <h2 id="evidence">Live evidence</h2>
-  <p>Our own test transactions, never a user's. They come from <a href="/evidence.json">/evidence.json</a>, refreshed every hour; older ones are archived in <a class="more" href="{{REPO_URL}}/tree/main/docs/evidence">the repository<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
-  <div class="evidence" data-evidence hidden>
-    <dl class="detail">
-      <dt>Network</dt><dd data-ev="network"></dd>
-      <dt>Official Tari library</dt><dd>ootle-wasm <span data-ev="version"></span>, SHA-256 <code data-ev="wasm"></code></dd>
-      <dt>Test deliveries (a file key sealed to our own test locker)</dt><dd><ul class="tx-list" data-ev="deliveries"></ul></dd>
-      <dt>Test payments (our demo wallet paying our own invoice)</dt><dd><ul class="tx-list" data-ev="payments"></ul></dd>
-    </dl>
   </div>
 
-  <h2 id="self-host">Run your own</h2>
-  <p>File sharing needs Python's standard library and a web server. The Tari features also need a walletd on the Ootle testnet and Node for the payment checker. <a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Self-host guide<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#external"/></svg></a></p>
+  <div class="tracks">
+    <section class="track" aria-labelledby="t1">
+      <h2 id="t1">A computer and a phone, about a minute</h2>
+      <p class="sub">No wallet. No sign-up.</p>
+      <ol class="steps">
+        <li><span class="do"><span class="where">Computer</span>Open the home page. Drop any file on the ghost.</span><span class="see">The ghost eats it. A link and a code come out.</span></li>
+        <li><span class="do"><span class="where">Phone</span>Scan the code. Tap <b class="ui">Open it</b>.</span><span class="see">Your file, on the phone.</span></li>
+        <li><span class="do"><span class="where">Phone</span>Reload the page.</span><span class="see">“It's gone. It said bye.”</span></li>
+        <li><span class="do"><span class="where">Either</span>Open <a href="/verify" data-demo-gone>a secret that already said bye</a>. Tap <b class="ui">See the goodbye</b>.</span><span class="see">Its goodbye on the Tari chain, checked by your browser. <span data-needs="config" hidden>Yours lands within <span data-v="checkpoint"></span>.</span></span></li>
+      </ol>
+    </section>
 
-  <h2 id="ai">How it was made</h2>
-  <p>Built with AI coding agents under the author's direction. The design, threat model and crypto choices were reviewed by the author; the verification evidence is linked above. This deployment runs commit <code>{{GIT_SHA}}</code>.</p>
-</div>
+    <section class="track" aria-labelledby="t2">
+      <h2 id="t2">The Tari part, on the same two</h2>
+      <p class="sub">About five minutes. Test tTARI only.</p>
+      <ol class="steps">
+        <li><span class="do"><span class="where">Computer</span>Open <b class="ui">My locker</b>. Tap <b class="ui">Later</b> when it asks about your key.</span><span class="see">A locker, its Tari address, and a code.</span></li>
+        <li><span class="do"><span class="where">Phone</span>Scan the code. Tap the ghost and pick a file.</span><span class="see">It goes by Tari. The amount and the owner are hidden. The note is locked.</span></li>
+        <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">See what came</b>. Open it.</span><span class="see">Your file. Only this locker's keys could find it.</span></li>
+        <li><span class="do"><span class="where">Both</span>Computer: tap <b class="ui">Get a file from someone</b>. Phone: scan its code and pick a photo.</span><span class="see">Delivered in about a minute. It shows up on the computer.</span></li>
+        <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">See what a view key sees</b>.</span><span class="see">What came, and how much. No file sent to your locker opens with it.</span></li>
+        <li><span class="do"><span class="where">Either</span>Tap <b class="ui">Get more room</b>. <span data-when="send_mode=relay">Tap <b class="ui">Pay with demo tTARI</b>.</span><span data-when="send_mode=direct" hidden>Pay from this browser.</span></span><span class="see">Checked on the chain, then added.</span></li>
+      </ol>
+      <details class="pass" data-judge-pass hidden>
+        <summary>Have a judge pass?</summary>
+        <form class="form pass-form">
+          <p class="hint" id="judge-hint">We give them on request. A pass skips the robot check and uses test tTARI we keep for judges. It stays in this browser for a week. Open your pass link on both devices.</p>
+          <div class="field">
+            <label for="judge-code">Your pass</label>
+            <div class="pass-row"><input type="text" id="judge-code" name="code" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="judge-hint judge-status"><button type="submit" class="btn">Save it</button></div>
+          </div>
+          <p><button type="button" class="textlink" data-judge-forget hidden>Forget it</button></p>
+          <p class="form-status" id="judge-status" role="status"></p>
+        </form>
+      </details>
+    </section>
+  </div>
+
+  <section class="proof" aria-labelledby="proof-h">
+    <h2 id="proof-h">Check our work</h2>
+    <p class="muted">Every claim, its limits, the Tari map, live evidence and how to run your own copy are on one page: <a href="/made">how it was made</a>. What a view key can read is in <a href="/made#who">who sees what</a>.</p>
+  </section>
 </main>
 <!--#include footer-->
 </body>
