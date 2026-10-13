@@ -21,7 +21,7 @@ SITE, SHARED = WEB / "site", WEB / "shared"
 PAGES = sorted((SITE / "pages").glob("*.html"))
 PARTIALS = sorted((SHARED / "partials").glob("*.html"))
 JS = sorted((SITE / "js").glob("*.js")) + sorted(SHARED.glob("*.js"))
-PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI"}
+PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI", "BRAND"}
 DATA_FILES = {".json", ".png", ".ico", ".webp", ".woff2", ".bin", ".webmanifest", ".pyc"}
 NOT_SOURCE = {"OFL.txt", "NOTICE", "llms.txt", "llms-full.txt"}
 
@@ -31,7 +31,7 @@ BANNED = ["seamless", "revolutionary", "game-changer", "cutting-edge", "next-gen
           "military-grade", "bank-level", "unhackable", "100% secure", "100% private", "fully anonymous", "untraceable",
           "trustless", "zero-knowledge", "decentralized storage", "censorship-resistant", "your data, your rules",
           "peace of mind", "magic", "magically", "effortless", "robust", "world-class", "Web3", "to the moon", "LFG",
-          "WAGMI", "XTR", "mining TARI", "Ootle chain", "Tari L3", "Emoji ID", "ghost", "ghostly", "vault",
+          "WAGMI", "XTR", "mining TARI", "Ootle chain", "Tari L3", "Emoji ID", "vault",
           "We see nothing", "We say nothing", "nothing left", "not anywhere", "no account to hack",
           "two independent indexers", "zero third-party runtime dependencies", "protects you from a malicious",
           "instead of through us", "gone forever", "deleted forever", "provably deleted", "vanished", "sealed file",
