@@ -1,0 +1,23 @@
+== purge 2026-10-13T13:45:06Z (build-3, after the non-chain E2E batch on 27e2946, the final release of this stage)
+plan (by id, from a read-only diff against the snapshot taken before the batch): 14 new items, 3 drops, 6 identities (empty, no admin removal), 0 invoices, 0 payments
+item 5utJADDB2nVfZjpN2t3cFA: removed
+item 9XYLUTpqoWJ1CcDL-nXJyQ: removed
+item Af7CAkZGcaUw_yl-FKUdsA: removed
+item FAUKy1KW_OkHidKOMzNcVw: removed
+item IH1ykIAWt9DdMcoOvQcCng: removed
+item REaKyWwBZsKpcM6jtkCr8g: removed
+item RKQXFHJGIb7HYSVOlWHhSQ: removed
+item RVnNNLmpfCteo6su20Jm2Q: removed
+item VdfSrw29zdQZHst-f92Hqw: removed
+item cN0rpYs6Mxgj-p76l9HKzw: removed
+item eWkzjV6g0IWgWwxlpn56LA: removed
+item hAotbIto5NDeFyRMK-iAPw: removed
+item iRo7vLZfC8EFlQerHANiJw: removed
+item wuA8t9TOfKo-a1xT3NFB_A: removed
+drop 0zenkdn74z: removed
+drop yjb5ezsvp3: removed
+drop arsgw4wcyf: already removed by E-17
+== post-purge 2026-10-13T13:45:09Z
+judge passes 20
+security drop 3w7m8k2v5t active
+/api/v1/config e2e_expiry_s: absent ; judge_demo_gone: tXoueLYCUlw-ZCgOcRMWAQ
