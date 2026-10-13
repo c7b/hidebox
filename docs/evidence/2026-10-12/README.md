@@ -25,6 +25,11 @@ repository public would publish those addresses. The repository stays private, a
 - `git clone https://github.com/c7b/mutis` in the README and the self-hosting guide fails for
   strangers, and so does the anonymous `verify-deploy` from a clean clone.
 
+What could run without a public repository did: a fresh clone of GitHub's `main` (signed in, since
+the repository is private) at `67996ed` rebuilt the deployed commit with `verify-deploy` (0 differences
+across 129 files for `39bd45c`, the SealLog template byte for byte) and passed the server suite (203
+tests, 4 opt-in skips).
+
 What clears it is the owner's (Tier 3): ask GitHub Support to remove the unreferenced commits of
 `c7b/mutis` (then check that `https://api.github.com/repos/c7b/mutis/commits/ea20751` answers 404
 for the owner too), or publish the rewritten history as a new repository. Then the remaining steps
