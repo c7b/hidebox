@@ -16,14 +16,14 @@ It runs, in order, and prints a summary (last run: `ALL PASS (9 steps)`):
 
 | Step | What | Last result |
 |---|---|---|
-| `lint_core.py` | §0.7 rules on these folders, stdlib-only Python, the A-06 import graph and size of the widget path | 824/824 |
+| `lint_core.py` | §0.7 rules on these folders, stdlib-only Python, the A-06 import graph and size of the widget path | 836/836 |
 | `vectors/crosscheck.py` | independent Python re-computation of the frozen vectors | 80/80 |
-| `node-run.mjs` | every suite that needs no browser, under Node 20 (what the sidecar imports); a Worker stand-in runs the PoW | 114/114 |
-| `headless.py` | every suite in headless Chromium 154 with the production app CSP and Trusted Types | 114/114 |
-| `headless.py --jitless --fragment nowasm` | V8 without WebAssembly (Tor Browser Safer-like): anonymous links still work | 73/73 |
+| `node-run.mjs` | every suite that needs no browser, under Node 20 (what the sidecar imports); a Worker stand-in runs the PoW | 118/118 |
+| `headless.py` | every suite in headless Chromium 154 with the production app CSP and Trusted Types | 118/118 |
+| `headless.py --jitless --fragment nowasm` | V8 without WebAssembly (Tor Browser Safer-like): anonymous links still work | 75/75 |
 | `sidecar_test.py` | the sidecar exactly as the chain worker starts it: protocol, G4, permissions | 16/16 |
-| `bench/` PoW | 18-bit proof of work at 6x CPU throttling (A-13), fails above 2 s | main-thread median 414 ms (174-612 across runs) |
-| `bench/` scan | trial decryption in the page, 390x844 touch emulation, 4x throttling; a report (the 1,000 rows/s target of §10.6 is for a real phone), failing only below 500 | 1,053 rows/s (930-1,235 across runs) |
+| `bench/` PoW | 18-bit proof of work at 6x CPU throttling (A-13), fails above 2 s | main-thread median 455 ms on 2026-10-12 (174-612 across earlier runs) |
+| `bench/` scan | trial decryption in the page, 390x844 touch emulation, 4x throttling; a report (the 1,000 rows/s target of §10.6 is for a real phone), failing only below 500 | 1,120 rows/s on 2026-10-12 (930-1,235 across earlier runs) |
 | contract | `contract.test.js` through `node-run.mjs --api`, against `server/bin/mutis-api --dev --pow-bits 8` started from the same checkout (fresh data directory, free port, one judge pass inserted); prints the server log tail on failure | 12/12 |
 
 Any single step runs on its own, e.g. `python3 -I web/app/tests/headless.py` (prints the page's
