@@ -10,7 +10,7 @@ set -euo pipefail
 
 dir=${1:-/srv/mutis/app/current/sidecar}
 keys=/home/drive/mutis
-pinned=57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df   # spec §3.3 step 7
+pinned=2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2   # spec §3.3 step 7
 
 [ "$(id -un)" = drive ] || { echo "init-keys: run as drive" >&2; exit 1; }
 missing=()

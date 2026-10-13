@@ -3,14 +3,14 @@ Copyright (c) 2026 Cristobal Alanis and the bye contributors. MIT License (LICEN
 
 This repository includes or is built with the following third-party work.
 
-1. @tari-project/ootle-wasm 0.45.0 (the official Tari Ootle client cryptography)
-   Files: web/app/vendor/ootle-wasm-0.45.0/ (vendored byte for byte from the npm tarball,
-   never installed with npm). Source: https://github.com/tari-project/tari-ootle, tag v0.45.0,
-   commit 9c626062673760530ffb075b6b006a67becebe5a.
-   ootle_wasm_bg.wasm sha256 57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df
+1. @tari-project/ootle-wasm 0.46.0 (the official Tari Ootle client cryptography)
+   Files: web/app/vendor/ootle-wasm-0.46.0/ (vendored byte for byte from the npm tarball,
+   never installed with npm). Source: https://github.com/tari-project/tari-ootle, tag v0.46.0,
+   commit cc8a83bcab88e03e0fcf760d2652ab6f1e067d8a.
+   ootle_wasm_bg.wasm sha256 2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2
    ootle_wasm_bg.js   sha256 2a338a3c8ef81b314c41487c9e2dc3d1f77942ea9f47c672fd971ab40d3ac36b
    License: BSD-3-Clause, Copyright (c) 2019, The Tari Developer Community
-   (web/app/vendor/ootle-wasm-0.45.0/LICENSE). Provenance: PROVENANCE.md in the same folder.
+   (web/app/vendor/ootle-wasm-0.46.0/LICENSE). Provenance: PROVENANCE.md in the same folder.
 
 2. Tari emoji address alphabet (RFC-0155)
    The 256-emoji table in web/app/lib/emoji.js, copied in order from tari-project/tari v6.1.0

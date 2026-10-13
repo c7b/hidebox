@@ -120,8 +120,8 @@ class PinnedWasmTest(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "tools"))
         import build
         from mutis import config
-        pinned = build.PINNED["ootle-wasm-0.45.0/ootle_wasm_bg.wasm"]
-        sums = (ROOT / "web" / "app" / "vendor" / "ootle-wasm-0.45.0" / "SHA256SUMS").read_text()
+        pinned = build.PINNED["ootle-wasm-0.46.0/ootle_wasm_bg.wasm"]
+        sums = (ROOT / "web" / "app" / "vendor" / "ootle-wasm-0.46.0" / "SHA256SUMS").read_text()
         self.assertIn(f"{pinned}  ootle_wasm_bg.wasm", sums)
         self.assertEqual(config.PINNED_WASM_SHA256, pinned)
         for script in ("activate-release.sh", "init-keys.sh"):

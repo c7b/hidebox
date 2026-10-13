@@ -19,7 +19,7 @@ import { searchNonce, leadingZeroBits } from '../../lib/pow.js';
 import { sha256Sync } from '../../lib/sha256sync.js';
 
 const here = new URL('./', import.meta.url);
-await ootle.initWithBytes(readFileSync(new URL('../../vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm', here)));
+await ootle.initWithBytes(readFileSync(new URL('../../vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm', here)));
 
 const seq = (start, n) => Uint8Array.from({ length: n }, (_, i) => (start + i) & 255);
 const SEED = seq(0x00, 32);

@@ -10,7 +10,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-PINNED_WASM_SHA256 = "57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df"   # spec §3.3 step 7
+PINNED_WASM_SHA256 = "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2"   # spec §3.3 step 7
 
 DEFAULTS: dict = {
     "public_origin": "https://srv2052606.hstgr.cloud",
@@ -53,7 +53,7 @@ DEFAULTS: dict = {
         "decoy_mean_gap_s": 900,
         "sponsor_grant_ut": 1_000_000,
         "seallog_component": "",
-        "wasm_version": "0.45.0",
+        "wasm_version": "0.46.0",
         "mainnet_date": "2026-11-11",
     },
     "sidecar": {

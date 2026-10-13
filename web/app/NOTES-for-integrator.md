@@ -46,7 +46,7 @@ library API in the places marked **(changed)** below.
   `ootle-secret-key-wallet` 0.8.0 (integrity = registry, provenance = `tari-project/ootle.ts` v0.8.0,
   commit `865569e8`), but its `StealthTransfer` builder can't express a stealth-only spend whose fee
   comes from a revealed bucket (it requires a revealed source account). The browser ships one official
-  artifact instead of four. Recorded in `vendor/ootle-wasm-0.45.0/PROVENANCE.md`.
+  artifact instead of four. Recorded in `vendor/ootle-wasm-0.46.0/PROVENANCE.md`.
 - **Claims this makes true** (§0.1 direct sentence, §1.3 row 4), for a send that went direct: the
   browser seals the file and pays the delivery from its own wallet output; our server relays the signed
   transaction but sees only one-time keys, commitments and encrypted data, so it can't tell the
@@ -328,7 +328,7 @@ modules also run under Node 20. `tests/contract.test.js` shows each flow against
 
 **Deploy builder**
 1. Sidecar release layout and command: `sidecar/README.md` (copy `lib/`, the two `package.json`
-   markers, the shim and `vendor/ootle-wasm-0.45.0/`).
+   markers, the shim and `vendor/ootle-wasm-0.46.0/`).
 2. Build lint: allow the SVG namespace identifier `http://www.w3.org/2000/svg` in `lib/dom.js` (it is
    not fetched) and the two indexer origins in `lib/ootle.js`.
 3. Serve `.wasm` as `application/wasm`. `lib/package.json`/`vendor/package.json` are harmless in

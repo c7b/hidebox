@@ -59,7 +59,7 @@ class System(unittest.TestCase):
         self.assertEqual(packs["s30"], {"id": "s30", "bytes": 2 << 30, "days": 30, "price_ut": "500000"})
         self.assertEqual(packs["m30"]["price_ut"], "2000000")
         self.assertEqual(c["courier"], {"amount_ut": "1000", "max_fee_ut": "30000", "jitter_s": [5, 45]})
-        self.assertEqual(c["ootle"]["wasm_version"], "0.45.0")
+        self.assertEqual(c["ootle"]["wasm_version"], "0.46.0")
         self.assertEqual(c["hosting"], {"snapshots": "weekly"})
         self.assertIsNone(c["onion"])
         self.assertEqual(c["retention"]["ticket_s"], 1800)

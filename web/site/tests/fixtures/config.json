@@ -100,7 +100,7 @@
    "https://ootle-indexer-b.tari.com",
    "https://ootle-indexer-a.tari.com"
   ],
-  "wasm_version": "0.45.0",
+  "wasm_version": "0.46.0",
   "mainnet_date": "2026-11-11"
  },
  "security_drop": null,

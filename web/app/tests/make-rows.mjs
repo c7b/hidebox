@@ -6,7 +6,7 @@ import { hex } from '../lib/b64.js';
 import { randomBytes } from '../lib/crypto.js';
 import { NETWORK_BYTE, TARI_RESOURCE, bindings, initWithBytes, newRandomKeys } from '../lib/ootle.js';
 
-await initWithBytes(readFileSync(new URL('../vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm', import.meta.url)));
+await initWithBytes(readFileSync(new URL('../vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm', import.meta.url)));
 const count = Number(process.argv[2] ?? 2000);
 const w = bindings();
 const keys = await newRandomKeys();
