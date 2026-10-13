@@ -32,10 +32,10 @@ BRAND = "bye"
 DEFAULT_CONFIG = ROOT / "deploy" / "config" / "mutis.toml.example"
 HOLDING = ROOT / "deploy" / "holding"
 
-# spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.45.0 build.
+# spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.46.0 build.
 PINNED = {
-    "ootle-wasm-0.45.0/ootle_wasm_bg.wasm": "57de0088e9b96ecdd47daad41f1c48fcfbf1773358244a4663c1f40766d6d4df",
-    "ootle-wasm-0.45.0/ootle_wasm_bg.js": "2a338a3c8ef81b314c41487c9e2dc3d1f77942ea9f47c672fd971ab40d3ac36b",
+    "ootle-wasm-0.46.0/ootle_wasm_bg.wasm": "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2",
+    "ootle-wasm-0.46.0/ootle_wasm_bg.js": "2a338a3c8ef81b314c41487c9e2dc3d1f77942ea9f47c672fd971ab40d3ac36b",
 }
 # Only these are ever copied into dist/ (an allow-list: notes, reviews, sources and tests never leak).
 SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".webp", ".jpg", ".woff2",

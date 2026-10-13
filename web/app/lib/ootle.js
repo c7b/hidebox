@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Everything that touches Tari Ootle keys: addresses, deterministic locker/wallet keys, sealing a
 // link secret to an address (kind 3: owner + view key; kind 4: view key only) and trial-decrypting
-// stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.45.0, loaded on demand.
+// stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.46.0, loaded on demand.
 import { ALPHABET, safetyCode } from './emoji.js';
 import { concat, equal, utf8 } from './bytes.js';
 import { unhex } from './b64.js';

@@ -89,7 +89,7 @@ browser ──HTTPS──► Caddy ──► mutis-api (Python 3.13, stdlib only
                      │            ▼
                      │      mutis-chain (runs as `drive`): relay sends, the UTXO mirror, canaries,
                      │            │ SealLog checkpoints, payment proofs through the sidecar
-                     │            ├──► sidecar (Node 20 permission model + vendored ootle-wasm 0.45.0)
+                     │            ├──► sidecar (Node 20 permission model + vendored ootle-wasm 0.46.0)
                      │            └──► tari_ootle_walletd 0.46.0 (official binary) ──► Esmeralda
                      └──► the site and the app: static files, a per-route CSP, SRI on each page's top-level
                           scripts and stylesheets, a hash manifest for everything served

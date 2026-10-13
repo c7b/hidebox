@@ -80,7 +80,7 @@ jitter_s = [5, 45]
 decoy_mean_gap_s = 900
 sponsor_grant_ut = 1000000
 seallog_component = ""          # the live log (template 2.0.0): deploy/ootle/setup-accounts.md §4
-wasm_version = "0.45.0"
+wasm_version = "0.46.0"
 mainnet_date = "2026-11-11"
 
 [sidecar]

@@ -20,7 +20,7 @@ NODE_PROGRAM = r"""
 import { readFileSync } from 'node:fs';
 const app = process.argv[1];
 const { NETWORK_BYTE, TARI_RESOURCE, bindings, decodeAddress, initWithBytes } = await import(app + '/lib/ootle.js');
-await initWithBytes(readFileSync(app + '/vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm'));
+await initWithBytes(readFileSync(app + '/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm'));
 const { addresses, items, origin } = JSON.parse(readFileSync(0, 'utf8'));
 const hex = (b) => Buffer.from(b).toString('hex');
 const byView = new Map(addresses.map((a) => [hex(decodeAddress(a).viewPk), decodeAddress(a)]));

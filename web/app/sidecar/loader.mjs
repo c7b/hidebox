@@ -13,7 +13,7 @@ export async function loadLib() {
     ['ootle', 'api', 'api-locker', 'b64', 'courier', 'crypto', 'seal', 'share', 'format'].map(mod),
   );
   const shim = await import(new URL('vendor/ootle-wasm-shim.js', appRoot).href);
-  await ootle.initWithBytes(readFileSync(new URL('vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm', appRoot)));
+  await ootle.initWithBytes(readFileSync(new URL('vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm', appRoot)));
   return { ootle, api, apiLocker, b64, courier, crypto, seal, share, format, wasmSha256: shim.WASM_SHA256 };
 }
 

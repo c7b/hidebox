@@ -33,7 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import headers_spec  # noqa: E402
 
-WASM = "/app/vendor/ootle-wasm-0.45.0/ootle_wasm_bg.wasm"
+WASM = "/app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm"
 
 
 def fetch(url: str, method: str = "GET", host: str | None = None, body: bytes = b"") -> tuple[int, dict, bytes]:

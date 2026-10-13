@@ -25,7 +25,7 @@ def rel(p):
 def files(*dirs, exts):
     for d in dirs:
         for root, _, names in os.walk(os.path.join(APP, d)):
-            if "ootle-wasm-0.45.0" in root:  # official vendored files: hash-pinned, never edited
+            if "ootle-wasm-0.46.0" in root:  # official vendored files: hash-pinned, never edited
                 continue
             for n in sorted(names):
                 if n.endswith(exts):

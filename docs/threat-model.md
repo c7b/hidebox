@@ -54,7 +54,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 
 A wallet saying "sent" isn't enough (in September 2026 a testnet wallet showed deposits that never
 happened), so **bye** credits rented space only after its own checks. With `amount_proof = "sidecar"`
-the official Tari library (ootle-wasm 0.45.0, in a Node process under the permission model that can
+the official Tari library (ootle-wasm 0.46.0, in a Node process under the permission model that can
 only read its own directory) opens the output's commitment to the exact amount, and a Tari-run public
 indexer shows the output committed. walletd never decides a credit. With `amount_proof = "wallet"`
 (the fallback when the sidecar can't run) the amount is the one our wallet reads, and the site says

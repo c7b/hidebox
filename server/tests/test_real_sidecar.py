@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 """S-07 (real half) and the sidecar contract: the server's client against the app builder's real Node
-sidecar (official ootle-wasm 0.45.0 under Node's permission model), and the canary sealed with the real
+sidecar (official ootle-wasm 0.46.0 under Node's permission model), and the canary sealed with the real
 lib/format.js through this server's API. Opt-in, on ultron as `build`:
 
     MUTIS_SIDECAR_DIR=/path/to/web/app python3 -I -m unittest discover -s server/tests -p test_real_sidecar.py
