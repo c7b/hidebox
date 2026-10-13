@@ -31,9 +31,9 @@ export async function passwordOnlySecret(password, kdf) {
   return hkdf(P, 'mutis/v1', 'password-only', 32);
 }
 
-// A hand-written list of very common passwords, plus Spanish and mutis/Tari words people try first,
-// checked after undoing common substitutions and stripping trailing digits and symbols
-// ("P@ssw0rd2024!" -> "password").
+// A hand-written list of very common passwords, English and Spanish ones (people type the passwords
+// they know), and the mutis/Tari words people try first. Checked after undoing common substitutions
+// and stripping trailing digits and symbols ("P@ssw0rd2024!" -> "password").
 const COMMON = new Set(`
 123456 password 12345678 qwerty 123456789 12345 1234 111111 1234567 dragon 123123 baseball abc123
 football monkey letmein shadow master 666666 qwertyuiop 123321 mustang 1234567890 michael 654321

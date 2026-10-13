@@ -1,64 +1,29 @@
 // SPDX-License-Identifier: MIT
-// Strings for the app (§12.7): t(key, params) with {name} interpolation and Intl plurals. Dictionaries
-// are flat JSON ({"viewer.ready.title": "…"}); a plural value is an object keyed by Intl plural
-// categories and chosen by params.count. English is the source; missing keys fall back to it.
-import { localGet, localSet } from './store.js';
+// Strings for the app (§12.7): t(key, params) with {name} interpolation and Intl plurals. The
+// dictionary is flat JSON ({"viewer.ready.title": "…"}); a plural value is an object keyed by Intl
+// plural categories and chosen by params.count. The app is in English and formats for en-US.
+const LOCALE = 'en-US';
+const plurals = new Intl.PluralRules(LOCALE);
+const numberFormat = (n) => new Intl.NumberFormat(LOCALE).format(n);
 
-export const LANGUAGES = ['en', 'es'];
-const STORAGE_KEY = 'mutis.lang';
-
-let lang = 'en';
 let dict = {};
-let english = {};
 
-export function pickLanguage(available = LANGUAGES) {
-  const stored = localGet(STORAGE_KEY);
-  if (available.includes(stored)) return stored;
-  for (const l of globalThis.navigator?.languages ?? []) {
-    const base = l.toLowerCase().split('-')[0];
-    if (available.includes(base)) return base;
-  }
-  return 'en';
+export async function loadStrings() {
+  const res = await fetch(new URL('../i18n/en.json', import.meta.url), { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error('no strings');
+  dict = await res.json();
 }
 
-async function fetchDict(l) {
-  const res = await fetch(new URL(`../i18n/${l}.json`, import.meta.url), { signal: AbortSignal.timeout(10000) });
-  if (!res.ok) throw new Error(`no strings for ${l}`);
-  return res.json();
-}
-
-export async function loadLanguage(l = pickLanguage(), { remember = false } = {}) {
-  english = await fetchDict('en');
-  dict = l === 'en' ? english : await fetchDict(l).catch(() => english);
-  lang = dict === english ? 'en' : l;
-  if (remember) localSet(STORAGE_KEY, lang);
-  if (globalThis.document) document.documentElement.lang = lang;
-  return lang;
-}
-
-// Installs dictionaries fetched elsewhere: the home widget's first, smaller dictionary
-// (i18n/widget-<lang>.json, ui/more.js), and the tests'.
-export function useStrings(l, strings, fallback = strings) {
-  lang = l;
+// Installs a dictionary fetched elsewhere: the home widget's first, smaller one
+// (i18n/widget-en.json, ui/more.js), and the tests'.
+export function useStrings(strings) {
   dict = strings;
-  english = fallback;
 }
-
-export function currentLanguage() {
-  return lang;
-}
-
-// The site's locales (site.js): Mexican Spanish writes 1.9 GB and 10,000.
-const locale = () => (lang === 'es' ? 'es-MX' : 'en-US');
-const numberFormat = (n) => new Intl.NumberFormat(locale()).format(n);
 
 export function t(key, params = {}) {
-  let v = dict[key] ?? english[key];
+  let v = dict[key];
   if (v === undefined) return key;
-  if (typeof v === 'object') {
-    const cat = new Intl.PluralRules(lang).select(Number(params.count ?? 0));
-    v = v[cat] ?? v.other;
-  }
+  if (typeof v === 'object') v = v[plurals.select(Number(params.count ?? 0))] ?? v.other;
   return String(v).replace(/\{(\w+)\}/g, (m, name) => {
     const p = params[name];
     if (p === undefined) return m;
@@ -76,11 +41,11 @@ export function formatBytes(n) {
     v /= 1024;
     i++;
   }
-  return `${new Intl.NumberFormat(locale(), { maximumFractionDigits: v < 10 && i > 0 ? 1 : 0 }).format(v)} ${UNITS[i]}`;
+  return `${new Intl.NumberFormat(LOCALE, { maximumFractionDigits: v < 10 && i > 0 ? 1 : 0 }).format(v)} ${UNITS[i]}`;
 }
 
 export function formatDate(ms, options = { dateStyle: 'medium', timeStyle: 'short' }) {
-  return new Intl.DateTimeFormat(locale(), options).format(new Date(ms));
+  return new Intl.DateTimeFormat(LOCALE, options).format(new Date(ms));
 }
 
 const STEPS = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]];
@@ -89,5 +54,5 @@ const STEPS = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 
 export function formatRelative(ms, now = Date.now()) {
   const s = Math.round((ms - now) / 1000);
   const [unit, size] = STEPS.find(([, size]) => Math.abs(s) >= size) ?? STEPS[STEPS.length - 1];
-  return new Intl.RelativeTimeFormat(locale(), { numeric: 'auto' }).format(Math.round(s / size), unit);
+  return new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' }).format(Math.round(s / size), unit);
 }

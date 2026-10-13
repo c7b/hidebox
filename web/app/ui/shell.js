@@ -1,31 +1,21 @@
 // SPDX-License-Identifier: MIT
-// What every app and viewer page does first: its language, the judge pass carried from /judges, the
-// footer's language switch (which here changes the app's language in place), the page title, and on
-// app pages the bottom bar of phones (spec §12.2: Locker · Inbox · Send).
+// What every app and viewer page does first: its strings, the judge pass carried from /judges, the
+// page title, and on app pages the bottom bar of phones (spec §12.2: Locker · Inbox · Send).
 import { h } from '../lib/dom.js';
-import { LANGUAGES, loadLanguage, pickLanguage, t } from '../lib/i18n.js';
+import { loadStrings, t } from '../lib/i18n.js';
 import { setJudgePass } from '../lib/pow.js';
 import { idbGet } from '../lib/idb.js';
-import { localSet, savedJudgePass } from '../lib/store.js';
+import { savedJudgePass } from '../lib/store.js';
 import { icon } from './core.js';
 
 const TABS = [['locker', '/locker', 'lock'], ['inbox', '/inbox', 'drop'], ['send', '/send', 'send']];
 
 export async function startPage({ bottomBar = false, current = null } = {}) {
-  await loadLanguage(pickLanguage());
+  await loadStrings();
   try {
     setJudgePass(savedJudgePass());
   } catch {
     // A malformed stored pass: the anti-bot check stays on.
-  }
-  for (const a of document.querySelectorAll('a[data-lang]')) {
-    a.toggleAttribute('aria-current', a.dataset.lang === document.documentElement.lang);
-    a.addEventListener('click', (e) => {
-      if (!LANGUAGES.includes(a.dataset.lang)) return;
-      e.preventDefault();
-      localSet('mutis.lang', a.dataset.lang);
-      location.reload();
-    });
   }
   const skip = document.querySelector('.skip-link');
   if (skip) skip.textContent = t('nav.skip');

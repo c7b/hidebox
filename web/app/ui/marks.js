@@ -2,7 +2,7 @@
 // What the Tari side of the app shows: tTARI amounts, short addresses, the 12-emoji safety code and
 // the testnet line (claim C19).
 import { h } from '../lib/dom.js';
-import { t } from '../lib/i18n.js';
+import { formatDate, t } from '../lib/i18n.js';
 import { phase } from '/shared/dates.js';
 
 // µT (decimal string or bigint) -> "0.5", "0.001": tTARI with up to 3 decimals, never rounded up.
@@ -35,7 +35,6 @@ export function safetyGrid(code, props = {}) {
 export function testnetLine(cfg) {
   const network = cfg.network.charAt(0).toUpperCase() + cfg.network.slice(1);
   if (phase() === 'mainnet') return h('p', { class: 'a-testnet' }, t('testnet_live', { network }));
-  const date = new Intl.DateTimeFormat(document.documentElement.lang, { dateStyle: 'medium', timeZone: 'UTC' })
-    .format(new Date(`${cfg.ootle.mainnet_date}T00:00:00Z`));
+  const date = formatDate(Date.parse(`${cfg.ootle.mainnet_date}T00:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' });
   return h('p', { class: 'a-testnet' }, t('testnet', { network, mainnet_date: date }));
 }

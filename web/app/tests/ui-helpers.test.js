@@ -73,15 +73,13 @@ export default [
       eq(match(bad).name, 'not-found', bad);
     }
   }],
-  ['i18n: interpolation, Intl plurals, English fallback, unknown keys visible', () => {
-    useStrings('es', { 'views.left': { one: 'Queda {count} vista', other: 'Quedan {count} vistas' }, hello: 'Hola, {name}' },
-      { 'views.left': { one: '{count} view left', other: '{count} views left' }, hello: 'Hi, {name}', only_en: 'Only English' });
-    eq(t('views.left', { count: 1 }), 'Queda 1 vista');
-    eq(t('views.left', { count: 3 }), 'Quedan 3 vistas');
-    eq(t('hello', { name: '<b>Ana</b>' }), 'Hola, <b>Ana</b>');
-    eq(t('only_en'), 'Only English');
+  ['i18n: interpolation, Intl plurals, unknown keys visible', () => {
+    useStrings({ 'views.left': { one: '{count} view left', other: '{count} views left' }, hello: 'Hi, {name}' });
+    eq(t('views.left', { count: 1 }), '1 view left');
+    eq(t('views.left', { count: 3 }), '3 views left');
+    eq(t('hello', { name: '<b>Ana</b>' }), 'Hi, <b>Ana</b>');
     eq(t('missing.key'), 'missing.key');
-    useStrings('en', { size: 'Up to {n}' });
+    useStrings({ size: 'Up to {n}' });
     eq(t('size', { n: 25000 }), 'Up to 25,000');
     eq(formatBytes(2.4 * 1024 * 1024), '2.4 MB');
     eq(formatBytes(512), '512 B');

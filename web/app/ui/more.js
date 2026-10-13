@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // The home page starts the drop widget with only what a first drop needs: a short dictionary
-// (i18n/widget-<lang>.json, a subset of the full one) and the widget's stylesheet. The rest of the
+// (i18n/widget-en.json, a subset of the full one) and the widget's stylesheet. The rest of the
 // strings and styles (the Change panel, the glass box, errors, the send step, recent drops) load the
 // first time one of them is about to show. On app pages both are already there.
-import { currentLanguage, loadLanguage, t, useStrings } from '../lib/i18n.js';
+import { loadStrings, t, useStrings } from '../lib/i18n.js';
 
 const PARTS = '/app/css/parts.css';
 const FULL_ONLY = 'error.internal'; // a string only the full dictionary has
@@ -26,16 +26,14 @@ async function fetchJson(path) {
   return res.json();
 }
 
-// The widget's first dictionary, in the page's language with English behind it.
-export async function widgetStrings(lang) {
-  const english = await fetchJson('/app/i18n/widget-en.json');
-  const dict = lang === 'en' ? english : await fetchJson(`/app/i18n/widget-${lang}.json`).catch(() => english);
-  useStrings(dict === english ? 'en' : lang, dict, english);
+// The widget's first dictionary.
+export async function widgetStrings() {
+  useStrings(await fetchJson('/app/i18n/widget-en.json'));
 }
 
 export function more() {
   pending ??= Promise.all([
-    t(FULL_ONLY) === FULL_ONLY ? loadLanguage(currentLanguage()) : null,
+    t(FULL_ONLY) === FULL_ONLY ? loadStrings() : null,
     stylesheet(PARTS),
   ]);
   return pending;

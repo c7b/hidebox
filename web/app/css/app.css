@@ -2,9 +2,6 @@
    /upgrade, /verify (spec §12.2–12.3; 11-brand §10, §13). Shared components (buttons, banners, chips,
    the glass box, the send step) are in widget.css. Shared tokens only; class prefix a-. */
 
-/* The header and footer come in both languages; the page shows the one <html lang> names. */
-html:not([lang="es"]) .a-lang-es, html[lang="es"] .a-lang-en { display: none; }
-
 .a-page { display: flex; flex-direction: column; min-height: 100svh; }
 .a-main { flex: 1; display: grid; align-content: start; gap: var(--s-6); padding-block: var(--s-7) var(--s-9); outline: none; }
 .a-main > * { min-width: 0; }

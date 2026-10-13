@@ -19,8 +19,8 @@ python3 -I web/app/ui/tests/run.py            # add --shots to rewrite web/app/s
 It runs, in order, and exits 1 on any failure:
 
 1. **Static checks:** `tools/lint.py --only web/app` (spec §0.7: no HTML sinks, SPDX headers, CSP-safe
-   markup), `tools/check-copy.py` (brand §7.4 banned words, no digits outside `{variables}`), both
-   dictionaries complete and alike, every string the UI asks for present and none unused, the widget's
+   markup), `tools/check-copy.py` (brand §7.4 banned words, no digits outside `{variables}`), every
+   string the UI asks for present in `i18n/en.json` and none unused, the widget's
    string subset in sync (`i18n/subset.py --check`), every `data-testid` of spec §3.4.9 in the sources.
 2. **Build:** `tools/build.py` into a fresh directory under `/var/tmp` (disk-backed; the dev
    server sizes lanes and the paid capacity from the disk under its data).
@@ -38,7 +38,7 @@ It runs, in order, and exits 1 on any failure:
    receipts checked against the template builder's vectors (and a log with an owner refused), the
    testnet line after Nov 11, keyboard-only use with the Accessibility tree checked for unnamed
    controls, no horizontal scroll at 360 px, no third-party request, no CSP or Trusted Types
-   violation, no WebAssembly (`--jitless`), Spanish, dark mode with reduced motion, and the widget's
+   violation, no WebAssembly (`--jitless`), dark mode with reduced motion, and the widget's
    payload (A-06).
 
 The dev server's fake chain writes its outputs in the clear, which the official library in the page
@@ -52,16 +52,16 @@ viewer, is the product code unchanged.
 | Path | What |
 |---|---|
 | `drop-widget.js` | the home page's entry: mounts the widget into `#mutis-drop` (spec §3.4.4) with its first dictionary and stylesheet |
-| `app.html`, `view.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`); header and footer in both languages, shown by `<html lang>` |
+| `app.html`, `view.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`) |
 | `ui/widget.js`, `zone.js`, `sealing.js`, `card.js`, `rules.js`, `noise.js`, `recent.js` | the drop widget: zone, sealing progress (the ¡ mark), the locked card with its noise strip, the Change panel, recent drops |
 | `ui/view.js` | the viewer: every state of spec §12.3.2, previews (lib/preview.js), the program warning, `/t` deliveries |
 | `ui/known.js` | "What we know about this link", the glass box |
 | `ui/locker.js`, `keyflow.js`, `locker-ctx.js` | `/locker`, the key (save, restore, the one-time prompt), opening a locker only when something needs it |
 | `ui/droppage.js`, `inbox.js`, `send.js`, `watch.js`, `upgrade.js`, `verify.js` | the other app pages |
-| `ui/core.js`, `marks.js`, `errors.js`, `shell.js`, `more.js`, `lang-early.js` | shared pieces: icons, durations, toasts; amounts, addresses, safety codes; every error code's copy; page start-up; loading the rest of the strings and styles; the language before first paint |
+| `ui/core.js`, `marks.js`, `errors.js`, `shell.js`, `more.js` | shared pieces: icons, durations, toasts; amounts, addresses, safety codes; every error code's copy; page start-up; loading the rest of the strings and styles |
 | `css/widget.css`, `css/parts.css`, `css/app.css` | what a first drop needs; the components beyond it; app pages. Shared tokens only; `md-` for the widget, `a-` for app pages and shared components |
-| `i18n/en.json`, `es.json` | the copy deck (11-brand §8–§14 with 12-integration's terms); every number is a `{variable}` from `/config` or computed |
-| `i18n/widget-en.json`, `widget-es.json`, `subset.py` | the strings a first drop needs, generated from the full dictionaries |
+| `i18n/en.json` | the copy deck (11-brand §8–§14 with 12-integration's terms); every number is a `{variable}` from `/config` or computed |
+| `i18n/widget-en.json`, `subset.py` | the strings a first drop needs, generated from the full dictionary |
 | `ui/tests/` | `run.py` (the command above), `flows.py`, `cdp.py` (DevTools over a pipe), `realize.py`, `devserver.py` (the dev server in another payment mode) |
 | `shots/` | curated screenshots (WebP) from `run.py --shots`; test evidence, not served (NOTES-ui.md asks deploy to skip it) |
 | `ACCEPTANCE.md`, `NOTES-ui.md` | acceptance evidence; requests to other builders and decisions |

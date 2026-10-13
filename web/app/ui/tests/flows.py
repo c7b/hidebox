@@ -215,7 +215,7 @@ def home_text(t):
     t.check(not same_origin(t, a), "the home page made no third-party request")
     stored = a.eval("JSON.stringify(Object.fromEntries(Object.entries(localStorage)))")
     t.check(url.split("#")[1] not in stored and "under the plant" not in stored
-            and set(json.loads(stored)) <= {"mutis.recent", "mutis.lang", "mutis.theme", "mutis.keyAsked"},
+            and set(json.loads(stored)) <= {"mutis.recent", "mutis.theme", "mutis.keyAsked"},
             f"localStorage holds no key and no text, only the recent-drops list ({sorted(json.loads(stored))})")
     b = t.actor("android")
     t.check(open_link(b, url, open_it=False) == "ready", "B sees the ready state, nothing used yet")
@@ -755,7 +755,7 @@ def upgrade(t):
     p.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": "Date.now = () => Date.UTC(2026, 10, 12, 12)"})
     p.goto(t.origin + "/upgrade")
     line = p.wait("document.querySelector('.a-testnet')?.textContent", 60)
-    footer = p.eval("!document.querySelector('.a-lang-en footer [data-phase-show=\"mainnet\"]')?.hidden")
+    footer = p.eval("!document.querySelector('footer [data-phase-show=\"mainnet\"]')?.hidden")
     t.check("mainnet is live" in line and footer, f"on Nov 12 the testnet line says the mainnet is live, like the footer ({line[:80]})")
 
 
@@ -843,7 +843,7 @@ def receipts(t):
             "the research log on Esmeralda (it has an owner) is refused; nothing is checked against it")
 
 
-# --- accessibility, keyboard, layout, no-WebAssembly, Spanish --------------------------------------------
+# --- accessibility, keyboard, layout, no-WebAssembly -----------------------------------------------------
 
 @scenario("keyboard", "Keyboard only: drop and copy; open; make a drop link; leave a file; send; buy; watch")
 def keyboard(t):
@@ -928,7 +928,7 @@ def keyboard(t):
     t.check(not o.ax_unnamed(), f"/watch: every control named ({o.ax_unnamed()[:5]})")
 
 
-APP_PAGES = ["/", "/es/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify", "/t", "/verify/tx/" + "0" * 64,
+APP_PAGES = ["/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify", "/t", "/verify/tx/" + "0" * 64,
              "/s/" + "A" * 22, "/d/" + "2" * 10]
 
 
@@ -959,29 +959,6 @@ def nowasm(t):
         a.wait("!!document.querySelector('[data-code=\"needs_wasm\"]')", 30)
         t.check(True, f"{path} shows needs_wasm")
     t.shot(a, "watch-1440-needs-wasm")
-
-
-@scenario("spanish", "Spanish: the app follows the chosen language; the /es/ home widget speaks Spanish")
-def spanish(t):
-    a = t.actor("iphone")
-    a.goto(t.origin + "/es/")
-    a.wait_for("drop-input", 60)
-    t.check("Elegir archivo" in a.eval("document.querySelector('#mutis-drop').textContent"), "the /es/ widget says Elegir archivo")
-    url = seal_text(a, "hola")
-    t.check(a.eval("document.querySelector('.md-locked').textContent") == "Listo, cifrado.", "Listo, cifrado.")
-    t.shot(a, "es-home-390-sealed")
-    a.eval("localStorage.setItem('mutis.lang', JSON.stringify('es'))")
-    b = a
-    t.check(open_link(b, url) == "opened", "the viewer opens it")
-    b.reload()
-    b.wait_state("view-root", VIEW_ASK, 60)
-    t.check("Este secreto ya hizo mutis." in b.text("view-root"), "burned in Spanish: Este secreto ya hizo mutis.")
-    t.check(b.eval("document.documentElement.lang") == "es", "<html lang> is es")
-    t.shot(b, "es-view-390-burned")
-    b.goto(t.origin + "/locker")
-    b.wait_for("drop-create", 60)
-    t.check("Déjame un archivo" in b.eval("document.body.textContent"), "/locker in Spanish")
-    t.shot(b, "es-locker-390", full_page=True)
 
 
 @scenario("dark", "Dark theme and reduced motion: the card, the viewer, the locker")
