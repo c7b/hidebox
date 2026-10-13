@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: MIT
-"""GET /blobs/{ticket} (Range, streamed in 64 KiB writes) and POST /blobs/{ticket}/done (spec §6.3)."""
+"""GET /blobs/{ticket} (Range, streamed in 64 KiB writes) and POST /blobs/{ticket}/done (spec §6.3).
+
+A folder link's ticket (`scope = 'tree'`, 16-drive-architecture §2.3) serves `?item=<id>` for any file
+that is, when it is asked for, a ready descendant of the ticket's folder outside the Trash: a file moved
+out or deleted mid-visit is refused at once (403 `not_in_folder`). Its byte cap counts across files.
+"""
 import re
 
-from .. import codec, db, items
-from ..http_util import ApiError, Response
+from .. import codec, db, items, tree
+from ..http_util import PARAM_RE, ApiError, Response
 
 _RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 
@@ -54,10 +59,28 @@ def _ticket(ctx, ticket: str):
     return row
 
 
+def _tree_item(ctx, row, item_id: str | None):
+    """The file a folder ticket may serve now, or 403 `not_in_folder`."""
+    if item_id is None:
+        raise ApiError(400, "bad_request", "Say which file: ?item=<id>.")
+    item = ctx.db.execute("SELECT id, kind, state, size_stored, trashed_at FROM items WHERE id = ?",
+                          (item_id,)).fetchone() if PARAM_RE["id"].match(item_id) else None
+    if item is None or item["kind"] != "file" or item["state"] != "ready" or item["trashed_at"] is not None \
+            or item_id == row["item_id"] or not tree.within(ctx.db, item_id, row["item_id"]):
+        raise ApiError(403, "not_in_folder", "That file isn't in this folder.")
+    return item
+
+
 def download(ctx, ticket: str):
     ctx.limit(("blob64", ctx.ip64, 300, 60, 1))
     row = _ticket(ctx, ticket)
-    item = ctx.db.execute("SELECT id, state, size_stored FROM items WHERE id = ?", (row["item_id"],)).fetchone()
+    wanted = ctx.req.query.get("item")
+    if row["scope"] == "tree":
+        item = _tree_item(ctx, row, wanted)
+    else:
+        if wanted is not None and wanted != row["item_id"]:
+            raise ApiError(403, "not_in_folder", "This download is for another file.")
+        item = ctx.db.execute("SELECT id, state, size_stored FROM items WHERE id = ?", (row["item_id"],)).fetchone()
     if item is None or item["state"] not in ("ready", "doomed") or not ctx.app.blobs.exists(item["id"]):
         raise ApiError(404, "not_found", "This download has ended.")
 

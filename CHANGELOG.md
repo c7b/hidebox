@@ -1,6 +1,26 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- lane S -->
+## 2026-10-13: the drive's server, steps 1, 2, 4 and 6 (research 16-drive-design §15)
+
+- Schema 4 (`migrations/004_drive.sql`, additive): folders, the Trash, folder tickets, opens per hour and
+  the pay-to-open tables. `/config` publishes the drive's numbers (`folders`, `items`, `send`,
+  `pay_to_open`, `retention.trash_days`, `links_per_item`); `features.folders` and
+  `features.pay_to_open` are off until the drive's routes ship.
+- R1, a bug in production, fixed: a pack payment now counts only if its one-time key is the one our
+  receiver's owner key derives (`oneTimeKey` in the sidecar). Before, an output that opened with our view
+  key credited a pack even when the payer kept the key to spend it. Tested on the fake chain and with an
+  offline known-answer pair made with the real library; never with forged outputs on the testnet.
+- Folders (`POST /folders`), moves, renames, the Trash (30 days; links end when an item goes in) and
+  Delete it after (`PATCH /items/{id}`); deleting a folder deletes what it holds, each file with its exit
+  receipt; `/me/items` lists one folder, the Trash, and what left the drive in the last 30 days; the
+  lapse of extra space deletes trashed files first.
+- Folder links open the whole folder as one visit with a folder ticket that serves only files still
+  inside; `then_delete` makes a file leave with its link; every open is counted per link per UTC hour
+  (never who opened it), shown to the owner.
+<!-- /lane S -->
+
 ## 2026-10-13: Ootle v0.46.0 (docs/evidence/2026-10-13/upgrade-0.46.0/)
 
 - walletd 0.46.0 (`tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64`, SHA-256 `26d4c269…6e05`) runs on

@@ -354,7 +354,8 @@ class Links(unittest.TestCase):
         status, _, opened = s.request("POST", f"{V}/s/{sid}/open", headers=link["access"])
         self.assertEqual(status, 200)
         self.assertEqual(set(opened), {"wrapped_key", "header", "meta_ct", "chunk_size", "chunk_count", "size_stored",
-                                       "views_left", "burned", "ticket", "ticket_expires_at", "inline_ct"})
+                                       "views_left", "burned", "ticket", "ticket_expires_at", "inline_ct", "kind"})
+        self.assertEqual((opened["kind"], peek["item"]["kind"]), ("file", "file"))
         self.assertTrue(opened["burned"])
         self.assertIsNone(opened["ticket"])
         self.assertEqual(codec.unb64u(opened["inline_ct"]), item["blob"])

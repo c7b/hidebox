@@ -5,11 +5,12 @@ import secrets
 
 from .. import cleanup, codec, db, items, quota
 from ..http_util import ApiError, Response, get_b64, json_response
-from .shares import _egress_ok, share_json
+from .shares import _egress_ok, opens_by_hour, share_json
 from .system import limits_block
 
 BUNDLE_MAX = 4096
 PAGE_MAX = 50
+OPENS_HOURS = 168               # a week of hourly open counts per link in the drive's list
 _CURSOR = re.compile(r"^(\d{1,12})\.([A-Za-z0-9_-]{22})$")
 
 
@@ -82,8 +83,10 @@ def get_bundle(ctx):
 
 
 def item_entry(conn, row, now: int) -> dict:
-    """One item as the drive lists it, with its links (state, rule, opens left)."""
+    """One item as the drive lists it, with its links (state, rule, opens left, opens per hour over the
+    last `OPENS_HOURS` hours; `GET /s/{id}/manage` has them all)."""
     shares = conn.execute("SELECT * FROM shares WHERE item_id = ? ORDER BY created_hour", (row["id"],)).fetchall()
+    since = codec.floor_hour(now) - (OPENS_HOURS - 1) * 3600
     return {"item_id": row["id"], "kind": row["kind"], "retention": row["retention"],
             "size_stored": row["size_stored"], "chunk_count": row["chunk_count"], "created_hour": row["created_hour"],
             "expires_at": row["expires_at"], "header": codec.b64u(row["header"]), "meta_ct": codec.b64u(row["meta_ct"]),
@@ -91,7 +94,7 @@ def item_entry(conn, row, now: int) -> dict:
             "parent_id": row["parent_id"],
             "parent_wrap": codec.b64u(row["parent_wrap"]) if row["parent_wrap"] else None,
             "trashed_at": row["trashed_at"],
-            "shares": [share_json(s, now) for s in shares]}
+            "shares": [{**share_json(s, now), "opens": opens_by_hour(conn, s["id"], since)} for s in shares]}
 
 
 def gone_entry(row) -> dict:

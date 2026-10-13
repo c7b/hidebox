@@ -4,6 +4,11 @@
 Spec §4.6–§4.7 (access tokens, link proofs, the online-guessing policy), §5.2–§5.4, §6.3 Links,
 brand patches P-25 (first_opened_min) and the P1 "Download the stored bytes" endpoint.
 
+A folder link (16-drive-architecture §2.3) opens the folder's whole subtree in one view: the open returns
+the tree (ids, headers, encrypted names, wraps) and a folder ticket that serves any file which, at the
+moment it is asked for, still sits in that folder outside the Trash. Opens are counted per link per UTC
+hour (`share_opens`), never per person.
+
 There is no server-side "Keep" for a received file: a recipient keeps one by opening it normally
 and sealing the plaintext again as their own kept file. The sender's link then still ends on its
 rule, and the sender's ciphertext still leaves.
@@ -11,7 +16,7 @@ rule, and the sender's ciphertext still leaves.
 import json
 import secrets
 
-from .. import codec, db, items, lanes, quota
+from .. import codec, db, items, lanes, quota, tree
 from ..http_util import ApiError, Response, get_b64, get_bool, get_enum, get_int, invalid, json_response
 from .blobs import ranged
 
@@ -172,11 +177,27 @@ def share_json(share, now: int) -> dict:
             "views_left": left}
 
 
-def item_json(item) -> dict:
-    return {"size_stored": item["size_stored"], "chunk_count": item["chunk_count"], "retention": item["retention"],
-            "created_hour": item["created_hour"], "lane": item["lane"],
-            "owner": "a locker" if item["owner_id"] else "nobody",
-            "ct_hash": codec.b64u(item["ct_hash"]) if item["ct_hash"] else None}
+def item_json(item, conn=None) -> dict:
+    out = {"size_stored": item["size_stored"], "chunk_count": item["chunk_count"], "retention": item["retention"],
+           "created_hour": item["created_hour"], "lane": item["lane"],
+           "owner": "a locker" if item["owner_id"] else "nobody",
+           "ct_hash": codec.b64u(item["ct_hash"]) if item["ct_hash"] else None, "kind": item["kind"]}
+    if item["kind"] == "folder" and conn is not None:
+        out["child_count"] = len(folder_tree(conn, item["id"], tree.MAX_TREE + 1))
+    return out
+
+
+def folder_tree(conn, folder_id: str, limit: int) -> list:
+    """What a folder link shows: every ready descendant outside the Trash, breadth first."""
+    rows = tree.subtree(conn, folder_id, ("ready",), limit + 1)[1:]          # [0] is the folder itself
+    return [r for r in rows if r["trashed_at"] is None][:limit]
+
+
+def opens_by_hour(conn, share_id: str, since: int | None = None) -> list[list[int]]:
+    """[[hour, n], …] oldest first: how many times a link opened in each UTC hour (C40: a count, never who)."""
+    rows = conn.execute("SELECT hour, n FROM share_opens WHERE share_id = ? AND hour >= ? ORDER BY hour",
+                        (share_id, since or 0)).fetchall()
+    return [[r["hour"], r["n"]] for r in rows]
 
 
 def created_json(share) -> dict:
@@ -242,10 +263,15 @@ def create(ctx, item_id: str):
         kdf = _kdf(body)
     max_views = get_int(body, "max_views", 1, 1_000_000, optional=True)
     expires_at = get_int(body, "expires_at", 0, 2 ** 40, optional=True)
+    then_delete = get_bool(body, "then_delete")
     cls = class_of_item(conn, item, ctx.now)
     if cls == "drop" and mode != "link":
         raise invalid("mode", "Drop deliveries use a plain link.")
+    if item["kind"] == "folder":
+        ctx.require_feature("folders")
     max_views, expires_at = link_rules(cls, max_views, expires_at, item, ctx.now)
+    if then_delete:
+        _check_then_delete(ctx, item, expires_at)
     per_item = 1 if cls in ("drop", "canary") else quota.CLASSES[cls]["links_per_item"]
     share_id = codec.new_id()
     with db.tx(conn):
@@ -254,8 +280,6 @@ def create(ctx, item_id: str):
             raise ApiError(409, "item_not_ready", "Finish the upload first.")
         if item["trashed_at"] is not None:
             raise ApiError(409, "trashed", "Bring it back from the Trash first.")
-        if item["kind"] == "folder":
-            raise ApiError(409, "conflict", "Folder links aren't on yet.")
         if conn.execute("SELECT COUNT(*) FROM shares WHERE item_id = ?", (item_id,)).fetchone()[0] >= per_item:
             raise ApiError(409, "conflict", "This file has as many links as it can have.",
                            details={"max_links": per_item})
@@ -263,7 +287,25 @@ def create(ctx, item_id: str):
                      "expires_at, created_hour) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      (share_id, item_id, mode, wrapped, access_verifier, link_verifier, kdf, max_views, expires_at,
                       codec.floor_hour(ctx.now)))
-    return json_response(201, created_json(get_share(conn, share_id)))
+        if then_delete:
+            # "Delete it from my drive after" (16-drive-design §3): the file leaves with its last link, at
+            # the latest when this one expires, and gets its exit receipt (C42).
+            conn.execute("UPDATE items SET retention = 'ephemeral', expires_at = MIN(COALESCE(expires_at, ?), ?) "
+                         "WHERE id = ?", (expires_at, expires_at, item_id))
+    out = created_json(get_share(conn, share_id))
+    if then_delete:
+        out["item_expires_at"] = conn.execute("SELECT expires_at FROM items WHERE id = ?", (item_id,)).fetchone()[0]
+    return json_response(201, out)
+
+
+def _check_then_delete(ctx, item, expires_at) -> None:
+    """Only a drive's own kept file, outside the Trash, on a link that ends by itself (not "When I stop it")."""
+    identity = ctx.session(required=False)
+    if item["kind"] != "file" or item["retention"] != "kept" or identity is None \
+            or item["owner_id"] != identity["id"]:
+        raise invalid("then_delete", "Only a file kept in your drive can leave with its link.")
+    if expires_at is None:
+        raise invalid("then_delete", "A link that leaves with the file needs an end.")
 
 
 # --- public status, peek, open -----------------------------------------------------------------------
@@ -274,6 +316,8 @@ def status(ctx, share_id: str):
     state = effective_state(share, ctx.now)
     if state != "active":
         raise gone(share, state, ctx.now)
+    # No `kind` here: someone with only the path learns that a link exists and its state, not whether it
+    # opens a file or a folder; the key holder reads `kind` from /peek (no view used) or /open.
     return json_response(200, {"state": "active", "mode": share["mode"], "needs_password": share["mode"] != "link",
                                "kdf": json.loads(share["kdf"]) if share["kdf"] else None})
 
@@ -282,7 +326,7 @@ def peek(ctx, share_id: str):
     ctx.limit(("status64", ctx.ip64, 120, 60, 1))
     body = ctx.req.json(required=False)
     share, item = authorized_share(ctx, share_id, body)
-    return json_response(200, {"share": share_json(share, ctx.now), "item": item_json(item),
+    return json_response(200, {"share": share_json(share, ctx.now), "item": item_json(item, ctx.db),
                                "not_known": NOT_KNOWN})
 
 
@@ -312,6 +356,13 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
     item = conn.execute("SELECT * FROM items WHERE id = ?", (share["item_id"],)).fetchone()
     if item["state"] != "ready":
         return ApiError(410, "gone", "This link has ended.", details={"reason": "removed", "ended_day": codec.day(now)})
+    folder = item["kind"] == "folder"
+    if folder:
+        contents = folder_tree(conn, item["id"], tree.MAX_TREE + 1)
+        if len(contents) > tree.MAX_TREE:          # before any view is used: share a smaller folder
+            return ApiError(413, "too_many", "This folder holds too much to open in one visit.",
+                            details={"max_tree": tree.MAX_TREE})
+        total = sum(r["size_stored"] for r in contents)
     if share["max_views"] is None:
         hour = codec.floor_hour(now)
         opens = share["opens_in_hour"] if share["opens_hour"] == hour else 0
@@ -319,33 +370,48 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
             return ApiError(429, "rate_limited", "This link was opened many times this hour.",
                             retry_after=hour + 3600 - now)
         conn.execute("UPDATE shares SET opens_hour = ?, opens_in_hour = ? WHERE id = ?", (hour, opens + 1, share_id))
-    if not _egress_ok(conn, item, now, item["size_stored"]):
+    if not _egress_ok(conn, item, now, total if folder else item["size_stored"]):
         return ApiError(429, "rate_limited", "This file was downloaded a lot today.",
                         retry_after=codec.next_utc_midnight(now) - now)
     conn.execute("UPDATE shares SET views_used = views_used + 1, first_opened_min = COALESCE(first_opened_min, ?) "
                  "WHERE id = ? AND state = 'active'", (codec.floor_minute(now), share_id))
+    count_open(conn, share_id, now)
     views_used = share["views_used"] + 1
     burned = share["max_views"] is not None and views_used >= share["max_views"]
     if burned:
         items.end_share(conn, share_id, "exhausted", now)
-    inline = item["size_stored"] <= quota.INLINE_MAX_STORED
+    inline = not folder and item["size_stored"] <= quota.INLINE_MAX_STORED
     ticket = None
     if not inline:
         ticket = secrets.token_bytes(32)
-        conn.execute("INSERT INTO tickets(token_hash, share_id, item_id, expires_at, max_bytes) VALUES (?, ?, ?, ?, ?)",
-                     (codec.sha256(ticket), share_id, item["id"], now + items.TICKET_S, 3 * item["size_stored"]))
+        conn.execute("INSERT INTO tickets(token_hash, share_id, item_id, expires_at, max_bytes, scope) "
+                     "VALUES (?, ?, ?, ?, ?, ?)",
+                     (codec.sha256(ticket), share_id, item["id"], now + items.TICKET_S,
+                      3 * (total if folder else item["size_stored"]), "tree" if folder else "item"))
     doomed = burned and items.doom_if_unlinked(conn, item["id"], now)
-    return {
-        "response": {
-            "wrapped_key": codec.b64u(share["wrapped_key"]), "header": codec.b64u(item["header"]),
-            "meta_ct": codec.b64u(item["meta_ct"]), "chunk_size": quota.CHUNK, "chunk_count": item["chunk_count"],
-            "size_stored": item["size_stored"],
-            "views_left": None if share["max_views"] is None else share["max_views"] - views_used,
-            "burned": burned, "ticket": codec.b64u(ticket) if ticket else None,
-            "ticket_expires_at": now + items.TICKET_S if ticket else None,
-            "inline_ct": codec.b64u(ctx.app.blobs.read_all(item["id"])) if inline else None},
-        "unlink": item["id"] if inline and doomed else None,
-    }
+    response = {
+        "wrapped_key": codec.b64u(share["wrapped_key"]), "header": codec.b64u(item["header"]),
+        "meta_ct": codec.b64u(item["meta_ct"]), "chunk_size": quota.CHUNK, "chunk_count": item["chunk_count"],
+        "size_stored": item["size_stored"], "kind": item["kind"],
+        "views_left": None if share["max_views"] is None else share["max_views"] - views_used,
+        "burned": burned, "ticket": codec.b64u(ticket) if ticket and not folder else None,
+        "ticket_expires_at": now + items.TICKET_S if ticket else None,
+        "inline_ct": codec.b64u(ctx.app.blobs.read_all(item["id"])) if inline else None}
+    if folder:
+        response.update({"tree": [tree_entry(r) for r in contents], "folder_ticket": codec.b64u(ticket)})
+    return {"response": response, "unlink": item["id"] if inline and doomed else None}
+
+
+def tree_entry(row) -> dict:
+    return {"id": row["id"], "kind": row["kind"], "parent_id": row["parent_id"], "header": codec.b64u(row["header"]),
+            "meta_ct": codec.b64u(row["meta_ct"]), "parent_wrap": codec.b64u(row["parent_wrap"]),
+            "size_stored": row["size_stored"], "chunk_count": row["chunk_count"]}
+
+
+def count_open(conn, share_id: str, now: int) -> None:
+    """One more open of this link in this UTC hour (the owner's Activity; C40)."""
+    conn.execute("INSERT INTO share_opens(share_id, hour, n) VALUES (?, ?, 1) "
+                 "ON CONFLICT(share_id, hour) DO UPDATE SET n = n + 1", (share_id, codec.floor_hour(now)))
 
 
 def open_share(ctx, share_id: str):
@@ -373,6 +439,8 @@ def stored_bytes(ctx, share_id: str):
     _, item = authorized_share(ctx, share_id, {})
     if item["state"] != "ready":
         raise ApiError(410, "gone", "This link has ended.", details={"reason": "removed", "ended_day": codec.day(ctx.now)})
+    if item["kind"] == "folder":
+        raise ApiError(409, "conflict", "A folder has no stored bytes of its own; open it.")
     with db.tx(ctx.db):
         allowed = _egress_ok(ctx.db, item, ctx.now, item["size_stored"])
     if not allowed:
@@ -448,8 +516,8 @@ def manage(ctx, share_id: str):
     if out["state"] != "active":
         out["reason"] = items.ENDED_REASON[out["state"]]
     out.update({"first_opened_min": share["first_opened_min"], "pw_locked": bool(share["pw_locked"]),
-                "pw_fail_count": share["pw_fail_count"]})
-    return json_response(200, {"share": out, "item": item_json(item)})
+                "pw_fail_count": share["pw_fail_count"], "opens": opens_by_hour(conn, share_id)})
+    return json_response(200, {"share": out, "item": item_json(item, conn)})
 
 
 def revoke(ctx, share_id: str):
