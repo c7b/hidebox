@@ -15,7 +15,7 @@ fonttools and woff2.
 python3 -I web/site/tests/run.py
 ```
 
-On ultron (as `build`) every check runs: 16 file checks (with `llms-full.txt`), `dates.js` under Node 20
+On ultron (as `build`) every check runs: 15 file checks (with `llms-full.txt`), `dates.js` under Node 20
 in two time zones, and 11 browser checks in headless Chromium against `tests/serve.py`, which serves
 the app's real widget from `web/app/`. Elsewhere, checks whose tool is missing print `SKIP`, never
 `PASS`; `--static` runs only the file checks. "/judges quotes the app's words" compares `/judges`, in
