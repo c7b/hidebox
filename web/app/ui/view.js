@@ -222,6 +222,11 @@ export function viewer(root, opts) {
       }
       parts = await fetchContent(opened, { onProgress });
     } catch (e) {
+      // lane app2: a folder that didn't open goes back to the link page's own look and states.
+      if (root.dataset.kind === 'folder') {
+        (await import('./folder-view.js')).ghostLook();
+        delete root.dataset.kind;
+      }
       if (opened && !(e?.name === 'IntegrityError')) return set('error', [sceneOf('oops', t('viewer.fetch_error_h')).head,
         errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: () => retryFetch(opened) } })]);
       return fail(e);

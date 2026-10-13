@@ -261,15 +261,36 @@ export async function driveLook() {
   document.body.dataset.look = 'drive';
   for (const el of document.querySelectorAll('body > header, body > footer, body > .site-header, body > .site-footer')) el.hidden = true;
   const skip = document.querySelector('.skip-link');
-  if (skip) skip.className = 'skip sr-only';
+  if (skip) {
+    skip.dataset.pageClass = skip.className;
+    skip.className = 'skip sr-only';
+  }
   const main = document.getElementById('main');
   if (main) {
+    main.dataset.pageClass = main.className;
     main.className = 'fv-page';
     if (!document.querySelector('.fv-top')) {
       main.before(h('header', { class: 'fv-top' },
         h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('lock')),
           h('span', { class: 'brand-text' }, h('span', {}, BRAND))),
         h('a', { class: 'btn', 'data-variant': 'outline', 'data-size': 'sm', href: '/drive?make' }, t('fv.own'))));
+    }
+  }
+}
+
+// Back to the link page's own look (a folder link that couldn't open shows the page's usual states).
+export function ghostLook() {
+  if (document.body.dataset.look !== 'drive') return;
+  for (const l of document.querySelectorAll('link[rel="stylesheet"]')) l.disabled = l.hasAttribute('data-drive');
+  delete document.body.dataset.look;
+  for (const el of document.querySelectorAll('body > header, body > footer, body > .site-header, body > .site-footer')) {
+    if (!el.classList.contains('fv-top')) el.hidden = false;
+  }
+  document.querySelector('.fv-top')?.remove();
+  for (const el of [document.getElementById('main'), document.querySelector('.skip[data-page-class]')]) {
+    if (el && el.dataset.pageClass !== undefined) {
+      el.className = el.dataset.pageClass;
+      delete el.dataset.pageClass;
     }
   }
 }
