@@ -144,8 +144,8 @@ def page_url(rel: str) -> str:
 SHARED_SKIP = ("partials", "fonts")
 # The drive's one family (DESIGN.md "Typography"): Geist, vendored from Vercel's repository with its
 # licence and pinned like ootle-wasm (a font can't carry SRI, so the build refuses any other bytes).
-FONTS = {"Geist-Variable.woff2": "2ffebe993e969069a9789d15164b7715d42491b5835516c5e3b935d5f81b05f1",
-         "OFL-Geist.txt": None}
+FONTS = {"geist/Geist-Variable.woff2": "2ffebe993e969069a9789d15164b7715d42491b5835516c5e3b935d5f81b05f1",
+         "geist/OFL.txt": None}
 
 
 def copy_fonts(web: Path, dist: Path) -> None:
@@ -158,7 +158,7 @@ def copy_fonts(web: Path, dist: Path) -> None:
             raise BuildError(f"font file missing: web/shared/fonts/{name}")
         if expected and sha256(src) != expected:
             raise BuildError(f"font hash mismatch: web/shared/fonts/{name}")
-        (dist / "shared" / "fonts").mkdir(parents=True, exist_ok=True)
+        (dist / "shared" / "fonts" / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dist / "shared" / "fonts" / name)
 
 

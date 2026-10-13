@@ -103,7 +103,8 @@ export default [
     await rejects(() => walkEntries([tree], { maxFiles: 3 }), (e) => e.code === 'too_many' && e.max === 3);
   }],
   ['the folder picker: paths from webkitRelativePath, every folder once, parents first', async () => {
-    const f = (rel) => Object.assign(new File(['x'], rel.split('/').pop()), { webkitRelativePath: rel });
+    // webkitRelativePath is a read-only getter in browsers: an own property stands in for the picker's.
+    const f = (rel) => Object.defineProperty(new File(['x'], rel.split('/').pop()), 'webkitRelativePath', { value: rel });
     const { files, dirs } = inputEntries([f('Trip/a.jpg'), f('Trip/day 1/b.jpg'), f('Trip/Thumbs.db'), f('Trip/day 1/c.jpg')]);
     eq(JSON.stringify(dirs), '[["Trip"],["Trip","day 1"]]');
     eq(files.length, 3);

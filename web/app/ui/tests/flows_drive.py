@@ -44,6 +44,7 @@ def fixture_files(t, names):
 
 def upload_files(t, page, names, count_before=None):
     """New → Upload files, through the real file input; waits until each one is listed."""
+    page.wait("!!document.querySelector('[data-testid=\"upload-files-input\"]')", 30)
     page.set_files("upload-files-input", fixture_files(t, names))
     page.wait(f"(() => {{ const n = [...document.querySelectorAll('[data-testid=\"file-row\"]')].map((e) => e.dataset.name);"
               f" return {json.dumps(names)}.every((x) => n.includes(x)); }})()", 120)
@@ -70,7 +71,7 @@ def drive_shell(t):
     fonts = a.wait("document.fonts.ready.then(() => document.fonts.check('14px Geist') && getComputedStyle(document.body).fontFamily.startsWith('Geist'))", 20)
     t.check(fonts, "the drive is set in Geist")
     woff = sorted({r["url"][len(t.origin):] for r in a.requests if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))})
-    t.check(woff == ["/shared/fonts/Geist-Variable.woff2"], f"one font file, the pinned Geist ({woff})")
+    t.check(woff == ["/shared/fonts/geist/Geist-Variable.woff2"], f"one font file, the pinned Geist ({woff})")
     t.check(not same_origin(t, a), f"no third-party request ({same_origin(t, a)[:3]})")
     t.check(a.ax_unnamed() == [], f"every control has a name ({a.ax_unnamed()[:5]})")
     t.shot(a, "drive-1440-empty")
@@ -355,6 +356,7 @@ def drive_upload_folder_input(t):
     for rel, body in (("plan.txt", "the plan"), ("day one/map.txt", "the map"), ("day one/.DS_Store", "junk")):
         with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
             f.write(body)
+    a.wait("!!document.querySelector('[data-testid=\"upload-dir-input\"]')", 30)
     a.set_files("upload-dir-input", [root])
     a.wait("[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === 'Trip')", 120)
     t.check(table_names(a) == ["Trip"], f"one folder at the root ({table_names(a)})")
