@@ -41,7 +41,7 @@ const EV = {
 function sub(e) {
   if (e.k === 'uploaded') return e.item.folder ? null : formatBytes(e.item.row.size_stored);
   if (e.k === 'made') return null;
-  if (e.k === 'opened') return e.share.max_views ? t('drive.act.opened_d', { used: e.share.views_used, max: e.share.max_views }) : null;
+  if (e.k === 'opened') return e.share?.max_views ? t('drive.act.opened_d', { used: e.share.views_used, max: e.share.max_views }) : null;
   if (e.k === 'paid') return t('drive.act.paid_d');
   if (e.k === 'ended') return t('drive.act.ended_d');
   return null;
@@ -117,7 +117,10 @@ export async function renderFeed(drive, page) {
       const { listAll } = await import('../lib/api-drive.js');
       const rows = await listAll({ view: 'gone' }, drive.headers());
       const opened = await drive.index.openList(rows);
-      gone = opened.map((it) => ({ k: 'left', at: it.row.exit_hour ?? null, item: it, row: it.row, name: itemName(it) }));
+      // Fifth pass: a file that left shows its opens first (Opened, then It left your drive; §10 track one step 5).
+      gone = opened.flatMap((it) => [
+        ...(it.row.opens ?? []).map(([hour, n]) => ({ k: 'opened', at: hour, item: it, share: null, n, gone: true, name: itemName(it) })),
+        { k: 'left', at: it.row.exit_hour ?? null, item: it, row: it.row, name: itemName(it), gone: true }]);
     } catch {
       gone = [];
     }
@@ -134,7 +137,7 @@ export async function renderFeed(drive, page) {
     all.length
       ? h('div', { class: 'stack', 'data-testid': 'activity-feed' }, groups.map(([label, list]) => h('section', { class: 'feed-group', 'aria-label': label },
         h('h2', { class: 'section-label' }, label),
-        h('ol', { class: 'timeline feed card' }, list.map((e) => timelineRow(drive, e, { named: true, onName: e.k === 'left' ? null : () => openActivity(drive, e.item) }))))))
+        h('ol', { class: 'timeline feed card' }, list.map((e) => timelineRow(drive, e, { named: true, onName: e.gone ? null : () => openActivity(drive, e.item) }))))))
       : h('div', { class: 'empty', 'data-testid': 'activity-feed' },
         h('div', { class: 'empty-header' }, h('div', { class: 'empty-media', 'data-variant': 'icon' }, icon('activity')),
           h('h2', { class: 'empty-title' }, t('drive.act.empty')), h('p', { class: 'empty-description' }, t('drive.act.empty_d')))));

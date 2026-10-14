@@ -45,6 +45,20 @@ class ReleaseGate(PaidCase):
                                             "paid_at": self.row(self.c)["paid_at"], "amount_ut": "100000",
                                             "received_ut": "100000", "utxo_ids": [utxo]}])
 
+    def test_payments_list_for_received(self):
+        """Fifth pass (§10 track two step 5): GET /me/sales lists this drive's payments with their link, the
+        test money mark, the chain check and the owner's answer; only the owner sees it."""
+        utxo = self.pay(self.c)
+        self.ticks()
+        paid = self.s.request("GET", f"{V}/me/sales", headers=self.d["auth"])[2]["paid"]
+        self.assertEqual(len(paid), 1)
+        self.assertEqual({k: paid[0][k] for k in ("utxo_id", "share_id", "value_ut", "demo", "owner_ok", "tx_id")},
+                         {"utxo_id": utxo, "share_id": self.link["share_id"], "value_ut": "100000", "demo": False,
+                          "owner_ok": None, "tx_id": None})
+        self.confirm("ok", utxo=utxo)
+        self.assertTrue(self.s.request("GET", f"{V}/me/sales", headers=self.d["auth"])[2]["paid"][0]["owner_ok"])
+        self.assertEqual(self.s.request("GET", f"{V}/me/sales")[0], 401)
+
     def test_the_owners_ok_releases_on_the_next_poll(self):
         self.utxo = self.pay(self.c)
         self.ticks()

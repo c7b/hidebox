@@ -42,7 +42,7 @@ class SalesAddress(PaidCase):
     def test_get_sales_shows_the_registration_and_nothing_to_check(self):
         self.register_seller()
         _, _, got = self.s.request("GET", f"{V}/me/sales", headers=self.d["auth"])
-        self.assertEqual(got, {"seller": {"address": self.sales_keys["address"], "state": "pending"}, "to_check": []})
+        self.assertEqual(got, {"seller": {"address": self.sales_keys["address"], "state": "pending"}, "to_check": [], "paid": []})
 
 
 class PaidLinks(PaidCase):

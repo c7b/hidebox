@@ -349,7 +349,7 @@ class Drive(unittest.TestCase):
         self.assertEqual([(g["item_id"], g["reason"]) for g in gone], [(doc["item_id"], "deleted")])
         self.assertEqual(gone[0]["exit_hour"], codec.floor_hour(self.s.now))
         self.assertEqual(set(gone[0]), {"item_id", "kind", "created_hour", "exit_hour", "reason", "exit_receipt",
-                                        "header", "meta_ct", "owner_wrap"})
+                                        "header", "meta_ct", "owner_wrap", "opens"})
         self.s.now += cleanup.TOMBSTONE_DAYS * 86400 + 3600
         self.s.run_cleanup()
         self.sign_in()

@@ -17,6 +17,7 @@ from .shares import _header_b64, effective_state, folder_tree, gone
 CLAIMS_PER_HOUR_64, CLAIMS_PER_HOUR_48 = 10, 30
 DEMO_PER_DAY_64, DEMO_PER_DAY_48 = 3, 6
 CHECKS_LISTED = 100
+PAID_LISTED = 50       # fifth pass: Received → Payments, newest first
 
 
 # --- the seller (a drive session) -----------------------------------------------------------------------
@@ -54,7 +55,24 @@ def get_sales(ctx):
                  "utxo_ids": [r[0] for r in conn.execute("SELECT utxo_id FROM sale_payments WHERE claim_id = ? "
                                                          "AND status = 'counted' AND owner_ok IS NULL",
                                                          (c["id"],))]} for c in rows]
-    return json_response(200, {"seller": dict(seller) if seller else None, "to_check": to_check})
+    # Fifth pass (16-drive-design §6, §10 track two step 5): the payments to this drive's paid links, newest
+    # first, so Received → Payments can say which link, Test money, Checked and the tx on any device that
+    # opens the drive. What our server already holds; never who paid.
+    paid = []
+    for r in conn.execute("SELECT sp.utxo_id, sp.value_ut, sp.seen_at, sp.committed, sp.owner_ok, c.id AS claim_id, "
+                          "c.share_id, c.demo FROM sale_payments sp JOIN claims c ON c.id = sp.claim_id "
+                          "JOIN shares s ON s.id = c.share_id JOIN items i ON i.id = s.item_id "
+                          "WHERE i.owner_id = ? AND sp.status IN ('counted','extra') ORDER BY sp.seen_at DESC LIMIT ?",
+                          (identity["id"], PAID_LISTED)).fetchall():
+        tx = None
+        if r["demo"]:
+            job = conn.execute("SELECT result FROM jobs WHERE kind = 'demo_pay' AND state = 'done' "
+                               "AND json_extract(result, '$.ref') = ? ORDER BY created_at DESC LIMIT 1", (r["claim_id"],)).fetchone()
+            tx = json.loads(job[0]).get("tx_id") if job else None
+        paid.append({"utxo_id": r["utxo_id"], "share_id": r["share_id"], "value_ut": str(r["value_ut"]),
+                     "seen_at": r["seen_at"], "demo": bool(r["demo"]), "checked": bool(r["committed"]),
+                     "owner_ok": None if r["owner_ok"] is None else bool(r["owner_ok"]), "tx_id": tx})
+    return json_response(200, {"seller": dict(seller) if seller else None, "to_check": to_check, "paid": paid})
 
 
 def confirm_claim(ctx, claim_id: str):
