@@ -40,7 +40,7 @@ Against production (there is no staging; 12-integration §7.7):
   it E-05 reports SKIP (so `--final` fails), and production never offers the preset.
 - **E-J** follows `/judges` step by step (16-drive-design §10): six steps on a computer and a phone with
   the drive (Make my drive from the home page, drop a small folder, share one file Once with Delete it from
-  my drive after, the phone opens it and reloads to "It's gone.", Activity shows it left, What our server
+  my drive after, the phone opens it and reloads to "This link has ended.", Activity shows Opened and It left your drive, What our server
   knows). Track two, with `features.pay_to_open` on: the computer sells that folder (Someone who pays you,
   the first price, Make pay link), the phone opens the pay link (name, count, size, price and fee), pays
   with test money to Ready to open, opens one file; the computer's Received lists the payment as Yours to
