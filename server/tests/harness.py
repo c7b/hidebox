@@ -179,6 +179,8 @@ class Stack(Client):
                       "receiver_keys": str(self.tmp / "receiver.json"), "robot_keys": str(self.tmp / "robot.json"),
                       "jitter_s": [5, 45]},
             "sidecar": {"command": fake_sidecar_argv(), "expected_wasm_sha256": FAKE_WASM_SHA256},
+            # The drive's features are off in config.py until the routes switch over; tests run with them on.
+            "features": {"folders": True, "pay_to_open": True},
         }
         for key, value in (overrides or {}).items():
             if isinstance(value, dict):

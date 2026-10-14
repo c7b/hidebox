@@ -1,8 +1,11 @@
 -- SPDX-License-Identifier: MIT
--- mutis database, schema version 3 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
--- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 and 003).
--- Deliberately absent: email, name, IP address, user agent, any user public key, a user's locker address,
--- file name, MIME type, plaintext size, any secret key, any grant or recipient table, the drop an item came from.
+-- mutis database, schema version 4 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
+-- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002, 003 and 004:
+-- the drive's folders, Trash, opens per hour and the pay-to-open tables).
+-- Deliberately absent: email, name, IP address, user agent, any login public key, a user's locker address,
+-- file or folder name, MIME type, plaintext size, any secret key in clear, any grant or recipient table, the
+-- drop an item came from, who opened a link, a buyer's identity. Kept on purpose, opt-in and for sales only:
+-- a seller's sales address and its view key sealed to the payment checker (sellers), and per-claim addresses.
 
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;
 -- keys: schema_version, free_quota_bytes, free_quota_updated_at, uploads_frozen, chain_heartbeat, chain_status (json),
@@ -52,13 +55,19 @@ CREATE TABLE items (
   expires_at   INTEGER,
   doomed_at    INTEGER,
   egress_day   TEXT, egress_bytes INTEGER NOT NULL DEFAULT 0,
-  exit_hour    INTEGER                          -- P-8: hour the blob was unlinked (recomputes the exit leaf)
+  exit_hour    INTEGER,                         -- P-8: hour the blob was unlinked (recomputes the exit leaf)
+  kind         TEXT NOT NULL DEFAULT 'file' CHECK (kind IN ('file','folder')),   -- a folder has no ciphertext
+  parent_id    TEXT REFERENCES items(id) ON DELETE SET NULL,                    -- NULL = the drive's root
+  parent_wrap  BLOB,                            -- 60 B: this item's key wrapped under its folder's; iff parent_id
+  trashed_at   INTEGER                          -- in the Trash since (its links ended when it went there)
 ) STRICT;
 CREATE INDEX items_owner  ON items(owner_id, state);
 CREATE INDEX items_lane   ON items(lane, state);
 CREATE INDEX items_doomed ON items(state, doomed_at);
 CREATE INDEX items_expiry ON items(expires_at) WHERE expires_at IS NOT NULL;
 CREATE INDEX items_recent ON items(created_hour) WHERE canary = 0;
+CREATE INDEX items_parent ON items(owner_id, parent_id, state);
+CREATE INDEX items_child ON items(parent_id) WHERE parent_id IS NOT NULL;
 
 CREATE TABLE uploads (
   id TEXT PRIMARY KEY, item_id TEXT NOT NULL UNIQUE REFERENCES items(id) ON DELETE CASCADE,
@@ -99,7 +108,8 @@ CREATE TABLE tickets (
   token_hash BLOB PRIMARY KEY, share_id TEXT,
   item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   expires_at INTEGER NOT NULL, max_bytes INTEGER NOT NULL,
-  bytes_served INTEGER NOT NULL DEFAULT 0, done INTEGER NOT NULL DEFAULT 0
+  bytes_served INTEGER NOT NULL DEFAULT 0, done INTEGER NOT NULL DEFAULT 0,
+  scope      TEXT NOT NULL DEFAULT 'item' CHECK (scope IN ('item','tree'))   -- tree: any ready descendant of item_id
 ) STRICT;
 CREATE INDEX tickets_item ON tickets(item_id, done, expires_at);
 
@@ -188,4 +198,66 @@ CREATE TABLE judge_passes (                       -- P-12: passes for the Counci
   uses_left  INTEGER NOT NULL,                    -- budgeted sends (courier, demo-pay, sponsor)
   created_at INTEGER NOT NULL,                    -- a pass works for auth.JUDGE_PASS_DAYS after this
   pow_skips_left INTEGER NOT NULL DEFAULT 100     -- proofs of work it may stand in for
+) STRICT;
+
+-- Opens per link per UTC hour (the owner's Activity): a count, never who opened it. Gone with the link's
+-- tombstone (the cascade).
+CREATE TABLE share_opens (
+  share_id TEXT NOT NULL REFERENCES shares(id) ON DELETE CASCADE,
+  hour     INTEGER NOT NULL,
+  n        INTEGER NOT NULL,
+  PRIMARY KEY (share_id, hour)
+) STRICT, WITHOUT ROWID;
+
+-- Pay to open (annex §1.4). A drive's sales address, registered with its first paid link; its view key
+-- arrives sealed (kind 3) to the payment checker's keys, which only the chain worker holds.
+CREATE TABLE sellers (
+  identity_id  TEXT PRIMARY KEY REFERENCES identities(id) ON DELETE CASCADE,
+  address      TEXT NOT NULL,                    -- sales address (base, no pay-ref)
+  view_sealed  BLOB NOT NULL,                    -- 125 B
+  state        TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending','ok','bad_key')),
+  scan_seq     INTEGER NOT NULL DEFAULT 0,       -- the worker's mirror cursor for this seller
+  scanned_at   INTEGER,
+  created_at   INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE paid_shares (                       -- one row per paid link (shares.mode stays 'link')
+  share_id       TEXT PRIMARY KEY REFERENCES shares(id) ON DELETE CASCADE,
+  price_ut       INTEGER NOT NULL,
+  server_half    BLOB,                           -- 32 B; NULL once the link ends
+  teaser_ct      BLOB,
+  buyer_views    INTEGER NOT NULL,
+  buyer_window_s INTEGER NOT NULL,
+  paused         INTEGER NOT NULL DEFAULT 0
+) STRICT;
+
+CREATE TABLE claims (                            -- one per buyer attempt; never an identity, never an IP
+  id           TEXT PRIMARY KEY,                 -- "clm_" + 20 [a-z2-7]; it is the pay-ref
+  share_id     TEXT NOT NULL REFERENCES shares(id) ON DELETE CASCADE,
+  token_hash   BLOB NOT NULL UNIQUE,             -- SHA-256 of the buyer's claim token
+  address      TEXT NOT NULL,                    -- the sales address with this claim's pay-ref
+  price_ut     INTEGER NOT NULL,
+  received_ut  INTEGER NOT NULL DEFAULT 0,
+  status       TEXT NOT NULL CHECK (status IN ('pending','seen','underpaid','paid','released','expired','void')),
+  owner_check  TEXT NOT NULL DEFAULT 'none' CHECK (owner_check IN ('none','pending','ok','bad')),   -- release gate
+  created_at   INTEGER NOT NULL,
+  created_seq  INTEGER NOT NULL,                 -- mirror head when made (where its scan starts)
+  expires_at   INTEGER NOT NULL,
+  paid_at      INTEGER,
+  released_at  INTEGER,
+  views_left   INTEGER,
+  open_until   INTEGER,
+  demo         INTEGER NOT NULL DEFAULT 0        -- paid by our demo wallet
+) STRICT;
+CREATE INDEX claims_open ON claims(status, expires_at);
+CREATE INDEX claims_share ON claims(share_id, status);
+
+CREATE TABLE sale_payments (                     -- one row per UTXO ever; apart from pack payments
+  utxo_id    TEXT PRIMARY KEY,
+  claim_id   TEXT REFERENCES claims(id) ON DELETE SET NULL,
+  value_ut   INTEGER NOT NULL,
+  seen_at    INTEGER NOT NULL,
+  epoch      INTEGER,
+  committed  INTEGER NOT NULL DEFAULT 0,
+  status     TEXT NOT NULL CHECK (status IN ('pending_check','counted','extra'))
 ) STRICT;

@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from .handlers import (abuse, auth, blobs, canary, chain, courier, drops, invoices, me, seallog, shares, stats,
-                       system, uploads)
+from .handlers import (abuse, auth, blobs, canary, chain, courier, drops, folders, invoices, me, seallog, shares,
+                       stats, system, uploads)
 from .http_util import PARAM_RE, ApiError
 
 
@@ -77,6 +77,10 @@ ROUTER = Router([
     ("GET", f"{V}/s/{{share_id:id}}/stored", shares.stored_bytes, "shares.stored"),
     ("DELETE", f"{V}/items/{{item_id:id}}", shares.delete_item, "items.delete"),
     ("POST", f"{V}/items/{{item_id:id}}/adopt", shares.adopt, "items.adopt"),
+    # lane S (the drive, 16-drive-design §15 step 4): folders, moves, renames, the Trash, Delete it after
+    ("POST", f"{V}/folders", folders.create, "folders.create"),
+    ("PATCH", f"{V}/items/{{item_id:id}}", folders.patch, "items.patch"),
+    # /lane S
 
     ("GET", f"{V}/blobs/{{ticket:ticket}}", blobs.download, "blobs.get"),
     ("POST", f"{V}/blobs/{{ticket:ticket}}/done", blobs.done, "blobs.done"),
