@@ -282,6 +282,15 @@ class TestMoneyGuards(PaidCase):
                                 (json.dumps({"tx_id": "ab" * 32, "ref": self.c["claim_id"]}), job["job_id"]))
         self.assertEqual(poll()["tx_id"], "ab" * 32)
 
+    def test_demo_pay_caps_each_selling_drive(self):
+        """Fifth pass: two test-money payments a day per selling drive, whatever network asks."""
+        for n, expect in ((1, 202), (2, 202), (3, 429)):
+            ip = f"203.0.{n}.7"
+            c = self.claim(self.link, ip=ip)
+            status, _, resp = self.s.request("POST", f"{V}/p/{c['share_id']}/claims/{c['claim_id']}/demo-pay",
+                                             {"pow": self.s.solve("demo_pay", ip)}, headers=c["hdr"], ip=ip)
+            self.assertEqual(status, expect, resp)
+
     def test_demo_pay_refuses_without_the_token_when_paid_or_when_off(self):
         self.demo({**self.c, "hdr": {"X-Mutis-Claim": b64(32)}}, 403)
         with db.tx(self.s.conn):

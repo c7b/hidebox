@@ -6,6 +6,7 @@
 import { t, BRAND } from '../lib/i18n.js';
 import { h, icon, init, openModal, closeModal } from './behaviors.js';
 import { alert, button, dialogBox, errorAlert } from './drive-parts.js';
+import { mmss } from './errors.js';
 
 // A new drive: its key made in this browser, then registered (a proof of work, or the judge pass).
 export async function makeDrive({ onProgress } = {}) {
@@ -89,10 +90,27 @@ export function renderStart(app, { onReady, make = false, open = false }) {
     try {
       onReady(await makeDrive(), { made: true });
     } catch (e) {
-      status.replaceChildren(errorAlert(e, { action: { label: t('drive.retry'), onClick: start } }));
       makeBtn.disabled = false;
       openBtn.disabled = false;
+      if (e?.code === 'rate_limited' && e.retryAfter) return wait(e.retryAfter);
+      status.replaceChildren(errorAlert(e, { action: { label: t('drive.retry'), onClick: start } }));
     }
+  };
+  // Fifth pass: too many new drives from this network: a live countdown, then it tries again by itself.
+  const wait = (seconds) => {
+    const until = Date.now() + seconds * 1000;
+    const text = h('span', { 'data-testid': 'make-wait' });
+    const box = alert({ glyph: 'timer', title: t('drive.start.busy_h'), description: text, testid: 'error-banner', role: 'status' });
+    box.dataset.code = 'rate_limited';
+    status.replaceChildren(box);
+    const tick = () => {
+      if (!box.isConnected) return;
+      const left = Math.ceil((until - Date.now()) / 1000);
+      if (left <= 0) return start();
+      text.textContent = t('drive.start.busy', { wait: mmss(left) });
+      setTimeout(tick, 1000);
+    };
+    tick();
   };
   makeBtn.addEventListener('click', start);
   openBtn.addEventListener('click', () => openDialog((identity) => onReady(identity, { made: false })));

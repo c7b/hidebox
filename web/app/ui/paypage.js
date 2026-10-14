@@ -176,6 +176,11 @@ export async function payPage(root, cfg, shareId) {
           P.opened = { file: { name: opened.meta.name || t('buy.unnamed_file'), size: opened.meta.size ?? 0, parts } };
         }
         remember('opened');
+        // On a phone the files sit under the summary: bring them into view once they draw.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const list = root.querySelector('[data-testid="pay-teaser"]');
+          if (list && list.getBoundingClientRect().top > innerHeight * 0.6) list.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        }));
       } catch (e) {
         if (e instanceof ApiError && e.code === 'claim_used') {
           P.used = true;
@@ -235,7 +240,7 @@ export async function payPage(root, cfg, shareId) {
             h('span', { class: 'badge', 'data-variant': 'tari' }, icon('coins'), t('drive.rule.pay', { price: formatTari(price) }))),
           h('p', { class: 'card-description', 'data-testid': 'pay-what' }, folder ? t('buy.count', { count: P.teaser.count ?? 0, size }) : t('buy.about', { size }))),
         h('div', { class: 'card-content stack' }, content)),
-      h('p', { class: 'small muted' }, t('fv.scan')));
+      P.opened?.folder ? null : h('p', { class: 'small muted' }, t('fv.scan'))); // the folder panel says it once
   }
 
   function otherBox(phase) {
@@ -322,6 +327,13 @@ export async function payPage(root, cfg, shareId) {
       content.append(button(t('buy.again'), { variant: 'outline', glyph: 'rotate-ccw', testid: 'pay-again', onclick: restart }));
     }
     if (P.error) content.append(errorAlert(P.error));
+    // Fifth pass (the devil's phone run): once it's open, the card is a short summary; the claims were read before paying.
+    if (phase === 'opened') {
+      return h('div', { class: 'buyer-pay stack' }, h('section', { class: 'card', 'aria-labelledby': 'pay-h' },
+        h('div', { class: 'card-header' }, h('h2', { class: 'card-title', id: 'pay-h' }, t('buy.amount')),
+          h('p', { class: 'card-description', 'data-testid': 'pay-status', role: 'status' }, desc)),
+        content));
+    }
     content.append(
       h('div', { class: 'alert', 'data-variant': 'tari' }, icon('shield-check'), h('div', { class: 'alert-title' }, t('buy.trust_h')),
         h('div', { class: 'alert-description' }, h('p', {}, t('buy.trust')), h('p', {}, t('buy.split')))),

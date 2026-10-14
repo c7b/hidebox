@@ -70,6 +70,23 @@ function wireKebabs(root, menu, drive) {
   init(root);
 }
 
+// Fifth pass: a file or folder with no live link of its own, inside a folder that has one, is not private:
+// whoever opens that folder's link sees it. Its badge says so (the closest such folder).
+function sharedAncestor(drive, it) {
+  for (let p = drive.index.get(it.parentId), guard = 0; p && guard < 32; p = drive.index.get(p.parentId), guard++) {
+    if (!['private', 'ended'].includes(ruleOf(p).kind)) return p;
+  }
+  return null;
+}
+
+function ownBadge(drive, it, r = ruleOf(it)) {
+  const anc = ['private', 'ended'].includes(r.kind) ? sharedAncestor(drive, it) : null;
+  if (!anc) return ruleBadge(r);
+  const pay = ruleOf(anc).kind === 'pay';
+  return h('span', { class: 'badge', 'data-variant': 'secondary', 'data-rule': 'inherited', 'data-testid': 'inherited-badge',
+    title: t(pay ? 'drive.rule.inherited_pay' : 'drive.rule.inherited_d', { name: itemName(anc) }) }, icon(pay ? 'coins' : 'share-2'), t('drive.rule.inherited'));
+}
+
 function folderCard(drive, f) {
   const href = drive.folderPath(f.id);
   const count = drive.index.children(f.id).length;
@@ -77,7 +94,7 @@ function folderCard(drive, f) {
     h('a', { class: 'folder-icon', href, 'data-nav': '', 'aria-label': t('drive.folder.open', { name: itemName(f) }) }, icon('folder')),
     h('a', { class: 'folder-body', href, 'data-nav': '', tabindex: '-1' },
       h('span', { class: 'folder-name' }, itemName(f)),
-      h('span', { class: 'folder-meta' }, ruleBadge(ruleOf(f)), h('span', {}, t('drive.folder.count', { count })))),
+      h('span', { class: 'folder-meta' }, ownBadge(drive, f), h('span', {}, t('drive.folder.count', { count })))),
     kebab(f));
 }
 
@@ -96,8 +113,8 @@ function fileRow(drive, it) {
     h('td', {}, h('button', { class: 'checkbox', type: 'button', 'aria-checked': 'false', 'aria-label': t('drive.sel.pick', { name: itemName(it) }) })),
     h('td', {}, h('div', { class: 'file-name' }, icon(fileIcon(it)),
       h('div', { class: 'file-text' }, name,
-        h('span', { class: 'file-meta' }, ruleBadge(r), meta ? h('span', {}, meta) : null, at ? leavesBadge(at) : null)))),
-    h('td', { class: 'col-wide' }, badges(it)),
+        h('span', { class: 'file-meta' }, ownBadge(drive, it, r), meta ? h('span', {}, meta) : null, at ? leavesBadge(at) : null)))),
+    h('td', { class: 'col-wide' }, h('span', { class: 'badges' }, ownBadge(drive, it, r), at ? leavesBadge(at) : null)),
     h('td', { class: 'col-wide num-cell' }, opens || none()),
     h('td', { class: 'col-wide num-cell' }, ends || none()),
     h('td', { class: 'col-wide num-cell' }, it.folder ? none() : formatBytes(it.meta.size)),
@@ -210,7 +227,7 @@ function emptyDrive(drive, folder) {
   return h('div', { class: 'empty', 'data-testid': 'drive-empty' },
     h('div', { class: 'empty-header' }, art,
       h('h2', { class: 'empty-title', id: 'files-h' }, t(folder ? 'drive.empty.folder_title' : 'drive.empty.title')),
-      h('p', { class: 'empty-description' }, t('drive.empty.desc'))),
+      h('p', { class: 'empty-description' }, t(coarse() ? 'drive.empty.desc_tap' : 'drive.empty.desc'))),
     h('div', { class: 'empty-content' }, h('div', { class: 'row wrap' }, primary, second), folder ? null : tariRow(drive)));
 }
 
@@ -317,7 +334,7 @@ export async function renderTrash(drive, page) {
       h('td', {}, h('div', { class: 'row end' }, restore, now)));
   });
   page.replaceChildren(head, h('p', { class: 'page-desc' }, t('drive.trash.desc', { trash_days: days })),
-    h('div', { class: 'files' }, h('div', { class: 'table-container' }, h('table', { class: 'table', 'aria-label': t('drive.side.trash') },
+    h('div', { class: 'files' }, h('div', { class: 'table-container' }, h('table', { class: 'table trash-table', 'aria-label': t('drive.side.trash') },
       h('thead', {}, h('tr', {}, h('th', {}, t('drive.col.name')), h('th', { class: 'col-wide' }, t('drive.col.leaves')), h('th', { class: 'col-wide' }, t('drive.col.size')),
         h('th', {}, h('span', { class: 'sr-only' }, t('drive.col.actions'))))),
       h('tbody', {}, rows)))),

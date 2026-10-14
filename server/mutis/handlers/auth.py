@@ -17,8 +17,10 @@ def _identity_id(body: dict) -> str:
 
 def register(ctx):
     body = ctx.req.json()
-    ctx.limit(("reg64", ctx.ip64, 5, 3600, 1), ("reg48", ctx.ip48, 20, 3600, 1),
-              ("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, 1))
+    # Fifth pass: a judge pass lifts the per-network limits (judges sharing an office network), as it does
+    # for sends and test money; the deployment-wide daily cap still applies.
+    network = () if ctx.judge() is not None else (("reg64", ctx.ip64, 5, 3600, 1), ("reg48", ctx.ip48, 20, 3600, 1))
+    ctx.limit(*network, ("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, 1))
     identity_id = _identity_id(body)
     verifier = get_b64(body, "auth_verifier", 32)
     ctx.proof_of_work("register", body)
