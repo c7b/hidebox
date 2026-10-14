@@ -427,7 +427,7 @@ def kept(t):
     a.wait_for("who")
     a.click("who", "only_me")
     a.click("apply-rules")
-    a.wait("!document.querySelector('[data-testid=\"sealed-link\"]') && /only this locker/.test(document.querySelector('.md-kept')?.textContent || '')", 180)
+    a.wait("!document.querySelector('[data-testid=\"sealed-link\"]') && /only this drive/.test(document.querySelector('.md-kept')?.textContent || '')", 180)
     t.check(True, "Only me: kept in the locker, no link")
     home(t, a)
     a.set_files("drop-input", [t.fixture("report.dat")])
@@ -466,7 +466,7 @@ def safety(t):
     t.shot(a, "home-1440-program")
     a.set_files("drop-input", [t.fixture("too-big.bin")])
     a.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'too_large'", 30)
-    t.check("free locker" in a.text("error-banner") and a.exists("offer-locker"), "too large: the banner offers a free locker")
+    t.check("free drive" in a.text("error-banner") and a.exists("offer-locker"), "too large: the banner offers a free locker")
     t.check(not [r for r in a.requests if r["url"].endswith("/api/v1/uploads")], "nothing was uploaded")
     # Names whose program extension appears only once invisible or forbidden characters are gone.
     for name, ext in (("invoice.b\u200bat", "bat"), ("run.p|s1", "ps1")):
