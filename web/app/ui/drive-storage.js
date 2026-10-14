@@ -127,8 +127,8 @@ async function buy(drive, pack, label) {
   openModal(box, { onClose: () => { if (polling === run) polling++; } });
   let invoice;
   try {
-    const { createInvoice } = await import('../lib/api-locker.js');
-    invoice = await createInvoice(pack.id, drive.headers());
+    const [{ createInvoice }, { judgeHeaders }] = await Promise.all([import('../lib/api-locker.js'), import('../lib/pow.js')]);
+    invoice = await createInvoice(pack.id, { ...drive.headers(), ...judgeHeaders() });  // a judge pass buys from the judges' share
   } catch (e) {
     return body.replaceChildren(errorAlert(e));
   }
@@ -199,18 +199,41 @@ async function buy(drive, pack, label) {
   poll(drive, invoice.invoice_id, draw, run);
 }
 
+// Sixth pass: one pack at a time. The pack a drive holds says until when, and turns into Renew it in its
+// last days (the same pack again adds days, not space); the other waits. Paused packs say so instead.
 function moreSection(drive) {
-  const packs = drive.cfg.pricing?.packs ?? [];
+  const cfg = drive.cfg;
+  const packs = cfg.pricing?.packs ?? [];
+  const held = drive.me.pack ?? null;
+  const day = (s) => formatDate(s * 1000, { dateStyle: 'medium' });
+  const renewing = held && Date.now() / 1000 >= held.renew_from;
+  const paused = cfg.features?.packs === false;
+  const action = (pack, label, i) => {
+    const testid = `pack-${pack.id}`;
+    const variant = i === 0 ? null : 'outline';
+    if (paused) return null;
+    if (!held) return button(t('drive.sto.get'), { variant, testid, onclick: () => buy(drive, pack, label) });
+    if (held.id === pack.id || held.id === null) {
+      return renewing ? button(t('drive.sto.renew'), { variant, testid, glyph: 'repeat', onclick: () => buy(drive, pack, label) })
+        : button(t('drive.sto.yours', { date: day(held.until) }), { variant: 'outline', testid, disabled: true });
+    }
+    return button(t('drive.sto.get'), { variant: 'outline', testid, disabled: true });
+  };
+  const note = paused ? alert({ glyph: 'info', title: t('drive.sto.paused'), testid: 'packs-paused' })
+    : held && !renewing ? h('p', { class: 'small muted', 'data-testid': 'pack-renew-from' }, t('drive.sto.renew_from', { date: day(held.renew_from) }))
+      : null;
   return h('section', { id: 'more', 'aria-labelledby': 'more-h', class: 'stack' },
     h('div', {}, h('h2', { class: 'h3', id: 'more-h' }, t('drive.sto.more')),
-      h('p', { class: 'muted' }, t('drive.sto.more_d'))),
+      h('p', { class: 'muted' }, t('drive.sto.more_d')),
+      cfg.pricing?.renew_days ? h('p', { class: 'small muted', 'data-testid': 'pack-rule' }, t('drive.sto.one', { renew_days: formatDuration(cfg.pricing.renew_days * 86400) })) : null),
+    note,
     h('div', { class: 'packs' }, packs.map((pack, i) => {
       const label = t('drive.sto.pack', { bytes: formatBytes(pack.bytes), days: formatDuration(pack.days * 86400) });
-      return h('div', { class: 'card', 'data-testid': 'storage-pack', 'data-pack': pack.id },
+      return h('div', { class: 'card', 'data-testid': 'storage-pack', 'data-pack': pack.id, 'data-held': held && (held.id === pack.id || held.id === null) ? 'true' : null },
         h('div', { class: 'card-header' }, h('h3', { class: 'card-title' }, label),
           h('p', { class: 'card-description' }, t(i === 0 ? 'drive.sto.small_d' : 'drive.sto.big_d'))),
         h('div', { class: 'card-content' }, h('div', { class: 'pack-price' }, formatTari(pack.price_ut), h('small', {}, 'tTARI'))),
-        h('div', { class: 'card-footer' }, button(t('drive.sto.get'), { variant: i === 0 ? null : 'outline', testid: `pack-${pack.id}`, onclick: () => buy(drive, pack, label) })));
+        h('div', { class: 'card-footer' }, action(pack, label, i)));
     })),
     testnetLine(drive.cfg));
 }

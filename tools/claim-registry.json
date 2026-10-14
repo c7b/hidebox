@@ -421,6 +421,36 @@
     "Files in the trash still use space. We empty it after {trash_days} days. Links add no space.",
     "Its links stop working now. You can bring it back for {trash_days} days."
    ]
+  },
+  {
+   "id": "C48",
+   "condition": "packs (sixth pass, anti-griefing)",
+   "backed_by": "server/mutis/packs.py, handlers/invoices.py: one pack per drive, renewable with the same pack in its last packs.renew_days days (grant_pack adds days, not bytes); daily sales brakes per network and for the deployment; features.packs",
+   "markers": [
+    "one pack at a time",
+    "a few a day",
+    "packs are paused",
+    "adds days, not space"
+   ],
+   "sentences": [
+    "One pack at a time. In its last {renew_days} you can renew it, which adds days, not space.",
+    "Packs are limited to a few a day while we're small.",
+    "Packs are limited to a few a day while we're small. Try tomorrow.",
+    "Space packs are paused."
+   ]
+  },
+  {
+   "id": "C49",
+   "condition": "free-space brakes (sixth pass)",
+   "backed_by": "handlers/auth.py register (brakes.drives_per_network_day), handlers/uploads.py _free_bytes_rules (brakes.upload_bytes_per_network_day), both per UTC day in memory",
+   "markers": [
+    "new drives it can today",
+    "uploaded all it can"
+   ],
+   "sentences": [
+    "Your network has made all the new drives it can today. Try again tomorrow, or open a drive you already have.",
+    "Your network has uploaded all it can to free drives today. Try again tomorrow."
+   ]
   }
  ],
  "labels": [
