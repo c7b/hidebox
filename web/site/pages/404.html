@@ -4,28 +4,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Oops · {{BRAND}}</title>
-<meta name="description" content="This page isn't here. The ghost looked everywhere.">
+<title>Not found · {{BRAND}}</title>
+<meta name="description" content="This page isn't here. Maybe the address has a typo.">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{BRAND}}">
-<meta property="og:title" content="Oops · {{BRAND}}">
-<meta property="og:description" content="This page isn't here. The ghost looked everywhere.">
+<meta property="og:title" content="Not found · {{BRAND}}">
+<meta property="og:description" content="This page isn't here. Maybe the address has a typo.">
 <meta property="og:url" content="{{ORIGIN}}/404">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A glowing ghost holds up one finger and winks. Show it once. Then bye.">
+<meta property="og:image:alt" content="A drive in {{BRAND}}: four files, each wearing its rule. Your private drive. Locked here. Shared your way.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#F4F5FC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#13183A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/shared/ghost.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
@@ -34,10 +33,9 @@
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
 <main id="main" class="wrap page not-found">
-  <span class="oops-ghost" data-ghost="oops" aria-hidden="true"><!--#include ghost.svg--></span>
-  <h1>Oops. This page isn't here.</h1>
-  <p class="lede">The ghost looked everywhere. Maybe the address has a typo.</p>
-  <p><a class="btn" href="/">Go home</a></p>
+  <h1>This page isn't here.</h1>
+  <p class="lede">Maybe the address has a typo. If someone sent you a link, ask them for it again.</p>
+  <p class="ways"><a class="btn" href="/">Go home</a><a class="quiet" href="/drive?open">Open my drive</a></p>
 </main>
 <!--#include footer-->
 </body>
