@@ -44,8 +44,8 @@
  "qr.label": "A code to scan with a phone",
  "toast.stopped": "Stopped. What reached us was ciphertext, and our server deletes it.",
  "toast.stopped_early": "Stopped before anything was uploaded.",
- "locker.opening": "Opening your locker…",
- "locker.offer": "Open a free locker",
+ "locker.opening": "Opening your drive…",
+ "locker.offer": "Open a free drive",
  "recent.h": "Your recent links (only on this device)",
  "dur.minute": {
   "one": "{count} minute",

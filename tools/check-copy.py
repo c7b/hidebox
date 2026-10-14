@@ -52,6 +52,10 @@ BANNED = [
     # retired with the drive (16-drive-design §9.2): false once we hold a sales view key, or for kept files
     r"buyers pay sellers directly", r"when a link ends, we write",
 ]
+# Fifth pass (the drive): the old nouns stay out of what people read on the pages and in the app's strings,
+# meta and og:* included. The codename lives in code, paths and services (and the llms.txt note), not copy.
+RETIRED = [r"lockers?", r"dead drops?", r"ghosts?", r"goodbyes?", r"said bye", r"mutis"]
+RETIRED_RX = re.compile(r"(?<![\w-])(" + "|".join(RETIRED) + r")(?![\w-])", re.I)
 WATCH = [r"simply", r"just", r"anonymous(ly)?"]
 BANNED_RX = re.compile(r"(?<![\w-])(" + "|".join(BANNED) + r")(?![\w-])", re.I)
 WATCH_RX = re.compile(r"(?<![\w-])(" + "|".join(WATCH) + r")(?![\w-])", re.I)
@@ -131,6 +135,8 @@ def banned_words(root: Path) -> tuple[list[str], list[str]]:
     for name, text in copy_sources(root):
         fails += [f"{name}: banned {m.group(0)!r}" for m in BANNED_RX.finditer(text)]
         warns += [f"{name}: check the sense of {m.group(0)!r}" for m in WATCH_RX.finditer(text)]
+        if not name.endswith(".md"):
+            fails += [f"{name}: retired word {m.group(0)!r}" for m in RETIRED_RX.finditer(VARIABLE.sub(" ", text))]
     return fails, warns
 
 

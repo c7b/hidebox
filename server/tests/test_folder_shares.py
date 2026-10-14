@@ -248,6 +248,26 @@ class ThenDelete(unittest.TestCase):
         gone = self.s.request("GET", f"{V}/me/items?view=gone", headers=self.d["auth"])[2]["items"]
         self.assertEqual([(g["item_id"], g["reason"]) for g in gone], [(self.doc["item_id"], "link_ended")])
 
+    def test_exit_receipt_only_when_the_file_leaves(self):
+        """Fifth pass (C42): a Once link on a kept file ends with no receipt (the viewer says the file stays);
+        with then_delete the file leaves and its link's receipt carries the exit leaf."""
+        self.s.close()
+        self.s = Stack({"features": {"seallog": True}, "ootle": {"seallog_component": "component_" + "ab" * 32}})
+        self.d = self.s.register()
+        self.s.graduate(self.d)
+        self.doc = self.s.upload(1000, headers=self.d["auth"], retention="kept", owner_wrap=b64(60))
+        kept = self.share(self.doc["item_id"], max_views=1)
+        self.s.request("POST", f"{V}/s/{kept['share_id']}/open", headers=kept["access"])
+        status, _, receipt = self.s.request("GET", f"{V}/s/{kept['share_id']}/exit")
+        self.assertEqual((status, receipt["reason"], receipt["receipt"]), (200, "burned", "none"))
+        self.assertEqual((receipt["leaf_hash"], receipt["proof"], receipt["exit_hour"]), (None, None, None))
+        self.assertEqual(self.row()["state"], "ready")
+        once = self.share(self.doc["item_id"], max_views=1, expires_at=self.s.now + 86400, then_delete=True)
+        self.s.request("POST", f"{V}/s/{once['share_id']}/open", headers=once["access"])
+        status, _, receipt = self.s.request("GET", f"{V}/s/{once['share_id']}/exit")
+        self.assertEqual((status, receipt["receipt"]), (200, "exit"))
+        self.assertEqual(receipt["leaf_hash"], seallog.exit_leaf(self.doc["item_id"], self.row()["exit_hour"]).hex())
+
     def test_it_leaves_at_the_links_end_even_unopened(self):
         link = self.share(self.doc["item_id"], max_views=3, expires_at=self.s.now + 86400, then_delete=True)
         self.s.now = link["expires_at"] + 1

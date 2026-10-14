@@ -480,8 +480,8 @@ def ej(t: T) -> None:
     done("3")
     t.check(flows.open_link(phone, url) == "opened", "4: the phone taps Open it and has the file")
     phone.reload()
-    t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned" and "It's gone." in phone.text("view-root"),
-            "4: the phone reloads: “It's gone.”")
+    t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned" and "This link has ended." in phone.text("view-root"),
+            "4: the phone reloads: “This link has ended.”")
     t.shot(phone, "1-4-gone")
     done("4")
     desk.goto(t.origin + "/drive/activity")

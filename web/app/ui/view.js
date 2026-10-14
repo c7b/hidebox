@@ -2,9 +2,9 @@
 // The viewer (spec §12.3.2, 14-ghost-design §4.3 and §10.2): a link (/s/<id>#…) or a delivery (/t#3…,
 // /t#4…) becomes a file in this tab. Nothing uses a view until the visitor presses Open it (the reveal
 // gate); the key leaves the address bar only after a successful open; every state carries the
-// report link. Each screen starts with the ghost in the pose of its rule; an ended link is the gone
-// page: the dashed ghost waving, the reason, and its goodbye on the Tari chain (or when it lands
-// there). Previews follow the allowlist of §12.3.4.
+// report link. Each screen starts with an icon tile for its state; an ended link says "This link has
+// ended", the reason, and (C42) only when the file left our server, that we wrote so on the Tari chain
+// (or when it lands there). Previews follow the allowlist of §12.3.4.
 import { h } from '../lib/dom.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
@@ -19,7 +19,7 @@ import { copyButton, formatDuration, icon } from './core.js';
 import { formatTari, safetyGrid } from './marks.js';
 import { errorBanner, mmss } from './errors.js';
 import { knownPanel } from './known.js';
-import { goodbye, scene, tariText } from './scene.js';
+import { scene, tariText } from './scene.js';
 import { abuseHref, setTitle, startPage } from './shell.js';
 
 const REASON_STATE = { burned: 'burned', expired: 'expired', revoked: 'revoked', owner_deleted: 'revoked', removed: 'removed' };
@@ -43,13 +43,18 @@ function head(parts) {
   return concat(...out);
 }
 
-// The receipt of an ended link (C7-k): once its exit is in a SealLog checkpoint, "We wrote its goodbye
-// on the Tari chain" and See the goodbye (/verify checks it in this browser); before that, when it
-// lands, and one goodbye we already wrote. Nothing when receipts are off.
+// The receipt of an ended link (C42): once the file's exit is in a SealLog checkpoint, "We wrote that on
+// the Tari chain" and a check in this browser (/verify); before that, when it lands, and one we already
+// wrote. A kept file: "The file stays with its owner", no chain line. Nothing when receipts are off.
 function receiptPanel(cfg, shareId) {
   if (!cfg.features?.seallog) return null;
   const box = h('div', { class: 'a-receipt', 'data-testid': 'gone-receipt', 'aria-live': 'polite' });
   exitReceipt(shareId).then((r) => {
+    // C42: a link that ends on a file its owner keeps writes nothing on the chain; the file stays.
+    if (r.receipt === 'none' || (!r.leaf_hash && !r.proof?.pending)) {
+      box.dataset.receipt = 'none';
+      return box.replaceChildren(h('p', {}, t('gone.kept')));
+    }
     const done = r.leaf_index !== null && r.checkpoint;
     box.dataset.receipt = done ? 'done' : 'pending';
     const other = cfg.judge_demo_gone && cfg.judge_demo_gone !== shareId ? `/verify#${cfg.judge_demo_gone}` : '/verify#latest';
@@ -95,15 +100,13 @@ export function viewer(root, opts) {
       h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'))], false);
   }
 
-  // The gone page: the ghost waves and fades to its dashed outline; one reason; the receipt.
+  // An ended link: one line, one reason, the receipt (C42) or that the file stays.
   function ended(reason, details = {}) {
     const state = REASON_STATE[reason] ?? 'revoked';
     opts.onEnded?.(reason);
     const date = details.ended_day ? formatDate(Date.parse(`${details.ended_day}T12:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' }) : '';
-    const say = h('span', {}, h('span', { class: 'a-bye' }, t('gone.bye')), ' ', t(`gone.${state}`, { date }));
-    const { head: top, ghost } = sceneOf('keep', t('gone.h'), say);
+    const { head: top } = sceneOf('gone', t('gone.h'), t(`gone.${state}`, { date }));
     set(state, [top, receiptPanel(cfg, shareId), h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'))], false);
-    goodbye(ghost);
   }
 
   function locked(e) {

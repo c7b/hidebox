@@ -13,6 +13,7 @@ import { chainUtxos } from './api-locker.js';
 import { idbDelete, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
 import { set as setState } from './store.js';
 import { PBKDF2_ITER } from './password.js';
+import { BRAND } from './i18n.js';
 
 const SALT = 'mutis/v1';
 const DROP_SLOTS = 16;
@@ -220,12 +221,12 @@ function fileHeader(identity) {
 
 export function keyFileName(identity) {
   const tag = identity.safetyCode ? identity.safetyCode.hex.replace(/ /g, '') : hex(b64uDecode(identity.id));
-  return `mutis-key-${tag.slice(0, 6)}.txt`;
+  return `${BRAND}-key-${tag.slice(0, 6)}.txt`;
 }
 
 export function keyFileText(identity) {
   return [
-    'mutis locker key. Keep it private: anyone with this file can open your locker.',
+    `${BRAND} drive key. Keep it private: anyone with this file can open your drive.`,
     ...fileHeader(identity),
     `Key: ${recoveryCode(identity.seed)}`,
     '',
@@ -242,7 +243,7 @@ export async function lockedKeyFileText(identity, passphrase) {
   const key = await pbkdf2Sha256(passphrase, salt, PBKDF2_ITER);
   const ct = await aesGcmEncrypt(key, iv, concat(identity.seed, checksum(identity.seed)), LOCK_AAD);
   return [
-    'mutis locker key, locked with a passphrase. You need this file and its passphrase to open your locker.',
+    `${BRAND} drive key, locked with a passphrase. You need this file and its passphrase to open your drive.`,
     ...fileHeader(identity),
     `Locked key: ${b64uEncode(concat(Uint8Array.of(1), salt, u32be(PBKDF2_ITER), iv, ct))}`,
     '',

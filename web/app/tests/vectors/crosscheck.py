@@ -151,13 +151,13 @@ def main():
     check("safety code hex", " ".join(re.findall("....", sh.hex())) == ident["safety_code"]["hex"])
     e = ident["safety_code"]["emoji"]
     expected_file = "\n".join([
-        "mutis locker key. Keep it private: anyone with this file can open your locker.",
+        "hidebox drive key. Keep it private: anyone with this file can open your drive.",
         f"Safety code: {''.join(e[:4])} {''.join(e[4:8])} {''.join(e[8:])}",
         f"Tari address (Esmeralda testnet): {ident['locker_address']}",
         f"Created: {ident['created']}",
         f"Key: {ident['recovery_code']}", ""])
     check("key file text", expected_file == ident["key_file_text"])
-    check("key file name", ident["key_file_name"] == f"mutis-key-{sh[:3].hex()}.txt")
+    check("key file name", ident["key_file_name"] == f"hidebox-key-{sh[:3].hex()}.txt")
 
     for case in f["pow"]:
         d = hashlib.sha256(unb64u(case["challenge"]) + unb64u(case["nonce"])).digest()

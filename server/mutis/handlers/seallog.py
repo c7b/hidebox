@@ -84,13 +84,19 @@ def exit_receipt(ctx, share_id: str):
         raise ApiError(404, "not_found", "No link with this id.")
     if share["state"] == "active":
         raise ApiError(409, "conflict", "This link hasn't ended.")
-    item = ctx.db.execute("SELECT exit_hour, ct_hash FROM items WHERE id = ?", (share["item_id"],)).fetchone()
+    item = ctx.db.execute("SELECT state, exit_hour, ct_hash FROM items WHERE id = ?", (share["item_id"],)).fetchone()
     out = {"reason": items.ENDED_REASON[share["state"]], "item_id": share["item_id"], "exit_hour": None,
            "leaf_hash": None}
-    if item is None or item["exit_hour"] is None or item["ct_hash"] is None:
-        out.update({"leaf_index": None, "checkpoint": None,
+    # C42 (fifth pass): a link that ends on a file its owner keeps gets no receipt, so the viewer says the
+    # file stays instead of promising a chain line. A file on its way out (doomed) gets its leaf soon.
+    leaving = item is not None and item["ct_hash"] is not None and (item["exit_hour"] is not None or item["state"] == "doomed")
+    if not leaving:
+        out.update({"receipt": "none", "leaf_index": None, "checkpoint": None, "proof": None})
+        return json_response(200, out)
+    if item["exit_hour"] is None:
+        out.update({"receipt": "pending", "leaf_index": None, "checkpoint": None,
                     "proof": {"pending": True, "next_checkpoint_eta": _eta(ctx)}})
         return json_response(200, out)
     leaf = seallog.exit_leaf(share["item_id"], item["exit_hour"])
-    out.update({"exit_hour": item["exit_hour"], "leaf_hash": leaf.hex(), **_proof(ctx, leaf)})
+    out.update({"receipt": "exit", "exit_hour": item["exit_hour"], "leaf_hash": leaf.hex(), **_proof(ctx, leaf)})
     return json_response(200, out)

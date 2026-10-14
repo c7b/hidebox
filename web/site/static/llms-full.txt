@@ -42,7 +42,7 @@ Your browser encrypts each file with AES-256-GCM before upload. We store ciphert
 
 ## Your key is the account
 No email, no password. Your key is the account. Keep it like a house key: lose it and nobody, including us, can let you back in.
-We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design.
+We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.
 Make my drive makes the key in this browser at once. Save it as a key file, locked with a passphrase if you like, and Open my drive takes it back on any device. Your drive's Tari keys come from the same key, the first time a Tari feature needs them.
 
 ## The locks
@@ -123,7 +123,7 @@ The file, as many times as its rule says (once, by default). The link is the key
 
 ### A view key
 A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those.
-For files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key.
+For files sent to a drive, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key.
 For space you rent from us we see the amount, because we're the seller. Nobody else does.
 Every party, fact by fact
 | | Our server | Anyone watching the Ootle | Someone with the full link | The person you send it to
@@ -141,7 +141,7 @@ Every party, fact by fact
 
 ### Our server, in detail
 - Sees and stores
-Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking drive id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; dead drops: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
+Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking drive id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; drop links: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
 - Sees, never stores
 Every uploader's and every opener's IP address, live (so at the moment it happens we could link who uploaded a link with who opened it); the login key at sign-in; access tokens (hashed on arrival); which drop a file was left in, and the submitter's IP; the destination Tari address of every send, the sealed 125-byte blob, which drive sent it, and by timing which link it carries, kept in the job until sent and then scrubbed.
 - Never sees
@@ -198,7 +198,7 @@ The file, as many times as its rule says (once, by default). The link is the key
 
 ### A view key
 A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those.
-For files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key.
+For files sent to a drive, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key.
 For space you rent from us we see the amount, because we're the seller. Nobody else does.
 Every party, fact by fact
 | | Our server | Anyone watching the Ootle | Someone with the full link | The person you send it to
@@ -215,11 +215,11 @@ Every party, fact by fact
 
 ### Our server, in detail
 - Sees and stores
-Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for lockers: a random-looking locker id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; invoices (pack, amount, status) and the chain outputs that paid them; dead drops: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
+Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking drive id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; invoices (pack, amount, status) and the chain outputs that paid them; drop links: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
 - Sees, never stores
-Every uploader's and every opener's IP address, live (so at the moment it happens we could link who uploaded a link with who opened it); the login key at sign-in; access tokens (hashed on arrival); which drop a file was left in, and the submitter's IP; the destination Tari address of every send, the sealed 125-byte blob, which locker sent it, and by timing which link it carries, kept in the job until sent and then scrubbed.
+Every uploader's and every opener's IP address, live (so at the moment it happens we could link who uploaded a link with who opened it); the login key at sign-in; access tokens (hashed on arrival); which drop a file was left in, and the submitter's IP; the destination Tari address of every send, the sealed 125-byte blob, which drive sent it, and by timing which link it carries, kept in the job until sent and then scrubbed.
 - Never sees
-File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your locker's Tari address, unless you make a drop or a relay send goes to it; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (there is no sharing inside {{BRAND}}).
+File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your drive's Tari address, unless you make a drop or a relay send goes to it; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (there is no sharing inside {{BRAND}}).
 
 ### Everyone else
 - A network observer
@@ -227,9 +227,9 @@ That you talk to us, timing, and padded transfer sizes. Nothing inside TLS.
 - Someone with only the link's path (no #)
 That a link exists, whether it needs a password, and its state; once it has ended, why and on what day. Not the key, the contents, the name, the real size or the open count.
 - A view-key holder
-Every delivery and payment to that address: amount, time and the memo's link text. Not the files locked to the locker, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.
+Every delivery and payment to that address: amount, time and the memo's link text. Not the files locked to the drive, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.
 - The public, through our live numbers
-The free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them; how many minutes ago someone last locked a file; and for up to 24 recent files, each at least an hour old, a coarse size and an exit rule, never whether one was opened, only when at least 8 exist in the last week. Nothing per person, but someone who knows a file's size and rule may recognise it there.
+The free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many drives were active recently, once there are enough of them; how many minutes ago someone last locked a file; and for up to 24 recent files, each at least an hour old, a coarse size and an exit rule, never whether one was opened, only when at least 8 exist in the last week. Nothing per person, but someone who knows a file's size and rule may recognise it there.
 - Our host (Hostinger)
 Everything our server stores, plus the disk and any snapshots it keeps; in principle, live memory.
 
@@ -245,8 +245,8 @@ Everything that touches a file or a key runs in your browser, with your browser'
 - Keys from keys: HKDF-SHA256 with a separate label for every purpose, so one derived key reveals nothing about another.
 - Links: every link has its own 32-byte secret, after the #. It unwraps the file key and derives an access token; our server stores only the SHA-256 of that token.
 - Passwords: PBKDF2-SHA256, combined with the link's secret by default (link + password), so a copy of our database isn't enough to guess it.
-- Lockers: one 32-byte seed made in your browser, kept in its storage, and backed up as your recovery code or key file. Everything else is derived from it: the login key (we store its SHA-256), the locker's Tari keys, a separate wallet key, and the dead-drop tags. There is no email and no password with us.
-- Safety code: 12 emoji (96 bits) derived from a locker's public keys, so two people can compare a locker out loud.
+- Drives: one 32-byte seed made in your browser, kept in its storage, and backed up as your recovery code or key file. Everything else is derived from it: the login key (we store its SHA-256), the drive's Tari keys, a separate wallet key, and the dead-drop tags. There is no email and no password with us.
+- Safety code: 12 emoji (96 bits) derived from a drive's public keys, so two people can compare a drive out loud.
 - Proof of work: SHA-256 with a number of leading zero bits, instead of a captcha. Your browser solves it in a background worker.
 - Photos: location and camera data are removed from JPEG, PNG and WebP files before encryption, unless you choose to keep the original.
 
@@ -258,14 +258,14 @@ When you send a file to a Tari address, your browser seals the link's secret to 
 Who could attack a link, and what stops them
 | Adversary | Can | What stops them | What remains
 | Network observer | see TLS metadata | HTTPS only, HSTS, Padmé size buckets | timing and volume
-| A curious or compromised server (including our host) | read the database and the stored files, change responses, watch IP addresses live | everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or locker addresses stored for logins; no sharing graph; each chunk is authenticated together with its header | can serve malicious JavaScript (see verify); can refuse service; sees the metadata listed on How it works; knows each relay send's destination; can ignore a deletion and keep ciphertext, which is useless without the key
+| A curious or compromised server (including our host) | read the database and the stored files, change responses, watch IP addresses live | everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or drive addresses stored for logins; no sharing graph; each chunk is authenticated together with its header | can serve malicious JavaScript (see verify); can refuse service; sees the metadata listed on How it works; knows each relay send's destination; can ignore a deletion and keep ciphertext, which is useless without the key
 | Someone with only the link's path | ask for its status | the key lives only after the #; opening needs an access token derived from it; link + password adds a link proof | learns that a link exists, and its state
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours
-| A view-key holder | read arrivals, amounts and memo text | files locked to a locker need its owner key too | files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)
-| Phishing through our relay | make our wallet send a link | the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address | someone can send unwanted {{BRAND}} deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs
-| Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working
+| A view-key holder | read arrivals, amounts and memo text | files locked to a drive need its owner key too | files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)
+| Phishing through our relay | make our wallet send a link | the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a drive; drop deliveries only go to the drop's own address | someone can send unwanted {{BRAND}} deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs
+| Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new drives, public and reserved budget slices with alerts | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working
 | Someone hosting abuse | upload and share | small and short-lived anonymous files, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, noindex, the report form (/fine-print#report), removal by id | we can't scan encrypted content, by design
 | Script injection or a poisoned dependency | run code in our origin | no third-party code; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash; SRI on each page's top-level scripts and stylesheets, and the hash manifest for the modules they import | browser extensions (out of scope)
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet; jobs are validated; daily budget slices; a firewall rule per user on the wallet port | at most the daily budgets
@@ -279,10 +279,10 @@ Sending a file to a Tari address, dead-drop deliveries, and paying for more room
 Check: /verify/tx/<id> shows the amount hidden, the owner a one-time key, the memo encrypted and the fee public.
 - Encrypted memos (XChaCha20-Poly1305)
 The file's key rides to one address inside the payment.
-Check: only the receiving locker opens it; any other key fails to decrypt.
+Check: only the receiving drive opens it; any other key fails to decrypt.
 - View keys, separate from spending
 Your inbox scans the chain in your browser; /watch shows what a view key sees.
-Check: for files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key. More in who sees what.
+Check: for files sent to a drive, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key. More in who sees what.
 
 ### Checked on the chain
 - Payments
@@ -290,9 +290,9 @@ Packs of more room, paid in tTARI to our receiving address with the invoice's re
 Check: our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads.
 
 ### Keys, not accounts
-- Your locker
+- Your drive
 No email, no password: a key that lives in your browser, and its Tari address.
-We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design.
+We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.
 Why not an escrow template? On the Ootle, TARI held by a template reveals its amount. Native stealth outputs keep it hidden, so that's what we use.
 
 ### How payments are checked
@@ -300,7 +300,7 @@ In September a wallet bug on the testnet showed deposits that never happened (fo
 We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads; this deployment doesn't prove it with the official Tari library.
 Read the code that does it ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 
-## The goodbye record
+## The exit record
 This deployment keeps no public record yet: SealLog is off here.
 
 ## The Tari map
@@ -315,7 +315,7 @@ The file's key rides to one address inside the payment.
 Check: only the receiving drive opens it; any other key fails to decrypt.
 - View keys, separate from spending
 Received scans the chain in your browser; /watch shows what a view key sees.
-Check: for files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key. More in who sees what.
+Check: for files sent to a drive, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key. More in who sees what.
 
 ### Checked on the chain
 - Payments
@@ -325,7 +325,7 @@ Check: our wallet sees it and a Tari-run public indexer confirms it exists on th
 ### Keys, not accounts
 - Your drive
 No email, no password: a key that lives in your browser, and its Tari address.
-We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design.
+We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.
 Why not an escrow template? On the Ootle, TARI held by a template reveals its amount. Native stealth outputs keep it hidden, so that's what we use.
 
 ### How payments are checked
@@ -337,7 +337,7 @@ Read the code that does it ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 SRI only pins files to this page; it can't protect you from us. What can: comparing what we serve with the published source, and running your own copy.
 - Every build writes a manifest (/.well-known/mutis-manifest.json) with the SHA-256 of every file this site serves and the git commit it came from.
 - tools/verify-deploy.py rebuilds the site from a clean checkout of that commit, downloads every file in the live manifest, and prints any difference.
-$ git clone {{REPO_URL}} $ cd mutis $ python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}
+$ git clone {{REPO_URL}} $ cd hidebox $ python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}
 It needs git and Python 3.11 or newer. This checks the site now. A browser can't pin it for you between visits.
 
 ### Check it in your devtools

@@ -1,0 +1,49 @@
+/* SPDX-License-Identifier: MIT — fifth pass (fix log, "the drive"): the link page (view.html) and the task
+   pages (app.html: /send, /watch, /verify, /d/…) in the drive's look (16-drive-design §2, DESIGN.md): Geist,
+   shadcn buttons (a medium radius, 1px borders), and a Lucide tile where the ghost stood. Loaded after
+   app.css. The folder viewer and the pay page switch to the drive's own sheets and turn this one off. */
+@font-face {
+  font-family: "Geist";
+  src: url("/shared/fonts/geist/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --t-hero: 600 clamp(2.25rem, 1.6rem + 2.2vw, 3rem)/1.1 var(--font);
+  --t-h2: 600 1.5rem/1.333 var(--font);
+  --t-h3: 600 1.125rem/1.4 var(--font);
+  --t-say: 400 1.125rem/1.6 var(--font);
+  --t-body: 400 1rem/1.6 var(--font);
+  --t-ui: 500 .875rem/1.25 var(--font);
+  --t-small: 400 .875rem/1.6 var(--font);
+}
+.a-page .a-scene-h { letter-spacing: -.02em; }
+.a-page .a-say { color: var(--fg-2); }
+
+/* buttons: shadcn's outline and default variants */
+:is(.md-root, .a-page) .a-btn {
+  border-width: 1px; border-color: var(--hair); border-radius: var(--r-input); background: var(--bg-raised);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .05); padding-inline: var(--s-4);
+}
+:is(.md-root, .a-page) .a-btn:hover { background: var(--bg-sunken); }
+:is(.md-root, .a-page) .a-btn:active { scale: none; }
+:is(.md-root, .a-page) .a-btn--primary { background: var(--act); color: var(--on-act); border-color: var(--act); box-shadow: none; }
+:is(.md-root, .a-page) .a-btn--primary:hover { background: var(--act-hover); color: var(--on-act); }
+:is(.md-root, .a-page) .a-btn--tari { border-color: var(--hair); color: var(--tari-text); }
+:is(.md-root, .a-page) .a-btn--big { min-height: 48px; font-size: 1rem; padding-inline: var(--s-5); }
+
+/* the screen's icon: a tile, as the drive's empty states draw it */
+.a-page .a-figure {
+  inline-size: 3rem; block-size: 3rem; display: grid; place-items: center; filter: none;
+  border-radius: .75rem; background: var(--bg-sunken); color: var(--fg);
+}
+.a-page .a-figure .a-tile-icon { width: 1.5rem; height: 1.5rem; }
+.a-page :is(.a-scene--small, .a-scene--row) .a-figure, .a-page .a-figure.a-choice-ghost { inline-size: 2.5rem; block-size: 2.5rem; }
+.a-page .a-figure[data-pose="oops"] { color: var(--exit-text); }
+.a-page .a-figure[data-pose="gone"] { color: var(--fg-2); }
+@media (min-width: 760px) {
+  .a-page .a-choice:first-child { grid-template-columns: 2.5rem minmax(0, 1fr); }
+  .a-page .a-choice:first-child .a-figure.a-choice-ghost { inline-size: 2.5rem; }
+}
