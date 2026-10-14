@@ -1,6 +1,30 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- integration, pass 1 -->
+## 2026-10-13: the drive replaces the locker (research 16-drive-design §15 steps 11 to 13, milestone M1)
+
+- **Merged** lanes S (steps 1, 2, 4, 6), A1 (3, 5, 7, 9) and A2 (8, 10) without conflicts; every suite green
+  on the merged tree (server 257, site 29, UI 637, app 9 steps, deploy).
+- **Home** (§11): "Your private drive." with Make my drive (`/drive?make`) and Open my drive (`/drive?open`)
+  beside an inert slice of a drive with its rule badges; **Just share one thing** keeps the anonymous widget
+  (its ids and A-06 unchanged; no Geist or drive code on `/`); Share it your way; Tari does the private
+  parts (the pay rows only when `features.pay_to_open` is on). The widget takes a scanned `/#to=` address
+  without the old figure, so the drive's address code still opens a send on a phone.
+- **The name** is hidebox (`BRAND` in tools/build.py and web/app/lib/i18n.js); the internal codename stays.
+- **The site and the older app pages** read the drive's neutral palette through `/shared/tokens.css`
+  (no growth in the widget's bytes); the header is the name, three pages and the light switch.
+- **Routes** (§12): `/locker` → `/drive`, `/inbox` → `/drive/received`, `/upgrade` → `/drive/storage#more`
+  (301, in the Caddyfile and `tests/e2e/headers_spec.py`); `/send`, `/watch`, `/verify`, `/d/*`, `/s/*`
+  and `/t` unchanged.
+- **/judges** follows the drive: six steps on a computer and a phone, then four for the Tari part.
+- **E2E** (step 12): E-08 moved to the drive; new E-26 (a folder and its restore), E-27 (a folder link,
+  Once, zip), E-28 (move into and out of a shared folder; 403 mid-visit), E-31 (opens per hour; no IP,
+  user agent or name in the database or backups); E-03, E-18, E-19, E-22, E-24 updated; the chain
+  scenarios and E-J read Received, Settings and Storage.
+- **Copy** (step 13): `tools/check-copy.py` knows C32 to C47 and bans the two retired sentences.
+<!-- /integration, pass 1 -->
+
 <!-- lane S -->
 ## 2026-10-13: the drive's server, steps 1, 2, 4 and 6 (research 16-drive-design §15)
 

@@ -56,7 +56,7 @@ export async function mountWidget(root, opts) {
   }
 
   const zone = createZone({
-    hint: opts.variant !== 'hero',
+    hint: !figure,
     windowDrops: opts.windowDrops,
     textMax: cfg.text_max_chars,
     live,
