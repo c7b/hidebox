@@ -453,7 +453,7 @@
           <h3><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-shield-check"/></svg>Checked on the chain</h3>
           <dl>
             <div><dt>Payments</dt><dd>More space, paid in tTARI to our receiving address with the invoice's reference inside it; the reference travels in the encrypted memo, so nothing on chain shows which invoice was paid, or by whom.</dd><dd class="proof-line"><span data-when="proof=proven" hidden>Check: the official Tari library opens the commitment to the exact amount, then a Tari-run public indexer shows it committed.</span><span data-when="proof=wallet">Check: our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads.</span></dd></div>
-            <div data-when="pay_to_open=on" hidden><dt>Pay links</dt><dd>Our server releases its half of a pay link's key only once a Tari-run public indexer shows the payment committed.</dd><dd class="proof-line">Check: the buyer's page shows each step; the owner's Received lists the payment with its tx.</dd></div>
+            <div data-when="pay_to_open=on" hidden><dt>Pay links</dt><dd>Our server releases its half of a pay link's key only once a Tari-run public indexer shows the payment committed.</dd><dd class="proof-line">Check: the buyer's page shows each step and links the payment's tx; the owner's Received lists the payment.</dd></div>
             <div data-when="seallog=on" hidden><dt>SealLog, a template of our own</dt><dd>Public hashes of stored files, and a receipt for every file that leaves, on the Ootle.</dd><dd class="proof-line">Check: <code>/verify</code> checks an inclusion proof against the root on chain.</dd></div>
           </dl>
         </div>

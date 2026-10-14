@@ -42,6 +42,7 @@ function phaseOf(P) {
 }
 
 const needsOwner = (P) => !(P.status?.demo || P.claim?.how === 'test');
+const txOf = (P) => [P.status?.tx_id, P.claim?.tx].find((x) => typeof x === 'string' && /^[0-9a-f]{64}$/.test(x)) ?? null;
 
 function stepper(P, phase) {
   const keys = ['buy.step.wait', 'buy.step.seen', 'buy.step.chain', ...(needsOwner(P) ? ['buy.step.owner'] : []), 'buy.step.open'];
@@ -314,7 +315,9 @@ export async function payPage(root, cfg, shareId) {
         h('p', { class: 'small', 'data-testid': 'pay-left', 'data-left': String(P.status?.views_left ?? '') },
           t('buy.left', { count: P.status?.views_left ?? 0, date: day(until()) })),
         phase === 'open' ? button(P.busy === 'open' ? t('buy.opening') : t('viewer.open'), { size: 'lg', glyph: folder ? 'folder-open' : 'download', testid: 'pay-open', 'data-autofocus': '', disabled: P.busy ? true : null, onclick: openIt }) : null,
-        P.identity ? h('a', { class: 'btn', 'data-variant': 'outline', href: '/drive/received', 'data-testid': 'pay-keep' }, icon('hard-drive'), t('buy.keep')) : null));
+        P.identity ? h('a', { class: 'btn', 'data-variant': 'outline', href: '/drive/received', 'data-testid': 'pay-keep' }, icon('hard-drive'), t('buy.keep')) : null,
+        // integration, pass 2: the payment's tx (test money's from our demo wallet, or this drive's own), §10 track two step 6
+        txOf(P) ? h('a', { class: 'a-more', href: `/verify/tx/${txOf(P)}`, 'data-testid': 'pay-tx', 'data-tx': txOf(P) }, t('chain.sees'), icon('arrow')) : null));
     } else if (phase === 'expired' || phase === 'void') {
       content.append(button(t('buy.again'), { variant: 'outline', glyph: 'rotate-ccw', testid: 'pay-again', onclick: restart }));
     }
