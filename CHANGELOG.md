@@ -1,6 +1,26 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- integration, pass 2 -->
+## 2026-10-14: pay to open in production with test money (research 16-drive-design §15 step 17, milestone M2)
+
+- **Merged** lane S (step 14, the server: sales address, paid links, `/p` routes, claims, the open gate,
+  `verify_sales`, the release gate; migration 005), lane A1 (step 11's reading pages, cards, README) and lane
+  A2 (steps 15 and 16, the client: the seller's dialog, the buyer page, the owner check) without conflicts;
+  every suite green on the merged tree (server 306, site 29, UI 628, app 9 steps, deploy).
+- **E2E** (step 17): new E-29 (a drive sells a folder; a phone with no drive pays with test money; three
+  names, one opens; a second stranger gets 402) and E-30 (a second drive pays from its own wallet, waits for
+  the owner's check, opens); E-J's track two follows §10 when `features.pay_to_open` is on (a pay link, test
+  money, Received, What the chain sees). The dev stack can't stand in for E-29: its fake keys aren't curve
+  points, so the browser can't seal to its watch address (tests/e2e/README.md).
+- **What the chain sees for test money:** the claim's poll carries `tx_id` once our demo wallet has sent it
+  (the finished job keeps the claim's ref; its payload is scrubbed), and the buyer page links it.
+  `/judges` track two steps 5 and 6 and `/made#pay` say where the tx is.
+- **Home:** the widget's result is one column inside the card, so the code to scan no longer covers the
+  words at 1440.
+- **Production:** `features.pay_to_open = true`.
+<!-- /integration, pass 2 -->
+
 <!-- lane app1, round 3 -->
 ## 2026-10-14: the reading pages, the cards and the README in the drive's clothes (16-drive-design §10, §11)
 
