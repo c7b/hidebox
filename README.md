@@ -30,7 +30,7 @@ Built for the Tari Ootle October 2026 contest, "Spooky Secrets". MIT licensed.
 2. On a computer, drop a small folder on it. Each file says Locking, then Uploading.
 3. Open the folder. On one file tap **Share**, keep **Once**, turn on **Delete it from my drive
    after**, and tap **Make link**.
-4. Open the link in a private window and tap **Open it**. Reload: "It's gone."
+4. Open the link in a private window and tap **Open it**. Reload: "This link has ended."
 5. Back in the drive, open **Activity**: opened, then "It left your drive", and soon its receipt on
    the Tari chain with its tx. **What our server knows** shows the rest: a padded size, the hour,
    the rule, how many times it opened each hour, and its folder.
