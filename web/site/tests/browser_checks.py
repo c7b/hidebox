@@ -177,8 +177,9 @@ WORDS = """((foldOnly) => {
 
 
 def check_word_budget(browser):
-    """14-ghost-design §4.4, §17 step 4: the home page says at most 120 words above the fold and 400 in all,
-    on a phone (390 × 844) and a desktop (1440 × 900); one h1, the ghost is the first thing to press."""
+    """16-drive-design §11 (the word budget of 14-ghost-design §4.4 kept): the home page says at most 120 words
+    above the fold and 400 in all, on a phone (390 × 844) and a desktop (1440 × 900); Make my drive is the
+    first thing to press in the page."""
     problems = []
     with server() as origin:
         for width, height, mobile in ((390, 844, True), (1440, 900, False)):
@@ -191,9 +192,9 @@ def check_word_budget(browser):
             if total > 400:
                 problems.append(f"home @{width}: {total} words in all (at most 400)")
             first = page.eval("(() => { const b = [...document.querySelectorAll('main button, main a, main input, main textarea')]"
-                              ".find((e) => e.checkVisibility() && e.getBoundingClientRect().width > 2); return b ? b.id : ''; })()")
-            if first != "drop":
-                problems.append(f"home @{width}: the first control in the page is {first!r}, not the ghost")
+                              ".find((e) => e.checkVisibility() && e.getBoundingClientRect().width > 2); return b ? b.dataset.testid || b.id : ''; })()")
+            if first != "home-make":
+                problems.append(f"home @{width}: the first control in the page is {first!r}, not Make my drive")
     return problems
 
 
@@ -221,7 +222,7 @@ def check_variants(browser):
             if "direct" in args and "sponsor wallet" not in text:
                 problems.append("direct mode: /made doesn't say sends link back to our sponsor wallet")
             page.goto(origin + "/judges", settle=1.5)
-            pay = "Pay from this browser" if "direct" in args else "Pay with demo tTARI"
+            pay = "Pay from my drive" if "direct" in args else "Pay with test money"
             if pay not in page.eval("document.body.innerText"):
                 problems.append(f"{args}: /judges doesn't name this mode's way to pay ({pay})")
     return problems
@@ -319,32 +320,21 @@ def check_interactions(browser):
     """The light switch: named "Lights", aria-pressed follows the theme, lights off persists across a
     reload; the judge pass is validated, lower-cased and kept where the app reads it (localStorage
     'mutis.judge' with its expiry, app-core store.js), and a /judges#pass=… link saves it on opening; the
-    home's ghost acts out the widget's states (14-ghost-design §3) and the words step aside after a drop."""
+    home's widget opens the note and comes back from it."""
     problems = []
     with server() as origin:
+        # The drive's home (16-drive-design §11): the anonymous widget sits in its card; Or write one opens
+        # the note and Cancel brings the zone back (the drop itself is the app's UI flow home-text).
         page = browser.page()
         page.goto(origin + "/", settle=1.5)
-        pose = ("[document.querySelector('#drop svg.ghost').dataset.state || 'ready', document.body.dataset.phase,"
-                " document.querySelector('.words').checkVisibility(), document.body.classList.contains('catching')]")
-        seen = {"idle": page.eval(pose)}
-        # A real file over the window, then away again (the drop itself is the app's UI flow window-drop).
-        over = {"items": [], "files": [str(Path(serve.FIX / "canary.json"))], "dragOperationsMask": 1}
-        page.cmd("Input.dispatchDragEvent", {"type": "dragEnter", "x": 300, "y": 500, "data": over})
-        page.b.pump(0.4)
-        seen["catch"] = page.eval(pose)
-        page.eval("window.dispatchEvent(new DragEvent('dragleave'))")  # the file leaves (CDP has no leave event)
-        page.b.pump(0.4)
-        seen["left"] = page.eval(pose)
         page.eval("document.querySelector('[data-testid=\"drop-write\"]').click()")
         page.b.pump(0.3)
-        seen["write"] = page.eval(pose) + [page.eval("document.activeElement?.dataset?.testid")]
+        wrote = page.eval("document.activeElement?.dataset?.testid")
         page.eval("[...document.querySelectorAll('.md-compose button')].find((b) => b.textContent === 'Cancel').click()")
         page.b.pump(0.3)
-        seen["cancel"] = page.eval(pose) + [page.eval("document.activeElement?.id")]
-        want = {"idle": ["ready", "idle", True, False], "catch": ["catch", "idle", True, True], "left": ["ready", "idle", True, False],
-                "write": ["ready", "write", False, False, "drop-textarea"], "cancel": ["ready", "idle", True, False, "drop"]}
-        if seen != want:
-            problems.append(f"the home ghost and its phases: {seen}")
+        back = page.eval("!!document.querySelector('[data-testid=\"drop-write\"]')")
+        if (wrote, back) != ("drop-textarea", True):
+            problems.append(f"the home's widget: Or write one focuses the note ({wrote}); Cancel brings the zone back ({back})")
         page = browser.page()
         page.goto(origin + "/how")
         switch = "document.querySelector('[data-theme-toggle]')"
@@ -379,7 +369,7 @@ def check_interactions(browser):
 
 CHECKS = [("no web fonts (system faces only)", check_fonts), ("every page, desktop and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
-          ("home words: 120 above the fold, 400 in all, the ghost first", check_word_budget),
+          ("home words: 120 above the fold, 400 in all, Make my drive first", check_word_budget),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions)]

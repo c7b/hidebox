@@ -696,12 +696,12 @@ def send(t):
     a.wait("!!document.querySelector('[data-testid=\"inbox-item\"][data-source=\"send\"]')", 120)
     a.eval("document.querySelector('[data-testid=\"inbox-item\"][data-source=\"send\"] button').click()")
     t.check(a.wait_state("view-root", VIEW_END, 120) == "opened" and a.text("view-text") == seal_text_send, "the recipient opens what was sent")
-    # The locker's address scanned by a phone: its home opens with the courier ghost, the send step filled in.
+    # The drive's address scanned by a phone: the home's widget says where it goes, the send step filled in.
     m = t.actor("iphone")
     home(t, m, f"/#to={address}")
-    m.wait("document.querySelector('#drop svg.ghost')?.dataset.state === 'courier' && !!document.querySelector('[data-testid=\"to-address\"]')", 30)
-    t.check(m.text("to-address") == f"To {address[:15]}…{address[-6:]}" and not m.eval("document.querySelector('#drop-say').checkVisibility()"),
-            "the scanned address opens the home with the courier ghost and where it goes")
+    m.wait("!!document.querySelector('[data-testid=\"to-address\"]')", 30)
+    t.check(m.text("to-address") == f"To {address[:15]}…{address[-6:]}",
+            "the scanned address opens the home's widget with where it goes")
     t.shot(m, "home-390-courier")
     seal_text(m, "scanned and sent")
     m.wait(f"document.querySelector('[data-testid=\"send-recipient\"]')?.value === {json.dumps(address)} && !!document.querySelector('[data-testid=\"send-safety\"]')", 180)
@@ -1022,7 +1022,7 @@ def dark(t):
     a = t.actor("desktop", dark=True, reduced_motion=True)
     home(t, a)
     url = seal_text(a, "in the dark")
-    t.check(a.eval("getComputedStyle(document.body).backgroundColor") == "rgb(19, 24, 58)", "the night background in dark mode")
+    t.check(a.eval("getComputedStyle(document.body).backgroundColor") == "rgb(10, 10, 10)", "the drive's dark background in dark mode")
     t.shot(a, "home-1440-dark-sealed")
     b = t.actor("iphone", dark=True, reduced_motion=True)
     t.check(open_link(b, url) == "opened", "opens in dark mode with reduced motion")
@@ -1218,7 +1218,8 @@ def ghost_states(t):
     states = json.dumps(list(GHOST_POSES))
     for dark in (False, True):
         a = t.actor("desktop", dark=dark)
-        home(t, a)
+        a.goto(t.origin + "/send")  # the app's pages still carry the partial; the drive's home has no figure
+        a.wait("!!document.getElementById('ghost-tpl')", 60)
         t.check(a.eval("document.getElementById('ghost-tpl')?.content.querySelectorAll('svg.ghost').length") == 1,
                 "the page carries the ghost partial in <template id=ghost-tpl>")
         t.check(a.eval(SHEET % states) == len(GHOST_POSES), f"{len(GHOST_POSES)} ghosts cloned from the partial")
@@ -1233,7 +1234,8 @@ def ghost_states(t):
         t.check((glow != "none") == dark, f"only the lights-off ghost glows ({glow})")
         t.shot(a, f"ghost-states-{'dark' if dark else 'light'}")
     calm = t.actor("iphone", reduced_motion=True)
-    home(t, calm)
+    calm.goto(t.origin + "/send")
+    calm.wait("!!document.getElementById('ghost-tpl')", 60)
     calm.eval(SHEET % states)
     calm.b.pump(0.5)
     running = calm.eval("document.getAnimations().filter((x) => x.playState === 'running' && x.effect?.target?.closest?.('#ghost-sheet')).length")
@@ -1286,7 +1288,7 @@ def wow_page(t, device="desktop", reduced=False, share=False):
     p = t.actor(device, reduced_motion=reduced)
     p.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": WOW_WATCH + (FAKE_SHARE if share else "")})
     home(t, p)
-    p.wait("!!document.querySelector('.md-root') && document.body.dataset.phase === 'idle'", 30)
+    p.wait("!!document.querySelector('.md-root')", 30)
     return p
 
 
@@ -1331,184 +1333,8 @@ def press_paste(p):
     p.cmd("Input.dispatchKeyEvent", {"type": "keyUp", "key": "v", "code": "KeyV", "windowsVirtualKeyCode": 86, "modifiers": 2})
 
 
-@scenario("window-drop", "The window drop: caught before the drop, the blank note, the wow under a second, honest Copy, Share, focus, one live region, paste, typing, the second drop")
-def window_drop(t):
-    note = t.fixture("notes.txt")
-    for device in ("desktop", "iphone"):
-        phone = device == "iphone"
-        p = wow_page(t, device, share=phone)
-        t.shot(p, f"dropflow-{'390' if phone else '1440'}-idle")
-        drag(p, "dragEnter", note)
-        drag(p, "dragOver", note, 220, 620)
-        p.b.drain(0.45)
-        caught = p.eval("[document.body.classList.contains('catching'), document.querySelector('#drop svg.ghost').dataset.state,"
-                        " Number(getComputedStyle(document.querySelector('.site-footer')).opacity)]")
-        t.check(caught[0] and caught[1] == "catch" and caught[2] < 0.2,
-                f"{device}: a file over the window is caught before the drop (scrim, open mouth, footer away: {caught})")
-        t.shot(p, f"dropflow-{'390' if phone else '1440'}-catch")
-        drag(p, "drop", note, 220, 620)
-        flyer = p.wait("(() => { const f = document.querySelector('body > .flyer'); return f ? [f.textContent, f.querySelectorAll('text, foreignObject, img').length] : null; })()", 5)
-        t.check(flyer == ["", 0], f"{device}: the flying note is blank (no text, no name: {flyer})")
-        p.wait(f"{PHASE} === 'done' && {LINK}.startsWith('http')", 60)
-        p.b.drain(1.0)
-        times = wow_times(p)
-        kinds = {k for k, _ in times["anims"]}
-        t.check({"flyer", "gf", "ghost", "md-card"} <= kinds and all(d in (320, 380) for _, d in times["anims"]),
-                f"{device}: the wow is the flight (380 ms), the gulp, the glide and the unroll (320 ms each), nothing else ({times['anims']})")
-        t.check(times["copied_ms"] is not None and times["copied_ms"] <= times["result_ms"] + 50,
-                f"{device}: the copy is tried the moment the link exists, before the result ({times})")
-        t.check(times["result_ms"] >= 600 and times["settled_ms"] - max(times["copied_ms"], 620) <= 600,
-                f"{device}: the result starts on the gulp's last frames and settles at once after it ({times})")
-        url = p.eval(LINK)
-        label = p.eval("document.querySelector('[data-testid=\"copy-link\"]').textContent.trim()")
-        live = p.eval("document.querySelector('.md-live').textContent")
-        t.check(label == "Copied" and live == "Link made. Copied." and p.eval("navigator.clipboard.readText()") == url,
-                f"{device}: Copied only after the write went through; the live region says so ({label!r}, {live!r})")
-        focus = p.eval("document.activeElement?.dataset?.testid")
-        t.check(focus == ("share-link" if phone else "copy-link"), f"{device}: focus lands on {'Share' if phone else 'Copy link'} ({focus})")
-        t.check(p.exists("share-link") == phone and (not phone or "a-btn--primary" in p.attr("share-link", "class")),
-                f"{device}: Share {'is the primary' if phone else 'only where there is a share sheet on a touch screen'}")
-        statuses = p.eval("[...document.querySelectorAll('[role=status]')].filter((e) => !e.closest('[aria-hidden=true]')).map((e) => e.textContent)")
-        t.check(len(statuses) == 1 and "http" not in statuses[0], f"{device}: one live region, and it never reads the link ({statuses})")
-        small = [c for c in p.eval(RESULT_CONTROLS) if c[1] < 44]
-        t.check(not small, f"{device}: every control on the result is at least 44 px tall ({small})")
-        t.check(not p.ax_unnamed(), f"{device}: every control on the result is named ({p.ax_unnamed()[:4]})")
-        t.check(no_hscroll(p), f"{device}: no horizontal scroll on the result")
-        if phone:
-            t.check(not p.exists("link-qr") and not [r for r in p.requests if r["url"].endswith("/app/ui/qr.js")],
-                    "phone: no code to scan, and the encoder never loads")
-        else:
-            payload, px, got = scan_code(p, "link-qr")
-            cap = p.eval("document.querySelector('[data-testid=\"link-qr\"] figcaption').textContent")
-            t.check(payload == url and px >= 4, f"desktop: the code beside the link reads back as the link (version {got['version']}-{got['ecl']}, {px:.2f} px a module)")
-            t.check(cap == "Scan it to open it on a phone. That uses its one look.", f"desktop: its caption says a scan uses the one look ({cap!r})")
-        t.shot(p, f"dropflow-{'390' if phone else '1440'}-result")
-        if phone:
-            p.click("share-link")
-            t.check(p.wait("window.__shared?.url ?? ''", 5) == url, "phone: Share hands the full link to the share sheet")
-        # A second file on the result: caught again, a new link, the rule back to once.
-        drag(p, "dragEnter", note, 300, 300)
-        p.b.drain(0.3)
-        t.check(p.eval("document.body.classList.contains('catching') && document.querySelector('#drop').checkVisibility()"),
-                f"{device}: a file over the result is caught too (the big ghost comes back)")
-        drag(p, "drop", note, 300, 300)
-        second = p.wait(f"{PHASE} === 'done' && {LINK} !== {json.dumps(url)} && {LINK}.startsWith('http') ? {LINK} : ''", 60)
-        t.check(bool(second), f"{device}: a drop on the result makes a new link")
-        # The clipboard refuses the copy the user asks for: the label stays honest, the link is selected.
-        p.eval("navigator.clipboard.writeText = () => Promise.reject(new DOMException('no', 'NotAllowedError'))")
-        p.click("copy-link")
-        p.wait("document.querySelector('.md-root > .a-toast:not([hidden])')?.textContent === 'Select the link and copy it.'", 5)
-        box = p.eval("(() => { const r = document.querySelector('.md-root > .a-toast').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })()")
-        picked = p.eval("[document.activeElement?.dataset?.testid, document.activeElement.selectionEnd - document.activeElement.selectionStart]")
-        t.check(p.eval("document.querySelector('[data-testid=\"copy-link\"]').textContent.trim()") == "Copy link" and picked[0] == "sealed-link" and picked[1] == len(second),
-                f"{device}: a refused copy: the label says Copy link and the whole link is selected ({picked})")
-        t.check(box[1] <= 70 and box[0] <= p.device["width"] - 32, f"{device}: the toast fits ({box})")
-
-    # The clipboard refuses or never answers (Safari and Firefox without a tap): the result still comes.
-    for mode, fn in (("reject", "() => Promise.reject(new DOMException('needs a user gesture', 'NotAllowedError'))"),
-                     ("hang", "() => new Promise(() => {})")):
-        p = wow_page(t, "iphone")
-        p.eval(f"navigator.clipboard.writeText = {fn}")
-        p.set_files("drop-input", [note])
-        p.wait(f"{PHASE} === 'done' && {LINK}.startsWith('http')", 60)
-        p.b.drain(1.0)
-        got = p.eval("[document.querySelector('[data-testid=\"copy-link\"]').textContent.trim(), document.querySelector('.md-live').textContent,"
-                     " getComputedStyle(document.querySelector('[data-testid=\"copy-link\"] svg')).display]")
-        want = "Link made. Press Copy link." if mode == "reject" else "Link made."
-        t.check(got == ["Copy link", want, "none"], f"clipboard {mode}: the result shows, the label says Copy link, the live region says {want!r} ({got})")
-        if mode == "reject":
-            t.shot(p, "dropflow-390-noclip")
-
-    # Paste text: the note opens already written, Lock it focused; one key locks it; nothing of it flies.
-    p = wow_page(t)
-    p.eval("navigator.clipboard.writeText('hunter2 my bank PIN')")
-    p.eval("document.activeElement.blur()")
-    press_paste(p)
-    p.b.drain(0.3)
-    pasted = p.eval(f"[{PHASE}, document.querySelector('[data-testid=\"drop-textarea\"]')?.value, document.activeElement?.dataset?.testid]")
-    t.check(pasted == ["write", "hunter2 my bank PIN", "drop-seal-text"], f"pasted text opens the note, written, with Lock it focused ({pasted})")
-    t.shot(p, "dropflow-1440-paste")
-    p.key("Enter", text="\r")
-    blank = p.wait("(() => { const f = document.querySelector('body > .flyer'); return f ? [f.textContent] : null; })()", 5)
-    p.wait(f"{PHASE} === 'done' && {LINK}.startsWith('http')", 60)
-    t.check(blank == [""], f"Enter locks it, and the note that flies is blank ({blank})")
-
-    # Paste an image: it goes straight in.
-    p = wow_page(t)
-    p.eval("(async () => { const png = Uint8Array.from(atob(%s), (c) => c.charCodeAt(0));"
-           " await navigator.clipboard.write([new ClipboardItem({'image/png': new Blob([png], {type: 'image/png'})})]); })()"
-           % json.dumps(base64.b64encode(TINY_PNG).decode()))
-    p.eval("document.activeElement.blur()")
-    press_paste(p)
-    t.check(bool(p.wait(f"{PHASE} === 'done' && {LINK}.startsWith('http') ? {LINK} : ''", 60)), "a pasted image goes straight in and makes a link")
-
-    # Typing starts a note; Ctrl + Enter locks it; the live region speaks (E-20's path).
-    p = wow_page(t)
-    p.cmd("Input.dispatchKeyEvent", {"type": "keyDown", "key": "T", "code": "KeyT", "text": "T", "windowsVirtualKeyCode": 84, "modifiers": 8})
-    p.cmd("Input.dispatchKeyEvent", {"type": "keyUp", "key": "T", "code": "KeyT", "windowsVirtualKeyCode": 84, "modifiers": 8})
-    p.b.drain(0.3)
-    typed = p.eval(f"[{PHASE}, document.querySelector('[data-testid=\"drop-textarea\"]')?.value]")
-    p.type_text("he spare key is under the blue pot.")
-    p.key("Enter", modifiers=2)
-    p.wait(f"{PHASE} === 'done' && {LINK}.startsWith('http')", 60)
-    live = p.wait("(document.querySelector('.md-live')?.textContent || '').trim()", 5)
-    t.check(typed == ["write", "T"] and live.startswith("Link made."), f"a key outside a field starts a note; Ctrl + Enter locks it ({typed}, {live!r})")
-
-    # One tap on the ghost opens the picker (phone); Enter on the ghost does (keyboard); focus on Copy after.
-    for device in ("iphone", "desktop"):
-        p = wow_page(t, device)
-        chooser = []
-        p.on("Page.fileChooserOpened", lambda params, seen=chooser: seen.append(params))
-        p.cmd("Page.setInterceptFileChooserDialog", {"enabled": True})
-        if device == "iphone":
-            tap(p, "#drop")
-        else:
-            p.eval("document.getElementById('drop').focus()")
-            p.key("Enter", text="\r")
-        p.b.drain(1.0)
-        t.check(bool(chooser), f"{device}: {'one tap on' if device == 'iphone' else 'Enter on'} the ghost opens the file picker")
-        p.cmd("Page.setInterceptFileChooserDialog", {"enabled": False})
-
-    # Busy: the window takes nothing else; the percent shows only for an upload that runs past 1.5 s.
-    for device in ("desktop", "iphone"):
-        p = wow_page(t, device)
-        p.cmd("Network.emulateNetworkConditions", {"offline": False, "latency": 40, "downloadThroughput": -1, "uploadThroughput": 64 * 1024})
-        p.set_files("drop-input", [t.fixture("report.dat")])
-        early = p.wait("document.querySelector('[data-testid=\"seal-progress\"]')?.textContent ?? ''", 10)
-        if t.shots:  # at once: the dev server's upload is quick, and the busy ghost doesn't wait for a picture
-            p.screenshot(os.path.join(t.shots, f"dropflow-{'390' if device == 'iphone' else '1440'}-busy.webp"))
-        drag(p, "dragEnter", note)
-        p.b.drain(0.3)
-        ignored = not p.eval("document.body.classList.contains('catching')")
-        late = p.wait("(() => { const s = document.querySelector('[data-testid=\"seal-progress\"]')?.textContent || ''; return /percent done/.test(s) ? s : ''; })()", 30)
-        busy = p.eval(f"[{PHASE}, document.querySelector('#drop svg.ghost').dataset.state]")
-        t.check(early == "Locking it up." and bool(late) and ignored and busy == ["busy", "busy"],
-                f"{device}: busy: the ghost chews, 'Locking it up.', the percent after 1.5 s ({late!r}), a file over the window waits")
-        drag(p, "dragCancel", note)
-        p.cmd("Network.emulateNetworkConditions", {"offline": False, "latency": 0, "downloadThroughput": -1, "uploadThroughput": -1})
-        p.wait(f"{PHASE} === 'done'", 120)
-
-    # An error: said once, in role=alert; the ghost holds its cheeks; the promise steps aside.
-    for device in ("iphone", "desktop"):
-        p = wow_page(t, device)
-        p.set_files("drop-input", [t.fixture("too-big.bin")])
-        p.wait("!!document.querySelector('[data-testid=\"error-banner\"][role=alert]')", 30)
-        oops = p.eval(f"[document.querySelector('#drop svg.ghost').dataset.state, {PHASE}, document.querySelector('#drop-say').checkVisibility(),"
-                      " document.querySelector('.md-live').textContent]")
-        t.check(oops[:3] == ["oops", "idle", False] and "free locker" not in oops[3],
-                f"{device}: an error is said once (role=alert), the ghost says oops, the promise steps aside ({oops})")
-        t.shot(p, f"dropflow-{'390' if device == 'iphone' else '1440'}-oops")
-
-    # Reduced motion: a cut.
-    for device in ("iphone", "desktop"):
-        p = wow_page(t, device, reduced=True)
-        drag(p, "dragEnter", note)
-        drag(p, "drop", note)
-        p.wait(f"{PHASE} === 'done' && {LINK}.startsWith('http')", 60)
-        p.b.drain(0.4)
-        times = wow_times(p)
-        t.check(not times["anims"] and times["result_ms"] - times["copied_ms"] < 200,
-                f"{device}: reduced motion is a cut (no animation; the result {times['result_ms'] - times['copied_ms']} ms after the link)")
+# window-drop retired with the ghost's home (16-drive-design §11): the drive's home seats the widget in a
+# card with its own Choose a file; the whole window no longer takes a drop there.
 
 
 # --- the rule on the figure (14-ghost-design §5, §17 step 6) --------------------------------------------
