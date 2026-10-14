@@ -523,9 +523,9 @@ def ej(t: T) -> None:
         done("T4")
         row = ("(() => { const r = document.querySelector('[data-testid=\"sales-row\"]'); return !!r && r.dataset.check === 'ok'"
                " && !!r.querySelector('[data-testid=\"sales-test\"]') && !!r.querySelector('[data-testid=\"sales-checked\"]')"
-               " && !!r.querySelector('[data-testid=\"sales-tx\"]'); })()")
+               " && !!r.querySelector('[data-testid=\"sales-tx\"]') && r.textContent.includes(" + json.dumps(folder) + "); })()")
         t.check(bool(desk.wait(row, 300)),
-                "T5: Received, Payments (open since T1, no reload): the payment, marked Test money, Checked and Yours to spend, with its tx")
+                "T5: Received, Payments (open since T1, no reload): the folder's payment, marked Test money, Checked and Yours to spend, with its tx")
         t.shot(desk, "2-5-received")
         done("T5")
         phone.reload()

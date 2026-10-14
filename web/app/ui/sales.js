@@ -27,6 +27,7 @@ export function startOwnerCheck(drive) {
   running ??= (async () => {
     const pay = await import('../lib/pay.js');
     const state = await pay.salesState(drive.identity);
+    if (!state.registered) await drive.ready?.().catch(() => null);   // Received doesn't load the index itself
     if (!state.registered && !sells(drive)) return state;
     if (!last) {
       last = state;
@@ -88,6 +89,7 @@ export function salesSection(drive) {
   };
   listeners.add(draw);
   draw(last);
+  drive.ready?.().then(() => draw(last), () => null);   // the names come from the index, which Received doesn't load
   startOwnerCheck(drive);
   const poll = setInterval(() => (el.isConnected ? visible() && startOwnerCheck(drive) : clearInterval(poll)), 20000);
   return el;
