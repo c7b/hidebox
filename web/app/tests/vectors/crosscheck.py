@@ -191,6 +191,15 @@ def main():
         check("zip bytes file", arc.read(z["seq_file"]) == bytes((i * 7) & 255 for i in range(300)))
         check("zip paths stay inside", all(not i.filename.startswith("/") and ".." not in i.filename.split("/") for i in infos))
 
+    # lane app2: pay to open's split key and teaser key (lib/pay.js), from the halves in pay-v1.json.
+    p = json.load(open(os.path.join(HERE, "pay-v1.json"), encoding="utf-8"))
+    s = hkdf(bytes.fromhex(p["sA"]) + bytes.fromhex(p["sB"]), b"mutis/v2", b"pay-split", 32)
+    check("pay split s", s.hex() == p["s"])
+    check("pay access token", hkdf(s, b"mutis/v1", b"share-access", 32).hex() == p["access_token"])
+    check("pay access verifier", hashlib.sha256(bytes.fromhex(p["access_token"])).hexdigest() == p["access_verifier"])
+    check("pay wrap key", hkdf(s, b"mutis/v1", b"share-wrap", 32).hex() == p["wrap_key"])
+    check("pay teaser key", hkdf(bytes.fromhex(p["sA"]), b"mutis/v2", b"pay-teaser", 32).hex() == p["teaser_key"])
+
     print(f"crosscheck: {len(checked) - len(failures)}/{len(checked)} checks passed")
     for name in failures:
         print("FAIL", name)

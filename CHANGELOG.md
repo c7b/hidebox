@@ -114,6 +114,32 @@
 <!-- /lane app1 -->
 
 <!-- lane app2 -->
+## 2026-10-14: pay to open, the client, steps 15 and 16 (research 16-drive-design §4, §15), behind `features.pay_to_open`
+
+- Sell: the share dialog's "Someone who pays you" (when /config offers it and the item has no paid link
+  yet): a price chip from `pay_to_open.prices_ut`, "Show the name before they pay" (on), the sales view
+  key notice the first time a drive sells (C35), then Make pay link. The browser derives the drive's
+  sales keys, seals the sales view key to our payment checker once per drive (`PUT /me/sales`), splits
+  the link's key (`sA` after the `#` as fragment kind 5, `sB` to our server, `s = HKDF(sA ‖ sB)`), seals
+  the teaser with a key from `sA`, and shows `/p/<id>#5…` with C34 and its boundary. Rows say Getting
+  ready, then Pay {price} tTARI with "{n} paid"; the Links tab has Stop selling and Sell again.
+- The buyer page `/p/<id>` (view.html; Caddy, the dev server and robots.txt route it): the teaser
+  (folder or file, the name if allowed, the count, a size bucket), the price and the public fee, what you
+  get (C39), no take-backs (C37), one primary Pay with test money; Pay from my drive only when a drive
+  in this browser has the money (its wallet pays the claim address, memo = the claim id); Another Ootle
+  wallet shows the address made for the claim only after the claim exists. The steps follow the claim
+  (waiting, seen with its amount checked, on the chain, the owner's drive check for any payment our
+  demo wallet didn't build, C38, ready to open); the claim's token stays in this browser, so a reload
+  resumes; unlocked: Open it (both headers), "{n} opens left until {date}", a folder's visit.
+- The owner check (R1, the release gate): each time a selling drive opens, it walks the chain mirror
+  with its sales view key, compares each sales output's one-time key on the indexer with the one its
+  sales owner key derives (`oneTimeKey`, as the sidecar does), and confirms the claim (or voids it:
+  "The payer kept control of this payment") with `POST /me/sales/claims/{cid}/confirm`. Received lists
+  the payments with their check.
+- Tests: UI flows share-pay, pay-page-states, owner-check (the pay routes faked in the annex's shapes in
+  front of the dev server until the server lane's step 14 merges); lib KATs `pay.test.js` with
+  `vectors/pay-v1.json`, checked again by `crosscheck.py`.
+
 ## 2026-10-13: the drive's sharing, the folder viewer and Received, steps 8 and 10 (research 16-drive-design §15)
 
 - The share dialog on files and folders: one question per step. Anyone with the link: Once, A few times

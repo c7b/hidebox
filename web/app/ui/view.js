@@ -439,6 +439,11 @@ export async function main() {
     viewer(root, { cfg, shareId: route.params.shareId, secrets, clearKey: true });
   } else if (route.name === 'delivery') {
     delivery(root, cfg, location.hash);
+  } else if (route.name === 'pay') {
+    // lane app2: a paid link's buyer page (pay to open), loaded only for /p/<id>.
+    setTitle('buy.page_title');
+    const { payPage } = await import('./paypage.js');
+    await payPage(root, cfg, route.params.shareId);
   } else {
     root.dataset.state = 'not-found';
     root.replaceChildren(scene({ state: 'oops', title: t('gone.notfound') }).head, footer());
