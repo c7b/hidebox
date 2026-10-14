@@ -44,7 +44,10 @@ function meterCard(drive) {
       h('b', {}, t('drive.sto.paid_until', { bytes: formatBytes(quota.paid_bytes), date: formatDate(quota.paid_until * 1000, { dateStyle: 'medium' }) }))) : null);
   return h('section', { class: 'card', 'aria-labelledby': 'meter-h' },
     h('div', { class: 'card-header' }, h('h2', { class: 'card-title', id: 'meter-h' }, t('drive.sto.space')),
-      h('p', { class: 'card-description' }, t('drive.sto.free', { free_each: formatBytes(quota.free_bytes) }))),
+      // Fifth pass: on the first day the limit is the first-day one; say both, so the two numbers don't clash.
+      h('p', { class: 'card-description', 'data-testid': 'storage-free' }, drive.me.identity?.probation
+        ? t('drive.sto.first_day', { probation_quota: formatBytes(quota.limit_bytes), free_each: formatBytes(quota.free_bytes) })
+        : t('drive.sto.free', { free_each: formatBytes(quota.free_bytes) }))),
     h('div', { class: 'card-content meter-big' },
       h('div', { class: 'meter-num' }, formatBytes(used), h('small', {}, ` ${t('drive.sto.of', { limit: formatBytes(quota.limit_bytes) })}`)),
       bar,

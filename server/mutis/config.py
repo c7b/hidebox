@@ -14,7 +14,7 @@ PINNED_WASM_SHA256 = "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7
 
 DEFAULTS: dict = {
     "public_origin": "https://srv2052606.hstgr.cloud",
-    "memo_origins": ["https://srv2052606.hstgr.cloud", "https://mutis.sh"],
+    "memo_origins": ["https://srv2052606.hstgr.cloud"],   # fifth pass: mutis.sh is unregistered; removed
     "listen": "127.0.0.1:8787",
     "data_dir": "/srv/mutis/data",
     "secret_key": "/etc/mutis/secret.key",

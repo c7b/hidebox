@@ -16,6 +16,7 @@ from .shares import _header_b64, effective_state, folder_tree, gone
 
 CLAIMS_PER_HOUR_64, CLAIMS_PER_HOUR_48 = 10, 30
 DEMO_PER_DAY_64, DEMO_PER_DAY_48 = 3, 6
+DEMO_PER_SELLER = 2          # test money paid to one drive's links a day, from any network (fifth pass)
 CHECKS_LISTED = 100
 PAID_LISTED = 50       # fifth pass: Received → Payments, newest first
 
@@ -250,7 +251,10 @@ def demo_pay(ctx, share_id: str, claim_id: str):
     seller = sales.seller_of_share(conn, share_id)
     if seller is None or seller["state"] != "ok":
         raise ApiError(409, "seller_not_ready", "The owner's drive isn't ready to take payments yet. Try again soon.")
-    network = (("demo_clm64", ctx.ip64, DEMO_PER_DAY_64, 86400, 1), ("demo_clm48", ctx.ip48, DEMO_PER_DAY_48, 86400, 1))
+    # Fifth pass (the devil's griefer): also a cap per selling drive, so paying yourself from many networks
+    # can't drain the public slice into one sales address. In memory only, like every other limit.
+    network = (("demo_clm64", ctx.ip64, DEMO_PER_DAY_64, 86400, 1), ("demo_clm48", ctx.ip48, DEMO_PER_DAY_48, 86400, 1),
+               ("demo_seller", seller["address"], DEMO_PER_SELLER, 86400, 1))
     with ctx.charged(*_unless_judge(ctx, network)):
         require_chain(ctx)
         judge = ctx.proof_of_work("demo_pay", body, budgeted=True)

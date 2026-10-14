@@ -90,7 +90,7 @@ def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str) -> con
     origin = f"http://127.0.0.1:{port}"
     mib = 1 << 20
     return config.from_dict({
-        "public_origin": origin, "memo_origins": [origin, "https://mutis.sh"], "listen": f"127.0.0.1:{port}",
+        "public_origin": origin, "memo_origins": [origin], "listen": f"127.0.0.1:{port}",
         "data_dir": str(data / "data"), "secret_key": str(data / "secret.key"),
         "gates": {"send_mode": "relay", "amount_proof": "sidecar", "key_bundle": False},
         "limits": {"reserve_min_bytes": 0, "small_lane_bytes": 256 * mib, "drop_lane_bytes": 256 * mib,

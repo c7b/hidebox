@@ -7,7 +7,7 @@
 
 public_origin = "https://srv2052606.hstgr.cloud"
 # Courier memos carry the origin on chain forever: keep every host we ever served from in this list.
-memo_origins = ["https://srv2052606.hstgr.cloud", "https://mutis.sh"]
+memo_origins = ["https://srv2052606.hstgr.cloud"]
 listen = "127.0.0.1:8787"
 data_dir = "/srv/mutis/data"
 secret_key = "/etc/mutis/secret.key"

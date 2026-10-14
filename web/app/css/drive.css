@@ -116,7 +116,7 @@
 @media (min-width: 768px) { .drop-overlay { left: var(--sidebar-width); } }
 .drop-overlay .dropzone-media { width: 3.5rem; height: 3.5rem; }
 .drop-overlay[data-state="open"] .drop-overlay-inner { --enter-opacity: 0; --enter-scale: 0.98; animation: sh-enter 150ms var(--ease-out) both; }
-.uploads { position: fixed; right: 1rem; bottom: 1rem; z-index: 40; width: min(22rem, calc(100vw - 2rem)); padding: 0; gap: 0; overflow: hidden; }
+.uploads { position: fixed; right: 1rem; bottom: 1rem; z-index: var(--z-sticky);   /* under dialogs and their overlay (fifth pass) */ width: min(22rem, calc(100vw - 2rem)); padding: 0; gap: 0; overflow: hidden; }
 .uploads-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.5rem 0.625rem 1rem; border-bottom: 1px solid var(--border); font-weight: 500; }
 .uploads-list { max-height: 15rem; overflow: auto; }
 .upload-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.25rem 0.75rem; padding: 0.625rem 1rem; }
@@ -329,6 +329,14 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .md-qr figcaption { font-size: var(--text-xs); color: var(--muted-foreground); max-width: 28ch; }
 .setting-row .stack { --gap: 0.5rem; margin-top: 0.5rem; }
 .trash-cell { white-space: nowrap; }
+/* fifth pass: on a phone the Trash's first cell is the name (the file table's first cell is its checkbox) */
+@media (max-width: 767px) {
+  .files .table.trash-table td:first-child { display: table-cell; padding-left: 1rem; width: 100%; max-width: 0; }
+  .trash-table .file-name { max-width: none; min-width: 0; }
+  .trash-table .file-text { min-width: 0; }
+  .trash-table .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trash-table td:last-child { padding-right: 1rem; }
+}
 /* Fixes from the first screenshot round (lane app1). */
 .upload-row .stage { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
 .uploads { z-index: var(--z-sticky); }
@@ -381,7 +389,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 /* lane app2, pay to open (step 15): the buyer page (/p/<id>) from the prototype's pay.html after the fix
    pass: the price card first on phones, beside the teaser from 960 px, where it stays in view. */
 .fv-page.pay-main { width: min(100%, 72rem); }
-.buyer { display: grid; gap: 1.5rem; align-items: start; grid-template-areas: "head" "pay" "list"; min-width: 0; }
+.buyer { display: grid; gap: 1.5rem; align-items: start; grid-template-areas: "head" "list" "pay"; min-width: 0; }   /* phones: what you buy, then the price (fifth pass) */
 .buyer-head { grid-area: head; display: grid; gap: 0.75rem; }
 .buyer-head .h1 { text-wrap: balance; }
 .buyer-head .h1:focus { outline: none; }   /* focused for screen readers on arrival, not a control */

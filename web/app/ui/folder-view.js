@@ -96,7 +96,7 @@ export function folderPanel(opened, { cfg, heading = 'h1', onSaveToDrive = null 
     h('div', { class: 'fv-head' },
       h('div', { class: 'stack fv-title' },
         h(HeadTag, { class: heading === 'h1' ? 'h2' : 'h3', id: 'fv-title', tabindex: '-1' }, root.name || t('fv.folder')),
-        h('p', { class: 'muted', 'data-testid': 'fv-count' }, t('fv.count', { count: all.length, size: formatBytes(total) }))),
+        h('p', { class: 'muted', 'data-testid': 'fv-count' }, t(total < 1024 ? 'fv.count_tiny' : 'fv.count', { count: all.length, size: formatBytes(total) }))),
       h('div', { class: 'row wrap fv-actions' }, keep, zipButton)),
     h('div', { class: 'row wrap fv-status' }, visit, left),
     tooBig, errors, crumbs, table, empty,
