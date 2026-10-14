@@ -33,10 +33,23 @@ UNDERPAID_GRACE_DAYS = 7
 INDEXER_FAILOVER_AFTER = 3
 UNKNOWN_ALERT_AFTER = 3          # hourly reconciles that couldn't reach a verdict before the alert is critical
 _INVOICE = re.compile(r"^inv_[a-z2-7]{20}$")
+_CLAIM = re.compile(r"^clm_[a-z2-7]{20}$")
 
 
 def pay_ref(memo) -> str | None:
     """The invoice id carried by a memo: PayRefAndBytes `[len u8][pay_ref][bytes]`, or a bare Message."""
+    ref = memo_ref(memo)
+    return ref if ref and _INVOICE.match(ref) else None
+
+
+def claim_ref(memo) -> str | None:
+    """The pay-to-open claim id (`clm_…`) carried by a memo, in the same two shapes (sales.py)."""
+    ref = memo_ref(memo)
+    return ref if ref and _CLAIM.match(ref) else None
+
+
+def memo_ref(memo) -> str | None:
+    """The reference a memo carries, unchecked: PayRefAndBytes' pay-ref, or the whole Message."""
     if not isinstance(memo, dict):
         return None
     if isinstance(memo.get("PayRefAndBytes"), str):
@@ -51,7 +64,7 @@ def pay_ref(memo) -> str | None:
         ref = memo["Message"]
     else:
         return None
-    return ref if _INVOICE.match(ref) else None
+    return ref
 
 
 def record_found(conn: sqlite3.Connection, found: list[dict], proven: bool, now: int, epoch: int | None) -> int:

@@ -5,7 +5,7 @@ Callers hold a BEGIN IMMEDIATE transaction around every function that writes.
 """
 import sqlite3
 
-from . import codec, seallog, tree
+from . import codec, sales, seallog, tree
 from .storage import Blobs
 
 ENDED_REASON = {"exhausted": "burned", "expired": "expired", "revoked": "revoked", "removed": "removed",
@@ -27,8 +27,10 @@ def egress_ok(conn: sqlite3.Connection, item, now: int, size: int) -> bool:
 
 def end_share(conn: sqlite3.Connection, share_id: str, state: str, now: int) -> None:
     """Move an active link to an ended state and scrub its secrets; the row stays as a tombstone."""
-    conn.execute("UPDATE shares SET state = ?, ended_at = ?, wrapped_key = NULL, access_hash = NULL, "
-                 "link_hash = NULL WHERE id = ? AND state = 'active'", (state, now, share_id))
+    cur = conn.execute("UPDATE shares SET state = ?, ended_at = ?, wrapped_key = NULL, access_hash = NULL, "
+                       "link_hash = NULL WHERE id = ? AND state = 'active'", (state, now, share_id))
+    if cur.rowcount:
+        sales.end_for_share(conn, share_id)      # a paid link: our half of its key goes, waiting claims are void
 
 
 def doom_if_unlinked(conn: sqlite3.Connection, item_id: str, now: int) -> bool:
