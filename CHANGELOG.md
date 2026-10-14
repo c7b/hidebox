@@ -1,6 +1,29 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- lane app1, round 3 -->
+## 2026-10-14: the reading pages, the cards and the README in the drive's clothes (16-drive-design §10, §11)
+
+- **How it works**: five stills of the real interface (make your drive, drop your files, share it your way,
+  Tari does the private parts, see what happened), drawn inert from the drive's parts so they follow the
+  theme; who sees what; no mascot, no animation (`js/how.js` is gone).
+- **How it was made** in the §11 outline: the short version, your key is the account, the locks, folders and
+  their keys, `#pay` (the §4 trust sentence, its limits, the next step; switched-off wording while
+  `features.pay_to_open` is off), Send by Tari, `#who` (C40, C41, C35), space and when files go (C45, C46, C47,
+  Delete it after), receipts on the Tari chain (C42; none for a link that ends on a kept file), the Tari map,
+  check us, what we can't hide (C5-snap, C6, C20), how it was built and tested (the R1 fix, on a fake chain).
+  Every old anchor still lands. The trust sentence is registered as C33-t.
+- **For judges**: the two six-step tracks of §10 (track two is pay to open when it is on, else Send by Tari and
+  Get more space) and a What to check table, claim by claim; the judge pass field stays.
+- **The fine print and 404** in drive words (the deletion terms carry C45 to C47).
+- **Geist** sets the reading pages (the pinned file); the home keeps the system faces (A-06).
+- **OG cards, app icons and favicon** redrawn: the brand tile and a slice of a drive with its rule badges;
+  `render-images.py` hands each card Geist and the brand. **llms.txt** describes the drive; **robots.txt** keeps
+  `/drive` and `/p/` out. **README**: the first screen (title, one paragraph, Try it, the Tari table).
+- **Drive polish**: the header's actions sit at the right edge; a finished upload row drops its full bar; the
+  search field reads as a field.
+<!-- /lane app1, round 3 -->
+
 <!-- integration, pass 1 -->
 ## 2026-10-13: the drive replaces the locker (research 16-drive-design §15 steps 11 to 13, milestone M1)
 

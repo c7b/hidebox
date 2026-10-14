@@ -344,6 +344,9 @@ def drive_upload_files(t):
     t.check(a.eval("document.querySelector('[data-testid=\"upload-panel\"] [aria-live]').textContent") == "3 files locked and saved.",
             "a screen reader hears it once")
     t.shot(a, "drive-1440-uploaded")
+    a.eval("document.documentElement.dataset.theme = 'dark'")
+    t.shot(a, "drive-1440-uploaded-dark")
+    a.eval("delete document.documentElement.dataset.theme")
     before = os.listdir(a.downloads) if os.path.isdir(a.downloads) else []
     a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'notes.txt').querySelector('.name').click()")
     got = downloaded(a, before, 30)
@@ -359,6 +362,8 @@ def drive_upload_files(t):
     upload_files(t, p, ["notes.txt"])
     t.check(no_hscroll(p), "a phone: rows are two lines, no horizontal scroll")
     t.shot(p, "drive-390-files", full_page=True)
+    p.eval("document.documentElement.dataset.theme = 'dark'")
+    t.shot(p, "drive-390-files-dark", full_page=True)
 
 
 @scenario("drive-upload-folder-input", "Upload a folder with the folder picker (step 7): folders top-down, files inside, names here only", features=FEATURES)

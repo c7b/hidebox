@@ -40,8 +40,9 @@
 @media (min-width: 768px) { .app-header { padding-inline: 1rem; gap: 0.75rem; } }
 .app-header .separator[data-orientation="vertical"] { height: 1rem; align-self: center; }
 .search { position: relative; flex: 1; max-width: 40rem; }
+.app-header .header-more { margin-left: auto; }   /* the actions sit at the right edge, as in Google Drive */
 .search > .icon { position: absolute; left: 0.75rem; top: 50%; translate: 0 -50%; color: var(--muted-foreground); }
-.search .input { padding-left: 2.25rem; padding-right: 3.25rem; background: color-mix(in oklab, var(--muted) 60%, transparent); border-color: transparent; box-shadow: none; }
+.search .input { padding-left: 2.25rem; padding-right: 3.25rem; background: var(--muted); border-color: transparent; box-shadow: none; }
 .search .input:focus-visible { background: var(--background); border-color: var(--ring); }
 .search .kbd { position: absolute; right: 0.5rem; top: 50%; translate: 0 -50%; }
 @media (max-width: 767px) { .search .kbd { display: none; } .search .input { padding-right: 0.75rem; } }
@@ -124,6 +125,7 @@
 .upload-row .progress { grid-column: 2 / 4; height: 0.25rem; }
 .upload-row .stage { font-size: var(--text-xs); color: var(--muted-foreground); }
 .upload-row[data-done] .stage { color: var(--success); }
+.upload-row[data-done] .progress { visibility: hidden; }   /* done says so in words; the full bar adds nothing */
 @media (max-width: 767px) { .uploads { bottom: 5.5rem; } }
 
 /* ---------- share dialog ---------- */
