@@ -12,8 +12,9 @@ the days stack (from the old end), the bytes don't.
 
 Sales a UTC day: the deployment-wide ceilings (`public_per_day`, `judge_per_day`) are counted here from
 the invoices table, which holds no network, so a restart doesn't reset them; the per-network brakes are
-in the API's memory (api.Ctx.daily) and a restart forgets them. An invoice that ended with nothing paid
-stops counting, and our own daily evidence invoice (no drive) never counts.
+in the API's memory (api.Ctx.daily) and a restart forgets them. An invoice that ended with nothing paid,
+or a pack that ended early (release-pack, a deleted drive), stops counting; our own daily evidence
+invoice (no drive) never counts.
 """
 import sqlite3
 from dataclasses import dataclass
@@ -70,10 +71,15 @@ def slices(conn: sqlite3.Connection, pool: quota.Pool, cfg_packs: dict, now: int
 
 
 def sold_today(conn: sqlite3.Connection, now: int, judge: bool) -> int:
-    """Pack invoices made this UTC day by drives, with or without a judge pass, that are paid or still open."""
-    return conn.execute("SELECT COUNT(*) FROM invoices WHERE identity_id IS NOT NULL AND judge = ? AND created_at >= ? "
-                        "AND NOT (received_ut = 0 AND (status = 'expired' OR (status IN ('pending','seen') "
-                        "AND expires_at <= ?)))", (int(judge), now - now % 86400, now)).fetchone()[0]
+    """Pack invoices made this UTC day by drives, with or without a judge pass, that still hold or promise
+    space: open, partly paid, or paid while the drive still holds its pack. A pack ended early (an operator's
+    `release-pack` after a test run) or a deleted drive stops counting, like an unpaid invoice that expired:
+    the ceiling bounds how much of today's selling can hold space at once."""
+    return conn.execute(
+        "SELECT COUNT(*) FROM invoices i JOIN identities d ON d.id = i.identity_id WHERE i.judge = ? AND i.created_at >= ? "
+        "AND ((i.status IN ('pending','seen') AND i.expires_at > ?) OR (i.received_ut > 0 AND i.status <> 'credited') "
+        "OR (i.status = 'credited' AND d.paid_until IS NOT NULL AND d.paid_until > ? AND d.paid_bytes > 0))",
+        (int(judge), now - now % 86400, now, now)).fetchone()[0]
 
 
 def held(identity, now: int, renew_days: int) -> dict | None:

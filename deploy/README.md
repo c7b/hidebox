@@ -226,8 +226,9 @@ packs are sold), `/api/v1/stats` `packs_sold_public` close to `packs_cap_public`
    per-network counts (they live in memory) but not the day's ceilings (counted from the invoices).
 4. Free space: `sudo mutis-admin freeze free` pauses uploads to free drives (paid drives and downloads
    keep working); `freeze none` resumes. The disk's own freezes need nothing from you.
-5. A test drive's pack (an end-to-end run) can be ended with `release-pack`; a visitor's pack is
-   theirs, even a griefer's: packs are paid for, and the brakes, not refunds, are the answer.
+5. A test drive's pack (an end-to-end run) can be ended with `release-pack`, which also frees its place
+   under the day's ceiling; a visitor's pack is theirs, even a griefer's: packs are paid for, and the
+   brakes, not refunds, are the answer.
 
 `[brakes] exempt_addresses` lists the server's own public addresses (the end-to-end tests run there:
 `ip -br addr` on the server); nothing else belongs there.
