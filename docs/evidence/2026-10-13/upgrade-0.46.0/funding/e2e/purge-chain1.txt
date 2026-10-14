@@ -1,0 +1,34 @@
+Purge after the chain batch (chain1.log), by id, from a read-only diff of two snapshots
+(scripts/dbsnap.py as mutis with sqlite mode=ro; scripts/purgeplan.py on the jarvis box).
+
+snapshot before the canary and the batch: 2026-10-13T18:59:31Z
+  judge passes 20 | security drop 3w7m8k2v5t active | identities 118 (active packs 0) | items 281 | drops 77 | shares 293 | invoices 17 | payments 15
+snapshot after the batch: 2026-10-13T19:04:28Z
+  judge passes 21 | security drop 3w7m8k2v5t active | identities 123 (active packs 0) | items 286 | drops 81 | shares 298 | invoices 18 | payments 16
+
+plan (new since the first snapshot):
+  items: 5 new. 2 canary items stay (the service's own: canary #47 from canary-now, E-25's forced #48);
+    1 already deleted by its own rule (E-10's); 2 to take down: shFNoxN0-GE1X8q2txgBgQ, DQFKfIT34OEYu4-OYYdJLA
+    (E-09's and E-12's photos, anonymous, created in the 19:00 UTC hour)
+  drops: 4 new, all active, one per scenario that makes a drop link (E-09, E-10, E-12, E-13):
+    pyb2qnhjg8, tn0xvhk3v1, 7hy6ktw8az, xje3ez8tfp
+  judge passes: 1 new, rowid 21 (E-13's one-use pass, uses_left 0)
+  identities: 5 new test lockers, empty; no admin removal, they stay (as in every earlier purge).
+    E-13's pack was released by the scenario (active packs 0 after it).
+  invoices and payments: 1 each, E-13's pack, credited on chain: kept (as in fix-3's purge).
+  checks: every old identity, judge pass and item is still there with the same state.
+
+== purge 2026-10-13T19:05:00Z (after the chain batch E-09, E-10, E-12, E-13, E-25 on the live release)
+item shFNoxN0-GE1X8q2txgBgQ: removed
+item DQFKfIT34OEYu4-OYYdJLA: removed
+drop pyb2qnhjg8: removed
+drop tn0xvhk3v1: removed
+drop 7hy6ktw8az: removed
+drop xje3ez8tfp: removed
+judge pass rowid 21 (E-13's one-use pass): deleted 1
+  (the judge pass with one guarded statement as mutis: DELETE FROM judge_passes WHERE rowid = 21 AND
+  created_at = 1791918169)
+
+after: 2026-10-13T19:05:09Z
+  judge passes 20 | security drop 3w7m8k2v5t active | identities 123 (active packs 0) | items 286 | drops 81 | shares 298 | invoices 18 | payments 16
+  the 2 items and 4 drops read state 'removed'; old identities, judge passes and items all present and unchanged.
