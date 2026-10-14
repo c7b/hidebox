@@ -35,7 +35,7 @@ class ConfigExampleTest(unittest.TestCase):
         with open(ROOT / "deploy" / "config" / "mutis.toml.example", "rb") as f:
             cfg = config.from_dict(tomllib.load(f))
         self.assertEqual(cfg.origin, "https://srv2052606.hstgr.cloud")
-        self.assertIn("https://mutis.sh", cfg["memo_origins"])
+        self.assertNotIn("https://mutis.sh", cfg["memo_origins"])   # fifth pass: an unregistered domain
 
 
 class CaddyfileTest(unittest.TestCase):
