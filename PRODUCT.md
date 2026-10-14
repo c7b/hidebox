@@ -98,6 +98,7 @@ Everything the server and library do today stays reachable; new server work is a
   C32 to C47; C12 and the old C7-d retired);
   every number in copy is a `{variable}` from `/api/v1/config`; test ids change only with their tests.
 - The public name lives in one brand constant; the codename mutis stays in code and paths [brief].
+- The repository is `https://github.com/c7b/hidebox` (renamed from `c7b/mutis` on 2026-10-14; GitHub redirects the old URL). The SealLog template's `Cargo.toml` keeps the old URL: it was published that way, and the field feeds its metadata hash.
 
 ## Brand Commitments
 

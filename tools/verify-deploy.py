@@ -69,7 +69,7 @@ def build_config(origin: str, cfg: dict, variant_config: dict) -> str:
     live build's copy variants read, as its manifest records them (only plain names and values)."""
     lines = [f"{k} = {toml_value(v)}" for k, v in {
         "public_origin": origin, "network": cfg.get("network", "esmeralda"),
-        "security_drop_url": cfg.get("security_drop") or "", "repo_url": cfg.get("repo_url", "https://github.com/c7b/mutis"),
+        "security_drop_url": cfg.get("security_drop") or "", "repo_url": cfg.get("repo_url", "https://github.com/c7b/hidebox"),
     }.items()]
     for table in VARIANT_TABLES:
         values = variant_config.get(table)

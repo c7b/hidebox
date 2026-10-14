@@ -8,7 +8,7 @@ testnet and Node for the payment checker. Nothing is installed from npm or pip.
 ## Try it on your machine
 
 ```sh
-git clone https://github.com/c7b/mutis && cd mutis
+git clone https://github.com/c7b/hidebox && cd hidebox
 python3 -I tools/build.py --config deploy/config/mutis.toml.example --origin http://127.0.0.1:8787 \
   --web web --out /tmp/mutis-dist --release /tmp/mutis-release
 python3 -I server/bin/mutis-api --dev --data /tmp/mutis-dev --dist /tmp/mutis-dist --port 8787 --pow-bits 10
@@ -40,7 +40,7 @@ may reach walletd and the API port.
    chromium fonttools python3-brotli woff2 ffmpeg` (provision checks for every one of them; Chromium,
    fonttools, woff2 and ffmpeg serve the test and asset tools). No npm, npx, pnpm, yarn or pip:
    provision and its privilege self-test fail while any is present. Then `sudo ufw limit 22/tcp && sudo ufw enable` (your SSH port, if it isn't 22).
-2. **A copy of the repository and the config:** `git clone https://github.com/c7b/mutis` on the server,
+2. **A copy of the repository and the config:** `git clone https://github.com/c7b/hidebox` on the server,
    then `sudo install -d /etc/mutis && sudo cp mutis/deploy/config/mutis.toml.example /etc/mutis/mutis.toml`
    and set `public_origin` (the example names our server; Caddy gets a certificate for the host you
    write) and `memo_origins` (every origin you ever served from: courier memos carry it on chain).

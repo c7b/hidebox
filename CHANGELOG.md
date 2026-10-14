@@ -1,6 +1,26 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- fifth pass, release -->
+## 2026-10-14: the fifth pass (the devil's judge run on the drive) and the release
+
+- **No ghost anywhere:** the link and task pages (`/s/`, `/t`, `/p/`, `/send`, `/watch`, `/verify`, `/d/`)
+  draw a Lucide tile instead, in Geist with shadcn buttons; the ghost's partials and `ghost.css` are gone and
+  the site checks fail if a page shows it again.
+- **C42 for kept files:** a link that ends on a file its owner keeps says "The file stays with its owner",
+  with no chain line (`GET /s/{id}/exit` answers `receipt: "none"`).
+- **Track two, step 5:** Received → Payments refreshes while the drive is open and lists each payment with its
+  file, Test money, Checked and the tx (`GET /me/sales` `paid`), on any device.
+- **Track one, step 5:** Activity shows Opened before It left your drive (gone rows carry `opens`).
+- **Mediums:** previews and app strings say drive (never locker); the key file is `hidebox-key-…`; the pay
+  page on phones; Trash names at 390; "In a shared folder"; day one's space line; test money capped per
+  selling drive; Make my drive counts down and retries, and a judge pass lifts its network limit; C11's short
+  form; `mutis.sh` out of `memo_origins`. Every verdict: `docs/review/fix-log.md`, "Fifth pass".
+- **Film:** `tools/film.py` records §10's two tracks.
+- **Repository:** renamed `c7b/mutis` → `c7b/hidebox` (GitHub redirects the old URL); `repo_url`, the
+  README, `SECURITY.md`, the self-host guide and the advisory check follow.
+<!-- /fifth pass, release -->
+
 <!-- integration, pass 2 -->
 ## 2026-10-14: pay to open in production with test money (research 16-drive-design §15 step 17, milestone M2)
 

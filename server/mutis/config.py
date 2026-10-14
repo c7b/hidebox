@@ -21,7 +21,7 @@ DEFAULTS: dict = {
     "network": "esmeralda",
     "single_uid": False,            # read by the deploy scripts (spec D4); the server behaves the same
     "security_drop_url": "",
-    "repo_url": "https://github.com/c7b/mutis",
+    "repo_url": "https://github.com/c7b/hidebox",
     "onion": "",
     "e2e_expiry_s": 0,              # > 0 only on a deployment the E2E suite runs against (spec §17.1)
     # A share id the release burns at least a checkpoint before the tag (deploy/scripts/demo-gone.py):

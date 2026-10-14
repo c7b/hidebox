@@ -122,7 +122,7 @@ Every build writes a manifest with the SHA-256 of every served file and its git 
 manifest hash is also notarized through SealLog (`/releases.json`).
 
 ```sh
-git clone https://github.com/c7b/mutis && cd mutis
+git clone https://github.com/c7b/hidebox && cd hidebox
 python3 tools/verify-deploy.py https://srv2052606.hstgr.cloud <commit>   # 0 differences, or a list
 ```
 

@@ -46,7 +46,7 @@ class Site:
         self.opts, self.origin = opts, origin
         self.values = {"ORIGIN": origin, "GIT_SHA": "0" * 40, "VERSION": "test", "BUILD_DATE": "2026-10-11",
                        "NETWORK": "esmeralda", "SECURITY_DROP_URL": f"{origin}/fine-print#report",
-                       "REPO_URL": "https://github.com/c7b/mutis", "BRAND": "hidebox"}
+                       "REPO_URL": "https://github.com/c7b/hidebox", "BRAND": "hidebox"}
 
     def file_for(self, path):
         """URL path → source file, mirroring the dist/ layout of spec §3.3."""
