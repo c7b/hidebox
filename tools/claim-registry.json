@@ -230,6 +230,15 @@
    ]
   },
   {
+   "id": "C33-t",
+   "condition": "pay to open, on /made#pay with its limits (C34, C38, R4) on the same page",
+   "backed_by": "16-drive-design §4 (trust sentence for /made)",
+   "markers": [],
+   "sentences": [
+    "The money goes straight to the owner's Tari address; our server keeps half of the key and hands it to the buyer once Tari's chain shows the payment, so the owner can be offline and we never hold the money or the whole key."
+   ]
+  },
+  {
    "id": "C34",
    "condition": "paid links; sB lives in backups for {db_backup_days} days",
    "backed_by": "annex §1.3 (16-drive-design §9.3)",
