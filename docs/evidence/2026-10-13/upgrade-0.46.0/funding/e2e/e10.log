@@ -1,0 +1,6 @@
+$ python3 -I tests/e2e/run.py --chain --final --only E-10   (from the workstation, 2026-10-13T22:07:11Z; release 643e766, ootle-wasm 0.46.0)
+PASS E-10     38.8s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → <scratch>/e2e/e10/20261013-160711/report.json
+exit 0
+2026-10-13T22:07:53Z
+(the send went by relay: a courier job from the public slice, since the sender's grant was not yet in its wallet when it pressed Send; the recipient's inbox scanned and opened it with 0.46.0 in the browser)

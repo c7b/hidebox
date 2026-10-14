@@ -1,0 +1,9 @@
+$ python3 -I tests/e2e/run.py --chain --final --only E-09,E-10,E-12,E-13,E-25   (from the workstation, 2026-10-13T19:00:58Z; release 27e2946, ootle-wasm 0.45.0)
+PASS E-09     34.1s  Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it
+PASS E-10     40.6s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-12     31.7s  A view key sees the delivery and can open no file
+PASS E-13     33.6s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+PASS E-25     41.7s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+e2e: PASS {'PASS': 5, 'FAIL': 0, 'SKIP': 0} → <scratch>/e2e/chain1/20261013-130059/report.json
+exit 0
+2026-10-13T19:04:04Z
