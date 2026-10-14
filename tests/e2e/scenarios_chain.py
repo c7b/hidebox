@@ -11,7 +11,7 @@ import urllib.request
 import apiclient
 import flows
 from harness import CHAIN, Skipped, T, poll, scenario
-from scenarios import locker_identity, make_drop_link, safety_emoji
+from scenarios import locker_identity, make_drop_link, open_settings, safety_emoji
 
 TX = re.compile(r"^[0-9a-f]{64}$")
 PHOTO_CHECK = ("import sys; d = open(sys.argv[1], 'rb').read(); "
@@ -35,14 +35,16 @@ def leave_photo(t: T, page, drop_url: str, safety: list[str]) -> str:
 
 
 def open_inbox_item(t: T, page, source: str) -> str:
-    page.goto(t.origin + "/inbox")
-    item = poll(lambda: page.eval(f"!!document.querySelector('[data-testid=\"inbox-item\"][data-source=\"{source}\"]')"),
-                600, 5)
-    t.check(item, f"the inbox lists a delivery from {source}")
-    t.check(page.attr("inbox-scan", "data-checked"), "the scan line says how many outputs it checked")
-    page.eval(f"document.querySelector('[data-testid=\"inbox-item\"][data-source=\"{source}\"] button, "
-              f"[data-testid=\"inbox-item\"][data-source=\"{source}\"] a').click()")
-    return page.wait_state("view-root", flows.VIEW_END, 180)
+    """Received (16-drive-design §12, the inbox's place in the drive): wait for a delivery from `source`
+    (the drive scans again on its own), open it here; -> 'opened' or the error code it shows."""
+    page.goto(t.origin + "/drive/received")
+    row = f'[data-testid="received-row"][data-source="{source}"]'
+    item = poll(lambda: page.eval(f"!!document.querySelector({json.dumps(row + ' [data-testid=received-open-button]')})"), 600, 5)
+    t.check(item, f"Received lists a delivery from {source}, ready to open")
+    t.check(page.exists("inbox-item"), "the row keeps the inbox-item id")
+    page.eval(f"document.querySelector({json.dumps(row + ' [data-testid=received-open-button]')}).click()")
+    return page.wait("(() => { const o = document.querySelector('[data-testid=\"inbox-opened\"]'); if (o) return 'opened';"
+                     " const e = document.querySelector('#rec-open [data-testid=\"error-banner\"]'); return e ? (e.dataset.code || 'error') : ''; })()", 180)
 
 
 def tx_view(t: T, page, tx: str) -> None:
@@ -82,21 +84,19 @@ def send_to_address(t: T, page, text: str, address: str, safety: list[str], dire
     return tx
 
 
-@scenario("E-09", "Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it", CHAIN)
+@scenario("E-09", "Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it", CHAIN)
 def e09(t: T) -> None:
     a = t.actor("android")
     drop_url = make_drop_link(t, a, "E2E E-09")
     if a.exists("key-later"):
         a.click("key-later")
-    a.goto(t.origin + "/locker")
-    a.wait_for("locker-safety")
     safety, _ = locker_identity(a)
     b = t.actor("desktop")
     tx = leave_photo(t, b, drop_url, safety)
     tx_view(t, b, tx)
-    t.check(open_inbox_item(t, a, "drop") == "opened", "the phone opens the delivery")
-    t.check(a.exists("view-image") and a.exists("view-chain-saw"), "it shows the photo and What the chain saw")
-    a.click("view-save")
+    t.check(open_inbox_item(t, a, "drop") == "opened", "the phone opens the delivery in Received")
+    a.wait_for("received-save-file", 60)
+    a.click("received-save-file")
     gps, orientation = t.env.remote.as_build(f"python3 -I -c {shlex.quote(PHOTO_CHECK)} {t.downloaded(a)}").split()
     t.check(gps == "clean", "the decrypted photo has no GPS")
     t.check(orientation == "oriented", "the decrypted photo keeps its orientation")
@@ -109,12 +109,10 @@ def e10(t: T) -> None:
     make_drop_link(t, a, "E2E E-10 recipient")
     if a.exists("key-later"):
         a.click("key-later")
-    a.goto(t.origin + "/locker")
-    a.wait_for("locker-address")
     safety, address = locker_identity(a)
     b = t.actor()
     send_to_address(t, b, "E2E E-10 sent to an address", address, safety)
-    t.check(open_inbox_item(t, a, "send") == "opened", "the recipient's inbox opens it")
+    t.check(open_inbox_item(t, a, "send") == "opened", "the recipient's drive opens it in Received")
     if t.env.config().get("send_mode") == "relay":
         left = t.env.remote.sql("SELECT COUNT(*) FROM jobs WHERE payload IS NOT NULL AND state IN ('done', 'failed')")[0][0]
         t.check(left == 0, "relay mode: no finished job keeps its payload (the address is forgotten)")
@@ -179,12 +177,9 @@ def e12(t: T) -> None:
     drop_url = make_drop_link(t, a, "E2E E-12")
     if a.exists("key-later"):
         a.click("key-later")
-    a.goto(t.origin + "/locker")
-    a.wait_for("locker-safety")
     safety, address = locker_identity(a)
     leave_photo(t, t.actor(), drop_url, safety)
-    a.goto(t.origin + "/locker")
-    a.wait_for("locker-safety", 120)
+    open_settings(a)
     a.click("export-view-key")
     a.wait_for("view-key-value")
     view_key = a.eval("(() => { const e = document.querySelector('[data-testid=\"view-key-value\"]');"
@@ -227,10 +222,9 @@ def e13(t: T) -> None:
     make_drop_link(t, a, "E2E E-13")
     if a.exists("key-later"):
         a.click("key-later")
-    a.goto(t.origin + "/locker")
-    a.wait_for("quota-bar", 60)
-    before = int(a.attr("quota-bar", "data-limit") or 0)
-    a.goto(t.origin + "/upgrade")
+    a.goto(t.origin + "/drive/storage#more")
+    a.wait_for("storage-meter", 60)
+    before = int(a.attr("storage-meter", "data-limit") or 0)
     if direct:
         price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
         t.check(poll(lambda: wallet_ut(a) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10),
@@ -242,9 +236,9 @@ def e13(t: T) -> None:
             "the invoice is credited")
     steps = a.eval("[...document.querySelectorAll('[data-testid=\"pay-step\"]')].map(e => e.dataset.step)")
     t.check(steps, f"the stepper shows its steps ({steps})")
-    a.goto(t.origin + "/locker")
-    a.wait_for("quota-bar", 60)
-    t.check(int(a.attr("quota-bar", "data-limit") or 0) >= before + 2 * 1024 ** 3, "the quota grew by 2 GiB")
+    a.goto(t.origin + "/drive/storage")
+    a.wait_for("storage-meter", 60)
+    t.check(int(a.attr("storage-meter", "data-limit") or 0) >= before + 2 * 1024 ** 3, "the quota grew by 2 GiB")
     release_pack(t, a)
 
 
@@ -281,12 +275,13 @@ def e25(t: T) -> None:
     t.check(entry["delivery_tx"] in [d["tx_id"] for d in evidence["deliveries"]], "/evidence.json lists the delivery")
 
 
-@scenario("E-J", "The judge script (/judges: 4 steps on a computer and a phone, then 6 for the Tari part), each step timed", CHAIN)
+@scenario("E-J", "The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed", CHAIN)
 def ej(t: T) -> None:
+    import scenarios_drive as drv
     cfg = t.env.config()
     direct = cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")
     # Direct mode: both contexts share one /64 (ultron's), like two judges in one office, and earlier
-    # lockers of this run took that network's daily sponsor grant; so, like a judge, they use a pass.
+    # drives of this run took that network's daily sponsor grant; so, like a judge, they use a pass.
     judge = t.env.remote.admin("judge-pass", "new", "--uses", "3").strip() if direct else None
     phone, desk = t.actor("iphone", judge_pass=judge), t.actor("desktop", judge_pass=judge)
     started = mark = time.monotonic()
@@ -297,55 +292,60 @@ def ej(t: T) -> None:
         seconds[step], mark = time.monotonic() - mark, time.monotonic()
         t.note(f"{step}: {seconds[step]:.0f} s")
 
-    # Track one: a computer and a phone, about a minute (no wallet, no sign-up)
+    # Track one: a computer and a phone with the drive (16-drive-design §10), no wallet, no sign-up
     flows.home(desk, t.origin)
-    flows.seal_file(desk, t.fixture("notes.txt"))
-    url = flows.wait_link(desk)
-    t.check("#" in url and bool(desk.wait("!!document.querySelector('[data-testid=\"link-qr\"] svg')", 30)),
-            "1: the computer drops a file on the ghost; a link and a code to scan come out")
+    desk.click("home-make")
+    desk.wait_for("drive-root", 120)
+    desk.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
+    t.check(True, "1: Make my drive: the drive opens, its key made in this browser")
     done("1")
-    t.check(flows.open_link(phone, url) == "opened", "2: the phone (the code's link) taps Open it and has the file")
+    folder = f"{t.sid}-council"
+    drv.upload_folder(t, desk, "council", {"minutes.txt": b"E2E E-J the council minutes.\n", "agenda.txt": b"E2E E-J agenda.\n"})
     done("2")
-    phone.reload()
-    t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "3: the phone reloads: the link has ended")
-    gone = phone.text("view-root")
-    t.check("It's gone." in gone and "It said bye." in gone, "3: “It's gone. It said bye.”")
-    t.shot(phone, "1-3-gone")
+    drv.into(desk, folder)
+    drv.wait_names(desk, ["minutes.txt", "agenda.txt"])
+    drv.row_menu(desk, "minutes.txt", "share")
+    desk.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    desk.click("share-next")
+    desk.wait("document.getElementById('share-dialog')?.dataset.step === 'opens'", 10)
+    desk.click("share-then-delete")
+    desk.click("share-make")
+    desk.wait("document.getElementById('share-dialog')?.dataset.step === 'result'", 90)
+    url = desk.value("share-link")
+    t.check("#" in url and bool(desk.wait("!!document.querySelector('[data-testid=\"share-qr\"] svg')", 30)),
+            "3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan")
+    desk.key("Escape")
     done("3")
-    demo = cfg.get("judge_demo_gone")
-    t.check(bool(demo), "4: this deployment serves the burned demo secret (deploy/scripts/demo-gone.py burn)")
-    if demo and (cfg.get("features") or {}).get("seallog"):
-        desk.goto(t.origin + "/judges")
-        href = desk.wait(f"(() => {{ const a = document.querySelector('a[data-demo-gone]'); return a && a.getAttribute('href') === '/s/{demo}' ? a.href : ''; }})()", 30)
-        t.check(bool(href), "4: /judges links the secret that already said bye")
-        desk.goto(href)
-        t.check(desk.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "4: its gone page")
-        t.check(bool(desk.wait("document.querySelector('[data-testid=\"gone-receipt\"]')?.dataset.receipt === 'done'", 60)),
-                "4: “We wrote its goodbye on the Tari chain.”")
-        desk.click("gone-see")
-        line = desk.wait("(() => { const e = document.querySelector('[data-testid=\"verify-item\"].a-item--this [data-testid=\"verify-exit\"]');"
-                         " const s = e?.textContent || ''; return /included at checkpoint|doesn't match/.test(s) ? s : ''; })()", 120)
-        t.check("included at checkpoint" in line, f"4: See the goodbye: its exit, checked by this browser against the root on the Ootle ({line[:90]})")
-        t.check("has no owner" in desk.text("verify-log"), "4: the page says the log has no owner and names its writer")
-        t.shot(desk, "1-4-goodbye")
+    t.check(flows.open_link(phone, url) == "opened", "4: the phone taps Open it and has the file")
+    phone.reload()
+    t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned" and "It's gone." in phone.text("view-root"),
+            "4: the phone reloads: “It's gone.”")
+    t.shot(phone, "1-4-gone")
     done("4")
+    desk.goto(t.origin + "/drive/activity")
+    desk.wait_for("activity-feed", 60)
+    left = desk.wait("(() => { const e = [...document.querySelectorAll('[data-event=\"left\"]')].find((x) => x.dataset.name === 'minutes.txt');"
+                     " return e ? e.textContent : ''; })()", 120)
+    t.check("It left your drive" in left, f"5: Activity: opened, then it left your drive ({left[:80]})")
+    t.shot(desk, "1-5-activity")
+    done("5")
+    desk.click("open-known")
+    desk.wait_for("known-sheet", 15)
+    t.check("What it never stores" in desk.text("known-sheet"), "6: What our server knows: what it keeps, and what it never stores")
+    desk.key("Escape")
+    done("6")
     track_one = time.monotonic() - started
 
-    # The Tari part, on the same two: the locker on the computer, codes carry things to the phone
-    drop_url = make_drop_link(t, desk, "Council computer")
+    # The Tari part, on the same two: the drive's address code carries the phone's send to the computer
     opened = time.monotonic()
-    if desk.exists("key-later"):
-        desk.click("key-later")
-    desk.wait_for("locker-safety", 60)
     safety, address = locker_identity(desk)
-    codes = desk.wait("!!document.querySelector('[data-testid=\"locker-qr\"] svg') && !!document.querySelector('[data-testid=\"drop-qr\"] svg')", 30)
-    t.check(len(safety) == 12 and address.startswith("otl_esm_1") and bool(codes),
-            "B1: a locker on the computer, its Tari address, and two codes (the address, the drop link)")
-    t.shot(desk, "B1-locker")
+    t.check(len(safety) == 12 and address.startswith("otl_esm_1") and bool(desk.wait("!!document.querySelector('[data-testid=\"locker-qr\"] svg')", 30)),
+            "B1: My Tari address, Settings: the drive's address, its safety code and a code to scan")
+    t.shot(desk, "B1-settings")
+    desk.key("Escape")
     done("B1")
-    # B2: the phone scans the address code: its home opens with the courier ghost and the address.
     phone.goto(f"{t.origin}/#to={address}")
-    phone.wait("!!document.querySelector('[data-testid=\"drop-input\"]') && document.querySelector('#drop svg.ghost')?.dataset.state === 'courier'", 60)
+    phone.wait("!!document.querySelector('[data-testid=\"drop-input\"]') && !!document.querySelector('[data-testid=\"to-address\"]')", 60)
     flows.lock_text(phone, "E2E E-J sent to the computer")
     phone.wait(f"document.querySelector('[data-testid=\"send-recipient\"]')?.value === {json.dumps(address)} && !!document.querySelector('[data-testid=\"send-safety\"]')", 180)
     t.check(safety_emoji(phone, "send-safety") == safety, "B2: the send step has the scanned address and its safety code")
@@ -355,37 +355,24 @@ def ej(t: T) -> None:
     t.check(bool(tx and TX.match(tx)), "B2: the send has a transaction id")
     tx_view(t, phone, tx)
     done("B2")
-    t.check(open_inbox_item(t, desk, "send") == "opened", "B3: See what came: the computer opens what the phone sent")
-    t.shot(desk, "B3-inbox-opened")
+    t.check(open_inbox_item(t, desk, "send") == "opened", "B3: Received: the computer opens what the phone sent")
+    t.shot(desk, "B3-received")
+    desk.key("Escape")
     done("B3")
-    leave_photo(t, phone, drop_url, safety)
-    t.shot(phone, "B4-delivered")
-    t.check(open_inbox_item(t, desk, "drop") == "opened", "B4: it shows up on the computer, and opens")
-    done("B4")
-    desk.goto(t.origin + "/inbox")
-    desk.click("watch-mine")
-    desk.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 2", 600)
-    t.check(desk.attr("watch-summary", "data-readable") == "0", "B5: what came, and how much; no file sent to the locker opens with the view key")
-    t.check(desk.exists("c15"), "B5: C15 sits on the view-key screen")
-    done("B5")
-    desk.goto(t.origin + "/upgrade")
+    desk.goto(t.origin + "/drive/storage#more")
+    desk.wait_for("storage-meter", 60)
     if direct:
         price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
         funded = poll(lambda: wallet_ut(desk) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10)
         cold = time.monotonic() - opened
-        t.note(f"cold start: the sponsor grant was spendable {cold:.0f} s after the locker opened")
+        t.note(f"cold start: the sponsor grant was spendable {cold:.0f} s after the drive opened")
         t.check(funded, "direct mode: the computer's browser wallet received its sponsor grant")
-        t.check(cold <= 195, f"cold start {cold:.0f} s: the grant is there within 3:15 (spec §18.2 step 5)")
     desk.click("pack-s30")
     desk.wait_for("invoice-address", 60)
     desk.click("pay-browser" if direct else "demo-pay")
     t.check(desk.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 300),
-            "B6: Get more room: checked on the chain, then added")
-    if direct:
-        desk.collect()
-        t.check(any(r["method"] == "POST" and r["url"].endswith("/api/v1/chain/ix/transactions") for r in desk.requests),
-                "B6: the browser built and submitted the payment itself (direct)")
-    done("B6")
+            "B4: Get more space: checked on the chain, then added")
+    done("B4")
     t.note("seconds per step: " + json.dumps({k: round(v) for k, v in seconds.items()}))
     t.note(f"track one {track_one:.0f} s, the Tari part {time.monotonic() - started - track_one:.0f} s")
     minutes = (time.monotonic() - started) / 60

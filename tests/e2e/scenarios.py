@@ -9,10 +9,12 @@ import apiclient
 import flows
 from harness import STAGING, T, big_fixture_sha256, poll, scenario
 
-# The six pages of the ghost (14-ghost-design §4.1) and the app's; the old pages answer 301 (D-01).
-ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/t",
-             "/verify/tx/" + "0" * 64, "/no-such-page"]
-INSTRUMENTED = ("E-01", "E-02", "E-05", "E-08", "E-09", "E-10", "E-12")    # E-03 searches their traffic
+# The site's six pages, the drive's (16-drive-design §12) and the app's; the old pages answer 301 (D-01).
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/drive", "/drive/received", "/drive/storage", "/drive/activity",
+             "/send", "/watch", "/t", "/verify/tx/" + "0" * 64, "/no-such-page"]
+# E-03 searches their traffic: file and folder keys, child keys, names, key files and passphrases (E-08, E-26,
+# E-27, E-28 register them), link keys and view keys. (The sales keys join with pay to open, step 17.)
+INSTRUMENTED = ("E-01", "E-02", "E-05", "E-08", "E-09", "E-10", "E-12", "E-26", "E-27", "E-28")
 
 
 def item_of(t: T, url: str) -> str:
@@ -67,7 +69,7 @@ def e02(t: T) -> None:
     t.check(not t.hygiene(), "no secret in any request (E-03)")
 
 
-@scenario("E-03", "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12")
+@scenario("E-03", "Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28")
 def e03(t: T) -> None:
     ran = [(sid, problems) for sid, problems in t.env.hygiene if sid in INSTRUMENTED]
     if not ran:
@@ -146,19 +148,15 @@ def e07(t: T) -> None:
 
 
 def make_drop_link(t: T, page, label: str) -> str:
-    """From /locker: open a locker silently by asking for a drop link; return the short URL."""
-    page.goto(t.origin + "/locker")
-    page.wait_for("locker-root")
+    """In a drive (made on arrival when this browser has none, as Make my drive does): Received → Make my
+    drop link; return the short URL. Drive drops carry no name; the purge finds them by id."""
+    page.goto(t.origin + "/drive?make")
+    page.wait_for("drive-root", 120)
+    page.goto(t.origin + "/drive/received")
+    page.wait_for("drop-create", 60)
     page.click("drop-create")
-    url = page.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]');"
-                    " const v = e && (e.value || e.textContent || '').trim(); return v && v.includes('/d/') ? v : ''; })()", 120)
-    # The drop's name comes after it exists (14-ghost-design §4.3); the purge finds test drops by it.
-    # (only when the key question isn't open: the scenarios answer it themselves)
-    if label and page.exists("drop-label") and not page.eval("!!document.querySelector('dialog[open]')"):
-        page.fill("drop-label", label)
-        page.click("drop-label-save")
-        page.wait(f"document.querySelector('[data-testid=\"drop-label\"]')?.value === {json.dumps(label)}", 30)
-    return url
+    return page.wait("(() => { const e = document.querySelector('[data-testid=\"drop-link\"]');"
+                     " const v = e && (e.value || e.textContent || '').trim(); return v && v.includes('/d/') ? v : ''; })()", 120)
 
 
 def safety_emoji(page, testid: str) -> list[str]:
@@ -167,48 +165,24 @@ def safety_emoji(page, testid: str) -> list[str]:
                      ".textContent)].map(s => s.segment).filter(g => /\\p{Extended_Pictographic}/u.test(g))")
 
 
+def open_settings(page) -> None:
+    """The drive's Settings (account menu → Settings): the key, the Tari address with its code and safety
+    code, the view key. Opens /drive first when the page is elsewhere."""
+    if not page.eval("location.pathname.startsWith('/drive')"):
+        page.goto(page.eval("location.origin") + "/drive")
+    page.wait_for("drive-root", 120)
+    page.eval("document.querySelector('[data-testid=\"acct-settings\"]').click()")
+    page.wait("!!document.querySelector('[data-testid=\"settings\"] [data-testid=\"locker-safety\"]')", 120)
+
+
 def locker_identity(page) -> tuple[list[str], str]:
-    address = page.eval("(() => { const e = document.querySelector('[data-testid=\"locker-address\"]');"
-                        " return (e?.value || e?.textContent || '').trim(); })()")
+    """The drive's safety code (emoji) and Tari address, from Settings (left open)."""
+    open_settings(page)
+    address = page.eval("document.querySelector('[data-testid=\"settings\"] [data-testid=\"locker-address\"]').textContent.trim()")
     return safety_emoji(page, "locker-safety"), address
 
 
-@scenario("E-08", "Locker: lazy creation from Make my drop link (Get a file from someone); key saved; restored in a clean browser")
-def e08(t: T) -> None:
-    a = t.actor()
-    make_drop_link(t, a, "E2E E-08")
-    a.wait_for("key-save-file", 60)
-    # Brand P-15: the key file is locked with a passphrase by default.
-    passphrase = "E2E orchid lantern " + secrets.token_hex(4)
-    t.secret("the key passphrase", passphrase)
-    a.fill("key-passphrase", passphrase)
-    a.click("key-save-file")
-    key_text = t.env.remote.as_build(f"cat {t.downloaded(a)}")
-    t.secret("the key file", key_text.strip())
-    t.check("Locked key:" in key_text, "the key file is locked with the passphrase")
-    if a.exists("key-saved-check"):
-        a.click("key-saved-check")
-    a.goto(t.origin + "/locker")
-    a.wait_for("locker-safety")
-    safety, address = locker_identity(a)
-    t.check(len(safety) == 12 and address.startswith("otl_esm_1"),
-            f"the locker shows its 12-emoji safety code and Tari address ({len(safety)} emoji)")
-    t.shot(a, "locker")
-    b = t.actor()
-    b.goto(t.origin + "/locker")
-    b.wait_for("restore-open")
-    b.click("restore-open")               # "I have a key" (14-ghost-design §4.3: one tap away)
-    b.wait_for("restore-text")
-    b.fill("restore-text", key_text)
-    b.click("restore-submit")
-    b.wait_for("restore-passphrase", 30)
-    b.fill("restore-passphrase", passphrase)
-    b.click("restore-submit")
-    b.wait_for("locker-safety", 120)
-    t.check(locker_identity(b) == (safety, address), "the restored locker has the same safety code and address")
-    b.wait_for("quota-bar", 60)
-    t.check(b.attr("quota-bar", "data-limit"), "/me answers for the restored locker (quota shown)")
-    t.check(not t.hygiene(), "no secret in any request (E-03)")
+# E-08 moved to the drive: tests/e2e/scenarios_drive.py.
 
 
 @scenario("E-15", "Burn race: five browsers press Open it together; exactly one opens")
@@ -355,7 +329,7 @@ def e20(t: T) -> None:
     t.check(not unnamed_controls(a), "drop page: every control has an accessible name")
 
 
-@scenario("E-22", "Programs: an anonymous .exe is refused; in a free locker it seals and opens behind the program warning")
+@scenario("E-22", "Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning")
 def e22(t: T) -> None:
     a = t.actor()
     flows.home(a, t.origin)
@@ -370,13 +344,25 @@ def e22(t: T) -> None:
     state = flows.open_link(b, url)
     t.check(state in ("program-warning", "opened-risky"), f"the viewer shows the program warning (got {state})")
     t.check(b.exists("view-save-anyway") and not b.exists("view-image"), "no preview, Save anyway offered")
+    # 16-drive-design §12: a program in a drive, shared Once, opens behind the same warning.
+    import scenarios_drive
+    d = scenarios_drive.make_drive(t)
+    d.wait("!!document.querySelector('[data-testid=\"upload-files-input\"]')", 30)
+    d.set_files("upload-files-input", [t.fixture("setup.exe")])
+    scenarios_drive.wait_names(d, ["setup.exe"])
+    link = scenarios_drive.share_link(d, "setup.exe")
+    state = flows.open_link(t.actor(), link)
+    t.check(state in ("program-warning", "opened-risky"), f"from a drive: the viewer shows the program warning (got {state})")
 
 
-@scenario("E-24", "Tor-like browser (--jitless, no WebAssembly): E-01 passes; locker pages say needs_wasm")
+@scenario("E-24", "Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm")
 def e24(t: T) -> None:
     text_once(t, "desktop", jitless=True)
     page = t.actor(jitless=True)
-    for path in ("/locker", "/d/" + "0" * 10):
-        page.goto(t.origin + path)
-        page.wait("!!document.querySelector('[data-code=\"needs_wasm\"]')")
-        t.check(True, f"{path} shows needs_wasm")
+    page.goto(t.origin + "/drive?make")
+    state = page.wait("document.querySelector('[data-testid=\"drive-root\"]') ? 'drive' : "
+                      "(document.querySelector('[data-code=\"needs_wasm\"]') ? 'needs_wasm' : '')", 120)
+    t.check(state == "drive", f"/drive?make without WebAssembly: the drive opens and lists its files ({state})")
+    page.goto(t.origin + "/d/" + "0" * 10)
+    page.wait("!!document.querySelector('[data-code=\"needs_wasm\"]')")
+    t.check(True, "/d/… shows needs_wasm")
