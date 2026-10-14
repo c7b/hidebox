@@ -240,7 +240,8 @@
    ],
    "sentences": [
     "We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.",
-    "If the link leaks, our server could open it too."
+    "If the link leaks, our server could open it too.",
+    "We keep half of the key and give it to each buyer once the chain shows their payment. The other half is in the link. Neither half opens it alone."
    ]
   },
   {
@@ -291,7 +292,9 @@
    ],
    "sentences": [
     "Paid from your own wallet? It opens after the owner's drive checks it.",
-    "We check the amount and that the payment is on the chain. Only the owner's drive can check the money is theirs to spend."
+    "We check the amount and that the payment is on the chain. Only the owner's drive can check the money is theirs to spend.",
+    "Paid. The owner's drive checks it next time it opens.",
+    "The owner's drive checks it"
    ]
   },
   {

@@ -30,7 +30,8 @@ too_large_locker too_large_drop too_large_request program_drop locked pow_requir
 probation_limit chain_unavailable feature_disabled budget_exhausted bad_address mainnet_address l1_address bad_blob
 unknown_pack internal client network crypto memory clipboard empty folder many text_long program needs_wasm needs_wasm_drop
 integrity read wrong_password keyfile checksum locked_key wrong_passphrase address_mismatch view_key drop_limit
-insufficient timeout rejected judge_spent`.split(/\s+/));
+insufficient timeout rejected judge_spent
+payment_required bad_claim claim_used not_for_sale seller_not_ready seller_not_registered busy`.split(/\s+/)); // last line: lane app2 (pay to open)
 
 // An error the UI raises itself, with a code from the list above.
 export function uiError(code) {

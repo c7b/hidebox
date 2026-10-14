@@ -42,7 +42,8 @@ export function ruleBadge(rule) {
     few: ['secondary', 'repeat', t('drive.rule.few', { n: r.max })],
     until: ['secondary', 'timer', t('drive.rule.until', { date: r.ends ? day(r.ends) : '' })],
     word: ['secondary', 'key-round', t('drive.rule.word')],
-    pay: ['tari', 'coins', t('drive.rule.pay', { price: r.price ? formatTari(r.price) : '' })],
+    pay: r.ready === false ? ['outline', 'hourglass', t('sell.ready')] : r.paused ? ['outline', 'lock', t('sell.paused')]
+      : ['tari', 'coins', t('drive.rule.pay', { price: r.price ? formatTari(r.price) : '' })], // lane app2
     public: ['secondary', 'globe', t('drive.rule.public')],
     ended: ['outline', 'check', t('drive.rule.ended')],
   }[r.kind] ?? ['outline', 'lock', t('drive.rule.private')];
@@ -55,6 +56,7 @@ export function leavesBadge(at) {
 
 // Opens and ends of a rule, in words, for the table and the phone's second line.
 export function opensText(r) {
+  if (r.kind === 'pay') return t('sell.paid', { count: r.paid ?? 0 }); // lane app2
   if (['once', 'few', 'word'].includes(r.kind) && r.max) return t('drive.state.opens', { used: r.used, max: r.max });
   if (['public', 'until', 'word'].includes(r.kind)) return t('drive.state.no_limit', { used: r.used });
   return '';

@@ -56,6 +56,9 @@ async function walk(after, visit, { onPage, onProgress, signal }) {
   }
 }
 
+// lane app2: the owner check (lib/pay.js) walks the same pages with the drive's sales view key.
+export const walkMirror = walk;
+
 // Inbox and wallet scan for this browser's locker. Callbacks get the stored records.
 // -> {head}
 export async function scan(identity, { onDelivery, onReceipt, onProgress, signal } = {}) {

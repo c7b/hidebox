@@ -7,6 +7,7 @@ Allow: /
 Allow: /api/v1/config$
 Allow: /api/v1/stats$
 Disallow: /s/
+Disallow: /p/
 Disallow: /t$
 Disallow: /api/
 Disallow: /locker
