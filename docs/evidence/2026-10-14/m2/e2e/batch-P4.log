@@ -1,0 +1,3 @@
+PASS E-J      43.1s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/integ/e2e-P4/20261014-020906/report.json
+EXIT 0

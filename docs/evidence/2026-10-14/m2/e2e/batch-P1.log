@@ -1,0 +1,6 @@
+PASS E-25     41.8s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+FAIL E-29     31.1s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+           the page links the test money's transaction
+PASS E-30     60.8s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+e2e: FAIL {'PASS': 2, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/integ/e2e-P1/20261014-002528/report.json
+EXIT 1

@@ -1,0 +1,4 @@
+FAIL E-29    161.9s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+           timed out after 120 s waiting for: (() => { const c = [...document.querySelectorAll('[data-testid="folder-card"]')].find((e) => e.dataset.name === "E-29-council"); return c && /1 paid/.test(c.tex
+e2e: FAIL {'PASS': 0, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/integ/e2e-P2/20261014-003555/report.json
+EXIT 1

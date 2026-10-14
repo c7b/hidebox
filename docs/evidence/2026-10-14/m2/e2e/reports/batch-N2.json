@@ -1,0 +1,72 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-22",
+   "title": "Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 11.1,
+   "notes": [
+    "ok: the widget refuses the program before upload (banner program)",
+    "ok: the viewer shows the program warning (got program-warning)",
+    "ok: no preview, Save anyway offered",
+    "ok: from a drive: the viewer shows the program warning (got program-warning)"
+   ]
+  },
+  {
+   "id": "E-24",
+   "title": "Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 12.1,
+   "notes": [
+    "ok: B opens the link",
+    "ok: B reads exactly the sealed text",
+    "ok: B's reload shows burned",
+    "ok: C sees burned",
+    "ok: the link's item is in the database",
+    "ok: the item is deleted after a cleanup cycle",
+    "ok: /drive?make without WebAssembly: the drive opens and lists its files (drive)",
+    "ok: /d/\u2026 shows needs_wasm"
+   ]
+  },
+  {
+   "id": "E-27",
+   "title": "Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 12.6,
+   "notes": [
+    "ok: a folder link's first screen (ready)",
+    "ok: 4 things, named in this browser (['later', 'one-sunset.txt', 'three-market.txt', 'two-harbour.txt'])",
+    "ok: Save one: the file, byte for byte",
+    "ok: Download all: Python's zipfile finds every CRC good and the files byte for byte (['later/four-night.txt', 'one-sunset.txt', 'three-market.txt', 'two-harbour.txt'])",
+    "ok: a second phone: the link ended with its one visit",
+    "ok: no name or key in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-28",
+   "title": "Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 12.2,
+   "notes": [
+    "ok: moving into a folder with a link warns: This shares it too.",
+    "ok: the moved file shows through the folder's link (['inside-already.txt', 'moved-in-later.txt'])",
+    "ok: the move dialog offers My drive (['', 'E-28-box'])",
+    "ok: the running visit can't fetch a file moved out (403 not_in_folder; banner not_in_folder)",
+    "ok: the new name was sealed here and never sent in clear (E-03)"
+   ]
+  },
+  {
+   "id": "E-31",
+   "title": "Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name",
+   "status": "FAIL",
+   "detail": "timed out after 120 s waiting for: (() => { const e = document.querySelector(\"[data-testid=\\\"drive-root\\\"]\"); return !!e && e.getClientRects().length > 0; })()",
+   "seconds": 122.4,
+   "notes": []
+  }
+ ]
+}

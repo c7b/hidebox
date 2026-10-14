@@ -1,0 +1,55 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-25",
+   "title": "Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 41.8,
+   "notes": [
+    "ok: within 15 minutes the delivery is in the mirror and opens with the robot keys",
+    "ok: /api/v1/canary shows the delivery",
+    "ok: /evidence.json lists the delivery"
+   ]
+  },
+  {
+   "id": "E-29",
+   "title": "Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting \u2192 Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402",
+   "status": "FAIL",
+   "detail": "the page links the test money's transaction",
+   "seconds": 31.1,
+   "notes": [
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan ([redacted])",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "ok: the page knows a folder of three (folder, 3)",
+    "ok: the phone: the folder's name, three files, about how big, the price and the fee (3 files, about 1 MB)",
+    "ok: the names inside stay locked; no address before a claim",
+    "ok: Pay with test money: Waiting \u2192 Seen \u2192 On the chain \u2192 Unlocked (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "test money to Unlocked: 7 s",
+    "ok: every step done (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "ok: the folder lists its names (['agenda.txt', 'budget.txt', 'minutes.txt'])",
+    "ok: minutes.txt opens on the phone, with Save",
+    "ok: a reload keeps the claim (2 opens left until Oct 21.)"
+   ]
+  },
+  {
+   "id": "E-30",
+   "title": "Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 60.8,
+   "notes": [
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan ([redacted])",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "ok: the phone's drive received its sponsor grant (enough for the price and the fee)",
+    "ok: paid from the drive: it waits for the owner's drive (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])",
+    "ok: the seller's drive checks the payment: Yours to spend",
+    "ok: the owner's drive confirmed it: the phone can open it",
+    "ok: the file opens on the phone"
+   ]
+  }
+ ]
+}

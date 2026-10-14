@@ -1,0 +1,8 @@
+PASS E-22     11.1s  Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning
+PASS E-24     12.1s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+PASS E-27     12.6s  Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended
+PASS E-28     12.2s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
+FAIL E-31    122.4s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+           timed out after 120 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drive-root\"]"); return !!e && e.getClientRects().length > 0; })()
+e2e: FAIL {'PASS': 4, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/integ/e2e-N2/20261014-031225/report.json
+EXIT 1
