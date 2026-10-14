@@ -223,7 +223,9 @@ export async function payPage(root, cfg, shareId) {
         h('li', {}, icon('file'), h('span', { class: 'name' }, sanitizeFileName(f.name)), h('span', { class: 'size' }, formatBytes(f.size)),
           button(t('buy.save'), { variant: 'ghost', size: 'sm', glyph: 'download', testid: 'pay-save', 'aria-label': t('buy.save_one', { name: sanitizeFileName(f.name) }), onclick: () => saveFile(f.parts, f.name) })));
     } else {
-      content = h('div', { class: 'locked-note', 'data-testid': 'pay-locked' }, icon('lock'), h('span', {}, t(folder ? 'buy.locked' : 'buy.locked_file')));
+      const paid = phase === 'open';
+      content = h('div', { class: 'locked-note', 'data-testid': 'pay-locked' }, icon(paid ? 'circle-check' : 'lock'),
+        h('span', {}, t(paid ? 'buy.paid_note' : folder ? 'buy.locked' : 'buy.locked_file')));
     }
     return h('section', { class: 'buyer-list stack', 'aria-labelledby': 'buy-h' },
       h('div', { class: 'card', 'data-testid': 'pay-teaser' },
