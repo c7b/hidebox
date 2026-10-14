@@ -36,7 +36,7 @@
   --exit: #FF6467; --on-exit: #0A0A0A; --exit-text: #FF6467;
   --ghost-fill: var(--phosphor); --ghost-line: var(--phosphor-deep); --ghost-eye: var(--night);
   --blush: #FF8FB0; --prop: #FFF3C4;
-  --glow: none; --ghost-shadow: rgb(0 0 0 / .3);
+  --glow: drop-shadow(0 0 22px rgb(189 239 195 / .38)); --ghost-shadow: rgb(189 239 195 / .18);
   --scrim: rgb(0 0 0 / .7);
   --shadow: 0 0 0 1px var(--hair), 0 16px 32px -18px rgb(0 0 0 / .7);
 }
@@ -51,7 +51,7 @@
     --exit: #FF6467; --on-exit: #0A0A0A; --exit-text: #FF6467;
     --ghost-fill: var(--phosphor); --ghost-line: var(--phosphor-deep); --ghost-eye: var(--night);
     --blush: #FF8FB0; --prop: #FFF3C4;
-    --glow: none; --ghost-shadow: rgb(0 0 0 / .3);
+    --glow: drop-shadow(0 0 22px rgb(189 239 195 / .38)); --ghost-shadow: rgb(189 239 195 / .18);
     --scrim: rgb(0 0 0 / .7);
     --shadow: 0 0 0 1px var(--hair), 0 16px 32px -18px rgb(0 0 0 / .7);
   }
