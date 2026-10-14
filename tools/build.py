@@ -140,13 +140,32 @@ def page_url(rel: str) -> str:
 
 
 # Never copied from web/shared: the partials are inlined, and the old Mutis Script fonts left the
-# site with the ghost (DESIGN.md: system faces only); their files stay in the repository one release.
+# site with the ghost; their files stay in the repository one release.
 SHARED_SKIP = ("partials", "fonts")
+# The drive's one family (DESIGN.md "Typography"): Geist, vendored from Vercel's repository with its
+# licence and pinned like ootle-wasm (a font can't carry SRI, so the build refuses any other bytes).
+FONTS = {"geist/Geist-Variable.woff2": "2ffebe993e969069a9789d15164b7715d42491b5835516c5e3b935d5f81b05f1",
+         "geist/OFL.txt": None}
+
+
+def copy_fonts(web: Path, dist: Path) -> None:
+    """A tree with the drive (web/app/drive.html) serves its font, and only these exact bytes."""
+    if not (web / "app" / "drive.html").is_file():
+        return
+    for name, expected in FONTS.items():
+        src = web / "shared" / "fonts" / name
+        if not src.is_file():
+            raise BuildError(f"font file missing: web/shared/fonts/{name}")
+        if expected and sha256(src) != expected:
+            raise BuildError(f"font hash mismatch: web/shared/fonts/{name}")
+        (dist / "shared" / "fonts" / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dist / "shared" / "fonts" / name)
 
 
 def copy_site(web: Path, dist: Path, with_tests: bool) -> list[str]:
     """Returns the pages copied, as paths under web/site/pages."""
     copy_tree(web / "shared", dist / "shared", skip=SHARED_SKIP)
+    copy_fonts(web, dist)
     copy_tree(web / "app", dist / "app", skip=APP_NEVER_SERVED + (() if with_tests else ("tests",)))
     copy_tree(web / "app" / "vendor", dist / "vendor")
     copy_tree(web / "site" / "static", dist)

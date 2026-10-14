@@ -2,12 +2,13 @@
 // Lockers (§4.8): one 32-byte seed made in the browser is the whole identity. Everything else is
 // derived from it with HKDF: the login secret, the vault key, the locker's Tari address keys, a
 // separate wallet keypair, and the dead-drop tags. There is no email and no server-side public key.
-import { b64uDecode, b64uEncode } from './b64.js';
+// The drive opens without WebAssembly (16-drive-architecture §6.4, A-06d): its list needs only the id,
+// authKey and vaultKey (WebCrypto), so `{lazy: true}` leaves the Tari keys, address and safety code
+// for withOotle(), which loads ootle-wasm the first time something needs Tari.
+import { b64uDecode, b64uEncode, hex } from './b64.js';
 import { concat, u32be, readU32be, utf8 } from './bytes.js';
 import { aesGcmDecrypt, aesGcmEncrypt, hkdf, pbkdf2Sha256, randomBytes } from './crypto.js';
 import { sha256Sync } from './sha256sync.js';
-import { addressFromKeys, deriveOotleKeys } from './ootle.js';
-import { safetyCode } from './emoji.js';
 import { chainUtxos } from './api-locker.js';
 import { idbDelete, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
 import { set as setState } from './store.js';
@@ -30,12 +31,9 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 // The derived, in-memory view of a stored record {v:2, seed, created, createdSeq, dropIndex, drops, keySaved}.
 // `storageAvailable` and `persisted` (true | false | null: unknown) describe this browser's storage.
-export async function identityFromSeed(seed, record = {}) {
+// With {lazy: true} `locker`, `wallet` and `safetyCode` are null until withOotle(identity) fills them.
+export async function identityFromSeed(seed, record = {}, { lazy = false } = {}) {
   if (seed.length !== 32) throw new TypeError('seed must be 32 bytes');
-  const locker = await deriveOotleKeys(seed, 'ootle');
-  const wallet = await deriveOotleKeys(seed, 'wallet');
-  locker.address = await addressFromKeys(locker.ownerPk, locker.viewPk);
-  wallet.address = await addressFromKeys(wallet.ownerPk, wallet.viewPk);
   const tags = [];
   const manage = [];
   for (let i = 0; i < DROP_SLOTS; i++) {
@@ -46,14 +44,14 @@ export async function identityFromSeed(seed, record = {}) {
     if (!Number.isInteger(i) || i < 0 || i >= DROP_SLOTS) throw new RangeError('drop index out of range');
     return list[i];
   };
-  return {
+  const identity = {
     id: b64uEncode(await hkdf(seed, SALT, 'identity-id', 16)),
     seed,
     authKey: await hkdf(seed, SALT, 'auth', 32),
     vaultKey: await hkdf(seed, SALT, 'vault', 32),
-    locker,
-    wallet,
-    safetyCode: await safetyCode(locker.ownerPk, locker.viewPk),
+    locker: null,
+    wallet: null,
+    safetyCode: null,
     created: record.created ?? today(),
     createdSeq: record.createdSeq ?? null,
     dropIndex: record.dropIndex ?? 0,
@@ -64,6 +62,31 @@ export async function identityFromSeed(seed, record = {}) {
     dropTag: (i) => slot(tags, i),
     dropManage: (i) => slot(manage, i),
   };
+  return lazy ? identity : withOotle(identity);
+}
+
+const ootleDone = new WeakMap();
+
+// Fills identity.locker, identity.wallet (keys and addresses) and identity.safetyCode in place, once
+// (ootle-wasm loads here); resolves to the same identity.
+export function withOotle(identity) {
+  if (identity.locker) return Promise.resolve(identity);
+  if (!ootleDone.has(identity)) {
+    const done = (async () => {
+      const [{ addressFromKeys, deriveOotleKeys }, { safetyCode }] = await Promise.all([import('./ootle.js'), import('./emoji.js')]);
+      const locker = await deriveOotleKeys(identity.seed, 'ootle');
+      const wallet = await deriveOotleKeys(identity.seed, 'wallet');
+      locker.address = await addressFromKeys(locker.ownerPk, locker.viewPk);
+      wallet.address = await addressFromKeys(wallet.ownerPk, wallet.viewPk);
+      identity.safetyCode = await safetyCode(locker.ownerPk, locker.viewPk);
+      identity.wallet = wallet;
+      identity.locker = locker;
+      return identity;
+    })();
+    done.catch(() => ootleDone.delete(identity));
+    ootleDone.set(identity, done);
+  }
+  return ootleDone.get(identity);
 }
 
 function recordOf(identity) {
@@ -88,16 +111,16 @@ async function mirrorHead() {
 }
 
 // Asks the browser to keep the new locker's storage; the answer is on identity.persisted.
-export async function createIdentity() {
-  const identity = await identityFromSeed(randomBytes(32), { created: today(), createdSeq: await mirrorHead() });
+export async function createIdentity({ lazy = false } = {}) {
+  const identity = await identityFromSeed(randomBytes(32), { created: today(), createdSeq: await mirrorHead() }, { lazy });
   identity.persisted = await persistStorage();
   return persist(identity);
 }
 
-export async function loadIdentity() {
+export async function loadIdentity({ lazy = false } = {}) {
   const rec = await idbGet('identity', 'current');
   if (!rec || rec.v !== 2) return null;
-  const identity = await identityFromSeed(new Uint8Array(rec.seed), rec);
+  const identity = await identityFromSeed(new Uint8Array(rec.seed), rec, { lazy });
   identity.persisted = await persistStorage({ ask: false });
   setState('identity', identity);
   return identity;
@@ -184,17 +207,20 @@ export function parseRecoveryCode(text) {
 
 // --- key files -------------------------------------------------------------------------------------
 
+// A drive opened without WebAssembly has no safety code or address yet (withOotle() fills them); its
+// key file then carries only the date, and the key itself.
 function fileHeader(identity) {
-  const e = identity.safetyCode.emoji;
+  const e = identity.safetyCode?.emoji;
   return [
-    `Safety code: ${e.slice(0, 4).join('')} ${e.slice(4, 8).join('')} ${e.slice(8, 12).join('')}`,
-    `Tari address (Esmeralda testnet): ${identity.locker.address}`,
+    ...(e ? [`Safety code: ${e.slice(0, 4).join('')} ${e.slice(4, 8).join('')} ${e.slice(8, 12).join('')}`,
+      `Tari address (Esmeralda testnet): ${identity.locker.address}`] : []),
     `Created: ${identity.created}`,
   ];
 }
 
 export function keyFileName(identity) {
-  return `mutis-key-${identity.safetyCode.hex.replace(/ /g, '').slice(0, 6)}.txt`;
+  const tag = identity.safetyCode ? identity.safetyCode.hex.replace(/ /g, '') : hex(b64uDecode(identity.id));
+  return `mutis-key-${tag.slice(0, 6)}.txt`;
 }
 
 export function keyFileText(identity) {
@@ -244,11 +270,11 @@ async function unlockSeed(lockedB64u, passphrase) {
 }
 
 // Accepts a whole key file (plain or locked) or any text that contains a recovery code.
-export async function restoreFromText(text, passphrase = '') {
+export async function restoreFromText(text, passphrase = '', { lazy = false } = {}) {
   const locked = /Locked key:\s*([A-Za-z0-9_-]+)/.exec(String(text));
   const seed = locked ? await unlockSeed(locked[1], passphrase) : parseRecoveryCode(text);
   const created = /Created:\s*(\d{4}-\d{2}-\d{2})/.exec(String(text))?.[1] ?? today();
-  const identity = await identityFromSeed(seed, { created, createdSeq: null, keySaved: true });
+  const identity = await identityFromSeed(seed, { created, createdSeq: null, keySaved: true }, { lazy });
   identity.persisted = await persistStorage();
   return persist(identity);
 }

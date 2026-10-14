@@ -70,7 +70,7 @@ const META_AAD = utf8('meta');
 const clean = (v, max) => truncateUtf8(String(v ?? '').replace(/\p{Cc}/gu, ''), max);
 
 function normalizeMeta(m) {
-  if (m.kind !== 'file' && m.kind !== 'text') throw new TypeError('meta.kind must be file or text');
+  if (m.kind !== 'file' && m.kind !== 'text' && m.kind !== 'folder') throw new TypeError('meta.kind must be file, text or folder');
   if (!Number.isSafeInteger(m.size) || m.size < 0) throw new TypeError('meta.size must be a byte count');
   return {
     v: 1,
