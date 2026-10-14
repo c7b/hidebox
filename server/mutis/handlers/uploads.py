@@ -7,7 +7,7 @@ BEGIN IMMEDIATE transaction, so concurrent uploads can never overshoot a limit (
 import os
 import struct
 
-from .. import codec, db, items, lanes, quota, seallog, tree
+from .. import auth, codec, db, items, lanes, quota, seallog, tree
 from ..http_util import ApiError, Response, get_b64, get_enum, get_int, invalid, json_response
 from .drops import active_drop
 
@@ -48,8 +48,10 @@ def _free_bytes_rules(ctx, size: int) -> tuple:
     brakes = ctx.cfg["brakes"]
     if ctx.exempt():
         return ()
-    if ctx.judge_soft() is not None:
-        return (("upbytes64j", ctx.ip64, brakes["judge_upload_bytes_per_network_day"], size),)
+    code = ctx.judge_soft()
+    if code is not None:                 # per network and per pass, so one leaked pass isn't many networks' worth
+        return (("upbytes64j", ctx.ip64, brakes["judge_upload_bytes_per_network_day"], size),
+                ("upbytespass", auth.judge_hash(code), brakes["judge_upload_bytes_per_network_day"], size))
     return (("upbytes64", ctx.ip64, brakes["upload_bytes_per_network_day"], size),
             ("upbytes48", ctx.ip48, brakes["upload_bytes_per_wide_network_day"], size))
 
