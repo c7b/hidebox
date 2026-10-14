@@ -1,0 +1,27 @@
+== checks on ultron as build (the server's Python)
+Ran 327 tests in 68.071s
+
+OK (skipped=6)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 4 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "8484114c", "files": 157, "git_sha": "f89963c0c8d61ee696eed9ae60c1b81cbdeae179", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 6, "vendored_checked": 6, "version": "spooky-secrets-2026-10-9-gf89963c"}
+== upload and activate f89963c0c8d61ee696eed9ae60c1b81cbdeae179-c8484114c
+sidecar: hello ok, pinned ootle-wasm
+schema version 6
+switched current → releases/f89963c0c8d61ee696eed9ae60c1b81cbdeae179-c8484114c
+restarted mutis-api
+restarted mutis-chain
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: f89963c0c8d61ee696eed9ae60c1b81cbdeae179-c8484114c manifest 64ae70eb3646… in tx e939fa4461d5e5c3985c793b30434d90fc01fd5d43b8ff3e0728cfd5dbb7486c
+== deployed f89963c0c8d61ee696eed9ae60c1b81cbdeae179-c8484114c to https://srv2052606.hstgr.cloud
+EXIT 0

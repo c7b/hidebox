@@ -1,0 +1,13 @@
+object f89963c0c8d61ee696eed9ae60c1b81cbdeae179
+type commit
+tag spooky-secrets-2026-10
+
+hidebox for Tari Ootle's Spooky Secrets contest (October 2026): the release deployed at https://srv2052606.hstgr.cloud
+
+git ls-remote origin:
+f89963c0c8d61ee696eed9ae60c1b81cbdeae179	refs/heads/main
+e31897e3b7783b58120954fd5210a9848da21ed4	refs/tags/spooky-secrets-2026-10
+f89963c0c8d61ee696eed9ae60c1b81cbdeae179	refs/tags/spooky-secrets-2026-10^{}
+
+live /api/v1/health version: f89963c0c8d61ee696eed9ae60c1b81cbdeae179
+previous tag object fc22b07 on c73c7b4 (fifth pass)

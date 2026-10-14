@@ -1,0 +1,10 @@
+drive PJ1UIdl8AiqNBZM--EiYsA
+invoice 201 pending amount_ut 500000
+same pack again while open: 200 same invoice
+demo-pay 202
+0 s: pending {}
+5 s: credited {"amount_proven": true, "committed_on_chain": true}
+me.pack {"id": "s30", "bytes": 2147483648} plan paid renew_from - until -259200
+second pack: 409 pack_active You already have 2 GiB until Nov 13.
+stats {"packs_sold_public": 2147483648, "packs_cap_public": 19327352832}
+EXIT 0

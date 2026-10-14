@@ -1,0 +1,5 @@
+security drop: ('active',)
+canary items ready: 52
+judge passes: 42
+active packs: (1, 2147483648)
+robot/owner meta: ['canary_item_id', 'receiver_address']

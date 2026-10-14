@@ -127,7 +127,9 @@ What this does and doesn't do. The per-network counts live only in memory, keyed
 that is never written, so a restart (a deploy) forgets them and gives each network a fresh day; the
 deployment's ceilings survive it. The brakes slow a griefer to the deployment's daily pace and make it
 visible; they don't stop someone with many networks: a botnet, or anyone with an IPv6 /32 (65,536 /48s),
-can still make drives and fill free space at 6 GiB a /48 a day, and can take the day's public packs. What
+can still make drives and fill free space at 6 GiB a /48 a day, and can take the day's public packs;
+three networks an hour can hold them with unpaid invoices, which free up when they expire (an hour).
+Judges' purchases may spill into the public slice by design (at most 10 a day). What
 protects the disk itself are the hard freezes in `quota.py`: free uploads pause when free disk falls
 within 2 GiB of the reserve, and all uploads within 256 MiB; files already stored are never deleted to
 make room. `deploy/README.md` ("If someone games the packs") is the operator's side.
