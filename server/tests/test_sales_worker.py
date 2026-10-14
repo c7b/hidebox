@@ -138,7 +138,9 @@ class SalesWorker(PaidCase):
         self.ticks()
         self.assertEqual(self.row(claim)["status"], "paid")
         self.assertTrue(seen and min(seen) >= head)             # never the rows before the claim
-        self.assertEqual(self.s.conn.execute("SELECT scan_seq FROM sellers").fetchone()[0], sales.mirror_head(self.s.conn))
+        # The cursor moves past every row it scanned. Not "== the head": a decoy the same tick sends after the
+        # scan (random, decoy_mean_gap_s) lands in the mirror later (integration, pass 2: was flaky, 1 in ~10).
+        self.assertGreaterEqual(self.s.conn.execute("SELECT scan_seq FROM sellers").fetchone()[0], max(seen))
 
     def test_sellers_take_turns(self):
         others = []
@@ -214,6 +216,7 @@ class DemoPayForClaims(PaidCase):
         got = self.poll(self.c)
         self.assertEqual((got["status"], got["views_left"], codec.unb64u(got["server_half"])),
                          ("released", sales.BUYER_VIEWS, self.link["half"]))
+        self.assertRegex(got["tx_id"], r"^[0-9a-f]{64}$")      # integration, pass 2: the buyer can see its tx
         self.open(self.link, self.c)
 
     def enqueue(self, **payload) -> str:

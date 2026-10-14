@@ -278,7 +278,8 @@ class TestMoneyGuards(PaidCase):
         poll = lambda: self.s.request("GET", f"{V}/p/{self.c['share_id']}/claims/{self.c['claim_id']}", headers=self.c["hdr"])[2]
         self.assertNotIn("tx_id", poll())
         with db.tx(self.s.conn):
-            self.s.conn.execute("UPDATE jobs SET result = ? WHERE id = ?", (json.dumps({"tx_id": "ab" * 32}), job["job_id"]))
+            self.s.conn.execute("UPDATE jobs SET state = 'done', payload = NULL, result = ? WHERE id = ?",
+                                (json.dumps({"tx_id": "ab" * 32, "ref": self.c["claim_id"]}), job["job_id"]))
         self.assertEqual(poll()["tx_id"], "ab" * 32)
 
     def test_demo_pay_refuses_without_the_token_when_paid_or_when_off(self):

@@ -429,11 +429,14 @@ class Worker:
             if now - job["updated_at"] >= SEND_TIMEOUT_S:
                 self._failed(job, "timeout", now, retry=False)
         elif outcome["committed"]:
+            result = {"tx_id": tx_id}
             if job["kind"] == "demo_pay" and job["payload"]:
                 payload = json.loads(job["payload"])
                 if str(payload.get("ref", "")).startswith("clm_"):
                     sales.mark_demo(self.conn, payload["ref"], int(payload["amount_ut"]))
-            result = {"tx_id": tx_id}
+                    # integration, pass 2: test money's tx stays findable by its claim (the payload is scrubbed),
+                    # so the buyer's poll can link What the chain sees (16-drive-design §10, track two)
+                    result["ref"] = payload["ref"]
             if job["evidence"]:
                 result["utxo_ids"] = outcome["utxo_ids"]
             jobs.finish(self.conn, job["id"], result, now)

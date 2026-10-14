@@ -202,8 +202,8 @@ def get_claim(ctx, share_id: str, claim_id: str):
                          "checks": {"amount_proven": True, "committed_on_chain": bool(p["committed"])}} for p in pays]}
     # integration, pass 2: test money's transaction, once our demo wallet has sent it, so the buyer can see
     # what the chain shows (16-drive-design §10, track two, step 6). Only this claim's holder asks for it.
-    job = conn.execute("SELECT result FROM jobs WHERE kind = 'demo_pay' AND json_extract(payload, '$.ref') = ? "
-                       "AND json_extract(result, '$.tx_id') IS NOT NULL ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
+    job = conn.execute("SELECT result FROM jobs WHERE kind = 'demo_pay' AND state = 'done' AND json_extract(result, '$.ref') = ? "
+                       "ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
     if job is not None:
         out["tx_id"] = json.loads(job[0])["tx_id"]
     if claim["status"] == "released":
