@@ -15,7 +15,7 @@ From the repository root:
 python3 -I -m unittest discover -s server/tests
 ```
 
-257 tests, about a minute (the server, Python 3.13.5, 2026-10-13: `Ran 257 tests`, `OK (skipped=5)`; the five skips are the first two opt-in suites below). Opt-in suites:
+305 tests, about a minute (local, 2026-10-14: `Ran 305 tests`, `OK (skipped=5)`; the five skips are the first two opt-in suites below). Opt-in suites:
 
 | Command | What it adds |
 |---|---|
@@ -88,6 +88,7 @@ IPv4 address; 128 for a /48 or /24), so slow downloads from one place can't hold
 | IPs only in memory, keyed by the day | `ipkeys.py` (HMAC with a key regenerated at 00:00 UTC, never written); rate limits and the bounded tables in `ratelimit.py` |
 | The schema has no name, type, IP, public key or recipient column (a seller's opt-in sales address and per-claim addresses are the deliberate exception, for pay to open) | `schema.sql`; `test_never_store.Schema` |
 | Opens are counts per link per UTC hour, never who opened it | `share_opens(share_id, hour, n)`, written in the open's transaction (`handlers/shares.py` `count_open`), deleted with the link's tombstone; `test_activity.py` |
+| A paid link releases our half of its key only for money the owner can spend | test money our demo wallet built for the whole price releases at `paid`; any other payment waits for the owner's drive (`POST /me/sales/claims/{cid}/confirm`); opens need a released claim (`handlers/pay.py`, `sales.py`, `shares.paid_claim`, `chain_worker.verify_sales`); `test_release_gate.py`, `test_sales_worker.py`, `test_paid_shares.py` |
 | A folder link serves only what is still in the folder | the folder ticket checks membership at each request (`handlers/blobs.py`, `tree.within`); `test_folder_shares.py` |
 | Exactly one of N concurrent opens burns a Once link | `handlers/shares.py` `_open_in_tx` in one `BEGIN IMMEDIATE`; `test_burn_race.py` (50 threads) |
 | A link's wrapped key is scrubbed when it ends: in the request that opens, revokes or deletes it, or within a minute of its expiry. SQLite zeroes the bytes it frees in the database file (`PRAGMA secure_delete`); an older page can stay in the write-ahead log until the log is reused, and in the daily backups for their 7 days | `items.end_share`, `cleanup.expire_links`, `db.connect`; `test_cleanup.py`, `test_schema.py` |

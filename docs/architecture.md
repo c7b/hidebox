@@ -83,6 +83,8 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
 | Payment amounts | for space rented from us (we're the seller) | no (a Pedersen commitment) | — | — |
 | Folder structure: which files share a folder, how deep, how many | yes (never a name) | no | yes, for the folder the link opens | — |
 | How many times a link opened, per hour | yes (a count per link per UTC hour; never who or from where) | no | no | — |
+| Payments to a seller (pay to open): amount, time, claim | yes, through the view key of the sales address, which the seller's drive sealed to our payment checker (only outputs that pay one of that seller's claims are recorded) | no (hidden amount, hidden owner; the fee is public) | the buyer sees their own | — |
+| Half of a paid link's key (`sB`) | yes, until the link ends | no | the other half (`sA`) | — |
 
 The long form, with every party and every column the database keeps, is on `/made#who` and `/fine-print#privacy`.
 
@@ -120,6 +122,20 @@ moved out mid-visit is refused at once. A file's link can carry **Delete it from
 (`then_delete`): the file then leaves with its last link, with its exit receipt. Each open adds one to
 its link's count for that UTC hour (`share_opens`), which the owner sees in the drive.
 
+**Pay to open** splits a link's key in two: the drive draws `sA` and `sB`, the link's secret is
+HKDF(`sA` ‖ `sB`), `sA` goes after the `#` of `/p/{share id}#5…` and `sB` to us with the price
+(`POST /items/{id}/shares`, `mode: "pay"`). Before its first paid link, the drive registers its **sales
+address** and seals that address's view key to our payment checker (`PUT /me/sales`). A buyer's browser
+reads the price and an encrypted preview (`GET /p/{id}`), makes a claim with a proof of work and a token
+only it holds (`POST /p/{id}/claims`), and pays the claim's address: the owner's sales address carrying the
+claim id as its payment reference, with test money from our demo wallet or from any Ootle wallet. The
+chain worker opens the sealed view key in memory, scans the mirror from the claim's position, proves the
+amount with the official library, waits for an indexer to commit the output, and marks the claim paid.
+Test money releases then; any other payment waits for the owner's drive to check that the money is its
+own to spend (`POST /me/sales/claims/{cid}/confirm`). The buyer's next poll returns `sB`; the browser
+derives the secret and opens through `/s/{id}/open` with its claim token, `buyer_views` times within
+`buyer_window_s`. Ending the link erases `sB`.
+
 Where the key travels instead of a link: **send to a Tari address** (the link's secret is sealed to
 the address's owner and view keys with the official library; the 125-byte blob is the memo of a
 stealth payment) and **dead drops** (a public intake page whose uploads are sealed to the drop
@@ -137,6 +153,7 @@ the browser, so the server never learns which outputs a browser can open.
 | The UTXO mirror | every TARI output since `mirror_start_epoch`, served to every browser alike | `server/mutis/mirror.py`, `GET /chain/utxos` |
 | Direct sends | the browser builds, signs and pays from a sponsor grant; the server relays only that shape | `web/app/lib/wallet.js`, `server/mutis/handlers/chain.py`, `server/mutis/cbor.py` |
 | Pack payments | credited only after the sidecar (official library) opens the commitment to the exact amount, an indexer shows it committed, and its one-time key is the one our receiver's owner key derives (spendable by us, not only readable with our view key) | `server/mutis/payments.py`, `server/mutis/chain_worker.py`, `web/app/sidecar/` |
+| Pay to open | a stealth payment straight to the owner's sales address, the claim id as the payment reference in the memo; the sales address's view key sealed to our payment checker (kind 3, flag `0x08`) and opened only in its memory; amounts proven by the official library and committed on an indexer; the release gate (test money we built, or the owner's drive's ownership check) | `server/mutis/sales.py`, `server/mutis/handlers/pay.py`, `server/mutis/chain_worker.py` (`verify_sales`), `web/app/sidecar/sidecar.mjs` (`openWatchKey`) |
 | SealLog | a Merkle root over stored-file hashes and exit records per checkpoint; proofs checked in the browser against the component's state; release manifests notarized | `template/seal_log/`, `server/mutis/seallog.py`, `web/app/lib/seallog.js` |
 
 The template is published from this repository's exact bytes; `template/check.sh --onchain` and

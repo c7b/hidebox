@@ -26,18 +26,19 @@ MAX_BITS = 24
 GLOBAL_MAX_BITS = 20
 
 PURPOSES = {"upload": (1, 16), "register": (2, 18), "courier": (3, 18), "demo_pay": (4, 18), "report": (5, 16),
-            "drop_create": (6, 18), "sponsor": (7, 18), "password": (8, 16)}
+            "drop_create": (6, 18), "sponsor": (7, 18), "password": (8, 16),
+            "claim": (9, 16)}
 _BY_CODE = {code: name for name, (code, _) in PURPOSES.items()}
 
 # The per-ip64 hourly limit of each purpose's endpoint (spec §6.2); escalation compares a key's
 # 10-minute count of solutions used with a sixth of it, but never with less than ESCALATE_FLOOR, so a
 # phone and a laptop behind one address can each retry a few times before anything gets harder.
 HOURLY = {"upload": 30, "register": 5, "courier": 10, "demo_pay": 2 / 24, "report": 10, "drop_create": 5,
-          "sponsor": 1 / 24, "password": 20}
+          "sponsor": 1 / 24, "password": 20, "claim": 10}
 ESCALATE_FLOOR = 3
 # Solutions used per 10 minutes, across everyone, above which every client gets +2 bits (never past 20).
 GLOBAL_10MIN = {"upload": 600, "register": 60, "courier": 120, "demo_pay": 30, "report": 60, "drop_create": 60,
-                "sponsor": 30, "password": 300}
+                "sponsor": 30, "password": 300, "claim": 300}
 
 
 class PowError(Exception):

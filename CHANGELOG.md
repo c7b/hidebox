@@ -25,6 +25,34 @@
 - **Copy** (step 13): `tools/check-copy.py` knows C32 to C47 and bans the two retired sentences.
 <!-- /integration, pass 1 -->
 
+<!-- lane S, step 14 -->
+## 2026-10-14: pay to open, the server (research 16-drive-design §4, §15 step 14), behind `features.pay_to_open`
+
+- **Sales address:** `PUT /me/sales` registers the drive's sales address and its view key sealed (kind 3,
+  flag `0x08`, bound to the address) to the payment checker; the chain worker opens it in memory only
+  (new sidecar op `openWatchKey`, with an offline round trip in `selftest`) and marks the seller `ok` or
+  `bad_key`. `GET /me/sales` lists paid claims waiting for the drive's ownership check.
+- **Paid links:** `mode: "pay"` on a drive's kept file or folder (a price from `/config`, our half of the
+  key, an encrypted preview); one per item; `PATCH /s/{id} {paused}`; `manage` and `/me/items` show counts
+  and earnings, never who paid.
+- **Buyers:** `GET /p/{id}` (never the seller's address), `POST /p/{id}/claims` (PoW purpose `claim`, code
+  9; caps per link and in all), `GET /p/{id}/claims/{cid}` with `X-Mutis-Claim`, and test money for a claim
+  (`…/demo-pay`; the worker re-checks claim, seller, address and amount for `clm_` references).
+- **The open gate:** a paid link opens, peeks and serves its bytes only with a released claim with opens
+  left in its window (402 `payment_required`, 403 `bad_claim`, 410 `claim_used`); each open spends one.
+- **verify_sales:** sellers with a waiting claim, 50 a tick, scanned from the claim's mirror position;
+  only outputs that pay one of that seller's claims are recorded; counted once an indexer commits them;
+  short payments, top-ups within the grace, extras. The pack credit freeze doesn't stop sales.
+- **The release gate:** test money our demo wallet built for the whole price releases at `paid`; any
+  other payment waits at `owner_check = 'pending'` until `POST /me/sales/claims/{cid}/confirm` from the
+  owner's drive, one call per output (`{utxo_id, spendable}`; migration 005 adds `sale_payments.owner_ok`):
+  every counted output spendable releases, one that isn't voids. Ending a link erases `server_half` and
+  voids waiting claims.
+- **Docs:** api.md (routes, `X-Mutis-Claim`, fragment kind 5, a "Pay to open" paragraph), threat-model.md
+  (five rows and a "Pay to open" paragraph), architecture.md (who sees what, the life of a file, the Tari
+  parts). Tests on the fake chain only: `test_paid_shares.py`, `test_sales_worker.py`, `test_release_gate.py`.
+<!-- /lane S, step 14 -->
+
 <!-- lane S -->
 ## 2026-10-13: the drive's server, steps 1, 2, 4 and 6 (research 16-drive-design §15)
 
