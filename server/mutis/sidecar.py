@@ -16,6 +16,8 @@ from . import logsafe
 
 TIMEOUT_S = 30
 MAX_LINE = 8 * 1024 * 1024
+# Errors about the sidecar process rather than the request: the process restarts, the caller retries later.
+TRANSPORT_ERRORS = frozenset({"timeout", "exited", "line_too_long", "protocol", "wasm_hash_mismatch"})
 
 
 class SidecarError(Exception):
@@ -90,7 +92,7 @@ class Sidecar:
                     self._start()
                 return self._exchange({"cmd": cmd, **fields})
             except SidecarError as e:
-                if e.code in ("timeout", "exited", "line_too_long"):
+                if e.code in TRANSPORT_ERRORS - {"protocol", "wasm_hash_mismatch"}:
                     self.stop()
                     logsafe.event("chain.sidecar_restart", "warning")
                 raise

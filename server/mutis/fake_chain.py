@@ -33,6 +33,12 @@ def fake_commitment(value: int, nonce: bytes) -> bytes:
     return codec.sha256(b"mutis-fake-commitment", struct.pack(">Q", value), nonce)
 
 
+def fake_one_time_key(owner_pk: bytes, nonce: bytes) -> bytes:
+    """The fake's stand-in for a stealth output's one-time public key (c + k)·G: only the destination's
+    owner key derives it from the nonce (`oneTimeKey` in the fake sidecar)."""
+    return codec.sha256(b"mutis-fake-otk", owner_pk, nonce)
+
+
 def seal_output(view_pk: bytes, value: int, memo) -> bytes:
     return view_pk + struct.pack(">Q", value) + json.dumps(memo).encode()
 
@@ -59,8 +65,14 @@ class FakeChain:
         self.transfers: list[dict] = []
         self.seal_logs: dict[str, list[int]] = {}      # component → leaf counts appended
 
-    def add_output(self, destination: str, value: int, memo, promise: int = 0) -> str:
-        _, view_pk, pay_ref = ootle_addr.parse_testnet(destination)
+    def add_output(self, destination: str, value: int, memo, promise: int = 0, spender: str | None = None,
+                   auth: dict | None = None) -> str:
+        """An output to `destination`. `spender` (another address) keeps the one-time key for its own owner
+        key while the payload still opens with the destination's view key: the R1 forgery a view key can't
+        see. `auth` replaces the spend rule outright (another variant than a key)."""
+        owner_pk, view_pk, pay_ref = ootle_addr.parse_testnet(destination)
+        if spender is not None:
+            owner_pk = ootle_addr.parse_testnet(spender)[0]
         if memo is None and pay_ref:
             memo = {"PayRefAndBytes": (bytes([len(pay_ref)]) + pay_ref).hex()}
         nonce = secrets.token_bytes(32)
@@ -70,7 +82,8 @@ class FakeChain:
             self.versions[shard] = self.versions.get(shard, 0) + 1
             self.outputs.append({"commitment": commitment.hex(), "nonce": nonce.hex(),
                                  "enc": seal_output(view_pk, value, memo).hex(), "tag": int.from_bytes(nonce[:4], "big"),
-                                 "promise": promise, "shard": shard, "version": self.versions[shard], "spent": False})
+                                 "promise": promise, "shard": shard, "version": self.versions[shard], "spent": False,
+                                 "auth": auth or {"Key": fake_one_time_key(owner_pk, nonce).hex()}})
         return f"utxo_{TARI_HEX}_{commitment.hex()}"
 
     def transfer(self, account: str, destination: str, value: int, memo, max_fee: int, promise: int = 0) -> str:
@@ -132,7 +145,7 @@ class FakeChain:
         """The indexer's `{"output": {...}, "auth", "tag"}` shape (gate G3)."""
         return {"output": {"public_nonce": o["nonce"], "encrypted_data": o["enc"],
                            "minimum_value_promise": o["promise"], "viewable_balance": None},
-                "auth": {"Key": "00" * 32}, "tag": o["tag"]}
+                "auth": o["auth"], "tag": o["tag"]}
 
     def fetch(self, pairs: list) -> list:
         wanted = {(int(t), n) for t, n in pairs}

@@ -28,8 +28,10 @@ DEFAULTS: dict = {
     # /judges, track one, step 4 opens it, so a judge sees a goodbye already on the chain (14 §9).
     "judge_demo_gone": "",
     "gates": {"send_mode": "relay", "amount_proof": "wallet", "key_bundle": False},
+    # The drive (16-drive-design §15): folders, Trash and Delete it after; pay to open. Off until the
+    # routes switch over; the tests turn them on.
     "features": {"drops": True, "relay_send": True, "direct_send": False, "demo_pay": True, "sponsor": False,
-                 "decoys": True, "kept": True, "seallog": False},
+                 "decoys": True, "kept": True, "seallog": False, "folders": False, "pay_to_open": False},
     "limits": {"reserve_min_bytes": 10 << 30, "small_lane_bytes": 1 << 30, "drop_lane_bytes": 2 << 30,
                "anon_lane_max_bytes": 6 << 30},
     "budgets": {

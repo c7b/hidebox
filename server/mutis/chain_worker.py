@@ -18,7 +18,7 @@ import urllib.request
 
 from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, payments, quota, seallog
 from .indexer import IndexerError, Indexers
-from .sidecar import Sidecar, SidecarError
+from .sidecar import TRANSPORT_ERRORS, Sidecar, SidecarError
 from .walletd import Walletd, WalletdError
 
 MIRROR_EVERY_S = 3
@@ -289,7 +289,26 @@ class Worker:
                 payments.record_found(self.conn, found, True, now, self.epoch())
                 with db.tx(self.conn):
                     db.set_meta(self.conn, "receiver_scan_seq", str(rows[-1]["seq"]))
-        payments.check_pending(self.conn, self.indexers, self.failures, now)
+        payments.check_pending(self.conn, self.indexers, self.failures, now,
+                               owns=self._ours if self.receiver is not None else None)
+
+    def _ours(self, nonce: str | None, auth_key: str | None) -> bool | None:
+        """R1 (16-drive-architecture §1.1): an output is our receiver's only if the one-time key the indexer
+        shows is the one our owner key derives from its nonce. None when that can't be told yet."""
+        if auth_key is None:
+            return False                  # not spendable by a key at all, so not by ours
+        if nonce is None:
+            return None
+        try:
+            reply = self.sidecar.request("oneTimeKey", owner_sk=self.receiver["owner_sk"], nonce=nonce)
+        except SidecarError as e:
+            if e.code in TRANSPORT_ERRORS:
+                raise                     # the step stops; the payment waits for a working sidecar
+            return False                  # the library refused the nonce (not a point): no key of ours
+        key = reply.get("public_key")
+        if not isinstance(key, str) or len(key) != 64:
+            return None
+        return codec.equal(bytes.fromhex(key), bytes.fromhex(auth_key))
 
     def reconcile(self, now: int) -> None:
         if self.mode == "wallet":
