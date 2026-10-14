@@ -44,16 +44,15 @@ def create(ctx):
     if pack_id not in quota.PACKS:
         raise ApiError(422, "unknown_pack", "No such pack.", details={"field": "pack"})
     pack, cfg, now = quota.PACKS[pack_id], ctx.cfg["packs"], ctx.now
-    swapped = False                          # the drive changed its mind about an unpaid invoice
+    replaced = []                            # the drive changed its mind about an unpaid invoice
     for row in ctx.db.execute("SELECT * FROM invoices WHERE identity_id = ? AND status IN ('pending','seen') "
                               "AND expires_at > ? ORDER BY created_at DESC", (identity["id"], now)).fetchall():
         if row["pack"] == pack_id:
             return json_response(200, _invoice_json(row))
         if row["status"] == "seen" or row["received_ut"]:
             raise ApiError(409, "conflict", "A payment for your other invoice is on its way.")
-        with db.tx(ctx.db):                  # nothing paid toward it: a late payment still credits (grace)
-            swapped |= ctx.db.execute("UPDATE invoices SET status = 'expired', expires_at = ? WHERE id = ? "
-                                      "AND status = 'pending' AND received_ut = 0", (now, row["id"])).rowcount == 1
+        replaced.append(row["id"])
+    swapped = bool(replaced)
     holding = packs.held(identity, now, cfg["renew_days"])
     if holding and (now < holding["renew_from"] or holding["id"] not in (None, pack_id)):
         size = f"{holding['bytes'] / quota.GiB:g} GiB"
@@ -81,6 +80,9 @@ def create(ctx):
     address = ootle_addr.with_pay_ref(base, invoice_id.encode())
     expires = now + payments.INVOICE_TTL_S
     with ctx.daily(*network, code="packs_limited", message=PACKS_LIMITED), db.tx(ctx.db):
+        for old_id in replaced:              # closed with the new one (a refusal keeps it); a late payment still credits
+            ctx.db.execute("UPDATE invoices SET status = 'expired', expires_at = ? WHERE id = ? AND status = 'pending' "
+                           "AND received_ut = 0", (now, old_id))
         # The server's own address (its tests) isn't held to the ceiling, but what it buys counts toward it.
         if not exempt and packs.sold_today(ctx.db, now, judge) >= cfg["judge_per_day" if judge else "public_per_day"]:
             raise ApiError(429, "packs_limited", PACKS_LIMITED,
