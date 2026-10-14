@@ -105,13 +105,14 @@ drives and fill free space until uploads pause for everyone. Sixth pass
   paying many invoices at once can't overbook a slice.
 - **One pack per drive.** Buying again is refused until the pack's last 3 days; then the same pack adds
   days, not bytes. The big pack is 5 GiB, so one purchase is a small part of the slice.
-- **Sales brakes:** 1 pack a UTC day per IPv6 /64 or IPv4 address (2 with a judge pass), held in the API's
-  memory; 3 public packs a UTC day for the whole deployment, and 10 bought with judge passes, counted
+- **Sales brakes:** 1 pack a UTC day per IPv6 /64 or IPv4 address (with a judge pass, 2 per network and 2
+  per pass), held in the API's memory; 3 public packs a UTC day for the whole deployment, and 10 bought with judge passes, counted
   from the invoices table (which holds no network), so a restart doesn't reset them. An unpaid invoice
   stops counting when it expires (an hour).
 - **Free-space brakes**, a UTC day each and in memory: 5 new drives per /64 or IPv4 address and 20 per
   /48 or IPv4 /24 (a judge pass skips them), and 2 GiB of uploads to free drives per /64 or IPv4 address
-  and 6 GiB per /48 or /24 (8 GiB per /64 with a judge pass; a drive with a pack is bounded by its pack).
+  and 6 GiB per /48 or /24 (with a judge pass, 8 GiB per /64 and per pass; a drive with a pack is bounded
+  by its pack).
   A drive's first day stays at 64 MiB (probation).
 - **The server's own addresses** (`brakes.exempt_addresses`; its end-to-end tests run there) skip the
   per-network brakes and the daily ceilings; what they buy still counts toward the ceilings.
