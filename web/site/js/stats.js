@@ -74,6 +74,11 @@ const VARIABLES = {
   db_backup_days: ['config', (c) => days(c.retention.db_backup_days), formatDuration],
   inactive_days: ['config', (c) => days(c.retention.inactive_days), formatDuration],
   lapse_grace_days: ['config', (c) => days(c.retention.lapse_grace_days), formatDuration],
+  // the drive's rules (16-drive-design §9: C45, C46, C47 say "{n} days" with the unit in the sentence)
+  inactive_n: ['config', (c) => c.retention.inactive_days, formatCount],
+  lapse_grace_n: ['config', (c) => c.retention.lapse_grace_days, formatCount],
+  trash_n: ['config', (c) => c.retention.trash_days, formatCount],
+  max_days: ['config', (c) => c.items && days(c.items.max_delete_after_days), formatDuration],
   quota_floor: ['config', (c) => c.quota.floor_bytes, formatBytes],
   quota_ceiling: ['config', (c) => c.quota.ceiling_bytes, formatBytes],
   overbook: ['config', (c) => c.quota.overcommit, formatCount],

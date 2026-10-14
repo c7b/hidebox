@@ -1,70 +1,114 @@
-/* SPDX-License-Identifier: MIT — the reading pages (14-ghost-design §8, §9): how it was made, for
-   judges, the fine print, and 404. Read mode: a 66ch measure, one panel shadow for what you act on,
-   the ghost at the head of a page, purple only on Tari rules. */
-.page { padding-block: var(--s-6) var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-7); }
-.page-head { display: grid; gap: var(--s-3); max-width: var(--read); }
-.page-head-figure { display: grid; grid-template-columns: 1fr; gap: var(--s-5); align-items: center; }
-.head-ghost { display: block; width: 132px; filter: var(--glow); }
-@media (min-width: 900px) { .page-head-figure { grid-template-columns: auto 1fr; gap: var(--s-6); } .head-ghost { width: 168px; } }
-
-/* anchor pills */
-.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--s-2); }
-.toc a {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: var(--r-pill);
-  border: 1.5px solid var(--hair); text-decoration: none; font: var(--t-small); font-weight: 650;
-  transition: border-color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
+/* SPDX-License-Identifier: MIT — the reading pages (16-drive-design §2, §10, §11; DESIGN.md "Read"): how it
+   works, how it was made, for judges, the fine print, and 404. Geist (the drive's one family, pinned by
+   tools/build.py) sets these pages; the home keeps the system faces until a drive action (A-06). A 44rem
+   column, reading type at 1rem/1.75, shadcn cards and accordions, violet only on what is Tari. */
+@font-face {
+  font-family: "Geist";
+  src: url("/shared/fonts/geist/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
-.toc a:hover { border-color: var(--line); background: var(--hair); }
+:root {
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --t-hero: 600 clamp(2.25rem, 1.6rem + 2.2vw, 3rem)/1.1 var(--font);
+  --t-h2: 600 1.5rem/1.333 var(--font);
+  --t-h3: 600 1.125rem/1.4 var(--font);
+  --t-say: 400 1.125rem/1.6 var(--font);
+  --t-body: 400 1rem/1.75 var(--font);
+  --t-ui: 500 .875rem/1.25 var(--font);
+  --t-small: 400 .875rem/1.6 var(--font);
+  --read: 44rem;
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / .08), 0 1px 2px -1px rgb(0 0 0 / .08);
+}
+.reading { font: var(--t-body); font-feature-settings: "ss01" off; }
+.reading ::selection { background: color-mix(in srgb, var(--fg) 14%, transparent); }
+.reading :is(h1, h2, h3) { text-wrap: balance; }
+.reading :is(p, li, dd) { text-wrap: pretty; }
+.reading a:not(.btn, .quiet, .toc a) { text-underline-offset: .22em; text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+.reading a:not(.btn, .quiet, .toc a):hover { text-decoration-color: currentColor; }
+.reading :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 50%, transparent); outline-offset: 2px; border-radius: 4px; }
+.reading :is(td, .tnum) { font-variant-numeric: tabular-nums; }
+@media (pointer: coarse) { .reading { --tap: 44px; } }
 
-/* how it was made: sections with a measure, the wide ones (tables, the Tari map) without */
+.page { padding-block: var(--s-7) var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-7); }
+.page-head { display: grid; gap: var(--s-3); max-width: var(--read); }
+.page-head h1 { font: var(--t-hero); letter-spacing: -.025em; }
+.page-head .lede { font: var(--t-say); color: var(--fg-2); max-width: 40rem; }
+
+/* anchor links: shadcn outline buttons, small */
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--s-3); }
+.toc a {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border-radius: var(--r-input);
+  border: 1px solid var(--hair); background: var(--bg-raised); box-shadow: 0 1px 2px rgb(0 0 0 / .05);
+  color: var(--fg); text-decoration: none; font: var(--t-ui); white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+.toc a:hover { background: var(--bg-sunken); }
+@media (pointer: coarse) { .toc a { min-height: var(--tap); } }
+
+/* how it was made: sections with a measure; the wide ones (tables, the Tari map) without */
 .doc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
 .doc section { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); max-width: var(--read); scroll-margin-top: var(--s-5); align-content: start; }
 .doc section > *, .more-box > * { min-width: 0; }
 .doc section.wide { max-width: none; }
-.doc section.wide > :is(p, .prose, ul) { max-width: var(--read); }
-.doc h2 { font: var(--t-h2); font-size: clamp(28px, 3.2vw, 40px); }
-.doc section > ul, .doc .prose ul { padding-left: 1.2em; display: grid; gap: 6px; }
-.doc .prose h3 { margin-top: var(--s-5); }
+.doc section.wide > :is(p, .prose, ul, ol) { max-width: var(--read); }
+.doc h2 { font: var(--t-h2); letter-spacing: -.025em; padding-top: var(--s-6); border-top: 1px solid var(--hair); }
+.doc section:first-child h2 { border-top: 0; padding-top: 0; }
+.doc section > :is(ul, ol), .doc .prose :is(ul, ol) { padding-left: 1.2em; display: grid; gap: 6px; }
+.doc .prose h3, .doc section > h3 { margin-top: var(--s-4); }
+.doc :is(p, li, dd) { max-width: 70ch; }
+.anchor-sub { scroll-margin-top: var(--s-5); }
 
-/* who sees what: four tiles */
+/* cards (shadcn): who sees what, the claim tiles */
 .who { display: grid; gap: var(--s-3); }
 @media (min-width: 720px) { .who { grid-template-columns: 1fr 1fr; } }
-.who > div { display: grid; gap: var(--s-2); align-content: start; padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
-.who h3 { font-size: 19px; }
+.card, .who > div {
+  display: grid; gap: var(--s-2); align-content: start; padding: var(--s-5); border: 1px solid var(--hair);
+  border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm);
+}
+.who h3 { font: var(--t-h3); }
 .who p { font: var(--t-small); color: var(--fg-2); }
 
-/* the details that hold the long precise text: one tap deeper */
-.more-box { border-radius: var(--r-panel); background: var(--bg-sunken); }
+/* the details that hold the long precise text: shadcn's accordion, one tap deeper */
+.more-box { border-block: 1px solid var(--hair); }
+.more-box + .more-box { border-top: 0; }
 .more-box > summary {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 56px; padding: 12px 20px;
-  font: var(--t-ui); cursor: pointer; list-style: none; border-radius: var(--r-panel);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 52px; padding: 12px 2px;
+  font: var(--t-ui); font-size: 15px; cursor: pointer; list-style: none; border-radius: var(--r-input);
 }
+.more-box > summary:hover { text-decoration: underline; text-underline-offset: .22em; }
 .more-box > summary::-webkit-details-marker { display: none; }
 .more-box > summary::after {
-  content: ""; inline-size: 10px; block-size: 10px; flex: none; border: solid currentColor; border-width: 0 2.5px 2.5px 0;
-  rotate: 45deg; translate: 0 -3px; transition: rotate var(--dur-2) var(--ease-out);
+  content: ""; inline-size: 7px; block-size: 7px; flex: none; border: solid var(--fg-2); border-width: 0 1.5px 1.5px 0;
+  rotate: 45deg; translate: 0 -2px; transition: rotate var(--dur-2) var(--ease-out), translate var(--dur-2) var(--ease-out);
 }
-.more-box[open] > summary::after { rotate: 225deg; translate: 0 3px; }
-.more-box > :not(summary) { margin: 0 20px 20px; }
-.more-box .data-table tbody tr:nth-child(odd) > * { background: var(--bg-raised); }
+.more-box[open] > summary::after { rotate: 225deg; translate: 0 2px; }
+.more-box > :not(summary) { margin: 0 0 var(--s-5); }
 
-/* the Tari map: three bands, one Tari rule over each, no hairline per row */
+/* the Tari map: three groups, a violet mark on each (it is all Tari), cards per use */
 .bands { display: grid; gap: var(--s-6); }
 @media (min-width: 1000px) { .bands { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.band { display: grid; align-content: start; gap: var(--s-4); padding-top: var(--s-4); border-top: 2px solid var(--tari-text); }
-.band h3 { font: var(--t-h3); }
+.bands > .band { display: grid; align-content: start; gap: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--hair); }
+.band h3 { font: var(--t-h3); display: flex; align-items: center; gap: 10px; }
+.band h3 .icon { width: 18px; height: 18px; color: var(--pay-text); }
 .band dl { display: grid; gap: var(--s-5); }
-.band dt { font-weight: 750; }
-.band dd { margin: 4px 0 0; }
-.band .proof-line { font: var(--t-small); color: var(--fg-2); }
+.band dt { font-weight: 600; }
+.band dd { margin: 4px 0 0; font: var(--t-small); }
+.band .proof-line { color: var(--fg-2); }
+.band .claim-id { font: 500 12px/1.4 var(--font-code); color: var(--fg-2); }
+
+/* claim tables (/judges "What to check", /made's map) */
+.claims { width: 100%; }
+.claims td:last-child { white-space: nowrap; }
 
 /* check us: the live status line, the test file, the evidence */
-.live-line { display: inline-flex; align-items: center; gap: 10px; font: var(--t-small); font-weight: 650; padding: 8px 14px; border-radius: var(--r-pill); background: var(--bg-sunken); justify-self: start; }
-.live-line .dot { inline-size: 10px; block-size: 10px; border-radius: 50%; background: var(--fg-2); }
+.live-line { display: inline-flex; align-items: center; gap: 10px; font: var(--t-ui); padding: 6px 12px; border-radius: var(--r-pill); border: 1px solid var(--hair); justify-self: start; }
+.live-line .dot { inline-size: 8px; block-size: 8px; border-radius: 50%; background: var(--fg-2); }
 .live-line[data-overall="green"] .dot { background: var(--ok-text); }
 .live-line[data-overall="amber"] .dot { background: var(--sand); }
 .live-line[data-overall="red"] .dot { background: var(--exit-text); }
-.try { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.try { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); }
 .canary { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
 .try > *, .canary > *, .canary .actions > * { min-width: 0; max-width: 100%; }
 @media (min-width: 720px) { .canary { grid-template-columns: 200px minmax(0, 1fr); align-items: start; } }
@@ -79,34 +123,50 @@
 .reveal pre { font: var(--t-code); white-space: pre-wrap; padding: var(--s-4); border-radius: var(--r-input); background: var(--bg-sunken); }
 .tx-list { list-style: none; padding: 0; display: grid; gap: 4px; }
 .evidence .detail dd { overflow-wrap: anywhere; }
-.price { color: var(--pay-text); font-weight: 750; }
+.price { color: var(--pay-text); font-weight: 600; }
+.terminal { background: #0A0A0A; color: #E5E5E5; border: 1px solid var(--hair); }
+.terminal span { color: #A3A3A3; }
 
-/* judge tracks */
-.tracks { display: grid; gap: var(--s-6); }
+/* judge tracks: two cards, numbered steps, "You see" under each */
+.tracks { display: grid; gap: var(--s-5); }
 @media (min-width: 1000px) { .tracks { grid-template-columns: 1fr 1fr; align-items: start; } }
-.track { display: grid; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
-.track h2 { font: var(--t-h3); font-size: 24px; }
-.track .sub { color: var(--fg-2); font: var(--t-small); margin-top: -8px; }
+.track { display: grid; gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); }
+.track-head { display: grid; gap: 4px; }
+.track h2 { font: var(--t-h3); font-size: 1.25rem; letter-spacing: -.015em; }
+.track .sub { color: var(--fg-2); font: var(--t-small); }
+.track > [hidden] { display: none; }
 .steps { list-style: none; counter-reset: s; padding: 0; display: grid; gap: var(--s-4); }
-.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; column-gap: var(--s-3); row-gap: 4px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--s-3); row-gap: 2px; }
 .steps li::before {
-  content: counter(s); grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--act); color: var(--on-act); font: var(--t-ui); font-size: 15px;
+  content: counter(s); grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--hair); background: var(--bg-sunken); color: var(--fg); font: 600 13px/1 var(--font); font-variant-numeric: tabular-nums;
 }
-.steps .do { font-weight: 650; }
+.steps .do { font: var(--t-small); font-size: 15px; color: var(--fg); }
 .steps .see { color: var(--fg-2); font: var(--t-small); }
-.steps .see::before { content: "You see: "; font-weight: 700; color: var(--fg); }
-.steps .ui { font-weight: 800; }
-.where { display: inline-block; padding: 1px 9px; margin-right: 6px; border-radius: var(--r-pill); background: var(--mark); color: var(--on-mark); font: var(--t-small); font-weight: 700; }
+.steps .see::before { content: "You see: "; font-weight: 600; color: var(--fg); }
+.steps .ui { font-weight: 600; }
+.where { display: inline-block; padding: 0 8px; margin-right: 6px; border-radius: var(--r-pill); border: 1px solid var(--hair); color: var(--fg-2); font: 500 12px/1.6 var(--font); vertical-align: 1px; }
 .pass { border-top: 1px solid var(--hair); padding-top: var(--s-3); }
-.pass summary { cursor: pointer; font: var(--t-ui); min-height: 44px; display: flex; align-items: center; text-decoration: underline; text-underline-offset: .2em; }
+.pass summary { cursor: pointer; font: var(--t-ui); min-height: 44px; display: flex; align-items: center; text-decoration: underline; text-underline-offset: .22em; }
 .pass-form { gap: var(--s-3); margin-top: var(--s-2); }
 .pass-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.pass-row input { flex: 1 1 12em; min-height: var(--tap); padding: 10px 14px; border: 2px solid var(--line); border-radius: var(--r-input); background: var(--bg); font: var(--t-code); }
-.proof { display: grid; gap: var(--s-2); max-width: var(--read); }
-.proof h2 { font: var(--t-h3); font-size: 24px; }
+.pass-row input { flex: 1 1 12em; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-input); background: transparent; font: var(--t-code); color: var(--fg); }
+.pass-row .btn { min-height: 40px; }
+.proof { display: grid; gap: var(--s-3); max-width: none; }
+.proof h2 { font: var(--t-h2); letter-spacing: -.025em; }
+.proof > p { max-width: var(--read); color: var(--fg-2); }
 
-/* 404: the oops ghost and a way home */
-.not-found { min-height: 62svh; align-content: center; justify-items: center; text-align: center; gap: var(--s-4); }
-.oops-ghost { display: block; width: min(52vw, 220px); filter: var(--glow); }
-.not-found h1 { max-width: 16ch; }
+/* forms on reading pages (the abuse report): shadcn inputs */
+.reading .field :is(input[type="url"], input[type="text"], textarea, select) { border-width: 1px; background: transparent; color: var(--fg); font: var(--t-small); font-size: 1rem; }
+@media (min-width: 768px) { .reading .field :is(input[type="url"], input[type="text"], textarea, select) { font-size: .875rem; } }
+.reading .field :is(input, textarea, select):focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); outline-offset: 0; border-color: var(--fg-2); }
+.reading .field [aria-invalid="true"] { border-color: var(--exit-text); }
+.reading .box-note { border: 1px solid var(--hair); background: var(--bg-sunken); }
+
+/* 404: the brand tile and a way home */
+.not-found { min-height: 56svh; align-content: center; justify-items: center; text-align: center; gap: var(--s-4); }
+.not-found .tile { display: grid; place-items: center; width: 56px; height: 56px; border-radius: var(--r-panel); background: var(--act); color: var(--on-act); box-shadow: var(--shadow-sm); }
+.not-found .tile .icon { width: 26px; height: 26px; }
+.not-found h1 { font: var(--t-hero); letter-spacing: -.025em; max-width: 16ch; }
+.not-found .lede { max-width: 34ch; }
+.not-found .ways { display: flex; flex-wrap: wrap; gap: var(--s-3); justify-content: center; }

@@ -5,25 +5,32 @@ Live limits and prices: {{ORIGIN}}/api/v1/config
 # How it works ({{ORIGIN}}/how)
 
 How it works
-Eight pictures. One minute.
--
-You give the ghost a secret: a note, a photo, any file.
--
-It gets locked right here, before it goes anywhere.
--
-Our server gets scrambled noise. Never the key.
--
-The key hides in the link, after the # sign.
--
-Your friend taps the link and sees it one time.
--
-Then it's gone. We delete our scrambled copy.
--
-Its goodbye is written on the Tari™ chain, for anyone to check.
--
-Or send it to a Tari address. Only they can open it.
-Try it (/)
-Want the grown-up version? Read how it was made (/made).
+Your drive opens with a key that lives in your browser. Everything you add is locked before it leaves, and Tari™ does the private parts.
+
+## Make your drive
+Your browser makes a key. The key is the account. No email, no password.
+
+## Drop your files
+Drop a file or a whole folder. It gets locked right here, before it goes anywhere. Our server gets scrambled noise. Never the key.
+
+## Share it your way
+Pick who can open it: anyone with the link, or one Tari address. Then pick how many opens and when the link ends.
+
+## Tari does the private parts
+Send by Tari: the key rides inside a payment to their address. Only they can open it.
+The chain shows a payment with a hidden amount and a hidden owner. The fee is public.
+
+## See what happened
+Each file shows its rule, how many times it opened, and when it ends. When a file leaves your drive, we write that on the Tari chain, for anyone to check.
+
+## Who sees what
+| Who | Sees | Never sees
+| Our server | A padded size, the hour it arrived, its rule, and how many times it opened each hour. | The name, the type, what's inside, the key, or who opened it.
+| The Tari chain | That a payment happened, and its fee. | The amount, who got it, or the key.
+| Someone with the link | What the rule still allows. | Your other files.
+Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day.
+Make my drive (/drive?make)
+Want every detail? Read how it was made (/made).
 
 # How it was made ({{ORIGIN}}/made)
 
@@ -32,6 +39,149 @@ The grown-up page. Each claim names its limits and a way to check it.
 
 ## The short version
 Your browser encrypts each file with AES-256-GCM before upload. We store ciphertext and never receive the key. Everything after # is the key. Browsers don't send it to any server, including ours.
+
+## Your key is the account
+No email, no password. Your key is the account. Keep it like a house key: lose it and nobody, including us, can let you back in.
+We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design.
+Make my drive makes the key in this browser at once. Save it as a key file, locked with a passphrase if you like, and Open my drive takes it back on any device. Your drive's Tari keys come from the same key, the first time a Tari feature needs them.
+
+## The locks
+- Files: AES-256-GCM in your browser, in chunks; size padded so the exact size stays hidden.
+- Names: file and folder names are locked too. Search runs in this browser. Our server can't read your file names.
+- The key: in the link after #, or sealed to a Tari address inside a stealth payment's encrypted memo.
+-
+- Photos: location and camera data removed before locking, unless you keep the original.
+The cryptography, in full
+Everything that touches a file or a key runs in your browser, with your browser's own WebCrypto. The server never receives a file key, a link's secret, a password or your seed. At sign-in it sees your login key and keeps only its SHA-256.
+- Files: a fresh random 32-byte key per file. The content is padded with Padmé (at least 1 KB, at most 12% over above that), cut into 4 MB chunks and encrypted with AES-256-GCM. Each chunk's nonce holds its index and a “last chunk” flag, and every chunk authenticates the file's header, so reordering, truncation and extension all fail.
+- Metadata: the name, type and real size are encrypted separately, also with AES-256-GCM, padded to a multiple of 256 bytes.
+- Keys from keys: HKDF-SHA256 with a separate label for every purpose, so one derived key reveals nothing about another.
+- Links: every link has its own 32-byte secret, after the #. It unwraps the file key and derives an access token; our server stores only the SHA-256 of that token.
+- Passwords: PBKDF2-SHA256, combined with the link's secret by default (link + password), so a copy of our database isn't enough to guess it.
+- Your drive: one 32-byte seed made in your browser, kept in its storage, and backed up as your key file (locked with a passphrase if you choose) or written down. Everything else is derived from it: the login key (we store its SHA-256), the drive's Tari keys (made only when a Tari feature first needs them), a separate wallet key, and the dead-drop tags. There is no email and no password with us.
+- Folders: every folder has its own random key. A file's key is wrapped under its folder's key, and a folder's under its parent's, up to your drive's root key. A folder link carries one folder key, so it opens what is below that folder and nothing above it.
+- Safety code: 12 emoji (96 bits) derived from a Tari address's public keys, so two people can compare an address out loud.
+- Proof of work: SHA-256 with a number of leading zero bits, instead of a captcha. Your browser solves it in a background worker.
+- Photos: location and camera data are removed from JPEG, PNG and WebP files before encryption, unless you choose to keep the original.
+
+### Sealing a file to a Tari address
+When you send a file to a Tari address, your browser seals the link's secret to that address's two public keys, the owner key and the view key, using the official Tari library for the key agreement. The sealed blob is 125 bytes, and it travels as the memo of a stealth payment.
+- Why a view key can't open your files: the seal needs both the owner key and the view key to open. A view key alone shows that a delivery arrived, its amount and its memo text, but not the file.
+- The exception, labelled: a sender can choose “The recipient uses another Ootle wallet”. That seal uses the view key only, so anyone with that view key can open the file, and the send screen says so.
+- Who posts the payment: our relay. We post the payment for you, so we learn the address you send to, never the key. The server writes the memo from its own address; a client supplies only the sealed blob.
+Who could attack a link, and what stops them
+| Adversary | Can | What stops them | What remains
+| Network observer | see TLS metadata | HTTPS only, HSTS, Padmé size buckets | timing and volume
+| A curious or compromised server (including our host) | read the database and the stored files, change responses, watch IP addresses live | everything is encrypted in the browser; tokens and verifiers are hashed; no public keys or drive addresses stored for logins; folder and file names encrypted; no sharing graph; each chunk is authenticated together with its header | can serve malicious JavaScript (see verify); can refuse service; sees the metadata listed on How it works; knows each relay send's destination; can ignore a deletion and keep ciphertext, which is useless without the key
+| Someone with only the link's path | ask for its status | the key lives only after the #; opening needs an access token derived from it; link + password adds a link proof | learns that a link exists, and its state
+| Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links
+| Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets
+| Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours
+| A view-key holder | read arrivals, amounts and memo text | files locked to a drive need its owner key too | files sent with “The recipient uses another Ootle wallet” open with the view key (labelled at send time)
+| Phishing through our relay | make our wallet send a link | the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a drive; drop deliveries only go to the drop's own address | someone can send unwanted {{BRAND}} deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs
+| Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small and anonymous files, limits per network prefix, a first-day limit for new drives, public and reserved budget slices with alerts | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working
+| Someone hosting abuse | upload and share | small and short-lived anonymous files, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, noindex, the report form (/fine-print#report), removal by id | we can't scan encrypted content, by design
+| Script injection or a poisoned dependency | run code in our origin | no third-party code; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash; SRI on each page's top-level scripts and stylesheets, and the hash manifest for the modules they import | browser extensions (out of scope)
+| Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet; jobs are validated; daily budget slices; a firewall rule per user on the wallet port | at most the daily budgets
+
+## Folders and their keys
+Folders are a tree of keys. Each file's key is locked under its folder's key, so one folder link opens the files below it and nothing above.
+Our server sees which files share a folder, how deep it goes and how many files are in it. Never a name.
+Moving a file into a folder that has a link shares it too, and the drive says so before it moves.
+
+## Pay to open
+Pay to open is built and switched off on this deployment. Until it is on, this is how it will work.
+The money goes straight to the owner's Tari address; our server keeps half of the key and hands it to the buyer once Tari's chain shows the payment, so the owner can be offline and we never hold the money or the whole key.
+- We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.
+- If the link leaks, our server could open it too.
+- We check the amount and that the payment is on the chain. Only the owner's drive can check the money is theirs to spend.
+- Test money comes from our demo wallet, so it can be grouped with our other payments. It opens at once, because our wallet built it. Paid from your own wallet? It opens after the owner's drive checks it.
+- Payments can't be taken back, by us or by Tari. Pay only if what you see here is enough.
+- To see who paid you, we keep your sales view key. It is sealed, so a copy of our database can't read it. Our payment checker on our server can. A view key can see payments, never spend them.
+Next: the locked payment, a Tari payment with a refund built in, so a buyer gets the money back if the owner never delivers. It isn't built yet.
+
+## Send by Tari
+Send by Tari: the key rides inside a payment to their address. Only they can open it.
+In relay mode we post the payment for you, so we learn the address you send to, never the key.
+The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. The fee is public. Our courier payments all come from one wallet with the same fee, so someone watching could group them as “sent by {{BRAND}}”, but not see to whom.
+How the seal works, and why a view key alone can't open it: sealing a file to a Tari address.
+
+## Who sees what
+
+### Our server
+We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, its exit rule and how often it's opened. Not the name, the type, the contents or the key.
+We count opens per hour. We never store who opened it or their IP address.
+Our server sees which files share a folder, how deep it goes and how many files are in it. Never a name.
+Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day.
+
+### The Tari™ chain
+The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. The fee is public. Our courier payments all come from one wallet with the same fee, so someone watching could group them as “sent by {{BRAND}}”, but not see to whom.
+In relay mode we post the payment for you, so we learn the address you send to, never the key.
+
+### Whoever has the link
+The file, as many times as its rule says (once, by default). The link is the key: anyone who gets the full link can open it until it's gone.
+
+### A view key
+A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those.
+For files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key.
+For space you rent from us we see the amount, because we're the seller. Nobody else does.
+Every party, fact by fact
+| | Our server | Anyone watching the Ootle | Someone with the full link | The person you send it to
+| File contents | no (ciphertext) | no | yes | yes
+| Name and type | no (encrypted inside) | no | yes | yes
+| Exact size | no (a padded bucket) | no | yes | yes
+| The key | no | no | yes (the link is the key) | yes
+| That a file exists, its arrival hour, its rule, its opens | yes; opens counted per hour, never who | no | partly (state, opens left) | does not apply
+| Which files share a folder | yes: the shape of the tree and the counts, never a name | no | a shared folder's files, by name | does not apply
+| Your IP address | while you're connected; not written to disk | no (Tari's indexer sees it only if you press “Check it on Tari's indexer”) | no | no
+| Who you send to | yes for every send and dead-drop delivery, while it's sent; then the job is scrubbed | no (a one-time stealth address) | does not apply | they know it's them
+| That we sent a payment | yes | yes for relay sends: one wallet, one fee | does not apply | does not apply
+| Payment amounts | for space rented from us, because we're the seller | no (a Pedersen commitment) | does not apply | does not apply
+| The network fee | does not apply | public | does not apply | does not apply
+
+### Our server, in detail
+- Sees and stores
+Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking drive id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; dead drops: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
+- Sees, never stores
+Every uploader's and every opener's IP address, live (so at the moment it happens we could link who uploaded a link with who opened it); the login key at sign-in; access tokens (hashed on arrival); which drop a file was left in, and the submitter's IP; the destination Tari address of every send, the sealed 125-byte blob, which drive sent it, and by timing which link it carries, kept in the job until sent and then scrubbed.
+- Never sees
+File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your drive's Tari address, unless you make a drop or a relay send goes to it; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (a link is the only way a file leaves your drive, and we never learn who holds it).
+
+### Everyone else
+- A network observer
+That you talk to us, timing, and padded transfer sizes. Nothing inside TLS.
+- Someone with only the link's path (no #)
+That a link exists, whether it needs a password, and its state; once it has ended, why and on what day. Not the key, the contents, the name, the real size or the open count.
+- A view-key holder
+Every delivery and payment to that address: amount, time and the memo's link text. Not the files locked to a drive, and it can't spend. The one exception: files a sender sealed with “The recipient uses another Ootle wallet” do open with the view key, and the send screen says so.
+- The public, through our live numbers
+The free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many drives were active recently, once there are enough of them; how many minutes ago someone last locked a file; and for up to 24 recent files, each at least an hour old, a coarse size and an exit rule, never whether one was opened, only when at least 8 exist in the last week. Nothing per person, but someone who knows a file's size and rule may recognise it there.
+- Our host (Hostinger)
+Everything our server stores, plus the disk and any snapshots it keeps; in principle, live memory.
+
+## Space, and when files go
+
+### Free
+If the disk ever truly fills, new uploads pause for everyone, and nothing already stored is lost.
+When the number goes down, nothing of yours is deleted. You can't add more until you're under it again.
+Files shared without a drive have their own reserved space, and small files have a reserved lane of their own, so a busy day of big uploads can't crowd out a quick note.
+The limits below come live from our server; they're also at /api/v1/config (/api/v1/config).
+
+### Limits
+| | No drive | Free drive | More space
+| Files in your drive | no | until you delete them | until you delete them
+
+### More space, paid in tTARI
+| Pack | Price (testnet) |
+| Sold out | none | The disk is finite. We'd rather say no than overbook paid space. Free space still works.
+
+### How paying works
+We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads. You pay our receiving address with this invoice's reference inside it; the reference travels in the payment's encrypted memo, so the chain doesn't show which invoice was paid, or by whom. The network fee is public on the chain. The amount and who paid are not. For space you rent from us we see the amount, because we're the seller. Nobody else does.
+Testnet. tTARI has no monetary value. These prices are real logic with play money.
+Paid features stay on the testnet until our code has been reviewed.
+
+## Receipts on the Tari chain
+A link that ends on a file you keep gets no receipt: the file is still in your drive.
 
 ## Who sees what
 
@@ -153,6 +303,36 @@ Read the code that does it ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 ## The goodbye record
 This deployment keeps no public record yet: SealLog is off here.
 
+## The Tari map
+The Ootle is Tari's layer for applications, where payments are private by default and can carry sealed messages. We use it to deliver keys and move money, and every use below is something you can check.
+
+### Hidden on the chain
+- Stealth outputs
+Send by Tari, dead-drop deliveries, more space.
+Check: /verify/tx/<id> shows the amount hidden, the owner a one-time key, the memo encrypted and the fee public.
+- Encrypted memos (XChaCha20-Poly1305)
+The file's key rides to one address inside the payment.
+Check: only the receiving drive opens it; any other key fails to decrypt.
+- View keys, separate from spending
+Received scans the chain in your browser; /watch shows what a view key sees.
+Check: for files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key. More in who sees what.
+
+### Checked on the chain
+- Payments
+More space, paid in tTARI to our receiving address with the invoice's reference inside it; the reference travels in the encrypted memo, so nothing on chain shows which invoice was paid, or by whom.
+Check: our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is what our wallet reads.
+
+### Keys, not accounts
+- Your drive
+No email, no password: a key that lives in your browser, and its Tari address.
+We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design.
+Why not an escrow template? On the Ootle, TARI held by a template reveals its amount. Native stealth outputs keep it hidden, so that's what we use.
+
+### How payments are checked
+In September a wallet bug on the testnet showed deposits that never happened (forum thread (https://community.tari.com/t/402)). A wallet saying “sent” isn't enough, so we credit rented space only after our own checks.
+We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads; this deployment doesn't prove it with the official Tari library.
+Read the code that does it ({{REPO_URL}}/blob/main/server/mutis/payments.py)
+
 ## Check us
 SRI only pins files to this page; it can't protect you from us. What can: comparing what we serve with the published source, and running your own copy.
 - Every build writes a manifest (/.well-known/mutis-manifest.json) with the SHA-256 of every file this site serves and the git commit it came from.
@@ -184,19 +364,19 @@ Please tell us privately before you tell anyone else. We'll answer, fix what's r
 - Report a link that hosts something harmful (/fine-print#report)
 The full threat model, with the findings of our own review, is in docs/threat-model.md ({{REPO_URL}}/blob/main/docs/threat-model.md).
 
-## What we can't protect you from
-Beyond what our server sees (who sees what):
+## What we can't hide
+Beyond what our server sees (who sees what), here is what we can't protect you from:
 - The person you send it to. They can save, screenshot or forward it.
-- Anyone who gets the full link. The link is the key. Use Link + password (sent separately) or send it to one Tari address.
+- Anyone who gets the full link. The link is the key. Add a secret word (sent another way) or send it to one Tari address.
 - Chat apps that preview links. Their servers see the full link. They can't use up a view (opening takes a click), but they could open it.
 - Your own browser. Your browser history, and any history sync, can keep the full link, key included. We clear the key from the address bar once it's opened, but we can't reach your history. Extensions allowed to read your tabs can see the link. Clipboard history (and cloud clipboards) can keep a copied link.
 - A compromised device or extension. Encryption in the browser can't beat malware in the browser.
 - A malicious version of this website. It's the known weak spot of all web encryption: if our server were compromised, it could serve code that leaks keys. SRI only pins files to this page; it can't protect you from us. What can: our verify-deploy script and running your own copy.
-- Metadata. We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, when it leaves (rounded up to the hour when that's an hour or more away; “midnight” is your own local midnight, which shows your time zone), its exit rule and how often it's opened. Not the name, the type, the contents or the key. Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. A VPN or Tor hides your IP from us; links without a locker work in Tor Browser's Safer mode, and Tari features need WebAssembly.
+- Metadata. We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, when it leaves (rounded up to the hour when that's an hour or more away; “midnight” is your own local midnight, which shows your time zone), its exit rule and how often it's opened. Not the name, the type, the contents or the key. Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. A VPN or Tor hides your IP from us; links without a drive work in Tor Browser's Safer mode, and Tari features need WebAssembly.
 - On-chain facts. The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. The fee is public. Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as “sent by {{BRAND}}”, but not see to whom.
-- Deletion you can't see. We delete on cue, and nothing can prove we kept no copy. Snapshots and free disk blocks are described above.
+- Deletion you can't see. We delete on cue, and nothing can prove we kept no copy. Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. Without the key it's noise. Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.
 - Testnet resets. Esmeralda can be reset. Payments and on-chain records from before a reset are archived in our repository; files on our server are not affected.
-- Legal requests. If compelled, we can hand over what we have: ciphertext, the columns on the “What we know” page, invoices. Not contents. Not keys.
+- Legal requests. If compelled, we can hand over what we have: ciphertext, the columns “What our server knows” prints, invoices. Not contents. Not keys.
 
 ### What never touches a disk
 Our server and web server never write your IP address, your links or your files' ids to a log. The database holds file and link ids, never keys; Privacy (/fine-print#inventory) lists every table.
@@ -207,31 +387,8 @@ Our server and web server never write your IP address, your links or your files'
 - The firewall: logging is off. System journal: kept for seven days.
 That's not the same as “nobody ever sees your IP”: our server sees it while you're connected, and so could our host.
 
-## Limits and space
-
-### Free
-If the disk ever truly fills, new uploads pause for everyone, and nothing already stored is lost.
-When the number goes down, nothing of yours is deleted. You can't add more until you're under it again.
-Files without a locker have their own reserved space, and small files have a reserved lane of their own, so a busy day of big uploads can't crowd out a quick note.
-The limits below come live from our server; they're also at /api/v1/config (/api/v1/config).
-
-## Limits
-| | No locker | Free locker | Rented space
-| Kept files (only you) | no | until you delete them | until you delete them
-
-## More room, rented in tTARI
-| Pack | Price (testnet) |
-| Sold out | none | The disk is finite. We'd rather say no than overbook rented space. Free space still works.
-
-### When rented space ends
-Your limit goes back to the free share. Nothing is deleted. After that, if you're still over, your oldest kept files are removed until you fit.
-
-### How paying works
-We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads. You pay our receiving address with this invoice's reference inside it; the reference travels in the payment's encrypted memo, so the chain doesn't show which invoice was paid, or by whom. The network fee is public on the chain. The amount and who paid are not. For space you rent from us we see the amount, because we're the seller. Nobody else does.
-Testnet. tTARI has no monetary value. These prices are real logic with play money.
-Paid features stay on the testnet until our code has been reviewed.
-
-## How it was built
+## How it was built, and tested
+No analytics, no trackers, no third-party scripts or fonts. Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”.
 Built with AI coding agents under the author's direction. The design, threat model and crypto choices were reviewed by the author. Python's standard library on the server, plain JavaScript in the browser.
 Every release runs the server, site, browser and end-to-end test suites first; the records are in the repository ({{REPO_URL}}/tree/main/docs/evidence). This deployment runs commit {{GIT_SHA}}.
 
@@ -239,8 +396,11 @@ Every release runs the server, site, browser and end-to-end test suites first; t
 File sharing needs Python's standard library and a web server. The Tari features also need a walletd on the Ootle testnet and Node for the payment checker. Self-host guide ({{REPO_URL}}/blob/main/docs/self-host.md)
 
 ### Who's behind it
-{{BRAND}} is built by an independent developer in Mexico, for the Tari community's October 2026 “Spooky Secrets” build contest, and it's meant to outlive it. The name says what it does: your friend sees the secret, and then it says bye.
+{{BRAND}} is built by an independent developer in Mexico, for the Tari community's October 2026 “Spooky Secrets” build contest, and it's meant to outlive it.
 The fine print (privacy, terms and how to report a link) is on one page: the fine print (/fine-print).
+
+### How we tested
+Every release runs the server's tests, the site's checks, the browser flows of the drive, and the deploy checks; then the end-to-end scenarios run against this deployment through the drive, as a stranger would. Our own security review found that a pack payment could count when its one-time key wasn't ours. Now a payment counts only if its one-time key is ours. We tested that fix on a fake chain, never on the public testnet.
 
 # The fine print ({{ORIGIN}}/fine-print)
 
@@ -251,7 +411,7 @@ Privacy, terms, and how to report a link, together on one page.
 {{BRAND}} runs on the Tari™ Ootle testnet. What we collect, what we can't, every table in our database, and how long each thing lasts.
 
 ### The short version
-- We collect ciphertext, padded sizes, hours, rules, open counts, your locker's random id and a hash of its login key (if you use one), and invoices for space you rent. The full list is below.
+- We collect ciphertext, padded sizes, hours, rules, open counts, your drive's random id and a hash of its login key (if you use one), and invoices for space you rent. The full list is below.
 - We don't collect names, emails, phone numbers, file names, file contents, keys, passwords, analytics or tracking cookies.
 - Your IP: our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. Our web server keeps no access logs.
 - Third parties: our host, Hostinger, which can see what our server stores; Let's Encrypt, for our certificate; Tari's indexer, only when you press “Check it on Tari's indexer”. No analytics, no trackers, no third-party scripts or fonts.
@@ -262,17 +422,17 @@ We need your IP address to answer you, and we see it while you're connected. We 
 ### Every table in our database
 This is the complete list, from our schema. Each link also has a “What we know” page that prints its own rows.
 | Table | What it holds | How long
-| items | One row per stored file: a random id; the locker that owns it, if any; a hash of the uploader's manage token; whether it's a link or kept; its lane; its state; the clear 32-byte header (format, chunk count, a random salt); the encrypted name, type and size; for kept files, the file key locked to your locker; chunk count and padded size; the ciphertext's hash; the hour it arrived; when it expires and when it left; today's download volume. | The ciphertext is deleted within a minute of the exit. The row stays as a note, so we can tell a visitor why a link is gone.
+| items | One row per stored file: a random id; the drive that owns it, if any; a hash of the uploader's manage token; whether it's a link or kept; its lane; its state; the clear 32-byte header (format, chunk count, a random salt); the encrypted name, type and size; for kept files, the file key locked to your drive; chunk count and padded size; the ciphertext's hash; the hour it arrived; when it expires and when it left; today's download volume. | The ciphertext is deleted within a minute of the exit. The row stays as a note, so we can tell a visitor why a link is gone.
 | chunks | The SHA-256 of each encrypted chunk. | With its file.
 | uploads | An upload in progress: its id, its file, its lane, the space reserved for it. | Until it finishes or expires (two hours).
 | shares | One row per link: its mode (link, link + password, password only); the file key wrapped by the link's secret; the SHA-256 of its access token and, for link + password, of its link proof; the password's stretching parameters (never the password); opens allowed and used; expiry; state; the hour it was made and when it ended; wrong-password counters; opens in the current hour; the minute of its first open, shown only to its owner. | The wrapped key and the hashes are erased at the exit; the rest stays as the note above.
 | share_opens | For each link, how many times it was opened in each hour: the link, the hour and a count. | Deleted with its link's row.
 | tickets | A download in progress: the SHA-256 of its token, the link and file, a byte cap. | Until the download ends.
-| identities | One row per locker: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; when rented space ends; today's send count. | Until you delete your locker.
-| sessions | The SHA-256 of a sign-in token, its locker, when it was made and expires, the last day it was used. | Until it expires.
+| identities | One row per drive: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; when rented space ends; today's send count. | Until you delete your drive.
+| sessions | The SHA-256 of a sign-in token, its drive, when it was made and expires, the last day it was used. | Until it expires.
 | drops | One row per drop link: its id; its Tari address and tag (public by design); its label; a hash of its manage token; its state; the day it opened and closed; today's file and byte counts. | While it's open, then after you close it or it's removed.
 | jobs | Deliveries and payments waiting to go out on the Ootle. While a relay send waits, it holds the destination address and the sealed 125-byte blob. | The address and blob are erased once it's sent; the job is deleted a day after it ends. Our own test jobs are kept as evidence.
-| invoices | For rented space: the pack, its price, our receiving address with the invoice's reference inside it, status, amount received, times, and the locker it's for. | For our books.
+| invoices | For rented space: the pack, its price, our receiving address with the invoice's reference inside it, status, amount received, times, and the drive it's for. | For our books.
 | payments | Each chain output that paid an invoice: its id, the invoice, its value, when we saw it, and the results of our checks. | For our books.
 | chain_utxos | A copy of the public TARI outputs on the Ootle, so your browser can look for its own deliveries without telling us which. | Public data; kept while useful.
 | abuse_reports | A report: the reported link's id, the category, your details, a contact if you gave one, and the link's key only if you chose to include it. | Kept with what we did about it, as our record of what we removed and why.
@@ -287,7 +447,7 @@ This is the complete list, from our schema. Each link also has a “What we know
 | sale_payments | Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it. | Empty until paid links are switched on.
 
 ### What we publish
-Our live numbers (/api/v1/stats) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them; and how many minutes ago the latest file finished uploading, to the minute.
+Our live numbers (/api/v1/stats) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many drives were active recently, once there are enough of them; and how many minutes ago the latest file finished uploading, to the minute.
 Our public endpoint /api/v1/stats/wall lists, for up to 24 recent files at least an hour old, a coarse size and an exit rule, only when at least 8 exist in the last week: never a name, an id or whether a file was opened. Someone who knows a file's size and rule may still recognise it there. Our hourly test file and our own test transactions are public too; never a visitor's.
 
 ### How long things last
@@ -297,10 +457,10 @@ Our host (Hostinger) can take weekly snapshots of the whole server. We haven't s
 Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. Without the key it's noise.
 
 ### Deleting everything
-Delete a link at any time from the card you got when you made it, or from your locker. Delete my locker, in your locker, removes its record, its files and every link to them; it asks for your key first.
+Delete a link at any time from the card you got when you made it, or from your drive. Delete my drive, in your drive, removes its record, its files and every link to them; it asks for your key first.
 
 ### Your browser
-We set no cookies. Your locker key lives in your browser's own storage (IndexedDB), and small preferences, like Lights off, in localStorage. Nothing in them is sent to us except what each action needs.
+We set no cookies. Your drive key lives in your browser's own storage (IndexedDB), and small preferences, like Lights off, in localStorage. Nothing in them is sent to us except what each action needs.
 Your browser history, and any history sync, can keep the full link, key included. We clear the key from the address bar once it's opened, but we can't reach your history.
 
 ### Third parties
@@ -317,10 +477,10 @@ Plain English, for a service on the Tari™ Ootle testnet. Last changed in Octob
 ### The short version
 - Your files are yours. We host ciphertext we can't read, for as long as the rule you chose (or your rental) allows.
 - Don't use {{BRAND}} to hurt people. No child sexual abuse material (zero tolerance; reported to the authorities), no malware, no phishing, no harassment, no illegal content, nothing you don't have the right to share.
-- Programs and installers can only be sent from a locker. We can remove any link, file or drop that's reported or abusing limits, by id, without seeing inside.
+- Programs and installers can only be sent from a drive. We can remove any link, file or drop that's reported or abusing limits, by id, without seeing inside.
 - This is a testnet service in active development, with no warranty. It's not a backup service. Files can be lost, the testnet can reset, and tTARI has no monetary value.
-- Free space changes hourly. Rented space lasts the period you paid for, then a grace period. Kept files of lockers unused are deleted.
-- If you lose your locker key, we can't help, by design.
+- Free space changes hourly. Extra space lasts the period you paid for, then a grace period. Files in drives unused are deleted.
+- If you lose your drive key, we can't help, by design.
 
 ### Using {{BRAND}}
 You may use {{BRAND}} to share files and notes you have the right to share. You may not use it to:
@@ -328,7 +488,7 @@ You may use {{BRAND}} to share files and notes you have the right to share. You 
 - spread malware, or host pages or files meant to steal passwords, money or identities;
 - harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or drop link;
 - share anything illegal where you or the recipient are, or anything that infringes someone else's rights;
-- attack {{BRAND}}, its users or the Tari testnet, or get around our limits with many networks, lockers or scripts.
+- attack {{BRAND}}, its users or the Tari testnet, or get around our limits with many networks, drives or scripts.
 We can't see inside files, so we rely on reports. Anyone can report a link.
 
 ### A testnet service, with no warranty
@@ -337,11 +497,11 @@ We can't see inside files, so we rely on reports. Anyone can report a link.
 ### Limits and space
 Free space is a fair share of one real disk, recalculated every hour, and it can go down. When it does, nothing of yours is deleted, but you can't add more until you're under it again. If the disk truly fills, new uploads pause for everyone. Rented space adds to your share for the period you paid for. The live limits are on Pricing and limits (/made#limits)
 
-### Your locker and its key
-A locker is a key your browser makes; there is no email and no password with us. Your recovery code or key file is the only way back into it. If you lose it, nobody, including us, can let you back in, and your kept files are lost with it. Anyone who has it can open your locker, so keep it private.
+### Your drive and its key
+Your drive opens with a key your browser makes; there is no email and no password with us. Your recovery code or key file is the only way back into it. If you lose it, nobody, including us, can let you back in, and your kept files are lost with it. Anyone who has it can open your drive, so keep it private.
 
-### Deletion, expiry and the end of rented space
-A link leaves when its rule says so: after its opens, at its time, or when you delete it. We then delete the ciphertext within a minute (after a download in progress finishes). When rented space ends, your limit goes back to the free share; nothing is deleted, and after that, if you're still over, your oldest kept files are removed until you fit. Files kept by a locker that hasn't signed in are deleted.
+### Deletion, expiry and the end of extra space
+A file leaves your drive when you delete it, when the trash is emptied, at the time you set with Delete it after, or after the last open of a link set to delete it from your drive. A link that ends on a file you keep only ends the link. When a file leaves, we delete the ciphertext within a minute (after a download in progress finishes).
 
 ### Removal
 We can remove any link, file or drop by its id, without seeing inside, when it's reported and we believe it breaks these terms, or when it's abusing limits. We usually disable first and ask questions later.
