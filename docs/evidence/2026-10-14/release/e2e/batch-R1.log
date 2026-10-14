@@ -1,0 +1,19 @@
+PASS E-01      7.9s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     12.6s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     26.3s  Link + password and password-only; path-only attempts never lock a link
+PASS E-06     10.6s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      4.5s  A link without its #key shows incomplete
+PASS E-08      7.7s  Drive: Make my drive at once; the key file locked with a passphrase; restored in a clean browser (same address and safety code)
+PASS E-15     10.8s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      2.8s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-17      7.5s  Abuse: a reported link and drop are taken down by id
+PASS E-18     11.3s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19     56.4s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20      6.5s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-21     49.8s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-22     10.4s  Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning
+FAIL E-24    135.4s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+           timed out after 120 s waiting for: document.querySelector('[data-testid="drive-root"]') ? 'drive' : (document.querySelector('[data-code="needs_wasm"]') ? 'needs_wasm' : '')
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+e2e: FAIL {'PASS': 15, 'FAIL': 1, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/rel5/e2e-R1/20261014-052011/report.json
+EXIT 1

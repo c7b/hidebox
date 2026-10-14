@@ -1,0 +1,5 @@
+PASS E-10     48.8s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-11     34.4s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+PASS E-12     32.9s  A view key sees the delivery and can open no file
+e2e: PASS {'PASS': 3, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/rel5/e2e-Q3/20261014-083513/report.json
+EXIT 0

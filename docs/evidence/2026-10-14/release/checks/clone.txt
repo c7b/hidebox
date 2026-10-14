@@ -1,0 +1,10 @@
+spooky-secrets-2026-10
+c73c7b415ecdc88bc848a76fc68c91528702be62 2026-10-14T06:47:46-06:00
+== verify-deploy
+  ABI (tari_tdef): equal
+  the chain runs seal_log.wasm byte for byte
+verify-deploy: 0 differences across 157 files (spooky-secrets-2026-10 = c73c7b415ecd, https://srv2052606.hstgr.cloud)
+== server
+Ran 309 tests in 73.998s
+
+OK (skipped=5)

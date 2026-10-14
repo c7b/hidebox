@@ -1,0 +1,4 @@
+PASS E-25     41.7s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+PASS E-J      48.6s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+e2e: PASS {'PASS': 2, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/rel5/e2e-Q1/20261014-052615/report.json
+EXIT 0

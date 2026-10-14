@@ -1,0 +1,7 @@
+PASS E-26      9.4s  Drive: upload a folder (3 files, 1 subfolder) with the folder picker; restored in a clean browser with the key file: the same tree
+PASS E-27     11.8s  Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended
+PASS E-28     13.4s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
+PASS E-31     14.5s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+e2e: PASS {'PASS': 5, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/rel5/e2e-R2/20261014-062511/report.json
+EXIT 0
