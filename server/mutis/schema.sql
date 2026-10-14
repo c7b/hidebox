@@ -132,7 +132,7 @@ CREATE TABLE jobs (
   payload    TEXT,                                -- JSON; scrubbed to NULL when done/failed
   state      TEXT NOT NULL CHECK (state IN ('queued','sending','done','failed')),
   not_before INTEGER NOT NULL,
-  result     TEXT,                                -- {"pending_tx"} once submitted, then {"tx_id"[, "utxo_ids"]}
+  result     TEXT,                                -- {"pending_tx"} once submitted, then {"tx_id"[, "utxo_ids"]}; test money for a claim adds its "ref"
   error TEXT, attempts INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
 ) STRICT;
