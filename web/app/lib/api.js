@@ -135,6 +135,7 @@ export const reportAbuse = (body) => request('POST', '/abuse', { json: body });
 // X-Mutis-Claim, never in a query string.
 const claimHeader = (t) => ({ 'X-Mutis-Claim': t });
 export const putSales = (body, headers) => request('PUT', '/me/sales', { json: body, headers, expect: 'none' });
+export const getSales = (headers) => request('GET', '/me/sales', { headers });
 export const confirmSale = (claimId, body, headers) => request('POST', `/me/sales/claims/${enc(claimId)}/confirm`, { json: body, headers });
 export const payInfo = (shareId) => request('GET', `/p/${enc(shareId)}`);
 export const createClaim = (shareId, body, headers = {}) => request('POST', `/p/${enc(shareId)}/claims`, { json: body, headers });
