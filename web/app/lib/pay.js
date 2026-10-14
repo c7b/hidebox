@@ -18,7 +18,7 @@
 import { b64uDecode, b64uEncode, unhex } from './b64.js';
 import { concat, fromUtf8, utf8 } from './bytes.js';
 import { aesGcmDecrypt, aesGcmEncrypt, hkdf, randomBytes, sha256 } from './crypto.js';
-import { ApiError, claimDemoPay, claimInfo, confirmSale, createClaim, createShare, payInfo, putSales } from './api.js';
+import { ApiError, claimDemoPay, claimInfo, confirmSale, createClaim, createShare, getSales, payInfo, putSales } from './api.js';
 import { shareKeys, wrapFileKey } from './share.js';
 import { localGet, localSet } from './store.js';
 import { idbGet, idbPut } from './idb.js';
@@ -114,12 +114,13 @@ async function saveSales(identity, state) {
 }
 
 // Registers the sales address with our payment checker once per drive (PUT /me/sales): the sales view
-// key, sealed (kind 3, flag 0x08) to the checker's watch address. -> {first: true} the first time,
-// which is when the dialog shows C35. `known`: our server already lists a seller row (any state).
-export async function ensureSeller(identity, cfg, headers, { known = false } = {}) {
+// key, sealed (kind 3, flag 0x08) to the checker's watch address. A drive that sells from another
+// device already has it there (GET /me/sales). -> {first: true} when this call registered it.
+export async function ensureSeller(identity, cfg, headers) {
   const k = await salesKeys(identity);
   const state = await salesState(identity);
-  if (state.registered === k.address || known) {
+  const known = state.registered === k.address || (await getSales(headers).catch(() => null))?.seller?.address === k.address;
+  if (known) {
     if (state.registered !== k.address) await saveSales(identity, { ...state, registered: k.address });
     return { first: false, address: k.address };
   }
@@ -281,14 +282,27 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
     onProgress,
     signal,
   });
+  // What our server waits on (GET /me/sales to_check: paid claims and their outputs not answered yet).
+  // Without that list (an older server), every found output with a claim reference is answered once.
+  const waits = await getSales(headers).then((r) => r?.to_check ?? [], () => null);
+  const asked = new Map();
+  for (const c of waits ?? []) for (const u of c.utxo_ids ?? []) asked.set(u, c.claim_id);
+  for (const [utxoId, claimId] of asked) {
+    // An output our walk didn't meet (paid before this drive's first page): checked from the indexer alone.
+    if (!seen.has(utxoId)) {
+      seen.add(utxoId);
+      state.outputs.push({ utxoId, seq: null, epoch: null, nonce: null, value: '0', claimId, check: null, confirmed: null, at: nowS() });
+    }
+  }
   for (const o of state.outputs) {
     signal?.throwIfAborted();
     if (o.check === null) o.check = await auditOutput(keys, o);
+    const claimId = waits ? asked.get(o.utxoId) : o.claimId;
     // A claim our server still waits on: confirm (or void) it. 409 with an open claim status means the
     // payment isn't counted yet; ask again next time. Any other 409 or 404: nothing waits on it.
-    if (o.claimId && o.check && o.confirmed === null) {
+    if (claimId && o.check && (waits ? true : o.confirmed === null)) {
       try {
-        await confirmSale(o.claimId, { utxo_id: o.utxoId, spendable: o.check === 'ok' }, headers);
+        await confirmSale(claimId, { utxo_id: o.utxoId, spendable: o.check === 'ok' }, headers);
         o.confirmed = 'sent';
       } catch (e) {
         if (!(e instanceof ApiError)) throw e;

@@ -115,6 +115,7 @@ class PayFake:
         ic.add(f"{api}/me/items*", "Response", self.items)
         ic.add(f"{api}/me/sales/claims/*/confirm", "Request", self.confirm, "POST")
         ic.add(f"{api}/me/sales", "Request", self.put_sales, "PUT")
+        ic.add(f"{api}/me/sales", "Request", self.get_sales, "GET")
         ic.add(f"{api}/items/*/shares", "Request", self.create_share, "POST")
         ic.add(f"{api}/s/*/open", "Request", self.open_gate, "POST")
         ic.add(f"{api}/s/*", "Request", self.patch_share, "PATCH")
@@ -154,6 +155,13 @@ class PayFake:
         self.sales_puts += 1
         return 200, {}
 
+    def get_sales(self, _params):
+        waiting = [{"claim_id": cid, "share_id": c["share"], "paid_at": int(time.time()), "amount_ut": self.links[c["share"]]["price_ut"],
+                    "received_ut": str(c["received"]), "utxo_ids": [u for u in c["utxos"] if u not in c["answered"]]}
+                   for cid, c in self.claims.items() if c["status"] == "paid" and not c["demo"] and c["owner_check"] == "pending"]
+        seller = {"address": self.sales["address"], "state": "ok"} if self.sales else None
+        return 200, {"seller": seller, "to_check": [w for w in waiting if w["utxo_ids"]]}
+
     def create_share(self, params):
         body = body_of(params)
         if body.get("mode") != "pay":
@@ -176,8 +184,11 @@ class PayFake:
             for s in row.get("shares") or []:
                 link = self.links.get(s.get("id") or s.get("share_id"))
                 if link:
-                    count = sum(1 for c in self.claims.values() if c["share"] == (s.get("id") or s.get("share_id")) and c["status"] in ("paid", "released"))
-                    s["paid"] = {"price_ut": link["price_ut"], "paused": link["paused"], "seller_state": link["seller_state"], "count": count}
+                    counts = {k: 0 for k in ("pending", "seen", "underpaid", "paid", "released", "expired", "void")}
+                    for c in self.claims.values():
+                        if c["share"] == (s.get("id") or s.get("share_id")):
+                            counts[c["status"]] += 1
+                    s["paid"] = {"price_ut": link["price_ut"], "paused": link["paused"], "seller_state": link["seller_state"], "counts": counts, "earned_ut": "0"}
         return res
 
     def patch_share(self, params):
@@ -197,6 +208,7 @@ class PayFake:
             return err("not_found", 404)
         if c["status"] != "paid" or c["owner_check"] != "pending":
             return err("conflict", 409, status=c["status"])
+        c["answered"].append(body.get("utxo_id"))
         c["owner_check"] = "ok" if body.get("spendable") else "bad"
         if c["owner_check"] == "bad":
             c["status"] = "void"
@@ -215,7 +227,7 @@ class PayFake:
         cid = "clm_" + "".join(secrets.choice(B32) for _ in range(20))
         c = {"share": sid, "verifier": verifier, "address": ootle_addr.with_pay_ref(self.sales["address"], cid.encode()),
              "status": "pending", "demo": False, "owner_check": "none", "received": 0, "queue": [], "views_left": 3,
-             "expires_at": int(time.time()) + 3600, "open_until": None, "opened": 0}
+             "expires_at": int(time.time()) + 3600, "open_until": None, "opened": 0, "utxos": [], "answered": []}
         self.claims[cid] = c
         return cid, c
 
@@ -633,10 +645,12 @@ def owner_check(t):
     rows = a.eval(OUTPUTS_JS + f"""([{{ to: 'sales', amount: '100000', memo: {{ Message: '{good}' }} }},
       {{ to: 'sales-other', amount: '100000', memo: {{ Message: '{bad}' }} }}, {{ to: 'sales', amount: '100000', memo: {{ Message: '{early}' }} }}])""", timeout=120)
     ids = fake.add_outputs(rows)
+    fake.claims[good]["utxos"] = [ids[0]]
+    fake.claims[bad]["utxos"] = [ids[1]]
     a.reload()
     a.wait_for("drive-root", 90)
     deadline = time.time() + 120
-    while time.time() < deadline and len(fake.confirms) < 3:
+    while time.time() < deadline and len(fake.confirms) < 2:
         a.eval("new Promise((r) => setTimeout(r, 500))")
     t.check(a.wait(CONFIRMED_JS, 60), "the drive kept what it confirmed")
     got = {cid: body for cid, body in fake.confirms}
@@ -644,7 +658,7 @@ def owner_check(t):
     t.check(got.get(bad) == {"utxo_id": ids[1], "spendable": False}, f"the payer kept control: the claim is voided ({got.get(bad)})")
     t.check(fake.claims[good]["owner_check"] == "ok" and fake.claims[bad]["status"] == "void", "the release gate moved: one to release, one void")
     t.check(set(ids) <= set(fake.substate_reads), "each output's one-time key was read from the indexer")
-    t.check(early in got and fake.claims[early]["status"] == "pending", "a claim not paid yet stays as it is (409), and is asked again next time")
+    t.check(early not in got and fake.claims[early]["status"] == "pending", "a claim our server doesn't wait on yet (not paid) gets no answer")
     a.goto(t.origin + "/drive/received")
     a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 3", 60)
     checks = a.eval("[...document.querySelectorAll('[data-testid=\"sales-row\"]')].map((r) => r.dataset.check).sort()")
@@ -656,4 +670,11 @@ def owner_check(t):
     a.reload()
     a.wait_for("drive-root", 90)
     a.eval("new Promise((r) => setTimeout(r, 4000))")
-    t.check([c for c, _ in fake.confirms[before:]] == [early], "the next opening asks again only about the claim that wasn't paid yet")
+    t.check(fake.confirms[before:] == [], "the next opening has nothing left to answer")
+    fake.claims[early].update(status="paid", owner_check="pending", received=100000, utxos=[ids[2]])
+    a.reload()
+    a.wait_for("drive-root", 90)
+    deadline = time.time() + 60
+    while time.time() < deadline and len(fake.confirms) == before:
+        a.eval("new Promise((r) => setTimeout(r, 500))")
+    t.check(fake.confirms[before:] == [(early, {"utxo_id": ids[2], "spendable": True})], "once that claim is paid, the next opening answers it")

@@ -130,8 +130,7 @@ async function makePay(btn) {
   btn.replaceChildren(spinner(), t('share.making'));
   try {
     const pay = await import('../lib/pay.js');
-    // A drive that already sells (from another device too) has its sales address on our server already.
-    await pay.ensureSeller(drive.identity, ctx.cfg, drive.headers(), { known: sells(drive) });
+    await pay.ensureSeller(drive.identity, ctx.cfg, drive.headers());
     const files = item.folder ? drive.index.descendants(item.id).filter((x) => !x.folder) : [item];
     const teaser = {
       kind: item.folder ? 'folder' : 'file', name: S.showName ? itemName(item) : null,
