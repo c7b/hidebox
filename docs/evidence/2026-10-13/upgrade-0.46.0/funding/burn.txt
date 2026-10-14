@@ -1,0 +1,89 @@
+Step 1b, the real refill: a burn of 400 tXTM on the L1, claimed by `sponsor`, 2026-10-13 (UTC). The L1
+console wallet in drive's tmux session `l1` (minotari_console_wallet 6.1.0, Esmeralda), driven with tmux
+send-keys and checked with capture-pane before the send, as 03-ootle-integration §5.1 and reset-playbook
+§3 say; walletd 0.46.0 claimed the proof by itself. Nothing in walletd's store or the L1 wallet's files was
+touched by hand; no key was moved or printed (the claim key is the sponsor's public key).
+
+== The claim key
+  `rpc call accounts.get '{"name_or_address":"sponsor"}'` → sponsor, component_d5614f…, owner_key_id
+  Derived {index 2, key_branch account}, owner_public_key 6ecbee156e9c199a912ce649ea3dc955adf4707ec5ef34ce698aca6478ac9602
+  (public), is_confirmed_on_chain false (the sponsor never needed an account component: a claim mints a
+  stealth output, it doesn't deposit in a vault).
+  Why the sponsor's own key and not service's as on 2026-10-11: walletd 0.46.0's auto-claimer finds the
+  account by the proof's burn_public_key (applications/tari_walletd/src/services/auto_claim_burn_service.rs
+  try_submit_claim: accounts_api.get_account_by_public_key) and claims into it
+  (handlers/accounts.rs build_claim_burn_transaction: a stealth output for that account, the fee revealed
+  from the claimed value), so the tTARI land in `sponsor` with no second transfer from service.
+
+== The burn in the TUI (window resized to 200×50 for reading; then Tab ×3 → Burn)
+  c, the 64 hex of the claim key (typed literally), Enter → focus on Sidechain Key (capture: highlighted)
+  Enter, leaving Sidechain Key EMPTY → focus on Amount (capture: highlighted, Sidechain Key blank)
+  400T, Enter (→ Payment-id, left empty), Escape (capture: no field highlighted)
+  capture before sending: Claim Public Key 6ecbee156e9c199a912ce649ea3dc955adf4707ec5ef34ce698aca6478ac9602,
+    Sidechain Key empty, Amount 400T, Fee-per-gram 5, Payment-id empty
+  s → "Are you sure you want to burn 400T Minotari with a Claim Public Key 6ecbee15…9602?" → y
+  18:58:58 "Transaction completed successfully!"; Burn Proofs list: 6ecbee15…9602 ⏳ 2026-10-13 18:58:58
+  L1 balance before: Available 999.999260 T. After: 599.998520 T (kept as reserve).
+
+== The L1 transaction (Transactions tab, details of the selected burn)
+  Burned output 400.000000 T, Status Mined Confirmed, Mined Height 978405, mined 18:59:09 UTC
+  (imported 18:58:58), fee 740 µT (weight 148 g, 1 input, 2 outputs)
+  PayRef c1b78490e513685d815598446effb094a5351a232336a42641feaf4a21130174
+  Excess sig (sig, nonce) (0e3c06a4526b0db2538b7e07c5ed7fb41b28f6dbd17f887730b514af69b5f702,
+                           f2f8e15cecc165bfc784f0952f0029f614ac415bc1670f6edcf420aa1fc11646)
+
+== The burn proof (walletd's burn_proofs dir, which walletd.service binds)
+  19:00:15 6ecbee15…9602-346ad9202dc2033967a0c2e101e7b7eba102e79f0575691d6839e8bef203ad30.json
+  burn_proofs.list → value 400000000 µT; the proof's mined_in_epoch 12230 (field read, nothing else printed)
+  The auto-claimer waits for an L2 epoch past 12230, then dry-runs the claim and defers it while the
+  validators haven't synced the L1 block (NotYetValid; info/debug lines, below walletd's warn level).
+  Epochs as read from /epoch-manager/stats (current_epoch): 12228 at 19:01, 12229 at 19:06, 12230 at 19:45,
+  12231 at 20:22 (consensus 12230), 12232 at 20:48 (consensus 12231).
+  Polled once a minute (file in burn_proofs/ or in burn_proofs/claimed/): unclaimed 19:05:35 to 20:46:58,
+  claimed at 20:47:59. walletd logged no warning or error about it (no "Giving up", no permanent error).
+
+== The claim
+  walletd transactions.get_all, transactions whose body has a ClaimBurn instruction (scripts/claimfind.py):
+    aa2a4585…d3d4 Accepted 2026-10-11 (the 9,000 tXTM burn into service, by hand)
+    a33d64e415d0449125c6e15f04014e83de918d86f2ff4bdbb1920be10d3a74d0 Accepted 2026-10-13 20:47:44, final_fee 13238
+  burn_proofs/claimed/ holds the proof since 20:47:44 (moved by walletd's claim monitor).
+  Both indexers (scripts/ixcheck.py, from the workstation):
+    a33d64e4… ootle-indexer-a: Commit, fee 13238, outputs 1 [39e46f7e:200]
+    a33d64e4… ootle-indexer-b: Commit, fee 13238, outputs 1 [39e46f7e:200]
+  So 400,000,000 − 13,238 = 399,986,762 µT reached the sponsor as one stealth output (…39e46f7e on the
+  indexers, 289e7389… in walletd's list). 0.46.0 reveals only the claim's price as the fee; the 2026-10-11
+  claim by hand paid its whole max_fee of 20,000.
+
+== 2026-10-13T20:48:31Z after step 1b (claim a33d64e4…) (read-only)
+wallet.get_info: {'network': 'esmeralda', 'version': '0.46.0'} 
+  buyer-demo  revealed 0, confidential 3500000 µT
+     stealth outputs: Unspent (on chain True) 2 = 3500000 µT
+       605d86a7…  Unspent  on_chain True  1500000 µT
+       7402e339…  Unspent  on_chain True  2000000 µT
+  operator    revealed 13940, confidential 0 µT
+     stealth outputs: none
+  service     revealed 17039898, confidential 10508000 µT
+     stealth outputs: Spent (on chain True) 9 = 63028092000 µT, Unspent (on chain True) 1 = 10508000 µT
+       5a4710af…  Unspent  on_chain True  10508000 µT
+  sponsor     revealed 0, confidential 457993762 µT
+     stealth outputs: LockedUnconfirmed (on chain False) 1 = 8851452000 µT, Spent (on chain True) 277 = 2317676149000 µT, Unspent (on chain True) 2 = 457993762 µT
+       289e7389…  Unspent  on_chain True  399986762 µT
+       ce8ba155…  Unspent  on_chain True  58007000 µT
+       3ee453ab…  LockedUnconfirmed  on_chain False  8851452000 µT
+transactions.get_all: 495: Accepted 473, New 1, Pending 21
+courier   public              4 / 1500
+courier   reserved            0 / 500
+courier   evidence           26 / 150
+decoy     public              0 / 0
+decoy     reserved           82 / 120
+decoy     evidence            0 / 0
+demo_pay  public              0 / 25000000
+demo_pay  reserved            0 / 10000000
+demo_pay  evidence       500000 / 10000000
+sponsor   public       15000000 / 100000000
+sponsor   reserved            0 / 30000000
+sponsor   evidence     10000000 / 10000000
+  sponsor: 457,993,762 µT spendable (399,986,762 from the claim + 58,007,000 left of the relief after the
+  worker's sends since 18:57: decoys, the canaries, grants). 3ee453ab… stays LockedUnconfirmed (the
+  10:39 change, untouched). walletd: 495 transactions, Pending still 21 (every new send settles).
+  /status.json at 20:49:49: sponsor_balance green (status/status-2050-after-claim.json).

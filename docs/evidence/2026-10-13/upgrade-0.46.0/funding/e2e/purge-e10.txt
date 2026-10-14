@@ -1,0 +1,12 @@
+Purge after E-10 on the deployed release, by id (scripts/dbsnap.py before and after, scripts/purgeplan.py).
+
+snapshot 2026-10-13T22:07:07Z: judge passes 20 | security drop 3w7m8k2v5t active | identities 123 (active packs 0) | items 289 | drops 81 | shares 301 | invoices 18 | payments 16
+snapshot 2026-10-13T22:08:08Z: judge passes 20 | security drop 3w7m8k2v5t active | identities 125 (active packs 0) | items 290 | drops 82 | shares 302 | invoices 18 | payments 16
+plan: no new item left to take down (E-10's one item, 7H59cASLGJeUJJXESQoTxA, owned by a new test locker, was
+  already deleted by its own rule once opened); 1 new drop, zdqq94ed6f (E-10's recipient's drop link);
+  2 new test lockers (empty, stay); no judge pass, invoice or payment.
+== purge 2026-10-13T22:08:13Z (after E-10 on 643e766)
+drop zdqq94ed6f: removed
+
+after:
+2026-10-13T22:08:13Z: judge passes 20 | security drop 3w7m8k2v5t active | identities 125 (active packs 0) | items 290 | drops 82 | shares 302 | invoices 18 | payments 16

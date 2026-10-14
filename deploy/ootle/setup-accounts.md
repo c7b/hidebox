@@ -50,6 +50,15 @@ Dry run: fee 15,249 µT. Real: tx `1847d302c96fe7a577ea0cab5b301f595fdb77b44f141
 math (spec §9.5): every slice maxed every day costs about 230 tTARI, so 8,900 lasts about 38 days of
 worst case and far longer in practice; the healthcheck turns amber below 200 tTARI.
 
+**Refilled 2026-10-13** (the 10:39 send's change stays locked in walletd;
+`docs/evidence/2026-10-13/upgrade-0.46.0/`, "Funding and deploy"): 61.5 tTARI from `service` as above
+(tx `a70eb538…7403`), then 400 tXTM burned on the L1 straight to the sponsor. In the TUI's Burn tab
+the Claim Public Key is the sponsor's own `owner_public_key` (`rpc call accounts.get
+'{"name_or_address":"sponsor"}'`), not `service`'s: walletd 0.46.0's auto-claimer finds the account by
+that key and claims into it, so the tTARI arrive as a sponsor stealth output with no second transfer
+(claim `a33d64e4…74d0`, 399.987 tTARI, fee 13,238 µT, 109 minutes after the burn). The L1 keeps about
+600 tXTM in reserve.
+
 ## 3. The operator (done 2026-10-11)
 
 A public vault pays transaction fees, so the account was funded with a public transfer
