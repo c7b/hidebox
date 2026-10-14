@@ -181,6 +181,9 @@ class Stack(Client):
             "sidecar": {"command": fake_sidecar_argv(), "expected_wasm_sha256": FAKE_WASM_SHA256},
             # The drive's features are off in config.py until the routes switch over; tests run with them on.
             "features": {"folders": True, "pay_to_open": True},
+            # Requests without `ip` come from 127.0.0.1, the test's own address: like the server's own tests in
+            # production, it skips the per-network daily brakes. Tests of the brakes pass `ip`.
+            "brakes": {"exempt_addresses": ["127.0.0.1"]},
         }
         for key, value in (overrides or {}).items():
             if isinstance(value, dict):

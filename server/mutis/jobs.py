@@ -16,7 +16,7 @@ KINDS = ("courier", "decoy", "demo_pay", "sponsor")
 MAX_ATTEMPTS = 3
 BACKOFF_S = (10, 60)
 MEMO_MAX_BYTES = 253
-DEMO_PAY_MAX_UT = 2_000_000
+DEMO_PAY_MAX_UT = 1_000_000          # the biggest pack's price (quota.PACKS); a claim's is lower
 SLICE_ORDER = "CASE slice WHEN 'evidence' THEN 0 WHEN 'reserved' THEN 1 ELSE 2 END"
 
 

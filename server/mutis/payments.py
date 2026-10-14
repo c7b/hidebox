@@ -182,20 +182,24 @@ def credit(conn: sqlite3.Connection, utxo_id: str, now: int) -> None:
         conn.execute("UPDATE invoices SET received_ut = ?, status = 'credited', credited_at = ? WHERE id = ?",
                      (received, now, inv["id"]))
         if inv["identity_id"]:
-            grant_pack(conn, inv["identity_id"], inv["pack"], now)
+            grant_pack(conn, inv["identity_id"], inv["pack"], now, bool(inv["judge"]))
 
 
-def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int) -> None:
-    """Stack bytes and extend paid_until by the pack's days from max(now, paid_until) (spec §9.6)."""
+def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int, judge: bool = False) -> None:
+    """A drive holds one pack at a time (sixth pass, packs.py): a new pack sets its bytes and days from now;
+    a payment while one is active (a renewal in its last days, or a second invoice paid anyway) adds the
+    days from the old end and never stacks bytes. The slice (judges' or public) is the first purchase's."""
     pack = quota.PACKS[pack_id]
-    row = conn.execute("SELECT paid_bytes, paid_until FROM identities WHERE id = ?", (identity_id,)).fetchone()
+    row = conn.execute("SELECT paid_bytes, paid_until, paid_pack FROM identities WHERE id = ?", (identity_id,)).fetchone()
     if row is None:
         return
-    active = row["paid_until"] is not None and row["paid_until"] > now
-    paid_bytes = (row["paid_bytes"] if active else 0) + pack["bytes"]
-    paid_until = max(now, row["paid_until"] or 0) + pack["days"] * 86400
-    conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ? WHERE id = ?", (paid_bytes, paid_until,
-                                                                                       identity_id))
+    if row["paid_until"] is not None and row["paid_until"] > now and row["paid_bytes"] > 0:
+        conn.execute("UPDATE identities SET paid_until = ?, paid_bytes = ?, paid_pack = COALESCE(paid_pack, ?) "
+                     "WHERE id = ?", (row["paid_until"] + pack["days"] * 86400, max(row["paid_bytes"], pack["bytes"]),
+                                      pack_id, identity_id))
+        return
+    conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ?, paid_pack = ?, paid_judge = ? WHERE id = ?",
+                 (pack["bytes"], now + pack["days"] * 86400, pack_id, int(judge), identity_id))
 
 
 def reconcile(conn: sqlite3.Connection, rescan, committed, now: int) -> str:

@@ -186,7 +186,7 @@ class Admin(unittest.TestCase):
             status, _, resp = s.request("POST", "/api/v1/sponsor", {"wallet_address": fake_keys()["address"]},
                                         headers={**locker["auth"], **judge}, ip=ip)
             self.assertEqual(status, 202, resp)
-            inv = s.request("POST", "/api/v1/invoices", {"pack": "s30"}, headers=locker["auth"], ip=ip)[2]
+            inv = s.request("POST", "/api/v1/invoices", {"pack": "s30"}, headers={**locker["auth"], **judge}, ip=ip)[2]
             status, _, resp = s.request("POST", f"/api/v1/invoices/{inv['invoice_id']}/demo-pay", {},
                                         headers={**locker["auth"], **judge}, ip=ip)
             self.assertEqual(status, 202, resp)

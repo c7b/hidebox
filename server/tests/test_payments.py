@@ -165,6 +165,7 @@ class Payments(unittest.TestCase):
         self.assertIsNone(self.s.meta("credit_freeze"))
 
     def credited_invoice(self) -> dict:
+        self.locker = self.s.register()          # a drive holds one pack at a time: each purchase is a new drive
         inv = self.invoice()
         self.pay(inv["address"], 500000)
         self.ticks()
@@ -243,6 +244,7 @@ class Payments(unittest.TestCase):
         del self.w.indexers.call_one
         self.w.indexers.upstreams = self.w.indexers.upstreams[:1]
         self.w.last["reconcile"] = self.s.now
+        self.locker = self.s.register()
         inv = self.invoice()
         self.pay(inv["address"], 500000)
         self.ticks()

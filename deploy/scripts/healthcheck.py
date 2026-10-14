@@ -5,7 +5,7 @@
 Writes data/health.json (full detail, not served) and status/status.json (the public subset served at
 /status.json: green/amber/red per check, `attention` with fixed reason codes, the mainnet phase).
 The check names are the ones /status labels (web/site/js/status.js): https api chain_worker walletd
-sponsor_balance mirror canary credits disk budgets; the detail says which part failed.
+sponsor_balance mirror canary credits disk budgets packs; the detail says which part failed.
 A red check also writes one CRIT line with its fixed code to the journal. The chain worker's state
 comes from the database (meta.chain_status, written by mutis-chain), because `mutis` cannot reach
 walletd. No check reads or writes anything that identifies a visitor, a link or an address.
@@ -35,6 +35,7 @@ SPONSOR_MIN_UT = 200_000_000
 CERT_MIN_DAYS = 14
 RECONCILE_UNKNOWN_ALERT = 3     # hourly reconciles in a row without a verdict (server payments.UNKNOWN_ALERT_AFTER)
 BUDGET_ALERT = 90               # a daily budget slice at 90 % of its limit (meta.alerts)
+PACKS_MAX_S = 900               # meta.packs older than this (cleanup stopped) is ignored
 
 
 def https_ok(origin: str) -> tuple[str, str]:
@@ -111,7 +112,20 @@ def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
         checks["canary"] = (AMBER, "canary_in_flight")
     levels = ((meta(conn, "alerts", {}) or {}).get("budgets") or {}).values()
     checks["budgets"] = (AMBER, "budget_90") if any(level >= BUDGET_ALERT for level in levels) else (GREEN, "below 90 %")
+    reasons = pack_reasons(conn, now)
+    checks["packs"] = (AMBER, reasons[0].replace(".", "_")) if reasons else (GREEN, "on sale")
     return checks
+
+
+def pack_reasons(conn: sqlite3.Connection, now: int) -> list[str]:
+    """Sixth pass: the public slice of paid space 80 % taken, or today's public ceiling reached
+    (meta.packs, written every minute by cleanup; server/mutis/packs.py). A stale note says nothing."""
+    packs = meta(conn, "packs", {}) or {}
+    if now - int(packs.get("updated_at") or 0) > PACKS_MAX_S:
+        return []
+    today = datetime.datetime.fromtimestamp(now, datetime.UTC).strftime("%Y-%m-%d")
+    return [code for code, on in (("packs.public_80", packs.get("public_80")),
+                                  ("packs.ceiling", packs.get("ceiling_hit") and packs.get("day") == today)) if on]
 
 
 def disk_check(data_dir: Path, reserve_min: int, statvfs=os.statvfs) -> tuple[str, str]:
@@ -125,9 +139,10 @@ def disk_check(data_dir: Path, reserve_min: int, statvfs=os.statvfs) -> tuple[st
     return GREEN, f"{(avail - reserve) // GIB} GiB above the reserve"
 
 
-def attention(conn: sqlite3.Connection) -> list[str]:
+def attention(conn: sqlite3.Connection, now: int | None = None) -> list[str]:
     reasons = [f"budget.{key.replace(':', '.')}.{level}" for key, level in
                sorted(((meta(conn, "alerts", {}) or {}).get("budgets") or {}).items())]
+    reasons += pack_reasons(conn, int(time.time()) if now is None else now)
     if conn.execute("SELECT COUNT(*) FROM abuse_reports WHERE state = 'new'").fetchone()[0]:
         reasons.append("abuse.new_reports")
     return reasons
@@ -146,7 +161,7 @@ def evaluate(cfg: dict, conn: sqlite3.Connection | None, now: int, probes: dict)
         reasons = []
     else:
         checks |= chain_checks(conn, now)
-        reasons = attention(conn)
+        reasons = attention(conn, now)
     checks["disk"] = probes["disk"](Path(cfg.get("data_dir", "/srv/mutis/data")),
                                     cfg.get("limits", {}).get("reserve_min_bytes", 10 * GIB))
     states = [state for state, _ in checks.values()]

@@ -26,7 +26,9 @@ CREATE TABLE identities (
   reserved_bytes INTEGER NOT NULL DEFAULT 0,
   sends_day      TEXT, sends_today INTEGER NOT NULL DEFAULT 0,
   bundle_ct      BLOB,                            -- only if G2a failed
-  state          TEXT NOT NULL DEFAULT 'active' CHECK (state IN ('active','suspended'))
+  state          TEXT NOT NULL DEFAULT 'active' CHECK (state IN ('active','suspended')),
+  paid_pack      TEXT,                            -- the pack held (one at a time; schema 6)
+  paid_judge     INTEGER NOT NULL DEFAULT 0 CHECK (paid_judge IN (0,1))   -- it takes the judges' slice
 ) STRICT;
 
 CREATE TABLE sessions (
@@ -146,7 +148,8 @@ CREATE TABLE invoices (
   pack TEXT NOT NULL, price_ut INTEGER NOT NULL, address TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending','seen','proven','credited','underpaid','expired')),
   received_ut INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, credited_at INTEGER
+  created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, credited_at INTEGER,
+  judge INTEGER NOT NULL DEFAULT 0 CHECK (judge IN (0,1))   -- made with a judge pass (schema 6)
 ) STRICT;
 
 CREATE TABLE payments (                           -- one row per on-chain UTXO (idempotency)

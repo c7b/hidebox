@@ -194,7 +194,7 @@ class HealthTest(unittest.TestCase):
 
     def test_check_names_are_the_ones_status_labels(self):
         labels = {"https", "api", "chain_worker", "walletd", "sponsor_balance", "mirror", "canary", "credits", "disk",
-                  "budgets"}
+                  "budgets", "packs"}
         self.assertEqual(set(self.report()["checks"]), labels)
         self.assertEqual(set(health.evaluate(self.cfg, None, self.NOW, self.probes)["checks"]) - labels, set())
 
@@ -216,6 +216,21 @@ class HealthTest(unittest.TestCase):
         self.assertTrue(r["attention"])
         self.assertEqual(r["reasons"], ["budget.courier.public.50"])
         self.assertEqual(r["overall"], "green")
+
+    def test_packs_turn_amber_when_the_public_slice_is_80_percent_taken_or_the_ceiling_is_hit(self):
+        day = time.strftime("%Y-%m-%d", time.gmtime(self.NOW))
+        set_meta(self.conn, "packs", {"day": day, "updated_at": self.NOW, "public_80": False, "ceiling_hit": False})
+        self.assertEqual(self.report()["checks"]["packs"], {"state": "green", "detail": "on sale"})
+        set_meta(self.conn, "packs", {"day": day, "updated_at": self.NOW, "public_80": True, "ceiling_hit": False})
+        r = self.report()
+        self.assertEqual(r["checks"]["packs"], {"state": "amber", "detail": "packs_public_80"})
+        self.assertEqual((r["overall"], r["reasons"]), ("amber", ["packs.public_80"]))
+        set_meta(self.conn, "packs", {"day": day, "updated_at": self.NOW, "public_80": False, "ceiling_hit": True})
+        self.assertEqual(self.report()["reasons"], ["packs.ceiling"])
+        set_meta(self.conn, "packs", {"day": "2000-01-01", "updated_at": self.NOW, "public_80": False, "ceiling_hit": True})
+        self.assertEqual(self.report()["checks"]["packs"]["state"], "green")       # yesterday's ceiling
+        set_meta(self.conn, "packs", {"day": day, "updated_at": self.NOW - 3600, "public_80": True, "ceiling_hit": True})
+        self.assertEqual(self.report()["checks"]["packs"]["state"], "green")       # a stale note says nothing
 
     def test_unverified_canary_is_amber_then_red(self):
         set_meta(self.conn, "canary_log", [{"n": 8, "sealed_at": self.NOW - 300, "verified": False}])

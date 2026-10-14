@@ -54,7 +54,7 @@ def build_config(ctx) -> dict:
         "kdf": {"alg": "PBKDF2-SHA256", "min_iter": KDF_MIN_ITER, "max_iter": KDF_MAX_ITER},
         "pricing": {"unit": "tTARI", "packs": [
             {"id": pid, "bytes": p["bytes"], "days": p["days"], "price_ut": str(p["price_ut"])}
-            for pid, p in quota.PACKS.items()]},
+            for pid, p in quota.PACKS.items()], "one_per_drive": True, "renew_days": cfg["packs"]["renew_days"]},
         "features": ctx.features(),
         "courier": {"amount_ut": str(ootle["courier_amount_ut"]), "max_fee_ut": str(ootle["max_fee_transfer_ut"]),
                     "jitter_s": list(ootle["jitter_s"])},
