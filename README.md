@@ -157,7 +157,9 @@ one changed are in [docs/review/fix-log.md](docs/review/fix-log.md).
 
 Our own test transactions only, never a user's: the hourly canary delivery and the daily demo payment
 in [`/evidence.json`](https://srv2052606.hstgr.cloud/evidence.json), the SealLog checkpoints, and the
-go-live record in [docs/evidence](docs/evidence).
+go-live record in [docs/evidence](docs/evidence). The contest release (the tag `spooky-secrets-2026-10`: suites,
+deploys, end-to-end runs, the film's check, a stranger's clone and crawl, the purge) is in
+[docs/evidence/2026-10-14/release](docs/evidence/2026-10-14/release).
 
 **hidebox** is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari
 Council, or the Tari project. "Tari" is a trademark of Tari Labs. Made in Mexico.

@@ -1,0 +1,97 @@
+OK   page 200 https://srv2052606.hstgr.cloud/
+OK   page 200 https://srv2052606.hstgr.cloud/d/3w7m8k2v5t
+OK   page 200 https://srv2052606.hstgr.cloud/drive
+OK   page 200 https://srv2052606.hstgr.cloud/fine-print
+OK   page 200 https://srv2052606.hstgr.cloud/how
+OK   page 200 https://srv2052606.hstgr.cloud/judges
+OK   page 200 https://srv2052606.hstgr.cloud/made
+OK   page 200 https://srv2052606.hstgr.cloud/p/AAAAAAAAAAAAAAAAAAAAAA
+OK   page 200 https://srv2052606.hstgr.cloud/s/AAAAAAAAAAAAAAAAAAAAAA
+OK   page 200 https://srv2052606.hstgr.cloud/send
+OK   page 200 https://srv2052606.hstgr.cloud/status
+OK   page 200 https://srv2052606.hstgr.cloud/verify
+OK   page 200 https://srv2052606.hstgr.cloud/watch
+OK   text 200 /llms.txt
+OK   text 200 /llms-full.txt
+OK   text 200 /.well-known/security.txt
+OK   text 200 /robots.txt
+OK   link 200 https://community.tari.com/  (from /judges)
+OK   link 200 https://community.tari.com/t/402  (from /llms-full.txt, /made, /status)
+OK   link 200 https://github.com/c7b/hidebox  (from /llms-full.txt, /llms.txt)
+OK   link 200 https://github.com/c7b/hidebox/blob/main/docs/api.md  (from /llms.txt)
+OK   link 200 https://github.com/c7b/hidebox/blob/main/docs/self-host.md  (from /llms-full.txt, /made, /status)
+OK   link 200 https://github.com/c7b/hidebox/blob/main/docs/threat-model.md  (from /llms-full.txt, /made, /status)
+OK   link 200 https://github.com/c7b/hidebox/blob/main/server/mutis/payments.py  (from /llms-full.txt, /made, /status)
+OK   link 200 https://github.com/c7b/hidebox/security/advisories/new  (from /.well-known/security.txt, /llms-full.txt, /made, /status)
+OK   link 200 https://github.com/c7b/hidebox/tree/main/docs/evidence  (from /llms-full.txt, /made, /status)
+OK   link 200 https://report.cybertip.org/  (from /fine-print, /llms-full.txt)
+OK   link 200 https://srv2052606.hstgr.cloud  (from /llms-full.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /p/AAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/.well-known/mutis-manifest.json  (from /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/.well-known/security.txt  (from /.well-known/security.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/api/v1/canary/raw  (from /llms-full.txt, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/api/v1/config  (from /llms-full.txt, /llms.txt, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/app/css/app.css  (from /d/3w7m8k2v5t, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/app/css/drive.css  (from /drive, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/app/css/look.css  (from /d/3w7m8k2v5t, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/app/css/parts.css  (from /d/3w7m8k2v5t, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/app/css/widget.css  (from /, /d/3w7m8k2v5t, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/app/drop-widget.js  (from /)
+OK   link 200 https://srv2052606.hstgr.cloud/app/ui/app.js  (from /d/3w7m8k2v5t, /send, /verify, /watch)
+OK   link 200 https://srv2052606.hstgr.cloud/app/ui/drive.js  (from /drive)
+OK   link 200 https://srv2052606.hstgr.cloud/app/ui/view-page.js  (from /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/apple-touch-icon.png  (from /, /fine-print, /how, /judges, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/d/3w7m8k2v5t  (from /.well-known/security.txt, /d/3w7m8k2v5t)
+OK   link 200 https://srv2052606.hstgr.cloud/drive  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /p/AAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/drive?make  (from /, /how)
+OK   link 200 https://srv2052606.hstgr.cloud/drive?open  (from /)
+OK   link 200 https://srv2052606.hstgr.cloud/evidence.json  (from /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/favicon.svg  (from /, /d/3w7m8k2v5t, /drive, /fine-print, /how, /judges, /made,)
+OK   link 200 https://srv2052606.hstgr.cloud/fine-print  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /llms-full.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/fine-print#report  (from /llms.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/how  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /llms-full.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/judges  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /llms.txt, /ma)
+OK   link 200 https://srv2052606.hstgr.cloud/llms-full.txt  (from /llms.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/made  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /llms-full.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/made#disclosure  (from /.well-known/security.txt, /llms.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/manifest.webmanifest  (from /, /fine-print, /how, /judges, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/og-s.png  (from /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/og.png  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /send, )
+OK   link 200 https://srv2052606.hstgr.cloud/p/AAAAAAAAAAAAAAAAAAAAAA  (from /p/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/releases.json  (from /llms.txt, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/s/AAAAAAAAAAAAAAAAAAAAAA  (from /s/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/send  (from /send)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/base.css  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /p/AAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/fonts/geist/Geist-Variable.woff2  (from /drive)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/icons.svg  (from /fine-print, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/theme.js  (from /, /d/3w7m8k2v5t, /drive, /fine-print, /how, /judges, /made,)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/tokens.css  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /p/AAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/ui/components.css  (from /drive, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/ui/icons.svg  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /p/AAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/shared/ui/tokens.css  (from /drive, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAAAAAAAAAAAAAAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/site/css/home.css  (from /)
+OK   link 200 https://srv2052606.hstgr.cloud/site/css/how.css  (from /how)
+OK   link 200 https://srv2052606.hstgr.cloud/site/css/pages.css  (from /fine-print, /how, /judges, /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/site/css/site.css  (from /, /d/3w7m8k2v5t, /fine-print, /how, /judges, /made, /p/AAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/site/js/abuse.js  (from /fine-print)
+OK   link 200 https://srv2052606.hstgr.cloud/site/js/judges.js  (from /judges)
+OK   link 200 https://srv2052606.hstgr.cloud/site/js/made.js  (from /made, /status)
+OK   link 200 https://srv2052606.hstgr.cloud/site/js/site.js  (from /, /d/3w7m8k2v5t, /how, /p/AAAAAAAAAAAAAAAAAAAAAA, /s/AAAAAA)
+OK   link 200 https://srv2052606.hstgr.cloud/sitemap.xml  (from /robots.txt)
+OK   link 200 https://srv2052606.hstgr.cloud/status  (from /status)
+OK   link 200 https://srv2052606.hstgr.cloud/verify  (from /made, /status, /verify)
+OK   link 200 https://srv2052606.hstgr.cloud/watch  (from /watch)
+OK   link 200 https://www.inhope.org/EN  (from /fine-print, /llms-full.txt)
+OK   old page /locker: 301 -> /drive -> 200
+OK   old page /inbox: 301 -> /drive/received -> 200
+OK   old page /upgrade: 301 -> /drive/storage#more -> 200
+OK   old page /terms: 301 -> /fine-print#terms -> 200
+OK   old page /privacy: 301 -> /fine-print#privacy -> 200
+OK   old page /security: 301 -> /made#locks -> 200
+OK   old page /abuse: 301 -> /fine-print#report -> 200
+OK   /es/: 404
+OK   /es/how: 404
+OK   repo https://github.com/c7b/hidebox: 200
+OK   old repo URL: 301 -> https://github.com/c7b/hidebox
+OK   GitHub links on the site use the new URL (7 links)
+crawl: 13 pages, 67 links, 0 failures

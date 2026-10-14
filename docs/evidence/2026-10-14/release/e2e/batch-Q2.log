@@ -1,0 +1,6 @@
+PASS E-09     67.2s  Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it
+PASS E-29     45.5s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+FAIL E-30    626.8s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+           the phone's drive received its sponsor grant (enough for the price and the fee)
+e2e: FAIL {'PASS': 2, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/rel5/e2e-Q2/20261014-073028/report.json
+EXIT 1

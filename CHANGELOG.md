@@ -19,6 +19,12 @@
 - **Film:** `tools/film.py` records §10's two tracks.
 - **Repository:** renamed `c7b/mutis` → `c7b/hidebox` (GitHub redirects the old URL); `repo_url`, the
   README, `SECURITY.md`, the self-host guide and the advisory check follow.
+- **Later fixes in the pass:** Received names each payment's file (it didn't load the drive's index); a folder's
+  menu no longer reads "null" where a file's entries go; Activity orders an hour's events from last to first;
+  `/judges` step 4 quotes "This link has ended.".
+- **Released:** tag `spooky-secrets-2026-10` on `c73c7b4`, live as `c73c7b415ecd…-cbb8c1e8a`; verify-deploy 0
+  differences; E-J and the non-chain batch green on it; E-30 and E-13 wait for the evidence slice's next day.
+  Evidence: `docs/evidence/2026-10-14/release/`.
 <!-- /fifth pass, release -->
 
 <!-- integration, pass 2 -->

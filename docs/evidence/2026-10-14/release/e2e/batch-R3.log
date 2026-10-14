@@ -1,0 +1,3 @@
+PASS E-24     11.6s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/rel5/e2e-R3/20261014-064504/report.json
+EXIT 0

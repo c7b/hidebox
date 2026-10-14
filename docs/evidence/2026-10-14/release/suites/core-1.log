@@ -1,0 +1,27 @@
+== lint
+lint: PASS (0 problems)
+== copy
+WARN docs/review/fix-log.md: check the sense of 'anonymous'
+WARN docs/review/fix-log.md: check the sense of 'anonymous'
+check-copy: PASS (0 problems, 9 to read, (3) skipped: no --config)
+== server
+----------------------------------------------------------------------
+Ran 309 tests in 67.255s
+
+OK (skipped=5)
+== deploy
+
+FAILED (failures=5)
+SealLog: this deployment names no log
+== site
+note home words at 1440: 96 above the fold, 291 in all
+note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; Test file #789: missed (the verifier restarted).
+29 of 29 checks without failures, 135 s
+== run_all
+PASS  sidecar protocol, permissions, G4 (A-12)                5.6s  SIDECAR PASS 18/18
+PASS  18-bit PoW at 6x CPU throttling (A-13)                  4.9s  title: BENCH PASS  (4.2s, 6.0x CPU)
+PASS  in-browser scan, phone emulation at 4x (report)        49.3s  title: BENCH PASS  (48.3s, 4.0x CPU)
+PASS  contract: the library against mutis-api --dev          88.5s  CONTRACT PASS 12/12 (node v20.19.2)
+
+ALL PASS (9 steps)
+EXIT 0

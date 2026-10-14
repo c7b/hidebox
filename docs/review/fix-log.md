@@ -643,3 +643,50 @@ anything changed; the evidence it cites is in `research/design/drive-devil/` (th
 | 17 | low | The upload panel over the overlay; "Drop files…" on a phone; no Share on the phone's share result | **Partly fixed.** | The panel sits under dialogs and their overlay; phones (coarse pointer) read "Tap Upload files." Auto-collapsing the panel and a Share button on the phone's result were not done. |
 | 18 | low | `memo_origins` lists `https://mutis.sh`, an unregistered domain | **Fixed.** | Removed from the server's defaults and the example config, and from production's `/etc/mutis/mutis.toml` at this deploy (backup kept). The dev stack keeps it: the UI fixtures move memos to that short origin and it is never served. Registering it is the owner's call. |
 | 19 | low | "about 7 B"; the scan warning twice on the paid page once open; `/gone` is 404 | **Two fixed, one rejected.** | "1 tiny file." below 1 KB; the warning shows once (the folder panel's). `/gone`: nothing links to it and the old gone page is the viewer's ended state; a 404 there is correct, §12's row is stale. |
+
+### Suites, releases, the tag, the E2E runs and the purge (`docs/evidence/2026-10-14/release/`)
+
+- **Suites** on the server as build on a tarball of HEAD (`suites/`): lint PASS, check-copy PASS, server 309 OK
+  (5 skipped), site 29/29, app `run_all` 9/9, deploy 78 OK after the copy and config tests followed the retired
+  nouns and `memo_origins`. UI 571/578 at first: the seven failures were the dev stack's memo origin (the UI
+  fixtures move memos to `https://mutis.sh`, so the dev stack keeps it) and two test strings (locker → drive);
+  re-run 140/140, then the pay and drive flows again after each later change (102/102, 186/186). A-06 40,442 B
+  (≤ 40,960), A-06d 112,459 B.
+- **Releases** (`deploy/`): `e0e53a5` (the fifth pass and the rename), `e72853e` (payment rows named; the film's
+  captions), `ad319d9` (a folder's menu read "null" where a file's entries go, seen in the film's frames; Received
+  and Activity order), `c73c7b4` (`/judges` step 4 still quoted the old ended-page line). Each: verify-deploy 0
+  differences across 157 files, D-01 PASS, `/status.json` amber only for `budget.sponsor.evidence.90`.
+- **Production config** (copies in `/var/backups/mutis/`): `memo_origins` without `https://mutis.sh`, `repo_url`
+  → `https://github.com/c7b/hidebox` (`…before-fifth-pass`); `e2e_expiry_s = 60` only for E-05's run, removed
+  and mutis-api restarted right after (`…before-e05`). No limit, budget or database was touched.
+- **The tag:** `spooky-secrets-2026-10`, annotated, on `c73c7b415ecdc88bc848a76fc68c91528702be62`, pushed with
+  main. It was first put on `e72853e`, then moved to `ad319d9` and to `c73c7b4` as the two fixes above landed,
+  before anything referred to it (`checks/tag.txt`). The judges' demo receipt (`judge_demo_gone`,
+  `tXoueLYCUlw-ZCgOcRMWAQ`, burned Oct 13) was checkpointed long before (`demo-gone.py check`: ready).
+- **E2E against production** (`e2e/`, batches an hour apart because a network may make 5 new drives an hour):
+  on the tag `c73c7b4`: E-J PASS (track one 9 s, track two 37 s: the folder's menu, Activity's Opened then It left
+  your drive, Received's Payments row live with the folder's name, Test money, Checked and its tx, What the chain
+  sees), the non-chain batch 13/13, E-09, E-10, E-11, E-12, E-29 PASS. On `ad319d9` (code identical to the tag's
+  but for `/judges` copy): E-05 (with the expiry preset), E-08, E-22, E-24, E-26, E-27, E-28, E-31, E-25 PASS.
+  **E-30 FAIL** on the tag: its buyer drive holds a judge pass and waited 600 s for a sponsor grant from the
+  evidence slice, which test runs had spent for the day; it passed in pass 2 and is to run after 00:00 UTC, with
+  E-13 (same slice). E-14 is staging-only.
+- **Film:** `tools/film.py` now records §10's two tracks; rendered against production, checked with ffprobe
+  (1920×1080, 30 fps, 87.97 s, 2.06 MB, no audio) and frame by frame; its frames found the folder-menu bug.
+- **Stranger checks:** an unauthenticated clean clone of `https://github.com/c7b/hidebox` → the tag, verify-deploy
+  0 differences, server 309 OK; a crawl of every live page and link: 0 failures, old pages 301 → 200, `/es/` 404,
+  the old repository URL 301 → the new one.
+- **Purge:** 29 test items and 7 drops by id; 5 canary items kept; the security drop active; 0 active paid
+  links; the judge passes and the owner's and robot's drives untouched. Status amber for budgets only.
+
+### Open items after the fifth pass
+
+1. **E-30 and E-13** after 00:00 UTC (the evidence slice's sponsor budget), then a purge by id.
+2. **Deferred findings:** the no-JS holes on `/judges` and `/made` (finding 14); the upload panel's
+   auto-collapse and a Share button on the phone's share result (17); the row sheet's "In a shared folder" line (9).
+3. **Owner (Tier 3):** accounts and posts per the contest kit; the judge passes; a domain (hidebox.sh/.app/.io);
+   the Hostinger snapshots; the unlabeled drop link; a fresh database before posting (or not); operator's password and
+   the sudoers rule on the server; the old private repository `c7b/mutis-pre-rewrite-private`; real-device runs (iOS
+   Safari, Android Chrome, a screen reader).
+4. **The judges' demo receipt** (`judge_demo_gone`) lasts until about Nov 12 (tombstones, 30 days): re-burn it
+   with `demo-gone.py burn` before then (`deploy/README.md`, go-live step 6).

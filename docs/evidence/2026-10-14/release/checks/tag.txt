@@ -1,0 +1,6 @@
+object c73c7b415ecdc88bc848a76fc68c91528702be62
+type commit
+tag spooky-secrets-2026-10
+tagger Cristobal Alanis <48932757+c7b@users.noreply.github.com> 1791982210 -0600
+
+hidebox for Tari Ootle's Spooky Secrets contest (October 2026): the release deployed at https://srv2052606.hstgr.cloud

@@ -1,0 +1,23 @@
+== ui
+FAIL kept: TimeoutError: waited 180s for !document.querySelector('[data-testid="sealed-link"]') && /only this locker/.test(document.querySelector('.md-kept')?.te
+FAIL safety: too large: the banner offers a free locker
+FAIL deaddrop: TimeoutError: waited 120s for !!document.querySelector('[data-testid="inbox-item"][data-source="drop"]')
+FAIL send: TimeoutError: waited 120s for !!document.querySelector('[data-testid="inbox-item"][data-source="send"]')
+FAIL kind4: TimeoutError: waited 120s for !!document.querySelector('[data-testid="inbox-item"]')
+PASS budget: phone: widget payload compressed: 24918 B at load, 40442 B after a drop (≤ 40 KB), no code encoder
+PASS drive-budget: A-06d: 112459 B compressed until the table renders, 36 files (≤ 131072 B)
+FAIL received-list: TimeoutError: waited 180s for !!document.querySelector('[data-testid="received-row"]')
+FAIL received-folder: TimeoutError: waited 180s for !!document.querySelector('[data-testid="received-row"]')
+UI FAIL 571/578
+  failed: kept: TimeoutError: waited 180s for !document.querySelector('[data-testid="sealed-link"]') && /only this locker/.test(document.querySelector('.md-kept')?.te
+  failed: safety: too large: the banner offers a free locker
+  failed: deaddrop: TimeoutError: waited 120s for !!document.querySelector('[data-testid="inbox-item"][data-source="drop"]')
+  failed: send: TimeoutError: waited 120s for !!document.querySelector('[data-testid="inbox-item"][data-source="send"]')
+  failed: kind4: TimeoutError: waited 120s for !!document.querySelector('[data-testid="inbox-item"]')
+  failed: received-list: TimeoutError: waited 180s for !!document.querySelector('[data-testid="received-row"]')
+  failed: received-folder: TimeoutError: waited 180s for !!document.querySelector('[data-testid="received-row"]')
+
+real	29m24.209s
+user	2m11.032s
+sys	0m49.702s
+EXIT 0
