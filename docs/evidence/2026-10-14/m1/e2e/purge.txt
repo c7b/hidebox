@@ -1,0 +1,45 @@
+== purge 2026-10-14T04:49:52Z (integration pass 1, after the E2E batches on 2510bc6, 8b170ef and e74d529)
+plan (by id, from a read-only diff against the snapshot taken before the first deploy): 30 new items (canary items kept: 4), 7 drops
+item erqe3o_5FxKC-0neTK52ZA: removed
+item CbIy9Aa7_A1jmdBxvb8HSA: removed
+item 4Ht7IE37D0mMLnt9_331qg: removed
+item aer23OS7XkZ6eMBSVMSfqg: removed
+item zOXQ7RYTT6PeV9Ye7jMTqA: removed
+item WnWyf6Jpo14ovq-RdMfrlg: removed
+item H6x3R4b6agJtVDrc_XhgFQ: removed
+item FRMz0YL_83npB6nGGATxZg: removed
+item FoIrDBaTJAPKr-Dw9UiKfg: removed
+item QqZMAIwbsYkgZkGt8I3dBQ: removed
+item ZaxF4amzK52tbrOeJvMeFg: removed
+item XMXNXMDbEqLC39kqdsdpMA: removed
+item e-oWwip1pGu15SdBHzCaeQ: removed
+item mvXDQzq44FrTDnVZZLuKug: removed
+item rhV_7-vse0Sbomr9ZN5kog: removed
+item Pugn-IRE6whj7hIp7N1qSw: removed
+item xhUWURBP2GJZ4hH2IVSkTw: removed
+item yTI6JysHdWY2Vyobjwcq1w: removed
+item qYk9bDknoq6lYAD_B1SNiA: removed
+item Cc5wPnZlvdmwgJeDsMNiNw: removed
+item UfDyJ_y4hpNPfmRIDVizNw: removed
+item 2GE4HYWZhvJxpoZmXG0jzg: removed
+item 5KT-SMr0ZeMhKJDQehHbuQ: removed
+item E6_AgwsUP3-lspzaduJGNA: removed
+item 605pNR6lYudCoCMz27Wc7Q: removed
+item uTAssAEFFueAuyY42-LGEg: removed
+item 2hlVsFZdrE-iSfBS8IJWCw: removed
+item 0NeIQbS16oA8p3-rtYSu8g: removed
+item q4MXcreqVhYC0sjMKousDw: removed
+item sCniGVCNwpSU8tcRs16-WA: removed
+drop 4bnf6n0tpx: removed
+drop 2jch3wq1ah: removed
+drop wjxb9mjbpd: removed
+drop b8vxha0xak: removed
+drop 4gvqr40zwp: removed
+drop w52akbvj81: removed
+drop fs6cs5m2hd: removed
+== post-purge 2026-10-14T04:50:25Z
+judge passes 26
+security drop 3w7m8k2v5t active
+the owner and robot lockers and every identity older than the snapshot untouched (no identity is removed by the purge; the 27 new test identities are empty now); the 4 canary items of the window kept
+/api/v1/config e2e_expiry_s: absent; judge_demo_gone: tXoueLYCUlw-ZCgOcRMWAQ; features.folders: true; features.pay_to_open: false
+judge passes: 20 before, 26 after (E-13 and E-J make one-use and three-use passes in direct mode; mutis-admin has no revoke, they lapse on their own)

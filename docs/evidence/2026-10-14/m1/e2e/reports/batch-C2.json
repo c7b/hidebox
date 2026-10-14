@@ -1,0 +1,75 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-11",
+   "title": "Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 21.5,
+   "notes": [
+    "ok: Delivered",
+    "ok: the output's memo, read with the view key alone, is a /t#4 link",
+    "ok: a browser without a locker is asked for a key",
+    "ok: the view key alone unlocks the link (got ready)",
+    "ok: the view key alone opens a kind-4 file",
+    "ok: it is the text that was sent",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-13",
+   "title": "Pack purchase on chain: Waiting \u2192 Seen \u2192 Amount proven \u2192 Added; quota +2 GiB",
+   "status": "FAIL",
+   "detail": "direct mode: the browser wallet received its sponsor grant",
+   "seconds": 611.3,
+   "notes": []
+  },
+  {
+   "id": "E-25",
+   "title": "Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 62.0,
+   "notes": [
+    "ok: within 15 minutes the delivery is in the mirror and opens with the robot keys",
+    "ok: /api/v1/canary shows the delivery",
+    "ok: /evidence.json lists the delivery"
+   ]
+  },
+  {
+   "id": "E-J",
+   "title": "The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed",
+   "status": "FAIL",
+   "detail": "direct mode: the computer's browser wallet received its sponsor grant",
+   "seconds": 662.5,
+   "notes": [
+    "ok: 1: Make my drive: the drive opens, its key made in this browser",
+    "1: 1 s",
+    "2: 1 s",
+    "ok: 3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan",
+    "3: 2 s",
+    "ok: 4: the phone taps Open it and has the file",
+    "ok: 4: the phone reloads: \u201cIt's gone.\u201d",
+    "4: 3 s",
+    "ok: 5: Activity: opened, then it left your drive (It left your drive \u00b7 minutes.txtThat goes on the Tari chain within 15 minutes.Oc)",
+    "5: 1 s",
+    "ok: 6: What our server knows: what it keeps, and what it never stores",
+    "6: 0 s",
+    "ok: B1: My Tari address, Settings: the drive's address, its safety code and a code to scan",
+    "B1: 2 s",
+    "ok: B2: the send step has the scanned address and its safety code",
+    "ok: B2: it goes by Tari",
+    "ok: B2: the send has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "B2: 35 s",
+    "ok: Received lists a delivery from send, ready to open",
+    "ok: the row keeps the inbox-item id",
+    "ok: B3: Received: the computer opens what the phone sent",
+    "B3: 6 s",
+    "cold start: the sponsor grant was spendable 649 s after the drive opened"
+   ]
+  }
+ ]
+}

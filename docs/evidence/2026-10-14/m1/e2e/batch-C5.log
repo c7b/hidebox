@@ -1,0 +1,2 @@
+PASS E-13     29.4s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/integ/e2e-C5/20261013-224900/report.json

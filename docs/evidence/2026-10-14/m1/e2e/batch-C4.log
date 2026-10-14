@@ -1,0 +1,2 @@
+PASS E-J      87.1s  The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/integ/e2e-C4/20261013-220424/report.json
