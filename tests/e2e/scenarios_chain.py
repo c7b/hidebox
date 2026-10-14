@@ -225,12 +225,12 @@ def e13(t: T) -> None:
     a.goto(t.origin + "/drive/storage#more")
     a.wait_for("storage-meter", 60)
     before = int(a.attr("storage-meter", "data-limit") or 0)
+    a.click("pack-s30")                   # the pack's dialog asks for today's sponsor grant in direct mode
+    a.wait_for("invoice-address", 60)
     if direct:
         price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
         t.check(poll(lambda: wallet_ut(a) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10),
                 "direct mode: the browser wallet received its sponsor grant")
-    a.click("pack-s30")
-    a.wait_for("invoice-address", 60)
     a.click("pay-browser" if direct else "demo-pay")
     t.check(a.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 420),
             "the invoice is credited")
@@ -349,6 +349,8 @@ def ej(t: T) -> None:
     flows.lock_text(phone, "E2E E-J sent to the computer")
     phone.wait(f"document.querySelector('[data-testid=\"send-recipient\"]')?.value === {json.dumps(address)} && !!document.querySelector('[data-testid=\"send-safety\"]')", 180)
     t.check(safety_emoji(phone, "send-safety") == safety, "B2: the send step has the scanned address and its safety code")
+    if direct:
+        phone.wait("['direct', 'relay'].includes(document.querySelector('[data-testid=\"send-path\"]')?.dataset.path)", 240)
     phone.click("send-submit")
     t.check(phone.wait_state("send-status", ("delivered", "failed"), 420) == "delivered", "B2: it goes by Tari")
     tx = phone.attr("send-tx", "data-tx")
@@ -361,14 +363,14 @@ def ej(t: T) -> None:
     done("B3")
     desk.goto(t.origin + "/drive/storage#more")
     desk.wait_for("storage-meter", 60)
+    desk.click("pack-s30")
+    desk.wait_for("invoice-address", 60)
     if direct:
         price = next(int(p["price_ut"]) for p in cfg["pricing"]["packs"] if p["id"] == "s30")
         funded = poll(lambda: wallet_ut(desk) >= price + int(cfg["courier"]["max_fee_ut"]), 600, 10)
         cold = time.monotonic() - opened
         t.note(f"cold start: the sponsor grant was spendable {cold:.0f} s after the drive opened")
         t.check(funded, "direct mode: the computer's browser wallet received its sponsor grant")
-    desk.click("pack-s30")
-    desk.wait_for("invoice-address", 60)
     desk.click("pay-browser" if direct else "demo-pay")
     t.check(desk.wait("document.querySelector('[data-testid=\"invoice-status\"]')?.dataset.status === 'credited'", 300),
             "B4: Get more space: checked on the chain, then added")
