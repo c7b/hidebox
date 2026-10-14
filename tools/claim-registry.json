@@ -201,6 +201,214 @@
     "Scan it to open it on a phone. That uses its one look.",
     "Scan it to open it on a phone. That uses its one open."
    ]
+  },
+  {
+   "id": "C32",
+   "condition": "always",
+   "backed_by": "spec §4.4, §4.14 (16-drive-design §9.3)",
+   "markers": [
+    "lock in this browser before"
+   ],
+   "sentences": [
+    "Files lock in this browser before upload.",
+    "They lock in this browser before they upload."
+   ]
+  },
+  {
+   "id": "C33",
+   "condition": "pay to open (features.pay_to_open)",
+   "backed_by": "annex §1.5, §1.10 (16-drive-design §9.3)",
+   "markers": [
+    "never hold the money",
+    "we never hold it",
+    "pays the owner for you"
+   ],
+   "sentences": [
+    "You pay the owner's Tari address directly. We never hold the money.",
+    "The money goes straight to your Tari address. We never hold it.",
+    "Our demo wallet pays the owner for you, with test money."
+   ]
+  },
+  {
+   "id": "C34",
+   "condition": "paid links; sB lives in backups for {db_backup_days} days",
+   "backed_by": "annex §1.3 (16-drive-design §9.3)",
+   "markers": [
+    "half of the key",
+    "neither half",
+    "could open it too"
+   ],
+   "sentences": [
+    "We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.",
+    "If the link leaks, our server could open it too."
+   ]
+  },
+  {
+   "id": "C35",
+   "condition": "sellers, shown the first time they sell",
+   "backed_by": "annex §1.5 PUT /me/sales (16-drive-design §9.3)",
+   "markers": [
+    "sales view key"
+   ],
+   "sentences": [
+    "To see who paid you, we keep your sales view key. It is sealed, so a copy of our database can't read it. Our payment checker on our server can. A view key can see payments, never spend them.",
+    "For pay links: each payment's amount and hour, read with your sealed sales view key"
+   ]
+  },
+  {
+   "id": "C36",
+   "condition": "every way to pay",
+   "backed_by": "annex §1.10, C9 (16-drive-design §9.3)",
+   "markers": [
+    "hidden amount and a hidden owner",
+    "grouped with our other payments",
+    "hides the amount and who got it"
+   ],
+   "sentences": [
+    "The chain shows a payment with a hidden amount and a hidden owner. The fee is public.",
+    "Test money comes from our demo wallet, so it can be grouped with our other payments.",
+    "Pay to open: they pay your Tari address, then it opens. The chain hides the amount and who got it. The fee is public."
+   ]
+  },
+  {
+   "id": "C37",
+   "condition": "pay page, before Pay",
+   "backed_by": "annex §1.8 (16-drive-design §9.3)",
+   "markers": [
+    "can't be taken back"
+   ],
+   "sentences": [
+    "Payments can't be taken back, by us or by Tari. Pay only if what you see here is enough."
+   ]
+  },
+  {
+   "id": "C38",
+   "condition": "non-test payments, only if the gated release ships",
+   "backed_by": "annex §1.1, §1.9 (16-drive-design §9.3)",
+   "markers": [
+    "owner's drive checks",
+    "theirs to spend"
+   ],
+   "sentences": [
+    "Paid from your own wallet? It opens after the owner's drive checks it.",
+    "We check the amount and that the payment is on the chain. Only the owner's drive can check the money is theirs to spend."
+   ]
+  },
+  {
+   "id": "C39",
+   "condition": "pay page",
+   "backed_by": "annex §1.5 (16-drive-design §9.3)",
+   "markers": [
+    "can pass it on"
+   ],
+   "sentences": [
+    "Paying lets you open it {buyer_views} times until {date}. Anyone who opens a file can pass it on. The owner can still delete it."
+   ]
+  },
+  {
+   "id": "C40",
+   "condition": "always (activity)",
+   "backed_by": "annex §3.2 (16-drive-design §9.3)",
+   "markers": [
+    "opens per hour",
+    "who opened it or their ip"
+   ],
+   "sentences": [
+    "We count opens per hour. We never store who opened it or their IP address."
+   ]
+  },
+  {
+   "id": "C41",
+   "condition": "folders",
+   "backed_by": "annex §2.1 (16-drive-design §9.3)",
+   "markers": [
+    "how deep it goes",
+    "sit beside it"
+   ],
+   "sentences": [
+    "Our server sees which files share a folder, how deep it goes and how many files are in it. Never a name.",
+    "Which folder it is in, and how many files sit beside it"
+   ]
+  },
+  {
+   "id": "C42",
+   "condition": "only for files that leave; never for a link ending on a kept file",
+   "backed_by": "items.unlink (exit leaf), spec §4.13 (16-drive-design §9.3)",
+   "markers": [
+    "write that on the tari chain",
+    "wrote that on the tari chain",
+    "goes on the tari chain within"
+   ],
+   "sentences": [
+    "When a file leaves your drive, we write that on the Tari chain, for anyone to check.",
+    "It left your drive. We wrote that on the Tari chain.",
+    "That goes on the Tari chain within {checkpoint_min} minutes.",
+    "After that, it leaves your drive. We write that on the Tari chain.",
+    "The file left our server. We wrote that on the Tari chain.",
+    "We write that on the Tari chain.",
+    "We wrote that on the Tari chain.",
+    "That goes on the Tari chain within {checkpoint}."
+   ]
+  },
+  {
+   "id": "C43",
+   "condition": "always",
+   "backed_by": "spec §4.5 (16-drive-design §9.3)",
+   "markers": [
+    "search runs in this browser"
+   ],
+   "sentences": [
+    "Search runs in this browser. Our server can't read your file names."
+   ]
+  },
+  {
+   "id": "C44",
+   "condition": "always (child of C3 with C40, C41)",
+   "backed_by": "spec §1.4; annex §5.3 (16-drive-design §9.3)",
+   "markers": [
+    "so the real size stays hidden",
+    "what it never stores"
+   ],
+   "sentences": [
+    "A padded size, so the real size stays hidden",
+    "What it never stores: the name, the type, what's inside, the key, who opened it, or their IP address.",
+    "What it never stores"
+   ]
+  },
+  {
+   "id": "C45",
+   "condition": "always (open = sign in, last_seen_day)",
+   "backed_by": "cleanup.py (16-drive-design §9.3)",
+   "markers": [
+    "don't open your drive for"
+   ],
+   "sentences": [
+    "If you don't open your drive for {inactive_days} days, we delete what's in it."
+   ]
+  },
+  {
+   "id": "C46",
+   "condition": "packs; trash first after step 4",
+   "backed_by": "cleanup.daily, annex §4.4 (16-drive-design §9.3)",
+   "markers": [
+    "when extra space ends"
+   ],
+   "sentences": [
+    "When extra space ends, nothing goes for {lapse_grace_days} days. Then files in the trash go first, then the oldest, until you fit."
+   ]
+  },
+  {
+   "id": "C47",
+   "condition": "trash (server state, annex §2.4)",
+   "backed_by": "annex §2.4, §4.2 (16-drive-design §9.3)",
+   "markers": [
+    "trash still use space",
+    "bring it back for"
+   ],
+   "sentences": [
+    "Files in the trash still use space. We empty it after {trash_days} days. Links add no space.",
+    "Its links stop working now. You can bring it back for {trash_days} days."
+   ]
   }
  ],
  "labels": [

@@ -49,6 +49,8 @@ BANNED = [
     r"zero third-party runtime dependencies", r"protects you from a malicious", r"instead of through us",
     r"gone forever", r"deleted forever", r"provably deleted", r"vanished", r"sealed files?",
     r"not promises",
+    # retired with the drive (16-drive-design §9.2): false once we hold a sales view key, or for kept files
+    r"buyers pay sellers directly", r"when a link ends, we write",
 ]
 WATCH = [r"simply", r"just", r"anonymous(ly)?"]
 BANNED_RX = re.compile(r"(?<![\w-])(" + "|".join(BANNED) + r")(?![\w-])", re.I)
