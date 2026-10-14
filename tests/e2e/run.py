@@ -27,6 +27,7 @@ import cdp  # noqa: E402
 import harness  # noqa: E402
 import scenarios  # noqa: E402,F401  (registers scenarios)
 import scenarios_chain  # noqa: E402,F401
+import scenarios_drive  # noqa: E402,F401
 import test_headers  # noqa: E402
 import test_privileges  # noqa: E402
 from harness import CHAIN, REGISTRY, STAGING, Env, Failed, Remote, Skipped, T, scenario  # noqa: E402
