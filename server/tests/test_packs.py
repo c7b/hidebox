@@ -146,6 +146,11 @@ class OnePackPerDrive(Base):
         old = self.s.conn.execute("SELECT status FROM invoices WHERE id = ?", (first["invoice_id"],)).fetchone()[0]
         self.assertEqual(old, "expired")
         self.assertEqual(packs.sold_today(self.s.conn, self.s.now, False), 1)
+        self.s.disk = Disk(total=100 * GiB, avail=14 * GiB)      # a refused swap keeps the invoice it would replace
+        self.s.app.statvfs = self.s.disk
+        status, code, _ = self.buy("s30", drive, ip=NET)
+        self.assertEqual((status, code), (409, "sold_out"))
+        self.assertEqual(self.buy("m30", drive, ip=NET)[:2], (200, swapped))
 
 
 class Brakes(Base):
