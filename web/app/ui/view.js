@@ -177,6 +177,12 @@ export function viewer(root, opts) {
       }
     }
     if (opts.autoOpen) return open();
+    // lane app2: a folder link shows the drive's look and its visit (ui/folder-view.js).
+    if (info.item?.kind === 'folder') {
+      const fv = await import('./folder-view.js');
+      await fv.driveLook();
+      return fv.folderReady(root, { cfg, info, onOpen: open });
+    }
     const { share } = info;
     const left = share.views_left;
     const once = left === 1 && share.max_views === 1;
@@ -196,14 +202,31 @@ export function viewer(root, opts) {
 
   async function open() {
     const progress = h('span', { class: 'a-opening' }, t('viewer.opening', { n: 0 }));
-    set('opening', sceneOf('busy', t('viewer.opening_h'), progress).head);
+    if (root.dataset.kind === 'folder') {
+      root.dataset.state = 'opening';
+      root.replaceChildren(h('p', { class: 'row muted working', role: 'status' }, t('viewer.opening_h')));
+    } else {
+      set('opening', sceneOf('busy', t('viewer.opening_h'), progress).head);
+    }
     const onProgress = (f) => { progress.textContent = t('viewer.opening', { n: Math.floor(f * 100) }); };
     let opened;
     let parts;
     try {
       opened = await openItem(shareId, access, {});
+      if (opened.kind === 'folder') {
+        const fv = await import('./folder-view.js');
+        await fv.driveLook();
+        if (opts.clearKey) clearFragment();
+        fv.folderOpened(root, opened, { cfg });
+        return;
+      }
       parts = await fetchContent(opened, { onProgress });
     } catch (e) {
+      // lane app2: a folder that didn't open goes back to the link page's own look and states.
+      if (root.dataset.kind === 'folder') {
+        (await import('./folder-view.js')).ghostLook();
+        delete root.dataset.kind;
+      }
       if (opened && !(e?.name === 'IntegrityError')) return set('error', [sceneOf('oops', t('viewer.fetch_error_h')).head,
         errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: () => retryFetch(opened) } })]);
       return fail(e);

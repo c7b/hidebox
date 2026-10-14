@@ -231,6 +231,7 @@ def main():
     args = ap.parse_args()
     import flows  # noqa: E402 (after sys.path)
     import flows_drive  # noqa: E402,F401 (lane app1: the drive's flows register themselves)
+    import flows_share  # noqa: E402,F401 (lane app2: the share dialog, the folder viewer and Received)
 
     r = Results()
     static_checks(r)
