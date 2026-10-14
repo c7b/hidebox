@@ -59,11 +59,15 @@ viewer, is the product code unchanged.
 | `ui/known.js` | "What we know about this link", the glass box |
 | `ui/locker.js`, `keyflow.js`, `locker-ctx.js` | `/locker` (first screen: its three things by name; a drop link asks nothing first), the key (save, restore one tap away, the one-time prompt with Later), opening a locker only when something needs it |
 | `ui/droppage.js`, `inbox.js`, `send.js`, `watch.js`, `upgrade.js`, `verify.js` | the other app pages |
+| `drive.html`, `ui/drive.js` | the drive (lane app1, 16-drive-design §2): `/drive`, `/drive/folders/<id>`, `/drive/shared`, `/drive/activity`, `/drive/trash`, `/drive/storage`, `/drive/received`, one page that moves between them; `?make` makes a drive at once, `?open` opens the key dialog |
+| `ui/behaviors.js`, `css/drive.css`, `/shared/ui/` | the shadcn/ui new-york port (DESIGN.md): Radix behaviour in plain DOM (dialogs, sheets, menus, select, tabs, tooltips, toasts, switches), the tokens, components and Lucide sprite, the drive's compositions; Geist in `/shared/fonts/geist`, pinned in `tools/build.py` |
+| `ui/drive-shell.js`, `drive-parts.js`, `drive-start.js`, `drive-list.js`, `drive-menu.js`, `drive-upload.js`, `drive-storage.js`, `drive-account.js`, `activity.js`, `drive-known.js`, `drive-received.js` | the shell; rule badges and frames; Make or Open my drive; My drive, folders, Shared, Trash; Move, Rename, Delete it after…, trash; uploads (files, the folder picker, dropped folders); Storage and Get more space; Settings and the key; Activity; What our server knows; Received (interim) |
+| `lib/drive.js`, `folder.js`, `entries.js`, `api-drive.js` | the drive's index opened with the vault key, rules from links; folders as a key tree (`childWrapKey`); the folder walkers; the folder API |
 | `ui/core.js`, `marks.js`, `errors.js`, `shell.js`, `more.js` | shared pieces: icons, durations, toasts; amounts, addresses, safety codes; every error code's copy; page start-up; loading the rest of the strings and styles |
 | `css/widget.css`, `css/parts.css`, `css/app.css` | what a first drop needs; the components beyond it; app pages. Shared tokens only; `md-` for the widget, `a-` for app pages and shared components |
 | `i18n/en.json` | the copy deck (11-brand §8–§14 with 12-integration's terms); every number is a `{variable}` from `/config` or computed |
 | `i18n/widget-en.json`, `subset.py` | the strings a first drop needs, generated from the full dictionary |
-| `ui/tests/` | `run.py` (the command above), `flows.py`, `cdp.py` (DevTools over a pipe), `realize.py`, `devserver.py` (the dev server in another payment mode) |
+| `ui/tests/` | `run.py` (the command above), `flows.py`, `flows_drive.py` (the drive), `cdp.py` (DevTools over a pipe), `realize.py`, `devserver.py` (the dev server in another payment mode), `drivefake.py` (the server lane's folder API in front of the dev server until it has `features.folders`) |
 | `shots/` | curated screenshots (WebP) from `run.py --shots`; test evidence, not served (NOTES-ui.md asks deploy to skip it) |
 | `ACCEPTANCE.md`, `NOTES-ui.md` | acceptance evidence; requests to other builders and decisions |
 

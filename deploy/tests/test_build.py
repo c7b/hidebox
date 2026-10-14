@@ -70,6 +70,23 @@ class BuildTest(unittest.TestCase):
         state = build.source_state(SOURCE)
         return build.build(self.web, self.tmp / "dist", self.tmp / "release", cfg, VALUES, state, holding=holding)
 
+    def test_the_drive_font_is_pinned(self):
+        """Lane app1: a tree with the drive serves Geist, the pinned bytes only (a font can't carry SRI)."""
+        (self.web / "app" / "drive.html").write_text(PAGE)
+        with self.assertRaisesRegex(build.BuildError, "font file missing"):
+            self.build()
+        fonts = self.web / "shared" / "fonts" / "geist"
+        fonts.mkdir(parents=True)
+        shutil.copyfile(ROOT / "web" / "shared" / "fonts" / "geist" / "OFL.txt", fonts / "OFL.txt")
+        data = bytearray((ROOT / "web" / "shared" / "fonts" / "geist" / "Geist-Variable.woff2").read_bytes())
+        (fonts / "Geist-Variable.woff2").write_bytes(data)
+        self.build()
+        self.assertEqual((self.tmp / "dist" / "shared" / "fonts" / "geist" / "Geist-Variable.woff2").read_bytes(), data)
+        data[100] ^= 1
+        (fonts / "Geist-Variable.woff2").write_bytes(data)
+        with self.assertRaisesRegex(build.BuildError, "font hash mismatch"):
+            self.build()
+
     def test_layout_includes_placeholders(self):
         self.build()
         dist = self.tmp / "dist"

@@ -118,6 +118,8 @@ http://{$MUTIS_HOST} {
 	@api path /api/*
 	@viewer path /s/* /t
 	@approute path /d/* /locker /locker/* /inbox /inbox/* /send /send/* /watch /watch/* /upgrade /upgrade/* /verify /verify/*
+	# lane app1: the drive (16-drive-design §12) has its own page
+	@drive path /drive /drive/*
 	@appfiles path /app/* /vendor/*
 	@status path /evidence.json /evidence-archive-*.json /status.json /releases.json
 	@fonts path /shared/fonts/*
@@ -174,6 +176,15 @@ http://{$MUTIS_HOST} {
 		import revalidate
 		header X-Robots-Tag "noindex, nofollow"
 		rewrite * /app/app.html
+		file_server
+	}
+
+	# lane app1: the drive
+	handle @drive {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/drive.html
 		file_server
 	}
 

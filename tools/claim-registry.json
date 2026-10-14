@@ -200,7 +200,8 @@
  "labels": [
   "See the goodbye",
   "See one we already wrote",
-  "The goodbye record"
+  "The goodbye record",
+  "Pay with test money"
  ],
  "public_key": "A sentence about what we store may name public keys only to say we store none (C29)."
 }
