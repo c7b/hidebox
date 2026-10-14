@@ -5,7 +5,7 @@ import secrets
 
 from .. import cleanup, codec, db, items, quota
 from ..http_util import ApiError, Response, get_b64, json_response
-from .shares import _egress_ok, opens_by_hour, share_json
+from .shares import _egress_ok, is_paid, opens_by_hour, paid_summary, share_json
 from .system import limits_block
 
 BUNDLE_MAX = 4096
@@ -94,7 +94,15 @@ def item_entry(conn, row, now: int) -> dict:
             "parent_id": row["parent_id"],
             "parent_wrap": codec.b64u(row["parent_wrap"]) if row["parent_wrap"] else None,
             "trashed_at": row["trashed_at"],
-            "shares": [{**share_json(s, now), "opens": opens_by_hour(conn, s["id"], since)} for s in shares]}
+            "shares": [_share_entry(conn, s, now, since) for s in shares]}
+
+
+def _share_entry(conn, share, now: int, since: int) -> dict:
+    """A link as its item's row shows it; a paid link adds its summary (the row badge "{k} paid")."""
+    out = {**share_json(share, now), "opens": opens_by_hour(conn, share["id"], since)}
+    if is_paid(conn, share["id"]):
+        out["paid"] = paid_summary(conn, share["id"])
+    return out
 
 
 def gone_entry(row) -> dict:

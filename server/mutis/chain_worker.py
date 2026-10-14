@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, payments, quota, seallog
+from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, payments, quota, sales, seallog
 from .indexer import IndexerError, Indexers
 from .sidecar import TRANSPORT_ERRORS, Sidecar, SidecarError
 from .walletd import Walletd, WalletdError
@@ -83,6 +83,8 @@ class Worker:
         self.receiver_base: str | None = None
         self.receiver: dict | None = None
         self.robot: dict | None = None
+        # Sellers' sales view keys (pay to open), opened from their sealed copies; only ever in this memory.
+        self.watch_keys: dict[str, str] = {}
         self.alive_at = time.monotonic()
 
     # --- scheduling helpers -----------------------------------------------------------------------
@@ -180,6 +182,7 @@ class Worker:
             self._step(self.mirror, now)
         if self._due("payments", PAYMENTS_EVERY_S, now):
             self._step(self.verify_payments, now)
+            self._step(self.verify_sales, now)
         if self.receiver_base is not None:
             self._step(self.run_jobs, now)
         features = self._features()
@@ -310,6 +313,50 @@ class Worker:
             return None
         return codec.equal(bytes.fromhex(key), bytes.fromhex(auth_key))
 
+    # --- pay to open (16-drive-architecture §1.6) -----------------------------------------------------
+
+    def verify_sales(self, now: int) -> None:
+        """Open new sellers' sealed view keys, scan each seller with a claim waiting for money from that
+        claim's mirror position, and count what an indexer commits (sales.py)."""
+        if self.receiver is None or not self._features()["pay_to_open"]:
+            return                        # sidecar mode only: amounts are proven by unblindOutput
+        for seller in sales.sellers_to_open(self.conn):
+            self._watch_key(seller)
+        for seller in sales.sellers_to_scan(self.conn, now):
+            view_sk = self.watch_keys.get(seller["identity_id"]) or self._watch_key(seller)
+            if view_sk is None:
+                continue
+            start = sales.scan_start(seller)
+            rows = self.conn.execute("SELECT seq, id, nonce, enc FROM chain_utxos WHERE seq > ? ORDER BY seq LIMIT ?",
+                                     (start, sales.SCAN_ROWS)).fetchall()
+            found = self._scan(view_sk, rows) if rows else []
+            sales.record_sales(self.conn, seller["identity_id"], found, rows[-1]["seq"] if rows else start, now,
+                               self.epoch())
+        sales.check_pending(self.conn, self.indexers, self.failures, now)
+
+    def _watch_key(self, seller: sqlite3.Row) -> str | None:
+        """A seller's sales view key, from the blob sealed to our receiver (`openWatchKey`: kind 3, flag 0x08,
+        the address's reference, and the key matching the address's view key). `bad_key` when it doesn't."""
+        try:
+            reply = self.sidecar.request("openWatchKey", blob=seller["view_sealed"].hex(),
+                                         owner_sk=self.receiver["owner_sk"], view_sk=self.receiver["view_sk"],
+                                         address=seller["address"])
+            view_sk = reply.get("view_sk")
+            ok = isinstance(view_sk, str) and len(view_sk) == 64
+        except SidecarError as e:
+            if e.code in TRANSPORT_ERRORS:
+                raise                     # the step stops; the seller waits for a working sidecar
+            ok = False
+        if not ok:
+            self.watch_keys.pop(seller["identity_id"], None)
+            sales.set_seller_state(self.conn, seller["identity_id"], seller["view_sealed"], "bad_key")
+            logsafe.event("chain.seller_bad_key", "warning")
+            return None
+        self.watch_keys[seller["identity_id"]] = view_sk
+        if seller["state"] != "ok":
+            sales.set_seller_state(self.conn, seller["identity_id"], seller["view_sealed"], "ok")
+        return view_sk
+
     def reconcile(self, now: int) -> None:
         if self.mode == "wallet":
             balance = self.walletd.stealth_balance_ut(self.cfg["ootle"]["service_account"])
@@ -332,7 +379,11 @@ class Worker:
 
     def _payload(self, job: sqlite3.Row) -> dict:
         payload = jobs.validate(job["kind"], json.loads(job["payload"] or "null"), list(self.cfg["memo_origins"]))
-        if job["kind"] == "demo_pay" and ootle_addr.base_address(payload["address"]) != self.receiver_base:
+        if job["kind"] == "demo_pay" and payload["ref"].startswith("clm_"):
+            # Pay to open: test money to a seller's claim address, re-checked here (sales.demo_payload_ok).
+            if not sales.demo_payload_ok(self.conn, payload, self.clock()):
+                raise jobs.PayloadError()
+        elif job["kind"] == "demo_pay" and ootle_addr.base_address(payload["address"]) != self.receiver_base:
             raise jobs.PayloadError()
         return payload
 
@@ -378,6 +429,10 @@ class Worker:
             if now - job["updated_at"] >= SEND_TIMEOUT_S:
                 self._failed(job, "timeout", now, retry=False)
         elif outcome["committed"]:
+            if job["kind"] == "demo_pay" and job["payload"]:
+                payload = json.loads(job["payload"])
+                if str(payload.get("ref", "")).startswith("clm_"):
+                    sales.mark_demo(self.conn, payload["ref"], int(payload["amount_ut"]))
             result = {"tx_id": tx_id}
             if job["evidence"]:
                 result["utxo_ids"] = outcome["utxo_ids"]

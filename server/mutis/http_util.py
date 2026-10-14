@@ -16,6 +16,7 @@ PARAM_RE = {
     "id": re.compile(r"^[A-Za-z0-9_-]{22}$"),
     "drop": re.compile(r"^[0-9a-hjkmnp-tv-z]{10}$"),
     "invoice": re.compile(r"^inv_[a-z2-7]{20}$"),
+    "claim": re.compile(r"^clm_[a-z2-7]{20}$"),
     "report": re.compile(r"^rep_[a-z2-7]{16}$"),
     "index": re.compile(r"^\d{1,6}$"),
     "substate": re.compile(r"^(utxo|component|template|resource|vault)_[0-9a-f_]{20,200}$"),

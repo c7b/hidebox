@@ -16,7 +16,7 @@ rule, and the sender's ciphertext still leaves.
 import json
 import secrets
 
-from .. import codec, db, items, lanes, quota, tree
+from .. import codec, db, items, lanes, quota, sales, tree
 from ..http_util import ApiError, Response, get_b64, get_bool, get_enum, get_int, invalid, json_response
 from .blobs import ranged
 
@@ -29,6 +29,7 @@ PWONLY_GLOBAL_HARD = 100      # password only: daily failures across everyone be
 PWONLY_HARD_BITS = 20
 EGRESS_PER_ITEM_DAY = items.EGRESS_PER_ITEM_DAY
 UNLIMITED_OPENS_PER_HOUR = 60
+TEASER_MAX = 2076             # iv ‖ AES-GCM(teaserKey, JSON padded to 256-byte steps): the pay page's preview
 KDF_MIN_ITER, KDF_MAX_ITER = 600_000, 5_000_000
 NOT_KNOWN = ["file_name", "file_type", "file_content", "link_key", "password", "ip_address_on_disk"]
 
@@ -161,10 +162,37 @@ def authorized_share(ctx, share_id: str, body: dict):
         if state != "active":
             error = gone(share, state, ctx.now)
         else:
-            error = check_secrets(ctx, conn, share)
+            error = paid_claim(ctx, conn, share)[0] or check_secrets(ctx, conn, share)
     if error:
         raise error
     return share, conn.execute("SELECT * FROM items WHERE id = ?", (share["item_id"],)).fetchone()
+
+
+def is_paid(conn, share_id: str) -> bool:
+    return conn.execute("SELECT 1 FROM paid_shares WHERE share_id = ?", (share_id,)).fetchone() is not None
+
+
+def paid_claim(ctx, conn, share) -> tuple[ApiError | None, str | None]:
+    """Pay to open's gate (16-drive-architecture §1.5): a paid link opens, peeks and serves its bytes only
+    with a released claim of this link (`X-Mutis-Claim`) that has opens left in its window. Checked before
+    the link's own key, so a link without a payment reads 402 rather than a key error. Returns (error, the
+    claim id to spend an open from); (None, None) for a link that isn't paid."""
+    if not is_paid(conn, share["id"]):
+        return None, None
+    token = _header_b64(ctx, "X-Mutis-Claim", 32)
+    if token is None:
+        return ApiError(402, "payment_required", "Pay to open this."), None
+    claim = conn.execute("SELECT * FROM claims WHERE share_id = ? AND token_hash = ?",
+                         (share["id"], codec.sha256(token) if token else b"")).fetchone()
+    if claim is None:
+        return ApiError(403, "bad_claim", "This payment belongs to another link or browser."), None
+    why = sales.usable(claim, ctx.now)
+    if why == "payment_required":
+        return ApiError(402, "payment_required", "This opens once your payment is on the chain."), None
+    if why is not None:
+        return ApiError(410, "claim_used", "Your payment's opens are used up." if why == "no_opens_left"
+                        else "Your payment's time to open this is over.", details={"reason": why}), None
+    return None, claim["id"]
 
 
 # --- JSON shapes ---------------------------------------------------------------------------------
@@ -200,8 +228,8 @@ def opens_by_hour(conn, share_id: str, since: int | None = None) -> list[list[in
     return [[r["hour"], r["n"]] for r in rows]
 
 
-def created_json(share) -> dict:
-    return {"share_id": share["id"], "path": f"/s/{share['id']}", "state": share["state"],
+def created_json(share, paid: bool = False) -> dict:
+    return {"share_id": share["id"], "path": f"/{'p' if paid else 's'}/{share['id']}", "state": share["state"],
             "max_views": share["max_views"], "expires_at": share["expires_at"]}
 
 
@@ -249,7 +277,10 @@ def create(ctx, item_id: str):
     conn = ctx.db
     item = get_item(conn, item_id)
     require_owner(ctx, item, allow_canary=True)
-    mode = get_enum(body, "mode", ("link", "link_password", "password"))
+    mode = get_enum(body, "mode", ("link", "link_password", "password", "pay"))
+    paid = _paid_fields(ctx, body, item) if mode == "pay" else None
+    if paid:
+        mode = "link"                       # a paid link opens like a plain link, once a claim is released
     wrapped = get_b64(body, "wrapped_key", 60)
     access_verifier = get_b64(body, "access_verifier", 32)
     link_verifier = get_b64(body, "link_verifier", 32, optional=True)
@@ -269,7 +300,11 @@ def create(ctx, item_id: str):
         raise invalid("mode", "Drop deliveries use a plain link.")
     if item["kind"] == "folder":
         ctx.require_feature("folders")
-    max_views, expires_at = link_rules(cls, max_views, expires_at, item, ctx.now)
+    if paid:
+        if max_views is not None or expires_at is not None or then_delete:
+            raise invalid("mode", "A paid link opens for each buyer; it has no rule of its own.")
+    else:
+        max_views, expires_at = link_rules(cls, max_views, expires_at, item, ctx.now)
     if then_delete:
         _check_then_delete(ctx, item, expires_at)
     per_item = 1 if cls in ("drop", "canary") else quota.CLASSES[cls]["links_per_item"]
@@ -283,19 +318,48 @@ def create(ctx, item_id: str):
         if conn.execute("SELECT COUNT(*) FROM shares WHERE item_id = ?", (item_id,)).fetchone()[0] >= per_item:
             raise ApiError(409, "conflict", "This file has as many links as it can have.",
                            details={"max_links": per_item})
+        if paid and conn.execute("SELECT 1 FROM shares s JOIN paid_shares p ON p.share_id = s.id "
+                                 "WHERE s.item_id = ? AND s.state = 'active'", (item_id,)).fetchone():
+            raise ApiError(409, "conflict", "This already has a link to pay for. Stop that one first.")
         conn.execute("INSERT INTO shares(id, item_id, mode, wrapped_key, access_hash, link_hash, kdf, max_views, "
                      "expires_at, created_hour) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      (share_id, item_id, mode, wrapped, access_verifier, link_verifier, kdf, max_views, expires_at,
                       codec.floor_hour(ctx.now)))
+        if paid:
+            conn.execute("INSERT INTO paid_shares(share_id, price_ut, server_half, teaser_ct, buyer_views, "
+                         "buyer_window_s) VALUES (?, ?, ?, ?, ?, ?)",
+                         (share_id, paid["price_ut"], paid["server_half"], paid["teaser_ct"], sales.BUYER_VIEWS,
+                          sales.BUYER_WINDOW_S))
         if then_delete:
             # "Delete it from my drive after" (16-drive-design §3): the file leaves with its last link, at
             # the latest when this one expires, and gets its exit receipt (C42).
             conn.execute("UPDATE items SET retention = 'ephemeral', expires_at = MIN(COALESCE(expires_at, ?), ?) "
                          "WHERE id = ?", (expires_at, expires_at, item_id))
-    out = created_json(get_share(conn, share_id))
+    out = created_json(get_share(conn, share_id), bool(paid))
     if then_delete:
         out["item_expires_at"] = conn.execute("SELECT expires_at FROM items WHERE id = ?", (item_id,)).fetchone()[0]
     return json_response(201, out)
+
+
+def _paid_fields(ctx, body: dict, item) -> dict:
+    """Pay to open (16-drive-architecture §1.5): a drive's own kept file or folder, a price from /config,
+    our half of the link's key, and a registered sales address (`PUT /me/sales`)."""
+    ctx.require_feature("pay_to_open")
+    if ctx.cfg["gates"]["amount_proof"] != "sidecar":
+        raise ApiError(503, "feature_disabled", "This feature is off right now.", details={"feature": "pay_to_open"})
+    identity = ctx.session(required=False)
+    if identity is None or item["owner_id"] != identity["id"] or item["retention"] != "kept" or item["canary"]:
+        raise invalid("mode", "Only something kept in your drive can be sold.")
+    if body.get("link_verifier") is not None or body.get("kdf") is not None:
+        raise invalid("mode", "A paid link has no password.")
+    price = body.get("price_ut")
+    if not isinstance(price, (str, int)) or isinstance(price, bool) or str(price) not in [str(p) for p in sales.PRICES_UT]:
+        raise invalid("price_ut", "Pick one of the prices offered.")
+    fields = {"price_ut": int(price), "server_half": get_b64(body, "server_half", 32),
+              "teaser_ct": get_b64(body, "teaser_ct", optional=True, max_len=TEASER_MAX)}
+    if ctx.db.execute("SELECT 1 FROM sellers WHERE identity_id = ?", (identity["id"],)).fetchone() is None:
+        raise ApiError(409, "seller_not_registered", "Your drive's sales address isn't set up yet.")
+    return fields
 
 
 def _check_then_delete(ctx, item, expires_at) -> None:
@@ -318,8 +382,11 @@ def status(ctx, share_id: str):
         raise gone(share, state, ctx.now)
     # No `kind` here: someone with only the path learns that a link exists and its state, not whether it
     # opens a file or a folder; the key holder reads `kind` from /peek (no view used) or /open.
-    return json_response(200, {"state": "active", "mode": share["mode"], "needs_password": share["mode"] != "link",
-                               "kdf": json.loads(share["kdf"]) if share["kdf"] else None})
+    out = {"state": "active", "mode": share["mode"], "needs_password": share["mode"] != "link",
+           "kdf": json.loads(share["kdf"]) if share["kdf"] else None}
+    if is_paid(ctx.db, share_id):
+        out["paid"] = True                       # a paid link's page is /p/{id}
+    return json_response(200, out)
 
 
 def peek(ctx, share_id: str):
@@ -344,7 +411,8 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
         items.end_share(conn, share_id, "expired", now)
         items.doom_if_unlinked(conn, share["item_id"], now)
         return gone(share, "expired", now)
-    error = check_secrets(ctx, conn, share)
+    error, claim_id = paid_claim(ctx, conn, share)
+    error = error or check_secrets(ctx, conn, share)
     if error:
         return error
     item = conn.execute("SELECT * FROM items WHERE id = ?", (share["item_id"],)).fetchone()
@@ -372,6 +440,8 @@ def _open_in_tx(ctx, conn, share_id: str) -> dict | ApiError:
     conn.execute("UPDATE shares SET views_used = views_used + 1, first_opened_min = COALESCE(first_opened_min, ?) "
                  "WHERE id = ? AND state = 'active'", (codec.floor_minute(now), share_id))
     count_open(conn, share_id, now)
+    if claim_id is not None:                       # a paid link: this buyer's claim gives one open fewer
+        conn.execute("UPDATE claims SET views_left = views_left - 1 WHERE id = ?", (claim_id,))
     views_used = share["views_used"] + 1
     burned = share["max_views"] is not None and views_used >= share["max_views"]
     if burned:
@@ -457,17 +527,30 @@ def patch(ctx, share_id: str):
     new_views = get_int(body, "max_views", 1, 1_000_000, optional=True)
     new_expiry = get_int(body, "expires_at", 0, 2 ** 40, optional=True)
     unlock = get_bool(body, "unlock")
+    paused = body.get("paused")
+    paid = is_paid(conn, share_id)
+    if paused is not None and (not paid or type(paused) is not bool):
+        raise invalid("paused", "Only a link to pay for can stop selling.")
+    if paid and (max_views_given or new_expiry is not None or unlock):
+        raise invalid("max_views", "A paid link opens for each buyer; it has no rule of its own.")
     cls = class_of_item(conn, item, ctx.now)
     with db.tx(conn):
         share = get_share(conn, share_id)
         state = effective_state(share, ctx.now)
         if state != "active":
             error = gone(share, state, ctx.now)
+        elif paid:
+            error = None
+            if paused is not None:      # Stop selling / Sell again: no new claims; released ones keep their opens
+                conn.execute("UPDATE paid_shares SET paused = ? WHERE share_id = ?", (int(paused), share_id))
         else:
             error = _apply_patch(conn, share, item, cls, max_views_given, new_views, new_expiry, unlock, ctx.now)
     if error:
         raise error
-    return json_response(200, created_json(get_share(conn, share_id)))
+    out = created_json(get_share(conn, share_id), paid)
+    if paid:
+        out["paused"] = bool(conn.execute("SELECT paused FROM paid_shares WHERE share_id = ?", (share_id,)).fetchone()[0])
+    return json_response(200, out)
 
 
 def _apply_patch(conn, share, item, cls, views_given, new_views, new_expiry, unlock, now) -> ApiError | None:
@@ -514,7 +597,34 @@ def manage(ctx, share_id: str):
         out["reason"] = items.ENDED_REASON[out["state"]]
     out.update({"first_opened_min": share["first_opened_min"], "pw_locked": bool(share["pw_locked"]),
                 "pw_fail_count": share["pw_fail_count"], "opens": opens_by_hour(conn, share_id)})
+    if is_paid(conn, share_id):
+        out["paid"] = paid_summary(conn, share_id, detail=True)
     return json_response(200, {"share": out, "item": item_json(item, conn)})
+
+
+def paid_summary(conn, share_id: str, detail: bool = False) -> dict:
+    """What the owner sees of a paid link (16-drive-architecture §1.5, §3): the price, whether it sells,
+    claim counts and earnings; with `detail`, the last 50 claims by a 4-character reference and the hour
+    they were paid and released. Never who paid: we don't know."""
+    p = conn.execute("SELECT p.price_ut, p.paused, se.state AS seller_state FROM paid_shares p "
+                     "JOIN shares s ON s.id = p.share_id JOIN items i ON i.id = s.item_id "
+                     "LEFT JOIN sellers se ON se.identity_id = i.owner_id WHERE p.share_id = ?", (share_id,)).fetchone()
+    counts = {k: 0 for k in ("pending", "seen", "underpaid", "paid", "released", "expired", "void")}
+    for row in conn.execute("SELECT status, COUNT(*) AS n FROM claims WHERE share_id = ? GROUP BY status", (share_id,)):
+        counts[row["status"]] = row["n"]
+    earned = conn.execute("SELECT COALESCE(SUM(sp.value_ut), 0) FROM sale_payments sp JOIN claims c "
+                          "ON c.id = sp.claim_id WHERE c.share_id = ? AND sp.status IN ('counted','extra')",
+                          (share_id,)).fetchone()[0]
+    out = {"price_ut": str(p["price_ut"]), "paused": bool(p["paused"]), "seller_state": p["seller_state"],
+           "counts": counts, "earned_ut": str(earned)}
+    if detail:
+        hour = lambda ts: codec.floor_hour(ts) if ts else None    # noqa: E731
+        out["recent"] = [{"ref4": c["id"][4:8], "status": c["status"], "received_ut": str(c["received_ut"]),
+                          "paid_hour": hour(c["paid_at"]), "released_hour": hour(c["released_at"]),
+                          "demo": bool(c["demo"]), "owner_check": c["owner_check"]}
+                         for c in conn.execute("SELECT * FROM claims WHERE share_id = ? ORDER BY created_at DESC "
+                                               "LIMIT 50", (share_id,))]
+    return out
 
 
 def revoke(ctx, share_id: str):
