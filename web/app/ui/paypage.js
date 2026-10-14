@@ -166,7 +166,8 @@ export async function payPage(root, cfg, shareId) {
     await act('open', async () => {
       try {
         const opened = await openItem(shareId, P.access);
-        P.status = { ...P.status, views_left: opened.viewsLeft ?? P.status.views_left };
+        // The claim's opens: what the open answered, or one fewer than before.
+        P.status = { ...P.status, views_left: opened.viewsLeft ?? Math.max(0, (P.status.views_left ?? 1) - 1) };
         if (opened.kind === 'folder' || opened.root) {
           P.opened = { folder: opened };
         } else {
@@ -250,7 +251,7 @@ export async function payPage(root, cfg, shareId) {
         }
       });
       const qrSlot = h('div', { class: 'pay-qr-code' });
-      import('./qr.js').then(({ qrFigure }) => qrSlot.replaceChildren(qrFigure(c.address, { label: t('buy.qr_label'), caption: t('buy.qr_cap', { price: formatTari(c.amountUt) }), testid: 'pay-qr' }))).catch(() => qrSlot.remove());
+      import('./qr.js').then(({ qrFigure }) => qrSlot.replaceChildren(qrFigure(c.address, { label: t('buy.qr_label'), caption: t('buy.qr_cap'), testid: 'pay-qr' }))).catch(() => qrSlot.remove());
       inner.append(h('div', { class: 'pay-qr' }, qrSlot, h('div', { class: 'stack' },
         h('span', { class: 'label' }, t('buy.to')),
         h('input', { class: 'input mono', readonly: true, value: c.address, 'aria-label': t('buy.to'), 'data-testid': 'pay-address' }),

@@ -232,6 +232,7 @@ def main():
     import flows  # noqa: E402 (after sys.path)
     import flows_drive  # noqa: E402,F401 (lane app1: the drive's flows register themselves)
     import flows_share  # noqa: E402,F401 (lane app2: the share dialog, the folder viewer and Received)
+    import flows_pay  # noqa: E402,F401 (lane app2: pay to open, the seller, the buyer page and the owner check)
 
     r = Results()
     static_checks(r)
