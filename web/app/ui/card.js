@@ -122,7 +122,7 @@ export function renderCard(result, { cfg, live, lockerContext, onAnother, to = n
       figure.disabled = true;
       fill(side, figure);
       fill(card, head, fill(main, say, exif));
-      fill(next, st.kept && h('a', { href: '/locker', class: 'a-linkbtn' }, t('nav.locker')), another);
+      fill(next, st.kept && h('a', { href: '/drive', class: 'a-linkbtn' }, t('nav.locker')), another);
     }
     if (!st.sent) ui.closeSlot();
     card.dataset.maxViews = String(st.link?.maxViews ?? '');

@@ -383,7 +383,7 @@ async function delivery(root, cfg, fragment) {
       return say('wrong-key',
         scene({ state: 'oops', title: t('viewer.wrong_h'), say: t('viewer.wrong_body') }).head,
         safetyGrid(identity.safetyCode, { testid: 'view-my-safety' }),
-        h('a', { class: 'a-btn', href: '/locker' }, t('viewer.switch')));
+        h('a', { class: 'a-btn', href: '/drive' }, t('viewer.switch')));
     }
   }
 

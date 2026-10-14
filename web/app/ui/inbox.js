@@ -24,7 +24,7 @@ export async function render(main) {
   const identity = await storedLocker();
   if (!identity) {
     return root.replaceChildren(h('p', { class: 'a-lede' }, t('inbox.no_locker')),
-      h('a', { class: 'a-btn a-btn--primary', href: '/locker' }, t('nav.open_locker')));
+      h('a', { class: 'a-btn a-btn--primary', href: '/drive' }, t('nav.open_locker')));
   }
   const { deliverySecret, inboxState, scan, updateDelivery } = await import('../lib/scan.js');
 

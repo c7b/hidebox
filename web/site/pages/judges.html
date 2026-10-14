@@ -25,7 +25,6 @@
 <link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/shared/ghost.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/judges.js" integrity="{{SRI}}"></script>
@@ -35,7 +34,6 @@
 <!--#include header-->
 <main id="main" class="wrap page">
   <div class="page-head-figure">
-    <span class="head-ghost" data-ghost="courier" aria-hidden="true"><!--#include ghost.svg--></span>
     <div class="page-head">
       <h1>For judges</h1>
       <p class="lede">Two short tracks. Each step says what you should see. If you see something else, it's a bug: tell us in our thread on the <a href="https://community.tari.com/">Tari™ community forum</a>.</p>
@@ -44,13 +42,15 @@
 
   <div class="tracks">
     <section class="track" aria-labelledby="t1">
-      <h2 id="t1">A computer and a phone, about a minute</h2>
+      <h2 id="t1">A computer and a phone, about two minutes</h2>
       <p class="sub">No wallet. No sign-up.</p>
       <ol class="steps">
-        <li><span class="do"><span class="where">Computer</span>Open the home page. Drop any file on the ghost.</span><span class="see">The ghost eats it. A link and a code come out.</span></li>
-        <li><span class="do"><span class="where">Phone</span>Scan the code. Tap <b class="ui">Open it</b>.</span><span class="see">Your file, on the phone.</span></li>
-        <li><span class="do"><span class="where">Phone</span>Reload the page.</span><span class="see">“It's gone. It said bye.”</span></li>
-        <li><span class="do"><span class="where">Either</span>Open <a href="/verify" data-demo-gone>a secret that already said bye</a>. Tap <b class="ui">See the goodbye</b>.</span><span class="see">Its goodbye on the Tari chain, checked by your browser. <span data-needs="config" hidden>Yours lands within <span data-v="checkpoint"></span>.</span></span></li>
+        <li><span class="do"><span class="where">Computer</span>Open the home page and tap <b class="ui">Make my drive</b>.</span><span class="see">Your drive opens. Its key was made in this browser, with your Tari address beside it. No email.</span></li>
+        <li><span class="do"><span class="where">Computer</span>Drop a small folder on your drive.</span><span class="see">Each file says Locking, then Uploading. The folder shows up with its files inside.</span></li>
+        <li><span class="do"><span class="where">Computer</span>Open the folder. On one file tap <b class="ui">Share</b>, keep <b class="ui">Once</b>, turn on <b class="ui">Delete it from my drive after</b>, then tap <b class="ui">Make link</b>.</span><span class="see">A link and a code to scan. It says the file leaves your drive after its one open.</span></li>
+        <li><span class="do"><span class="where">Phone</span>Scan the code. Tap <b class="ui">Open it</b>. Then reload the page.</span><span class="see">The file opens on the phone. After the reload: “It's gone.”</span></li>
+        <li><span class="do"><span class="where">Computer</span>Open <b class="ui">Activity</b>.</span><span class="see">Opened, then it left your drive. <span data-needs="config" hidden>Within <span data-v="checkpoint"></span>, we write that on the Tari chain, for anyone to check.</span></span></li>
+        <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">What our server knows</b>.</span><span class="see">A padded size, the hour, the rule, how many times it opened each hour, and its folder. Never the name, the key or who opened it.</span></li>
       </ol>
     </section>
 
@@ -58,12 +58,10 @@
       <h2 id="t2">The Tari part, on the same two</h2>
       <p class="sub">About five minutes. Test tTARI only.</p>
       <ol class="steps">
-        <li><span class="do"><span class="where">Computer</span>Open <b class="ui">My locker</b>. Tap <b class="ui">Make my drop link</b>, then <b class="ui">Later</b> when it asks about your key.</span><span class="see">A locker, its Tari address, and two codes.</span></li>
-        <li><span class="do"><span class="where">Phone</span>Scan the code under the Tari address. Tap the ghost, pick a file, then tap <b class="ui">Send</b>.</span><span class="see">It goes by Tari. The amount and the owner are hidden. The note is locked.</span></li>
-        <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">See what came</b>. Open it.</span><span class="see">Your file. Only this locker's keys could find it.</span></li>
-        <li><span class="do"><span class="where">Phone</span>Scan the code under <b class="ui">Get a file from someone</b>. Pick a photo.</span><span class="see">Delivered in about a minute. It shows up on the computer.</span></li>
-        <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">See what a view key sees</b>.</span><span class="see">What came, and how much. No file sent to your locker opens with it.</span></li>
-        <li><span class="do"><span class="where">Either</span>Tap <b class="ui">Get more room</b>. <span data-when="send_mode=relay">Tap <b class="ui">Pay with demo tTARI</b>.</span><span data-when="send_mode=direct" hidden>Pay from this browser.</span></span><span class="see">Checked on the chain, then added.</span></li>
+        <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">My Tari address</b>, then <b class="ui">Settings</b>.</span><span class="see">Your drive's Tari address, and a code to scan.</span></li>
+        <li><span class="do"><span class="where">Phone</span>Scan that code. Tap <b class="ui">Choose a file</b>, pick one, then tap <b class="ui">Send</b>.</span><span class="see">It goes by Tari. The amount and the owner are hidden. The note is locked.</span></li>
+        <li><span class="do"><span class="where">Computer</span>Open <b class="ui">Received</b>. Open what came.</span><span class="see">Your file. Only this drive's keys could find it.</span></li>
+        <li><span class="do"><span class="where">Either</span>Open <b class="ui">Storage</b> and tap <b class="ui">Get more space</b>. <span data-when="send_mode=relay">Tap <b class="ui">Pay with test money</b>.</span><span data-when="send_mode=direct" hidden>Tap <b class="ui">Pay from my drive</b>.</span></span><span class="see">Checked on the chain, then added.</span></li>
       </ol>
       <details class="pass" data-judge-pass hidden>
         <summary>Have a judge pass?</summary>

@@ -17,7 +17,7 @@ SOURCE = ["a" * 40, "v1-test", "1760000000"]
 CFG = {"public_origin": "https://example.test", "gates": {"send_mode": "relay", "amount_proof": "wallet"},
        "features": {"seallog": False, "kept": True}, "hosting": {"snapshots": "weekly"}}
 VALUES = {"ORIGIN": "https://example.test", "NETWORK": "Esmeralda", "SECURITY_DROP_URL": "https://example.test/fine-print#report",
-          "REPO_URL": "https://code.example/mutis", "BRAND": "bye"}
+          "REPO_URL": "https://code.example/mutis", "BRAND": "hidebox"}
 PAGE = """<!doctype html>
 <!-- SPDX-License-Identifier: MIT -->
 <html lang="en"><head><title>t</title>
@@ -94,7 +94,7 @@ class BuildTest(unittest.TestCase):
         self.assertIn('<header><a href="https://code.example/mutis">code</a></header>', how)
         self.assertNotIn("<!--#include", how)
         self.assertEqual(how.count("SPDX"), 1, "the partial's own license comment is not repeated")
-        self.assertIn("bye · Esmeralda · " + "a" * 40 + " · 2025-10-09", how)
+        self.assertIn("hidebox · Esmeralda · " + "a" * 40 + " · 2025-10-09", how)
         for path in ("index.html", "404.html", "how/index.html", "status/index.html", "shared/tokens.css",
                      "site/js/site.js", "vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm",
                      "app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm"):

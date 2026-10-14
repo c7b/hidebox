@@ -108,6 +108,13 @@ http://{$MUTIS_HOST} {
 	redir @old_faq "/made" 301
 	@old_status path /status /status/
 	redir @old_status "/made#check" 301
+	# The drive replaced the locker (16-drive-design §12): its three pages answer 301 to their place in it.
+	@old_locker path /locker /locker/
+	redir @old_locker "/drive" 301
+	@old_inbox path /inbox /inbox/
+	redir @old_inbox "/drive/received" 301
+	@old_upgrade path /upgrade /upgrade/
+	redir @old_upgrade "/drive/storage#more" 301
 
 	# Types Go's MIME table lacks on Debian (it reads shared-mime-info, not /etc/mime.types).
 	@webmanifest path *.webmanifest
@@ -117,7 +124,7 @@ http://{$MUTIS_HOST} {
 
 	@api path /api/*
 	@viewer path /s/* /t
-	@approute path /d/* /locker /locker/* /inbox /inbox/* /send /send/* /watch /watch/* /upgrade /upgrade/* /verify /verify/*
+	@approute path /d/* /send /send/* /watch /watch/* /verify /verify/*
 	# lane app1: the drive (16-drive-design §12) has its own page
 	@drive path /drive /drive/*
 	@appfiles path /app/* /vendor/*
