@@ -4,6 +4,7 @@
 // sizes and dates in words, and the one error alert every view uses.
 import { formatBytes, formatDate, formatRelative, t } from '../lib/i18n.js';
 import { leavesAt, ruleOf } from '../lib/drive.js';
+import { SENT } from '../lib/links.js';
 import { h, icon } from './behaviors.js';
 import { describe, errorText } from './errors.js';
 
@@ -31,6 +32,10 @@ export const itemName = (item) => item.name || t('drive.note');
 
 export function ruleBadge(rule) {
   const r = rule ?? { kind: 'private' };
+  // lane app2: a link this browser sent by Tari wears the Tari badge (lib/links.js SENT).
+  if (r.share && r.kind !== 'ended' && r.kind !== 'pay' && SENT.has(r.share.id)) {
+    return h('span', { class: 'badge', 'data-variant': 'tari', 'data-rule': 'sent' }, icon('send'), t('share.sent_badge'));
+  }
   const [variant, glyph, text] = {
     private: ['outline', 'lock', t('drive.rule.private')],
     once: ['secondary', 'flame', t('drive.rule.once')],
