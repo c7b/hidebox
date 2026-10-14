@@ -31,7 +31,9 @@ export const FLAG_WATCH = 8;
 const TEASER_STEP = 256;
 const TEASER_AAD = utf8('mutis-teaser-v1');
 // The size a teaser says ("about 50 MB"): the smallest bucket at or above the real size, never the size.
-const BUCKETS = [1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 2e9, 5e9, 1e10];
+// Binary steps, so the page's byte format says round numbers.
+const MIB = 1048576;
+const BUCKETS = [1, 5, 10, 50, 100, 500, 1024, 2048, 5120, 10240].map((n) => n * MIB);
 const CLAIM_RE = /^clm_[a-z2-7]{20}$/;
 const CLAIMS = 'mutis.claims';
 // Claim states in which a payment can still count (annex §1.4).

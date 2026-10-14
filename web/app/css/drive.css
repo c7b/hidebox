@@ -382,10 +382,11 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .buyer { display: grid; gap: 1.5rem; align-items: start; grid-template-areas: "head" "pay" "list"; min-width: 0; }
 .buyer-head { grid-area: head; display: grid; gap: 0.75rem; }
 .buyer-head .h1 { text-wrap: balance; }
+.buyer-head .h1:focus { outline: none; }   /* focused for screen readers on arrival, not a control */
 .buyer-pay { grid-area: pay; min-width: 0; }
 .buyer-list { grid-area: list; min-width: 0; }
 @media (min-width: 960px) {
-  .buyer { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); grid-template-areas: "head pay" "list pay"; column-gap: 2.5rem; padding-block: 1rem; }
+  .buyer { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); grid-template-rows: auto 1fr; grid-template-areas: "head pay" "list pay"; column-gap: 2.5rem; padding-block: 1rem; }
   .buyer-pay { position: sticky; top: 1.5rem; }
 }
 .buyer-pay .btn[data-size="lg"] { width: 100%; }

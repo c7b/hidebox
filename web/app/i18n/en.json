@@ -485,7 +485,7 @@
  "buy.to": "Pay to this address",
  "buy.copy": "Copy address",
  "buy.qr_label": "Code of the payment address",
- "buy.qr_cap": "Send exactly {price} tTARI.",
+ "buy.qr_cap": "Scan it with your Ootle wallet.",
  "buy.claiming": "Getting ready…",
  "buy.wait": "Waiting for your payment.",
  "buy.seen": "We see the payment. Checking it on the chain.",
