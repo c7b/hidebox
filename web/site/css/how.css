@@ -1,95 +1,84 @@
-/* SPDX-License-Identifier: MIT — How it works (14-ghost-design §7): a pinned stage acts out the caption
-   that crosses the middle of the screen. The same actors stay on stage (the ghost, two phones, our
-   server, the link, the chain), so the story reads as one film. Each scene's pose is CSS; how.js adds
-   a short flourish. Reduced motion: the poses alone, as stills. The "#" is ink: it is not a Tari thing. */
-.story-wrap { padding-bottom: var(--s-8); }
-.intro { padding-block: var(--s-6) var(--s-5); display: grid; gap: var(--s-2); }
-.story-grid { display: grid; position: relative; }
-.stage-box {
-  position: sticky; top: 0; z-index: 2; height: 46svh; min-height: 280px; display: grid; place-items: center;
-  background: var(--bg); padding-block: var(--s-2);
-}
-.story { width: 100%; height: 100%; overflow: visible; }
-.captions { list-style: none; padding: 0; margin: 0; }
-.captions li { min-height: 78svh; display: flex; align-items: flex-start; padding-top: 50svh; }
-.captions p { font: var(--t-h2); max-width: 17ch; color: var(--fg-2); transition: color var(--dur-3) var(--ease-out); }
-.captions li.on p { color: var(--fg); }
-.outro { display: grid; justify-items: start; gap: var(--s-3); padding-top: var(--s-6); }
-
-/* On a desktop the stage takes two thirds of a wider grid, so each scene fills about half the
-   window's height (the drawing's viewBox is cropped to the actors' reach) */
+/* SPDX-License-Identifier: MIT — how it works (16-drive-design §2 "Read", the prototype's how.html): five
+   stills of the real interface, each beside its two lines of words. The stills are the drive's own parts
+   (cards, upload rows, the share dialog's choices, the activity timeline) drawn inert, so they follow the
+   theme and stay sharp; nothing in them can be pressed. No mascot, no animation. */
+.how-page { gap: var(--s-8); }
+.stills { display: grid; gap: var(--s-8); }
+.still { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: center; }
+.still-copy { display: grid; gap: var(--s-2); max-width: 30rem; }
+.still-copy h2 { font: var(--t-h2); letter-spacing: -.025em; }
+.still-copy p { color: var(--fg-2); }
+.still-copy .step-n { font: 500 13px/1 var(--font); color: var(--fg-2); font-variant-numeric: tabular-nums; }
 @media (min-width: 900px) {
-  .story-grid {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: var(--s-6);
-    margin-right: calc(-1 * ((100vw - 100%) / 2 - var(--gutter)));
-  }
-  .stage-box { grid-column: 2; grid-row: 1; top: 7svh; height: 86svh; }
-  .captions { grid-column: 1; grid-row: 1; }
-  .captions li { min-height: 86svh; align-items: center; padding-top: 0; }
+  .still { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: var(--s-8); }
 }
 
-/* actors: drawn in their place, shown and moved per scene */
-.story .act { opacity: 0; transition: opacity 450ms var(--ease-out), translate 700ms var(--ease-out), scale 700ms var(--ease-out); }
-.story text { font: 600 13px var(--font); fill: var(--fg-2); text-anchor: middle; }
-.story .phone rect { fill: var(--bg-raised); stroke: var(--fg); stroke-width: 2.5; }
-.story .phone path { stroke: var(--line); stroke-width: 3; stroke-linecap: round; }
-.story .note rect { fill: var(--prop); stroke: var(--ink); stroke-width: 2; }
-.story .note .lines { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; transition: opacity 300ms; }
-.story .note .scr { fill: var(--ink); opacity: 0; transition: opacity 300ms; }
-.story #lock rect { fill: var(--act); }
-.story #lock .shackle { fill: none; stroke: var(--act); stroke-width: 3.2; }
-.story #fly rect, .story #srvnoise rect { fill: var(--fg-2); }
-.story #server rect:first-child { fill: var(--bg-sunken); stroke: var(--fg); stroke-width: 2.5; }
-.story #key { transform-box: fill-box; transform-origin: center; }
-.story #key circle, .story #key path { fill: none; stroke: var(--sand); stroke-width: 3.4; stroke-linecap: round; }
-.story #ticket rect { fill: var(--bg-raised); stroke: var(--fg); stroke-width: 2.5; }
-.story #ticket text { font: 600 13px var(--font-code); fill: var(--fg); text-anchor: start; }
-.story #ticket .hash { fill: var(--fg); font-weight: 800; }
-.story #ticket .slot { fill: none; stroke: var(--line); stroke-width: 2; stroke-dasharray: 3 3; }
-.story #openB rect { fill: var(--act); }
-.story #openB text { fill: var(--on-act); font-size: 12px; }
-.story #chain rect { fill: var(--bg-sunken); stroke: var(--tari-text); stroke-width: 2.5; }
-.story #chain .ln { stroke: var(--tari-text); stroke-width: 3; }
-.story #receipt rect { fill: var(--prop); stroke: var(--ink); stroke-width: 2; }
-.story #receipt .tick { fill: none; stroke: var(--ink); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
-.story #locker rect { fill: var(--bg-raised); stroke: var(--tari-text); stroke-width: 2.5; }
-.story #locker circle { fill: var(--tari-text); }
-.story #locker path { stroke: var(--tari-text); stroke-width: 4; stroke-linecap: round; }
-.story #locker text { font-size: 11px; font-family: var(--font-code); }
-.story #env rect { fill: var(--prop); stroke: var(--ink); stroke-width: 2; }
-.story #env path { fill: none; stroke: var(--ink); stroke-width: 2; }
-.story #env .coin { fill: var(--tari); stroke: var(--ink); stroke-width: 2; }
-.story #gh { filter: var(--glow); }
-.story #gh .ghost { overflow: visible; }
-.story .ghost .sh { display: none; }
+/* the frame: a quiet sunken stage, the interface on it */
+.still-frame {
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-items: center; padding: clamp(16px, 4vw, 40px); border-radius: calc(var(--r-panel) + 4px);
+  background: var(--bg-sunken); border: 1px solid var(--hair); pointer-events: none; user-select: none; min-width: 0;
+}
+.still-frame > * { width: 100%; max-width: 26rem; }
+.ui-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); font: var(--t-small); }
+.ui-card.flush { padding: 0; gap: 0; overflow: hidden; }
+.ui-title { font: 600 1rem/1.3 var(--font); letter-spacing: -.01em; color: var(--fg); }
+.ui-desc { color: var(--fg-2); font: var(--t-small); }
+.ui-key { display: flex; gap: var(--s-2); align-items: center; }
+.ui-input { flex: 1; min-width: 0; height: 36px; display: flex; align-items: center; padding: 0 12px; border: 1px solid var(--hair); border-radius: var(--r-input); font: 400 13px/1 var(--font-code); color: var(--fg-2); overflow: hidden; white-space: nowrap; }
+.ui-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--r-input); background: var(--act); color: var(--on-act); font: var(--t-ui); white-space: nowrap; }
+.ui-btn.outline { background: var(--bg-raised); color: var(--fg); border: 1px solid var(--hair); box-shadow: 0 1px 2px rgb(0 0 0 / .05); }
+.ui-btn .icon, .ui-row .icon, .ui-choice .icon, .ui-event .icon { width: 16px; height: 16px; }
+.ui-addr { display: flex; align-items: center; gap: 8px; padding-top: var(--s-3); border-top: 1px solid var(--hair); color: var(--fg-2); font: var(--t-small); }
+.ui-addr code { color: var(--pay-text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ui-addr .icon { width: 16px; height: 16px; color: var(--pay-text); flex: none; }
 
-/* scene 1: the ghost catches a note */
-.story[data-scene="1"] #gh { opacity: 1; translate: 86px 34px; scale: 1.9; }
-/* scene 2: locked on your phone */
-.story[data-scene="2"] :is(#phoneA, #noteA, #lock) { opacity: 1; }
-.story[data-scene="2"] #gh { opacity: 1; translate: 168px 116px; scale: .76; }
-.story:is([data-scene="2"], [data-scene="3"], [data-scene="4"]) #noteA .lines { opacity: 0; }
-.story:is([data-scene="2"], [data-scene="3"], [data-scene="4"]) #noteA .scr { opacity: 1; }
-/* scene 3: noise to our server, the key stays */
-.story[data-scene="3"] :is(#phoneA, #noteA, #lock, #key, #server) { opacity: 1; }
-/* scene 4: the key goes into the link */
-.story[data-scene="4"] :is(#phoneA, #noteA, #lock, #server, #ticket, #key) { opacity: 1; }
-.story[data-scene="4"] #key { translate: 176px 52px; } /* the key's head lands on the slot (252, 266) */
-/* scene 5: a friend opens it */
-.story[data-scene="5"] :is(#phoneB, #noteB, #ticket, #key) { opacity: 1; }
-.story[data-scene="5"] #phoneA { opacity: .3; }
-.story[data-scene="5"] #key { translate: 176px 52px; }
-/* scene 6: gone */
-.story[data-scene="6"] :is(#phoneB, #server) { opacity: 1; }
-.story[data-scene="6"] #srvnoise rect { opacity: 0; transition: opacity 300ms; }
-.story[data-scene="6"] #gh { opacity: 1; translate: 24px 104px; scale: .9; }
-.story[data-scene="6"] :is(#phoneB, #noteB) { translate: -110px 50px; }
-/* scene 7: the goodbye on the chain */
-.story[data-scene="7"] :is(#chain, #receipt) { opacity: 1; }
-.story[data-scene="7"] #chain .last { fill: var(--mark); }
-.story[data-scene="7"] #gh { opacity: 1; translate: 40px 92px; scale: .9; }
-/* scene 8: by Tari, to an address */
-.story[data-scene="8"] :is(#chain, #locker, #env) { opacity: 1; }
-.story[data-scene="8"] #env { translate: 262px -84px; scale: 1.05; }
-.story[data-scene="8"] #gh { opacity: 1; translate: 36px 86px; scale: .95; }
-.story[data-scene="8"] #locker rect { fill: var(--mark); }
+/* the upload panel */
+.ui-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--hair); font: var(--t-ui); color: var(--fg); }
+.ui-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 12px 16px; }
+.ui-row + .ui-row { border-top: 1px solid var(--hair); }
+.ui-row > .icon { color: var(--fg-2); }
+.ui-row .name { color: var(--fg); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-row .stage { font: 500 12px/1.4 var(--font); color: var(--fg-2); }
+.ui-row .stage.done { color: var(--ok-text); }
+.ui-bar { grid-column: 2 / 4; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 10%, transparent); overflow: hidden; }
+.ui-bar i { display: block; height: 100%; border-radius: inherit; background: var(--act); }
+
+/* the share dialog's question */
+.ui-q { font: 600 1rem/1.3 var(--font); color: var(--fg); }
+.ui-choices { display: grid; gap: var(--s-2); }
+.ui-choice { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--hair); border-radius: var(--r-input); }
+.ui-choice[data-checked] { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.ui-choice[hidden] { display: none; }
+.ui-choice .tile { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-input); background: var(--bg-sunken); color: var(--fg); }
+.ui-choice .tile.chain { background: color-mix(in srgb, var(--tari) 9%, transparent); color: var(--pay-text); }
+.ui-choice b { display: block; font: var(--t-ui); color: var(--fg); }
+.ui-choice span { font: 400 12px/1.4 var(--font); color: var(--fg-2); }
+.ui-radio { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line); }
+[data-checked] > .ui-radio { border: 5px solid var(--fg); }
+
+/* the Tari send's steps */
+.ui-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ui-steps li { display: flex; align-items: center; gap: 12px; color: var(--fg); }
+.ui-steps .dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--act); color: var(--on-act); flex: none; }
+.ui-steps .dot .icon { width: 14px; height: 14px; }
+.ui-note { display: flex; gap: 10px; padding: 12px; border-radius: var(--r-input); background: color-mix(in srgb, var(--tari) 7%, transparent); color: var(--fg); font: var(--t-small); }
+.ui-note .icon { width: 16px; height: 16px; color: var(--pay-text); flex: none; margin-top: 3px; }
+
+/* the activity timeline */
+.ui-events { list-style: none; margin: 0; padding: 0; display: grid; }
+.ui-event { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 2px 12px; padding-bottom: 16px; position: relative; }
+.ui-event:not(:last-child)::after { content: ""; position: absolute; left: 15.5px; top: 34px; bottom: 2px; width: 1px; background: var(--hair); }
+.ui-event .mark { grid-row: span 2; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--hair); background: var(--bg-raised); color: var(--fg-2); }
+.ui-event .mark.chain { color: var(--pay-text); border-color: color-mix(in srgb, var(--tari) 30%, transparent); }
+.ui-event b { font: var(--t-ui); color: var(--fg); padding-top: 6px; }
+.ui-event span { font: 400 12px/1.5 var(--font); color: var(--fg-2); }
+.ui-event .badge { justify-self: start; }
+.ui-event .tx { font-family: var(--font-code); color: var(--pay-text); }
+
+/* who sees what, then the way on */
+.how-table h2 { font: var(--t-h2); letter-spacing: -.025em; }
+.how-table { display: grid; gap: var(--s-4); }
+.how-table > p { max-width: var(--read); color: var(--fg-2); }
+.outro { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-5); padding-top: var(--s-6); border-top: 1px solid var(--hair); }
+.ui-bar .w-most { width: 62%; }
+.ui-bar .w-some { width: 18%; }

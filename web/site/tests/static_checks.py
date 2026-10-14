@@ -421,10 +421,10 @@ def check_static():
     s = SITE / "static"
     problems = []
     robots = (s / "robots.txt").read_text()
-    for path in ("/s/", "/p/", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
+    for path in ("/s/", "/p/", "/drive", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
         if f"Disallow: {path}\n" not in robots:
             problems.append(f"robots.txt: no Disallow: {path}")
-    for path in ("/t", "/s/abc", "/p/abc", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
+    for path in ("/t", "/s/abc", "/p/abc", "/drive", "/drive/received", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
         if robots_allows(robots, path):
             problems.append(f"robots.txt: {path} is not disallowed")
     # A drop page is public by design (it carries noindex itself); the public config and numbers are
@@ -460,9 +460,9 @@ def check_static():
     if not (s / "favicon.ico").is_file() or (s / "favicon.ico").read_bytes()[:4] != b"\0\0\1\0":
         problems.append("favicon.ico: missing or not an ICO (Bing and unfurlers ask for it by name)")
     llms = (s / "llms.txt").read_text()
-    if not llms.startswith("# {{BRAND}}\n") or "pay-to-open" in llms or "dead-drop" not in llms:
-        problems.append("llms.txt: not the spec §13.4 shape")
-    for fact in ("send_mode=direct", "send_mode=relay", "seallog=on"):
+    if not llms.startswith("# {{BRAND}}\n") or "private drive" not in llms or "dead-drop" not in llms:
+        problems.append("llms.txt: not the spec §13.4 shape (the drive's, 16-drive-design §11)")
+    for fact in ("send_mode=direct", "send_mode=relay", "seallog=on", "pay_to_open=on"):
         if f"{{when:{fact}}}" not in llms:
             problems.append(f"llms.txt: no line for {fact} (tools/variants.py keeps the ones true here)")
     fonts = SHARED / "fonts"
@@ -552,9 +552,9 @@ def indexable_paths():
 
 # The server's own defaults (server/mutis/config.py): what the HTML must show before /config is read.
 SERVER_DEFAULTS = {"send_mode": "relay", "proof": "wallet", "seallog": "off", "kept": "on", "snapshots": "weekly",
-                   "security_drop": "off"}
+                   "security_drop": "off", "pay_to_open": "off", "folders": "off"}
 DIRECT = {"send_mode": "direct", "proof": "proven", "seallog": "on", "kept": "on", "snapshots": "off",
-          "security_drop": "on"}
+          "security_drop": "on", "pay_to_open": "on", "folders": "on"}
 
 
 def check_build_variants():
@@ -586,8 +586,8 @@ def _strings(value):
 
 # A button /judges names before the app has it would be listed here; once it is in
 # web/app/i18n/en.json it must leave this list (the check says so), so the script can't drift from the
-# app. Empty since Phase 6B step 8 gave the app every label of 14-ghost-design §9.
-PENDING_LABELS: set[str] = set()
+# app. Pay to open's two labels arrive with lane app2's seller dialog (16-drive-design §15 step 15).
+PENDING_LABELS: set[str] = {"Someone who pays you", "Make pay link"}
 
 
 def check_ui_strings():
@@ -604,14 +604,17 @@ def check_ui_strings():
     known = lambda phrase: any(p.match(phrase) for p in patterns)
     problems += [f"PENDING_LABELS: “{label}” is in en.json now; take it off the list" for label in PENDING_LABELS if known(label)]
     for mode in ("relay", "direct"):
-        text = variants.resolve((SITE / "pages" / "judges.html").read_text(), {"send_mode": mode})
-        text = re.sub(r"<span[^>]*\shidden[\s>].*?</span>", "", text)
-        for phrase in re.findall(r'<b class="ui">(.*?)</b>', text):
-            if phrase not in PENDING_LABELS and not known(phrase):
-                problems.append(f"pages/judges.html ({mode}): names the button “{phrase}”, which web/app/i18n/en.json doesn't have")
-    steps = [len(re.findall(r"<li>", ol)) for ol in re.findall(r'<ol class="steps">(.*?)</ol>', (SITE / "pages" / "judges.html").read_text(), re.S)]
-    if len(steps) != 2 or any(n > 6 for n in steps):
-        problems.append(f"pages/judges.html: the script is {steps} steps; at most 6 + 6 (14-ghost-design §9)")
+        for pay in ("off", "on"):
+            text = variants.resolve((SITE / "pages" / "judges.html").read_text(), {"send_mode": mode, "pay_to_open": pay})
+            text = re.sub(r"<div[^>]*\shidden[\s>].*?</div>", "", text, flags=re.S)
+            text = re.sub(r"<span[^>]*\shidden[\s>].*?</span>", "", text)
+            for phrase in re.findall(r'<b class="ui">(.*?)</b>', text):
+                if phrase not in PENDING_LABELS and not known(phrase):
+                    problems.append(f"pages/judges.html ({mode}, pay to open {pay}): names the button “{phrase}”, which web/app/i18n/en.json doesn't have")
+            # 16-drive-design §10: two tracks of at most six steps, whichever way pay to open is set
+            steps = [len(re.findall(r"<li>", ol)) for ol in re.findall(r'<ol class="steps">(.*?)</ol>', text, re.S)]
+            if len(steps) != 2 or any(n > 6 for n in steps):
+                problems.append(f"pages/judges.html (pay to open {pay}): the script is {steps} steps; at most 6 + 6 (16-drive-design §10)")
     return problems
 
 
