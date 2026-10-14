@@ -83,7 +83,9 @@
   "sponsor": false,
   "decoys": true,
   "kept": true,
-  "seallog": false
+  "seallog": false,
+  "folders": true,
+  "pay_to_open": false
  },
  "courier": {
   "amount_ut": "1000",
@@ -109,12 +111,16 @@
   "checkpoint_interval_s": 900,
   "component": null
  },
+ "items": {
+  "max_delete_after_days": 30
+ },
  "retention": {
   "ticket_s": 1800,
   "tombstone_days": 30,
   "db_backup_days": 7,
   "inactive_days": 180,
   "lapse_grace_days": 30,
+  "trash_days": 30,
   "session_s": 2592000
  },
  "quota": {

@@ -5,77 +5,136 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>How {{BRAND}} works</title>
-<meta name="description" content="Eight pictures, one minute: how a secret goes into the ghost, comes out as a link, opens once, and says bye on the Tari chain.">
+<meta name="description" content="How {{BRAND}} keeps your files private: a key made in your browser, files locked before upload, and private Tari payments.">
 <link rel="canonical" href="{{ORIGIN}}/how">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{BRAND}}">
 <meta property="og:title" content="How {{BRAND}} works">
-<meta property="og:description" content="Eight pictures, one minute: how a secret goes into the ghost, comes out as a link, opens once, and says bye on the Tari chain.">
+<meta property="og:description" content="How {{BRAND}} keeps your files private: a key made in your browser, files locked before upload, and private Tari payments.">
 <meta property="og:url" content="{{ORIGIN}}/how">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A glowing ghost holds up one finger and winks. Show it once. Then bye.">
+<meta property="og:image:alt" content="A drive in {{BRAND}}: four files, each wearing its rule. Your private drive. Locked here. Shared your way.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#F4F5FC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#13183A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/shared/ghost.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/how.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
-<script type="module" src="/site/js/how.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
 </head>
-<body class="how">
-<a class="skip-link" href="#main">Skip to the story</a>
+<body class="reading">
+<a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
-<main id="main" class="wrap story-wrap">
-  <div class="intro">
+<main id="main" class="wrap page how-page">
+  <div class="page-head">
     <h1>How it works</h1>
-    <p class="lede">Eight pictures. One minute.</p>
+    <p class="lede">Your drive opens with a key that lives in your browser. Everything you add is locked before it leaves, and Tari™ does the private parts.</p>
   </div>
 
-  <div class="story-grid">
-    <div class="stage-box">
-      <svg class="story" id="story" viewBox="12 20 376 272" role="img" aria-labelledby="story-cap" data-scene="1">
-        <title id="story-cap">The story, one picture at a time</title>
-        <g id="chain" class="act"><path class="ln" d="M80 267h15M155 267h15M230 267h15M305 267h15"/><rect x="20" y="250" width="60" height="34" rx="8"/><rect x="95" y="250" width="60" height="34" rx="8"/><rect x="170" y="250" width="60" height="34" rx="8"/><rect x="245" y="250" width="60" height="34" rx="8"/><rect class="last" x="320" y="250" width="60" height="34" rx="8"/></g>
-        <g id="server" class="act"><rect x="252" y="28" width="124" height="82" rx="14"/><text x="314" y="54">our server</text><g id="srvnoise"><rect x="276" y="66" width="12" height="12"/><rect x="292" y="66" width="12" height="12"/><rect x="308" y="66" width="12" height="12"/><rect x="324" y="66" width="12" height="12"/><rect x="284" y="82" width="12" height="12"/><rect x="300" y="82" width="12" height="12"/><rect x="316" y="82" width="12" height="12"/><rect x="332" y="82" width="12" height="12"/></g></g>
-        <g id="phoneA" class="act phone"><rect x="40" y="62" width="94" height="176" rx="18"/><path d="M76 74h22"/></g>
-        <g id="phoneB" class="act phone"><rect x="266" y="62" width="94" height="176" rx="18"/><path d="M302 74h22"/></g>
-        <g id="noteA" class="act note"><rect x="66" y="104" width="42" height="54" rx="4"/><path class="lines" d="M73 118h28M73 128h28M73 138h18"/><g class="scr"><rect x="72" y="114" width="8" height="8"/><rect x="88" y="114" width="8" height="8"/><rect x="80" y="124" width="8" height="8"/><rect x="96" y="124" width="8" height="8"/><rect x="72" y="134" width="8" height="8"/><rect x="88" y="142" width="8" height="8"/></g></g>
-        <g id="lock" class="act"><path class="shackle" d="M79 168v-6a8 8 0 0 1 16 0v6"/><rect x="74" y="166" width="26" height="20" rx="5"/></g>
-        <g id="fly" class="act"><rect x="80" y="122" width="10" height="10"/><rect x="92" y="130" width="10" height="10"/><rect x="76" y="138" width="10" height="10"/><rect x="88" y="112" width="10" height="10"/><rect x="96" y="142" width="10" height="10"/><rect x="72" y="126" width="10" height="10"/></g>
-        <g id="ticket" class="act"><rect x="112" y="248" width="176" height="36" rx="18"/><text x="128" y="271">{{BRAND}}/s/2kAL</text><text class="hash" x="214" y="271">#</text><circle class="slot" cx="252" cy="266" r="9"/></g>
-        <g id="key" class="act"><circle cx="76" cy="214" r="7"/><path d="M83 214h18M95 214v6M100 214v4"/></g>
-        <g id="openB" class="act"><rect x="282" y="188" width="62" height="26" rx="13"/><text x="313" y="205">Open it</text></g>
-        <g id="noteB" class="act note"><rect x="292" y="100" width="42" height="54" rx="4"/><path class="lines" d="M299 114h28M299 124h28M299 134h18"/></g>
-        <g id="receipt" class="act"><rect x="322" y="186" width="56" height="48" rx="6"/><path class="tick" d="M337 211l8 8 16-17"/></g>
-        <g id="locker" class="act"><rect x="292" y="120" width="88" height="104" rx="12"/><circle cx="336" cy="166" r="7"/><path d="M336 172v12"/><text x="336" y="214">otl_esm_…</text></g>
-        <g id="env" class="act"><rect x="40" y="226" width="40" height="27" rx="4"/><path d="M41 228l19 13 19-13"/><circle class="coin" cx="80" cy="226" r="8"/></g>
-        <g id="gh" class="act"><svg width="120" height="120" viewBox="0 0 120 120" overflow="visible"><!--#include ghost.svg--></svg></g>
-      </svg>
+  <div class="stills">
+    <section class="still" aria-labelledby="s1">
+      <div class="still-copy"><h2 id="s1">Make your drive</h2><p>Your browser makes a key. The key is the account. No email, no password.</p></div>
+      <div class="still-frame" aria-hidden="true">
+        <div class="ui-card">
+          <div class="ui-title">Your drive is ready.</div>
+          <p class="ui-desc">Save your key. If this browser forgets it, nobody can let you back in, not even us.</p>
+          <div class="ui-key"><span class="ui-input">••••••••••••••••••••••••</span><span class="ui-btn"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-download"/></svg>Save my key</span></div>
+          <div class="ui-addr"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wallet"/></svg><span>Your Tari address</span><code>otl_esm_…</code></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="still" aria-labelledby="s2">
+      <div class="still-copy"><h2 id="s2">Drop your files</h2><p>Drop a file or a whole folder. It gets locked right here, before it goes anywhere. Our server gets scrambled noise. Never the key.</p></div>
+      <div class="still-frame" aria-hidden="true">
+        <div class="ui-card flush">
+          <div class="ui-head"><span>Uploads</span><span class="badge" data-variant="outline"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg>Private</span></div>
+          <div class="ui-row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-image"/></svg><span class="name">beach-at-mazunte.jpg</span><span class="stage done"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-circle-check"/></svg></span></div>
+          <div class="ui-row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-text"/></svg><span class="name">lease-signed.pdf</span><span class="stage">Uploading</span><span class="ui-bar"><i class="w-most"></i></span></div>
+          <div class="ui-row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-video-camera"/></svg><span class="name">first-steps.mov</span><span class="stage">Locking</span><span class="ui-bar"><i class="w-some"></i></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="still" aria-labelledby="s3">
+      <div class="still-copy"><h2 id="s3">Share it your way</h2>
+        <p data-when="pay_to_open=off">Pick who can open it: anyone with the link, or one Tari address. Then pick how many opens and when the link ends.</p>
+        <p data-when="pay_to_open=on" hidden>Pick who can open it: anyone with the link, someone who pays you, or one Tari address. Then pick how many opens and when the link ends.</p>
+      </div>
+      <div class="still-frame" aria-hidden="true">
+        <div class="ui-card">
+          <div class="ui-q">Who can open it?</div>
+          <div class="ui-choices">
+            <div class="ui-choice" data-checked><span class="tile"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><div><b>Anyone with the link</b><span>You send the link. You pick how many opens.</span></div><span class="ui-radio"></span></div>
+            <div class="ui-choice" data-when="pay_to_open=on" hidden><span class="tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><div><b>Someone who pays you</b><span>They pay you tTARI, then it opens.</span></div><span class="ui-radio"></span></div>
+            <div class="ui-choice"><span class="tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg></span><div><b>One Tari address</b><span>Send by Tari. Only that address can open it.</span></div><span class="ui-radio"></span></div>
+          </div>
+          <div class="row-badges"><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-repeat"/></svg>A few times</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-timer"/></svg>Until a time</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Secret word</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="still" aria-labelledby="s4">
+      <div class="still-copy"><h2 id="s4">Tari does the private parts</h2>
+        <p>Send by Tari: the key rides inside a payment to their address. Only they can open it.</p>
+        <p data-when="pay_to_open=on" hidden>Pay to open: they pay your Tari address, then it opens. The chain hides the amount and who got it. The fee is public.</p>
+        <p data-when="pay_to_open=off">The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</p>
+      </div>
+      <div class="still-frame" aria-hidden="true">
+        <div class="ui-card">
+          <div class="ui-title">Send by Tari</div>
+          <ol class="ui-steps">
+            <li><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg></span>Locking the key to their address</li>
+            <li><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg></span>Sending on the Ootle</li>
+            <li><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg></span>Sent</li>
+          </ol>
+          <p class="ui-note"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg><span>The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="still" aria-labelledby="s5">
+      <div class="still-copy"><h2 id="s5">See what happened</h2><p>Each file shows its rule, how many times it opened, and when it ends. When a file leaves your drive, we write that on the Tari chain, for anyone to check.</p></div>
+      <div class="still-frame" aria-hidden="true">
+        <div class="ui-card">
+          <div class="ui-title">Activity</div>
+          <ol class="ui-events">
+            <li class="ui-event"><span class="mark chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><b>It left your drive</b><span>We wrote that on the Tari chain. <span class="tx">tx abfe…cdea</span></span></li>
+            <li class="ui-event"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-eye"/></svg></span><b>Opened</b><span>Today</span></li>
+            <li class="ui-event"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><b>Link made</b><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span></li>
+            <li class="ui-event"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span><b>Locked and uploaded</b><span>Earlier</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="how-table" aria-labelledby="who-h">
+    <h2 id="who-h">Who sees what</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th scope="col">Who</th><th scope="col">Sees</th><th scope="col">Never sees</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Our server</th><td data-cue="Sees">A padded size, the hour it arrived, its rule, and how many times it opened each hour.</td><td data-cue="Never sees">The name, the type, what's inside, the key, or who opened it.</td></tr>
+          <tr><th scope="row">The Tari chain</th><td data-cue="Sees">That a payment happened, and its fee.</td><td data-cue="Never sees">The amount, who got it, or the key.</td></tr>
+          <tr><th scope="row">Someone with the link</th><td data-cue="Sees">What the rule still allows.</td><td data-cue="Never sees">Your other files.</td></tr>
+        </tbody>
+      </table>
     </div>
-
-    <ol class="captions">
-      <li data-scene="1"><p>You give the ghost a secret: a note, a photo, any file.</p></li>
-      <li data-scene="2"><p>It gets locked right here, before it goes anywhere.</p></li>
-      <li data-scene="3"><p>Our server gets scrambled noise. Never the key.</p></li>
-      <li data-scene="4"><p>The key hides in the link, after the # sign.</p></li>
-      <li data-scene="5"><p>Your friend taps the link and sees it one time.</p></li>
-      <li data-scene="6"><p>Then it's gone. We delete our scrambled copy.</p></li>
-      <li data-scene="7"><p>Its goodbye is written on the Tari™ chain, for anyone to check.</p></li>
-      <li data-scene="8"><p>Or send it to a Tari address. Only they can open it.</p></li>
-    </ol>
-  </div>
+    <p>Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day.</p>
+  </section>
 
   <div class="outro">
-    <a class="btn" href="/">Try it</a>
-    <p class="muted">Want the grown-up version? Read <a href="/made">how it was made</a>.</p>
+    <a class="btn" href="/drive?make"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-plus"/></svg>Make my drive</a>
+    <p class="muted">Want every detail? Read <a href="/made">how it was made</a>.</p>
   </div>
 </main>
 <!--#include footer-->

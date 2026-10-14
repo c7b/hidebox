@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: MIT
 """Renders the OG cards and app icons in web/site/og/ to PNGs in web/site/static/ with headless
 Chromium (Debian package), over the DevTools pipe, and wraps the 192 px icon as favicon.ico (an ICO
-may hold PNG data; Bing, feed readers and some unfurlers ask for that path by name). Python standard
-library only; run as `build` on ultron: python3 -I web/site/tools/render-images.py
+may hold PNG data; Bing, feed readers and some unfurlers ask for that path by name). Each card gets
+the public name from tools/build.py (BRAND) and Geist from web/shared/fonts/geist/ (the pinned file,
+handed to the page as data, since a file:// page can't load a font file). Python standard library
+only; run as `build` on ultron: python3 -I web/site/tools/render-images.py
 """
+import base64
+import json
+import re
 import struct
 import sys
 from pathlib import Path
@@ -12,6 +17,25 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))   # -I leaves the scrip
 from cdp import Browser  # noqa: E402
 
 SITE = Path(__file__).resolve().parents[1]
+ROOT = SITE.parents[1]
+GEIST = ROOT / "web" / "shared" / "fonts" / "geist" / "Geist-Variable.woff2"
+
+
+def brand() -> str:
+    m = re.search(r'^BRAND = "([^"]+)"', (ROOT / "tools" / "build.py").read_text(), re.M)
+    if not m:
+        raise SystemExit("tools/build.py: no BRAND")
+    return m.group(1)
+
+
+# Geist as a data URL and the brand into every {{BRAND}}, before the fonts settle.
+PREPARE = """((font, name) => {
+  const face = new FontFace('Geist', `url(${font})`, { weight: '100 900' });
+  document.fonts.add(face);
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) n.nodeValue = n.nodeValue.replaceAll('{{BRAND}}', name);
+  return face.load().then(() => document.fonts.ready).then(() => true);
+})"""
 OG_MAX_BYTES = 150 * 1024   # 11-brand §13.10
 JOBS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630),
         ("icon.html", "icon-512.png", 512, 512), ("icon.html", "icon-192.png", 192, 192),
@@ -28,11 +52,13 @@ def write_ico(png: Path, out: Path) -> None:
 
 def main() -> int:
     failed = False
+    font = "data:font/woff2;base64," + base64.b64encode(GEIST.read_bytes()).decode()
+    name = brand()
     with Browser() as browser:
         for source, target, width, height in JOBS:
             page = browser.page(width, height)
             page.goto((SITE / "og" / source).as_uri(), settle=1.0)
-            page.eval("document.fonts.ready.then(() => true)", await_promise=True)
+            page.eval(f"{PREPARE}({json.dumps(font)}, {json.dumps(name)})", await_promise=True)
             out = SITE / "static" / target
             page.screenshot(str(out))
             size = out.stat().st_size

@@ -1,12 +1,13 @@
 <!-- SPDX-License-Identifier: MIT -->
-# The site of bye (codename mutis) and its shared design system
+# The site of hidebox (codename mutis) and its shared design system
 
 The site (`web/site/`) and the design system the app shares with it (`web/shared/`): the six pages of
-14-ghost-design §4.1 (the home with the ghost around the drop widget, how it works in eight scenes, how
-it was made, for judges, the fine print, 404), SEO and static files, the brand marks, the ghost (its
-SVG partial, `ghost.css`, `ghost.js`) and the partials.
+16-drive-design §2 and §11 (the home with Make my drive beside a slice of a drive and the anonymous widget,
+how it works in five stills of the real interface, how it was made, for judges, the fine print, 404), SEO
+and static files, the brand tile and the partials.
 
-No third-party code: our own ES modules and stylesheets, system faces only (DESIGN.md), Python's
+No third-party code: our own ES modules and stylesheets, Geist (pinned) on the reading pages and the
+system faces on the home (A-06), Python's
 standard library for every tool and test, Debian's Chromium. The old Mutis Script fonts stay in
 `../shared/fonts/` for one release; the build no longer copies them.
 
@@ -31,17 +32,17 @@ each amount-proof mode, with `web/app/i18n/en.json`. Last run on ultron: see `AC
 | `../shared/dates.js` | `MAINNET`, `phase()`, `isOctober31()`, `msToNextLocalMidnight()`, `applyPhase(root, now)` |
 | `../shared/theme.js` | classic script in `<head>`, before the first paint: "Lights off / Lights on", and `html.motion` when scripts run and motion is allowed |
 | `../shared/icons.svg` | the icon sprite of 11-brand §13.8, plus drop slot, watch and the wall's `keyhole` |
-| `../shared/brand/` | `logo.svg`, `symbol.svg`, `favicon.svg` (the research marks, unchanged) |
+| `../shared/brand/` | `symbol.svg`, `favicon.svg`: the brand tile (ink square, Lucide lock), light and dark |
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how security pricing faq judges terms privacy abuse status 404`, and `es/` |
-| `js/` | `site.js` (every page; on `/` the drop widget, `/app/drop-widget.js`, drives the ghost and the page's phase), `stats.js` (numbers from `/config` and `/stats`), `how.js`, `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js` |
+| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js` |
 | `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |
 | `tools/` | `subset-fonts.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
 | `tests/` | `run.py`, `static_checks.py`, `browser_checks.py`, `dates.test.mjs`, `serve.py`, `shots.py`, `make-canary.mjs`, `fixtures/` |
-| `shots/` | 112 curated WebP screenshots (3.0 MB), made by `tests/shots.py` |
+| `shots/` | curated WebP screenshots of the six pages at 1440 and 390, light and dark, made by `tests/shots.py` |
 
 ## How the pages get their numbers
 
@@ -59,11 +60,11 @@ line, which spec §3.4.2 pins in the partial and `stats.js` then overwrites from
 
 ## The home and how it works
 
-`index.html` is one screen: the ghost (a `<button>` that holds the inlined partial, 14-ghost-design
-§3) over the widget that `/app/drop-widget.js` mounts; the widget drives `body[data-phase]` and the
-ghost's poses, and the whole window takes a drop (§6). `/how` pins a stage and plays eight scenes as
-their captions scroll past (`js/how.js`, `css/how.css`); with reduced motion each scene is a still.
-The exit wall of the old site is gone: its live count moved to `/made#record`.
+`index.html` is the drive's home for strangers (16-drive-design §11): Make my drive and Open my drive
+beside an inert slice of a drive, then Just share one thing (the anonymous widget that
+`/app/drop-widget.js` mounts, its ids and the A-06 budget unchanged), the three ways to share and the
+Tari rows. `/how` is five stills of the real interface, drawn inert from the drive's parts in
+`css/how.css`, so they follow the theme; no mascot, no animation.
 
 ## Tools (run as `build` on ultron)
 
