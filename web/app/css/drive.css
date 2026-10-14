@@ -376,3 +376,32 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 #rec-open .fv .files { max-height: min(50vh, 28rem); overflow: auto; }
 /* Received: the sender column says who can't be named; the scan line breathes under the drop card. */
 .drop-card + .scanline { margin-top: -0.5rem; }
+/* lane app2, pay to open (step 15): the buyer page (/p/<id>) from the prototype's pay.html after the fix
+   pass: the price card first on phones, beside the teaser from 960 px, where it stays in view. */
+.fv-page.pay-main { width: min(100%, 72rem); }
+.buyer { display: grid; gap: 1.5rem; align-items: start; grid-template-areas: "head" "pay" "list"; min-width: 0; }
+.buyer-head { grid-area: head; display: grid; gap: 0.75rem; }
+.buyer-head .h1 { text-wrap: balance; }
+.buyer-pay { grid-area: pay; min-width: 0; }
+.buyer-list { grid-area: list; min-width: 0; }
+@media (min-width: 960px) {
+  .buyer { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); grid-template-areas: "head pay" "list pay"; column-gap: 2.5rem; padding-block: 1rem; }
+  .buyer-pay { position: sticky; top: 1.5rem; }
+}
+.buyer-pay .btn[data-size="lg"] { width: 100%; }
+.buyer-pay .alert p + p { margin-top: 0.5rem; }
+.buyer .card-title.row { flex-wrap: wrap; row-gap: 0.25rem; }
+.preview-list { list-style: none; margin: 0; padding: 0; }
+.preview-list li { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid var(--border); }
+.preview-list li:last-child { border-bottom: 0; }
+.preview-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-list .size { color: var(--muted-foreground); font-variant-numeric: tabular-nums; font-size: var(--text-xs); }
+.preview-list .icon { color: var(--muted-foreground); }
+.pay-qr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; align-items: center; }
+.pay-qr .md-qr { margin: 0; }
+.pay-qr .md-qr svg { width: 7.5rem; height: 7.5rem; }
+.pay-qr .md-qr figcaption { max-width: 7.5rem; }
+.pay-qr .input { font-size: var(--text-xs); }
+@media (max-width: 380px) { .pay-qr { grid-template-columns: minmax(0, 1fr); justify-items: start; } }
+/* Received's Payments (the owner check, step 16) */
+[data-testid="sales-root"] .badge[data-check] { white-space: nowrap; }

@@ -421,10 +421,10 @@ def check_static():
     s = SITE / "static"
     problems = []
     robots = (s / "robots.txt").read_text()
-    for path in ("/s/", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
+    for path in ("/s/", "/p/", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
         if f"Disallow: {path}\n" not in robots:
             problems.append(f"robots.txt: no Disallow: {path}")
-    for path in ("/t", "/s/abc", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
+    for path in ("/t", "/s/abc", "/p/abc", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
         if robots_allows(robots, path):
             problems.append(f"robots.txt: {path} is not disallowed")
     # A drop page is public by design (it carries noindex itself); the public config and numbers are

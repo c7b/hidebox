@@ -57,7 +57,7 @@ class Static:
         if path == "/" or path.startswith(("/app/", "/vendor/")):
             csp = APP_CSP
             target = path
-        elif path.startswith("/s/") or path == "/t":
+        elif path.startswith(("/s/", "/p/")) or path == "/t":   # /p/: a paid link's buyer page (lane app2)
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/view.html"
         elif path == "/drive" or path.startswith("/drive/"):   # lane app1: the drive's own page (16-drive-design §12)
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/drive.html"

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // The share dialog (16-drive-design §3, DESIGN.md "The share dialog"), lane app2: one question per step,
 // three named choices at most. Who can open it? Anyone with the link, or one Tari address (Someone who
-// pays you joins with pay to open, step 15). For a link: how many times (Once, A few times, No limit),
+// pays you (pay to open, behind features.pay_to_open: a price chip, the name switch, C35 the first time,
+// then a /p/ link; lane app2 step 15). For a link: how many times (Once, A few times, No limit),
 // a defaulted line "It ends" (Tomorrow, In a week, When I stop it), a secret word, and on files "Delete it
 // from my drive after". For a Tari address: the address, its safety code, the kind-4 switch, the line that
 // says who sends it (C8) and what the chain shows (C9-d). The result: the rule in one sentence, the link
@@ -11,7 +12,8 @@ import { formatDate, t } from '../lib/i18n.js';
 import { activeShares, ruleOf } from '../lib/drive.js';
 import { FEW, FLAG_FOLDER, knownLinks, makeLink, rememberLink, stopLink } from '../lib/links.js';
 import { h, icon, id, init, openModal, closeModal, toast } from './behaviors.js';
-import { alert, button, closeX, endsText, errorAlert, itemName, opensText, ruleBadge, safetyGrid, shortAddress } from './drive-parts.js';
+import { alert, button, closeX, endsText, errorAlert, formatTari, itemName, opensText, ruleBadge, safetyGrid, shortAddress } from './drive-parts.js';
+import { patchShare } from '../lib/api.js';
 
 const coarse = () => matchMedia('(pointer: coarse)').matches;
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -90,15 +92,62 @@ function go(step) {
 
 // ---------- steps ----------
 
+// Pay to open is offered when /config turns it on and the item has no paid link yet (one per item).
+const canSell = () => Boolean(S.ctx.cfg.features?.pay_to_open && S.ctx.cfg.pay_to_open?.prices_ut?.length
+  && !activeShares(S.item).some((x) => x.mode === 'pay' || x.paid));
+
 function whoStep(body, footer) {
   const { item, ctx } = S;
   if (item.folder) body.append(h('p', { class: 'small muted', 'data-testid': 'share-folder-note' }, t('share.folder_note', { count: ctx.files })));
-  // Someone who pays you is pay to open's (16-drive-design §15 step 15), behind features.pay_to_open.
+  if (S.who === 'pay' && !canSell()) S.who = 'link';
   body.append(group('who', t('share.who'), [
     choice('who', 'link', 'link', t('share.who.link'), t('share.who.link_d')),
     choice('who', 'tari', 'send', t('share.who.tari'), t('share.who.tari_d'), { tari: true }),
+    canSell() ? choice('who', 'pay', 'coins', t('sell.who'), t('sell.who_d'), { tari: true }) : null,
   ]));
-  footer.append(cancel(), button(t('share.next'), { testid: 'share-next', 'data-autofocus': '', onclick: () => go(S.who === 'tari' ? 'tari' : 'opens') }));
+  footer.append(cancel(), button(t('share.next'), { testid: 'share-next', 'data-autofocus': '', onclick: () => go({ tari: 'tari', pay: 'pay' }[S.who] ?? 'opens') }));
+}
+
+// ---------- Pay to open (lane app2, step 15) ----------
+
+const sells = (drive) => [...drive.index.items.values()].some((x) => (x.row.shares ?? []).some((sh) => sh.mode === 'pay' || sh.paid));
+
+function payStep(body, footer) {
+  const { ctx } = S;
+  const prices = ctx.cfg.pay_to_open.prices_ut;
+  if (!prices.includes(S.price)) S.price = prices[0];
+  body.append(h('p', { class: 'small muted' }, t('sell.price_d')),
+    group('price', t('sell.price'), prices.map((p) => choice('price', p, 'coins', t('sell.chip', { price: formatTari(p) }), null, { tari: true }))),
+    switchRow('showName', 'eye', t('sell.names'), t('sell.names_d'), { testid: 'pay-names' }),
+    S.firstSale ? alert({ glyph: 'key-round', variant: 'tari', title: t('sell.key_h'), description: t('sell.key'), testid: 'pay-key-note' }) : null);
+  footer.append(back('who'), button(t('sell.make'), { glyph: 'coins', testid: 'pay-make', 'data-autofocus': '', onclick: (e) => makePay(e.currentTarget) }));
+}
+
+async function makePay(btn) {
+  const { drive, item, ctx } = S;
+  S.error = null;
+  btn.disabled = true;
+  btn.replaceChildren(spinner(), t('share.making'));
+  try {
+    const pay = await import('../lib/pay.js');
+    // A drive that already sells (from another device too) has its sales address on our server already.
+    await pay.ensureSeller(drive.identity, ctx.cfg, drive.headers(), { known: sells(drive) });
+    const files = item.folder ? drive.index.descendants(item.id).filter((x) => !x.folder) : [item];
+    const teaser = {
+      kind: item.folder ? 'folder' : 'file', name: S.showName ? itemName(item) : null,
+      count: files.length, size: files.reduce((sum, f) => sum + (f.meta?.size ?? 0), 0),
+    };
+    const link = await pay.makePayLink(item, { priceUt: S.price, teaser }, { headers: drive.headers(), origin: ctx.cfg.origin || location.origin });
+    await rememberLink(drive.identity, link.shareId, { url: link.url });
+    S.firstSale = false;
+    S.link = { ...link, word: null, rule: { pay: true } };
+    S.step = 'result';
+    refreshDrive();
+    render();
+  } catch (e) {
+    S.error = { e };
+    render();
+  }
 }
 
 function wordField() {
@@ -387,25 +436,27 @@ function resultStep(body, footer) {
       input.focus();
     }
   });
-  const extra = [
+  const pay = Boolean(link.rule.pay);
+  const extra = pay ? [] : [
     item.folder ? t('share.say.visit', { ticket_min: ctx.ticketMin }) : null,
     link.rule.thenDelete ? t('share.say.gone') : null,
   ].filter(Boolean);
   const left = h('div', { class: 'stack' },
     h('div', { class: 'row' }, h('span', { class: 'badge', 'data-variant': 'success' }, icon('check'), t('share.ready'))),
-    h('p', { class: 'say', 'data-testid': 'share-say' }, sentence(link, ctx, item.folder)),
+    h('p', { class: 'say', 'data-testid': 'share-say' }, pay ? t('sell.say', { price: formatTari(link.priceUt) }) : sentence(link, ctx, item.folder)),
     extra.length ? h('p', { class: 'small', 'data-testid': 'share-say-more' }, extra.join(' ')) : null,
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'share-link-out' }, t('share.link')), h('div', { class: 'link-row' }, input, copyBtn)),
     link.word ? h('div', { class: 'stack' },
       h('div', { class: 'word-box', 'data-testid': 'share-word-box' }, icon('key-round'),
         h('div', { class: 'stack' }, h('span', { class: 'small muted' }, t('share.say.word')), h('strong', {}, link.word))),
       h('p', { class: 'small muted' }, t('share.word_apart'))) : null,
-    h('p', { class: 'small muted' }, t('share.key_note')));
+    // C34 (seller form) and its boundary for a paid link; C2 for the others.
+    pay ? h('p', { class: 'small muted', 'data-testid': 'pay-split' }, `${t('sell.split')} ${t('sell.split_limit')}`) : h('p', { class: 'small muted' }, t('share.key_note')));
   const qrSlot = h('div', { class: 'qr-wrap' });
   body.append(h('div', { class: 'result-grid' }, left, coarse() ? null : qrSlot));
   if (!coarse()) {
     import('./qr.js').then(({ qrFigure }) => qrSlot.replaceChildren(qrFigure(link.url, {
-      label: t('share.qr_label'), caption: link.rule.opens === 'once' ? t('share.qr_once') : t('share.qr'), testid: 'share-qr',
+      label: t('share.qr_label'), caption: !pay && link.rule.opens === 'once' ? t('share.qr_once') : t('share.qr'), testid: 'share-qr',
     }))).catch(() => qrSlot.remove());
   }
   // Phones: the share sheet is the primary action; Done stays quiet.
@@ -443,13 +494,32 @@ function linksPanel(panel) {
         panel.append(errorAlert(e));
       }
     });
+    // lane app2: a paid link can stop selling (no new claims; buyers who paid keep their opens) and sell again.
+    let pause = null;
+    if (rule.kind === 'pay' && rule.ready !== false) {
+      pause = button(rule.paused ? t('sell.resume') : t('sell.stop'), { variant: 'outline', size: 'sm', testid: rule.paused ? 'link-resume' : 'link-pause' });
+      pause.addEventListener('click', async () => {
+        pause.disabled = true;
+        try {
+          await patchShare(s.id, { paused: !rule.paused }, drive.headers());
+          toast(rule.paused ? t('sell.resumed') : t('sell.stopped'), { type: 'success' });
+          await drive.reload();
+          drive.render();
+          S.item = drive.index.get(item.id) ?? item;
+          render();
+        } catch (e) {
+          pause.disabled = false;
+          panel.append(errorAlert(e));
+        }
+      });
+    }
     const meta = [opensText(rule), endsText(rule)].filter(Boolean).join(' · ');
-    return h('div', { class: 'item', 'data-variant': 'outline', 'data-size': 'sm', 'data-testid': 'link-row', 'data-id': s.id },
+    return h('div', { class: 'item', 'data-variant': 'outline', 'data-size': 'sm', 'data-testid': 'link-row', 'data-id': s.id, 'data-rule': rule.kind },
       h('div', { class: 'item-content' },
         h('div', { class: 'item-title' }, h('span', { class: 'badges' }, ruleBadge(rule))),
         meta ? h('div', { class: 'item-description' }, meta) : null,
         mine?.url ? null : h('div', { class: 'item-description' }, t('share.not_here'))),
-      h('div', { class: 'item-actions' }, mine?.url ? copyIt : null, stop));
+      h('div', { class: 'item-actions' }, mine?.url ? copyIt : null, pause, stop));
   });
   panel.replaceChildren(h('div', { class: 'item-group links-list' }, rows));
 }
@@ -492,10 +562,10 @@ function render() {
   const box = document.getElementById(BOX);
   const body = h('div', { class: 'stack', 'data-testid': `share-step-${S.step}` });
   const footer = h('div', { class: 'dialog-footer' });
-  const steps = { who: whoStep, opens: opensStep, tari: tariStep, sending: sendingStep, result: resultStep };
+  const steps = { who: whoStep, opens: opensStep, pay: payStep, tari: tariStep, sending: sendingStep, result: resultStep };
   steps[S.step](body, footer);
   if (S.error) body.append(S.error.e ? errorAlert(S.error.e) : alert({ glyph: 'triangle-alert', variant: 'destructive', title: S.error.text, role: 'alert' }));
-  const description = { who: t('share.who'), opens: t('share.opens'), tari: t('share.who.tari_d'), sending: t('tari.sending'), result: null }[S.step];
+  const description = { who: t('share.who'), opens: t('share.opens'), pay: t('sell.price'), tari: t('share.who.tari_d'), sending: t('tari.sending'), result: null }[S.step];
   // On the Links tab, Next (to a new link's rule) steps aside; Cancel closes.
   const syncFooter = () => {
     const next = footer.querySelector('[data-testid="share-next"]');
@@ -525,8 +595,12 @@ export async function openShare(drive, item, { trigger = null, step = 'who', tab
   S = {
     drive, item, ctx: context(drive, item), step, who: 'link', opens: 'once', ends: 'week', word: false, wordValue: '',
     thenDelete: false, tari: '', kind4: false, tab: tab ?? 'new', known: await knownLinks(drive.identity),
-    link: null, error: null, send: null, sendJob: null,
+    link: null, error: null, send: null, sendJob: null, price: null, showName: true, firstSale: false,
   };
+  // C35 shows the first time this drive sells (lane app2): no sales address registered from here yet.
+  if (S.ctx.cfg.features?.pay_to_open) {
+    S.firstSale = !sells(drive) && !(await (await import('../lib/pay.js')).salesState(drive.identity)).registered;
+  }
   const mine = S;
   render();
   openModal(box, { returnFocus: trigger ?? undefined, onClose: () => { if (S === mine) S = null; for (const old of document.querySelectorAll('body > [data-owner="share"]')) old.remove(); } });
