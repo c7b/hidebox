@@ -46,6 +46,12 @@
 }
 .toc a:hover { background: var(--bg-sunken); }
 @media (pointer: coarse) { .toc a { min-height: var(--tap); } }
+/* phones: one row that scrolls sideways inside itself, so the page starts with its words */
+@media (max-width: 639.98px) {
+  .toc { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding: 2px var(--gutter) 4px; scroll-padding-inline: var(--gutter); }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc a { flex: none; }
+}
 
 /* how it was made: sections with a measure; the wide ones (tables, the Tari map) without */
 .doc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
