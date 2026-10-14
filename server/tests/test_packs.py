@@ -194,6 +194,26 @@ class Brakes(Base):
         self.s.heartbeat()
         self.assertEqual(buy()[0], 201)
 
+    def test_a_pack_ended_early_frees_its_place_for_the_day(self):
+        """A test run's pack ended with release-pack (or a deleted drive) no longer holds a place."""
+        nets = iter(f"192.0.2.{i}" for i in range(1, 50))
+        bought = []
+        for _ in range(3):
+            drive = self.new_drive()
+            status, inv, _ = self.buy("s30", drive, ip=next(nets))
+            bought.append((drive, inv))
+        self.assertEqual(self.buy("s30", ip=next(nets))[:2], (429, "packs_limited"))
+        drive, inv = bought[0]
+        with db.tx(self.s.conn):                 # paid and credited: it still counts
+            self.s.conn.execute("UPDATE invoices SET status = 'credited', received_ut = price_ut, credited_at = ? "
+                                "WHERE id = ?", (self.s.now, inv["invoice_id"]))
+        self.grant(drive, "s30")
+        self.assertEqual(packs.sold_today(self.s.conn, self.s.now, False), 3)
+        with db.tx(self.s.conn):                 # mutis-admin release-pack
+            self.s.conn.execute("UPDATE identities SET paid_bytes = 0, paid_until = ? WHERE id = ?", (self.s.now, drive["id"]))
+        self.assertEqual(packs.sold_today(self.s.conn, self.s.now, False), 2)
+        self.assertEqual(self.buy("s30", ip=next(nets))[0], 201)
+
     def test_our_evidence_invoice_and_a_refused_purchase_dont_count(self):
         with db.tx(self.s.conn):                                    # chain_worker.evidence_payment's row
             self.s.conn.execute("INSERT INTO invoices(id, identity_id, pack, price_ut, address, status, created_at, "
