@@ -3,7 +3,7 @@
 import re
 import secrets
 
-from .. import cleanup, codec, db, items, quota
+from .. import cleanup, codec, db, items, packs, quota
 from ..http_util import ApiError, Response, get_b64, json_response
 from .shares import _egress_ok, is_paid, opens_by_hour, paid_summary, share_json
 from .system import limits_block
@@ -37,6 +37,8 @@ def get_me(ctx):
                   "paid_bytes": identity["paid_bytes"] if paid_active else 0,
                   "paid_until": identity["paid_until"] if paid_active else None,
                   "trash_bytes": counts["trash_bytes"]},
+        # Sixth pass: the pack this drive holds (one at a time) and when it can be renewed.
+        "pack": packs.held(identity, ctx.now, ctx.cfg["packs"]["renew_days"]),
         "files": counts["files"], "folders": counts["folders"],
         "limits": limits_block()[cls],
         "sends_today": identity["sends_today"] if identity["sends_day"] == today else 0,

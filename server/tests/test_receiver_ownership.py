@@ -93,7 +93,9 @@ class ReceiverOwnership(unittest.TestCase):
         finds nothing missing and credits stay open for everyone."""
         genuine = self.invoice()
         self.s.chain.transfer("service", genuine["address"], 500000, None, 30000)
+        buyer, self.locker = self.locker, self.s.register()   # the forger's own drive
         forged_inv = self.invoice()
+        self.locker = buyer
         forged = self.s.chain.add_output(forged_inv["address"], 500000, None, spender=self.payer["address"])
         self.ticks()
         self.assertEqual(self.get(genuine)["status"], "credited")

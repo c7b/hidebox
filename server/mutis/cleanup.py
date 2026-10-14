@@ -8,7 +8,7 @@ or, while a download ticket is still open, when that download finishes (at most 
 import sqlite3
 import time
 
-from . import codec, db, items, payments, quota, sales
+from . import codec, db, items, packs, payments, quota, sales
 from .storage import Blobs
 
 TOMBSTONE_DAYS = 30
@@ -163,6 +163,9 @@ def run(conn: sqlite3.Connection, cfg, blobs: Blobs, statvfs, now: int) -> dict:
     purge_tombstones(conn, now)
     payments.expire_invoices(conn, now)
     sales.expire_claims(conn, now)
+    with db.tx(conn):                    # what the healthcheck reads for its `packs` check (packs.status)
+        db.set_meta(conn, "packs", packs.status(conn, quota.measure(conn, statvfs, cfg.data_dir, cfg["limits"], now),
+                                                cfg["packs"], now))
     hour = str(codec.floor_hour(now))
     if db.get_meta(conn, "cleanup_hour") != hour:
         pool = quota.measure(conn, statvfs, cfg.data_dir, cfg["limits"], now)

@@ -130,12 +130,13 @@ class Migration(unittest.TestCase):
         working as a file at the drive's root, outside the Trash, with an item ticket; the new tables start
         empty and the foreign keys hold."""
         path = self.v3_database()
-        self.assertEqual(db.migrate(path), 5)               # 004, then 005 (the owner's check of sales)
+        self.assertEqual(db.migrate(path), 6)               # 004, 005 (the owner's check of sales), 006 (packs)
         conn = db.connect(path)
         try:
             item = conn.execute("SELECT kind, parent_id, parent_wrap, trashed_at, items.state, used_bytes FROM items "
                                 "JOIN identities ON identities.id = items.owner_id").fetchone()
             self.assertEqual(tuple(item), ("file", None, None, None, "ready", 2048))
+            self.assertEqual(tuple(conn.execute("SELECT paid_pack, paid_judge FROM identities").fetchone()), (None, 0))
             self.assertEqual(conn.execute("SELECT scope FROM tickets").fetchone()[0], "item")
             self.assertEqual(conn.execute("SELECT state, max_views FROM shares").fetchone()[:], ("active", 3))
             for table in ("share_opens", "sellers", "paid_shares", "claims", "sale_payments"):

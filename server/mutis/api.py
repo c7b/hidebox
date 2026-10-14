@@ -4,6 +4,7 @@
 Nothing from a request is ever logged: the stock request/error logging of http.server is
 replaced, and failures are reported only as fixed event codes through logsafe.
 """
+import ipaddress
 import os
 import signal
 import sqlite3
@@ -20,7 +21,7 @@ from .http_util import HEADERS_MAX, ApiError, Request, Response, error_response
 from .indexer import Indexers
 from .ipkeys import IpKeys, client_ip
 from .pow import Pow, PowError
-from .ratelimit import Limiter, Recent
+from .ratelimit import DayCounts, Limiter, Recent
 from .router import ROUTER
 from .storage import Blobs
 
@@ -88,6 +89,8 @@ class App:
         self.git_sha = _git_sha()
         self.pw_tries = Recent(MEMORY_CAP)       # (share id, ip64) → (wrong passwords today, last try)
         self.small_held = Recent(MEMORY_CAP)     # ip48 → {item id: SMALL-lane bytes it holds}
+        self.daily = DayCounts(MEMORY_CAP)       # the daily brakes (drives, drive uploads, packs) per network
+        self.exempt_nets = tuple(ipaddress.ip_network(a, strict=False) for a in cfg["brakes"]["exempt_addresses"])
         self.cache: dict = {}
         self.inflight = InFlight()
         self._features = (0.0, {})
@@ -97,6 +100,15 @@ class App:
         self.pow.reset()
         self.pw_tries.clear()
         self.small_held.clear()
+        self.daily.clear()
+
+    def exempt(self, ip_text: str) -> bool:
+        """The server's own addresses (brakes.exempt_addresses) skip the per-network daily brakes."""
+        try:
+            ip = ipaddress.ip_address(ip_text)
+        except ValueError:
+            return False
+        return any(ip.version == net.version and ip in net for net in self.exempt_nets)
 
     def connect(self) -> sqlite3.Connection:
         return db.connect(self.cfg.db_path)
@@ -175,6 +187,21 @@ class Ctx:
                 self.app.limiter.refund(rule, self.now)
             raise
 
+    @contextmanager
+    def daily(self, *rules, code: str, message: str):
+        """Charge per-UTC-day brakes (name, key, limit, cost) for a block: 429 `code` until midnight UTC when
+        one is used up, and give them back if the block refuses the request."""
+        if not self.app.daily.take(rules):
+            raise ApiError(429, code, message, retry_after=max(1, codec.next_utc_midnight(self.now) - self.now))
+        try:
+            yield
+        except ApiError:
+            self.app.daily.give_back(rules)
+            raise
+
+    def exempt(self) -> bool:
+        return self.app.exempt(self.req.ip)
+
     def session(self, required: bool = True) -> sqlite3.Row | None:
         if self._identity is None:
             token = auth.bearer(self.req.header("Authorization"))
@@ -218,6 +245,14 @@ class Ctx:
             return None
         if len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
             raise _judge_refused()
+        return code
+
+    def judge_soft(self) -> str | None:
+        """The X-Mutis-Judge code when it names a live pass, else None (never a 403): for the brakes a pass
+        widens (uploads, packs), where an old pass in a browser must not break the request."""
+        code = self.req.header("X-Mutis-Judge")
+        if code is None or len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
+            return None
         return code
 
     def spend_judge(self, code: str) -> None:

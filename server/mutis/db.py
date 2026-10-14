@@ -9,7 +9,7 @@ from pathlib import Path
 
 SCHEMA = Path(__file__).with_name("schema.sql")
 MIGRATIONS = Path(__file__).with_name("migrations")
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 # Threads of one process queue here instead of spinning in SQLite's busy handler; other processes
 # (worker, cleanup) still wait on SQLite's own lock.
 _WRITERS = threading.Lock()

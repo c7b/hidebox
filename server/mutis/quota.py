@@ -24,7 +24,6 @@ ACTIVE_DAYS = 30
 N_MIN = 100
 RESERVE_FRACTION = 0.10
 ANON_FRACTION = 0.08
-PAID_CAP_FRACTION = 0.40
 FREEZE_FREE_MARGIN = 2 * GiB
 FREEZE_ALL_MARGIN = 256 * MiB
 
@@ -46,8 +45,9 @@ CANARY_MAX_EXPIRY_S = 2 * 86400
 SEND_VIEWS = 3
 SEND_EXPIRY_S = 30 * 86400
 
+# Sixth pass (anti-griefing): the big pack is 5 GiB, so a few purchases can't take the paid share at once.
 PACKS = {"s30": {"bytes": 2 * GiB, "days": 30, "price_ut": 500_000},
-         "m30": {"bytes": 10 * GiB, "days": 30, "price_ut": 2_000_000}}
+         "m30": {"bytes": 5 * GiB, "days": 30, "price_ut": 1_000_000}}
 
 
 def padme(length: int) -> int:

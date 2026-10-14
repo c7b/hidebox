@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """GET /stats and /stats/wall (spec §6.3, brand §8.3 / P-3): live numbers, never anything per person.
 
+Paid space shows the public slice only, sold and capped, each rounded down to a whole GiB.
 Disk sizes are rounded to 0.1 GiB: uploads reserve their full size at once, so exact free bytes
 refreshed every minute would show each upload's padded size and time.
 
@@ -11,7 +12,7 @@ size class and rule may still recognise it there.
 """
 import random
 
-from .. import db, lanes, quota, seallog
+from .. import db, lanes, packs, quota, seallog
 from ..http_util import json_response
 from .courier import HEARTBEAT_MAX_AGE_S
 
@@ -31,6 +32,7 @@ def build_stats(ctx) -> dict:
     status = db.get_meta_json(conn, "chain_status", {})
     beat = int(db.get_meta(conn, "chain_heartbeat", "0"))
     checkpoint = seallog.latest_committed(conn)
+    paid = packs.slices(conn, pool, ctx.cfg["packs"], now)
     return {
         "free_quota_bytes": quota.free_quota(conn, pool),
         "last_sealed_min": (now - int(last)) // 60 if last else None,
@@ -39,6 +41,9 @@ def build_stats(ctx) -> dict:
         "disk_total_bytes": pool.d_total - pool.d_total % DISK_STEP,
         "disk_free_bytes": pool.d_avail - pool.d_avail % DISK_STEP,
         "uploads_frozen": lanes.freeze_state(conn, pool),
+        # Sixth pass: the public slice of paid space, in whole GiB (no drive, no judge slice).
+        "packs_sold_public": paid.public_sold - paid.public_sold % quota.GiB,
+        "packs_cap_public": paid.public_cap - paid.public_cap % quota.GiB,
         "chain_ok": now - beat <= HEARTBEAT_MAX_AGE_S and bool(status.get("walletd_ok")),
         "seal_log": {"tree_size": checkpoint["tree_size"], "epoch": checkpoint["epoch"]} if checkpoint else None,
         "updated_at": now,

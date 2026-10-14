@@ -4,6 +4,7 @@
 Unknown keys are an error, so a typo in the TOML stops the service instead of being ignored.
 """
 import copy
+import ipaddress
 import os
 import re
 import tomllib
@@ -31,9 +32,24 @@ DEFAULTS: dict = {
     # The drive (16-drive-design §15): folders, Trash and Delete it after; pay to open. Off until the
     # routes switch over; the tests turn them on.
     "features": {"drops": True, "relay_send": True, "direct_send": False, "demo_pay": True, "sponsor": False,
-                 "decoys": True, "kept": True, "seallog": False, "folders": False, "pay_to_open": False},
+                 "decoys": True, "kept": True, "seallog": False, "folders": False, "pay_to_open": False,
+                 "packs": True},
     "limits": {"reserve_min_bytes": 10 << 30, "small_lane_bytes": 1 << 30, "drop_lane_bytes": 2 << 30,
                "anon_lane_max_bytes": 6 << 30},
+    # Space packs (spec §9.6; sixth pass, anti-griefing; server/mutis/packs.py). Paid space is capped at
+    # paid_cap_fraction of the pool; judge_fraction of that cap is a slice only purchases made with a judge
+    # pass draw from (they spill into the public slice when it is used up). A drive holds one pack at a
+    # time and may buy the same pack again in its last renew_days days (days stack, bytes don't). Sales a
+    # UTC day: per network (in memory) and for the whole deployment (counted from the invoices).
+    "packs": {"paid_cap_fraction": 0.40, "judge_fraction": 0.30, "renew_days": 3, "per_network_day": 1,
+              "judge_per_network_day": 2, "public_per_day": 3, "judge_per_day": 10},
+    # Free space brakes, a UTC day each, in memory (a restart forgets them): new drives and drive upload
+    # bytes per IPv6 /64 or IPv4 address, and per /48 or IPv4 /24. A judge pass skips the drive brakes and
+    # has its own upload allowance; drives with an active pack are bounded by their pack instead.
+    # exempt_addresses: the server's own addresses (its end-to-end tests run there), addresses or CIDR.
+    "brakes": {"drives_per_network_day": 5, "drives_per_wide_network_day": 20,
+               "upload_bytes_per_network_day": 2 << 30, "upload_bytes_per_wide_network_day": 6 << 30,
+               "judge_upload_bytes_per_network_day": 8 << 30, "exempt_addresses": []},
     "budgets": {
         "public": {"courier": 1500, "demo_pay_ut": 25_000_000, "sponsor_ut": 100_000_000},
         "reserved": {"courier": 500, "decoy": 120, "demo_pay_ut": 10_000_000, "sponsor_ut": 30_000_000},
@@ -150,6 +166,17 @@ def validate(raw: dict, dev: bool = False) -> None:
         raise ConfigError(f"seal_log.checkpoint_interval_s must be at least {SEAL_MIN_INTERVAL_S}")
     if raw["e2e_expiry_s"] < 0:
         raise ConfigError("e2e_expiry_s must be 0 (off) or a number of seconds")
+    packs = raw["packs"]
+    if not (0 < packs["paid_cap_fraction"] <= 1 and 0 <= packs["judge_fraction"] <= 1):
+        raise ConfigError("packs.paid_cap_fraction must be in (0, 1] and packs.judge_fraction in [0, 1]")
+    if min(packs[k] for k in ("renew_days", "per_network_day", "judge_per_network_day", "public_per_day",
+                              "judge_per_day")) < 0 or min(v for k, v in raw["brakes"].items() if k != "exempt_addresses") < 0:
+        raise ConfigError("packs and brakes take numbers of at least 0")
+    for entry in raw["brakes"]["exempt_addresses"]:
+        try:
+            ipaddress.ip_network(entry, strict=False)
+        except (TypeError, ValueError):
+            raise ConfigError("brakes.exempt_addresses takes addresses or CIDR networks") from None
     if raw["judge_demo_gone"] and not SHARE_ID.fullmatch(raw["judge_demo_gone"]):
         raise ConfigError("judge_demo_gone must be empty or a share id (22 base64url characters)")
 

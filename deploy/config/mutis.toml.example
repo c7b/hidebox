@@ -39,12 +39,38 @@ sponsor = false
 decoys = true
 kept = true
 seallog = false
+# Space packs on sale. `sudo mutis-admin feature packs off` stops sales at once (deploy/README.md,
+# "If someone games the packs"); payments already sent still credit.
+packs = true
 
 [limits]
 reserve_min_bytes = 10737418240
 small_lane_bytes = 1073741824
 drop_lane_bytes = 2147483648
 anon_lane_max_bytes = 6442450944
+
+# Space packs (server/mutis/packs.py). Paid space is at most paid_cap_fraction of the pool; judge_fraction of
+# that is kept for purchases made with a judge pass. One pack per drive, renewable with the same pack in its
+# last renew_days days. Sales a UTC day: per IPv6 /64 or IPv4 address (in memory), and for the deployment.
+[packs]
+paid_cap_fraction = 0.4
+judge_fraction = 0.3
+renew_days = 3
+per_network_day = 1
+judge_per_network_day = 2
+public_per_day = 3
+judge_per_day = 10
+
+# Free space brakes, a UTC day each, in memory (a restart forgets them). "network" is an IPv6 /64 or an
+# IPv4 address; "wide" a /48 or an IPv4 /24. exempt_addresses: the server's own addresses, where its
+# end-to-end tests run (production lists them in /etc/mutis/mutis.toml; nobody else's).
+[brakes]
+drives_per_network_day = 5
+drives_per_wide_network_day = 20
+upload_bytes_per_network_day = 2147483648
+upload_bytes_per_wide_network_day = 6442450944
+judge_upload_bytes_per_network_day = 8589934592
+exempt_addresses = []
 
 [budgets.public]
 courier = 1500

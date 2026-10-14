@@ -19,6 +19,7 @@ SMALL_AT_ONCE_PER_48 = 100 * quota.MiB
 DRIVE_PER_HOUR, DRIVE_PER_HOUR_PROBATION, DRIVE_PER_HOUR_64 = 600, 100, 1200   # kept files with folders on
 DROP_FILES_PER_DAY = 50
 DROP_BYTES_PER_DAY = 1 * quota.GiB
+UPLOADS_LIMITED = "Your network has uploaded all it can to free drives today. Try again tomorrow."
 
 
 def _check_header(header: bytes, chunk_count: int) -> None:
@@ -38,6 +39,19 @@ def _anon_rules(ctx, lane: str, size: int) -> list:
     return [("up_anon64", ctx.ip64, ANON_LARGE_PER_HOUR, 3600, 1), ("up_anon64b", ctx.ip64, 500 * mb, 86400, size),
             ("up_anon48", ctx.ip48, 30, 3600, 1), ("up_anon48b", ctx.ip48, 1536 * mb, 86400, size),
             ("up_anon_all", "all", 6 * quota.GiB, 86400, size)]
+
+
+def _free_bytes_rules(ctx, size: int) -> tuple:
+    """Sixth pass: bytes a free drive may upload a UTC day, per network (in memory), so a few patient
+    drives can't freeze free uploads for everyone. A live judge pass has its own, larger allowance; the
+    server's own address (its tests) none. Drives with an active pack are bounded by their pack."""
+    brakes = ctx.cfg["brakes"]
+    if ctx.exempt():
+        return ()
+    if ctx.judge_soft() is not None:
+        return (("upbytes64j", ctx.ip64, brakes["judge_upload_bytes_per_network_day"], size),)
+    return (("upbytes64", ctx.ip64, brakes["upload_bytes_per_network_day"], size),
+            ("upbytes48", ctx.ip48, brakes["upload_bytes_per_wide_network_day"], size))
 
 
 def _small_at_once(ctx, size: int) -> None:
@@ -78,7 +92,7 @@ def create(ctx):
     expires_at = get_int(body, "expires_at", 0, 1 << 40, optional=True)
     in_folder = body.get("parent_id") is not None or body.get("parent_wrap") is not None
 
-    rules, pow_purpose, drop = [], None, None
+    rules, pow_purpose, drop, daily = [], None, None, ()
     if in_folder and (canary or identity is None or retention != "kept"):
         raise invalid("parent_id", "Only a drive's kept files go in folders.")
     if canary:
@@ -127,10 +141,12 @@ def create(ctx):
         if in_folder:
             ctx.require_feature("folders")
             tree.parent_fields(body, ctx.db, identity)        # 403, 409 trashed, 422 before any byte
+        if cls != "paid":
+            daily = _free_bytes_rules(ctx, size)
     if not canary and expires_at is not None:
         expires_at = codec.coarse_expiry(expires_at, now)
 
-    with ctx.charged(*rules):
+    with ctx.charged(*rules), ctx.daily(*daily, code="uploads_limited", message=UPLOADS_LIMITED):
         if lane == "small" and not canary:
             _small_at_once(ctx, size)
         if pow_purpose:

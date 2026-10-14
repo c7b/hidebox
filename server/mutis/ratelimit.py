@@ -73,3 +73,40 @@ class Recent:
     def clear(self) -> None:
         with self._lock:
             self._data.clear()
+
+
+class DayCounts:
+    """Exact totals for one UTC day, (name, key) → used, all in memory: cleared with the day key at
+    midnight UTC (api.App._new_day), and forgotten by any restart. A rule is (name, key, limit, cost).
+    Past `cap` keys the least recently charged are forgotten, so rotating addresses can't grow it."""
+
+    def __init__(self, cap: int):
+        self.cap = cap
+        self._lock = threading.Lock()
+        self._used: OrderedDict = OrderedDict()
+
+    def take(self, rules) -> bool:
+        """Charge every rule, or none of them when one would go over its limit."""
+        with self._lock:
+            if any(self._used.get((name, key), 0) + cost > limit for name, key, limit, cost in rules):
+                return False
+            for name, key, _, cost in rules:
+                self._used[(name, key)] = self._used.get((name, key), 0) + cost
+                self._used.move_to_end((name, key))
+            while len(self._used) > self.cap:
+                self._used.popitem(last=False)
+            return True
+
+    def give_back(self, rules) -> None:
+        with self._lock:
+            for name, key, _, cost in rules:
+                if (name, key) in self._used:
+                    self._used[(name, key)] = max(0, self._used[(name, key)] - cost)
+
+    def used(self, name: str, key) -> int:
+        with self._lock:
+            return self._used.get((name, key), 0)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._used.clear()

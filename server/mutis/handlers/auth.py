@@ -19,19 +19,27 @@ def register(ctx):
     body = ctx.req.json()
     # Fifth pass: a judge pass lifts the per-network limits (judges sharing an office network), as it does
     # for sends and test money; the deployment-wide daily cap still applies.
-    network = () if ctx.judge() is not None else (("reg64", ctx.ip64, 5, 3600, 1), ("reg48", ctx.ip48, 20, 3600, 1))
+    judge = ctx.judge() is not None
+    network = () if judge else (("reg64", ctx.ip64, 5, 3600, 1), ("reg48", ctx.ip48, 20, 3600, 1))
     ctx.limit(*network, ("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, 1))
     identity_id = _identity_id(body)
     verifier = get_b64(body, "auth_verifier", 32)
-    ctx.proof_of_work("register", body)
-    today = codec.day(ctx.now)
-    try:
-        with db.tx(ctx.db):
-            ctx.db.execute("INSERT INTO identities(id, auth_verifier, created_day, last_seen_day) VALUES (?, ?, ?, ?)",
-                           (identity_id, verifier, today, today))
-            token, expires = auth.create_session(ctx.db, identity_id, ctx.now)
-    except sqlite3.IntegrityError:
-        raise ApiError(409, "identity_exists", "This locker already exists. Sign in instead.") from None
+    # Sixth pass: new drives a UTC day per network (in memory), so a patient griefer can't make the
+    # dozens of drives it takes to hold the free space; a judge pass and the server's own address skip it.
+    brakes = ctx.cfg["brakes"]
+    daily = () if judge or ctx.exempt() else (("drives64", ctx.ip64, brakes["drives_per_network_day"], 1),
+                                              ("drives48", ctx.ip48, brakes["drives_per_wide_network_day"], 1))
+    with ctx.daily(*daily, code="drives_limited",
+                   message="Your network has made all the new drives it can today. Try again tomorrow."):
+        ctx.proof_of_work("register", body)
+        today = codec.day(ctx.now)
+        try:
+            with db.tx(ctx.db):
+                ctx.db.execute("INSERT INTO identities(id, auth_verifier, created_day, last_seen_day) "
+                               "VALUES (?, ?, ?, ?)", (identity_id, verifier, today, today))
+                token, expires = auth.create_session(ctx.db, identity_id, ctx.now)
+        except sqlite3.IntegrityError:
+            raise ApiError(409, "identity_exists", "This locker already exists. Sign in instead.") from None
     return json_response(201, {"token": codec.b64u(token), "expires_at": expires, "identity_id": identity_id,
                                "probation": True})
 
