@@ -43,17 +43,21 @@ def real_errors(page):
 
 
 def check_fonts(browser):
-    """DESIGN.md: system faces only. No page asks for a font file, none is registered, no OTS error."""
+    """DESIGN.md: one family, Geist, pinned. The home keeps the system faces (A-06: no Geist on / until a
+    drive action); a reading page asks for the one pinned Geist file and nothing else. No OTS error."""
     problems = []
     with server() as origin:
-        for path in ("/", "/how"):
+        for path, want in (("/", []), ("/how", ["/shared/fonts/geist/Geist-Variable.woff2"])):
             page = browser.page()
             page.goto(origin + path, settle=1)
-            fonts = page.eval("[...document.fonts].map((f) => f.family)")
-            files = [r["url"] for r in page.requests() if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))]
-            problems += [f"{path}: font face {f}" for f in fonts] + [f"{path}: requested {u}" for u in files]
+            page.eval("document.fonts.ready.then(() => true)", True)
+            fonts = page.eval("[...document.fonts].map((f) => f.family.replace(/\"/g, ''))")
+            files = [r["url"].replace(origin, "") for r in page.requests() if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))]
+            problems += [f"{path}: font face {f}" for f in fonts if f != "Geist" or not want]
+            if sorted(set(files)) != want:
+                problems.append(f"{path}: font files {files}, expected {want}")
             problems += [f"{path}: {line}" for line in page.console() if "OTS" in line]
-        NOTES.append(f"fonts: none registered or requested on / and /how ({len(problems)} problems)")
+        NOTES.append(f"fonts: none on /, the pinned Geist on /how ({len(problems)} problems)")
     return problems
 
 
@@ -367,7 +371,7 @@ def check_interactions(browser):
     return problems
 
 
-CHECKS = [("no web fonts (system faces only)", check_fonts), ("every page, desktop and 360 px", check_pages),
+CHECKS = [("fonts: none on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("home words: 120 above the fold, 400 in all, Make my drive first", check_word_budget),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
