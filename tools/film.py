@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""The film (14-ghost-design §9 and §17 step 11): the judge script on two devices, desktop left and
-phone right, one short caption per shot in the system sans, no voice, no music, about 60 to 90 s.
+"""The film (16-drive-design §10, the judge script; fifth pass): the drive on two devices, desktop left and
+phone right, one short caption per shot in the platform sans, no voice, no music, about 60 to 90 s.
 Python stdlib here; Chromium and ffmpeg run on the server.
 
   python3 -I tools/film.py [--origin URL] [--host hidebox] [--out film]
-  python3 -I tools/film.py --demo        the pipeline alone, on the pages live now (no chain, no locker)
+  python3 -I tools/film.py --demo        the pipeline alone, on the pages live now (no chain, no drive)
 
 1. Two browser contexts on the server through the E2E harness (tests/e2e/): a 1440×900 desktop and a
-   390×844 phone with touch and 4× CPU throttle, each recorded with CDP Page.startScreencast. In direct
-   mode both hold a judge pass, as E-J does, so the computer's wallet gets its sponsor grant.
-2. The story is /judges, track one and then the Tari part, on the real site: the computer drops a
-   file on the ghost; the phone opens the link and reloads to the gone page; the goodbye the release
-   burned in advance (judge_demo_gone) is checked by the browser; the computer's locker shows its
-   codes; the phone scans the address and sends a note by Tari; See what came opens it; See what a
-   view key sees. Each shot is marked with the page clock; waiting between shots is cut, and each
-   shot's real time is retimed to its slot in the film.
-3. On the server, as build, Debian's ffmpeg places the two tracks on the night ground, burns in the
-   captions with the platform sans (Noto Sans Bold; the Mutis Script fonts are gone) and ends on the
-   wordmark card: 1920×1080, 30 fps, H.264, +faststart, no audio track, at most 25 MB.
-Writes <out>/film.mp4 and <out>/poster.png. Re-rendering is this one command.
+   390×844 phone with touch and 4× CPU throttle, each recorded with CDP Page.startScreencast. Both hold a
+   judge pass, as E-J does (the network limits on new drives and test money).
+2. The story is /judges, both tracks, on the real site. Track one: Make my drive; a folder dropped
+   (Locking, Uploading, Private); one file shared Once with Delete it from my drive after; the phone
+   opens it and reloads to "This link has ended."; Activity (Opened, It left your drive); What our
+   server knows. Track two: the folder shared to Someone who pays you; the phone scans the pay link,
+   pays with test money, opens a photo; Received → Payments shows it, Test money and Checked; What the
+   chain sees. Each shot is marked with the page clock; waiting between shots is cut, and each shot's
+   real time is retimed to its slot in the film.
+3. On the server, as build, Debian's ffmpeg places the two tracks on the dark ground, burns in the
+   captions with the platform sans (Noto Sans Bold) and ends on the brand card (the symbol, the name and
+   the drive's line): 1920×1080, 30 fps, H.264, +faststart, no audio track, at most 25 MB.
+Writes <out>/film.mp4 and <out>/poster.png. Re-rendering is this one command. Take the film's drive down
+by id afterwards (its pay link is ended here).
 """
 import argparse
 import bisect
@@ -39,34 +41,40 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests" / "e2e"))
 import flows  # noqa: E402
 from harness import Env, Remote, T  # noqa: E402
-from scenarios import locker_identity, make_drop_link  # noqa: E402
-from scenarios_chain import open_inbox_item  # noqa: E402
+import scenarios_drive as drv  # noqa: E402
+from scenarios_chain import PAY_LINK, open_paid_folder, pay_page, pay_wait, seller_ready, tx_view  # noqa: E402
 
 FPS = 30
 WORK = "/home/build/work/deploy/film"
-FONT = "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"              # the platform sans (DESIGN.md: system faces)
-NIGHT, MOON, MOON_DIM = "0x13183A", "0xEEF0FF", "0xAEB4DC"            # web/shared/tokens.css, lights off
+FONT = "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"              # the platform sans
+NIGHT, MOON, MOON_DIM = "0x0A0A0A", "0xFAFAFA", "0xA3A3A3"            # web/shared/ui/tokens.css, dark
 DESK_BOX, PHONE_BOX = (95, 70, 1280, 800), (1455, 70, 370, 800)       # x, y, width, height on 1920×1080
 END_CARD_S = 3
 MAX_BYTES = 25 * 1024 * 1024
 LENGTH = (60, 90)                                                      # seconds, the story (not --demo)
+BRAND = "hidebox"                                                      # web/app/lib/i18n.js BRAND
 
-# The captions: the deck's words (14-ghost-design §10.2), privacy sentences from the claim registry.
-GIVE = "Give the ghost a secret."                                      # home
-LINK = "You get a link. Your friend sees it once."                     # C26
-GONE = "Then it's gone, and its goodbye goes on the Tari chain."       # C7-h
-GOODBYE = "Its goodbye on the Tari chain, checked by your browser."    # C31
-LOCKER = "It lives in this browser. No email, no password."             # C17-k, the locker's line
-SEND = "It goes by Tari. Only they can open it."                       # C25
-CAME = "See what came."
-PEEK = "What came, and how much. No file sent to your locker opens with it."   # C15-k (C15 is on that screen)
-TAGLINE = "Show it once. Then bye."
+# The captions: the deck's words and the UI's own labels; privacy sentences only from the claim registry.
+MAKE = "It lives in this browser. No email, no password."              # C17-k
+DROP = "Files lock in this browser before upload."                     # C32
+SHARE = "After that, it leaves your drive. We write that on the Tari chain."   # C42 (share result)
+ONCE = "It opens one time. When you open it, the link ends."           # C26
+ACTIVITY = "We count opens per hour. We never store who opened it or their IP address."   # C40
+KNOWN = "What our server knows."                                       # the sheet's title
+SELL = "Share it with someone who pays you."                           # the share dialog's choice
+SCAN = "The phone scans the pay link."
+TEST = "Our demo wallet pays the owner for you, with test money."      # C33
+OPENS = "It opens on the phone."
+PAID = "Checked on the chain, not a wallet's word."                    # C11 short form
+CHAIN_SEES = "The chain shows a payment with a hidden amount and a hidden owner. The fee is public."   # C36
+TAGLINE = "Your private drive. Locked here. Shared your way."
 
 
 def end_lines(cfg: dict) -> tuple:
     network = str(cfg.get("network", "esmeralda")).capitalize()
     mainnet = (cfg.get("ootle") or {}).get("mainnet_date", "")
-    return ((TAGLINE, 52, MOON), (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet}.", 30, MOON_DIM))
+    return ((BRAND, 72, MOON), (TAGLINE, 44, MOON),
+            (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet}.", 30, MOON_DIM))
 
 
 @dataclass
@@ -103,81 +111,117 @@ class Take:
         return {name: page.stop_recording() for name, page in (("desk", self.desk), ("phone", self.phone))}
 
 
-def direct_mode(t: T) -> bool:
-    cfg = t.env.config()
-    return cfg.get("send_mode") == "direct" and bool((cfg.get("features") or {}).get("direct_send"))
+def photo(t: T, base: str, name: str, spec: str) -> None:
+    """A real JPEG for the film, made on the server by ffmpeg (a lavfi source, no files from outside)."""
+    t.env.remote.as_build(f"cd {shlex.quote(base)} && ffmpeg -hide_banner -loglevel error -y -f lavfi -i {shlex.quote(spec)} "
+                          f"-frames:v 1 -q:v 4 {shlex.quote(name)}")
 
 
 def story(t: T, take: Take) -> None:
     desk, phone = take.desk, take.phone
-    cfg = t.env.config()
     flows.home(desk, t.origin)
     flows.home(phone, t.origin)
-    with take.shot(GIVE, 6):
-        take.hold(1.5)
-        desk.set_files("drop-input", [t.fixture("notes.txt")])
-        desk.wait("!!document.querySelector('[data-testid=\"seal-progress\"], [data-testid=\"sealed-link\"]')", 30)
-    with take.shot(LINK, 8):
-        link = flows.wait_link(desk)
-        desk.wait("!!document.querySelector('[data-testid=\"link-qr\"] svg')", 30)
+    # Track one (16-drive-design §10): one computer, then the phone opens the link.
+    with take.shot(MAKE, 5):
         take.hold(1.0)
-        t.check(flows.open_link(phone, link) == "opened", "the phone (the code's link) opens the file")
+        desk.click("home-make")
+        desk.wait_for("drive-root", 120)
+        desk.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
         take.hold(1.5)
-    with take.shot(GONE, 7):
-        phone.reload()
-        t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "the reload: It's gone. It said bye.")
-        take.hold(2.5)
-    demo = cfg.get("judge_demo_gone")
-    if demo and (cfg.get("features") or {}).get("seallog"):
-        with take.shot(GOODBYE, 8):
-            desk.goto(f"{t.origin}/s/{demo}")
-            desk.wait("document.querySelector('[data-testid=\"gone-receipt\"]')?.dataset.receipt === 'done'", 60)
-            take.hold(1.0)
-            desk.click("gone-see")
-            desk.wait("/included at checkpoint/.test(document.querySelector('.a-item--this [data-testid=\"verify-exit\"]')?.textContent || '')", 120)
-            take.hold(2.0)
-    # The Tari part: the locker on the computer, the phone carries things by its codes.
-    make_drop_link(t, desk, "Film computer")
-    if desk.exists("key-later"):
-        desk.click("key-later")
-    with take.shot(LOCKER, 6):
-        desk.wait("!!document.querySelector('[data-testid=\"locker-qr\"] svg')", 30)
-        _, address = locker_identity(desk)
-        take.hold(2.5)
-    phone.goto(f"{t.origin}/#to={address}")
-    phone.wait("document.querySelector('#drop svg.ghost')?.dataset.state === 'courier'", 60)
-    with take.shot(SEND, 9):
-        take.hold(1.0)
-        flows.lock_text(phone, "Stage door, nine o'clock.")
-        phone.wait(f"document.querySelector('[data-testid=\"send-recipient\"]')?.value === {json.dumps(address)}", 180)
-        take.hold(1.0)
-        phone.click("send-submit")
-        take.hold(1.5)
-    t.check(phone.wait_state("send-status", ("delivered", "failed"), 420) == "delivered", "sent by Tari")
-    with take.shot(SEND, 2):
-        take.hold(1.5)
-    desk.goto(t.origin + "/inbox")
-    desk.wait("!!document.querySelector('[data-testid=\"inbox-item\"][data-source=\"send\"]')", 600)
-    with take.shot(CAME, 7):
-        t.check(open_inbox_item(t, desk, "send") == "opened", "See what came opens it")
+    base = drv.remote_tree(t, "secrets", {"letter.txt": b"Meet me at the old lighthouse at midnight. Bring the map.\n"})
+    photo(t, base, "moon.jpg", "mandelbrot=s=1200x800:end_pts=40")
+    photo(t, base, "lighthouse.jpg", "gradients=s=1200x800:c0=0x0A0A0A:c1=0x7008E7:n=2:seed=7")
+    folder = f"{t.sid}-secrets"
+    with take.shot(DROP, 7):
+        desk.wait("!!document.querySelector('[data-testid=\"upload-dir-input\"]')", 30)
+        desk.set_files("upload-dir-input", [base])
+        desk.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === {json.dumps(folder)})", 180)
         take.hold(2.0)
-    desk.goto(t.origin + "/inbox")
-    desk.wait_for("watch-mine", 60)
-    with take.shot(PEEK, 8):
-        desk.click("watch-mine")
-        desk.wait("Number(document.querySelector('[data-testid=\"watch-summary\"]')?.dataset.deliveries || 0) >= 1", 600)
+    with take.shot(SHARE, 8):
+        drv.into(desk, folder)
+        drv.wait_names(desk, ["letter.txt", "moon.jpg", "lighthouse.jpg"])
+        take.hold(0.8)
+        drv.row_menu(desk, "letter.txt", "share")
+        desk.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+        take.hold(0.8)
+        desk.click("share-next")
+        desk.wait("document.getElementById('share-dialog')?.dataset.step === 'opens'", 10)
+        desk.click("share-then-delete")
+        take.hold(0.8)
+        desk.click("share-make")
+        desk.wait("document.getElementById('share-dialog')?.dataset.step === 'result'", 90)
+        url = desk.value("share-link")
+        take.hold(2.0)
+    desk.key("Escape")
+    with take.shot(ONCE, 8):
+        t.check(flows.open_link(phone, url) == "opened", "the phone opens the file")
+        take.hold(1.5)
+        phone.reload()
+        t.check(phone.wait_state("view-root", flows.VIEW_ASK, 60) == "burned", "the reload: This link has ended.")
+        take.hold(2.0)
+    desk.goto(t.origin + "/drive/activity")
+    desk.wait("[...document.querySelectorAll('[data-event=\"left\"]')].some((x) => x.dataset.name === 'letter.txt')", 120)
+    with take.shot(ACTIVITY, 7):
+        take.hold(3.0)
+    with take.shot(KNOWN, 5):
+        desk.click("open-known")
+        desk.wait_for("known-sheet", 15)
         take.hold(2.5)
+    desk.key("Escape")
+    # Track two: the folder for test money, the phone pays and opens a photo, the computer sees it.
+    desk.goto(t.origin + "/drive")
+    desk.wait_for("drive-root", 120)
+    drv.wait_names(desk, [folder])
+    with take.shot(SELL, 7):
+        drv.row_menu(desk, folder, "share")
+        desk.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+        take.hold(0.8)
+        desk.click("share-choice", "pay")
+        take.hold(0.6)
+        desk.click("share-next")
+        desk.wait("document.getElementById('share-dialog')?.dataset.step === 'pay'", 10)
+        take.hold(0.8)
+        desk.click("pay-make")
+        desk.wait("document.getElementById('share-dialog')?.dataset.step === 'result'", 180)
+        desk.wait("!!document.querySelector('[data-testid=\"share-qr\"] svg')", 30)
+        pay_url = desk.value("share-link")
+        take.hold(2.5)
+    sid = PAY_LINK.search(pay_url)[1]
+    desk.key("Escape")
+    seller_ready(t, sid)
+    desk.goto(t.origin + "/drive/received")
+    desk.wait_for("drive-root", 120)
+    with take.shot(SCAN, 6):
+        t.check(pay_page(phone, pay_url) == "wait", "the phone has the pay page")
+        take.hold(2.5)
+    with take.shot(TEST, 9):
+        phone.click("pay-test")
+        t.check(pay_wait(phone, ("open", "expired", "void", "error"), 420) == "open", "test money: Ready to open")
+        take.hold(1.5)
+    with take.shot(OPENS, 7):
+        open_paid_folder(t, phone, ["moon.jpg", "lighthouse.jpg"], "moon.jpg")
+        take.hold(2.0)
+    desk.wait("(() => { const r = document.querySelector('[data-testid=\"sales-row\"]');"
+              " return !!r && !!r.querySelector('[data-testid=\"sales-test\"]') && !!r.querySelector('[data-testid=\"sales-tx\"]'); })()", 420)
+    with take.shot(PAID, 7):
+        take.hold(3.0)
+    tx = desk.attr("sales-tx", "href").rsplit("/", 1)[-1]
+    with take.shot(CHAIN_SEES, 9):
+        tx_view(t, desk, tx)
+        take.hold(3.0)
+    t.env.remote.admin("takedown", "share", "--", sid)              # ends the pay link and its claim
+    t.note(f"film drive: folder {folder}, pay link {sid}")
 
 
 def demo(t: T, take: Take) -> None:
     """The same pipeline on whatever is served now: no chain, no locker, nothing stored."""
     for page in (take.desk, take.phone):
         page.goto(t.origin + "/")
-    with take.shot(GIVE, 4):
+    with take.shot(TAGLINE, 4):
         take.hold(2)
     take.phone.goto(t.origin + "/how")
     take.desk.goto(t.origin + "/judges")
-    with take.shot(LINK, 6):
+    with take.shot(DROP, 6):
         scroll_through(take, take.phone, "main", 4)
 
 
@@ -236,11 +280,12 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
     texts = []
     for i, (caption, start, stop) in enumerate(captions(shots)):
         files[f"cap{i}.txt"] = caption
-        texts.append(drawtext(f"cap{i}.txt", 44, MOON, "940", f"between(t,{start:.3f},{stop:.3f})"))
+        size = 44 if len(caption) <= 64 else max(30, int(44 * 64 / len(caption)))     # one line on 1920
+        texts.append(drawtext(f"cap{i}.txt", size, MOON, "940", f"between(t,{start:.3f},{stop:.3f})"))
     end_texts = []
     for i, (line, size, color) in enumerate(end):
         files[f"end{i}.txt"] = line
-        end_texts.append(drawtext(f"end{i}.txt", size, color, str(640 + 90 * i)))
+        end_texts.append(drawtext(f"end{i}.txt", size, color, str((480, 600, 690)[i] if i < 3 else 690 + 60 * (i - 2))))
     dx, dy, dw, dh = DESK_BOX
     px, py, pw, ph = PHONE_BOX
     graph = ";".join([
@@ -250,8 +295,8 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
         f"[bg][d]overlay={dx}:{dy}:shortest=1[a]",
         f"[a][p]overlay={px}:{py}:shortest=1," + ",".join(texts) + f",fps={FPS},format=yuv420p[film]",
         f"color=c={NIGHT}:s=1920x1080:r={FPS}:d={END_CARD_S}[ebg]",
-        "[2:v]scale=744:-1[logo]",
-        "[ebg][logo]overlay=(W-w)/2:290," + ",".join(end_texts) + f",fps={FPS},format=yuv420p[end]",
+        "[2:v]scale=160:-1[logo]",
+        "[ebg][logo]overlay=(W-w)/2:280," + ",".join(end_texts) + f",fps={FPS},format=yuv420p[end]",
         "[film][end]concat=n=2:v=1:a=0[out]",
     ])
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
@@ -259,7 +304,7 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
                "-i", "logo.png", "-filter_complex", graph, "-map", "[out]",
                "-c:v", "libx264", "-preset", "slow", "-crf", "22", "-pix_fmt", "yuv420p", "-r", str(FPS),
                "-movflags", "+faststart", "-an", "film.mp4"]
-    logo = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-c:v", "librsvg", "-width", "1488",
+    logo = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-c:v", "librsvg", "-width", "320",
             "-i", "logo.svg", "logo.png"]
     poster = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{shots[0].seconds + 2:.2f}",
               "-i", "film.mp4", "-frames:v", "1", "poster.png"]
@@ -283,7 +328,9 @@ def compose(remote: Remote, host: str, recordings: dict, shots: list[Shot], out:
         for name, text in files.items():
             add(name, text.encode())
         add("render.sh", script.encode())
-        logo = (ROOT / "web" / "shared" / "brand" / "logo.svg").read_text().replace('color="#151A3B"', 'color="#EEF0FF"')
+        # the symbol, light on the dark ground (its own light tile with a dark lock)
+        logo = (ROOT / "web" / "shared" / "brand" / "symbol.svg").read_text().replace(".t{fill:#171717}", ".t{fill:#FAFAFA}") \
+            .replace(".l{stroke:#FAFAFA}", ".l{stroke:#0A0A0A}")
         add("logo.svg", logo.encode())
     remote.as_build(f"rm -rf {WORK} && mkdir -p {WORK} && tar -x -C {WORK} && cd {WORK} && bash render.sh",
                     data.getvalue())
@@ -305,10 +352,9 @@ def main() -> int:
     args = p.parse_args()
     env = Env(args.origin.rstrip("/"), Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-film-"))), args.out)
     env.stage()
-    t = T(env, "FILM")
-    # Direct mode: a sponsor grant is two a day per network and the server's may be spent on tests, so
-    # both contexts hold a judge pass, like E-J.
-    judge = env.remote.admin("judge-pass", "new", "--uses", "3").strip() if not args.demo and direct_mode(t) else None
+    t = T(env, "Spooky")
+    # Both contexts hold a judge pass, like E-J: new drives and test money are limited per network.
+    judge = env.remote.admin("judge-pass", "new", "--uses", "6").strip() if not args.demo else None
     with tempfile.TemporaryDirectory(prefix="mutis-frames-") as frames:
         try:
             take = Take(t.actor("desktop", judge_pass=judge), t.actor("iphone", judge_pass=judge), Path(frames))

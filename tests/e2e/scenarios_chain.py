@@ -488,7 +488,8 @@ def ej(t: T) -> None:
     desk.wait_for("activity-feed", 60)
     left = desk.wait("(() => { const e = [...document.querySelectorAll('[data-event=\"left\"]')].find((x) => x.dataset.name === 'minutes.txt');"
                      " return e ? e.textContent : ''; })()", 120)
-    t.check("It left your drive" in left, f"5: Activity: opened, then it left your drive ({left[:80]})")
+    opened = desk.eval("[...document.querySelectorAll('[data-event=\"opened\"]')].some((x) => x.dataset.name === 'minutes.txt')")
+    t.check("It left your drive" in left and opened, f"5: Activity: Opened, then It left your drive ({left[:80]}, opened {opened})")
     t.shot(desk, "1-5-activity")
     done("5")
     desk.click("open-known")
@@ -505,6 +506,8 @@ def ej(t: T) -> None:
         url, sid = sell(t, desk, folder)
         seller_ready(t, sid)
         t.shot(desk, "2-1-pay-link")
+        desk.goto(t.origin + "/drive/received")            # fifth pass: Received is open before the phone pays
+        desk.wait_for("drive-root", 120)
         done("T1")
         t.check(pay_page(phone, url) == "wait" and phone.text("pay-name") == folder and "2" in phone.text("pay-what"),
                 f"T2: the phone scans it: the folder's name, how many files, about how big, the price and the fee ({phone.text('pay-what')})")
@@ -518,9 +521,11 @@ def ej(t: T) -> None:
         open_paid_folder(t, phone, ["agenda.txt", "notes.txt"], "notes.txt")
         t.shot(phone, "2-4-open")
         done("T4")
-        desk.goto(t.origin + "/drive/received")
-        t.check(bool(desk.wait("document.querySelector('[data-testid=\"sales-row\"]')?.dataset.check === 'ok'", 300)),
-                "T5: Received, Payments: the payment, marked Yours to spend")
+        row = ("(() => { const r = document.querySelector('[data-testid=\"sales-row\"]'); return !!r && r.dataset.check === 'ok'"
+               " && !!r.querySelector('[data-testid=\"sales-test\"]') && !!r.querySelector('[data-testid=\"sales-checked\"]')"
+               " && !!r.querySelector('[data-testid=\"sales-tx\"]'); })()")
+        t.check(bool(desk.wait(row, 300)),
+                "T5: Received, Payments (open since T1, no reload): the payment, marked Test money, Checked and Yours to spend, with its tx")
         t.shot(desk, "2-5-received")
         done("T5")
         phone.reload()

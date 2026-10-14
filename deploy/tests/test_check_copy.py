@@ -46,18 +46,19 @@ class CheckCopyTest(unittest.TestCase):
         fails, _ = check_copy.banned_words(self.root)
         self.assertEqual(len(fails), 2)
 
-    def test_the_ghost_is_the_figure_and_gone_forever_stays_banned(self):
+    def test_the_ghost_is_retired_and_gone_forever_stays_banned(self):
+        """Fifth pass: the ghost, the locker and goodbye are retired words in copy (not in the docs)."""
         self.page("<p>Give the ghost a secret. A ghostly wave. Two ghosts.</p><p>It vanished. Gone forever.</p>")
         fails, _ = check_copy.banned_words(self.root)
-        self.assertEqual(sorted(f.split("'")[1].lower() for f in fails), ["gone forever", "vanished"])
+        self.assertEqual(sorted(f.split("'")[1].lower() for f in fails), ["ghost", "ghosts", "gone forever", "vanished"])
 
     def registry(self):
         return check_copy.load_registry(ROOT / "tools" / "claim-registry.json")
 
     def test_registered_sentences_pass_and_paraphrases_fail(self):
-        ok = ("<p>Our server gets scrambled noise. Never the key.</p><p>Then it's gone, and its goodbye goes on the "
-              "<span>Tari\u2122 chain</span>.</p><p>Its goodbye goes on the Tari chain within <span data-v=\"checkpoint_min\"></span> "
-              "minutes.</p><button>See the goodbye</button><h2>The goodbye record</h2>")
+        ok = ("<p>Our server gets scrambled noise. Never the key.</p><p>The file left our server. We wrote that on the "
+              "<span>Tari\u2122 chain</span>.</p><p>That goes on the Tari chain within <span data-v=\"checkpoint_min\"></span> "
+              "minutes.</p><button>Check it in this browser</button><h2>The exit record</h2>")
         self.assertEqual(check_copy.claim_problems("p", check_copy.page_text(ok)[0], self.registry(), page=True), [])
         for bad in ("<p>Our server only gets scrambled noise.</p>", "<p>Its goodbye is carved on the chain forever.</p>",
                     "<p>Only they can open it, nobody else ever.</p>"):
@@ -67,7 +68,7 @@ class CheckCopyTest(unittest.TestCase):
     def test_variables_in_i18n_and_the_view_key_condition(self):
         reg = self.registry()
         self.assertEqual(check_copy.claim_problems("k", "It opens up to {few} times in the next {anon_max_expiry}. Then it's gone.", reg, page=False), [])
-        peek = "For files sent to your locker: you see that something came, and how much. Not the file."
+        peek = "For files sent to your drive: you see that something came, and how much. Not the file."
         self.assertEqual(check_copy.claim_problems("k", peek, reg, page=False), [])
         problems = check_copy.claim_problems("p", peek, reg, page=True)
         self.assertEqual(len(problems), 1)
@@ -80,7 +81,7 @@ class CheckCopyTest(unittest.TestCase):
     def test_public_keys_are_never_stored(self):
         reg = self.registry()
         self.assertEqual(len(check_copy.claim_problems("p", "We store a random id and public keys.", reg, page=True)), 1)
-        for fine in ("We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design.",
+        for fine in ("We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.",
                      "Your fingerprint is 12 emoji (96 bits) from your public keys.", "No public keys are stored for logins."):
             with self.subTest(fine):
                 self.assertEqual(check_copy.claim_problems("p", fine, reg, page=True), [])
