@@ -130,6 +130,11 @@ async function buy(drive, pack, label) {
     return body.replaceChildren(errorAlert(e));
   }
   const direct = cfg.send_mode === 'direct' && cfg.features?.direct_send;
+  if (direct && cfg.features?.sponsor) {
+    // Pay from my drive spends the browser wallet's sponsor grant: ask for today's, in the background (once a day).
+    import('../lib/identity.js').then(({ withOotle }) => withOotle(drive.identity))
+      .then((id) => import('../lib/wallet.js').then((w) => w.ensureGrant(id, cfg))).catch(() => null);
+  }
   const list = steps(cfg.amount_proof);
   const status = h('p', { class: 'say', 'data-testid': 'invoice-status', 'data-status': invoice.status, 'aria-live': 'polite' });
   const stepper = h('ol', { class: 'steps', 'aria-label': t('drive.sto.steps') });

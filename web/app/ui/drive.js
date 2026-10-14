@@ -198,6 +198,11 @@ async function boot(identity, { made }) {
       await withOotle(identity);
       drive.shell.setAccount(identity);
       document.dispatchEvent(new CustomEvent('drive:ootle'));
+      // Direct mode: a new drive's browser wallet asks for its sponsor grant in the background, as the
+      // locker did (Pay from my drive and direct sends spend it); a refusal only means sends go by relay.
+      if (made && cfg.send_mode === 'direct' && cfg.features?.sponsor) {
+        import('../lib/wallet.js').then((w) => w.ensureGrant(identity, cfg)).catch(() => null);
+      }
     } catch {
       drive.shell.setAccount({ locker: null });
       for (const el of document.querySelectorAll('[data-account-address]')) el.textContent = t('drive.acct.no_wasm');
