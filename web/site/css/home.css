@@ -77,3 +77,10 @@
 .quick-body .md-stage { min-height: 0; }
 .quick-body .md-zone { min-height: 168px; padding: var(--s-5); border-width: 1px; background: var(--bg-sunken); border-radius: var(--r-input); }
 .quick-body :is(.a-btn, .md-chip, .md-word-btn) { border-radius: var(--r-input); }
+/* integration, pass 2: in the card's right column the widget's result is one column, so the code sits
+   beside the words instead of on them (at 1440 the card's text column fell to a few pixels) */
+@media (min-width: 900px) {
+  .quick-body .md-result { grid-template-columns: minmax(0, 1fr); justify-content: stretch; }
+  .quick-body .md-result-figure { grid-row: auto; justify-self: start; }
+  .quick-body :is(.md-next, .md-slot) { grid-column: auto; }
+}
