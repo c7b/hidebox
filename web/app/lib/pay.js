@@ -18,11 +18,25 @@
 import { b64uDecode, b64uEncode, unhex } from './b64.js';
 import { concat, fromUtf8, utf8 } from './bytes.js';
 import { aesGcmDecrypt, aesGcmEncrypt, hkdf, randomBytes, sha256 } from './crypto.js';
-import { ApiError, claimDemoPay, claimInfo, confirmSale, createClaim, createShare, getSales, payInfo, putSales } from './api.js';
+import { ApiError, createShare, enc, request } from './api.js';
 import { shareKeys, wrapFileKey } from './share.js';
 import { localGet, localSet } from './store.js';
 import { idbGet, idbPut } from './idb.js';
 import { withPow } from './pow.js';
+
+// The pay routes (16-drive-architecture §1.5, docs/api.md "Pay to open"), here rather than in api.js so the
+// anonymous widget's first load doesn't carry them. The buyer side sends no session: a claim is never
+// linked to a drive. The claim token travels in X-Mutis-Claim, never in a query string.
+const claimHeader = (t) => ({ 'X-Mutis-Claim': t });
+const putSales = (body, headers) => request('PUT', '/me/sales', { json: body, headers, expect: 'none' });
+const getSales = (headers) => request('GET', '/me/sales', { headers });
+const confirmSale = (claimId, body, headers) => request('POST', `/me/sales/claims/${enc(claimId)}/confirm`, { json: body, headers });
+const payInfo = (shareId) => request('GET', `/p/${enc(shareId)}`);
+const createClaim = (shareId, body, headers = {}) => request('POST', `/p/${enc(shareId)}/claims`, { json: body, headers });
+const claimInfo = (shareId, claimId, t) => request('GET', `/p/${enc(shareId)}/claims/${enc(claimId)}`, { headers: claimHeader(t) });
+const claimDemoPay = (shareId, claimId, t, pow, headers = {}) => request('POST', `/p/${enc(shareId)}/claims/${enc(claimId)}/demo-pay`, {
+  json: { pow }, headers: { ...headers, ...claimHeader(t) },
+});
 
 const V2 = 'mutis/v2';
 // Courier inner flags (16-drive-architecture §1.3): bit 2 a paid link's `sA`, bit 3 a watch key.
