@@ -715,7 +715,7 @@
  "drive.sto.later": "Any file can delete itself after a day, a week or {max_days} days. Pick Delete it after… in its menu.",
  "drive.sto.idle": "If you don't open your drive for {inactive_days} days, we delete what's in it.",
  "drive.sto.lapse": "When extra space ends, nothing goes for {lapse_grace_days} days. Then files in the trash go first, then the oldest, until you fit.",
- "drive.sto.lapse_oldest": "When extra space ends, nothing goes for {lapse_grace_days} days. Then the oldest files go, until you fit.",
+ "drive.sto.lapse_oldest": "When extra space ends, nothing goes for {lapse_grace_days} days. Then files in the trash go first, then the oldest, until you fit.",
  "drive.sto.seller": "For space you rent from us we see the amount, because we're the seller. Nobody else does.",
  "drive.sto.invoice": "Your invoice",
  "drive.sto.steps": "Payment",
