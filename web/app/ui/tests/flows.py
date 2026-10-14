@@ -1352,6 +1352,31 @@ def rule_state(p):
 # stay (the rules flow); the figure that switched them on a tap is gone from the home.
 
 
+# --- 14-ghost-design §17 step 8: every app screen on the ghost, at 390 and 1440 ---------------------------
+
+def seallog_on(t, p, share_id, receipt):
+    """Test-only: this page's /config turns receipts on, and the exit receipt of `share_id` is
+    `receipt` ("done": in checkpoint #1 of the template builder's vectors; "pending": waits)."""
+    vectors = os.path.join(REPO, "template", "seal_log", "tests", "vectors")
+    state = json.load(open(os.path.join(vectors, "seallog-state-v1.json"), encoding="utf-8"))
+    v = json.load(open(os.path.join(vectors, "seallog-v1.json"), encoding="utf-8"))
+    exited = v["leaves"][64]
+    cp = next(c for c in v["checkpoints"] if int(c["tree_size"]) == 128)
+    path = {int(x["leaf_index"]): x["path"] for x in cp["proofs"]}
+    component = "component_" + "fd" * 32
+    checkpoint = {"index": 9, "component": component, "tree_size": 128, "epoch": 12128, "root": cp["root"]}
+    body = ({"reason": "burned", "item_id": exited["item_id_b64u"], "exit_hour": int(exited["exit_hour_unix"]),
+             "leaf_hash": exited["leaf_hash"], "leaf_index": 64, "proof": path[64], "checkpoint": checkpoint}
+            if receipt == "done" else
+            {"reason": "burned", "item_id": exited["item_id_b64u"], "exit_hour": None, "leaf_hash": None, "leaf_index": None,
+             "checkpoint": None, "proof": {"pending": True, "next_checkpoint_eta": int(time.time()) + 600}})
+    (Intercept(p)
+     .add("*/api/v1/config", "Response", lambda cfg: {**cfg, "features": {**cfg["features"], "seallog": True},
+                                                       "seal_log": {**cfg["seal_log"], "component": component}})
+     .add("*/api/v1/chain/ix/substates/component_*", "Request", lambda _p: (200, state))
+     .add(f"*/api/v1/s/{share_id}/exit", "Request", lambda _p: (200, body)))
+
+
 @scenario("ghost-screens", "Step 8 on the ghost at 390 and 1440: the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify")
 def ghost_screens(t):
     for device, w in (("iphone", 390), ("desktop", 1440)):
