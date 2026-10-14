@@ -471,6 +471,7 @@
  "buy.about": "About {size}",
  "buy.locked": "The names stay locked until you pay.",
  "buy.locked_file": "What's inside stays locked until you pay.",
+ "buy.paid_note": "Paid. Open it to see what's inside.",
  "buy.amount": "Price",
  "buy.fee": "Plus a network fee of {fee} tTARI. The fee is public.",
  "buy.get": "Paying lets you open it {buyer_views} times until {date}. Anyone who opens a file can pass it on. The owner can still delete it.",
