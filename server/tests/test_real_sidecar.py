@@ -51,6 +51,27 @@ class RealSidecar(unittest.TestCase):
         finally:
             car.stop()
 
+    def test_receiver_ownership_with_the_real_library(self):
+        """R1 (16-drive-architecture §1.1): the worker's ownership check with the official library, on the
+        offline KAT (two outputs that both open with our view key; one is spendable by someone else)."""
+        own = json.loads((Path(__file__).resolve().parents[2] / "web" / "app" / "sidecar" / "selftest.json")
+                         .read_text())["ownership"]
+        s = Stack(chain=True)
+        try:
+            s.worker.sidecar.stop()
+            s.worker.sidecar = Sidecar(argv(), "http://127.0.0.1:9", PINNED_WASM_SHA256)
+            s.worker.receiver = {"owner_sk": own["owner_sk"], "view_sk": own["view_sk"]}
+            rows = [{"id": own[n]["id"], "nonce": bytes.fromhex(own[n]["nonce"]), "enc": bytes.fromhex(own[n]["enc"])}
+                    for n in ("genuine", "not_ours")]
+            found = s.worker._scan(own["view_sk"], rows)
+            self.assertEqual(sorted(f["value_ut"] for f in found), [500000, 500000])     # the view key can't tell
+            self.assertTrue(s.worker._ours(own["genuine"]["nonce"], own["genuine"]["auth_key"]))
+            self.assertFalse(s.worker._ours(own["not_ours"]["nonce"], own["not_ours"]["auth_key"]))
+            self.assertFalse(s.worker._ours("ff" * 32, own["genuine"]["auth_key"]))       # not a point: not ours
+        finally:
+            s.worker.sidecar.stop()
+            s.close()
+
     def test_wrong_pin_refused(self):
         with self.assertRaises(SidecarError) as err:
             Sidecar(argv(), "http://127.0.0.1:9", "00" * 32).request("hello")

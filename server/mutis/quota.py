@@ -41,6 +41,10 @@ CLASSES = {
              "max_views": 50, "sends_per_day": 50, "links_per_item": 50},
 }
 CANARY_MAX_EXPIRY_S = 2 * 86400
+# Send by Tari (16-drive-design §3): the link sealed to an address opens this many times within this long
+# (a first-day drive's links last at most its own max_expiry_s).
+SEND_VIEWS = 3
+SEND_EXPIRY_S = 30 * 86400
 
 PACKS = {"s30": {"bytes": 2 * GiB, "days": 30, "price_ut": 500_000},
          "m30": {"bytes": 10 * GiB, "days": 30, "price_ut": 2_000_000}}

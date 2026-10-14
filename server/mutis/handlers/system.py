@@ -2,7 +2,7 @@
 """GET /health, GET /config, POST /pow (spec §6.3 System, brand patch P-3)."""
 import sqlite3
 
-from .. import cleanup, items, payments, pow as pow_mod, quota
+from .. import cleanup, db, items, payments, pow as pow_mod, quota, sales, tree
 from ..auth import SESSION_TTL_S
 from ..http_util import get_enum, get_int, json_response
 from .invoices import DEMO_PAY_PER_DAY
@@ -22,7 +22,8 @@ def limits_block() -> dict:
     def pick(cls: str, keys: tuple) -> dict:
         return {k: quota.CLASSES[cls][k] for k in keys}
 
-    anon = pick("anon", ("max_file_bytes", "small_lane_max_bytes", "max_expiry_s", "default_expiry_s", "max_views"))
+    anon = pick("anon", ("max_file_bytes", "small_lane_max_bytes", "max_expiry_s", "default_expiry_s", "max_views",
+                         "links_per_item"))
     # Sends always leave from a locker; a first-day locker (made silently) gets probation's count.
     anon.update({"courier_per_day": quota.CLASSES["probation"]["sends_per_day"],
                  "uploads_per_hour": ANON_SMALL_PER_HOUR, "large_uploads_per_hour": ANON_LARGE_PER_HOUR})
@@ -30,9 +31,11 @@ def limits_block() -> dict:
         "anon": anon,
         "drop": pick("drop", ("max_file_bytes", "expiry_s", "views")),
         "probation": pick("probation", ("max_file_bytes", "quota_bytes", "max_expiry_s", "default_expiry_s",
-                                        "max_views", "sends_per_day")),
-        "locker": pick("locker", ("max_file_bytes", "max_expiry_s", "default_expiry_s", "max_views", "sends_per_day")),
-        "paid": pick("paid", ("max_file_bytes", "max_expiry_s", "default_expiry_s", "max_views", "sends_per_day")),
+                                        "max_views", "sends_per_day", "links_per_item")),
+        "locker": pick("locker", ("max_file_bytes", "max_expiry_s", "default_expiry_s", "max_views", "sends_per_day",
+                                  "links_per_item")),
+        "paid": pick("paid", ("max_file_bytes", "max_expiry_s", "default_expiry_s", "max_views", "sends_per_day",
+                              "links_per_item")),
         "demo_pay_per_day": DEMO_PAY_PER_DAY,
     }
 
@@ -65,7 +68,14 @@ def build_config(ctx) -> dict:
                      "component": ootle["seallog_component"] or None},
         "retention": {"ticket_s": items.TICKET_S, "tombstone_days": cleanup.TOMBSTONE_DAYS,
                       "db_backup_days": cleanup.DB_BACKUP_DAYS, "inactive_days": cleanup.INACTIVE_DAYS,
-                      "lapse_grace_days": cleanup.LAPSE_GRACE_DAYS, "session_s": SESSION_TTL_S},
+                      "lapse_grace_days": cleanup.LAPSE_GRACE_DAYS, "session_s": SESSION_TTL_S,
+                      "trash_days": cleanup.TRASH_DAYS},
+        # The drive (16-drive-design §15 step 1): published before the routes, behind features.folders and
+        # features.pay_to_open, so the app and the copy deck read their numbers from here.
+        "folders": tree.config_block(),
+        "items": {"max_delete_after_days": items.MAX_DELETE_AFTER_DAYS},
+        "send": {"views": quota.SEND_VIEWS, "expiry_s": quota.SEND_EXPIRY_S},
+        "pay_to_open": sales.config_block(ootle["max_fee_transfer_ut"], db.get_meta(ctx.db, "receiver_address")),
         "quota": {"floor_bytes": quota.QUOTA_FLOOR, "ceiling_bytes": quota.QUOTA_CEILING,
                   "overcommit": quota.OVERCOMMIT, "active_days": quota.ACTIVE_DAYS},
         "password": {"lock_after": PW_LOCK_AFTER, "lock_s": PW_DELAY_START_S, "permanent_after": PW_PERMANENT_AFTER,

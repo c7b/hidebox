@@ -28,7 +28,16 @@ class Framing(unittest.TestCase):
         entries = json.loads((FIXTURES / "indexer-fetch.json").read_text())["utxos"]
         parsed = [indexer.parse_fetched(e) for e in entries]
         self.assertTrue(all(parsed))
-        self.assertEqual(set(parsed[0]), {"commitment", "nonce", "enc", "tag", "promise", "viewable", "auth"})
+        self.assertEqual(set(parsed[0]), {"commitment", "nonce", "enc", "tag", "promise", "viewable", "auth",
+                                          "auth_key"})
+        # R1: the one-time key that alone can spend the output is kept for the ownership check.
+        self.assertEqual(parsed[0]["auth_key"], "7a3eb2cc0d4e0aa116283bd1c843602f3f2516d281d15ce923a970bac4d64322")
+        self.assertIsNone(indexer.one_time_key({"auth": {"Script": "00" * 32}}))
+        self.assertIsNone(indexer.one_time_key({"auth": {"Key": "zz" * 32}}))
+        substate = {"verified": True, "substate": {"Utxo": {"output": entries[0][1]["output"], "is_frozen": False}}}
+        self.assertEqual(indexer.substate_output(substate),
+                         (parsed[0]["auth_key"], parsed[0]["nonce"]))
+        self.assertEqual(indexer.substate_output({"verified": True, "substate": {"Utxo": {}}}), (None, None))
         # Real outputs differ in what they reveal: the first one recorded publishes a 1,000 tTARI lower bound.
         self.assertEqual([(p["promise"], p["viewable"], p["auth"]) for p in parsed],
                          [(1_000_000_000, 0, "key"), (0, 0, "key"), (0, 0, "key")])
