@@ -83,6 +83,20 @@ async function selftest() {
   st2.free();
   const opened = await ootle.tryDecryptUtxo(k.viewSk, { id: id(f.output), nonce: f.output.sender_public_nonce, enc: f.output.encrypted_data });
   cases.push({ name: 'fresh output for another owner opens with our view key but is not ours', passed: opened?.value === 7000n && oneTimeKeyHex(k.ownerSk, unhex(f.output.sender_public_nonce)) !== f.auth.Key });
+  // Pay to open: a sales view key sealed to our receiver opens only with the watch flag, the reference of
+  // exactly that address and a key that is the address's view key.
+  const seller = await ootle.newRandomKeys();
+  const shareId = b64uEncode(new Uint8Array(16));
+  const sealFor = async (flags, addr, key) => hex(await courier.sealDelivery(k.address, { shareId, s: key, flags, ref16: await watchRef(addr) }, 3));
+  const ask = (blob) => openWatchKey({ blob, owner_sk: hex(k.ownerSk), view_sk: hex(k.viewSk), address: seller.address });
+  const good = await ask(await sealFor(0x08, seller.address, seller.viewSk));
+  cases.push({ name: 'sealed sales view key opens', passed: good.view_sk === hex(seller.viewSk) });
+  for (const [name, flags, addr, key] of [['without the watch flag', 0x04, seller.address, seller.viewSk],
+    ['for another address', 0x08, other.address, seller.viewSk], ['with a key not the address\'s', 0x08, seller.address, other.viewSk]]) {
+    let refused = false;
+    try { await ask(await sealFor(flags, addr, key)); } catch (e) { refused = e instanceof RequestError; }
+    cases.push({ name: `sealed sales view key refused ${name}`, passed: refused });
+  }
   return { passed: cases.every((c) => c.passed), cases };
 }
 
@@ -144,6 +158,43 @@ async function openDelivery({ memo, owner_sk, view_sk, origins }) {
   return { share_id: inner.shareId, flags: inner.flags, ref: hex(inner.ref16), access_token: b64uEncode(accessToken) };
 }
 
+// Pay to open (16-drive-architecture §1.5): a seller's sales view key, sealed (kind 3) to our receiver by
+// the seller's drive. Only the chain worker asks, with the receiver keys; the key goes back to its memory.
+// The blob must carry the watch flag, the reference of exactly this address, and a key whose public half
+// is the address's view key, so a drive can't make us watch an address it doesn't hold the key of.
+async function watchRef(address) {
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode('mutis-watch-v1' + address));
+  return new Uint8Array(digest).slice(0, 16);
+}
+
+async function openWatchKey({ blob, owner_sk, view_sk, address }) {
+  const sealed = hexField(blob, 125);
+  need(typeof address === 'string' && ootle.classifyAddressInput(address) === 'ootle_testnet');
+  const ownerSk = hexField(owner_sk, 32);
+  const viewSk = hexField(view_sk, 32);
+  const w = ootle.bindings();
+  const keys = { ownerSk, viewSk, ownerPk: w.publicKeyFromSecretKey(ownerSk), viewPk: w.publicKeyFromSecretKey(viewSk) };
+  let inner;
+  try {
+    inner = courier.decodeInner(await ootle.unwrapBlob(keys, sealed, 3));
+  } catch {
+    throw new RequestError('cannot_open');
+  } finally {
+    ownerSk.fill(0);
+    viewSk.fill(0);
+  }
+  const ref = await watchRef(address);
+  const { viewPk } = ootle.decodeAddress(address);
+  const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+  if (inner.flags !== 0x08 || !same(inner.ref16, ref) || !same(w.publicKeyFromSecretKey(inner.s), viewPk)) {
+    inner.s.fill(0);
+    throw new RequestError('bad_key');
+  }
+  const out = hex(inner.s);
+  inner.s.fill(0);
+  return { view_sk: out };
+}
+
 const handlers = {
   hello: async () => ({ version: VERSION, wasm_sha256: lib.wasmSha256, node: process.version, permission: Boolean(process.permission) }),
   newKeys: async () => keysHex(await ootle.newRandomKeys()),
@@ -166,6 +217,7 @@ const handlers = {
     }
     return { public_key: key };
   },
+  openWatchKey,
   selftest,
   canary,
   openDelivery,
