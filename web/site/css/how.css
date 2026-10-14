@@ -13,10 +13,10 @@
   .still { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: var(--s-8); }
 }
 
-/* the frame: a quiet sunken stage, the interface on it */
+/* the frame: a quiet sunken stage (no border: a stage, not a card), the interface on it */
 .still-frame {
-  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-items: center; padding: clamp(16px, 4vw, 40px); border-radius: calc(var(--r-panel) + 4px);
-  background: var(--bg-sunken); border: 1px solid var(--hair); pointer-events: none; user-select: none; min-width: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-items: center; padding: clamp(16px, 4vw, 40px); border-radius: var(--r-panel);
+  background: var(--bg-sunken); pointer-events: none; user-select: none; min-width: 0;
 }
 .still-frame > * { width: 100%; max-width: 26rem; }
 .ui-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); font: var(--t-small); }
