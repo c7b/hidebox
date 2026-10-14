@@ -96,7 +96,7 @@ export async function render(drive, page) {
     h('h2', { class: 'empty-title' }, t('drive.rec.title')), h('p', { class: 'empty-description' }, t('drive.rec.empty'))));
   const scanLine = h('p', { class: 'scanline', role: 'status', 'data-testid': 'inbox-scan' }, spinner(), h('span', {}, t('rec.scanning')));
   const problems = h('div', {});
-  page.replaceChildren(
+  page.replaceChildren(...[   // optional parts are null when off: never appended
     h('div', { class: 'page-head' }, h('h1', { class: 'h2' }, t('drive.side.received'))),
     h('p', { class: 'page-desc' }, t('drive.rec.desc')),
     drive.cfg.features?.drops === false ? null : dropCard(drive),
@@ -104,7 +104,7 @@ export async function render(drive, page) {
     h('section', { 'aria-label': t('rec.files'), 'data-testid': 'received-root' }, table, empty),
     // lane app2: the payments to this drive's pay links, with the owner check (ui/sales.js).
     drive.cfg.features?.pay_to_open ? await import('./sales.js').then((m) => m.salesSection(drive)).catch(() => null) : null,
-    tariRow(drive));
+    tariRow(drive)].filter(Boolean));
   init(page);
 
   let identity;

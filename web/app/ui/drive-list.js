@@ -19,7 +19,7 @@ function rowMenu(drive) {
   menu.fill = (it) => {
     const file = !it.folder;
     const folders = drive.folders;
-    menu.replaceChildren(
+    menu.replaceChildren(...[   // the entries a folder doesn't have are null: never append them (they'd read "null")
       item('share', 'share-2', 'drive.menu.share'),
       file ? item('once', 'flame', 'drive.menu.once') : null,
       item('activity', 'activity', 'drive.menu.activity'),
@@ -29,7 +29,7 @@ function rowMenu(drive) {
       folders ? item('move', 'folder-input', 'drive.menu.move') : null,
       folders && file ? item('later', 'hourglass', 'drive.menu.later') : null,
       sep(),
-      folders ? item('trash', 'trash', 'drive.menu.trash', 'destructive') : item('delete', 'trash', 'drive.menu.delete', 'destructive'));
+      folders ? item('trash', 'trash', 'drive.menu.trash', 'destructive') : item('delete', 'trash', 'drive.menu.delete', 'destructive')].filter(Boolean));
   };
   menu.addEventListener('sh:select', (e) => {
     const it = drive.index.get(e.detail.trigger.dataset.id);

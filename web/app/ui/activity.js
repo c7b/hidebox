@@ -126,7 +126,9 @@ export async function renderFeed(drive, page) {
     }
   }
   // Newest first; in the same hour, a file leaving comes after (so above) what happened to it before.
-  const all = [...events, ...gone].sort((a, b) => ((b.at ?? 0) - (a.at ?? 0)) || ((b.k === 'left') - (a.k === 'left')));
+  // Within an hour, what happened last comes first: it left, then its opens and payments, then the link, then the upload.
+  const RANK = { left: 5, ended: 4, opened: 3, paid: 3, made: 2, uploaded: 1 };
+  const all = [...events, ...gone].sort((a, b) => ((b.at ?? 0) - (a.at ?? 0)) || ((RANK[b.k] ?? 0) - (RANK[a.k] ?? 0)));
   const today = Math.floor(Date.now() / 1000) - 24 * HOUR;
   const groups = [[t('drive.act.today'), all.filter((e) => (e.at ?? 0) >= today)], [t('drive.act.earlier'), all.filter((e) => (e.at ?? 0) < today)]]
     .filter(([, list]) => list.length);
