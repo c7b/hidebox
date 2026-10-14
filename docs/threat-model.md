@@ -21,6 +21,11 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links |
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets |
 | A dishonest payer (packs) | build an output that opens with our receiver's view key but that they can still spend | the one-time key must be the one our receiver's owner key derives ("Ownership" below) | none known |
+| A curious or compromised server, for paid links (pay to open) | hold half of each paid link's key (`sB`); read each seller's payments through the view key of the sales address | `sA` stays after the `#`; `sB` is erased when the link ends; the view key arrives sealed to the payment checker's keys, which the API user and a copy of the database can't use; outputs that pay no claim of that seller are not recorded | our server together with a leaked link could open a paid link; `sB` stays in database backups for `retention.db_backup_days`; the payment checker sees a seller's sales payments while it scans (amount, time, claim) |
+| A compromised API, for test money | invent sellers and claims to steer demo payments | the chain worker re-checks every demo payment to a claim: the claim waits for money on a live link, the address is that link owner's sales address with the claim's reference, the seller's view key opened, the amount is at most what is missing; per-network caps; the daily `demo_pay` budget | at most a day's demo budget, in test money, to an address the attacker picks |
+| A dishonest buyer (pay to open) | build a payment the seller's view key opens while keeping its spend key, to get the key for the fee | only test money our demo wallet built for the whole price releases by itself; every other payment waits until the owner's drive has compared its one-time keys and confirmed ("Pay to open" below); a failed check voids the claim | a wallet payment opens nothing until the owner's drive has run its check |
+| A buyer passing a paid file on | share the file, or the link with their claim token | each claim gives `pay_to_open.buyer_views` opens within `pay_to_open.buyer_window_s`; the link alone opens nothing | anyone who opens a file can share it further (stated on the pay page) |
+| A dishonest seller | sell something other than the preview says | none: no disputes, no refunds (stated before paying) | stated |
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours; direct sends link to our sponsor wallet and to each other |
 | A view-key holder | read arrivals, amounts and memo text | files sealed to a locker need its owner key too | files sent with "The recipient uses another Ootle wallet" open with the view key (labelled at send time) |
 | Phishing through our sends | make someone receive a **bye** link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact **bye** delivery as plain text | someone can send unwanted **bye** deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
@@ -70,6 +75,20 @@ the output's one-time key from our receiver's owner key and the output's nonce (
 mismatch marks the payment `rejected`, never credited. Tested on the fake chain and with an offline
 known-answer test made with the real library (`web/app/sidecar/selftest.json`, `ownership`), never with
 forged outputs on the public testnet. The walletd fallback relies on walletd's own list for ownership.
+
+**Pay to open (October 2026).** A buyer pays the owner's sales address directly; the money never reaches
+us. To see those payments the payment checker holds the view key of each seller's sales address, which the seller's drive
+seals to the checker's keys (kind 3, flag `0x08`, bound to the address); it is opened only in the chain
+worker's memory, and only if its public half is the address's view key. A payment counts as for packs:
+amount proven by `unblindOutput`, output committed on an indexer, each output once, ever. The ownership
+check above can't run here, because only the seller's drive holds the sales owner key, so the release
+gate decides: test money our demo wallet built for the whole price (spendable by the owner by
+construction) releases `sB` at `paid`; any other payment waits at `owner_check: pending`
+until the owner's drive compares each output's one-time key with its own (`stealthDhSecret`, as in
+"Ownership") and confirms; a failed check voids the claim and shows "The payer kept control of this
+payment". Tested on the fake chain only (`test_release_gate.py`, `test_sales_worker.py`); the sidecar's
+`openWatchKey` has an offline round trip in its selftest. Not yet: a locked payment with a refund (a
+native Ootle HTLC), which has never run, so nothing is promised about it.
 
 ## SealLog
 

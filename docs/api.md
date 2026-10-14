@@ -19,6 +19,8 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
   - `X-Mutis-Access`: a link's access token, derived in the browser from the secret after the `#`;
     the server stores only its SHA-256. `X-Mutis-Link`: the link proof of a link + password share.
   - `X-Mutis-Judge`: a judge pass (it stands in for proofs of work and draws on a reserved budget).
+  - `X-Mutis-Claim`: a pay-to-open claim token (32 bytes), drawn by the buyer's browser; the server
+    stores only its SHA-256. A paid link's fragment is kind `5`: `/p/<share_id>#5<b64u(sA)>`.
 - A state-changing request with an `Origin` header must carry the deployment's own origin
   (403 `bad_origin`). No CORS headers are sent.
 - Proof of work: `POST /pow {"purpose"}` returns a challenge and a difficulty; requests that need one
@@ -103,6 +105,36 @@ in the browser. The server learns which items share a folder, how deep and how m
 or a real size. Folders cost no space; files in the Trash do until it empties. A folder link opens the
 subtree as one visit: a Once folder link gives one visit of `retention.ticket_s`, then ends; the files
 stay in the drive.
+<!-- /lane S -->
+
+<!-- lane S: pay to open (16-drive-design §4, §15 step 14), behind features.pay_to_open -->
+| Route | Who | What |
+|---|---|---|
+| `PUT /me/sales` | a drive session | `{address, view_sealed}` → 204: the drive's sales address (testnet, no payment reference) and its view key sealed (kind 3, flag `0x08`, `ref16` = SHA-256(`"mutis-watch-v1"` ‖ address)[0:16]) to `pay_to_open.watch_address`. Replaces the previous one (checked again from the start). 422 `invalid`, `bad_address`; 10 a day per drive |
+| `GET /me/sales` | a drive session | `{seller: {address, state} or null, to_check: [{claim_id, share_id, paid_at, amount_ut, received_ut, utxo_ids}]}`: `state` is `pending` (not yet opened by the payment checker), `ok` or `bad_key`; `to_check` lists paid claims waiting for this drive's ownership check, with the outputs that paid them (at most 100, oldest first) |
+| `POST /me/sales/claims/{claim_id}/confirm` | the link's owner | `{check: "ok" | "bad"}` → 200 `{claim_id, status, owner_check}`: the drive compared each output's one-time key with the one its sales owner key derives. `ok` lets the buyer's next poll release the claim; `bad` voids it. 404 not this drive's, 409 `conflict` unless the claim is `paid`, waiting, and not test money |
+| `POST /items/{id}/shares` + `mode: "pay"` | the drive | `{mode: "pay", wrapped_key, access_verifier, server_half (32 bytes), price_ut (one of pay_to_open.prices_ut), teaser_ct? (at most 2,076 bytes)}` on the drive's own kept file or folder: stored as a plain link without a rule of its own, plus its price and our half of its key. The response's `path` is `/p/{id}`. 409 `seller_not_registered` (no `PUT /me/sales` yet), `conflict` (one paid link per item at a time), 422 (`price_ut`, a rule, `then_delete`, a password, or not the drive's kept item), 503 `feature_disabled` |
+| `PATCH /s/{id}` (paid) | the owner | `{paused: true | false}`: Stop selling / Sell again; no new claims while paused, released claims keep their opens. Rules can't be changed on a paid link (422); `paused` on any other link is 422 |
+| `GET /s/{id}/manage`, `GET /me/items` (paid) | the owner | each paid link gains `paid: {price_ut, paused, seller_state, counts: {pending, seen, underpaid, paid, released, expired, void}, earned_ut}`; `manage` adds `recent`: the last 50 claims as `{ref4, status, received_ut, paid_hour, released_hour, demo, owner_check}`. Never who paid |
+| `GET /s/{id}` (paid) | anyone | adds `paid: true` (the viewer moves to `/p/{id}`) |
+| `GET /p/{id}` | anyone | `{state: "selling" | "paused", price_ut, fee_ut, buyer_views, buyer_window_s, kind, size_stored, child_count, teaser_ct, seller: {ready}, testnet: true}`; never the seller's address. 404, 410 `gone` as `/s/{id}`. 120 a minute per network |
+| `POST /p/{id}/claims` | anyone (PoW `claim`) | `{claim_verifier: b64u(SHA-256(t)), pow}` → 201 `{claim_id, address, amount_ut, expires_at, status: "pending"}`: `address` is the owner's sales address with the claim id as its payment reference; pay within `pay_to_open.claim_ttl_s`. 409 `not_for_sale` (paused), `seller_not_ready`, `busy` (`max_open_claims_per_share` waiting on this link), 503 `busy` (500 waiting in all). 10 an hour per network, 30 per /48 |
+| `GET /p/{id}/claims/{claim_id}` | `X-Mutis-Claim` | `{claim_id, status, address, amount_ut, received_ut, expires_at, demo, owner_check, payments: [{value_ut, seen_at, counted, checks: {amount_proven, committed_on_chain}}]}`; once released, `views_left`, `open_until` and, while opens and time are left, `server_half`. The first poll of a claim that passes the release gate releases it. 403 `bad_claim`, 404. 60 a minute per network |
+| `POST /p/{id}/claims/{claim_id}/demo-pay` | `X-Mutis-Claim` (PoW `demo_pay` or a judge pass) | `{pow}` → 202 `{job_id}`: our demo wallet pays what the claim still misses (at most `pay_to_open.demo_max_ut`), with test money, to the claim's address. 409 `conflict` (paid, closed, or one already on its way), `seller_not_ready`, 422 (the price is over `demo_max_ut`), 429 `rate_limited` / `budget_exhausted`, 503 `feature_disabled`. 3 a day per network, 6 per /48 (a judge pass lifts both); the `demo_pay` budget |
+| `POST /s/{id}/open`, `/peek`, `GET /s/{id}/stored` (paid) | `X-Mutis-Access` + `X-Mutis-Claim` | the claim must be this link's, released, with opens left and inside its window; each open spends one. 402 `payment_required` (no claim, or not paid yet), 403 `bad_claim`, 410 `claim_used` (`details.reason`: `no_opens_left` or `window_over`); checked before the access token |
+
+**Pay to open.** A paid link splits its key: `sA` after the `#`, `sB` (`server_half`) with us; the link's
+secret is HKDF(`sA` ‖ `sB`), so one half without the other opens nothing. A buyer's browser draws a claim token `t`,
+makes a claim and pays the claim's address; the memo carries the claim id. Our chain worker opens the
+seller's sealed view key, scans the mirror from the claim's position, proves the amount with the official
+`unblindOutput`, and counts it once an indexer commits it (`pending` → `seen` → `paid`; short payments
+are `underpaid` at expiry and top-ups count for `late_grace_s` more; anything after `paid` is `extra`,
+kept by the owner). **The release gate:** a view key proves amount and memo, not who can spend the
+output, so only test money our demo wallet built for the whole price releases at `paid`; any other
+payment waits (`owner_check: "pending"`) until the owner's drive has run its check and confirmed. Released, the
+claim gives `buyer_views` opens within `buyer_window_s`. Ending the link (revoke, delete, removal) erases
+`server_half`, voids claims not yet released and leaves released ones without opens. Payments are
+final.
 <!-- /lane S -->
 
 Checkpoint objects are `{"index", "component", "tree_size", "root", "epoch", "tx_id", "created_at"}`;
