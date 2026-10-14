@@ -302,7 +302,7 @@ def sell(t: T, page, name: str) -> tuple[str, str]:
     url = page.value("share-link") if page.exists("share-link") else ""
     m = PAY_LINK.search(url)
     t.check(bool(m and url.startswith(t.origin) and page.wait("!!document.querySelector('[data-testid=\"share-qr\"] svg')", 30)),
-            f"Make pay link: a /p/ link with half of the key after the #, and a code to scan ({url[-40:] or page.text('share-dialog')[-120:]})")
+            f"Make pay link: a /p/ link with half of the key after the #, and a code to scan ({m[1] if m else page.text('share-dialog')[-120:]})")
     page.key("Escape")
     page.wait("!document.getElementById('share-dialog') || document.getElementById('share-dialog').hidden", 10)
     return url, m[1]
