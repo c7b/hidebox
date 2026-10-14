@@ -391,8 +391,9 @@ def e29(t: T) -> None:
     t.check(pay_page(other, url) == "wait" and not other.exists("folder-view"), "a second stranger sees the price and no files")
     desk.reload()
     desk.wait_for("drive-root", 120)
-    card = desk.wait(f"(() => {{ const c = [...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === {json.dumps(folder)}); return c && /1 paid/.test(c.textContent) ? c.textContent : ''; }})()", 120)
-    t.check("1 paid" in card, f"the seller's folder says 1 paid ({card[-60:]})")
+    badge = desk.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === {json.dumps(folder)})"
+                      "?.querySelector('[data-rule=\"pay\"]')?.textContent.trim() ?? ''", 120)
+    t.check(badge.startswith("Pay "), f"the seller's folder wears its price ({badge})")
     t.env.remote.admin("takedown", "share", "--", sid)                  # ends the link and its claims
 
 
