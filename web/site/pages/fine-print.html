@@ -70,6 +70,7 @@
       <tr><th scope="row"><code>chunks</code></th><td>The SHA-256 of each encrypted chunk.</td><td>With its file.</td></tr>
       <tr><th scope="row"><code>uploads</code></th><td>An upload in progress: its id, its file, its lane, the space reserved for it.</td><td>Until it finishes or expires (two hours).</td></tr>
       <tr><th scope="row"><code>shares</code></th><td>One row per link: its mode (link, link + password, password only); the file key wrapped by the link's secret; the SHA-256 of its access token and, for link + password, of its link proof; the password's stretching parameters (never the password); opens allowed and used; expiry; state; the hour it was made and when it ended; wrong-password counters; opens in the current hour; the minute of its first open, shown only to its owner.</td><td>The wrapped key and the hashes are erased at the exit; the rest stays as the note above.</td></tr>
+      <tr><th scope="row"><code>share_opens</code></th><td>For each link, how many times it was opened in each hour: the link, the hour and a count.</td><td>Deleted with its link's row.</td></tr>
       <tr><th scope="row"><code>tickets</code></th><td>A download in progress: the SHA-256 of its token, the link and file, a byte cap.</td><td>Until the download ends<span data-needs="config" hidden> (at most <span data-v="ticket"></span>)</span>.</td></tr>
       <tr><th scope="row"><code>identities</code></th><td>One row per locker: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; when rented space ends; today's send count.</td><td>Until you delete your locker.</td></tr>
       <tr><th scope="row"><code>sessions</code></th><td>The SHA-256 of a sign-in token, its locker, when it was made and expires, the last day it was used.</td><td>Until it expires.</td></tr>
@@ -84,6 +85,10 @@
       <tr><th scope="row"><code>seal_leaves</code>, <code>seal_checkpoints</code></th><td>SealLog: hashes of stored files and exits, and the checkpoints written to the Ootle.</td><td>Permanent, like the chain.</td></tr>
       <tr><th scope="row"><code>judge_passes</code></th><td>The SHA-256 of each one-time pass we gave the Council, and its uses left.</td><td>For the contest. They hold nothing about a person.</td></tr>
       <tr><th scope="row"><code>meta</code></th><td>Server settings and counters, such as when the last file was locked and which file is our hourly test.</td><td>Overwritten as they change.</td></tr>
+      <tr><th scope="row"><code>sellers</code></th><td>For paid links: a drive's sales address, the key that lets our payment checker see payments to it (sealed to keys only our chain worker holds), and how far the checker has read.</td><td>Empty until paid links are switched on.</td></tr>
+      <tr><th scope="row"><code>paid_shares</code></th><td>One row per paid link: its price; our half of its key, which we erase when the link ends; its encrypted preview; how many views and how long a buyer gets; whether it is paused.</td><td>Empty until paid links are switched on.</td></tr>
+      <tr><th scope="row"><code>claims</code></th><td>One row per try to buy: a random id that is also the payment reference; the SHA-256 of the buyer's claim token; the address to pay; the price and what has arrived; its status; when it was made, paid, opened and when it expires.</td><td>Empty until paid links are switched on.</td></tr>
+      <tr><th scope="row"><code>sale_payments</code></th><td>Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it.</td><td>Empty until paid links are switched on.</td></tr>
     </tbody>
   </table>
 </div>
