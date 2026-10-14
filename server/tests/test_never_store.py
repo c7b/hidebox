@@ -62,7 +62,10 @@ class Schema(unittest.TestCase):
                     self.assertNotIn(col["name"], FORBIDDEN_COLUMNS, f"{table}.{col['name']}")
                     if "address" in col["name"]:
                         addresses.append(f"{table}.{col['name']}")
-            self.assertEqual(sorted(addresses), ["drops.address", "invoices.address"])
+            # A drop's public intake address and our own receiver per invoice; pay to open adds a seller's
+            # opt-in sales address and the per-claim address made from it (16-drive-architecture §1.4).
+            self.assertEqual(sorted(addresses), ["claims.address", "drops.address", "invoices.address",
+                                                 "sellers.address"])
             item_cols = {c["name"] for c in s.conn.execute("PRAGMA table_info(items)")}
             self.assertNotIn("drop_id", item_cols)          # which drop a file came from is never stored
         finally:

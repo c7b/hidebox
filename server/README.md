@@ -15,7 +15,7 @@ From the repository root:
 python3 -I -m unittest discover -s server/tests
 ```
 
-202 tests, under a minute (ultron, Python 3.13.5, 2026-10-12: `Ran 202 tests in 48.5s, OK (skipped=4)`; the four skips are the first two opt-in suites below). Opt-in suites:
+257 tests, about a minute (ultron, Python 3.13.5, 2026-10-13: `Ran 257 tests`, `OK (skipped=5)`; the five skips are the first two opt-in suites below). Opt-in suites:
 
 | Command | What it adds |
 |---|---|
@@ -86,14 +86,16 @@ IPv4 address; 128 for a /48 or /24), so slow downloads from one place can't hold
 |---|---|
 | No IP, token, id, address or header value in logs | `logsafe.py` accepts only a route name, a status, a duration and fixed event codes; `api.py` replaces `http.server`'s logging; `test_never_store.py` runs the whole contract suite and requires every log line to match those two formats |
 | IPs only in memory, keyed by the day | `ipkeys.py` (HMAC with a key regenerated at 00:00 UTC, never written); rate limits and the bounded tables in `ratelimit.py` |
-| The schema has no name, type, IP, public key or recipient column | `schema.sql`; `test_never_store.Schema` |
+| The schema has no name, type, IP, public key or recipient column (a seller's opt-in sales address and per-claim addresses are the deliberate exception, for pay to open) | `schema.sql`; `test_never_store.Schema` |
+| Opens are counts per link per UTC hour, never who opened it | `share_opens(share_id, hour, n)`, written in the open's transaction (`handlers/shares.py` `count_open`), deleted with the link's tombstone; `test_activity.py` |
+| A folder link serves only what is still in the folder | the folder ticket checks membership at each request (`handlers/blobs.py`, `tree.within`); `test_folder_shares.py` |
 | Exactly one of N concurrent opens burns a Once link | `handlers/shares.py` `_open_in_tx` in one `BEGIN IMMEDIATE`; `test_burn_race.py` (50 threads) |
 | A link's wrapped key is scrubbed when it ends: in the request that opens, revokes or deletes it, or within a minute of its expiry. SQLite zeroes the bytes it frees in the database file (`PRAGMA secure_delete`); an older page can stay in the write-ahead log until the log is reused, and in the daily backups for their 7 days | `items.end_share`, `cleanup.expire_links`, `db.connect`; `test_cleanup.py`, `test_schema.py` |
 | Ciphertext is unlinked within a minute of its exit, or when an open download ticket ends (at most 30 minutes); a canary is kept 48 hours | `items.unlink`, `cleanup.py`; `test_cleanup.py`, `test_canary.py` |
 | No link outlives its rule: there is no server-side "Keep" for a received file | a recipient keeps one by sealing it again as their own file; `test_contract.Links.test_no_server_side_keep` |
 | The relay can only carry our own memo to the intended address (a direct-mode send builds its memo in the browser; what bounds those is the daily sponsor budget) | `jobs.courier_memo` (built from `PUBLIC_ORIGIN`), drop deliveries use the drop's address, the worker re-validates every payload; `test_courier.py` |
 | A destination address lives in the database only while its send is pending | payloads scrubbed to `NULL` when a job ends; an unsettled send ends within 30 minutes; finished user jobs deleted after a day; `test_courier.py` |
-| Credit only what a Tari indexer (not walletd) confirms on chain; with `amount_proof = "sidecar"` (or `"chromium"`) the official library also proves the amount; with `"wallet"` the amount is the one walletd reads | `payments.py` (+ `sidecar.py`, `indexer.py`); credits freeze only when every indexer says a credited output is gone; `test_payments.py`, `test_real_sidecar.py` |
+| Credit only what a Tari indexer (not walletd) confirms on chain; with `amount_proof = "sidecar"` (or `"chromium"`) the official library also proves the amount, and the output's one-time key must be the one our receiver's owner key derives (R1: a view key can't tell who can spend an output); with `"wallet"` the amount is the one walletd reads | `payments.py` (+ `sidecar.py` `oneTimeKey`, `indexer.py`, `chain_worker._ours`); credits freeze only when every indexer says a credited output is gone; `test_payments.py`, `test_receiver_ownership.py`, `test_real_sidecar.py` |
 | A bug in the API can spend at most the daily budget slices, plus SealLog fees for at most one checkpoint every 10 minutes | the worker pays demo payments only to the receiver it learned itself, makes checkpoints itself (every `seal_log.checkpoint_interval_s`, which the config refuses below 600; `seal-now` no faster than every 10 minutes; each fee capped at 1 tTARI), and ignores budget overrides above the TOML; `test_payments.py`, `test_seallog.py`, `test_courier.py` |
 | SealLog shows volume only in steps of 64, and an idle window looks like any window with fewer than 64 new records | every checkpoint adds at least one pad, up to the next multiple of 64 (the template refuses a size that doesn't grow); a leaf gets its index at the checkpoint that commits it, shuffled within that batch; `test_seallog.LeafOrder`, `test_seallog.SharedVector` |
 | `/stats` shows disk sizes only in steps of 0.1 GiB, and the wall only each item's size class and exit rule (never whether a link was opened), in random order, without items under an hour old or taken down | `handlers/stats.py`; `test_contract.System`. (`last_sealed_min`, defined by the spec, does say to the minute when the latest upload finished.) |

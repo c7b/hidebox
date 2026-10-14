@@ -14,6 +14,7 @@ from .storage import Blobs
 TOMBSTONE_DAYS = 30
 INACTIVE_DAYS = 180
 LAPSE_GRACE_DAYS = 30
+TRASH_DAYS = 30             # the Trash empties itself after this (16-drive-design §7, C47)
 DB_BACKUP_DAYS = 7          # kept by deploy/scripts/backup.py; published in /config
 UNSHARED_GRACE_S = 2 * 3600
 JOB_KEEP_S = 86400          # finished jobs (tx ids of user deliveries) are forgotten after a day
@@ -50,6 +51,17 @@ def doom_items(conn: sqlite3.Connection, now: int) -> int:
         with db.tx(conn):
             items.doom_if_unlinked(conn, item_id, now)
     return len(expired) + len(unlinked)
+
+
+def empty_trash(conn: sqlite3.Connection, blobs: Blobs, now: int) -> int:
+    """What sat in the Trash for `TRASH_DAYS` leaves, each file with its exit receipt (16-drive-design §7).
+    Everything a folder took into the Trash carries the same date, so it leaves with the folder."""
+    ids = _ids(conn, "SELECT id FROM items WHERE state IN ('ready','uploading') AND trashed_at IS NOT NULL "
+                     "AND trashed_at <= ?", (now - TRASH_DAYS * 86400,))
+    for item_id in ids:
+        with db.tx(conn):
+            items.delete_tree(conn, blobs, item_id, "owner_deleted", now)
+    return len(ids)
 
 
 def unlink_blobs(conn: sqlite3.Connection, blobs: Blobs, now: int) -> int:
@@ -126,8 +138,10 @@ def daily(conn: sqlite3.Connection, blobs: Blobs, q: int, now: int) -> None:
     for identity in lapsed:
         over = identity["used_bytes"] - q
         doomed = []
+        # Files in the Trash go first, then the oldest (C46); folders hold no bytes and stay.
         for row in conn.execute("SELECT id, size_stored FROM items WHERE owner_id = ? AND retention = 'kept' "
-                                "AND state = 'ready' ORDER BY created_hour, rowid", (identity["id"],)):
+                                "AND state = 'ready' AND kind = 'file' "
+                                "ORDER BY trashed_at IS NULL, trashed_at, created_hour, rowid", (identity["id"],)):
             if over <= 0:
                 break
             doomed.append(row["id"])
@@ -142,7 +156,7 @@ def daily(conn: sqlite3.Connection, blobs: Blobs, q: int, now: int) -> None:
 
 def run(conn: sqlite3.Connection, cfg, blobs: Blobs, statvfs, now: int) -> dict:
     counts = {"links_expired": expire_links(conn, now), "items_doomed": doom_items(conn, now),
-              "blobs_unlinked": unlink_blobs(conn, blobs, now),
+              "trash_emptied": empty_trash(conn, blobs, now), "blobs_unlinked": unlink_blobs(conn, blobs, now),
               "uploads_dropped": drop_abandoned_uploads(conn, blobs, now),
               "sends_interrupted": fail_stale_sends(conn, now)}
     purge_expired(conn, now)

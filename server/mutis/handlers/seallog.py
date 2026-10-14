@@ -51,11 +51,22 @@ def checkpoints(ctx):
 
 
 def proof(ctx, item_id: str):
+    """The stored-file receipt, or with `?kind=exit` the exit receipt of a file that left (the drive's
+    Activity lists files that left without a link: Delete it after, the Trash, a deletion; C42)."""
     _require_seallog(ctx)
     ctx.limit(("seal64", ctx.ip64, 60, 60, 1))
-    item = ctx.db.execute("SELECT ct_hash FROM items WHERE id = ?", (item_id,)).fetchone()
+    kind = ctx.req.query.get("kind", "stored")
+    if kind not in ("stored", "exit"):
+        raise ApiError(400, "bad_request", "Bad kind.")
+    item = ctx.db.execute("SELECT ct_hash, exit_hour FROM items WHERE id = ?", (item_id,)).fetchone()
     if item is None or item["ct_hash"] is None:
         raise ApiError(404, "not_found", "No stored file with this id.")
+    if kind == "exit":
+        if item["exit_hour"] is None:
+            raise ApiError(404, "not_found", "This file hasn't left.")
+        leaf = seallog.exit_leaf(item_id, item["exit_hour"])
+        return json_response(200, {"item_id": item_id, "kind": "exit", "exit_hour": item["exit_hour"],
+                                   "leaf_hash": leaf.hex(), **_proof(ctx, leaf)})
     leaf = seallog.stored_leaf(item_id, item["ct_hash"])
     return json_response(200, {"item_id": item_id, "kind": "stored", "leaf_hash": leaf.hex(), **_proof(ctx, leaf)})
 

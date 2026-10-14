@@ -5,10 +5,13 @@ import io
 import json
 import logging
 import unittest
+from pathlib import Path
 
 from harness import ORIGIN, Stack
-from mutis import admin, auth, budgets, codec, db
+from mutis import admin, auth, budgets, codec, config, db
 from mutis.fake_chain import fake_keys
+
+FIXTURE = Path(__file__).with_name("fixtures") / "schema-v1.sql"
 
 
 def toml(raw: dict, prefix: str = "") -> str:
@@ -44,15 +47,34 @@ class Admin(unittest.TestCase):
             admin.main(["--config", str(self.path), *args])
         return out.getvalue()
 
+    def one_migration_behind(self):
+        """A deployment whose database is one migration behind: the deployed schema-1 fixture through every
+        migration but the newest. Returns its config file and its backup folder."""
+        raw = dict(self.s.cfg.raw, data_dir=str(self.s.tmp / "behind"))
+        path = self.s.tmp / "behind.toml"
+        path.write_text(toml(raw))
+        db_path = config.from_dict(raw).db_path
+        db_path.parent.mkdir(parents=True)
+        conn = db.connect(db_path)
+        with db.tx(conn):
+            for statement in db._statements(FIXTURE.read_text()):
+                conn.execute(statement)
+            db.set_meta(conn, "schema_version", "1")
+        conn.close()
+        older = self.s.tmp / "older-migrations"
+        older.mkdir()
+        for number, file in db._migration_files(db.MIGRATIONS):
+            if number < db.SCHEMA_VERSION:
+                (older / file.name).write_text(file.read_text())
+        self.assertEqual(db.migrate(db_path, older), db.SCHEMA_VERSION - 1)
+        return path, Path(raw["data_dir"]) / "backup"
+
     def test_check_config_and_migrate(self):
         self.assertEqual(self.run_admin("check-config").strip(), "ok")
         backups = self.s.cfg.data_dir / "backup"
         self.assertEqual(self.run_admin("migrate").strip(), f"schema version {db.SCHEMA_VERSION}")
         self.assertFalse(backups.exists())                   # nothing pending: no copy
-        with db.tx(self.s.conn):                             # a database one migration behind
-            for column in ("component", "chain_index"):
-                self.s.conn.execute(f"ALTER TABLE seal_checkpoints DROP COLUMN {column}")
-            db.set_meta(self.s.conn, "schema_version", str(db.SCHEMA_VERSION - 1))
+        self.path, backups = self.one_migration_behind()
         self.assertIn(f"schema version {db.SCHEMA_VERSION} (backup: ", self.run_admin("migrate"))
         copy = next(backups.glob("pre-migrate-*.sqlite3"))
         self.assertEqual(copy.stat().st_mode & 0o777, 0o600)

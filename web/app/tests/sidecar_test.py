@@ -135,6 +135,14 @@ def main():
     check("selftest: real outputs open, every forgery is rejected (G4)", st["ok"] and st["passed"],
           "; ".join(f"{c['name'][:48]}={'ok' if c['passed'] else 'NO'}" for c in st.get("cases", [])))
 
+    own = json.load(open(os.path.join(APP, "sidecar", "selftest.json"), encoding="utf-8"))["ownership"]
+    otk = {n: sc.ask("oneTimeKey", owner_sk=own["owner_sk"], nonce=own[n]["nonce"]) for n in ("genuine", "not_ours")}
+    check("oneTimeKey (R1): our owner key derives the genuine output's one-time key, not the other one's",
+          otk["genuine"].get("public_key") == own["genuine"]["auth_key"]
+          and otk["not_ours"]["ok"] and otk["not_ours"].get("public_key") != own["not_ours"]["auth_key"])
+    bad = sc.ask("oneTimeKey", owner_sk=own["owner_sk"], nonce="ff" * 32)
+    check("oneTimeKey: a nonce that isn't a point is refused", not bad["ok"] and bad["error"] == "bad_point", bad.get("error", ""))
+
     wallet_rows = [r for r in wrap["real_outputs"] if r["owner"] == "gate wallet"]
     mixed = [{k: r[k] for k in ("id", "nonce", "enc")} for r in wrap["real_outputs"]] + [{k: c[k] for k in ("id", "nonce", "enc")} for c in wrap["crafted"]]
     found = sc.ask("scan", view_sk=wallet_rows[0]["view_sk"], utxos=mixed)
