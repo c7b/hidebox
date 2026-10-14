@@ -18,10 +18,10 @@ code, .code { font: var(--t-code); font-size: max(13px, .9em); overflow-wrap: an
 kbd { font: var(--t-code); font-size: .9em; padding: 1px 6px; border-radius: 6px; background: var(--bg-sunken); }
 .nowrap { white-space: nowrap; }
 
-/* ---------- controls: pills; one primary per screen ---------- */
+/* ---------- controls: one primary per screen (the drive's buttons: radius md) ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: var(--tap);
-  padding: 12px 24px; border: 0; border-radius: var(--r-pill); font: var(--t-ui); text-decoration: none;
+  padding: 10px 18px; border: 0; border-radius: var(--r-input); font: var(--t-ui); text-decoration: none;
   background: var(--act); color: var(--on-act); white-space: nowrap;
   transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
 }
@@ -30,11 +30,11 @@ kbd { font: var(--t-code); font-size: .9em; padding: 1px 6px; border-radius: 6px
 .btn:disabled { opacity: .55; cursor: default; }
 .quiet {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tap);
-  padding: 10px 18px; border: 1.5px solid var(--line); border-radius: var(--r-pill); background: transparent;
+  padding: 10px 18px; border: 1px solid var(--line); border-radius: var(--r-input); background: var(--bg-raised);
   font: var(--t-ui); color: var(--fg); text-decoration: none;
   transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
 }
-.quiet:hover { background: var(--hair); }
+.quiet:hover { background: var(--bg-sunken); }
 .textlink {
   font: var(--t-ui); background: none; border: 0; padding: 12px 6px; min-height: 44px;
   text-decoration: underline; text-underline-offset: .2em; text-decoration-thickness: 1.5px; color: var(--fg);
@@ -53,22 +53,29 @@ kbd { font: var(--t-code); font-size: .9em; padding: 1px 6px; border-radius: 6px
 /* ---------- layout ---------- */
 .wrap { width: 100%; max-width: calc(var(--content) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 
-/* ---------- header: the name and the light switch ---------- */
-.site-header { position: relative; z-index: var(--z-header); }
-.top { display: flex; align-items: center; justify-content: space-between; height: 68px; }
-.wm { display: inline-flex; align-items: center; text-decoration: none; padding: 6px 4px; border-radius: 10px; color: var(--fg); }
-.wm svg { height: 34px; width: auto; fill: none; stroke: currentColor; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+/* ---------- header: the name, three pages, the light switch ---------- */
+.site-header { position: relative; z-index: var(--z-header); border-bottom: 1px solid var(--hair); background: var(--bg); }
+.top { display: flex; align-items: center; gap: var(--s-5); height: 56px; }
+.wm { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; padding: 4px; margin-left: -4px; border-radius: var(--r-input); color: var(--fg); }
+.wm-tile { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-input); background: var(--act); color: var(--on-act); }
+.wm-tile .icon { width: 18px; height: 18px; }
+.wm-name { font: 650 17px/1 var(--font); letter-spacing: -.02em; }
+.top-nav { display: none; gap: var(--s-2); }
+.top-nav a { color: var(--fg-2); text-decoration: none; font: var(--t-small); padding: 8px 8px; border-radius: var(--r-input); }
+.top-nav a:hover { color: var(--fg); background: var(--bg-sunken); }
+.top-nav a[aria-current="page"] { color: var(--fg); }
+@media (min-width: 720px) { .top-nav { display: flex; } }
 /* the light switch: its name stays "Lights", its state is aria-pressed (pressed = lights on) */
 .lights {
-  inline-size: var(--tap); block-size: var(--tap); display: grid; place-items: center; border: 0; padding: 0;
-  background: transparent; border-radius: 50%; color: var(--fg); transition: background-color var(--dur-1) var(--ease-out);
+  margin-left: auto; inline-size: 40px; block-size: 40px; display: grid; place-items: center; border: 0; padding: 0;
+  background: transparent; border-radius: var(--r-input); color: var(--fg); transition: background-color var(--dur-1) var(--ease-out);
 }
-.lights:hover { background: var(--hair); }
-.lights svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.lights .bulb { fill: var(--mark); transition: fill var(--dur-2) var(--ease-out); }
-.lights[aria-pressed="false"] .bulb { fill: none; }
+.lights:hover { background: var(--bg-sunken); }
+.lights .icon { width: 18px; height: 18px; }
+@media (pointer: coarse) { .lights { inline-size: var(--tap); block-size: var(--tap); } }
 
 /* ---------- footer: everything else, one deliberate tap away ---------- */
+.site-footer { border-top: 1px solid var(--hair); margin-top: var(--s-8); }
 .foot { padding-block: var(--s-6) var(--s-5); color: var(--fg-2); font: var(--t-small); display: grid; gap: var(--s-2); }
 .foot-nav { display: flex; flex-wrap: wrap; gap: 0 20px; margin-left: -4px; }
 .foot-nav a { color: var(--fg); display: inline-flex; align-items: center; min-height: 44px; padding-inline: 4px; }

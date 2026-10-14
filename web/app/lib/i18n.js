@@ -5,7 +5,7 @@
 const LOCALE = 'en-US';
 // The public name (tools/build.py BRAND, which the build checks against this line). {brand} in any
 // string is this, unless the caller passes its own.
-export const BRAND = 'bye';
+export const BRAND = 'hidebox';
 const plurals = new Intl.PluralRules(LOCALE);
 const numberFormat = (n) => new Intl.NumberFormat(LOCALE).format(n);
 

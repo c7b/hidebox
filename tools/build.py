@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # The public name (14-ghost-design §2). The owner can swap it here, in one word; the internal codename
 # mutis stays in code, paths, services, the CLI and the database. Pages read it as {{BRAND}}; the app's
 # strings read it as {brand} from web/app/lib/i18n.js, which must say the same (the build checks).
-BRAND = "bye"
+BRAND = "hidebox"
 DEFAULT_CONFIG = ROOT / "deploy" / "config" / "mutis.toml.example"
 HOLDING = ROOT / "deploy" / "holding"
 

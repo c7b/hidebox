@@ -31,13 +31,12 @@ ROUTES = {
     "/s/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),
     "/t": (APP_CSP, NOINDEX),
     "/d/7kq2x9mdh4": (APP_CSP, NOINDEX),
-    "/locker": (APP_CSP, NOINDEX),
-    "/inbox": (APP_CSP, NOINDEX),
     "/send": (APP_CSP, NOINDEX),
     "/watch": (APP_CSP, NOINDEX),
-    "/upgrade": (APP_CSP, NOINDEX),
     "/drive": (APP_CSP, NOINDEX),                       # lane app1
     "/drive/storage": (APP_CSP, NOINDEX),               # lane app1
+    "/drive/received": (APP_CSP, NOINDEX),
+    "/drive/activity": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
@@ -60,6 +59,10 @@ REDIRECTS = {
     "/pricing": "/made#limits",
     "/faq": "/made",
     "/status": "/made#check",
+    # the drive replaced the locker (16-drive-design §12); these targets are the drive's own pages
+    "/locker": "/drive",
+    "/inbox": "/drive/received",
+    "/upgrade": "/drive/storage#more",
 }
 
 # Caching (deploy/caddy/Caddyfile): pages, app files and status files revalidate on every visit; an

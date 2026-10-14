@@ -31,7 +31,7 @@ export async function mountWidget(root, opts) {
   const figure = opts.figure ?? null;
   // A locker's code scanned by a phone (/#to=<address>, a fragment our server never sees): the ghost
   // carries an envelope, and after the drop the send step opens with that address filled in.
-  const to = (figure && /^#to=([a-z0-9_]{20,200})$/.exec(location.hash)?.[1]) || null;
+  const to = /^#to=([a-z0-9_]{20,200})$/.exec(location.hash)?.[1] || null;
   const rest = to ? 'courier' : 'ready';
   if (to) {
     await more();

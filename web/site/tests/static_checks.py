@@ -299,13 +299,14 @@ def check_trademark():
 
 
 def check_partials():
-    """The footer repeats the status line; they must not drift. The header holds the name and the light
-    switch, nothing else (DESIGN.md): no links, no status line."""
+    """The footer repeats the status line; they must not drift. The header holds the name, the three
+    reading pages and the light switch (16-drive-design §11, the prototype's site header): no status line."""
     problems = []
     line = (SHARED / "partials" / "status-line.html").read_text().split("\n", 1)[1].strip()
     header = (SHARED / "partials" / "header.html").read_text()
-    if len(re.findall(r"<a\b", header)) != 1 or "data-theme-toggle" not in header or 'aria-label="Lights"' not in header:
-        problems.append("partials/header.html: the header is the wordmark and the Lights switch, nothing else")
+    links = re.findall(r'<a\b[^>]*href="([^"]+)"', header)
+    if links != ["/", "/how", "/judges", "/made"] or "data-theme-toggle" not in header or 'aria-label="Lights"' not in header:
+        problems.append("partials/header.html: the header is the wordmark, How it works, For judges, How it was made and the Lights switch")
     for part in ("footer",):
         if line not in (SHARED / "partials" / f"{part}.html").read_text():
             problems.append(f"partials/{part}.html: status line differs from status-line.html")
@@ -626,6 +627,8 @@ def check_redirects():
         if (SITE / "pages" / f"{old.strip('/')}.html").exists():
             problems.append(f"{old}: still a page, but it redirects to {new}")
         path, _, anchor = new.partition("#")
+        if path == "/drive" or path.startswith("/drive/"):
+            continue  # the drive's own pages (web/app/drive.html; the UI suite checks them)
         page = SITE / "pages" / f"{path.strip('/') or 'index'}.html"
         if not page.is_file():
             problems.append(f"{old} → {new}: no page {page.name}")
