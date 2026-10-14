@@ -266,6 +266,7 @@ This is the complete list, from our schema. Each link also has a “What we know
 | chunks | The SHA-256 of each encrypted chunk. | With its file.
 | uploads | An upload in progress: its id, its file, its lane, the space reserved for it. | Until it finishes or expires (two hours).
 | shares | One row per link: its mode (link, link + password, password only); the file key wrapped by the link's secret; the SHA-256 of its access token and, for link + password, of its link proof; the password's stretching parameters (never the password); opens allowed and used; expiry; state; the hour it was made and when it ended; wrong-password counters; opens in the current hour; the minute of its first open, shown only to its owner. | The wrapped key and the hashes are erased at the exit; the rest stays as the note above.
+| share_opens | For each link, how many times it was opened in each hour: the link, the hour and a count. | Deleted with its link's row.
 | tickets | A download in progress: the SHA-256 of its token, the link and file, a byte cap. | Until the download ends.
 | identities | One row per locker: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; when rented space ends; today's send count. | Until you delete your locker.
 | sessions | The SHA-256 of a sign-in token, its locker, when it was made and expires, the last day it was used. | Until it expires.
@@ -280,6 +281,10 @@ This is the complete list, from our schema. Each link also has a “What we know
 | seal_leaves, seal_checkpoints | SealLog: hashes of stored files and exits, and the checkpoints written to the Ootle. | Permanent, like the chain.
 | judge_passes | The SHA-256 of each one-time pass we gave the Council, and its uses left. | For the contest. They hold nothing about a person.
 | meta | Server settings and counters, such as when the last file was locked and which file is our hourly test. | Overwritten as they change.
+| sellers | For paid links: a drive's sales address, the key that lets our payment checker see payments to it (sealed to keys only our chain worker holds), and how far the checker has read. | Empty until paid links are switched on.
+| paid_shares | One row per paid link: its price; our half of its key, which we erase when the link ends; its encrypted preview; how many views and how long a buyer gets; whether it is paused. | Empty until paid links are switched on.
+| claims | One row per try to buy: a random id that is also the payment reference; the SHA-256 of the buyer's claim token; the address to pay; the price and what has arrived; its status; when it was made, paid, opened and when it expires. | Empty until paid links are switched on.
+| sale_payments | Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it. | Empty until paid links are switched on.
 
 ### What we publish
 Our live numbers (/api/v1/stats) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many lockers were active recently, once there are enough of them; and how many minutes ago the latest file finished uploading, to the minute.
