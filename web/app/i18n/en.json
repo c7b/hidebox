@@ -417,6 +417,7 @@
  "fv.empty": "This folder is empty.",
  "fv.visit": {"one": "This visit ends in a minute.", "other": "This visit ends in {count} minutes."},
  "fv.over": "This visit ended. Open the link again for a new visit, if it has opens left.",
+ "fv.moved": "That file isn't in this folder any more.",
  "fv.left": {"one": "{count} visit left.", "other": "{count} visits left."},
  "fv.last": "That was its last open. Save what you need before this visit ends.",
  "fv.save": "Save",
