@@ -1,0 +1,34 @@
+== purge 2026-10-14T09:29:52Z (integration pass 2, after the E2E batches on cb88bac, 8bbc73b, 7ac03f1)
+plan (by id, read-only diff against the snapshot taken before the first pass-2 batch): 28 new items (canary items kept: 3), 4 drops
+item tDp-zJiWiMqV1kBI1Ay1Ew: removed
+item p6ET4c1gxMLm7BVNLGG32g: removed
+item t7yq4aEqBELhJl20ilteMA: removed
+item LqZ2waw4mJHSFZPj0M8qUQ: removed
+item Ia4mEiQPxERTxrMs38oG_g: removed
+item Jdg-IZ_8nH3Kvt2P0COHEA: removed
+item I_M-rKuLTF1x1tw_681-rA: removed
+item d-4BudGvRKxw7-sRvvuH_w: removed
+item 8_bHExOb_qnUPDvzbOiD7A: removed
+item 3o_fcV1JIm7vMlDMH1RFbg: removed
+item eM88emWVp96p1Nl7PuRMoA: removed
+item ArT2hfHwa3MRqBwZEWJkzQ: removed
+item Jsc52MlSTNFQlhn1pQJu0A: removed
+item b_4zu654oyhBSMMh1ofmWQ: removed
+item K1wi4DHJP8nBZGNB86E5KQ: removed
+item kUxtL8XhslHurpVBqMny6g: removed
+item VhlCTfnrFStDMbhQZ2UH0A: removed
+item uwG2XGJBQwkA7FWeOzfbxA: removed
+item 02BqkKqa1WyQulAVC92YBg: removed
+item yU4E6ilnloLxQF_u-Jr6Mg: removed
+item vb0JXGBvvCze8qc97m00nw: removed
+item 9VIbwWG72VGihPFBliVNnA: removed
+item -KPkvLMlGHZgrIdN43SKKg: removed
+item g4r5nbQpsvsgt20wep-M8w: removed
+item cpOXFRcEIaPeQBdZqO2izw: removed
+item q339gvoSxtOS9MSoj3C77g: removed
+item _8cmK6lq3JT1_EeZMxlNGw: removed
+item tWsIuN9hbWWTB78LqfcS5Q: removed
+drop bd7dnh8gmv: removed
+drop c4ejfa69c8: removed
+drop 0rf0ef1r5p: removed
+drop 0v5wsh25j9: removed

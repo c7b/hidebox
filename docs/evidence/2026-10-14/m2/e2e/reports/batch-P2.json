@@ -1,0 +1,32 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-29",
+   "title": "Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting \u2192 Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402",
+   "status": "FAIL",
+   "detail": "timed out after 120 s waiting for: (() => { const c = [...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === \"E-29-council\"); return c && /1 paid/.test(c.tex",
+   "seconds": 161.9,
+   "notes": [
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan ([redacted])",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "ok: the page knows a folder of three (folder, 3)",
+    "ok: the phone: the folder's name, three files, about how big, the price and the fee (3 files, about 1 MB)",
+    "ok: the names inside stay locked; no address before a claim",
+    "ok: Pay with test money: Waiting \u2192 Seen \u2192 On the chain \u2192 Unlocked (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "test money to Unlocked: 13 s",
+    "ok: every step done (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "ok: the folder lists its names (['agenda.txt', 'budget.txt', 'minutes.txt'])",
+    "ok: minutes.txt opens on the phone, with Save",
+    "ok: a reload keeps the claim (2 opens left until Oct 21.)",
+    "ok: the page links the test money's transaction",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: no name and not the link's half of the key in any request (E-03)",
+    "ok: a stranger with the same link and no payment: 402 payment_required (402)",
+    "ok: a second stranger sees the price and no files"
+   ]
+  }
+ ]
+}

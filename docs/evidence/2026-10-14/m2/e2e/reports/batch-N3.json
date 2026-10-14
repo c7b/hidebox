@@ -1,0 +1,19 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-31",
+   "title": "Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 12.5,
+   "notes": [
+    "ok: the iphone opens the link",
+    "ok: the android opens the link",
+    "ok: the drive's Activity lists what happened",
+    "ok: share_opens counts the opens per hour (2); the feed: 'TodayLocked and uploaded \u00b7 activity-probe-file.txt1 KBOct 14, 3:00 AMLink made \u00b7'",
+    "ok: no IP address, user agent or name in the database, its WAL or the backups ([])"
+   ]
+  }
+ ]
+}

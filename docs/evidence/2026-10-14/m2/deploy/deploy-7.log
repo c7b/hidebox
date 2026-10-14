@@ -1,0 +1,27 @@
+== checks on ultron as build (the server's Python)
+Ran 303 tests in 64.412s
+
+OK (skipped=6)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 4 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "be214852", "files": 157, "git_sha": "7ac03f171c710354ef990a85fc3ce818283ff593", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 6, "vendored_checked": 6, "version": "7ac03f1"}
+== upload and activate 7ac03f171c710354ef990a85fc3ce818283ff593-cbe214852
+sidecar: hello ok, pinned ootle-wasm
+schema version 5
+switched current → releases/7ac03f171c710354ef990a85fc3ce818283ff593-cbe214852
+restarted mutis-api
+restarted mutis-chain
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: 7ac03f171c710354ef990a85fc3ce818283ff593-cbe214852 manifest 5ce023d98eb3… in tx ddd251a9f3add500e36281e6e7981bcf0aad5ded66989545dadd40111a84a123
+== deployed 7ac03f171c710354ef990a85fc3ce818283ff593-cbe214852 to https://srv2052606.hstgr.cloud
+EXIT 0

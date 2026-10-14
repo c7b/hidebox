@@ -1,0 +1,8 @@
+PASS E-09     38.9s  Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it
+PASS E-10     54.4s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-12     49.8s  A view key sees the delivery and can open no file
+PASS E-29     33.9s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+FAIL E-J     124.5s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+           timed out after 120 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drive-root\"]"); return !!e && e.getClientRects().length > 0; })()
+e2e: FAIL {'PASS': 4, 'FAIL': 1, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/integ/e2e-P3/20261014-015006/report.json
+EXIT 1
