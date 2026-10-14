@@ -105,13 +105,22 @@ def _share_entry(conn, share, now: int, since: int) -> dict:
     return out
 
 
-def gone_entry(row) -> dict:
+def gone_entry(row, conn=None) -> dict:
     """An item that left this drive (`view=gone`, for Activity): enough to decrypt its name in the browser
-    and recompute its exit leaf (`exit_receipt`: files only; a folder has no ciphertext)."""
-    return {"item_id": row["id"], "kind": row["kind"], "created_hour": row["created_hour"],
-            "exit_hour": row["exit_hour"], "reason": gone_reason(row), "exit_receipt": row["ct_hash"] is not None,
-            "header": codec.b64u(row["header"]), "meta_ct": codec.b64u(row["meta_ct"]),
-            "owner_wrap": codec.b64u(row["owner_wrap"]) if row["owner_wrap"] else None}
+    and recompute its exit leaf (`exit_receipt`: files only; a folder has no ciphertext). Fifth pass: with
+    `conn`, `opens` too: its links' opens per UTC hour, summed (share_opens stays until the tombstone purge,
+    16-drive-design §6), so Activity shows Opened before It left your drive."""
+    out = {"item_id": row["id"], "kind": row["kind"], "created_hour": row["created_hour"],
+           "exit_hour": row["exit_hour"], "reason": gone_reason(row), "exit_receipt": row["ct_hash"] is not None,
+           "header": codec.b64u(row["header"]), "meta_ct": codec.b64u(row["meta_ct"]),
+           "owner_wrap": codec.b64u(row["owner_wrap"]) if row["owner_wrap"] else None}
+    if conn is not None:
+        opens = {}
+        for r in conn.execute("SELECT o.hour, o.n FROM share_opens o JOIN shares s ON s.id = o.share_id "
+                              "WHERE s.item_id = ?", (row["id"],)):
+            opens[r["hour"]] = opens.get(r["hour"], 0) + r["n"]
+        out["opens"] = [[hour, n] for hour, n in sorted(opens.items())]
+    return out
 
 
 def gone_reason(row) -> str:
@@ -160,7 +169,7 @@ def list_items(ctx):
                             "AND exit_hour >= ? AND (exit_hour < ? OR (exit_hour = ? AND id < ?)) "
                             "ORDER BY exit_hour DESC, id DESC LIMIT ?",
                             (owner, since, key, key, after, limit)).fetchall()
-        out, order = [gone_entry(r) for r in rows], "exit_hour"
+        out, order = [gone_entry(r, conn) for r in rows], "exit_hour"
     elif view == "trash":
         # Trash roots: trashed items whose folder isn't in the Trash with them (same moment).
         rows = conn.execute("SELECT i.* FROM items i LEFT JOIN items p ON p.id = i.parent_id "

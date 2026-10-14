@@ -298,7 +298,8 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
   });
   // What our server waits on (GET /me/sales to_check: paid claims and their outputs not answered yet).
   // Without that list (an older server), every found output with a claim reference is answered once.
-  const waits = await getSales(headers).then((r) => r?.to_check ?? [], () => null);
+  const sales = await getSales(headers).catch(() => null);
+  const waits = sales ? sales.to_check ?? [] : null;
   const asked = new Map();
   for (const c of waits ?? []) for (const u of c.utxo_ids ?? []) asked.set(u, c.claim_id);
   for (const [utxoId, claimId] of asked) {
@@ -327,5 +328,8 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
     onOutput?.(o);
   }
   await saveSales(identity, state);
+  // Fifth pass: our server's list of this drive's payments (which link, test money, checked, the tx), for
+  // Received → Payments on any device; not kept in this browser.
+  state.paid = sales?.paid ?? null;
   return state;
 }

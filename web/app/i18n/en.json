@@ -527,6 +527,7 @@
  "sales.ok": "Yours to spend",
  "sales.bad": "The payer kept control of this payment",
  "sales.checking": "Checking",
+ "sales.checked": "Checked",
  "rec.drop": "Your drop link",
  "rec.drop_d": "Anyone can leave you a file here. They don't need a drive.",
  "rec.drop_make": "Make my drop link",

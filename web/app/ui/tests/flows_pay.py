@@ -678,3 +678,12 @@ def owner_check(t):
     while time.time() < deadline and len(fake.confirms) == before:
         a.eval("new Promise((r) => setTimeout(r, 500))")
     t.check(fake.confirms[before:] == [(early, {"utxo_id": ids[2], "spendable": True})], "once that claim is paid, the next opening answers it")
+    # Fifth pass (the devil's run, track two step 5): a payment made while Received is open shows up
+    # without a reload; the drive asks again every 20 seconds there.
+    a.goto(t.origin + "/drive/received")
+    a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 3", 60)
+    late, _ = fake.new_claim(sid, "w")
+    more = a.eval(OUTPUTS_JS + f"""([{{ to: 'sales', amount: '100000', memo: {{ Message: '{late}' }} }}])""", timeout=120)
+    fake.add_outputs(more)
+    t.check(a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 4", 50),
+            "a payment made while Received is open shows up there without a reload")
