@@ -165,21 +165,29 @@ class Brakes(Base):
         net = "198.51.100.4"
         for expected in (201, 201, 429):
             self.assertEqual(self.buy("s30", self.s.register(ip=net), headers=judge, ip=net)[0], expected)
+        # Two a day per pass as well, from any network (the devil's finding: one pass over many networks).
+        self.assertEqual(self.buy("s30", self.new_drive(), headers=judge, ip="198.51.100.5")[:2], (429, "packs_limited"))
+        self.assertEqual(self.buy("s30", self.new_drive(), headers=self.judge(), ip="198.51.100.5")[0], 201)
         self.s.now = codec.next_utc_midnight(self.s.now) + 60     # a new UTC day forgets the networks
         self.s.heartbeat()
         self.assertEqual(self.buy("s30", self.s.register(ip=NET), ip=NET)[0], 201)
 
     def test_three_public_packs_a_day_and_ten_with_judge_passes(self):
+        nets = iter(f"192.0.2.{i}" for i in range(1, 200))         # each purchase from a network of its own
+
+        def buy(**kw):
+            return self.buy("s30", ip=next(nets), **kw)[:2]
         for _ in range(3):
-            self.assertEqual(self.buy("s30")[0], 201)
-        self.assertEqual(self.buy("s30")[:2], (429, "packs_limited"))
-        judge = self.judge()
+            self.assertEqual(buy()[0], 201)
+        self.assertEqual(buy(), (429, "packs_limited"))
+        self.assertEqual(self.buy("s30")[0], 201)                  # the server's own address isn't held to it...
+        self.assertEqual(packs.sold_today(self.s.conn, self.s.now, False), 4)   # ...but what it buys counts
         for _ in range(10):
-            self.assertEqual(self.buy("s30", headers=judge)[0], 201)      # their own ceiling
-        self.assertEqual(self.buy("s30", headers=judge)[:2], (429, "packs_limited"))
+            self.assertEqual(buy(headers=self.judge())[0], 201)    # their own ceiling (one pass each)
+        self.assertEqual(buy(headers=self.judge()), (429, "packs_limited"))
         self.s.now += payments.INVOICE_TTL_S + 1                    # unpaid invoices ran out: their places free up
         self.s.heartbeat()
-        self.assertEqual(self.buy("s30")[0], 201)
+        self.assertEqual(buy()[0], 201)
 
     def test_our_evidence_invoice_and_a_refused_purchase_dont_count(self):
         with db.tx(self.s.conn):                                    # chain_worker.evidence_payment's row
@@ -271,6 +279,9 @@ class FreeSpaceBrakes(Base):
         d = self.drive(judge=judge)
         for _ in range(6):
             self.assertEqual(self.reserve(d, 45), (201, None))   # 270 MiB: past the public allowance
+        other = self.drive("203.0.113.88", judge=judge)              # the same pass elsewhere shares its 800 MiB
+        results = [self.reserve(other, 45, "203.0.113.88")[1] for _ in range(14)]
+        self.assertEqual((results.count(None), results[-1]), (11, "uploads_limited"))
         paid = self.drive()
         self.grant(paid, "m30")
         for _ in range(6):

@@ -95,6 +95,9 @@ def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str) -> con
         "gates": {"send_mode": "relay", "amount_proof": "sidecar", "key_bundle": False},
         "limits": {"reserve_min_bytes": 0, "small_lane_bytes": 256 * mib, "drop_lane_bytes": 256 * mib,
                    "anon_lane_max_bytes": 512 * mib},
+        # A browser on this machine is the dev stack's own address: like the server's own tests in production
+        # it skips the daily brakes. Forged X-Real-IP traffic (griefer.py, devil.py) meets all of them.
+        "brakes": {"exempt_addresses": ["127.0.0.1", "::1"]},
         "budgets": {"public": {"courier": 50, "demo_pay_ut": 5_000_000, "sponsor_ut": 5_000_000},
                     "reserved": {"courier": 20, "decoy": 10, "demo_pay_ut": 2_000_000, "sponsor_ut": 2_000_000}},
         "ootle": {"walletd_url": walletd_url, "indexers": [indexer_url], "decoy_mean_gap_s": 600,

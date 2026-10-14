@@ -2,7 +2,7 @@
 """Packs paid in tTARI: invoices, the demo payment and the sponsor grant (spec §6.3 Payments, §9.6, §9.7)."""
 import time
 
-from .. import codec, db, jobs, ootle_addr, packs, payments, quota
+from .. import auth, codec, db, jobs, ootle_addr, packs, payments, quota
 from ..http_util import ApiError, json_response
 from .courier import budget_check, require_chain, slice_for
 from .drops import require_testnet_address
@@ -65,11 +65,15 @@ def create(ctx):
     base = db.get_meta(ctx.db, "receiver_address")
     if not base:
         raise ApiError(503, "chain_unavailable", "Payments aren't ready yet. Try again in a minute.")
-    judge = ctx.judge_soft() is not None
-    if ctx.exempt() or swapped:              # a swap was charged with the invoice it replaces
+    code = ctx.judge_soft()
+    judge, exempt = code is not None, ctx.exempt()
+    if exempt or swapped:                    # a swap was charged with the invoice it replaces
         network = ()
     elif judge:
-        network = (("packs64j", ctx.ip64, cfg["judge_per_network_day"], 1),)
+        # Per network, and per pass too: the devil's run found one pass, spread over networks, could take the
+        # judges' slice and spill into the public one in minutes (docs/evidence/2026-10-14/anti-grief/).
+        network = (("packs64j", ctx.ip64, cfg["judge_per_network_day"], 1),
+                   ("packspass", auth.judge_hash(code), cfg["judge_per_network_day"], 1))
     else:
         network = (("packs64", ctx.ip64, cfg["per_network_day"], 1),)
     pool = quota.measure(ctx.db, ctx.app.statvfs, ctx.cfg.data_dir, ctx.cfg["limits"], now)
@@ -77,7 +81,8 @@ def create(ctx):
     address = ootle_addr.with_pay_ref(base, invoice_id.encode())
     expires = now + payments.INVOICE_TTL_S
     with ctx.daily(*network, code="packs_limited", message=PACKS_LIMITED), db.tx(ctx.db):
-        if packs.sold_today(ctx.db, now, judge) >= cfg["judge_per_day" if judge else "public_per_day"]:
+        # The server's own address (its tests) isn't held to the ceiling, but what it buys counts toward it.
+        if not exempt and packs.sold_today(ctx.db, now, judge) >= cfg["judge_per_day" if judge else "public_per_day"]:
             raise ApiError(429, "packs_limited", PACKS_LIMITED,
                            retry_after=max(1, codec.next_utc_midnight(now) - now))
         if not holding and not packs.slices(ctx.db, pool, cfg, now).room(pack["bytes"], judge):
