@@ -281,7 +281,7 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
     for i, (caption, start, stop) in enumerate(captions(shots)):
         files[f"cap{i}.txt"] = caption
         size = 44 if len(caption) <= 64 else max(30, int(44 * 64 / len(caption)))     # one line on 1920
-        texts.append(drawtext(f"cap{i}.txt", size, MOON, "940", f"between(t,{start:.3f},{stop:.3f})"))
+        texts.append(drawtext(f"cap{i}.txt", size, MOON, "940", f"gte(t,{start:.3f})*lt(t,{stop:.3f})"))   # one caption at a time
     end_texts = []
     for i, (line, size, color) in enumerate(end):
         files[f"end{i}.txt"] = line
