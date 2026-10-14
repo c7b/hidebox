@@ -4,7 +4,7 @@
 // stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.46.0, loaded on demand.
 import { ALPHABET, safetyCode } from './emoji.js';
 import { concat, equal, utf8 } from './bytes.js';
-import { unhex } from './b64.js';
+import { hex, unhex } from './b64.js';
 import { IntegrityError, aesGcmDecrypt, aesGcmEncrypt, hkdf, randomBytes } from './crypto.js';
 import { WASM_URL, instantiate, wasm as glue } from '../vendor/ootle-wasm-shim.js';
 
@@ -223,11 +223,13 @@ async function seedScalar(seed, info) {
   throw new Error('unreachable: two zero scalars');
 }
 
-const KEY_INFO = { ootle: ['ootle-owner', 'ootle-view'], wallet: ['wallet-owner', 'wallet-view'] };
+// lane app2: `sales` is the drive's sales address, which receives pay-to-open money only
+// (16-drive-architecture §1.3).
+const KEY_INFO = { ootle: ['ootle-owner', 'ootle-view'], wallet: ['wallet-owner', 'wallet-view'], sales: ['sales-owner', 'sales-view'] };
 
 export async function deriveOotleKeys(seed, label) {
   const info = KEY_INFO[label];
-  if (!info) throw new TypeError('label must be ootle or wallet');
+  if (!info) throw new TypeError('label must be ootle, wallet or sales');
   const ownerSk = await seedScalar(seed, info[0]);
   const viewSk = await seedScalar(seed, info[1]);
   await ready();
@@ -247,6 +249,23 @@ export async function newRandomKeys() {
 export async function viewPublicKey(viewSk) {
   await ready();
   return glue.publicKeyFromSecretKey(viewSk);
+}
+
+// lane app2, R1 (16-drive-architecture §1.9): the one-time public key (c + k)·G of a stealth output paid to
+// this owner key, from the output's public nonce (hex). It equals the output's `auth.Key` only when this
+// owner key can spend it; a view key proves the amount and the memo, never that. Same as the sidecar's
+// `oneTimeKey`. -> hex, or null when the nonce isn't a point.
+export async function oneTimeKey(ownerSk, nonceHex) {
+  await ready();
+  let secret;
+  try {
+    secret = glue.stealthDhSecret(NETWORK_BYTE, ownerSk, unhex(nonceHex));
+    return hex(glue.publicKeyFromSecretKey(secret));
+  } catch {
+    return null;
+  } finally {
+    secret?.fill(0);
+  }
 }
 
 // --- address wraps (§4.9) --------------------------------------------------------------------------

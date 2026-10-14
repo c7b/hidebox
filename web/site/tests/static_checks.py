@@ -587,7 +587,7 @@ def _strings(value):
 # A button /judges names before the app has it would be listed here; once it is in
 # web/app/i18n/en.json it must leave this list (the check says so), so the script can't drift from the
 # app. Pay to open's two labels arrive with lane app2's seller dialog (16-drive-design §15 step 15).
-PENDING_LABELS: set[str] = {"Someone who pays you", "Make pay link"}
+PENDING_LABELS: set[str] = set()  # lane app2: "Someone who pays you" and "Make pay link" are in en.json (step 15)
 
 
 def check_ui_strings():

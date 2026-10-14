@@ -123,7 +123,8 @@ http://{$MUTIS_HOST} {
 	header @notice Content-Type "text/plain; charset=utf-8"
 
 	@api path /api/*
-	@viewer path /s/* /t
+	# /p/* (lane app2): the buyer page of a paid link
+	@viewer path /s/* /t /p/*
 	@approute path /d/* /send /send/* /watch /watch/* /verify /verify/*
 	# lane app1: the drive (16-drive-design §12) has its own page
 	@drive path /drive /drive/*

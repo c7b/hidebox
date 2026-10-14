@@ -198,6 +198,9 @@ async function boot(identity, { made }) {
       await withOotle(identity);
       drive.shell.setAccount(identity);
       document.dispatchEvent(new CustomEvent('drive:ootle'));
+      // lane app2, the owner check (R1, the release gate): a drive that sells checks its sales outputs each
+      // time it opens and confirms the claims our server holds back until then (ui/sales.js).
+      if (cfg.features?.pay_to_open) import('./sales.js').then((m) => m.startOwnerCheck(drive)).catch(() => null);
       // Direct mode: a new drive's browser wallet asks for its sponsor grant in the background, as the
       // locker did (Pay from my drive and direct sends spend it); a refusal only means sends go by relay.
       if (made && cfg.send_mode === 'direct' && cfg.features?.sponsor) {
