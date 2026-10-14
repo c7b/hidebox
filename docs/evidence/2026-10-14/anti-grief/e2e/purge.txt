@@ -1,0 +1,6 @@
+Sixth pass purge, 2026-10-14T18:01:50Z: a read-only diff of ids against a snapshot taken before the E2E batch and the live pack check.
+New since the snapshot: 11 items (4 deleted, 3 deleted drive files, 1 doomed, 1 removed by E-17, 2 ready), 2 drops (1 removed by E-17, 1 active), 5 drives (the E2E batch's and the pack-live check's, none holding a file; that pack released with release-pack). The kill-switch check's drive deleted itself (DELETE /me).
+Taken down by id (mutis-admin takedown ... --note 'sixth pass e2e purge'): each answered 'removed'
+item LESidHmo6MpK8dRfO78kZA
+item MKWdnQxxJrMMAHx3A3bvxg
+drop amg6zcnww5

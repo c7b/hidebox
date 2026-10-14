@@ -690,3 +690,28 @@ anything changed; the evidence it cites is in `research/design/drive-devil/` (th
    Safari, Android Chrome, a screen reader).
 4. **The judges' demo receipt** (`judge_demo_gone`) lasts until about Nov 12 (tombstones, 30 days): re-burn it
    with `demo-gone.py burn` before then (`deploy/README.md`, go-live step 6).
+
+## Sixth pass (anti-griefing): the space (2026-10-14)
+
+The owner's requirement: nobody buys space from many drives so fast that the disk saturates, the packs
+sell out at once, or free uploads freeze for everyone. Policy decided by the owner; built server-side and
+config-driven (`[packs]`, `[brakes]`), each rule tested in `server/tests/test_packs.py`.
+
+| # | Decision | What changed |
+|---|---|---|
+| 1 | A judges' slice of the paid cap | 30 % of the 40 % cap only for purchases made with a judge pass, spilling into the public slice; `sold_out` is the public slice's; open invoices hold their bytes (`packs.py`; schema 6: `invoices.judge`, `identities.paid_pack`, `paid_judge`) |
+| 2 | One pack per drive | 409 `pack_active` until the last 3 days, then the same pack adds days, not bytes (`payments.grant_pack` no longer stacks bytes); an open invoice is handed back; Storage shows Yours until…, Renew it, the other pack waiting |
+| 3 | Sales brakes | 1 a UTC day per /64 or IPv4 (judge pass: 2 per network and 2 per pass), in memory; 3 public and 10 judge packs a day for the deployment, counted from the invoices (packs still holding space); 429 `packs_limited` |
+| 4 | A smaller big pack | m30 = 5 GiB / 30 days / 1 tTARI (`quota.PACKS`, `/config`, fixtures; `/made` reads it) |
+| 5 | Free-space brakes | 5 new drives a day per /64 (20 per /48), 2 GiB of free-drive uploads per /64 (6 per /48; judge pass 8 per /64 and per pass), in memory; 429 `drives_limited`, `uploads_limited` |
+| 6 | Visibility and a kill switch | `/status.json` `packs` check and reasons `packs.public_80`, `packs.ceiling` (from `meta.packs`, written by cleanup); `/stats` `packs_sold_public`, `packs_cap_public`; `feature packs off` → 503 and "Space packs are paused."; `mutis-admin packs` |
+| 7 | Honest docs | threat model "Griefing the space", runbook "If someone games the packs", `/made` and the fine print, claims C48 and C49 |
+
+The devil (`tests/e2e/devil.py`, before/after in `docs/evidence/2026-10-14/anti-grief/`) found one judge
+pass over many networks filling both slices (fixed: per-pass limits); production then showed test runs'
+released packs filling the day's ceiling (fixed: the ceiling counts packs still holding space), and a
+refused pack swap lost the open invoice (fixed: one transaction). The server's own addresses
+(`brakes.exempt_addresses`, set on the server) skip the daily brakes so the E2E suite still runs from there.
+Released as `f89963c`, tag `spooky-secrets-2026-10` moved there; the non-chain batch 13/13; E-13 and E-J
+track two wait for the evidence slice's sponsor budget (00:00 UTC), a pack was bought on chain with a judge
+pass through the API instead.

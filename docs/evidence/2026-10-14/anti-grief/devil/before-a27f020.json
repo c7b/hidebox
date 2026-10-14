@@ -1,0 +1,43 @@
+{
+ "P1 one network, 5 drives, m30 each": {
+  "through": 5,
+  "stopped": {}
+ },
+ "P2 40 networks, m30 each": {
+  "through": 6,
+  "stopped": {
+   "sold_out": 34
+  },
+  "paid_with_test_money": 2,
+  "pay_refused": [
+   "budget_exhausted"
+  ]
+ },
+ "P2 /api/v1/stats after": {
+  "packs_sold_public": null,
+  "packs_cap_public": null
+ },
+ "P3 a judge pass, 6 networks x 3 drives, s30 each": {
+  "through": 18,
+  "stopped": {}
+ },
+ "P4 a drive holding a pack asks for another": {
+  "first_pack_credited": true,
+  "second": "sold_out"
+ },
+ "F1 one network, 3 drives, 16 x 256 MiB": {
+  "through": 16,
+  "stopped": {}
+ },
+ "F2 one /48, 8 /64s, 32 x 256 MiB": {
+  "through": 32,
+  "stopped": {}
+ },
+ "D1 one /48, 40 /64s, a drive each": {
+  "through": 20,
+  "stopped": {
+   "rate_limited": 20
+  }
+ },
+ "seconds": 122
+}
