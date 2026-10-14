@@ -132,7 +132,7 @@ def check_live_numbers(browser):
         page.goto(origin + "/made", settle=2.5)
         _scroll_through(page, "check", "limits")
         text = page.eval("document.body.innerText")
-        for expected in ("per locker", "Largest file", "budget for sponsor grants is used", "test deliveries"):
+        for expected in ("per drive", "Largest file", "budget for sponsor grants is used", "test deliveries"):
             if expected.lower() not in text.lower():
                 problems.append(f"API up: {expected!r} not shown on /made")
         for sel in blocks:

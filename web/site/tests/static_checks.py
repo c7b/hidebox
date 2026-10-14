@@ -421,10 +421,10 @@ def check_static():
     s = SITE / "static"
     problems = []
     robots = (s / "robots.txt").read_text()
-    for path in ("/s/", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
+    for path in ("/s/", "/p/", "/drive", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
         if f"Disallow: {path}\n" not in robots:
             problems.append(f"robots.txt: no Disallow: {path}")
-    for path in ("/t", "/s/abc", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
+    for path in ("/t", "/s/abc", "/p/abc", "/drive", "/drive/received", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
         if robots_allows(robots, path):
             problems.append(f"robots.txt: {path} is not disallowed")
     # A drop page is public by design (it carries noindex itself); the public config and numbers are
@@ -460,9 +460,9 @@ def check_static():
     if not (s / "favicon.ico").is_file() or (s / "favicon.ico").read_bytes()[:4] != b"\0\0\1\0":
         problems.append("favicon.ico: missing or not an ICO (Bing and unfurlers ask for it by name)")
     llms = (s / "llms.txt").read_text()
-    if not llms.startswith("# {{BRAND}}\n") or "pay-to-open" in llms or "dead-drop" not in llms:
-        problems.append("llms.txt: not the spec §13.4 shape")
-    for fact in ("send_mode=direct", "send_mode=relay", "seallog=on"):
+    if not llms.startswith("# {{BRAND}}\n") or "private drive" not in llms or "dead-drop" not in llms:
+        problems.append("llms.txt: not the spec §13.4 shape (the drive's, 16-drive-design §11)")
+    for fact in ("send_mode=direct", "send_mode=relay", "seallog=on", "pay_to_open=on"):
         if f"{{when:{fact}}}" not in llms:
             problems.append(f"llms.txt: no line for {fact} (tools/variants.py keeps the ones true here)")
     fonts = SHARED / "fonts"

@@ -15,11 +15,11 @@
 
 /* the frame: a quiet sunken stage, the interface on it */
 .still-frame {
-  display: grid; place-items: center; padding: clamp(16px, 4vw, 40px); border-radius: calc(var(--r-panel) + 4px);
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-items: center; padding: clamp(16px, 4vw, 40px); border-radius: calc(var(--r-panel) + 4px);
   background: var(--bg-sunken); border: 1px solid var(--hair); pointer-events: none; user-select: none; min-width: 0;
 }
 .still-frame > * { width: 100%; max-width: 26rem; }
-.ui-card { display: grid; gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); font: var(--t-small); }
+.ui-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); font: var(--t-small); }
 .ui-card.flush { padding: 0; gap: 0; overflow: hidden; }
 .ui-title { font: 600 1rem/1.3 var(--font); letter-spacing: -.01em; color: var(--fg); }
 .ui-desc { color: var(--fg-2); font: var(--t-small); }
@@ -72,6 +72,7 @@
 .ui-event .mark.chain { color: var(--pay-text); border-color: color-mix(in srgb, var(--tari) 30%, transparent); }
 .ui-event b { font: var(--t-ui); color: var(--fg); padding-top: 6px; }
 .ui-event span { font: 400 12px/1.5 var(--font); color: var(--fg-2); }
+.ui-event .badge { justify-self: start; }
 .ui-event .tx { font-family: var(--font-code); color: var(--pay-text); }
 
 /* who sees what, then the way on */
