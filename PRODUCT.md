@@ -73,7 +73,7 @@ Everything the server and library do today stays reachable; new server work is a
 
 - Today [code]: anonymous drop and link (once, a few opens, a time, a password), lockers (keypair
   identity, kept files, drop links, inbox by chain scan, view key), send to a Tari address (kind 3 and
-  kind 4), packs bought with tTARI (s30, m30) with demo pay, `/verify` of SealLog proofs, abuse reports.
+  kind 4), packs bought with tTARI (s30, m30; one per drive, a few a day) with demo pay, `/verify` of SealLog proofs, abuse reports.
 - New, decided at architecture and settled in the merge [code-checked]: folders as a key tree (each file's
   key wrapped under its folder's; the server sees the tree's shape, never a name); pay to open as a split key
   with a per-buyer claim (the money goes to the owner's sales address; our server holds half the key and

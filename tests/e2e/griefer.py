@@ -8,13 +8,14 @@ It never touches production. It starts the local stack on the server (localstack
 --dev`, with fakes, small limits and its own temporary data, behind the production Caddyfile, all as
 `build`) and talks to the API directly on loopback through an ssh tunnel, so the API believes the
 forged X-Real-IP values (documentation addresses, 2001:db8::/32). From ten /48s and 200 /64s it fills
-the anonymous lanes, registers 200 lockers, drains the public `courier` and `demo_pay` slices, pushes
+the anonymous lanes, registers 200 lockers, drains the public `courier` slice, tries to buy packs
+(the daily ceiling stops them before the `demo_pay` slice: sixth pass), pushes
 PoW difficulty up from one /64 by spending proofs, and makes 60 path-only attempts on a link +
 password share. Then it holds 300 slow uploads open through Caddy (a byte every few seconds) while it
 counts the API's threads and times a health request through Caddy. It checks what must still hold:
 the free quota didn't move, PoW escalated for the hammering /64 while a fresh /48 still gets the base
 difficulty, a small file still fits, the password link isn't locked, the public slices were refused
-with budget_exhausted, and the slow uploads held no API thread while the API kept answering. The
+with budget_exhausted, pack purchases stopped at the daily ceiling, and the slow uploads held no API thread while the API kept answering. The
 stack is removed afterwards.
 
 --then-judge ORIGIN finally runs E-J (the judge script) against that origin, the real site.
@@ -37,7 +38,8 @@ from apiclient import ApiError, Client  # noqa: E402
 from localstack import WEB_PORT, LocalStack  # noqa: E402
 
 STOP = {"rate_limited", "lane_full", "uploads_frozen", "too_large", "budget_exhausted", "quota_exceeded",
-        "pow_too_hard", "probation_limit"}
+        "pow_too_hard", "probation_limit", "packs_limited", "pack_active", "sold_out", "drives_limited",
+        "uploads_limited"}
 SLOW_UPLOADS = 300
 SLOW_HOLD_S = 20
 SLOW_EXTRA_THREADS = 25        # the API may start a few threads of its own meanwhile; 300 held would be ~300
@@ -78,7 +80,7 @@ def grief(api: str, origin: str, file_mib: int) -> tuple[dict, set, dict]:
 
     drops = []
     for i in range(10):
-        owner = Client(api, ip(i, 200), origin)
+        owner = Client(api, ip(40 + i, 200), origin)        # /48s whose daily drives the lockers above didn't take
         try:
             owner.register()
             drops.append(owner.create_drop(apiclient.random_address(), "griefer")["drop_id"])
@@ -172,9 +174,12 @@ def cheap_attacks(stack: LocalStack, origin: str, file_mib: int, checks: list) -
     checks.append(("path-only attempts never lock a link (the prober may be rate limited)",
                    "bad_link" in codes and codes <= {"bad_link", "rate_limited"} and status["state"] == "active",
                    f"{sorted(codes)}, {status['state']}"))
-    for slice_ in ("courier", "demo_pay"):
-        refused = report[slice_][1]
-        checks.append((f"the public {slice_} slice ran dry and said so", "budget_exhausted" in refused, str(sorted(refused))))
+    refused = report["courier"][1]
+    checks.append(("the public courier slice ran dry and said so", "budget_exhausted" in refused, str(sorted(refused))))
+    # Sixth pass: packs stop at the deployment's daily ceiling (3 public) long before the demo_pay slice.
+    accepted, refused = report["demo_pay"]
+    checks.append(("pack purchases stopped at the daily ceiling", accepted <= 3 and "packs_limited" in refused,
+                   f"{accepted} paid, {sorted(refused)}"))
     return report
 
 

@@ -21,6 +21,8 @@ repository's address.
 - How it works, in five pictures: [/how](https://srv2052606.hstgr.cloud/how) · how it was made, who
   sees what and the threat model: [/made](https://srv2052606.hstgr.cloud/made) and
   [docs/threat-model.md](docs/threat-model.md)
+- Space is one real disk: packs and free space have daily limits per network, which slow anyone trying
+  to take it ([threat model, "Griefing the space"](docs/threat-model.md#griefing-the-space))
 
 Built for the Tari Ootle October 2026 contest, "Spooky Secrets". MIT licensed.
 

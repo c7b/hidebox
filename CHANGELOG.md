@@ -1,6 +1,23 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- sixth pass, anti-griefing -->
+## 2026-10-14: the sixth pass (anti-griefing: the space)
+
+- **Packs:** a judges' slice (30 %) of the paid cap that public buyers can't take, with judges spilling into
+  the public slice; open invoices hold their bytes until they expire; one pack per drive, renewable with the
+  same pack in its last 3 days (days stack, bytes don't); the big pack is 5 GiB for 1 tTARI.
+- **Sales brakes:** 1 pack a UTC day per /64 or IPv4 address (2 with a judge pass), in memory; 3 public packs
+  a day for the deployment and 10 with judge passes, counted from the invoices. 429 `packs_limited`.
+- **Free-space brakes**, a UTC day per network, in memory: 5 new drives per /64 (20 per /48), 2 GiB of uploads
+  to free drives per /64 (6 GiB per /48; 8 GiB with a judge pass). 429 `drives_limited`, `uploads_limited`.
+- **Visible and stoppable:** `/status.json` amber on `packs.public_80` and `packs.ceiling`; `/api/v1/stats`
+  `packs_sold_public`, `packs_cap_public`; `mutis-admin feature packs off` (Storage says "Space packs are
+  paused."), `mutis-admin packs`. Schema 6 (`invoices.judge`, `identities.paid_pack`, `paid_judge`).
+- **Docs:** the threat model's "Griefing the space", the runbook's "If someone games the packs", claims
+  C48 and C49. Evidence: `docs/evidence/2026-10-14/anti-grief/`.
+<!-- /sixth pass, anti-griefing -->
+
 <!-- fifth pass, release -->
 ## 2026-10-14: the fifth pass (the devil's judge run on the drive) and the release
 
