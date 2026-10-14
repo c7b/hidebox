@@ -154,6 +154,9 @@ export function folderPanel(opened, { cfg, heading = 'h1', onSaveToDrive = null 
   async function problem(e) {
     const { errorAlert } = await import('./drive-parts.js');
     if (e?.code === 'visit_over') return h('div', { class: 'alert', role: 'alert' }, icon('timer'), h('div', { class: 'alert-title' }, t('fv.over')));
+    // 403 not_in_folder: the owner moved the file out (or deleted it) during this visit.
+    if (e?.code === 'not_in_folder') return h('div', { class: 'alert', 'data-variant': 'destructive', role: 'alert', 'data-testid': 'error-banner', 'data-code': 'not_in_folder' },
+      icon('triangle-alert'), h('div', { class: 'alert-title' }, t('fv.moved')));
     return errorAlert(e);
   }
 
