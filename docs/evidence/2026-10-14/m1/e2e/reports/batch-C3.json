@@ -1,0 +1,37 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-13",
+   "title": "Pack purchase on chain: Waiting \u2192 Seen \u2192 Amount proven \u2192 Added; quota +2 GiB",
+   "status": "FAIL",
+   "detail": "direct mode: the browser wallet received its sponsor grant",
+   "seconds": 610.1,
+   "notes": []
+  },
+  {
+   "id": "E-J",
+   "title": "The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed",
+   "status": "FAIL",
+   "detail": "timed out after 420 s waiting for: (() => { const s = document.querySelector(\"[data-testid=\\\"send-status\\\"]\")?.dataset.state; return [\"delivered\", \"failed\"].includes(s) ? s : ''; })()",
+   "seconds": 438.0,
+   "notes": [
+    "ok: 1: Make my drive: the drive opens, its key made in this browser",
+    "1: 1 s",
+    "2: 1 s",
+    "ok: 3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan",
+    "3: 2 s",
+    "ok: 4: the phone taps Open it and has the file",
+    "ok: 4: the phone reloads: \u201cIt's gone.\u201d",
+    "4: 3 s",
+    "ok: 5: Activity: opened, then it left your drive (It left your drive \u00b7 minutes.txtThat goes on the Tari chain within 15 minutes.Oc)",
+    "5: 1 s",
+    "ok: 6: What our server knows: what it keeps, and what it never stores",
+    "6: 0 s",
+    "ok: B1: My Tari address, Settings: the drive's address, its safety code and a code to scan",
+    "B1: 2 s",
+    "ok: B2: the send step has the scanned address and its safety code"
+   ]
+  }
+ ]
+}

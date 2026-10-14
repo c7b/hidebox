@@ -1,0 +1,2 @@
+PASS E-13     29.4s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/integ/e2e-C5/20261013-224900/report.json

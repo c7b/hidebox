@@ -1,0 +1,18 @@
+PASS E-01     13.1s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     25.6s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     55.9s  Link + password and password-only; path-only attempts never lock a link
+PASS E-05     75.4s  Expiry 60 s: after 65 s the link is expired
+PASS E-06      8.7s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      8.5s  A link without its #key shows incomplete
+PASS E-08     13.4s  Drive: Make my drive at once; the key file locked with a passphrase; restored in a clean browser (same address and safety code)
+PASS E-15     27.6s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      5.1s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-17     14.9s  Abuse: a reported link and drop are taken down by id
+PASS E-18     31.2s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19    131.6s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20     21.3s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-21     63.0s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-26     26.7s  Drive: upload a folder (3 files, 1 subfolder) with the folder picker; restored in a clean browser with the key file: the same tree
+PASS E-27     29.2s  Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+e2e: PASS {'PASS': 17, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/integ/e2e-A/20261013-195519/report.json

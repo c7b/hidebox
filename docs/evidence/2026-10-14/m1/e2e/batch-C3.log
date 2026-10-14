@@ -1,0 +1,5 @@
+FAIL E-13    610.1s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+           direct mode: the browser wallet received its sponsor grant
+FAIL E-J     438.0s  The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed
+           timed out after 420 s waiting for: (() => { const s = document.querySelector("[data-testid=\"send-status\"]")?.dataset.state; return ["delivered", "failed"].includes(s) ? s : ''; })()
+e2e: FAIL {'PASS': 0, 'FAIL': 2, 'SKIP': 0} → $TMPDIR/integ/e2e-C3/20261013-214558/report.json

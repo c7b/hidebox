@@ -1,0 +1,6 @@
+PASS E-22     14.2s  Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning
+PASS E-24     29.8s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+FAIL E-28     15.7s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
+           the running visit can't fetch a file moved out (403 not_in_folder; banner internal)
+PASS E-31     18.6s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+e2e: FAIL {'PASS': 3, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/integ/e2e-B/20261013-200827/report.json

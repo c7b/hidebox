@@ -1,0 +1,75 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-09",
+   "title": "Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 67.2,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: Received lists a delivery from drop, ready to open",
+    "ok: the row keeps the inbox-item id",
+    "ok: the phone opens the delivery in Received",
+    "ok: the decrypted photo has no GPS",
+    "ok: the decrypted photo keeps its orientation",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-10",
+   "title": "Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 32.8,
+   "notes": [
+    "ok: the send screen shows the recipient's safety code",
+    "ok: Delivered privately",
+    "ok: the send has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: Received lists a delivery from send, ready to open",
+    "ok: the row keeps the inbox-item id",
+    "ok: the recipient's drive opens it in Received",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-12",
+   "title": "A view key sees the delivery and can open no file",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 72.1,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id",
+    "ok: 0 files readable with the view key",
+    "ok: the view key never left the tab (E-03)"
+   ]
+  },
+  {
+   "id": "E-28",
+   "title": "Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 23.5,
+   "notes": [
+    "ok: moving into a folder with a link warns: This shares it too.",
+    "ok: the moved file shows through the folder's link (['inside-already.txt', 'moved-in-later.txt'])",
+    "ok: the move dialog offers My drive (['', 'E-28-box'])",
+    "ok: the running visit can't fetch a file moved out (403 not_in_folder; banner not_in_folder)",
+    "ok: the new name was sealed here and never sent in clear (E-03)"
+   ]
+  }
+ ]
+}

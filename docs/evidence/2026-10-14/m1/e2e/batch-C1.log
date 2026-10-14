@@ -1,0 +1,5 @@
+PASS E-09     67.2s  Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it
+PASS E-10     32.8s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-12     72.1s  A view key sees the delivery and can open no file
+PASS E-28     23.5s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
+e2e: PASS {'PASS': 4, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/integ/e2e-C1/20261013-201915/report.json
