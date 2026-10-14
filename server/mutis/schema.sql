@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
--- mutis database, schema version 4 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
--- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002, 003 and 004:
--- the drive's folders, Trash, opens per hour and the pay-to-open tables).
+-- mutis database, schema version 5 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
+-- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 to 005:
+-- the drive's folders, Trash, opens per hour, the pay-to-open tables and the owner's check of sales).
 -- Deliberately absent: email, name, IP address, user agent, any login public key, a user's locker address,
 -- file or folder name, MIME type, plaintext size, any secret key in clear, any grant or recipient table, the
 -- drop an item came from, who opened a link, a buyer's identity. Kept on purpose, opt-in and for sales only:
@@ -259,5 +259,6 @@ CREATE TABLE sale_payments (                     -- one row per UTXO ever; apart
   seen_at    INTEGER NOT NULL,
   epoch      INTEGER,
   committed  INTEGER NOT NULL DEFAULT 0,
-  status     TEXT NOT NULL CHECK (status IN ('pending_check','counted','extra'))
+  status     TEXT NOT NULL CHECK (status IN ('pending_check','counted','extra')),
+  owner_ok   INTEGER CHECK (owner_ok IN (0,1))       -- the seller's drive: 1 its to spend, 0 the payer kept it
 ) STRICT;

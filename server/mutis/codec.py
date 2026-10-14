@@ -68,6 +68,11 @@ def invoice_id() -> str:
     return "inv_" + random_chars(RFC4648_LOWER, 20)
 
 
+def claim_id() -> str:
+    """A pay-to-open claim: also the payment reference in the buyer's memo (16-drive-architecture §1.4)."""
+    return "clm_" + random_chars(RFC4648_LOWER, 20)
+
+
 def report_id() -> str:
     return "rep_" + random_chars(RFC4648_LOWER, 16)
 
