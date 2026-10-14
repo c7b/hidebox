@@ -45,7 +45,9 @@
   short payments, top-ups within the grace, extras. The pack credit freeze doesn't stop sales.
 - **The release gate:** test money our demo wallet built for the whole price releases at `paid`; any
   other payment waits at `owner_check = 'pending'` until `POST /me/sales/claims/{cid}/confirm` from the
-  owner's drive (`ok` releases, `bad` voids). Ending a link erases `server_half` and voids waiting claims.
+  owner's drive, one call per output (`{utxo_id, spendable}`; migration 005 adds `sale_payments.owner_ok`):
+  every counted output spendable releases, one that isn't voids. Ending a link erases `server_half` and
+  voids waiting claims.
 - **Docs:** api.md (routes, `X-Mutis-Claim`, fragment kind 5, a "Pay to open" paragraph), threat-model.md
   (five rows and a "Pay to open" paragraph), architecture.md (who sees what, the life of a file, the Tari
   parts). Tests on the fake chain only: `test_paid_shares.py`, `test_sales_worker.py`, `test_release_gate.py`.

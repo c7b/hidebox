@@ -20,10 +20,12 @@ class ReleaseGate(PaidCase):
         self.ready_seller()
         self.link = self.sell(self.kept()["item_id"])
         self.c = self.claim(self.link)
+        self.utxo = "utxo_" + "0" * 64
 
-    def confirm(self, check: str, headers: dict | None = None, claim: dict | None = None, expect: int = 200) -> dict:
-        claim = claim or self.c
-        status, _, resp = self.s.request("POST", f"{V}/me/sales/claims/{claim['claim_id']}/confirm", {"check": check},
+    def confirm(self, check: str, headers: dict | None = None, utxo: str | None = None, expect: int = 200) -> dict:
+        utxo = utxo or self.utxo
+        status, _, resp = self.s.request("POST", f"{V}/me/sales/claims/{self.c['claim_id']}/confirm",
+                                         {"utxo_id": utxo, "spendable": check == "ok"},
                                          headers=self.d["auth"] if headers is None else headers)
         self.assertEqual(status, expect, resp)
         return resp
@@ -32,7 +34,7 @@ class ReleaseGate(PaidCase):
         return self.s.request("GET", f"{V}/me/sales", headers=self.d["auth"])[2]["to_check"]
 
     def test_a_payment_from_a_wallet_never_releases_before_the_owners_check(self):
-        utxo = self.pay(self.c)
+        utxo = self.utxo = self.pay(self.c)
         self.ticks()
         for _ in range(5):
             got = self.poll(self.c)
@@ -44,7 +46,7 @@ class ReleaseGate(PaidCase):
                                             "received_ut": "100000", "utxo_ids": [utxo]}])
 
     def test_the_owners_ok_releases_on_the_next_poll(self):
-        self.pay(self.c)
+        self.utxo = self.pay(self.c)
         self.ticks()
         self.assertEqual(self.confirm("ok"), {"claim_id": self.c["claim_id"], "status": "paid", "owner_check": "ok"})
         got = self.poll(self.c)
@@ -55,7 +57,7 @@ class ReleaseGate(PaidCase):
     def test_a_forgery_the_owner_marks_bad_is_void(self):
         """The R2 forgery on the fake chain: the seller's view key opens it, the payer keeps the spend key."""
         payer = fake_keys()
-        self.pay(self.c, spender=payer["address"])
+        self.utxo = self.pay(self.c, spender=payer["address"])
         self.ticks()
         self.assertEqual(self.row(self.c)["status"], "paid")    # amount proven and committed: we can't tell
         self.assertEqual(self.confirm("bad"), {"claim_id": self.c["claim_id"], "status": "void", "owner_check": "bad"})
@@ -63,6 +65,18 @@ class ReleaseGate(PaidCase):
         self.assertEqual((got["status"], "server_half" in got), ("void", False))
         self.assertEqual(self.open(self.link, self.c, 402)["error"]["code"], "payment_required")
         self.confirm("ok", expect=409)                          # a void claim can't come back
+
+    def test_two_outputs_release_only_when_both_are_the_owners(self):
+        first = self.pay(self.c, 40000)
+        self.ticks()
+        second = self.pay(self.c, 60000)
+        self.ticks()
+        self.assertEqual([c["utxo_ids"] for c in self.to_check()], [[first, second]])
+        self.assertEqual(self.confirm("ok", utxo=first)["owner_check"], "pending")
+        self.assertNotIn("server_half", self.poll(self.c))
+        self.assertEqual([c["utxo_ids"] for c in self.to_check()], [[second]])
+        self.assertEqual(self.confirm("ok", utxo=second)["owner_check"], "ok")
+        self.assertEqual(self.poll(self.c)["status"], "released")
 
     def test_test_money_releases_at_paid_without_a_check(self):
         status, _, _ = self.s.request("POST", f"{V}/p/{self.link['share_id']}/claims/{self.c['claim_id']}/demo-pay",
@@ -74,19 +88,21 @@ class ReleaseGate(PaidCase):
         self.confirm("bad", expect=409)                         # nothing to check on money we built
 
     def test_only_the_owner_answers_and_only_for_a_paid_claim(self):
-        self.confirm("ok", expect=409)                          # still pending: nothing paid yet
-        self.pay(self.c)
+        early = self.confirm("ok", expect=409)                  # still pending: nothing paid yet (the drive retries)
+        self.assertEqual(early["error"]["details"], {"status": "pending"})
+        self.utxo = self.pay(self.c)
         self.ticks()
         other = self.s.register()
         self.confirm("ok", headers={}, expect=401)
         self.confirm("ok", headers=other["auth"], expect=404)
-        status, _, _ = self.s.request("POST", f"{V}/me/sales/claims/{self.c['claim_id']}/confirm", {"check": "maybe"},
-                                      headers=self.d["auth"])
+        self.confirm("ok", utxo="utxo_" + "1" * 64, expect=409)   # not an output that paid this claim
+        status, _, _ = self.s.request("POST", f"{V}/me/sales/claims/{self.c['claim_id']}/confirm",
+                                      {"utxo_id": self.utxo, "spendable": "yes"}, headers=self.d["auth"])
         self.assertEqual(status, 422)
         self.assertEqual(self.row(self.c)["owner_check"], "pending")
 
     def test_the_owner_ending_the_link_before_the_check_voids_the_claim(self):
-        self.pay(self.c)
+        self.utxo = self.pay(self.c)
         self.ticks()
         self.s.request("DELETE", f"{V}/s/{self.link['share_id']}", headers=self.d["auth"])
         self.assertEqual(self.row(self.c)["status"], "void")

@@ -292,7 +292,7 @@ class TestMoneyGuards(PaidCase):
         other = self.s.register()
         for headers, expect in (({}, 401), (other["auth"], 404), (self.d["auth"], 409)):
             status, _, _ = self.s.request("POST", f"{V}/me/sales/claims/{self.c['claim_id']}/confirm",
-                                          {"check": "ok"}, headers=headers)
+                                          {"utxo_id": "utxo_" + "0" * 64, "spendable": True}, headers=headers)
             self.assertEqual(status, expect)
         self.assertEqual(self.row(self.c)["owner_check"], "none")
 

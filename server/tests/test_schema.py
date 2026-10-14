@@ -130,7 +130,7 @@ class Migration(unittest.TestCase):
         working as a file at the drive's root, outside the Trash, with an item ticket; the new tables start
         empty and the foreign keys hold."""
         path = self.v3_database()
-        self.assertEqual(db.migrate(path), 4)
+        self.assertEqual(db.migrate(path), 5)               # 004, then 005 (the owner's check of sales)
         conn = db.connect(path)
         try:
             item = conn.execute("SELECT kind, parent_id, parent_wrap, trashed_at, items.state, used_bytes FROM items "
@@ -149,6 +149,9 @@ class Migration(unittest.TestCase):
                 conn.execute("INSERT INTO claims(id, share_id, token_hash, address, price_ut, status, owner_check, "
                              "created_at, created_seq, expires_at) VALUES ('clm_x', 'share-a', x'09', 'a', 1, "
                              "'pending', 'maybe', 0, 0, 0)")
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("INSERT INTO sale_payments(utxo_id, value_ut, seen_at, status, owner_ok) "
+                             "VALUES ('utxo_y', 1, 0, 'counted', 2)")
             conn.execute("INSERT INTO share_opens(share_id, hour, n) VALUES ('share-a', ?, 2)", (START,))
             conn.execute("DELETE FROM shares WHERE id = 'share-a'")       # the tombstone purge cascades
             self.assertEqual(conn.execute("SELECT COUNT(*) FROM share_opens").fetchone()[0], 0)

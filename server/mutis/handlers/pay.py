@@ -6,7 +6,7 @@ The buyer's routes (`/p/*`) never read a session, so a claim is never linked to 
 random id plus SHA-256 of a token only the buyer's browser holds (`X-Mutis-Claim`), never an IP.
 """
 from .. import codec, db, jobs, ootle_addr, sales, tree
-from ..http_util import ApiError, Response, get_b64, get_enum, invalid, json_response
+from ..http_util import ApiError, Response, get_b64, invalid, json_response
 from .courier import budget_check, require_chain, slice_for
 from .drops import require_testnet_address
 from .invoices import _unless_judge
@@ -50,27 +50,42 @@ def get_sales(ctx):
     to_check = [{"claim_id": c["id"], "share_id": c["share_id"], "paid_at": c["paid_at"],
                  "amount_ut": str(c["price_ut"]), "received_ut": str(c["received_ut"]),
                  "utxo_ids": [r[0] for r in conn.execute("SELECT utxo_id FROM sale_payments WHERE claim_id = ? "
-                                                         "AND status = 'counted'", (c["id"],))]} for c in rows]
+                                                         "AND status = 'counted' AND owner_ok IS NULL",
+                                                         (c["id"],))]} for c in rows]
     return json_response(200, {"seller": dict(seller) if seller else None, "to_check": to_check})
 
 
 def confirm_claim(ctx, claim_id: str):
-    """The owner's drive checked the money that paid this claim: `ok` (its one-time keys are the drive's
-    own) lets the buyer's next poll release it; `bad` (the payer kept control) voids it."""
+    """The owner's drive checked one output that paid this claim: `spendable` when the output's one-time
+    key is the one its sales owner key derives. The claim releases (on the buyer's next poll) once every
+    output that counted for it is confirmed; one output the payer kept voids it. 409 (with the claim's
+    `status` in `details`) when the claim isn't waiting for this check: not paid yet, test money, closed."""
     identity = ctx.session()
-    check = get_enum(ctx.req.json(), "check", ("ok", "bad"))
+    body = ctx.req.json()
+    utxo_id = body.get("utxo_id")
+    spendable = body.get("spendable")
+    if not isinstance(utxo_id, str) or len(utxo_id) > 300:
+        raise invalid("utxo_id")
+    if type(spendable) is not bool:
+        raise invalid("spendable")
     conn = ctx.db
     with db.tx(conn):
         claim = conn.execute("SELECT c.*, i.owner_id FROM claims c JOIN shares s ON s.id = c.share_id "
                              "JOIN items i ON i.id = s.item_id WHERE c.id = ?", (claim_id,)).fetchone()
         if claim is None or claim["owner_id"] != identity["id"]:
             raise ApiError(404, "not_found", "No such payment.")
-        if claim["status"] != "paid" or claim["demo"] or claim["owner_check"] not in ("pending", "ok"):
-            raise ApiError(409, "conflict", "This payment isn't waiting for your check.")
-        if check == "ok":
-            conn.execute("UPDATE claims SET owner_check = 'ok' WHERE id = ?", (claim_id,))
-        else:
+        pay = conn.execute("SELECT * FROM sale_payments WHERE utxo_id = ? AND claim_id = ?",
+                           (utxo_id, claim_id)).fetchone()
+        if claim["status"] != "paid" or claim["demo"] or claim["owner_check"] not in ("pending", "ok") \
+                or pay is None or pay["status"] != "counted":
+            raise ApiError(409, "conflict", "This payment isn't waiting for your check.",
+                           details={"status": claim["status"]})
+        conn.execute("UPDATE sale_payments SET owner_ok = ? WHERE utxo_id = ?", (int(spendable), utxo_id))
+        if not spendable:
             conn.execute("UPDATE claims SET owner_check = 'bad', status = 'void' WHERE id = ?", (claim_id,))
+        elif conn.execute("SELECT 1 FROM sale_payments WHERE claim_id = ? AND status = 'counted' "
+                          "AND owner_ok IS NOT 1", (claim_id,)).fetchone() is None:
+            conn.execute("UPDATE claims SET owner_check = 'ok' WHERE id = ?", (claim_id,))
     row = conn.execute("SELECT status, owner_check FROM claims WHERE id = ?", (claim_id,)).fetchone()
     return json_response(200, {"claim_id": claim_id, "status": row["status"], "owner_check": row["owner_check"]})
 
