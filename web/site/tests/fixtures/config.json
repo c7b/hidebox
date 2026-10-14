@@ -106,7 +106,7 @@
   "mainnet_date": "2026-11-11"
  },
  "security_drop": null,
- "repo_url": "https://github.com/c7b/mutis",
+ "repo_url": "https://github.com/c7b/hidebox",
  "seal_log": {
   "checkpoint_interval_s": 900,
   "component": null

@@ -15,8 +15,8 @@ Please tell us privately before you tell anyone else.
    report is readable by us alone, and nothing on our server or on the chain says who left it. A
    drop takes a fixed number of files a day (`DROP_FILES_PER_DAY` in `server/mutis/handlers/uploads.py`);
    if it answers "took all it can today", try again after midnight UTC, or use the next channel.
-2. **A GitHub private security advisory** on `c7b/mutis`:
-   [Report a vulnerability](https://github.com/c7b/mutis/security/advisories/new) (*Security →
+2. **A GitHub private security advisory** on `c7b/hidebox`:
+   [Report a vulnerability](https://github.com/c7b/hidebox/security/advisories/new) (*Security →
    Report a vulnerability*; it needs a GitHub account). Only you and the maintainer see the advisory.
    `security.txt` lists it as the second `Contact`, and `/made#disclosure` links it; the site's test suite
    checks, as a visitor who isn't signed in, that the form answers and that private reporting is on.
