@@ -7,13 +7,17 @@ const T = {
   green: 'Every check is working.',
   amber: 'Working, with something near a limit:',
   red: 'Something is broken:',
-  reasons: { budget: (kind, slice, pct) => `${pct}% of today's ${slice} budget for ${kind} is used.`, 'abuse.new_reports': 'new abuse reports are waiting for us.' },
+  reasons: {
+    budget: (kind, slice, pct) => `${pct}% of today's ${slice} budget for ${kind} is used.`, 'abuse.new_reports': 'new abuse reports are waiting for us.',
+    'packs.public_80': 'most of the space packs on sale are taken.', 'packs.ceiling': "today's space packs are sold; more go on sale tomorrow.",
+  },
   kinds: { sponsor: 'sponsor grants', courier: 'deliveries', demo_pay: 'demo payments', decoy: 'decoy sends' },
   slices: { public: 'public', reserved: 'reserved', evidence: 'test-delivery' },
   checked: (when) => `Checked ${when}.`,
 };
 
-// Reason codes are fixed strings from the health check (budget.<kind>.<slice>.<percent>, abuse.new_reports).
+// Reason codes are fixed strings from the health check (budget.<kind>.<slice>.<percent>, abuse.new_reports,
+// packs.public_80, packs.ceiling).
 function reasonText(code) {
   const [head, kind, slice, pct] = code.split('.');
   if (head === 'budget' && pct) return T.reasons.budget(T.kinds[kind] ?? kind, T.slices[slice] ?? slice, pct);

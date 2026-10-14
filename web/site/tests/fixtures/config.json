@@ -69,11 +69,13 @@
    },
    {
     "id": "m30",
-    "bytes": 10737418240,
+    "bytes": 5368709120,
     "days": 30,
-    "price_ut": "2000000"
+    "price_ut": "1000000"
    }
-  ]
+  ],
+  "one_per_drive": true,
+  "renew_days": 3
  },
  "features": {
   "drops": true,
@@ -85,7 +87,8 @@
   "kept": true,
   "seallog": false,
   "folders": true,
-  "pay_to_open": false
+  "pay_to_open": false,
+  "packs": true
  },
  "courier": {
   "amount_ut": "1000",

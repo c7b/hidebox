@@ -143,6 +143,9 @@ export function setJudgePass(code) {
 
 export const hasJudgePass = () => judgePass !== null;
 
+// The pass where it widens a daily allowance (a drive's uploads, a pack); a stale one counts as none.
+export const judgeHeaders = () => (judgePass ? { 'X-Mutis-Judge': judgePass } : {});
+
 // Sends a request the server gates with proof of work. `send(pow, headers)` makes the request with
 // the solved PoW (or null) and the extra headers. With a judge pass it goes out once with the pass and
 // no PoW; if the server calls the pass unknown or used up, the pass is dropped and the request is sent

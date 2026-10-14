@@ -8,7 +8,7 @@ import { randomBytes } from './crypto.js';
 import { ctHash, encryptFile, encryptMeta, deriveItemKeys } from './format.js';
 import { linkFragment, linkProof, newShareSecret, shareKeys, shareUrl, wrapFileKey } from './share.js';
 import { ApiError, completeUpload, createShare, createUpload, deleteUpload, putChunk } from './api.js';
-import { withPow } from './pow.js';
+import { judgeHeaders, withPow } from './pow.js';
 
 // The same number /config serves as text_max_chars (spec §9.4).
 export const TEXT_MAX_CHARS = 10000;
@@ -80,7 +80,7 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
     if (keepFor && parent) Object.assign(body, await (await import('./folder.js')).parentFields(parent, { fk, headerHash }));
     const res = anonymous
       ? await withPow('upload', (pow, judge) => createUpload({ ...body, pow }, { ...headers, ...judge }), { signal, onProgress: (f) => onPhase?.('pow', f) })
-      : await createUpload(body, headers);
+      : await createUpload(body, { ...headers, ...judgeHeaders() });
     up = { uploadId: res.upload_id, itemId: res.item_id, manageToken: res.manage_token, expiresAt: body.expires_at, uploadExpiresAt: res.expires_at };
   }
   const itemHeaders = up.manageToken ? { ...headers, 'X-Mutis-Manage': up.manageToken } : headers;

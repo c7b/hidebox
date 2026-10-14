@@ -62,6 +62,7 @@ const VARIABLES = {
   pack_m30_size: ['config', (c) => pack(c, 'm30')?.bytes, formatBytes],
   pack_m30_price: ['config', (c) => pack(c, 'm30')?.price_ut, formatTari],
   pack_m30_days: ['config', (c) => pack(c, 'm30') && days(pack(c, 'm30').days), formatDuration],
+  pack_renew_days: ['config', (c) => c.pricing?.renew_days && days(c.pricing.renew_days), formatDuration],
   courier_amount: ['config', (c) => c.courier.amount_ut, formatTari],
   sponsor_grant: ['config', (c) => c.sponsor_grant_ut, formatTari],
   courier_fee: ['config', (c) => c.courier.max_fee_ut, formatTari],

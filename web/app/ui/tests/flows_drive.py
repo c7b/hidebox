@@ -269,6 +269,12 @@ def storage_meter(t):
     a.wait("!document.querySelector('[data-testid=\"invoice-dialog\"]') || document.querySelector('[data-testid=\"invoice-dialog\"]').hidden", 10)
     legend = a.wait("document.querySelector('.legend')?.textContent ?? ''", 30)
     t.check("Space you paid for" in legend, "the legend names the paid space (violet only for space paid with tTARI)")
+    # Sixth pass: one pack at a time. The pack held says until when and can't be bought again before its last
+    # days; the other pack waits; the rule and the renewal date are said in words.
+    a.wait("document.querySelector('[data-testid=\"pack-s30\"]')?.disabled === true", 30)
+    t.check("Yours until" in a.text("pack-s30") and a.eval("document.querySelector('[data-testid=\"pack-m30\"]').disabled"),
+            "one pack at a time: the pack held says until when, the other waits")
+    t.check(a.exists("pack-renew-from") and "One pack at a time" in a.text("pack-rule"), "the rule and the renewal date, in words")
     t.shot(a, "storage-1440-paid", full_page=True)
 
 

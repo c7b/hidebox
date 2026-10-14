@@ -3,7 +3,7 @@
 // what happened, what did not happen, what to do. The server's English `message` only ever appears
 // inside "Technical details".
 import { h } from '../lib/dom.js';
-import { formatBytes, t } from '../lib/i18n.js';
+import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { icon } from './core.js';
 import { cloneGhost } from '/shared/ghost.js';
 
@@ -30,7 +30,7 @@ too_large_locker too_large_drop too_large_request program_drop locked pow_requir
 probation_limit chain_unavailable feature_disabled budget_exhausted bad_address mainnet_address l1_address bad_blob
 unknown_pack internal client network crypto memory clipboard empty folder many text_long program needs_wasm needs_wasm_drop
 integrity read wrong_password keyfile checksum locked_key wrong_passphrase address_mismatch view_key drop_limit
-insufficient timeout rejected judge_spent
+insufficient timeout rejected judge_spent pack_active packs_limited packs_paused drives_limited uploads_limited
 payment_required bad_claim claim_used not_for_sale seller_not_ready seller_not_registered busy`.split(/\s+/)); // last line: lane app2 (pay to open)
 
 // An error the UI raises itself, with a code from the list above.
@@ -50,6 +50,7 @@ export function describe(e) {
   else if (name === 'QuotaExceededError' || /allocation|out of memory/i.test(e?.message ?? '')) code = 'memory';
   else if (name === 'DropError' && code === 'limit') code = 'drop_limit';
   if (code === 'uploads_frozen' && e.details?.scope === 'all') code = 'uploads_frozen_all';
+  if (code === 'feature_disabled' && e.details?.feature === 'packs') code = 'packs_paused';
   // A 413 from our server or the web server in front of it (details.max_bytes), not the app's own size check.
   if (code === 'too_large' && api) code = 'too_large_request';
   // A file that already has every link its class allows (an anonymous file: three, spec §9.4).
@@ -67,6 +68,10 @@ export function errorText(e, params = {}) {
   const { code, retryAfter, details } = describe(e);
   const wait = retryAfter ? mmss(retryAfter) : '';
   const max = Number.isFinite(details.max_bytes) ? formatBytes(details.max_bytes) : '';
+  if (code === 'pack_active') {
+    const day = (s) => formatDate(s * 1000, { dateStyle: 'medium' });
+    Object.assign(params, { bytes: formatBytes(details.bytes), date: day(details.until), renew: day(details.renew_from), ...params });
+  }
   return t(`error.${code}`, { wait, max, ...params });
 }
 
