@@ -106,7 +106,7 @@
     "You get a link. Your friend sees it once.",
     "It opens one time in the next {anon_max_expiry}. Then it's gone.",
     "Same link. Now it opens one time.",
-    "It opens one time. When you open it, it's gone.",
+    "It opens one time. When you open it, the link ends.",
     "It opens one time, until {date}. Then the link ends.",
     "It opens one time. Then the link ends."
    ]
@@ -127,18 +127,18 @@
   },
   {
    "id": "C15-k",
-   "condition": "kind 3 only (the default send and every dead drop); kind 4 files open with that wallet's view key, so C15 sits on every view-key screen; deleted if only kind 4 ships (spec G2)",
+   "condition": "kind 3 only (the default send and every drop link); kind 4 files open with that wallet's view key, so C15 sits on every view-key screen; deleted if only kind 4 ships (spec G2)",
    "backed_by": "spec §4.9.1, §4.9.2, G2",
    "markers": [
     "for files sent to",
-    "no file sent to your locker",
+    "no file sent to your drive",
     "lists arrivals and opens no file"
    ],
    "requires": "A view key can't spend, but it can read everything sent to this address, including files.",
    "sentences": [
-    "For files sent to your locker: you see that something came, and how much. Not the file.",
-    "What came, and how much. No file sent to your locker opens with it.",
-    "For files sent to a locker, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key."
+    "For files sent to your drive: you see that something came, and how much. Not the file.",
+    "What came, and how much. No file sent to your drive opens with it.",
+    "For files sent to a drive, the view-key screen lists arrivals and opens no file. Files sent to another wallet open with its view key."
    ],
    "requires_link": "/made#who"
   },
@@ -150,7 +150,7 @@
     "hash of your login key"
    ],
    "sentences": [
-    "We store a random id and a hash of your login key. No email and no public key; a dead drop stores its own address, by design."
+    "We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design."
    ]
   },
   {
@@ -424,9 +424,9 @@
   }
  ],
  "labels": [
-  "See the goodbye",
-  "See one we already wrote",
-  "The goodbye record",
+  "Check it in this browser",
+  "Check one we already wrote",
+  "The exit record",
   "Pay with test money",
   "Test money"
  ],

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-// The ghost's few moves (14-ghost-design §3, §6), for the site and the app alike. Its markup is a
-// static partial (web/shared/partials/ghost.svg): the build inlines it where a page shows a ghost and
-// keeps a copy in <template id="ghost-tpl">, which cloneGhost() uses. No HTML is ever parsed from a
-// string (Trusted Types). A state is `data-state` on the svg; ghost.css draws it.
+// The ghost's few moves (14-ghost-design §3, §6). Fifth pass: no page carries the ghost any more (its
+// partials and ghost.css are gone; web/site/tests checks it), so cloneGhost() finds no template and returns
+// null and every other move is a no-op. Kept so the widget and card modules keep their imports.
 
 export const STATES = ['ready', 'catch', 'busy', 'once', 'few', 'word', 'peek', 'courier', 'bag', 'keep', 'gone', 'oops'];
 

@@ -329,8 +329,8 @@
    ],
    "hex": "ce63 4ac2 aecc b18f c66a 3cf1"
   },
-  "key_file_name": "mutis-key-ce634a.txt",
-  "key_file_text": "mutis locker key. Keep it private: anyone with this file can open your locker.\nSafety code: 📱🏆🎤💵 💉📡👂🐻 📈🏰🍼🚒\nTari address (Esmeralda testnet): otl_esm_13fuwjzw3kpn3p0t8t52xxjxdkmmdz5ey807jq8xp9enm42rytexq3e0vd2r8mnqyfur43pevv2dzywsaw6nqv89g706924n2mr6ku4q2y9978\nCreated: 2026-10-14\nKey: MUTIS-000G4-0R40M-30E20-9185G-R38E1-W8124-GK2GA-HC5RR-34D1P-70X3R-FKZ4R\n"
+  "key_file_name": "hidebox-key-ce634a.txt",
+  "key_file_text": "hidebox drive key. Keep it private: anyone with this file can open your drive.\nSafety code: 📱🏆🎤💵 💉📡👂🐻 📈🏰🍼🚒\nTari address (Esmeralda testnet): otl_esm_13fuwjzw3kpn3p0t8t52xxjxdkmmdz5ey807jq8xp9enm42rytexq3e0vd2r8mnqyfur43pevv2dzywsaw6nqv89g706924n2mr6ku4q2y9978\nCreated: 2026-10-14\nKey: MUTIS-000G4-0R40M-30E20-9185G-R38E1-W8124-GK2GA-HC5RR-34D1P-70X3R-FKZ4R\n"
  },
  "pow": [
   {

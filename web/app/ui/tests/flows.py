@@ -239,9 +239,9 @@ def home_text(t):
             f"localStorage holds no key and no text, only the recent-drops list ({sorted(json.loads(stored))})")
     b = t.actor("android")
     t.check(open_link(b, url, open_it=False) == "ready", "B sees the ready state, nothing used yet")
-    t.check(b.text("view-views-left") == "It opens one time. When you open it, it's gone.", "the ghost's sentence says the rule: once")
-    t.check(b.attr("view-root", "data-state") == "ready" and b.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state") == "once",
-            "the ghost holds up one finger: Once")
+    t.check(b.text("view-views-left") == "It opens one time. When you open it, the link ends.", "the sentence says the rule: once")
+    t.check(b.attr("view-root", "data-state") == "ready" and b.eval("document.querySelector('.a-figure')?.dataset.pose") == "once"
+            and b.eval("!document.querySelector('svg.ghost')"), "a tile for Once, and no ghost")
     t.shot(b, "view-412-ready")
     b.click("view-open")
     t.check(b.wait_state("view-root", VIEW_END, 60) == "opened", "B opens it")
@@ -254,8 +254,8 @@ def home_text(t):
     c = t.actor("desktop")
     t.check(open_link(c, url) == "burned", "a second browser sees burned")
     gone_text = c.text("view-root")
-    t.check("It's gone." in gone_text and "It said bye. Someone opened it already." in gone_text, f"the gone page: It's gone. It said bye. ({gone_text[:80]!r})")
-    t.check(c.wait("document.querySelector('.a-figure svg.ghost')?.dataset.state === 'gone'", 5), "the ghost fades to its dashed outline and waves")
+    t.check("This link has ended." in gone_text and "Someone opened it already." in gone_text, f"the ended page: This link has ended. ({gone_text[:80]!r})")
+    t.check(c.eval("document.querySelector('.a-figure')?.dataset.pose === 'gone' && !document.querySelector('svg.ghost')"), "the ended tile, no ghost")
     t.shot(c, "view-1440-burned")
 
 
@@ -975,7 +975,7 @@ def keyboard(t):
     t.check(not o.ax_unnamed(), f"/upgrade: every control named ({o.ax_unnamed()[:5]})")
     o.goto(t.origin + "/watch")
     o.wait_for("watch-address", 60)
-    t.check(o.tab_to("a.textContent.trim() === \"Use my locker's view key\""), "Tab reaches Use my locker's view key")
+    t.check(o.tab_to("a.textContent.trim() === \"Use my drive's view key\""), "Tab reaches Use my drive's view key")
     o.key("Enter", text="\r")
     t.check(o.tab_to("a.dataset.testid === 'watch-run'"), "Tab reaches Look")
     o.key("Enter", text="\r")
@@ -1166,82 +1166,26 @@ def states(t):
     time.sleep(max(0, short_at + 65 - time.time()))
     e = t.actor()
     t.check(open_link(e, short) == "expired", "65 seconds later the real server answers: expired")
-    t.check("Its time ran out." in e.text("view-root"), "It's gone. It said bye. Its time ran out.")
+    t.check("Its time ran out." in e.text("view-root"), "This link has ended. Its time ran out.")
 
 
-# 14-ghost-design §3: every state's parts. (shown, hidden) as CSS selectors inside the ghost; the
-# merged poses share their drawing (busy and keep hug the note; gone is the dashed outline).
-GHOST_POSES = {
-    "ready": ([".eo", ".ms", ".hl", ".hr"], [".wk", ".mo", ".p1", ".mt", ".pn", ".pp"]),
-    "catch": ([".ew", ".mo"], [".eo", ".ms"]),
-    "busy": ([".es", ".pn"], [".eo", ".ms"]),
-    "once": ([".wk", ".p1", ".el"], [".er", ".hr", ".mt"]),
-    "few": ([".pg"], [".pn", ".pe"]),
-    "word": ([".ml", ".mr"], [".hl", ".hr"]),
-    "peek": ([".ml", ".er"], [".mr", ".hl"]),
-    "courier": ([".pe"], [".pn", ".pg"]),
-    "bag": ([".pb"], [".pe", ".pn"]),
-    "keep": ([".pn", ".eo"], [".es"]),
-    "gone": ([".pp", ".eo"], [".ck"]),
-    "oops": ([".ex", ".mw"], [".eo", ".ms"]),
-}
-SHEET = """(() => {
-  const old = document.getElementById('ghost-sheet');
-  if (old) old.remove();
-  const sheet = document.createElement('section');
-  sheet.id = 'ghost-sheet';
-  sheet.style.cssText = 'position:fixed;inset:0;z-index:999;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:24px;background:var(--bg);color:var(--fg);font:var(--t-small)';
-  for (const state of %s) {
-    const fig = document.createElement('figure');
-    fig.style.cssText = 'margin:0;display:grid;justify-items:center;gap:4px';
-    const holder = document.createElement('div');
-    holder.style.cssText = 'width:150px;filter:var(--glow)';
-    holder.dataset.ghost = state;
-    holder.append(document.getElementById('ghost-tpl').content.querySelector('svg.ghost').cloneNode(true));
-    const cap = document.createElement('figcaption');
-    cap.textContent = state;
-    fig.append(holder, cap);
-    sheet.append(fig);
-  }
-  document.body.append(sheet);
-  return sheet.querySelectorAll('svg.ghost').length;
-})()"""
-
-
-def ghost_parts(page, state, sel):
-    return page.eval(f"[...document.querySelectorAll('#ghost-sheet [data-ghost=\"{state}\"] svg.ghost {sel}')]"
-                     ".map((e) => Number(getComputedStyle(e).opacity))")
-
-
-@scenario("ghost-states", "The ghost: all twelve states of 14 §3 from the static partial, both themes; reduced motion stills")
-def ghost_states(t):
-    states = json.dumps(list(GHOST_POSES))
+# Fifth pass (16-drive-design §0, the owner: no ghost): the link and task pages carry no ghost and set
+# their words in Geist, with a Lucide tile where the ghost stood.
+@scenario("no-ghost", "No ghost: /send and the link page carry no ghost template or figure; Geist; a Lucide tile")
+def no_ghost(t):
     for dark in (False, True):
         a = t.actor("desktop", dark=dark)
-        a.goto(t.origin + "/send")  # the app's pages still carry the partial; the drive's home has no figure
-        a.wait("!!document.getElementById('ghost-tpl')", 60)
-        t.check(a.eval("document.getElementById('ghost-tpl')?.content.querySelectorAll('svg.ghost').length") == 1,
-                "the page carries the ghost partial in <template id=ghost-tpl>")
-        t.check(a.eval(SHEET % states) == len(GHOST_POSES), f"{len(GHOST_POSES)} ghosts cloned from the partial")
-        a.b.pump(0.8)  # the 200 ms fades and the 340 ms poses settle
-        for state, (shown, hidden) in GHOST_POSES.items():
-            bad = [f"{sel} hidden" for sel in shown if not any(o > 0.5 for o in ghost_parts(a, state, sel))]
-            bad += [f"{sel} shown" for sel in hidden if any(o > 0.05 for o in ghost_parts(a, state, sel))]
-            t.check(not bad, f"{'dark' if dark else 'light'}: {state} draws its parts ({bad})")
-        dashed = a.eval("getComputedStyle(document.querySelector('#ghost-sheet [data-ghost=\"gone\"] .bd')).strokeDasharray")
-        t.check(dashed not in ("none", ""), f"gone is a dashed outline ({dashed})")
-        glow = a.eval("getComputedStyle(document.querySelector('#ghost-sheet [data-ghost]')).filter")
-        t.check((glow != "none") == dark, f"only the lights-off ghost glows ({glow})")
-        t.shot(a, f"ghost-states-{'dark' if dark else 'light'}")
-    calm = t.actor("iphone", reduced_motion=True)
-    calm.goto(t.origin + "/send")
-    calm.wait("!!document.getElementById('ghost-tpl')", 60)
-    calm.eval(SHEET % states)
-    calm.b.pump(0.5)
-    running = calm.eval("document.getAnimations().filter((x) => x.playState === 'running' && x.effect?.target?.closest?.('#ghost-sheet')).length")
-    t.check(running == 0, f"reduced motion: every ghost is a still ({running} animations running)")
-    t.check(ghost_parts(calm, "once", ".p1")[0] > 0.5, "reduced motion: the pose is still drawn (once: the finger up)")
-    t.shot(calm, "ghost-states-390-reduced")
+        for path in ("/send", "/watch", "/s/AAAAAAAAAAAAAAAAAAAAAA#1" + "A" * 43):
+            a.goto(t.origin + path)
+            a.wait("!!document.querySelector('.a-scene-h, [data-testid=\"view-root\"][data-state]:not([data-state=\"loading\"])')", 60)
+            t.check(a.eval("!document.getElementById('ghost-tpl') && !document.querySelector('svg.ghost, [data-ghost]')"),
+                    f"{path.split('#')[0]}: no ghost template and no ghost")
+            t.check(a.eval("![...document.styleSheets].some((x) => (x.href || '').includes('ghost'))"), f"{path.split('#')[0]}: no ghost.css")
+            font = a.eval("getComputedStyle(document.querySelector('.a-scene-h') || document.body).fontFamily")
+            t.check("Geist" in font, f"{path.split('#')[0]}: Geist ({font[:40]})")
+            tile = a.eval("document.querySelector('.a-figure use')?.getAttribute('href') ?? ''")
+            t.check(tile.startswith("/shared/ui/icons.svg#i-"), f"{path.split('#')[0]}: a Lucide tile ({tile})")
+        t.shot(a, f"no-ghost-{'dark' if dark else 'light'}")
 
 
 # --- the window drop and the wow (14-ghost-design §5, §6; ported from the 6A critique's verify.py) ----
@@ -1377,7 +1321,7 @@ def seallog_on(t, p, share_id, receipt):
      .add(f"*/api/v1/s/{share_id}/exit", "Request", lambda _p: (200, body)))
 
 
-@scenario("ghost-screens", "Step 8 on the ghost at 390 and 1440: the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify")
+@scenario("ghost-screens", "Step 8 at 390 and 1440 (no ghost since the fifth pass): the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify")
 def ghost_screens(t):
     for device, w in (("iphone", 390), ("desktop", 1440)):
         maker = t.actor()
@@ -1386,10 +1330,10 @@ def ghost_screens(t):
         sid = url.split("/s/")[1].split("#")[0]
         v = t.actor(device)
         t.check(open_link(v, url, open_it=False) == "ready", f"{w}: the viewer is ready")
-        pose = v.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state")
-        t.check(pose == "once" and v.text("view-views-left") == "It opens one time. When you open it, it's gone."
-                and "Someone sent you a secret." in v.text("view-root") and v.eval("document.activeElement?.dataset?.testid") == "view-open",
-                f"{w}: the viewer's first screen: the ghost's finger up, one sentence, C18, Open it focused ({pose})")
+        pose = v.eval("document.querySelector('.a-figure')?.dataset.pose")
+        t.check(pose == "once" and v.text("view-views-left") == "It opens one time. When you open it, the link ends."
+                and "Someone shared something with you." in v.text("view-root") and v.eval("document.activeElement?.dataset?.testid") == "view-open",
+                f"{w}: the viewer's first screen: the Once tile, one sentence, C18, Open it focused ({pose})")
         t.shot(v, f"viewer-{w}-ready", full_page=True)
         v.click("view-open")
         t.check(v.wait_state("view-root", VIEW_END, 60) == "opened" and "This was its only look." in v.text("view-root"), f"{w}: opened, its only look")
@@ -1400,14 +1344,12 @@ def ghost_screens(t):
             g.goto(url.split("#")[0])
             t.check(g.wait_state("view-root", VIEW_ASK, 60) == "burned", f"{w}: the gone page ({receipt})")
             g.wait(f"document.querySelector('[data-testid=\"gone-receipt\"]')?.dataset.receipt === {json.dumps(receipt)}", 30)
-            g.wait("document.querySelector('.a-figure svg.ghost')?.dataset.state === 'gone'", 5)
             text, href = g.text("view-root"), g.attr("gone-see", "href")
-            want = ("We wrote its goodbye on the Tari™ chain.", "See the goodbye", f"/verify#{sid}") if receipt == "done" else \
-                   ("Its goodbye goes on the Tari™ chain within 15 minutes.", "See one we already wrote", "/verify#latest")
-            t.check("It's gone." in text and "It said bye. Someone opened it already." in text and want[0] in text
-                    and g.text("gone-see") == want[1] and href == want[2],
-                    f"{w}: gone, {receipt}: the dashed ghost waves; the receipt says {want[0]!r} and links {href}")
-            time.sleep(0.5)                                      # the pose change (340 ms) settles
+            want = ("The file left our server. We wrote that on the Tari™ chain.", "Check it in this browser", f"/verify#{sid}") if receipt == "done" else \
+                   ("The file left our server. That goes on the Tari™ chain within 15 minutes.", "Check one we already wrote", "/verify#latest")
+            t.check("This link has ended." in text and "Someone opened it already." in text and want[0] in text
+                    and g.text("gone-see") == want[1] and href == want[2] and g.eval("document.querySelector('.a-figure')?.dataset.pose") == "gone",
+                    f"{w}: ended, {receipt}: the receipt says {want[0]!r} and links {href}")
             t.shot(g, f"gone-{w}-{receipt}", full_page=True)
         lo = t.actor(device)
         lo.goto(t.origin + "/locker")
@@ -1422,7 +1364,7 @@ def ghost_screens(t):
         lo.wait("!document.querySelector('dialog[open]')", 10)
         lo.wait_for("locker-safety", 60)
         address = lo.text("locker-address").strip()
-        t.check(lo.exists("c15") and "For files sent to your locker: you see that something came, and how much. Not the file." in lo.text("locker-root"),
+        t.check(lo.exists("c15") and "For files sent to your drive: you see that something came, and how much. Not the file." in lo.text("locker-root"),
                 f"{w}: the locker's view key section: C15-k and C15")
         t.shot(lo, f"locker-{w}-full", full_page=True)
         lo.goto(t.origin + "/inbox")
@@ -1439,12 +1381,12 @@ def ghost_screens(t):
         lo.fill("send-recipient", address)
         lo.wait_for("send-safety", 30)
         t.check("It goes by Tari. Only they can open it." in lo.eval("document.querySelector('main').textContent")
-                and lo.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state") == "courier", f"{w}: send: the courier ghost and C25")
+                and lo.eval("document.querySelector('.a-figure')?.dataset.pose") == "courier", f"{w}: send: the courier tile and C25")
         t.shot(lo, f"send-{w}", full_page=True)
         lo.goto(t.origin + "/watch#mine")
         lo.wait("!!document.querySelector('[data-testid=\"watch-summary\"]')", 120)
-        t.check(lo.exists("c15") and lo.eval("document.querySelector('.a-figure svg.ghost')?.dataset.state") == "peek",
-                f"{w}: /watch: the peek ghost, C15-k and C15")
+        t.check(lo.exists("c15") and lo.eval("document.querySelector('.a-figure')?.dataset.pose") == "peek",
+                f"{w}: /watch: the peek tile, C15-k and C15")
         t.shot(lo, f"watch-{w}", full_page=True)
         lo.goto(t.origin + "/upgrade")
         lo.wait_for("pack-s30", 60)
@@ -1453,6 +1395,6 @@ def ghost_screens(t):
         seallog_on(t, vf, sid, "done")
         vf.goto(t.origin + f"/verify#{sid}")
         line = vf.wait("(() => { const s = document.querySelector('.a-item--this [data-testid=\"verify-exit\"]')?.textContent || ''; return /included|match/.test(s) ? s : ''; })()", 60)
-        t.check("Exit: included at checkpoint" in line and "Its goodbye on the Tari™ chain, checked by your browser." in vf.eval("document.querySelector('main').textContent"),
+        t.check("Exit: included at checkpoint" in line and "Its exit on the Tari™ chain, checked by your browser." in vf.eval("document.querySelector('main').textContent"),
                 f"{w}: See the goodbye: /verify checks this link's exit ({line[:60]})")
         t.shot(vf, f"verify-{w}", full_page=True)

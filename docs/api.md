@@ -54,7 +54,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `POST /s/{id}/open` | `X-Mutis-Access` | uses a view; returns the wrapped key, the header and metadata, and the ciphertext inline (small files) or a short-lived download ticket |
 | `GET /blobs/{ticket}`, `POST /blobs/{ticket}/done` | the ticket | the ciphertext (Range supported); "done" ends the ticket, and a file whose last link has left loses its ciphertext at once |
 | `PATCH /s/{id}`, `GET /s/{id}/manage`, `DELETE /s/{id}` | owner or manage token | tighten views or expiry, read the link's state, revoke |
-| `GET /s/{id}/exit` | anyone with the path | the exit receipt: reason, `item_id`, `exit_hour`, leaf hash, and an inclusion proof against the latest committed checkpoint, or `{"pending": true, "next_checkpoint_eta"}` |
+| `GET /s/{id}/exit` | anyone with the path | the exit receipt: reason, `item_id`, and `receipt`: `exit` (`exit_hour`, leaf hash, and an inclusion proof against the latest committed checkpoint, or `{"pending": true, "next_checkpoint_eta"}`), `pending` (the file is on its way out), or `none` (the link ended on a file its owner keeps: no leaf, `proof` null; C42) |
 | `GET /s/{id}/stored` | `X-Mutis-Access` | the link's file exactly as the disk holds it, without using a view (the key is released only by `/open`) |
 | `DELETE /items/{id}` | owner or manage token | delete the file and every link to it |
 | `POST /items/{id}/adopt` | a locker and the item's manage token | move a file locked without a locker into the locker |
