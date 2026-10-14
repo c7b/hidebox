@@ -46,6 +46,10 @@
  "k_pow": "0b5c516fd1272a9d044b945f446d866a4ae5c0b47ce4dd46f375e9ade9fe3f45",
  "layout": "ver(1)=1 || purpose(1) || difficulty(1) || 0x00 || u32be(expiry) || rand(12) || HMAC-SHA256(k_pow, first 20 bytes)[0:16]; solve SHA-256(challenge || nonce8) >= difficulty leading zero bits",
  "purposes": {
+  "claim": {
+   "base_bits": 16,
+   "code": 9
+  },
   "courier": {
    "base_bits": 18,
    "code": 3

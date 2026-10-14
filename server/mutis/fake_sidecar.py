@@ -15,7 +15,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from . import codec, quota
+from . import codec, ootle_addr, quota
 from .fake_chain import FAKE_WASM_SHA256, fake_keys, fake_one_time_key, fake_pk, open_output
 
 _MEMO = re.compile(r"/t#3([A-Za-z0-9_-]{167})$")
@@ -73,6 +73,18 @@ def open_delivery(memo, origins: list[str]) -> dict:
             "access_token": codec.b64u(access)}
 
 
+def open_watch_key(blob: bytes, address: str) -> dict:
+    """The fake's kind-3 seal is the plain inner payload; the checks are the real op's (sidecar.mjs)."""
+    if len(blob) != 125:
+        raise ValueError("bad_request")
+    inner = blob[:65]
+    view_sk, flags, ref = inner[16:48], inner[48], inner[49:65]
+    _, view_pk, _ = ootle_addr.parse_testnet(address)
+    if flags != 0x08 or ref != codec.sha256(b"mutis-watch-v1", address.encode())[:16] or fake_pk(view_sk) != view_pk:
+        raise ValueError("bad_key")
+    return {"view_sk": view_sk.hex()}
+
+
 def scan(view_sk: str, utxos: list[dict]) -> list[dict]:
     found = []
     for u in utxos:
@@ -98,6 +110,8 @@ def handle(req: dict) -> dict:
         if len(owner_sk) != 32 or len(nonce) != 32:
             raise ValueError("bad_request")
         return {"public_key": fake_one_time_key(fake_pk(owner_sk), nonce).hex()}
+    if cmd == "openWatchKey":                # pay to open: a seller's sales view key, sealed to our receiver
+        return open_watch_key(bytes.fromhex(req["blob"]), req["address"])
     if cmd == "selftest":
         return {"passed": True, "cases": 0}
     if cmd == "canary":
