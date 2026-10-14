@@ -12,7 +12,7 @@ and 412×915 (Android-class) with touch, a mobile user agent and 4× CPU throttl
 ```sh
 python3 -I tests/e2e/run.py --list                     # what would run
 python3 -I tests/e2e/run.py                            # every scenario without chain transactions
-python3 -I tests/e2e/run.py --chain                    # plus E-09…E-14, E-25 and E-J on Esmeralda
+python3 -I tests/e2e/run.py --chain                    # plus E-09…E-14, E-25, E-29, E-30 and E-J on Esmeralda
 python3 -I tests/e2e/run.py --only E-01,E-15 --out /tmp/e2e
 python3 -I tests/e2e/run.py --chain --final            # submission day: a SKIP fails the run (D-08)
 python3 -I tests/e2e/griefer.py --then-judge https://srv2052606.hstgr.cloud   # E-23
@@ -41,10 +41,21 @@ Against production (there is no staging; 12-integration §7.7):
 - **E-J** follows `/judges` step by step (16-drive-design §10): six steps on a computer and a phone with
   the drive (Make my drive from the home page, drop a small folder, share one file Once with Delete it from
   my drive after, the phone opens it and reloads to "It's gone.", Activity shows it left, What our server
-  knows), then four for the Tari part (the drive's address code in Settings, scanned by the phone, whose home
-  sends a note to it by Tari; Received opens it on the computer; Storage, Get more space, paid). The phone
-  is 390×844 and the computer 1440×900; each step is timed (`report.json`, `notes` of E-J); both tracks
-  together must take at most 6 minutes.
+  knows). Track two, with `features.pay_to_open` on: the computer sells that folder (Someone who pays you,
+  the first price, Make pay link), the phone opens the pay link (name, count, size, price and fee), pays
+  with test money to Ready to open, opens one file; the computer's Received lists the payment as Yours to
+  spend; the phone's What the chain sees shows hidden amounts and the public fee. With pay to open off,
+  track two is the older four steps (the drive's address code, a note sent to it by Tari, Received, Get
+  more space). The phone is 390×844 and the computer 1440×900; each step is timed (`report.json`, `notes`
+  of E-J); track one must take at most 3 minutes and track two at most 7.
+- **E-29 and E-30** (16-drive-design §15 step 17, `features.pay_to_open` on, else SKIP): E-29 sells a folder
+  of three and a phone with no drive pays it with test money (a judge pass lifts the test-money caps);
+  E-30 sells a file and a second drive pays it from its sponsor grant, waits for the owner's check, and
+  opens once the seller's drive has opened and confirmed it. Both end their paid link by id as their last
+  step (`mutis-admin takedown share`), which voids waiting claims. The dev stack can't stand in for them:
+  its fake keys aren't curve points, so the browser's ootle-wasm can't seal to its watch address; the
+  fake-chain coverage is the server's `test_paid_shares`, `test_sales_worker`, `test_release_gate` and
+  the UI flows `share-pay`, `pay-page-states`, `owner-check`.
 - **E-J in direct mode** (12-integration §7.5, before `send_mode = "direct"` goes public): with
   `send_mode = "direct"`, `features.direct_send` and `features.sponsor` on, E-J makes a judge pass
   (`mutis-admin judge-pass new --uses 3`) and gives it to both of its browser contexts, which share

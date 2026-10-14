@@ -65,8 +65,8 @@
           <li><span class="do"><span class="where">Phone</span>Scan the code.</span><span class="see">The folder's name, how many files, about how big, the price and the fee. The names inside stay locked.</span></li>
           <li><span class="do"><span class="where">Phone</span>Tap <b class="ui">Pay with test money</b>.</span><span class="see">Waiting for your payment, Payment seen, On the chain, Ready to open.</span></li>
           <li><span class="do"><span class="where">Phone</span>Open one photo, then save it.</span><span class="see">It opens. Our server never had the whole key.</span></li>
-          <li><span class="do"><span class="where">Computer</span>Open <b class="ui">Received</b>, then <b class="ui">Payments</b>.</span><span class="see">The payment, marked Test money and Checked, with its tx.</span></li>
-          <li><span class="do"><span class="where">Computer</span>Open the tx on Tari's indexer.</span><span class="see">The amount and the owner are hidden. The fee is public.</span></li>
+          <li><span class="do"><span class="where">Computer</span>Open <b class="ui">Received</b>.</span><span class="see">Under Payments, the payment, marked Yours to spend.</span></li>
+          <li><span class="do"><span class="where">Phone</span>Tap <b class="ui">What the chain sees</b>.</span><span class="see">The amount and the owner are hidden. The fee is public.</span></li>
         </ol>
       </div>
       <div data-when="pay_to_open=off">
@@ -99,7 +99,7 @@
       <table class="data-table claims">
         <thead><tr><th scope="col">Tari's part</th><th scope="col">What we claim</th><th scope="col">Where you see it</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Stealth payments</th><td data-cue="What we claim">The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</td><td data-cue="Where you see it">The tx on Tari's indexer</td></tr>
+          <tr><th scope="row">Stealth payments</th><td data-cue="What we claim">The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</td><td data-cue="Where you see it">What the chain sees, on the pay page after you pay</td></tr>
           <tr data-when="pay_to_open=on" hidden><th scope="row">A split key</th><td data-cue="What we claim">We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.</td><td data-cue="Where you see it">The pay page</td></tr>
           <tr><th scope="row">A key inside a payment</th><td data-cue="What we claim">Send by Tari: the key rides inside a payment to their address. Only they can open it.</td><td data-cue="Where you see it">Share, One Tari address</td></tr>
           <tr><th scope="row">View keys</th><td data-cue="What we claim">A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those.</td><td data-cue="Where you see it"><a href="/made#who">Who sees what</a></td></tr>

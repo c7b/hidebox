@@ -275,14 +275,174 @@ def e25(t: T) -> None:
     t.check(entry["delivery_tx"] in [d["tx_id"] for d in evidence["deliveries"]], "/evidence.json lists the delivery")
 
 
-@scenario("E-J", "The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed", CHAIN)
+# --- integration, pass 2: pay to open on Esmeralda (16-drive-design §4, §10, §15 step 17) -----------------
+
+PAY_LINK = re.compile(r"/p/([A-Za-z0-9_-]{22})#5[A-Za-z0-9_-]{43}$")
+PAY_STATES = "['wait','paying','seen','check','unlocking','open','opened','expired','void','used','gone','incomplete','not-found','integrity-error','error']"
+
+
+def pay_to_open(t: T) -> dict:
+    cfg = t.env.config()
+    if not (cfg.get("features") or {}).get("pay_to_open"):
+        raise Skipped("pay to open is off in this deployment (features.pay_to_open)")
+    return cfg
+
+
+def sell(t: T, page, name: str) -> tuple[str, str]:
+    """Share → Someone who pays you → the first price → Make pay link; -> (the /p/ link with its #5 half, the share id)."""
+    import scenarios_drive as drv
+    drv.row_menu(page, name, "share")
+    page.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    page.click("share-choice", "pay")
+    page.click("share-next")
+    page.wait("document.getElementById('share-dialog')?.dataset.step === 'pay'", 10)
+    page.click("pay-make")
+    page.wait("document.getElementById('share-dialog')?.dataset.step === 'result'"
+              " || !!document.querySelector('#share-dialog [data-testid=\"error-banner\"]')", 180)
+    url = page.value("share-link") if page.exists("share-link") else ""
+    m = PAY_LINK.search(url)
+    t.check(bool(m and url.startswith(t.origin) and page.wait("!!document.querySelector('[data-testid=\"share-qr\"] svg')", 30)),
+            f"Make pay link: a /p/ link with half of the key after the #, and a code to scan ({url[-40:] or page.text('share-dialog')[-120:]})")
+    page.key("Escape")
+    page.wait("!document.getElementById('share-dialog') || document.getElementById('share-dialog').hidden", 10)
+    return url, m[1]
+
+
+def seller_ready(t: T, sid: str, timeout: float = 600) -> dict:
+    """GET /p/{id} until the chain worker has opened the drive's sealed sales key (seller.ready)."""
+    client = apiclient.Client(t.origin)
+    info = poll(lambda: (lambda b: b if b.get("seller", {}).get("ready") else None)(client.call("GET", f"/p/{sid}")[1]), timeout, 10)
+    t.check(bool(info), "the payment checker opened the drive's sealed sales key: the seller is ready")
+    t.check("otl_" not in json.dumps(info), "the pay page's data never carries the seller's address")
+    return info
+
+
+def pay_page(page, url: str) -> str:
+    page.goto(url)
+    page.wait(f"{PAY_STATES}.includes(document.querySelector('[data-testid=\"pay-page\"]')?.dataset.state)", 90)
+    return page.attr("pay-page", "data-state")
+
+
+def pay_wait(page, states: tuple[str, ...], timeout: float) -> str:
+    page.wait(f"{json.dumps(list(states))}.includes(document.querySelector('[data-testid=\"pay-page\"]')?.dataset.state)", timeout)
+    return page.attr("pay-page", "data-state")
+
+
+def pay_steps(page) -> list[str]:
+    return page.eval("[...document.querySelectorAll('[data-testid=\"pay-claim-step\"] li')].map((l) => l.dataset.step + ':' + l.dataset.state)")
+
+
+def paid_402(t: T, sid: str) -> None:
+    try:
+        apiclient.Client(t.origin).call("POST", f"/s/{sid}/open", {})
+        t.check(False, "a stranger without a paid claim can't open it")
+    except apiclient.ApiError as e:
+        t.check(e.status == 402, f"a stranger with the same link and no payment: 402 payment_required ({e.status})")
+
+
+def open_paid_folder(t: T, page, wanted: list[str], one: str) -> None:
+    page.click("pay-open")
+    page.wait_for("folder-view", 90)
+    names = sorted(page.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].map((e) => e.dataset.name)"))
+    t.check(names == sorted(wanted), f"the folder lists its names ({names})")
+    page.eval(f"[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === {json.dumps(one)}).querySelector('[data-testid=\"fv-open\"]').click()")
+    page.wait("document.querySelector('[data-testid=\"fv-preview\"] .fv-preview-body')?.dataset.state === 'open'", 90)
+    t.check(page.exists("fv-preview-save"), f"{one} opens on the phone, with Save")
+
+
+@scenario("E-29", "Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402", CHAIN)
+def e29(t: T) -> None:
+    import scenarios_drive as drv
+    pay_to_open(t)
+    judge = t.env.remote.admin("judge-pass", "new", "--uses", "4").strip()
+    desk = t.actor("desktop", judge_pass=judge)
+    desk.goto(t.origin + "/drive?make")
+    desk.wait_for("drive-root", 120)
+    desk.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
+    files = {"minutes.txt": b"E2E E-29 the council minutes.\n", "agenda.txt": b"E2E E-29 agenda.\n", "budget.txt": b"E2E E-29 budget.\n"}
+    drv.upload_folder(t, desk, "council", files)
+    folder = f"{t.sid}-council"
+    url, sid = sell(t, desk, folder)
+    info = seller_ready(t, sid)
+    t.check(info["kind"] == "folder" and info["child_count"] == 3, f"the page knows a folder of three ({info['kind']}, {info['child_count']})")
+    phone = t.actor("iphone", judge_pass=judge)
+    t.check(pay_page(phone, url) == "wait" and phone.text("pay-name") == folder and "3" in phone.text("pay-what"),
+            f"the phone: the folder's name, three files, about how big, the price and the fee ({phone.text('pay-what')})")
+    t.check(not phone.exists("folder-view") and not phone.exists("pay-address"), "the names inside stay locked; no address before a claim")
+    t.shot(phone, "1-teaser")
+    started = time.monotonic()
+    phone.click("pay-test")
+    t.check(pay_wait(phone, ("open", "expired", "void", "error"), 420) == "open", f"Pay with test money: Waiting → Seen → On the chain → Unlocked ({pay_steps(phone)})")
+    t.note(f"test money to Unlocked: {time.monotonic() - started:.0f} s")
+    t.check(all(s.endswith(":done") for s in pay_steps(phone)), f"every step done ({pay_steps(phone)})")
+    t.shot(phone, "2-unlocked")
+    open_paid_folder(t, phone, list(files), "minutes.txt")
+    t.shot(phone, "3-open")
+    phone.reload()
+    t.check(pay_wait(phone, ("open",), 90) == "open" and phone.text("pay-left").startswith("2 opens left"), f"a reload keeps the claim ({phone.text('pay-left')})")
+    tx = phone.attr("pay-tx", "data-tx") if phone.exists("pay-tx") else None
+    t.check(bool(tx and TX.match(tx)), "the page links the test money's transaction")
+    if tx:
+        tx_view(t, phone, tx)
+    sent = " ".join(r["url"] + json.dumps(r.get("headers", {})) for r in phone.requests + desk.requests)
+    t.check(url.split("#")[1] not in sent and "minutes.txt" not in sent and folder not in sent, "no name and not the link's half of the key in any request (E-03)")
+    paid_402(t, sid)
+    other = t.actor()
+    t.check(pay_page(other, url) == "wait" and not other.exists("folder-view"), "a second stranger sees the price and no files")
+    desk.reload()
+    desk.wait_for("drive-root", 120)
+    card = desk.wait(f"(() => {{ const c = [...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === {json.dumps(folder)}); return c && /1 paid/.test(c.textContent) ? c.textContent : ''; }})()", 120)
+    t.check("1 paid" in card, f"the seller's folder says 1 paid ({card[-60:]})")
+    t.env.remote.admin("takedown", "share", "--", sid)                  # ends the link and its claims
+
+
+@scenario("E-30", "Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend", CHAIN)
+def e30(t: T) -> None:
+    import scenarios_drive as drv
+    cfg = pay_to_open(t)
+    judge = t.env.remote.admin("judge-pass", "new", "--uses", "4").strip()
+    desk = t.actor("desktop", judge_pass=judge)
+    desk.goto(t.origin + "/drive?make")
+    desk.wait_for("drive-root", 120)
+    desk.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
+    drv.upload_files(t, desk, {"report.txt": b"E2E E-30 the quarterly report.\n"})
+    url, sid = sell(t, desk, "report.txt")
+    seller_ready(t, sid)
+    phone = t.actor("iphone", judge_pass=judge)
+    phone.goto(t.origin + "/drive?make")
+    phone.wait_for("drive-root", 120)
+    block = cfg.get("pay_to_open") or {}
+    price, fee = int((block.get("prices_ut") or ["100000"])[0]), int(block.get("fee_ut") or cfg["courier"]["max_fee_ut"])
+    t.check(poll(lambda: wallet_ut(phone) >= price + fee, 600, 10),
+            "the phone's drive received its sponsor grant (enough for the price and the fee)")
+    pay_page(phone, url)
+    phone.wait_for("pay-browser", 180)
+    t.shot(phone, "1-pay-from-drive")
+    phone.click("pay-browser")
+    t.check(pay_wait(phone, ("check", "open", "expired", "void", "error"), 600) == "check",
+            f"paid from the drive: it waits for the owner's drive ({pay_steps(phone)})")
+    t.shot(phone, "2-owner-check")
+    desk.goto(t.origin + "/drive/received")                            # the owner check runs as the drive opens
+    t.check(bool(desk.wait("document.querySelector('[data-testid=\"sales-row\"]')?.dataset.check === 'ok'", 300)),
+            "the seller's drive checks the payment: Yours to spend")
+    t.shot(desk, "3-received")
+    t.check(pay_wait(phone, ("open", "void", "error"), 300) == "open", "the owner's drive confirmed it: the phone can open it")
+    phone.click("pay-open")
+    phone.wait_for("pay-file", 90)
+    t.check(phone.text("pay-file").startswith("report.txt"), "the file opens on the phone")
+    t.env.remote.admin("takedown", "share", "--", sid)
+
+
+@scenario("E-J", "The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed", CHAIN)
 def ej(t: T) -> None:
     import scenarios_drive as drv
     cfg = t.env.config()
     direct = cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")
     # Direct mode: both contexts share one /64 (the server's), like two judges in one office, and earlier
     # drives of this run took that network's daily sponsor grant; so, like a judge, they use a pass.
-    judge = t.env.remote.admin("judge-pass", "new", "--uses", "3").strip() if direct else None
+    pay = bool((cfg.get("features") or {}).get("pay_to_open"))
+    # With pay to open on, track two is §10's (a pay link, test money); the judge pass also lifts the test-money caps.
+    judge = t.env.remote.admin("judge-pass", "new", "--uses", "6" if pay else "3").strip() if direct or pay else None
     phone, desk = t.actor("iphone", judge_pass=judge), t.actor("desktop", judge_pass=judge)
     started = mark = time.monotonic()
     seconds: dict[str, float] = {}
@@ -300,7 +460,8 @@ def ej(t: T) -> None:
     t.check(True, "1: Make my drive: the drive opens, its key made in this browser")
     done("1")
     folder = f"{t.sid}-council"
-    drv.upload_folder(t, desk, "council", {"minutes.txt": b"E2E E-J the council minutes.\n", "agenda.txt": b"E2E E-J agenda.\n"})
+    drv.upload_folder(t, desk, "council", {"minutes.txt": b"E2E E-J the council minutes.\n", "agenda.txt": b"E2E E-J agenda.\n",
+                                          "notes.txt": b"E2E E-J notes for the buyer.\n"})
     done("2")
     drv.into(desk, folder)
     drv.wait_names(desk, ["minutes.txt", "agenda.txt"])
@@ -335,6 +496,45 @@ def ej(t: T) -> None:
     desk.key("Escape")
     done("6")
     track_one = time.monotonic() - started
+    if pay:
+        # Track two (16-drive-design §10): a pay link for the folder, test money on the phone, Received, the tx
+        desk.goto(t.origin + "/drive")
+        desk.wait_for("drive-root", 120)
+        drv.wait_names(desk, [folder])
+        url, sid = sell(t, desk, folder)
+        seller_ready(t, sid)
+        t.shot(desk, "2-1-pay-link")
+        done("T1")
+        t.check(pay_page(phone, url) == "wait" and phone.text("pay-name") == folder and "2" in phone.text("pay-what"),
+                f"T2: the phone scans it: the folder's name, how many files, about how big, the price and the fee ({phone.text('pay-what')})")
+        t.check(not phone.exists("folder-view"), "T2: the names inside stay locked")
+        t.shot(phone, "2-2-teaser")
+        done("T2")
+        phone.click("pay-test")
+        t.check(pay_wait(phone, ("open", "expired", "void", "error"), 420) == "open", f"T3: Pay with test money: the steps run to Ready to open ({pay_steps(phone)})")
+        t.shot(phone, "2-3-unlocked")
+        done("T3")
+        open_paid_folder(t, phone, ["agenda.txt", "notes.txt"], "notes.txt")
+        t.shot(phone, "2-4-open")
+        done("T4")
+        desk.goto(t.origin + "/drive/received")
+        t.check(bool(desk.wait("document.querySelector('[data-testid=\"sales-row\"]')?.dataset.check === 'ok'", 300)),
+                "T5: Received, Payments: the payment, marked Yours to spend")
+        t.shot(desk, "2-5-received")
+        done("T5")
+        phone.reload()
+        pay_wait(phone, ("open",), 90)
+        tx = phone.attr("pay-tx", "data-tx") if phone.exists("pay-tx") else None
+        t.check(bool(tx and TX.match(tx)), "T6: the phone has What the chain sees")
+        tx_view(t, phone, tx or "0" * 64)
+        t.shot(phone, "2-6-chain")
+        done("T6")
+        t.env.remote.admin("takedown", "share", "--", sid)              # ends the link and its claim
+        t.note("seconds per step: " + json.dumps({k: round(v) for k, v in seconds.items()}))
+        two = time.monotonic() - started - track_one
+        t.note(f"track one {track_one:.0f} s, track two {two:.0f} s")
+        t.check(track_one <= 180 and two <= 420, f"track one {track_one / 60:.1f} min (≤ 3), track two {two / 60:.1f} min (≤ 7)")
+        return
 
     # The Tari part, on the same two: the drive's address code carries the phone's send to the computer
     opened = time.monotonic()

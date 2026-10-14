@@ -5,6 +5,8 @@ check (research 16-drive-design §4, annex 16-drive-architecture §1.5; the life
 The buyer's routes (`/p/*`) never read a session, so a claim is never linked to a drive; a claim is a
 random id plus SHA-256 of a token only the buyer's browser holds (`X-Mutis-Claim`), never an IP.
 """
+import json
+
 from .. import codec, db, jobs, ootle_addr, sales, tree
 from ..http_util import ApiError, Response, get_b64, invalid, json_response
 from .courier import budget_check, require_chain, slice_for
@@ -198,6 +200,12 @@ def get_claim(ctx, share_id: str, claim_id: str):
            "expires_at": claim["expires_at"], "demo": bool(claim["demo"]), "owner_check": claim["owner_check"],
            "payments": [{"value_ut": str(p["value_ut"]), "seen_at": p["seen_at"], "counted": p["status"] == "counted",
                          "checks": {"amount_proven": True, "committed_on_chain": bool(p["committed"])}} for p in pays]}
+    # integration, pass 2: test money's transaction, once our demo wallet has sent it, so the buyer can see
+    # what the chain shows (16-drive-design §10, track two, step 6). Only this claim's holder asks for it.
+    job = conn.execute("SELECT result FROM jobs WHERE kind = 'demo_pay' AND json_extract(payload, '$.ref') = ? "
+                       "AND json_extract(result, '$.tx_id') IS NOT NULL ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
+    if job is not None:
+        out["tx_id"] = json.loads(job[0])["tx_id"]
     if claim["status"] == "released":
         out.update({"views_left": claim["views_left"], "open_until": claim["open_until"]})
         if sales.usable(claim, ctx.now) is None and share["server_half"]:

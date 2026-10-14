@@ -274,6 +274,12 @@ class TestMoneyGuards(PaidCase):
                                                       "ref": self.c["claim_id"]})
         self.assertEqual(row["slice"], "public")
         self.demo(self.c, 409)                                  # one on its way per claim
+        # integration, pass 2: once our demo wallet has sent it, the buyer's poll carries its tx (§10, track two)
+        poll = lambda: self.s.request("GET", f"{V}/p/{self.c['share_id']}/claims/{self.c['claim_id']}", headers=self.c["hdr"])[2]
+        self.assertNotIn("tx_id", poll())
+        with db.tx(self.s.conn):
+            self.s.conn.execute("UPDATE jobs SET result = ? WHERE id = ?", (json.dumps({"tx_id": "ab" * 32}), job["job_id"]))
+        self.assertEqual(poll()["tx_id"], "ab" * 32)
 
     def test_demo_pay_refuses_without_the_token_when_paid_or_when_off(self):
         self.demo({**self.c, "hdr": {"X-Mutis-Claim": b64(32)}}, 403)
