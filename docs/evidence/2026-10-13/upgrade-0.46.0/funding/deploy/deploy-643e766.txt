@@ -1,0 +1,28 @@
+$ deploy/scripts/deploy.sh HEAD   (from the jarvis box, a clean worktree at 643e766 = 6a94220 + the funding evidence)
+== checks on ultron as build (the server's Python)
+Ran 201 tests in 48.115s
+
+OK (skipped=5)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 0 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "97d6064f", "files": 126, "git_sha": "643e76635e1655f187b36fcb2390f252c9faca9e", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 6, "vendored_checked": 6, "version": "643e766"}
+== upload and activate 643e76635e1655f187b36fcb2390f252c9faca9e-c97d6064f
+sidecar: hello ok, pinned ootle-wasm
+schema version 3
+switched current → releases/643e76635e1655f187b36fcb2390f252c9faca9e-c97d6064f
+restarted mutis-api
+restarted mutis-chain
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: 643e76635e1655f187b36fcb2390f252c9faca9e-c97d6064f manifest 4ffafcb01136… in tx 474e576b79fb50d4744644f722e89943cad8cee87f6c0b1ad55db6fb33c268f6
+== deployed 643e76635e1655f187b36fcb2390f252c9faca9e-c97d6064f to https://srv2052606.hstgr.cloud
+exit 0 at 2026-10-13T22:05:55Z
