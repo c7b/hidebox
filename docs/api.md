@@ -40,11 +40,11 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | Route | Who | What |
 |---|---|---|
 | `GET /health` | anyone | `{"ok", "version", "time"}` |
-| `GET /config` | anyone | origins, network, `send_mode`, `amount_proof`, limits (with `links_per_item`), KDF bounds, pricing, `features` (`folders` and `pay_to_open` are off until the drive's routes ship), courier and SealLog settings (`seal_log.checkpoint_interval_s`, `seal_log.component`), retention (with `trash_days`), the security drop, and the drive's numbers: `folders` (`max_depth`, `max_children`, `max_tree`, `max_items`, `max_upload_files`, `zip_max_bytes`, `zip_max_bytes_phone`), `items.max_delete_after_days`, `send` (`views`, `expiry_s` of a link sent by Tari), `pay_to_open` (`prices_ut`, `fee_ut`, `buyer_views`, `buyer_window_s`, `claim_ttl_s`, `late_grace_s`, `demo_max_ut`, `watch_address`, `max_open_claims_per_share`). Copy variants follow it |
+| `GET /config` | anyone | origins, network, `send_mode`, `amount_proof`, limits (with `links_per_item`), KDF bounds, pricing (with `one_per_drive` and `renew_days`), `features` (`folders` and `pay_to_open` are off until the drive's routes ship), courier and SealLog settings (`seal_log.checkpoint_interval_s`, `seal_log.component`), retention (with `trash_days`), the security drop, and the drive's numbers: `folders` (`max_depth`, `max_children`, `max_tree`, `max_items`, `max_upload_files`, `zip_max_bytes`, `zip_max_bytes_phone`), `items.max_delete_after_days`, `send` (`views`, `expiry_s` of a link sent by Tari), `pay_to_open` (`prices_ut`, `fee_ut`, `buyer_views`, `buyer_window_s`, `claim_ttl_s`, `late_grace_s`, `demo_max_ut`, `watch_address`, `max_open_claims_per_share`). Copy variants follow it |
 | `POST /pow` | anyone | a proof-of-work challenge for one purpose |
-| `GET /stats` | anyone | free quota, minutes since the last upload, disk use, `uploads_frozen`, `chain_ok`, the latest SealLog tree size and epoch |
+| `GET /stats` | anyone | free quota, minutes since the last upload, disk use, `uploads_frozen`, `chain_ok`, the latest SealLog tree size and epoch, `packs_sold_public` and `packs_cap_public` (the public slice of paid space, whole GiB) |
 | `GET /stats/wall` | anyone | up to 24 recent items as `{size, exit}` classes (none until 8 exist), and the latest canary's age and size |
-| `POST /uploads` | anyone (PoW) or a locker | reserve an upload: header, encrypted metadata, chunk count, padded size, expiry, optional `drop_id` → `upload_id`, `item_id`, `manage_token` |
+| `POST /uploads` | anyone (PoW) or a locker | reserve an upload: header, encrypted metadata, chunk count, padded size, expiry, optional `drop_id` → `upload_id`, `item_id`, `manage_token`. A drive without a pack: 429 `uploads_limited` past 2 GiB a UTC day per /64 or IPv4 address, 6 GiB per /48 or /24 (8 GiB per /64 with a live judge pass in `X-Mutis-Judge`) |
 | `PUT /uploads/{id}/chunks/{n}` | the uploader | one chunk's ciphertext (`X-Mutis-Chunk-SHA256`); idempotent |
 | `POST /uploads/{id}/complete` | the uploader | → `item_id`, `ct_hash`, `size_stored` |
 | `DELETE /uploads/{id}` | the uploader | abandon it and release the reservation |
@@ -58,9 +58,9 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /s/{id}/stored` | `X-Mutis-Access` | the link's file exactly as the disk holds it, without using a view (the key is released only by `/open`) |
 | `DELETE /items/{id}` | owner or manage token | delete the file and every link to it |
 | `POST /items/{id}/adopt` | a locker and the item's manage token | move a file locked without a locker into the locker |
-| `POST /auth/register` | anyone (PoW) | a new locker: id and login-key verifier → session |
+| `POST /auth/register` | anyone (PoW) | a new locker: id and login-key verifier → session. 429 `drives_limited` past 5 new drives a UTC day per /64 or IPv4 address, 20 per /48 or /24 (a judge pass skips both) |
 | `POST /auth/session`, `DELETE /auth/session` | the locker | sign in with the login key; sign out |
-| `GET /me`, `DELETE /me` | the locker | quota, packs, probation; delete the locker and its files |
+| `GET /me`, `DELETE /me` | the locker | quota, packs (`pack`: `id`, `bytes`, `until`, `renew_from`, or null), probation; delete the locker and its files |
 | `GET /me/items`, `POST /me/items/{id}/open` | the locker | the locker's files and their links, newest first; read one without using a link's views |
 | `PUT /me/bundle`, `GET /me/bundle` | the locker | an encrypted key bundle (used only when `gates.key_bundle` is on) |
 | `POST /drops` | anyone (PoW) | a dead drop: the locker's Tari address, a tag, a label, a manage verifier → `drop_id`, URL |
@@ -72,8 +72,8 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /chain/tx/{id}/view` | anyone | "What the chain sees" for one transaction: hidden amounts, one-time owners, encrypted memos, the fee. An id the indexers don't know (up to four upstream calls) draws on a budget of ten a minute per network |
 | `GET /chain/ix/{path}` | anyone | an allowlisted pass-through to the Tari indexers (substates with proofs, results, the epoch) |
 | `POST /chain/ix/transactions` | a locker session | submits a transaction in direct mode: only `{"transaction": <base64 BOR envelope>}` shaped like the app's own send (one stealth transfer paying its fee of at most `courier.max_fee_ut` from a bucket, one output plus change, up to four inputs, no other instruction), 12 KB at most; anything else is `422 invalid`. The proxy is not a relay for other transactions |
-| `POST /invoices`, `GET /invoices/{id}` | the locker | a pack invoice: a receiver address with the invoice's reference, the amount; its status (`pending`, `seen`, `credited`, …) |
-| `POST /invoices/{id}/demo-pay` | the locker (PoW) | our demo wallet pays the invoice (play money, real stealth transaction) |
+| `POST /invoices`, `GET /invoices/{id}` | the locker (a judge pass in `X-Mutis-Judge` buys from the judges' slice) | a pack invoice: a receiver address with the invoice's reference, the amount; its status (`pending`, `seen`, `credited`, …). An open invoice for the same pack comes back with 200; one for the other pack, unpaid, is closed and replaced. 409 `pack_active` (`details`: `pack`, `bytes`, `until`, `renew_from`) while the drive holds a pack, except the same pack in its last `pricing.renew_days` days (days stack, bytes don't); 409 `sold_out` (the slice is full, open invoices included); 429 `packs_limited` with `Retry-After` until 00:00 UTC (1 a day per /64 or IPv4 address, 2 with a judge pass; 3 a day for the deployment, 10 with judge passes); 503 `feature_disabled` `{feature: packs}` (the kill switch) |
+| `POST /invoices/{id}/demo-pay` | the locker (PoW) | our demo wallet pays the invoice (play money, real stealth transaction); 503 `feature_disabled` (the kill switch) |
 | `POST /sponsor` | the locker (PoW) | direct mode: a small grant to the locker's wallet address, once a day |
 | `GET /canary`, `GET /canary/raw[?n=]` | anyone | the latest hourly canary (header, encrypted metadata, ciphertext hash, delivery transaction) and its bytes; keys published a day later, or `missed: true` for an hour whose key the verifier lost |
 | `POST /abuse` | anyone (PoW) | report a link or a drop (the fragment is stripped by the client) |

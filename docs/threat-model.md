@@ -30,6 +30,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | A view-key holder | read arrivals, amounts and memo text | files sealed to a locker need its owner key too | files sent with "The recipient uses another Ootle wallet" open with the view key (labelled at send time) |
 | Phishing through our sends | make someone receive a **bye** link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact **bye** delivery as plain text | someone can send unwanted **bye** deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small files and files without a locker, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts, a cap on requests in flight per network | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working |
+| Griefer, the space (sixth pass) | buy packs from many drives fast so paid space sells out; make many drives and fill free space so uploads freeze for everyone | a judges' slice of the paid cap; one pack per drive; open invoices count against the cap; daily sales brakes per network (in memory) and per deployment (from the invoices); daily brakes on new drives and free uploads per network (in memory); the hard freezes at the disk's margins; `/status.json` amber and a kill switch ("Griefing the space" below) | many networks (a botnet, or one IPv6 /32) still get through at the deployment's daily pace; a restart forgets the per-network counts |
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
 | Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash and re-hashed before it runs; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet (a firewall rule per user on the wallet port); jobs are validated; daily budget slices | at most the daily budgets |
@@ -89,6 +90,45 @@ until the owner's drive compares each output's one-time key with its own (`steal
 payment". Tested on the fake chain only (`test_release_gate.py`, `test_sales_worker.py`); the sidecar's
 `openWatchKey` has an offline round trip in its selftest. Not yet: a locked payment with a refund (a
 native Ootle HTLC), which has never run, so nothing is promised about it.
+
+## Griefing the space
+
+The disk is one real disk ([`server/mutis/quota.py`](../server/mutis/quota.py)), and space is the thing a
+griefer can take without breaking anything: buy packs from many drives so nobody else can, or make
+drives and fill free space until uploads pause for everyone. Sixth pass
+([`server/mutis/packs.py`](../server/mutis/packs.py)); each number is a key in `/etc/mutis/mutis.toml`
+(`[packs]`, `[brakes]`), defaults here:
+
+- **Paid space** is at most 40 % of the pool. 30 % of that is a slice only purchases made with a judge
+  pass draw from; public buyers can't reach it, and judges spill into the public slice once theirs is
+  used. "Sold out" is the public slice's answer. An open invoice holds its bytes until it expires, so
+  paying many invoices at once can't overbook a slice.
+- **One pack per drive.** Buying again is refused until the pack's last 3 days; then the same pack adds
+  days, not bytes. The big pack is 5 GiB, so one purchase is a small part of the slice.
+- **Sales brakes:** 1 pack a UTC day per IPv6 /64 or IPv4 address (2 with a judge pass), held in the API's
+  memory; 3 public packs a UTC day for the whole deployment, and 10 bought with judge passes, counted
+  from the invoices table (which holds no network), so a restart doesn't reset them. An unpaid invoice
+  stops counting when it expires (an hour).
+- **Free-space brakes**, a UTC day each and in memory: 5 new drives per /64 or IPv4 address and 20 per
+  /48 or IPv4 /24 (a judge pass skips them), and 2 GiB of uploads to free drives per /64 or IPv4 address
+  and 6 GiB per /48 or /24 (8 GiB per /64 with a judge pass; a drive with a pack is bounded by its pack).
+  A drive's first day stays at 64 MiB (probation).
+- **The server's own addresses** (`brakes.exempt_addresses`; its end-to-end tests run there) skip the
+  per-network brakes and the daily ceilings; what they buy still counts toward the ceilings.
+- **Visible:** `/status.json` turns amber (`packs.public_80`, `packs.ceiling`) when the public slice is
+  80 % taken or today's public ceiling is reached; `/api/v1/stats` shows `packs_sold_public` and
+  `packs_cap_public` in whole GiB, nothing per drive.
+- **Kill switch:** `mutis-admin feature packs off` stops new invoices and test-money payments at once
+  (503, "Space packs are paused."); a payment someone already sent on chain still credits.
+
+What this does and doesn't do. The per-network counts live only in memory, keyed with the day key
+that is never written, so a restart (a deploy) forgets them and gives each network a fresh day; the
+deployment's ceilings survive it. The brakes slow a griefer to the deployment's daily pace and make it
+visible; they don't stop someone with many networks: a botnet, or anyone with an IPv6 /32 (65,536 /48s),
+can still make drives and fill free space at 6 GiB a /48 a day, and can take the day's public packs. What
+protects the disk itself are the hard freezes in `quota.py`: free uploads pause when free disk falls
+within 2 GiB of the reserve, and all uploads within 256 MiB; files already stored are never deleted to
+make room. `deploy/README.md` ("If someone games the packs") is the operator's side.
 
 ## SealLog
 

@@ -131,7 +131,7 @@ refuses a newer schema (it says so in the journal; the healthcheck turns red).
 
 Every restart of `mutis-api` (a deploy, a rollback, a reboot) forgets the in-memory counters: rate
 limits, each network's and each locker's daily caps (sponsor grants, demo payments, registrations,
-drop uploads), proof-of-work escalation and wrong-password tries per network on password-only
+drop uploads, and the sixth pass's daily brakes: new drives, free uploads and packs per network), proof-of-work escalation and wrong-password tries per network on password-only
 links (a link's own failure count and lock are database rows and survive). They are keyed with a day key
 that is never written, which is why they live only in memory (`server/mutis/ipkeys.py`,
 `ratelimit.py`). The daily budgets (sponsor µT, deliveries, demo payments, decoys per slice) are rows
@@ -193,7 +193,7 @@ day key, which the privacy design rules out.
 |---|---|
 | Health | `https://srv2052606.hstgr.cloud/status.json` (the checks `/status` labels: https, api, chain_worker with its verifier, walletd, sponsor_balance, mirror, canary, credits, disk, budgets); full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
 | Takedown | `sudo mutis-admin takedown share|item|drop <id>`; `sudo mutis-admin reports --new` |
-| Packs "sold out" | paid space is capped at 40 % of the pool (`server/mutis/quota.py`); count active packs with `SELECT COUNT(*), SUM(paid_bytes) FROM identities WHERE paid_until > strftime('%s','now')` (read-only, as mutis); end a test locker's pack with `sudo mutis-admin release-pack -- <locker id>` (never a visitor's) |
+| Packs "sold out" | paid space is capped at `packs.paid_cap_fraction` (40 %) of the pool, 30 % of it kept for judge passes (`server/mutis/packs.py`); `sudo mutis-admin packs` shows both slices and today's sales (read-only); end a test drive's pack with `sudo mutis-admin release-pack -- <drive id>` (never a visitor's). See "If someone games the packs" |
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |
 | Features, budgets | `sudo mutis-admin feature <name> on|off|clear` (at once for the app and for pages read with JavaScript; the built pages follow the TOML at the next deploy); `sudo mutis-admin budget show` |
 | Canary, evidence | `sudo mutis-admin canary-now`; `sudo systemctl start mutis-evidence` |
@@ -206,6 +206,32 @@ day key, which the privacy design rules out.
 The L1 wallet has no unit on purpose: its console UI is how the burn's human capture check is done
 (reset playbook §3), and nothing in the service depends on it running. After a reboot, start it by
 hand only when a burn is needed.
+
+## If someone games the packs
+
+Sixth pass (`docs/threat-model.md`, "Griefing the space"). The signs: `/status.json` amber with
+`packs.public_80` (the public slice of paid space is 80 % taken) or `packs.ceiling` (today's public
+packs are sold), `/api/v1/stats` `packs_sold_public` close to `packs_cap_public`, or many 429s
+`packs_limited`, `drives_limited`, `uploads_limited` in `journalctl -u mutis-api` (route and status only).
+
+1. Look: `sudo mutis-admin packs` (slices, open invoices, judges' overflow, sales today against the
+   ceilings) and `sudo mutis-admin budget show` (test money spent today).
+2. Stop sales at once: `sudo mutis-admin feature packs off`. New invoices and test-money payments get
+   503 and the Storage page says "Space packs are paused." within two seconds; payments already sent on
+   chain still credit (the money is real to the payer). `sudo mutis-admin feature packs clear` turns
+   them back on (the TOML's `features.packs`).
+3. Tighten, if it continues: in `/etc/mutis/mutis.toml` (copy first to
+   `/var/backups/mutis/mutis.toml.<UTC time>.before-<why>`), lower `[packs] public_per_day` or
+   `per_network_day`, or `[brakes]` (drives and upload bytes per network a day), then
+   `sudo mutis-admin check-config` and `sudo systemctl restart mutis-api`. A restart forgets the
+   per-network counts (they live in memory) but not the day's ceilings (counted from the invoices).
+4. Free space: `sudo mutis-admin freeze free` pauses uploads to free drives (paid drives and downloads
+   keep working); `freeze none` resumes. The disk's own freezes need nothing from you.
+5. A test drive's pack (an end-to-end run) can be ended with `release-pack`; a visitor's pack is
+   theirs, even a griefer's: packs are paid for, and the brakes, not refunds, are the answer.
+
+`[brakes] exempt_addresses` lists the server's own public addresses (the end-to-end tests run there:
+`ip -br addr` on ultron); nothing else belongs there.
 
 ## Logs (spec §14.3)
 
