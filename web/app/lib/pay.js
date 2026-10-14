@@ -9,7 +9,7 @@
 //
 // Seller: the drive's sales keys (`sales-owner`, `sales-view`, derived from the drive's seed), the
 // sealed sales view key (PUT /me/sales, once per drive), the paid link.
-// Buyer: a claim (a fresh token `t`; our server keeps SHA-256(t)), kept in this browser's localStorage
+// Buyer: a claim (a fresh token `t`; our server keeps SHA-256(t)), kept in this browser (store.js)
 // so a reload resumes it; three ways to pay; the paid open with both headers.
 // Owner check (R1, the release gate): the seller's drive walks the chain mirror with its sales view key,
 // and for each sales output compares the output's one-time key (`auth.Key` on the indexer) with the one
