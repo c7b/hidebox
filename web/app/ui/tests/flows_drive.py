@@ -275,7 +275,9 @@ def storage_meter(t):
 # A-06d (16-drive-architecture §6.4): from navigation to /drive until the file table renders for a drive
 # of 20 items, phone profile: gzip -9 of every /app/, /shared/ and /vendor/ file requested, without the
 # Geist file (at most 2 font files, asserted apart) and without ootle-wasm (it must not load before then).
-A06D_CEILING = 160 * 1024
+# First measured on the merged drive (integration pass 1, 2026-10-13): 109,318 B in 36 files. The ceiling
+# (§15 step 12) keeps about a fifth of headroom for what the drive's first screen still gains.
+A06D_CEILING = 128 * 1024
 
 
 @scenario("drive-budget", "A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it", features=FEATURES)
@@ -310,7 +312,7 @@ def drive_budget(t):
     t.check(made == 20, "a drive of 20 items")
     t.check(not any("ootle_wasm" in u for u in seen), "no ootle-wasm before the file table renders")
     t.check(len(fonts) <= 2, f"at most 2 font files ({sorted(fonts)})")
-    t.check(total <= A06D_CEILING, f"A-06d: {total} B compressed until the table renders, {len(files)} files (≤ {A06D_CEILING} B provisional)")
+    t.check(total <= A06D_CEILING, f"A-06d: {total} B compressed until the table renders, {len(files)} files (≤ {A06D_CEILING} B)")
     print(f"  A-06d measured: {total} B gzip -9, files: {', '.join(files)}")
 
 
@@ -415,8 +417,10 @@ def drive_move_rename(t):
     a, fake = make_drive(t)
     a.wait_for("drive-empty", 30)
     for name in ("Shared box", "Private box"):
+        # wait out the last folder's closing dialog first (the race a2d3dd7 fixed in flows_share.py)
+        a.wait("![...document.querySelectorAll('[data-testid=\"new-folder-dialog\"]')].some((d) => !d.hidden)", 10)
         a.eval("document.dispatchEvent(new CustomEvent('drive:new', { detail: 'folder' }))")
-        a.wait_for("new-folder-dialog", 10)
+        a.wait("[...document.querySelectorAll('[data-testid=\"new-folder-dialog\"]')].some((d) => !d.hidden && d.dataset.state === 'open')", 10)
         a.fill("folder-name", name)
         a.click("folder-create")
         a.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === {json.dumps(name)})", 30)
