@@ -1,0 +1,14 @@
+PASS E-01      9.7s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     14.5s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     35.3s  Link + password and password-only; path-only attempts never lock a link
+PASS E-06      6.6s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      6.4s  A link without its #key shows incomplete
+PASS E-15     11.6s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      3.5s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-17      8.9s  Abuse: a reported link and drop are taken down by id
+PASS E-18     14.3s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19     74.2s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20      8.5s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-21     49.1s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+e2e: PASS {'PASS': 13, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/e2e-batch/20261016-165930/report.json

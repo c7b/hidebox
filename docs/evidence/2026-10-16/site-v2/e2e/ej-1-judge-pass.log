@@ -1,0 +1,3 @@
+FAIL E-J     131.8s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+           timed out after 120 s waiting for: (() => { const e = [...document.querySelectorAll('[data-event="left"]')].find((x) => x.dataset.name === 'minutes.txt'); return e ? e.textContent : ''; })()
+e2e: FAIL {'PASS': 0, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/e2e-ej/20261016-164831/report.json

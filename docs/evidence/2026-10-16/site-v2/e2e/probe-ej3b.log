@@ -1,0 +1,2 @@
+PASS P-EJ3b   14.9s  probe: E-J step 3 as E-J does it, three times
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/probe-out/20261016-165710/report.json

@@ -1,0 +1,22 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-J",
+   "title": "The judge script (/judges, 16-drive-design \u00a710): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed",
+   "status": "FAIL",
+   "detail": "timed out after 120 s waiting for: (() => { const e = [...document.querySelectorAll('[data-event=\"left\"]')].find((x) => x.dataset.name === 'minutes.txt'); return e ? e.textContent : ''; })()",
+   "seconds": 131.8,
+   "notes": [
+    "ok: 1: Make my drive: the drive opens, its key made in this browser",
+    "1: 1 s",
+    "2: 2 s",
+    "ok: 3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan",
+    "3: 2 s",
+    "ok: 4: the phone taps Open it and has the file",
+    "ok: 4: the phone reloads: \u201cThis link has ended.\u201d",
+    "4: 3 s"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "E-J",
+   "title": "The judge script (/judges, 16-drive-design \u00a710): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 49.6,
+   "notes": [
+    "ok: 1: Make my drive: the drive opens, its key made in this browser",
+    "1: 1 s",
+    "2: 1 s",
+    "ok: 3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan",
+    "3: 2 s",
+    "ok: 4: the phone taps Open it and has the file",
+    "ok: 4: the phone reloads: \u201cThis link has ended.\u201d",
+    "4: 3 s",
+    "ok: 5: Activity: Opened, then It left your drive (It left your drive \u00b7 minutes.txtThat goes on the Tari chain within 15 minutes.Oc, opened True)",
+    "5: 1 s",
+    "ok: 6: What our server knows: what it keeps, and what it never stores",
+    "6: 0 s",
+    "ok: T1: the folder's menu ('Share\u2026See activityRenameMoveMove to trash')",
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan (v1UVjCzGRnXXm6zhCEvRbQ)",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "T1: 14 s",
+    "ok: T2: the phone scans it: the folder's name, how many files, about how big, the price and the fee (2 files, about 1 MB)",
+    "ok: T2: the names inside stay locked",
+    "T2: 2 s",
+    "ok: T3: Pay with test money: the steps run to Ready to open (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "T3: 11 s",
+    "ok: the folder lists its names (['agenda.txt', 'notes.txt'])",
+    "ok: notes.txt opens on the phone, with Save",
+    "T4: 1 s",
+    "ok: T5: Received, Payments (open since T1, no reload): the folder's payment, marked Test money, Checked and Yours to spend, with its tx",
+    "T5: 6 s",
+    "ok: T6: the phone has What the chain sees",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "T6: 3 s",
+    "seconds per step: {\"1\": 1, \"2\": 1, \"3\": 2, \"4\": 3, \"5\": 1, \"6\": 0, \"T1\": 14, \"T2\": 2, \"T3\": 11, \"T4\": 1, \"T5\": 6, \"T6\": 3}",
+    "track one 9 s, track two 38 s",
+    "ok: track one 0.1 min (\u2264 3), track two 0.6 min (\u2264 7)"
+   ]
+  }
+ ]
+}

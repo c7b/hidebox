@@ -1,0 +1,24 @@
+nojs_contrast.py: the hero's grey words over the static grid without JavaScript, 8 widths x light/dark,
+worst contrast of the text colour over every background pixel under each word box (devil_site.text_contrast).
+Lines other than FAIL are PASS; 48 lines a run.
+
+== live before, release 32bffc5 (quiet-zone fallback 46% x 26% at 50% 34%)
+FAIL no JS @360 light: .lede text contrast, worst over its background pixels 4.24:1 (≥ 4.5)
+FAIL no JS @390 light: .lede text contrast, worst over its background pixels 4.22:1 (≥ 4.5)
+FAIL no JS @390 dark (large text): .h1-2 text contrast, worst over its background pixels 2.81:1 (≥ 3.0)
+FAIL no JS @412 light: .lede text contrast, worst over its background pixels 4.36:1 (≥ 4.5)
+FAIL no JS @412 light: .hero-note text contrast, worst over its background pixels 4.47:1 (≥ 4.5)
+FAIL no JS @412 dark (large text): .h1-2 text contrast, worst over its background pixels 2.61:1 (≥ 3.0)
+FAIL no JS @1024 light: .hero-note text contrast, worst over its background pixels 4.23:1 (≥ 4.5)
+FAIL no JS @1280 light: .hero-note text contrast, worst over its background pixels 4.40:1 (≥ 4.5)
+FAIL no JS @1440 light: .hero-note text contrast, worst over its background pixels 4.41:1 (≥ 4.5)
+FAIL no JS @1920 light: .hero-note text contrast, worst over its background pixels 4.47:1 (≥ 4.5)
+nojs: 48 lines, 10 FAIL
+
+== after, serve.py with 410f210's home.css (fallback 80% x 46% at 50% 32%)
+nojs: 48 lines, 0 FAIL
+
+== after, with JavaScript (the measured quiet zone, the field idle), same widths and themes
+nojs: 48 lines, 0 FAIL
+
+== live after, release 410f210: devil_site.py --origin (devil-live-2.log), no-JS lines at 390 and 1440 PASS

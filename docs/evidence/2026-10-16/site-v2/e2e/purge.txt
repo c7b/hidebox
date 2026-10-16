@@ -1,0 +1,20 @@
+Seventh pass purge, 2026-10-16T23:04Z: a read-only diff of ids against a snapshot taken at 22:48:31Z, before E-J, the two probes, the E-J rerun without a pass and the non-chain batch (e2e/dbsnap.py, as mutis, mode=ro). The database was never reset.
+New since the snapshot: 27 items (12 ready, 8 deleted, 4 removed by the runs, 1 doomed, 2 anonymous ready), 20 shares, 1 paid share (E-J's, ended by E-J: takedown share), 1 claim (released), 2 drops (1 removed by E-17, 1 active), 8 drives (E-J with the judge pass, probe 1, probe 2, E-J without a pass, four from the batch; none holds a pack; no invoice), 1 judge pass (E-J's, --uses 6).
+Taken down by id (sudo mutis-admin takedown <kind> --note 'seventh pass e2e purge' -- <id>), files before their folders; each answered 'removed':
+item AmQrxwglhCU2_eQYYEOc8g -> removed
+item pi7IDcWTNAzJ08WWOKzDxA -> removed
+item dQiu1yJawVWFk9vYkhG1fg -> removed
+item ZxAvYFheIHjySa72HKQQJQ -> removed
+item 5lm038w69Je69M4Mf784Bg -> removed
+item lr53aeHCqz8Xv7WB1iHvWg -> removed
+item GI98wol7hU2MT6wHF_JHgA -> removed
+item 4zeRKydCAuEtIkvxZmq4DQ -> removed
+item dLhsPyB3bHHw4Cp9EkO_Dg -> removed
+item VHwnlqLLo7ugLsJOF_uz7A -> removed
+item yeVdQ_WCimHTuKfGn8qa9w -> removed
+item yxgY1iipzTt6XZrTtO0W4g -> removed
+drop tqzxqyd0jd -> removed
+item p41C-Ag5IduurRrwic4-3A -> removed
+item ZZVCHDNk812hDoFd0M-uYQ -> removed
+item fNpdj6iSW2ju6JhjDR4Lzw -> removed
+After: the 27 test items are removed (19) or deleted (8); no item that existed before the snapshot changed state (e2e/survivors.txt).

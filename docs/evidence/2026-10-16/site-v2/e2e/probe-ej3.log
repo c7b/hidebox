@@ -1,0 +1,2 @@
+PASS P-EJ3     8.1s  probe: E-J step 3's switch on production
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → $TMPDIR/probe-out/20261016-165500/report.json

@@ -1,0 +1,40 @@
+HTTP checks on https://srv2052606.hstgr.cloud, 2026-10-16T22:34:04Z
+/                            200 text/html; charset=utf-8
+/how                         200 text/html; charset=utf-8
+/judges                      200 text/html; charset=utf-8
+/made                        200 text/html; charset=utf-8
+/fine-print                  200 text/html; charset=utf-8
+/llms.txt                    200 text/plain; charset=utf-8
+/llms-full.txt               200 text/plain; charset=utf-8
+/robots.txt                  200 text/plain; charset=utf-8
+/.well-known/security.txt    200 text/plain; charset=utf-8
+/sitemap.xml                 200 text/xml; charset=utf-8
+/es/                         404 text/html; charset=utf-8
+/es                          404 text/html; charset=utf-8
+/es/how                      404 text/html; charset=utf-8
+/status.json                 200 application/json
+/drive                       200 text/html; charset=utf-8
+/d/3w7m8k2v5t                200 text/html; charset=utf-8
+/security                    301 -> https://srv2052606.hstgr.cloud/made#locks
+/privacy                     301 -> https://srv2052606.hstgr.cloud/fine-print#privacy
+/terms                       301 -> https://srv2052606.hstgr.cloud/fine-print#terms
+/abuse                       301 -> https://srv2052606.hstgr.cloud/fine-print#report
+/pricing                     301 -> https://srv2052606.hstgr.cloud/made#limits
+/faq                         301 -> https://srv2052606.hstgr.cloud/made
+/status                      301 -> https://srv2052606.hstgr.cloud/made#check
+/locker                      301 -> https://srv2052606.hstgr.cloud/drive
+/inbox                       301 -> https://srv2052606.hstgr.cloud/drive/received
+/upgrade                     301 -> https://srv2052606.hstgr.cloud/drive/storage#more
+/faq/                        301 -> https://srv2052606.hstgr.cloud/made
+anchors (301 targets and the old /made ids):
+  /made#locks      1
+  /made#limits     1
+  /made#check      1
+  /made#who        1
+  /made#tari       1
+  /made#record     1
+  /made#payments   1
+id="privacy" id="report" id="terms" 
+nav on /: <a href="/how">How it works</a> <a href="/judges">For judges</a> (no /made; Under the hood is in the footer and on /judges)
+
+home links to #ttari: 2 (the share picture, the comparison); /judges: "What's tTARI?" beside the first visible tTARI; /how: the box is its first readable tTARI (the still above it is aria-hidden)
