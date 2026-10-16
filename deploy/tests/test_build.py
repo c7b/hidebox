@@ -78,6 +78,7 @@ class BuildTest(unittest.TestCase):
         fonts = self.web / "shared" / "fonts" / "geist"
         fonts.mkdir(parents=True)
         shutil.copyfile(ROOT / "web" / "shared" / "fonts" / "geist" / "OFL.txt", fonts / "OFL.txt")
+        shutil.copyfile(ROOT / "web" / "shared" / "fonts" / "geist" / "Geist-Latin.woff2", fonts / "Geist-Latin.woff2")
         data = bytearray((ROOT / "web" / "shared" / "fonts" / "geist" / "Geist-Variable.woff2").read_bytes())
         (fonts / "Geist-Variable.woff2").write_bytes(data)
         self.build()

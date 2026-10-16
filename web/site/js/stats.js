@@ -100,6 +100,8 @@ const CONDITIONS = {
   security_drop: (c) => (c.security_drop ? 'on' : 'off'),
   pay_to_open: (c) => (c.features?.pay_to_open ? 'on' : 'off'),
   folders: (c) => (c.features?.folders ? 'on' : 'off'),
+  sponsor: (c) => (c.features?.sponsor ? 'on' : 'off'),
+  test_pay: (c) => (c.features?.pay_to_open && c.features?.demo_pay ? 'on' : 'off'),
 };
 
 function value(name, sources, locale) {

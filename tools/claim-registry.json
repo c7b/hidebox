@@ -451,6 +451,98 @@
     "Your network has made all the new drives it can today. Try again tomorrow, or open a drive you already have.",
     "Your network has uploaded all it can to free drives today. Try again tomorrow."
    ]
+  },
+  {
+   "id": "C50",
+   "condition": "about other drives (site v2, 17-site-brief §3.4): what a consumer cloud drive does by default; C51 sits under the same table",
+   "backed_by": "17-site-brief §10: default for consumer cloud drives; client-side encryption (Google Workspace on some plans) and iCloud Advanced Data Protection are options, said by C51",
+   "markers": [
+    "locks them on its own servers"
+   ],
+   "requires": "Some drives can lock files on your device too, as an extra setting. This table compares what they do by default.",
+   "sentences": [
+    "Files lock in this browser before upload. A usual drive locks them on its own servers, with its own key.",
+    "A usual drive locks them on its own servers, with its own key."
+   ]
+  },
+  {
+   "id": "C51",
+   "condition": "always under the comparison (the hedge for C50 and C52)",
+   "backed_by": "17-site-brief §10: Workspace client-side encryption, iCloud Advanced Data Protection",
+   "markers": [
+    "as an extra setting",
+    "what they do by default"
+   ],
+   "sentences": [
+    "Some drives can lock files on your device too, as an extra setting. This table compares what they do by default."
+   ]
+  },
+  {
+   "id": "C52",
+   "condition": "the comparison's cells for a usual cloud drive and a file-sending site: their defaults, \"Not usually\" where products differ; C51 under the table",
+   "backed_by": "17-site-brief §3.4, §10",
+   "markers": [
+    "your files and their key",
+    "the company can read them",
+    "a link works until you turn it off",
+    "it ends after some days",
+    "reset it with your email",
+    "ask for a new link"
+   ],
+   "requires": "Some drives can lock files on your device too, as an extra setting. This table compares what they do by default.",
+   "sentences": [
+    "On their servers",
+    "Your files and their key",
+    "The company can read them",
+    "Not usually. A link works until you turn it off.",
+    "Not usually. It ends after some days.",
+    "Reset it with your email",
+    "Ask for a new link"
+   ]
+  },
+  {
+   "id": "C53",
+   "condition": "always (Who sees what, the You card)",
+   "backed_by": "the drive decrypts names in the browser (C43); Activity shows each link's opens per hour and its end (C40)",
+   "markers": [
+    "what happened to each link"
+   ],
+   "sentences": [
+    "Your files, their names, and what happened to each link."
+   ]
+  },
+  {
+   "id": "C54",
+   "condition": "always (Who sees what, the You card); for Send by Tari you chose the address yourself",
+   "backed_by": "C40: opens counted per hour, never who; annex §3.2",
+   "markers": [
+    "you see how many times it opened"
+   ],
+   "sentences": [
+    "Who opened a link. You see how many times it opened."
+   ]
+  },
+  {
+   "id": "C55",
+   "condition": "always (a fact, not a privacy claim: What's tTARI?)",
+   "backed_by": "/made (Testnet tTARI), the footer's status line (C19-k)",
+   "markers": [
+    "the coin on tari's test network"
+   ],
+   "sentences": [
+    "tTARI is the coin on Tari's test network."
+   ]
+  },
+  {
+   "id": "C56",
+   "condition": "while features.sponsor is on (data-when=\"sponsor=on\")",
+   "backed_by": "/made#rent: when your drive opens, our sponsor wallet sends its browser wallet a grant of tTARI (server/mutis/sponsor grants)",
+   "markers": [
+    "sends it some ttari"
+   ],
+   "sentences": [
+    "When your drive opens, our sponsor wallet sends it some tTARI to try things."
+   ]
   }
  ],
  "labels": [

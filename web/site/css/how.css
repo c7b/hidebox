@@ -76,9 +76,12 @@
 .ui-event .tx { font-family: var(--font-code); color: var(--pay-text); }
 
 /* who sees what, then the way on */
-.how-table h2 { font: var(--t-h2); letter-spacing: -.025em; }
-.how-table { display: grid; gap: var(--s-4); }
-.how-table > p { max-width: var(--read); color: var(--fg-2); }
-.outro { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-5); padding-top: var(--s-6); border-top: 1px solid var(--hair); }
+.how-who { display: grid; gap: var(--s-5); }
+.how-who h2 { font: var(--t-h2); letter-spacing: -.025em; }
+.how-who .sides-foot { margin-top: 0; }
+/* What's tTARI?, after the Tari step: the box under the words' column */
+.coin-row { display: grid; }
+.coin-row .coin-box { max-width: 30rem; }
+.outro { padding-top: var(--s-6); border-top: 1px solid var(--hair); color: var(--fg-2); }
 .ui-bar .w-most { width: 62%; }
 .ui-bar .w-some { width: 18%; }
