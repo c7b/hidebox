@@ -74,7 +74,7 @@ rebuilt byte for byte by `web/site/tools/subset-geist.sh` and pinned in `tools/b
 |---|---|---|
 | A-06, phone, at load / after a drop | 25,001 / 40,536 B (of 40,960) | 25,001 / 40,536 B |
 | A-06, computer with the code to scan | 43,503 B (of 43,520) | 43,503 B |
-| A-06h, field.js gzip -9 | n/a | 3,353 B (of 6,144) |
+| A-06h, field.js gzip -9 | n/a | 3,428 B (of 6,144) |
 | A-06h, home.css gzip -9 | 1,770 B | 3,916 B (+2,146 of 3,072) |
-| M-01, HTML+CSS+JS on / (gzip) | 47.0 KB (last ACCEPTANCE.md run) | 53.0 KB (of 60) |
+| M-01, HTML+CSS+JS on / (gzip) | 47.0 KB (last ACCEPTANCE.md run) | 53.3 KB (of 60) |
 | Flesch-Kincaid grade, home / judges (fk.py) | n/a | 2.3 / 2.6 (at most 5) |
