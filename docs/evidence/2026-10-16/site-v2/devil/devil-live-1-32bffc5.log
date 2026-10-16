@@ -1,0 +1,87 @@
+PASS 360 px /: scrollWidth 360 ≤ clientWidth 360
+PASS 360 px /how: scrollWidth 360 ≤ clientWidth 360
+PASS 360 px /judges: scrollWidth 360 ≤ clientWidth 360
+PASS 360 px /made: scrollWidth 360 ≤ clientWidth 360
+PASS 360 px /fine-print: scrollWidth 360 ≤ clientWidth 360
+PASS 360 px /no-such-page: scrollWidth 360 ≤ clientWidth 360
+PASS phone hero @360: #hero-h inside the width (16..344), no overflow
+PASS phone hero @360: .lede inside the width (16..344), no overflow
+PASS phone hero @360: .cta-row inside the width (16..344), no overflow
+PASS phone hero @360: .hero-note inside the width (29..331), no overflow
+PASS phone hero @360x740: the buttons end at 486 px, in the first screen
+PASS phone hero @390: #hero-h inside the width (16..374), no overflow
+PASS phone hero @390: .lede inside the width (16..374), no overflow
+PASS phone hero @390: .cta-row inside the width (16..374), no overflow
+PASS phone hero @390: .hero-note inside the width (44..346), no overflow
+PASS phone hero @390x844: the buttons end at 486 px, in the first screen
+PASS field @1440: the canvas is live and a ripple ran (1)
+PASS hero @1440 light, mid-ripple: .lede text contrast, worst over its background pixels 4.57:1 (≥ 4.5)
+PASS hero @1440 light, mid-ripple: .hero-note text contrast, worst over its background pixels 4.92:1 (≥ 4.5)
+PASS hero @1440 light, idle: .lede text contrast, worst over its background pixels 4.57:1 (≥ 4.5)
+PASS hero @1440 light, idle: .hero-note text contrast, worst over its background pixels 4.92:1 (≥ 4.5)
+PASS hero @1440 light, idle: .slice-title text contrast, worst over its background pixels 18.16:1 (≥ 4.5)
+PASS hero @1440 light, idle (large text, 3:1): .h1-2 text contrast, worst over its background pixels 4.61:1 (≥ 3.0)
+PASS hero @1440 dark, mid-ripple: .lede text contrast, worst over its background pixels 5.71:1 (≥ 4.5)
+PASS hero @1440 dark, mid-ripple: .hero-note text contrast, worst over its background pixels 6.44:1 (≥ 4.5)
+PASS reduced motion @1440: no field.js, no canvas, the static grid shown
+PASS no JavaScript @1440: the static grid (['1', 'linear-gradient(to right, oklab(0.620757'])
+PASS no JavaScript @1440: Make my drive visible in the hero
+PASS no JavaScript @1440: .lede text contrast, worst over its background pixels 4.56:1 (≥ 4.5)
+FAIL no JavaScript @1440: .hero-note text contrast, worst over its background pixels 4.41:1 (≥ 4.5)
+PASS no JavaScript @1440 (large text, 3:1): .h1-2 text contrast, worst over its background pixels 4.56:1 (≥ 3.0)
+PASS field @390: the canvas is live and a ripple ran (1)
+PASS hero @390 light, mid-ripple: .lede text contrast, worst over its background pixels 4.56:1 (≥ 4.5)
+PASS hero @390 light, mid-ripple: .hero-note text contrast, worst over its background pixels 5.19:1 (≥ 4.5)
+PASS hero @390 light, idle: .lede text contrast, worst over its background pixels 4.56:1 (≥ 4.5)
+PASS hero @390 light, idle: .hero-note text contrast, worst over its background pixels 5.19:1 (≥ 4.5)
+PASS hero @390 light, idle: .slice-title text contrast, worst over its background pixels 18.16:1 (≥ 4.5)
+PASS hero @390 light, idle (large text, 3:1): .h1-2 text contrast, worst over its background pixels 4.57:1 (≥ 3.0)
+PASS hero @390 dark, mid-ripple: .lede text contrast, worst over its background pixels 5.65:1 (≥ 4.5)
+PASS hero @390 dark, mid-ripple: .hero-note text contrast, worst over its background pixels 6.98:1 (≥ 4.5)
+PASS reduced motion @390: no field.js, no canvas, the static grid shown
+PASS no JavaScript @390: the static grid (['1', 'linear-gradient(to right, oklab(0.620757'])
+PASS no JavaScript @390: Make my drive visible in the hero
+FAIL no JavaScript @390: .lede text contrast, worst over its background pixels 4.22:1 (≥ 4.5)
+PASS no JavaScript @390: .hero-note text contrast, worst over its background pixels 4.52:1 (≥ 4.5)
+PASS no JavaScript @390 (large text, 3:1): .h1-2 text contrast, worst over its background pixels 3.28:1 (≥ 3.0)
+NOTE focus order @1440: Skip to the content > hidebox, home > How it works > For judges > Lights > home-make > home-open > drop-input > drop-write
+PASS focus @1440: Make my drive reached, the hidden header button skipped
+NOTE focus order @390: Skip to the content > hidebox, home > Lights > home-make > home-open > drop-input > drop-write > tTARI > tTARI
+PASS focus @390: Make my drive reached, the hidden header button skipped
+PASS header @1440 /: Make my drive hidden while the hero's is in view
+PASS header @1440 /: Make my drive after the hero (no drive)
+PASS header @1440 /how: Make my drive (no drive)
+PASS header @1440 /judges: Make my drive (no drive)
+PASS header @1440 /made: Make my drive (no drive)
+PASS header @1440 /fine-print: Make my drive (no drive)
+PASS header @1440 /no-such-page: Make my drive (no drive)
+PASS drive @1440 /: Open my drive decided before the first paint
+PASS drive @1440 /: the hero leads with Open my drive (['home-open', 'home-make'])
+PASS header @1440 /: Open my drive (a drive in this browser)
+PASS header @1440 /how: Open my drive (a drive in this browser)
+PASS header @1440 /judges: Open my drive (a drive in this browser)
+PASS header @1440 /made: Open my drive (a drive in this browser)
+PASS header @1440 /fine-print: Open my drive (a drive in this browser)
+PASS header @1440 /no-such-page: Open my drive (a drive in this browser)
+PASS header @390 /: Make my drive hidden while the hero's is in view
+PASS header @390 /: Make my drive after the hero (no drive)
+PASS header @390 /how: Make my drive (no drive)
+PASS header @390 /judges: Make my drive (no drive)
+PASS header @390 /made: Make my drive (no drive)
+PASS header @390 /fine-print: Make my drive (no drive)
+PASS header @390 /no-such-page: Make my drive (no drive)
+PASS drive @390 /: Open my drive decided before the first paint
+PASS drive @390 /: the hero leads with Open my drive (['home-open', 'home-make'])
+PASS header @390 /: Open my drive (a drive in this browser)
+PASS header @390 /how: Open my drive (a drive in this browser)
+PASS header @390 /judges: Open my drive (a drive in this browser)
+PASS header @390 /made: Open my drive (a drive in this browser)
+PASS header @390 /fine-print: Open my drive (a drive in this browser)
+PASS header @390 /no-such-page: Open my drive (a drive in this browser)
+PASS nav ['/how', '/judges']; footer's /made link ['Under the hood']
+NOTE first visible tTARI on /: ['ways', 'tTARI', '#ttari', 'link beside']
+NOTE first visible tTARI on /how: ['ttari', "What's tTARI?", None, '']
+NOTE first visible tTARI on /judges: ['', 'About five minutes. Test tTARI only.', None, 'link beside']
+NOTE /judges @1440: {'h2': [720, 'center'], 'table': 720, 'height': 2493, 'tracks': 2, 'made': True} (viewport centre 720)
+PASS Who sees what on /: 4 cards
+devil: 86 lines, 2 FAIL

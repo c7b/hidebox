@@ -1,0 +1,60 @@
+Devil screenshots (PNG, headless Chromium 154 on ultron as build), devil_site.py --origin https://srv2052606.hstgr.cloud on release 410f210, 2026-10-16. Not committed (about 10 MB; rerun the script to get them). * = looked at by eye (also on the serve.py run before the deploy).
+
+  404-1440-dark.png                  1440x900
+  404-1440-light.png                 1440x900
+  404-390-dark.png                   390x844
+  404-390-light.png                  390x844
+  field-1440-dark-ripple.png         1440x900
+  field-1440-reduced.png             1440x900
+* field-1440-ripple.png              1440x900
+* field-390-dark-ripple.png          390x844
+  field-390-reduced.png              390x844
+  field-390-ripple.png               390x844
+  fine-print-1440-dark.png           1440x900
+  fine-print-1440-light-full.png     1440x8200
+  fine-print-1440-light.png          1440x900
+  fine-print-390-dark.png            390x844
+  fine-print-390-light-full.png      390x13252
+  fine-print-390-light.png           390x844
+  home-1440-dark.png                 1440x900
+* home-1440-light-full.png           1440x4613
+* home-1440-light.png                1440x900
+  home-1440-nojs.png                 1440x900
+* home-1440-with-drive.png           1440x900
+  home-360-hero.png                  360x740
+* home-390-dark.png                  390x844
+  home-390-hero.png                  390x844
+  home-390-light-full.png            390x6948
+* home-390-light.png                 390x844
+* home-390-nojs.png                  390x844
+  home-390-with-drive.png            390x844
+  how-1440-dark.png                  1440x900
+  how-1440-light-full.png            1440x3615
+  how-1440-light.png                 1440x900
+  how-390-dark.png                   390x844
+* how-390-light-full.png             390x5199
+  how-390-light.png                  390x844
+* judges-1440-dark.png               1440x900
+* judges-1440-light-full.png         1440x2493
+  judges-1440-light.png              1440x900
+  judges-390-dark.png                390x844
+  judges-390-light-full.png          390x3891
+  judges-390-light.png               390x844
+  made-1440-dark.png                 1440x900
+  made-1440-light-full.png           1440x13686
+* made-1440-light.png                1440x900
+  made-390-dark.png                  390x844
+  made-390-light-full.png            390x20910
+  made-390-light.png                 390x844
+
+From the UI flows (web/app/ui/tests/run.py --shots on 32bffc5, WebP), looked at by eye:
+* pay-drive-sent-390.webp
+* pay-drive-1440.webp
+* share-1440-menu-stop.webp
+* share-1440-result-stop.webp
+* sell-stop-menu-1440.webp
+* sell-stop-result-1440.webp
+* pay-drive-check-390.webp
+* pay-drive-failed-390.webp
+
+From E-J on production: E-J-01-1-4-gone.png (the phone, judge-pass run: "The file stays with its owner."), E-J-failure-1-0.png (Activity without It left your drive).

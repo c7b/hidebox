@@ -1,0 +1,106 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 12 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: phone: widget payload compressed: 25001 B at load, 40536 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: computer: 43503 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+PASS budget: phone, after a photo: 45574 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
+PASS drive-budget: a drive of 20 items
+PASS drive-budget: no ootle-wasm before the file table renders
+PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Variable.woff2'])
+PASS drive-budget: A-06d: 113793 B compressed until the table renders, 36 files (≤ 131072 B)
+  A-06d measured: 113793 B gzip -9, files: app/css/drive.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
+PASS drive-budget: no CSP or Trusted Types violation ([])
+--- share-stop Stop sharing where people look (B): the row menu ends a file's links in one click (the toast says a stopped link can't come back, no Undo); the result has its own Stop sharing; the Links tab says where
+PASS share-stop: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-stop: a file without a link has no Stop sharing (['share', 'once', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS share-stop: the result: Stop sharing, and where else it lives ("Stop it any time, here or from this file's menu.Stop sharing")
+PASS share-stop: every control in the result has a name
+PASS share-stop: the row wears its link
+PASS share-stop: the menu: Share, Copy a once link, Stop sharing (['share', 'once', 'stop-share', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS share-stop: one click; the toast says a stopped link can't come back, and offers no Undo ("Stopped sharing. The link can't open it now.A stopped link can't come back. To share again, make a new link.")
+PASS share-stop: the row says the link ended; the file stays
+PASS share-stop: the link no longer opens (revoked)
+PASS share-stop: Stop sharing in the result: the link ends, the dialog closes
+PASS share-stop: that link no longer opens either (revoked)
+PASS share-stop: the Links tab: When you stop it, from this file's menu; Stop sharing ("Public link0 so far · When you stop it, from this file's menuCopyStop sharing")
+PASS share-stop: no CSP or Trusted Types violation ([])
+--- pay-page-states The buyer page (steps 15 and 16): teaser, price and fee, C39, C37, one primary; the address only after a claim; test money to Unlocked and the open; resume; the owner's check; Pay from my drive; paused, gone, no key
+PASS pay-page-states: a stranger's first screen: waiting, nothing claimed (wait)
+PASS pay-page-states: the title, and the name the owner allowed (read from the teaser with the link's half)
+PASS pay-page-states: the price and the public fee ('0.1tTARI', 'Plus a network fee of 0.03 tTARI. The fee is public.')
+PASS pay-page-states: what you get (C39: Paying lets you open it 3 times until Oct 23. Anyone who opens a file can pass it on. The owner can still delete it.)
+PASS pay-page-states: no take-backs, before Pay (C37)
+PASS pay-page-states: one primary: Pay with test money
+PASS pay-page-states: no Pay from my drive without a drive here
+PASS pay-page-states: Another Ootle wallet shows no address before a claim exists
+PASS pay-page-states: the content stays locked
+PASS pay-page-states: names on every control; no CSP violation
+PASS pay-page-states: a browser without a drive: the top bar says Make your own drive
+PASS pay-page-states: Another Ootle wallet: the address just for this claim (the owner's sales address with the claim's reference), after the claim
+PASS pay-page-states: the claim asked for its proof of work (claim)
+PASS pay-page-states: C38 under the other wallet
+PASS pay-page-states: Pay with test money starts the steps
+PASS pay-page-states: test money pays the claim that exists
+PASS pay-page-states: released: the page has both halves
+PASS pay-page-states: test money skips the owner's check (['wait:done', 'seen:done', 'chain:done', 'open:done'])
+PASS pay-page-states: 3 opens left until Oct 23.
+PASS pay-page-states: what the chain shows, with test money's grouping (C36)
+PASS pay-page-states: Open it: the real open, with the claim's token, decrypts here
+PASS pay-page-states: one open used (2 opens left until Oct 23.)
+PASS pay-page-states: a reload resumes the claim kept in this browser
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: Payment seen: the steps take over
+PASS pay-page-states: paid from another wallet: the owner's drive checks it
+PASS pay-page-states: the owner step, and C38 (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-page-states: no sideways scroll at 390
+PASS pay-page-states: after the owner's drive confirms, it opens
+PASS pay-page-states: a closed payment window: Start again
+PASS pay-page-states: Start again: a fresh page, no old address
+PASS pay-page-states: Not selling: no Pay, and why
+PASS pay-page-states: a link without its half of the key says so
+PASS pay-page-states: an ended paid link says it ended
+PASS pay-page-states: a funded drive here: Pay from my drive, with C38 under it
+PASS pay-page-states: Pay from my drive: this browser built and sent the payment; it waits for the owner's check
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: no CSP or Trusted Types violation ([])
+--- pay-drive Pay from my drive (A): the click shows the steps at once (Building the payment from your drive…), then Sent and Seen on the chain, then Waiting for the owner's check, then Ready to open; a refused payment spent nothing and says so where the button was, with Try again; a drive short of the price and the fee says why there is no button
+PASS pay-drive: a drive short of the price and the fee: no Pay from my drive, and why ('Your drive here has 0.05 tTARI. Paying from it takes 0.13 tTARI with the fee.')
+PASS pay-drive: no sideways scroll at 390
+PASS pay-drive: a browser with a drive: the pay page's top bar says Open my drive, not Make your own drive
+PASS pay-drive: the click shows the payment's steps at once (5 ms, at most 300)
+PASS pay-drive: step one turns: Building the payment from your drive…; the steps take the focus ({'steps': ['build:now:Building the payment from your drive…', 'chain:todo:Seen on the chain', "owner:todo:Waiting for the owner's check", 'open:todo:Ready to open'], 'status': 'Your drive is paying. Keep this page open.', 'focus': 'pay-claim-step'})
+PASS pay-drive: refused: an alert in a plain sentence, with Try again ("Your drive didn't pay.The Ootle refused that transaction. Nothing was spent.Try again")
+PASS pay-drive: the alert is on screen
+PASS pay-drive: the claim forgets the drive: nothing was paid, so a reload offers the payment again
+PASS pay-drive: Try again shows the steps at once too
+PASS pay-drive: sent: Sent from your drive, then Seen on the chain turns (['build:done', 'chain:now', 'owner:todo', 'open:todo'], 'Sent from your drive. Now we look for it on the chain.')
+PASS pay-drive: seen on the chain and paid: it waits for the owner's check
+PASS pay-drive: Waiting for the owner's check, with C38 (['build:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-drive: Try again paid the same claim (claims 1, transactions 2)
+PASS pay-drive: Ready to open (['build:done', 'chain:done', 'owner:done', 'open:done'])
+PASS pay-drive: no CSP violation; every control named
+PASS pay-drive: no CSP or Trusted Types violation ([])
+--- sell-stop Stop selling where people look (B): the pay link's result has Stop selling, then Sell again; the row menu's Stop selling (PATCH paused) with Undo in its toast, and Sell again; the buyer page says it stopped
+PASS sell-stop: the pay link's result: Stop selling, and where else it lives ("It sells until you stop it, here or from this file's menu.Stop selling")
+PASS sell-stop: Stop selling in the result: one click, the button flips to Sell again
+PASS sell-stop: Sell again in the result
+PASS sell-stop: the row sells
+PASS sell-stop: the row menu of a paid file: Stop selling (['share', 'once', 'stop-sell', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS sell-stop: the row says Not selling
+PASS sell-stop: Stop selling from the menu: one click, a toast with Undo
+PASS sell-stop: the buyer page: not selling, no Pay
+PASS sell-stop: Undo: it sells again
+PASS sell-stop: stopped again
+PASS sell-stop: a paused link's menu: Sell again (['share', 'once', 'sell-again', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS sell-stop: Sell again from the menu
+PASS sell-stop: no CSP or Trusted Types violation ([])
+
+UI PASS 97/97

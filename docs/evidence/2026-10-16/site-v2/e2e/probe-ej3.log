@@ -1,0 +1,2 @@
+PASS P-EJ3     8.1s  probe: E-J step 3's switch on production
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → /tmp/claude-1000/-home-lcam-jarvis/67ab879b-8d16-438a-8252-96d085b172c4/scratchpad/probe-out/20261016-165500/report.json

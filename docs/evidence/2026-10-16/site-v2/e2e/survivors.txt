@@ -1,0 +1,8 @@
+Survivors after the seventh pass purge, 2026-10-16T23:04:58Z (read-only, as mutis)
+security drop 3w7m8k2v5t: [['active']]
+canary items ready: 47 before -> 47 after
+judge passes: 42 before -> 43 after (the one E-J made with --uses 6 is the new one)
+items that existed before the run and changed state: 0 (visitors' or expiries, untouched by the purge)
+packs held (identities with paid_bytes): 2 before: 2
+meta keys (owner/robot): ['canary_item_id', 'receiver_address']
+test items after the purge: 27 {'removed': 19, 'deleted': 8}

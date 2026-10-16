@@ -1,0 +1,44 @@
+PASS SPDX headers
+PASS no HTML/script sinks in JS
+PASS markup: CSP-safe, includes, placeholders, JSON-LD
+PASS banned words
+PASS no typed /config numbers (P-20)
+PASS variables and conditions
+PASS SEO metadata (M-04)
+PASS trademark and mandatory lines (M-05)
+PASS partials in sync
+PASS no page shows the ghost
+PASS privacy inventory covers the schema (M-06)
+PASS contrast table (M-03)
+PASS static files (M-04)
+PASS security.txt contacts answer a stranger (needs the network)
+PASS copy variants set at build time (M11)
+PASS /judges quotes the app's words, 6 + 6 steps
+PASS old pages redirect to pages and anchors that exist
+PASS A-06h: field.js at most 6 KB gzip, home.css at most 3 KB more, field.js only from site.js
+PASS the four sides and What's tTARI? are the same on / and /how
+PASS links to site pages and anchors land on something
+PASS llms-full.txt matches /how, /made and /fine-print
+PASS dates.js in two time zones (M-08)
+PASS fonts: the pinned Geist subset on the home, pinned Geist on reading pages
+PASS every page, desktop, 390 and 360 px
+PASS home page budget (M-01)
+PASS live numbers and their failure (M-07)
+PASS home words: 120 above the fold, 800 in all, Make my drive first
+PASS A-06h: the field loads after the load event, ripples, never with reduced motion
+PASS header: Make my drive steps aside on the home, Open my drive with a drive
+PASS copy variants from /config
+PASS status line phase (M-08)
+PASS abuse form: key stripped, never sent without JavaScript
+PASS canary reveal (P1)
+PASS theme, judge pass
+note A-06h: field.js 3,428 B gzip -9 (at most 6,144); home.css 4,005 B (was 1,770, +2,235 of 3,072)
+note fonts: the pinned Geist subset on /, the pinned Geist on /how (0 problems)
+note budget on /: 33 requests, HTML+CSS+JS 53.4 KB gzip, other 52.3 KB, total 105.7 KB, 1 font files, third-party 0 (with the drop widget's first load)
+note API blocked: /made hides 28 [data-needs] blocks, shows 0
+note home words at 390: 63 above the fold, 670 in all
+note home words at 1440: 68 above the fold, 689 in all
+note A-06h @1440: field.js at 643 ms, load event ended 168 ms; 2 ripples
+note A-06h @390: field.js at 495 ms, load event ended 223 ms; 2 ripples
+note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; Test file #789: missed (the verifier restarted).
+34 of 34 checks without failures, 160 s

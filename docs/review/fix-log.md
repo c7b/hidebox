@@ -715,3 +715,29 @@ refused pack swap lost the open invoice (fixed: one transaction). The server's o
 Released as `f89963c`, tag `spooky-secrets-2026-10` moved there; the non-chain batch 13/13; E-13 and E-J
 track two wait for the evidence slice's sponsor budget (00:00 UTC), a pack was bought on chain with a judge
 pass through the API instead.
+
+## Seventh pass (site v2 + stop/pay feedback) (2026-10-16)
+
+Two branches were merged into `main`. `fix/share-stop-pay` came first, as a fast-forward: Pay from my drive
+now shows its steps from the click (measured at 5 ms, limit 300), and Stop sharing and Stop selling sit in
+the row menu and the share result. `design/site-v2` followed (merge `059763e`, no conflicts): the
+redesigned site, a sticky header shared with the app's link pages, A-06h, and claims C50 to C56. The
+integration devil checked the designer's twelve points on the real pages, at 390 and 1440, in light and
+dark (`docs/review/site-v2.md`, "Integration devil"; evidence in `docs/evidence/2026-10-16/site-v2/`).
+
+| # | Finding | What changed |
+|---|---|---|
+| 1 | Without JavaScript, the hero's grey words fell to 4.22:1 at 390 and 4.41:1 at 1440 over the static grid, and the headline's second line to 2.61:1 in dark. The CSS fallback quiet zone missed the words | The wider fallback gives 4.5:1 or more (3:1 for large text) at eight widths from 360 to 1920, in both themes, with and without JavaScript (`410f210`) |
+| 2 | The pay page and the folder view said "Make your own drive" to a browser that already holds a drive (point 10) | They now say Open my drive and link to `/drive`; UI checks cover both cases (`32bffc5`) |
+| 3 | The site's `mutis.drive` flag was never set by the app (the site builder's request) | It is set when a drive is made, opened or loaded, and cleared by Delete my drive and Lock my drive; app pages paint from the drive record (`d3bf966`) |
+| 4 | `nav.my_locker` was left unused, which failed the UI's static check (665 of 666) | Removed (`7646442`) |
+| 5 | The home's first tTARI (in the share picture) didn't link to What's tTARI? (point 3) | It does now (`faf93da`) |
+
+All twelve points are ok, three of them after these fixes. The ones rejected, with the reason, are in
+site-v2.md. Released as `410f210`, with the tag `spooky-secrets-2026-10` moved there; verify-deploy found 0
+differences, D-01 passed, and the non-chain batch passed 13/13. **E-J with its judge pass failed at step 5:**
+the Once link's "Delete it from my drive after" never reached the server, so the file stayed. It could not
+be reproduced: two probes on production (four shares) applied it, and so did E-J itself run without a pass,
+which passed both tracks (track one 9 s, track two 38 s). The task allowed one judge-pass drive, so E-J
+with a pass was not rerun. Open: E-J should check the switch is on after the click (as the UI flow does),
+and a rerun with a pass is the owner's call.
