@@ -2,7 +2,8 @@
    (shadcn new-york, neutral base) under the names the site, the anonymous widget and the older app pages
    already read, so they match the drive (web/shared/ui/tokens.css) without growing the widget's bytes.
    Violet means Tari, nothing else. Sea (17-brand.md) is the brand: your side of hidebox, spent once per
-   view (the home's field and the Make my drive fill). System faces here; Geist loads only in the drive (A-06).
+   view (the home's field and the Make my drive fill). System faces here; Geist comes with home.css, pages.css
+   and the drive.
    The --ghost-* names stay for the pages that still draw the old figure until they are restyled.
    Consumers use only these names; the block marked "compat" keeps the names older stylesheets read. */
 :root {

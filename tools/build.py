@@ -143,8 +143,11 @@ def page_url(rel: str) -> str:
 # site with the ghost; their files stay in the repository one release.
 SHARED_SKIP = ("partials", "fonts")
 # The drive's one family (DESIGN.md "Typography"): Geist, vendored from Vercel's repository with its
-# licence and pinned like ootle-wasm (a font can't carry SRI, so the build refuses any other bytes).
+# licence and pinned like ootle-wasm (a font can't carry SRI, so the build refuses any other bytes). The
+# home sets its words in Geist-Latin.woff2, a subset of the same file (web/site/tools/subset-geist.sh,
+# reproducible: 400 to 700, Latin-1; 17-site-brief §1.2), pinned the same way.
 FONTS = {"geist/Geist-Variable.woff2": "2ffebe993e969069a9789d15164b7715d42491b5835516c5e3b935d5f81b05f1",
+         "geist/Geist-Latin.woff2": "7e1491511dafabbbef951b7f7c96fe6de94a87efe6c2343443cd4167c86b07f3",
          "geist/OFL.txt": None}
 
 
