@@ -548,6 +548,8 @@ def pay_page_states(t):
     t.check("What's inside stays locked until you pay." in b.text("pay-locked"), "the content stays locked")
     t.check(b.ax_unnamed() == [] and b.csp_violations() == [], "names on every control; no CSP violation")
     t.shot(b, "pay-wait-1440")
+    t.check(b.eval("[...document.querySelectorAll('.fv-top a.btn')].map((a) => [a.textContent, a.getAttribute('href')]).join()") == "Make your own drive,/drive?make",
+            "a browser without a drive: the top bar says Make your own drive")
     b.eval("document.querySelector('[data-testid=\"pay-other\"] summary').click()")
     b.wait_for("pay-address", 60)
     cid = next(iter(fake.claims))
@@ -683,6 +685,8 @@ def pay_drive(t):
             f"a drive short of the price and the fee: no Pay from my drive, and why ({s.text('pay-drive-short')!r})")
     t.check(s.eval("document.scrollingElement.scrollWidth <= window.innerWidth"), "no sideways scroll at 390")
     t.shot(s, "pay-drive-short-390")
+    t.check(s.eval("[...document.querySelectorAll('.fv-top a.btn')].map((a) => [a.textContent, a.getAttribute('href')]).join()") == "Open my drive,/drive",
+            "a browser with a drive: the pay page's top bar says Open my drive, not Make your own drive")
 
     # A funded drive. First the chain refuses the payment: nothing spent, said where the button was.
     d = t.actor("iphone")

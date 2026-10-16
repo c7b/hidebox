@@ -20,7 +20,7 @@ import * as pay from '../lib/pay.js';
 import { h, icon, init, toast } from './behaviors.js';
 import { alert, button, driveErrorText, errorAlert, formatTari } from './drive-parts.js';
 import { describe } from './errors.js';
-import { driveLook, folderPanel } from './folder-view.js';
+import { driveLook, folderPanel, ownDrive } from './folder-view.js';
 import { testnetLine } from './marks.js';
 
 const POLL_MS = 3000;
@@ -81,7 +81,7 @@ export async function payPage(root, cfg, shareId) {
     root.dataset.state = state;
     root.replaceChildren(h('div', { class: 'card fv-card' }, h('div', { class: 'card-header' },
       h('h1', { class: 'card-title h3', tabindex: '-1' }, title), body ? h('p', { class: 'card-description' }, body) : null),
-    h('div', { class: 'card-footer' }, h('a', { class: 'btn', 'data-variant': 'outline', href: '/drive?make' }, t('fv.own')))));
+    h('div', { class: 'card-footer' }, ownDrive())));
   };
 
   if (!P.sA) return fatal('incomplete', t('gone.nokey'), t('gone.nokey_body'));

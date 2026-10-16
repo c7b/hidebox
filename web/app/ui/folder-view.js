@@ -248,6 +248,12 @@ export function folderPanel(opened, { cfg, heading = 'h1', onSaveToDrive = null 
 
 // view.html carries the drive's stylesheets switched off (data-drive); a folder link switches the page
 // to them, so a folder looks like the drive it came from. The ghost page's header and footer go.
+// The link pages' one way to the drive: Open my drive when this browser holds one (html[data-has-drive],
+// painted by theme.js from the flag identity.js keeps), else Make your own drive.
+export const ownDrive = (attrs = {}) => (document.documentElement.hasAttribute('data-has-drive')
+  ? h('a', { class: 'btn', 'data-variant': 'outline', href: '/drive', ...attrs }, t('nav.open_locker'))
+  : h('a', { class: 'btn', 'data-variant': 'outline', href: '/drive?make', ...attrs }, t('fv.own')));
+
 export async function driveLook() {
   if (document.body.dataset.look === 'drive') return;
   const sheets = [...document.querySelectorAll('link[rel="stylesheet"]')];
@@ -276,7 +282,7 @@ export async function driveLook() {
       main.before(h('header', { class: 'fv-top' },
         h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('lock')),
           h('span', { class: 'brand-text' }, h('span', {}, BRAND))),
-        h('a', { class: 'btn', 'data-variant': 'outline', 'data-size': 'sm', href: '/drive?make' }, t('fv.own'))));
+        ownDrive({ 'data-size': 'sm' })));
     }
   }
 }
