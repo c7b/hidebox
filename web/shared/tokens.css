@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT — tokens v4 (16-drive-design §8, DESIGN.md): the drive's neutral look
    (shadcn new-york, neutral base) under the names the site, the anonymous widget and the older app pages
    already read, so they match the drive (web/shared/ui/tokens.css) without growing the widget's bytes.
-   Violet means Tari, nothing else. System faces here; Geist loads only in the drive (A-06).
+   Violet means Tari, nothing else. Sea (17-brand.md) is the brand: your side of hidebox, spent once per
+   view (the home's field and the Make my drive fill). System faces here; Geist loads only in the drive (A-06).
    The --ghost-* names stay for the pages that still draw the old figure until they are restyled.
    Consumers use only these names; the block marked "compat" keeps the names older stylesheets read. */
 :root {
@@ -25,6 +26,20 @@
   --ghost-shadow: rgb(21 26 59 / .16);
   --scrim: rgb(0 0 0 / .5);
   --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 12px 28px -14px rgb(0 0 0 / .2);
+  --shadow-lg: 0 1px 2px rgb(0 0 0 / .05), 0 24px 48px -24px rgb(0 0 0 / .28);
+  /* site v2 (17-brand.md §9): the second section surface, the ruler on its seams, and the sea ramp.
+     Primitives by hue (--sea-*); components read only the --brand-* roles. sea-300, -400 and -950 are
+     reserved: no role yet, so no component may use them. */
+  --bg-alt: #FAFAFA; --tick: rgb(10 10 10 / .16);
+  --sea-50: #F3FAFC; --sea-100: #DAF0F7; --sea-200: #B6E5F5; --sea-300: #6FD4F2; --sea-400: #41B4D4;
+  --sea-500: #2E94AF; --sea-600: #22748A; --sea-700: #1D5E70; --sea-800: #1B4B58; --sea-900: #173842;
+  --sea-950: #12262C;
+  --sea-d-solid: #81CAE1; --sea-d-solid-hover: #B1D9E6; --sea-d-text: #8ED0E5; --sea-d-fx: #6AB8D0;
+  --sea-d-line: #2B4D58; --sea-d-tile: #19323A; --sea-d-soft: #112126;
+  --brand-solid: var(--sea-600); --brand-solid-hover: var(--sea-700); --on-brand: #FFFFFF;
+  --brand-text: var(--sea-700); --brand-subtle: var(--sea-50); --brand-border: var(--sea-200);
+  --brand-tile: var(--sea-100); --brand-field: var(--sea-500);
+  --field-alpha: .30; --field-quiet: .40;   /* lines 30 %, times .40 under words = 12 % */
 }
 :root[data-theme="dark"] {                   /* dark, chosen with the switch */
   --bg: #0A0A0A; --bg-raised: #171717; --bg-sunken: #1C1C1C;
@@ -39,6 +54,11 @@
   --glow: drop-shadow(0 0 22px rgb(189 239 195 / .38)); --ghost-shadow: rgb(189 239 195 / .18);
   --scrim: rgb(0 0 0 / .7);
   --shadow: 0 0 0 1px var(--hair), 0 16px 32px -18px rgb(0 0 0 / .7);
+  --shadow-lg: 0 0 0 1px var(--hair), 0 28px 56px -24px rgb(0 0 0 / .8);
+  --bg-alt: #111111; --tick: rgb(255 255 255 / .18);
+  --brand-solid: var(--sea-d-solid); --brand-solid-hover: var(--sea-d-solid-hover); --on-brand: #0A0A0A;
+  --brand-text: var(--sea-d-text); --brand-subtle: var(--sea-d-soft); --brand-border: var(--sea-d-line);
+  --brand-tile: var(--sea-d-tile); --brand-field: var(--sea-d-fx);
 }
 @media (prefers-color-scheme: dark) {        /* dark: follow the OS until the switch is pressed */
   :root:not([data-theme="light"]) {
@@ -54,9 +74,21 @@
     --glow: drop-shadow(0 0 22px rgb(189 239 195 / .38)); --ghost-shadow: rgb(189 239 195 / .18);
     --scrim: rgb(0 0 0 / .7);
     --shadow: 0 0 0 1px var(--hair), 0 16px 32px -18px rgb(0 0 0 / .7);
+    --shadow-lg: 0 0 0 1px var(--hair), 0 28px 56px -24px rgb(0 0 0 / .8);
+    --bg-alt: #111111; --tick: rgb(255 255 255 / .18);
+    --brand-solid: var(--sea-d-solid); --brand-solid-hover: var(--sea-d-solid-hover); --on-brand: #0A0A0A;
+    --brand-text: var(--sea-d-text); --brand-subtle: var(--sea-d-soft); --brand-border: var(--sea-d-line);
+    --brand-tile: var(--sea-d-tile); --brand-field: var(--sea-d-fx);
   }
 }
 @media (prefers-contrast: more) { :root { --line: var(--fg); --hair: color-mix(in srgb, var(--fg) 40%, transparent); } }
+/* increased contrast for the brand, one block per appearance (17-brand.md §9): the dark blocks outrank the
+   light :root, so a dark page never gets sea-900 under a dark label */
+@media (prefers-contrast: more) { :root { --brand-solid: var(--sea-900); --brand-text: var(--sea-800); --field-alpha: .15; } }
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --brand-solid: #D9F4FD; --brand-text: #D9F4FD; }
+}
+@media (prefers-contrast: more) { :root[data-theme="dark"] { --brand-solid: #D9F4FD; --brand-text: #D9F4FD; } }
 
 :root {
   /* system faces only: the platform sans (Geist is the drive's, and loads only there) */
@@ -73,8 +105,8 @@
 
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px;
   --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px; --s-10: 128px;
-  --gutter: 16px; --content: 1088px; --read: 66ch; --tap: 44px;
-  --r-panel: 14px; --r-input: 8px; --r-pill: 999px;
+  --gutter: 16px; --content: 1088px; --read: 66ch; --tap: 44px; --grid: 48px; --sec-pad: var(--s-8);
+  --r-panel: 14px; --r-input: 8px; --r-btn: 10px; --r-pill: 999px;
   --z-header: 10; --z-catch: 40; --z-sheet: 50; --z-modal: 100; --z-toast: 200;
 
   --dur-1: 120ms;    /* press, hover */
@@ -107,4 +139,5 @@
   --locker-side: var(--night-sunken); --locker-top: var(--night-raised); --locker-bottom: #080B22;
 }
 @media (min-width: 640px)  { :root { --gutter: 28px; --cols: 8; } }
+@media (min-width: 1024px) { :root { --sec-pad: var(--s-9); } }
 @media (min-width: 1280px) { :root { --gutter: 40px; } }
