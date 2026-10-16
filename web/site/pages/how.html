@@ -101,6 +101,19 @@
       </div>
     </section>
 
+    <div class="coin-row">
+      <aside class="coin-box" id="ttari" aria-labelledby="ttari-h">
+        <div class="coin-top"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><h3 id="ttari-h">What's tTARI?</h3></div>
+        <ul role="list">
+          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg><span>tTARI is the coin on Tari's test network.</span></li>
+          <li data-when="sponsor=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hard-drive"/></svg><span>When your drive opens, our sponsor wallet sends it some tTARI to try things.</span></li>
+          <li data-when="test_pay=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>On a pay page, tap Pay with test money. Our demo wallet pays the owner for you, with test money.</span></li>
+          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg><span>Judging? <a href="/judges#pass">Get a judge pass</a>.</span></li>
+        </ul>
+        <!--#include status-line-->
+      </aside>
+    </div>
+
     <section class="still" aria-labelledby="s5">
       <div class="still-copy"><h2 id="s5">See what happened</h2><p>Each file shows its rule, how many times it opened, and when it ends. When a file leaves your drive, we write that on the Tari chain, for anyone to check.</p></div>
       <div class="still-frame" aria-hidden="true">
@@ -117,25 +130,30 @@
     </section>
   </div>
 
-  <section class="how-table" aria-labelledby="who-h">
+  <section class="how-who" aria-labelledby="who-h">
     <h2 id="who-h">Who sees what</h2>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th scope="col">Who</th><th scope="col">Sees</th><th scope="col">Never sees</th></tr></thead>
-        <tbody>
-          <tr><th scope="row">Our server</th><td data-cue="Sees">A padded size, the hour it arrived, its rule, and how many times it opened each hour.</td><td data-cue="Never sees">The name, the type, what's inside, the key, or who opened it.</td></tr>
-          <tr><th scope="row">The Tari chain</th><td data-cue="Sees">That a payment happened, and its fee.</td><td data-cue="Never sees">The amount, who got it, or the key.</td></tr>
-          <tr><th scope="row">Someone with the link</th><td data-cue="Sees">What the rule still allows.</td><td data-cue="Never sees">Your other files.</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day.</p>
+    <ul class="sides" role="list">
+      <li class="side yours">
+        <div class="side-top"><span class="icon-tile yours" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-user-round"/></svg></span><h3>You</h3></div>
+        <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>Your files, their names, and what happened to each link.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Who opened a link. You see how many times it opened.</dd></dl>
+      </li>
+      <li class="side">
+        <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-share-2"/></svg></span><h3>The person you share with</h3></div>
+        <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>What the rule still allows.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Your other files.</dd></dl>
+      </li>
+      <li class="side">
+        <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-server"/></svg></span><h3>Our server</h3></div>
+        <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>A padded size, the hour it arrived, its rule, and how many times it opened each hour.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The name, the type, what's inside, the key, or who opened it.</dd></dl>
+      </li>
+      <li class="side">
+        <div class="side-top"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><h3>The Tari chain</h3></div>
+        <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>That a payment happened, and its fee.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The amount, who got it, or the key.</dd></dl>
+      </li>
+    </ul>
+    <p class="sides-foot">Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day.</p>
   </section>
 
-  <div class="outro">
-    <a class="btn" href="/drive?make"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-plus"/></svg>Make my drive</a>
-    <p class="muted">Want every detail? Read <a href="/made">how it was made</a>.</p>
-  </div>
+  <p class="outro">Want every detail? Read <a href="/made">Under the hood</a>.</p>
 </main>
 <!--#include footer-->
 </body>
