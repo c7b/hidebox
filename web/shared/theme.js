@@ -6,22 +6,24 @@
 // "Lights" and its state is aria-pressed (pressed = lights on). On Oct 31 from 18:00 local the house
 // lights are already down (11-brand §13.11), unless the visitor chose.
 // html.motion: scripts run and the visitor allows motion.
+// html[data-has-drive]: a drive lives in this browser ('mutis.drive', kept by site.js), so Open my drive paints first.
 (() => {
   const KEY = 'mutis.theme';
   const root = document.documentElement;
   const osDark = matchMedia('(prefers-color-scheme: dark)');
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) root.classList.add('motion');
 
-  const stored = () => {
+  const stored = (key) => {
     try {
-      return localStorage.getItem(KEY);
+      return localStorage.getItem(key);
     } catch {
       return null;
     }
   };
+  if (stored('mutis.drive') === '1') root.dataset.hasDrive = '';
   const now = new Date();
   const halloweenNight = now.getMonth() === 9 && now.getDate() === 31 && now.getHours() >= 18;
-  const chosen = stored();
+  const chosen = stored(KEY);
   if (chosen === 'light' || chosen === 'dark') root.dataset.theme = chosen;
   else if (halloweenNight) root.dataset.theme = 'dark';
 

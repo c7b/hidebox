@@ -34,6 +34,8 @@ READ = {
     "security_drop": lambda c: "on" if c["security_drop_url"] else "off",
     "pay_to_open": lambda c: "on" if c["features"].get("pay_to_open") else "off",
     "folders": lambda c: "on" if c["features"].get("folders") else "off",
+    "sponsor": lambda c: "on" if c["features"].get("sponsor") else "off",
+    "test_pay": lambda c: "on" if c["features"].get("pay_to_open") and c["features"].get("demo_pay", True) else "off",
 }
 VARIANT = re.compile(r'<[a-z][a-z0-9]*\s[^>]*?\bdata-when="([a-z_]+)=([a-z0-9_]+)"[^>]*>')
 LINE = re.compile(r'^\{when:([a-z_]+)=([a-z0-9_]+)\} (.*\n?)', re.M)
