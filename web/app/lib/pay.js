@@ -208,18 +208,33 @@ export async function payWithTestMoney(shareId, claim, opts = {}) {
 }
 
 // Pay from my drive: the drive's browser wallet pays the claim address with the claim id as its memo.
-// The link and the claim are checked again right before the payment is built.
-export async function payFromDrive(identity, shareId, claim, { signal } = {}) {
+// The link and the claim are checked again right before the payment is built. onSent(txId) once the
+// indexer has the transaction: from then on the claim's progress tells, so a slow chain (the wallet's
+// timeout) resolves as {tx_id, late: true}. A failure before that, or a refused transaction, spent
+// nothing: the claim forgets the drive, so the page offers the payment again.
+export async function payFromDrive(identity, shareId, claim, { signal, onSent } = {}) {
   const [info, now] = await Promise.all([payInfo(shareId), claimState(shareId, claim)]);
   if (info.state !== 'selling') throw Object.assign(new Error('not_for_sale'), { code: 'not_for_sale' });
   if (!OPEN_CLAIM.has(now.status)) throw Object.assign(new Error('conflict'), { code: 'conflict' });
   const owed = BigInt(claim.amountUt) - BigInt(now.received_ut ?? '0');
   if (owed <= 0n) return null;
-  keepClaim(shareId, { how: 'drive' });
+  keepClaim(shareId, { how: 'drive', tx: null });
   const { send } = await import('./wallet.js');
-  const res = await send(identity, { to: claim.address, amountUt: owed, memo: { Message: claim.claimId }, signal });
-  keepClaim(shareId, { tx: res.tx_id });
-  return res;
+  let sent = null;
+  try {
+    return await send(identity, {
+      to: claim.address, amountUt: owed, memo: { Message: claim.claimId }, signal,
+      onSubmit: (tx) => {
+        sent = tx;
+        keepClaim(shareId, { tx });
+        onSent?.(tx);
+      },
+    });
+  } catch (e) {
+    if (sent && e?.code !== 'rejected') return { tx_id: sent, late: true };
+    keepClaim(shareId, { how: null, tx: null });
+    throw e;
+  }
 }
 
 // The paid open's proof: the link's access token (from sA and the server half) and the claim token.

@@ -10,7 +10,8 @@ payment the page builds is the product code's; ootle-wasm builds the chain outpu
 (a funded drive, a genuine sales output, one whose payer kept control), so the owner check runs the real
 one-time-key comparison.
 
-share-pay (the seller), pay-page-states (the buyer page, every state), owner-check (R1 and the release gate)."""
+share-pay (the seller), pay-page-states (the buyer page, every state), owner-check (R1 and the release gate),
+pay-drive (Pay from my drive: its steps from the click, a refusal with Try again, a drive short of money)."""
 import base64
 import glob
 import hashlib
@@ -105,6 +106,7 @@ class PayFake:
         self.txs = []
         self.on_tx = None
         self.direct = False    # /config says direct mode (a funded drive pays from this browser)
+        self.final = "Commit"  # the chain's decision on a submitted transaction; None: not final yet
 
     # ---- wiring ----
 
@@ -124,7 +126,7 @@ class PayFake:
         ic.add(f"{api}/chain/ix/substates/utxo_*", "Request", self.substate, "GET")
         ic.add(f"{api}/chain/ix/epoch-manager/stats", "Request", lambda _p: (200, {"current_epoch": 100}), "GET")
         ic.add(f"{api}/chain/ix/transactions", "Request", self.submit, "POST")
-        ic.add(f"{api}/chain/ix/transactions/*/result", "Request", lambda _p: (200, {"result": {"Finalized": {"final_decision": "Commit"}}}), "GET")
+        ic.add(f"{api}/chain/ix/transactions/*/result", "Request", self.tx_result, "GET")
         return ic
 
     def forward(self, params, method, path, body):
@@ -322,6 +324,9 @@ class PayFake:
         if not o:
             return err("not_found", 404)
         return 200, {"substate": {"Utxo": {"output": {"auth": {"Key": o["key"]}, "output": {"public_nonce": o["nonce"], "encrypted_data": o["enc"]}}, "is_frozen": False}}}
+
+    def tx_result(self, _params):
+        return 200, {"result": {"Finalized": {"final_decision": self.final}} if self.final else None}
 
     def submit(self, params):
         self.txs.append(body_of(params))
@@ -625,6 +630,106 @@ def pay_page_states(t):
     t.check(wait_pay(d, ("check",), 120) == "check" and len(fake.txs) == 1, "Pay from my drive: this browser built and sent the payment; it waits for the owner's check")
     t.check(d.csp_violations() == [], "no CSP violation")
     fake.direct = False
+
+
+# --- Pay from my drive, said at once (the designer's report A) -----------------------------------------
+
+CLICK_JS = """(() => {
+  window.__clickAt = null; window.__stepsAt = null; window.__seen = null;
+  const root = document.querySelector('[data-testid="pay-page"]');
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-testid="pay-browser"], [data-testid="pay-retry"]')) { window.__clickAt = performance.now(); window.__stepsAt = null; }
+  }, true);
+  new MutationObserver(() => {
+    const st = root.querySelector('[data-testid="pay-claim-step"][data-how="drive"]');
+    if (window.__clickAt === null || window.__stepsAt !== null || !st?.querySelector('li[data-step="build"][data-state="now"]')) return;
+    window.__stepsAt = performance.now();
+    window.__seen = { steps: [...st.querySelectorAll('li')].map((l) => l.dataset.step + ':' + l.dataset.state + ':' + l.textContent.trim()),
+      status: root.querySelector('[data-testid="pay-status"]')?.textContent, focus: document.activeElement?.dataset.testid ?? null };
+  }).observe(root, { childList: true, subtree: true });
+})()"""
+
+
+def in_view(page, testid):
+    return page.eval(f"(() => {{ const r = document.querySelector('[data-testid=\"{testid}\"]')?.getBoundingClientRect(); return !!r && r.top >= 0 && r.bottom <= innerHeight; }})()")
+
+
+@scenario("pay-drive", "Pay from my drive (A): the click shows the steps at once (Building the payment from your drive…), then Sent and Seen on the chain, then Waiting for the owner's check, then Ready to open; a refused payment spent nothing and says so where the button was, with Try again; a drive short of the price and the fee says why there is no button", features=FEATURES)
+def pay_drive(t):
+    fake = PayFake(t)
+    a = seller(t, fake)
+    url = sell(a, "notes.txt", price="100000")
+    sid = re.search(PAY_LINK, url)[1]
+    fake.links[sid]["seller_state"] = "ok"
+    close_dialog(a)
+    fake.direct = True
+
+    def paid_from_drive():  # a payment the chain refuses never shows up as paid
+        mine = [k for k, v in fake.claims.items() if v["share"] == sid and v["status"] == "pending"]
+        if mine and not isinstance(fake.final, dict):
+            fake.claims[mine[-1]]["queue"] = ["seen", "paid"]
+    fake.on_tx = paid_from_drive
+
+    # A drive here with too little test money: no button, and the page says why.
+    s = t.actor("iphone")
+    attach(t, fake, s)
+    s.goto(t.origin + "/drive?make")
+    s.wait_for("drive-root", 90)
+    fake.add_outputs(s.eval(OUTPUTS_JS + "([{ to: 'wallet', amount: '50000' }])", timeout=120))
+    s.goto(url)
+    s.wait_for("pay-drive-short", 120)
+    t.check(not s.exists("pay-browser") and s.text("pay-drive-short") == "Your drive here has 0.05 tTARI. Paying from it takes 0.13 tTARI with the fee.",
+            f"a drive short of the price and the fee: no Pay from my drive, and why ({s.text('pay-drive-short')!r})")
+    t.check(s.eval("document.scrollingElement.scrollWidth <= window.innerWidth"), "no sideways scroll at 390")
+    t.shot(s, "pay-drive-short-390")
+
+    # A funded drive. First the chain refuses the payment: nothing spent, said where the button was.
+    d = t.actor("iphone")
+    attach(t, fake, d)
+    d.goto(t.origin + "/drive?make")
+    d.wait_for("drive-root", 90)
+    fake.add_outputs(d.eval(OUTPUTS_JS + "([{ to: 'wallet', amount: '1000000' }])", timeout=120))
+    d.goto(url)
+    d.wait_for("pay-browser", 120)
+    d.eval(CLICK_JS)
+    fake.final = {"Reject": "the fake chain says no"}
+    d.click("pay-browser")
+    d.wait("window.__stepsAt !== null", 5)
+    ms = d.eval("window.__stepsAt - window.__clickAt")
+    seen = d.eval("window.__seen")
+    t.check(ms <= 300, f"the click shows the payment's steps at once ({ms:.0f} ms, at most 300)")
+    t.check(seen["steps"] == ["build:now:Building the payment from your drive…", "chain:todo:Seen on the chain", "owner:todo:Waiting for the owner's check", "open:todo:Ready to open"]
+            and seen["status"] == "Your drive is paying. Keep this page open." and seen["focus"] == "pay-claim-step",
+            f"step one turns: Building the payment from your drive…; the steps take the focus ({seen})")
+    d.wait_for("pay-failed", 60)
+    t.check(pay_state(d) == "wait" and d.attr("pay-failed", "data-code") == "rejected"
+            and d.text("pay-failed").startswith("Your drive didn't pay.The Ootle refused that transaction. Nothing was spent.") and d.exists("pay-retry"),
+            f"refused: an alert in a plain sentence, with Try again ({d.text('pay-failed')!r})")
+    t.check(in_view(d, "pay-failed"), "the alert is on screen")
+    t.check(d.eval(f"import('/app/lib/pay.js').then((m) => m.savedClaim({json.dumps(sid)})?.how ?? null)") is None,
+            "the claim forgets the drive: nothing was paid, so a reload offers the payment again")
+    t.shot(d, "pay-drive-failed-390")
+    # Try again, on a slow chain: sent, then seen on the chain, then the owner's check.
+    fake.final = None
+    d.click("pay-retry")
+    d.wait("window.__stepsAt !== null", 5)
+    t.check(d.eval("window.__stepsAt - window.__clickAt") <= 300, "Try again shows the steps at once too")
+    d.wait("document.querySelector('[data-testid=\"pay-claim-step\"] li[data-step=\"chain\"]')?.dataset.state === 'now'", 60)
+    t.check(steps(d) == ["build:done", "chain:now", "owner:todo", "open:todo"] and "Sent from your drive" in d.text("pay-claim-step")
+            and d.text("pay-status") == "Sent from your drive. Now we look for it on the chain.",
+            f"sent: Sent from your drive, then Seen on the chain turns ({steps(d)}, {d.text('pay-status')!r})")
+    t.shot(d, "pay-drive-sent-390")
+    fake.final = "Commit"
+    t.check(wait_pay(d, ("check",), 60) == "check", "seen on the chain and paid: it waits for the owner's check")
+    t.check(steps(d) == ["build:done", "chain:done", "owner:now", "open:todo"] and "Waiting for the owner's check" in d.text("pay-claim-step")
+            and "Paid from your own wallet? It opens after the owner's drive checks it." in d.text("pay-page"),
+            f"Waiting for the owner's check, with C38 ({steps(d)})")
+    t.shot(d, "pay-drive-check-390")
+    cids = [k for k, v in fake.claims.items() if v["share"] == sid]
+    t.check(len(cids) == 1 and len(fake.txs) == 2, f"Try again paid the same claim (claims {len(cids)}, transactions {len(fake.txs)})")
+    fake.claims[cids[0]]["owner_check"] = "ok"
+    t.check(wait_pay(d, ("open",), 30) == "open" and all(x.endswith(":done") for x in steps(d)), f"Ready to open ({steps(d)})")
+    t.check(d.csp_violations() == [] and d.ax_unnamed() == [], "no CSP violation; every control named")
 
 
 # --- §15 step 16: the owner check -----------------------------------------------------------------------
