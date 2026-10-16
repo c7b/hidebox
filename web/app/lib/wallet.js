@@ -102,8 +102,9 @@ async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
 }
 
 // Send `amountUt` to an Ootle address with an optional memo object ({Message: "…"}).
+// onSubmit(txId): the indexer took the transaction (it may still land after a timeout).
 // -> {tx_id, inputs, fee_ut}
-export async function send(identity, { to, amountUt, memo = null, signal }) {
+export async function send(identity, { to, amountUt, memo = null, signal, onSubmit = null }) {
   await ready();
   const w = bindings();
   const dest = await parseAddress(to);
@@ -147,6 +148,11 @@ export async function send(identity, { to, amountUt, memo = null, signal }) {
 
   // Submitting takes the locker session: the proxy relays sends of our lockers, not anyone's transactions.
   const { transaction_id: txId } = await chainIx('POST', 'transactions', { transaction: envelope }, authHeaders());
+  try {
+    onSubmit?.(txId);
+  } catch {
+    // the caller's display only: the inputs below are marked whatever it did
+  }
   const ids = inputs.map((i) => i.utxoId);
   await updateWallet(identity, ids, { pending: { tx: txId, at: Date.now() } });
   try {

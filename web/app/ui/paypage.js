@@ -8,6 +8,9 @@
 // appears only after the claim exists. The steps follow the claim: waiting, seen with its amount
 // checked, on the chain, the owner's drive check for any payment our demo wallet didn't build (C38),
 // unlocked. Unlocked: open it here, a visit for a folder, "{n} opens left until {date}".
+// Pay from my drive answers at once: the click shows its own steps (building the payment in this tab,
+// seen on the chain, the owner's check, ready to open); a failure that spent nothing says why, with Try
+// again; a drive here without enough test money says so instead of offering the button.
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError } from '../lib/api.js';
 import { fetchContent, openItem } from '../lib/open.js';
@@ -15,7 +18,8 @@ import { saveFile } from '../lib/download.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import * as pay from '../lib/pay.js';
 import { h, icon, init, toast } from './behaviors.js';
-import { alert, button, errorAlert, formatTari } from './drive-parts.js';
+import { alert, button, driveErrorText, errorAlert, formatTari } from './drive-parts.js';
+import { describe } from './errors.js';
 import { driveLook, folderPanel } from './folder-view.js';
 import { testnetLine } from './marks.js';
 
@@ -35,6 +39,7 @@ function phaseOf(P) {
   if (st === 'released' && P.access) return P.opened ? 'opened' : 'open';
   if (st === 'expired') return 'expired';
   if (st === 'void') return 'void';
+  if (P.busy === 'drive') return 'paying'; // this tab builds the payment: its steps show from the click
   if (st === 'paid' || st === 'released') return needsOwner(P) ? 'check' : 'unlocking';
   if (st === 'seen' || st === 'underpaid') return 'seen';
   if (st === 'pending' && P.claim?.how) return 'paying';
@@ -42,13 +47,21 @@ function phaseOf(P) {
 }
 
 const needsOwner = (P) => !(P.status?.demo || P.claim?.how === 'test');
+const viaDrive = (P) => P.busy === 'drive' || P.claim?.how === 'drive';
 const txOf = (P) => [P.status?.tx_id, P.claim?.tx].find((x) => typeof x === 'string' && /^[0-9a-f]{64}$/.test(x)) ?? null;
 
+// [data-step, words]. A payment from this drive: built here (then sent), seen on the chain, the owner's check
+// (C38: our server can't tell whose it is to spend), ready to open.
 function stepper(P, phase) {
-  const keys = ['buy.step.wait', 'buy.step.seen', 'buy.step.chain', ...(needsOwner(P) ? ['buy.step.owner'] : []), 'buy.step.open'];
-  const at = { paying: 0, seen: 2, check: 3, unlocking: keys.length, open: keys.length, opened: keys.length }[phase] ?? 0;
-  return h('ol', { class: 'steps', 'aria-live': 'polite', 'aria-label': t('buy.steps'), 'data-testid': 'pay-claim-step', 'data-at': String(at) },
-    keys.map((k, i) => h('li', { 'data-state': i < at ? 'done' : i === at ? 'now' : 'todo', 'data-step': k.split('.').pop() },
+  const drive = viaDrive(P);
+  const sent = Boolean(P.claim?.tx);
+  const steps = drive
+    ? [['build', sent ? 'buy.step.sent' : 'buy.step.build'], ['chain', 'buy.step.on_chain'], ['owner', 'buy.step.owner_wait'], ['open', 'buy.step.open']]
+    : [['wait', 'buy.step.wait'], ['seen', 'buy.step.seen'], ['chain', 'buy.step.chain'], ...(needsOwner(P) ? [['owner', 'buy.step.owner']] : []), ['open', 'buy.step.open']];
+  const end = steps.length;
+  const at = (drive ? { paying: sent ? 1 : 0, seen: 1, check: 2 } : { paying: 0, seen: 2, check: 3 })[phase] ?? (['unlocking', 'open', 'opened'].includes(phase) ? end : 0);
+  return h('ol', { class: 'steps', tabindex: '-1', 'aria-live': 'polite', 'aria-label': t('buy.steps'), 'data-testid': 'pay-claim-step', 'data-at': String(at), 'data-how': drive ? 'drive' : null },
+    steps.map(([step, k], i) => h('li', { 'data-state': i < at ? 'done' : i === at ? 'now' : 'todo', 'data-step': step },
       h('span', { class: 'dot' }, i < at ? icon('check') : i === at ? spinner() : null), h('span', {}, t(k)))));
 }
 
@@ -58,9 +71,11 @@ export async function payPage(root, cfg, shareId) {
   root.setAttribute('data-testid', 'pay-page');
   const P = {
     cfg, shareId, sA: pay.parsePayFragment(location.hash), info: null, teaser: null, claim: pay.savedClaim(shareId),
-    status: null, error: null, busy: null, other: false, identity: null, funded: false, access: null, opened: null,
-    used: false, timer: null, panel: null,
+    status: null, error: null, busy: null, other: false, identity: null, funded: false, have: null, need: null, access: null, opened: null,
+    used: false, timer: null, panel: null, driveError: null, late: false,
   };
+  // A payment from this drive that never reached the chain (the tab closed while it was built) spent nothing.
+  if (P.claim?.how === 'drive' && !P.claim.tx) P.claim = pay.keepClaim(shareId, { how: null });
 
   const fatal = (state, title, body) => {
     root.dataset.state = state;
@@ -97,6 +112,7 @@ export async function payPage(root, cfg, shareId) {
     if (P.busy) return;
     P.busy = key;
     P.error = null;
+    P.driveError = null;
     draw();
     try {
       await fn();
@@ -124,12 +140,42 @@ export async function payPage(root, cfg, shareId) {
     poll();
   });
 
-  const payDrive = () => act('drive', async () => {
-    const c = await claim();
-    await pay.payFromDrive(P.identity, shareId, c);
-    P.claim = pay.savedClaim(shareId);
-    poll();
-  });
+  // The click draws the steps in the same task (phase 'paying', step one turning) and focuses them; the
+  // send's own wait for the chain (up to two minutes) runs under them. Sent: the claim's progress takes
+  // over. Nothing spent: an alert where the button was, with Try again.
+  async function payDrive() {
+    P.late = false;
+    const run = act('drive', async () => {
+      try {
+        const c = await claim();
+        const res = await pay.payFromDrive(P.identity, shareId, c, { onSent: () => {
+          P.claim = pay.savedClaim(shareId);
+          draw();
+        } });
+        P.late = Boolean(res?.late);
+      } catch (e) {
+        P.driveError = e;
+        if (describe(e).code === 'insufficient') {
+          P.funded = false;
+          findDrive().catch(() => null); // what it has now, said under the price
+        }
+      }
+      P.claim = pay.savedClaim(shareId) ?? P.claim;
+      if (!P.driveError) poll();
+    });
+    reveal('pay-claim-step', true);
+    await run;
+    if (P.driveError) reveal('pay-failed', false);
+  }
+
+  // Brings a part of the page into view (a phone may have scrolled past it); `focus` for the steps.
+  function reveal(testid, focus) {
+    const el = root.querySelector(`[data-testid="${testid}"]`);
+    if (!el) return;
+    if (focus) el.focus({ preventScroll: true });
+    const r = el.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
 
   const showOther = () => act('other', async () => {
     await claim();
@@ -209,7 +255,9 @@ export async function payPage(root, cfg, shareId) {
     await withOotle(stored);
     const { scan } = await import('../lib/scan.js');
     await scan(stored).catch(() => null);
-    P.funded = (await w.balance(stored)) >= BigInt(price) + w.FEE_UT;
+    P.have = await w.balance(stored);
+    P.need = BigInt(price) + w.FEE_UT;
+    P.funded = P.have >= P.need;
     if (P.claim) remember(phaseOf(P) === 'open' || phaseOf(P) === 'opened' ? 'paid' : 'waiting');
     draw();
   }
@@ -277,9 +325,23 @@ export async function payPage(root, cfg, shareId) {
     return box;
   }
 
+  // A payment from this drive that spent nothing: what happened, in one sentence, and Try again while the
+  // drive can still pay (it may have gone short: then the line under the price says so).
+  function driveFailed() {
+    const e = P.driveError;
+    const code = describe(e).code;
+    const why = ['client', 'internal'].includes(code) ? t('buy.drive_failed_d') : driveErrorText(e);
+    const again = P.funded && code !== 'not_for_sale';
+    return h('div', { class: 'alert', 'data-variant': 'destructive', role: 'alert', 'data-testid': 'pay-failed', 'data-code': code }, icon('triangle-alert'),
+      h('div', { class: 'alert-title' }, t('buy.drive_failed')),
+      h('div', { class: 'alert-description' }, h('p', {}, why),
+        again ? button(t('viewer.retry'), { variant: 'outline', size: 'sm', glyph: 'rotate-ccw', testid: 'pay-retry', onclick: payDrive }) : null));
+  }
+
   function payCard(phase) {
+    const drive = viaDrive(P);
     const desc = {
-      wait: t('buy.wait'), paying: t('buy.wait'), seen: t('buy.seen'), check: t('buy.check'), unlocking: t('buy.seen'),
+      wait: t('buy.wait'), paying: drive ? t(P.claim?.tx ? 'buy.drive_sent' : 'buy.drive_paying') : t('buy.wait'), seen: t('buy.seen'), check: t('buy.check'), unlocking: t('buy.seen'),
       open: t('buy.open'), opened: t('buy.open'), expired: t('buy.expired'), void: t('buy.void'), used: t('buy.used'),
     }[phase];
     const content = h('div', { class: 'card-content stack' },
@@ -294,15 +356,20 @@ export async function payPage(root, cfg, shareId) {
         content.append(alert({ glyph: 'circle-question-mark', title: t(paused ? 'buy.paused_h' : 'buy.not_ready_h'), description: t(paused ? 'buy.paused' : 'buy.not_ready'), testid: 'pay-closed', role: 'status' }));
       } else {
         const choices = h('div', { class: 'stack' });
+        if (P.driveError) choices.append(driveFailed());
         if (testMoney) {
           const b = button(P.busy === 'test' ? t('buy.claiming') : t('buy.test'), { size: 'lg', glyph: P.busy === 'test' ? null : 'coins', testid: 'pay-test', 'data-autofocus': '', disabled: P.busy ? true : null, onclick: payTest });
           if (P.busy === 'test') b.prepend(spinner());
           choices.append(b, h('p', { class: 'small muted' }, t('buy.test_d')));
         }
         if (P.funded) {
-          const b = button(t('buy.drive'), { variant: testMoney ? 'outline' : null, glyph: P.busy === 'drive' ? null : 'wallet', testid: 'pay-browser', disabled: P.busy ? true : null, onclick: payDrive });
-          if (P.busy === 'drive') b.prepend(spinner());
-          choices.append(b, h('p', { class: 'small muted' }, t('buy.own_wait')));
+          // Its click turns the card into the payment's steps at once (phase 'paying'), never a quiet spinner.
+          choices.append(button(t('buy.drive'), { variant: testMoney ? 'outline' : null, glyph: 'wallet', testid: 'pay-browser', disabled: P.busy ? true : null, onclick: payDrive }),
+            h('p', { class: 'small muted' }, t('buy.own_wait')));
+        } else if (P.have !== null) {
+          // A drive here, short of the price and the fee: say why there is no Pay from my drive.
+          choices.append(h('p', { class: 'small muted row', 'data-testid': 'pay-drive-short' }, icon('wallet'),
+            h('span', {}, t('buy.drive_short', { have: formatTari(P.have.toString()), need: formatTari(P.need.toString()) }))));
         }
         choices.append(otherBox(phase));
         content.append(choices);
@@ -314,7 +381,8 @@ export async function payPage(root, cfg, shareId) {
         content.append(alert({ glyph: 'info', title: t('buy.partial', { paid: formatTari(got.toString()), price: formatTari(price) }), testid: 'pay-partial', role: 'status' }));
       }
       if (phase === 'check') content.append(h('p', { class: 'small muted' }, t('buy.own_wait')));
-      if (P.claim?.how !== 'test' && P.claim?.address && phase === 'paying') content.append(otherBox(phase));
+      if (drive && P.late && phase === 'paying') content.append(h('p', { class: 'small muted', 'data-testid': 'pay-late' }, t('buy.drive_late')));
+      if (!drive && P.claim?.how !== 'test' && P.claim?.address && phase === 'paying') content.append(otherBox(phase));
     } else if (phase === 'open' || phase === 'opened') {
       content.append(stepper(P, phase), h('div', { class: 'stack', 'data-testid': 'pay-unlocked' },
         h('p', { class: 'small', 'data-testid': 'pay-left', 'data-left': String(P.status?.views_left ?? '') },
