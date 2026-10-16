@@ -133,6 +133,7 @@
 .radio { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line); }
 .choice[data-checked] .radio { border: 5px solid var(--fg); }
 .share-foot { display: flex; justify-content: flex-end; }
+.share-pic a { pointer-events: auto; }   /* the one live thing in the picture: what tTARI is */
 .share-foot .btn { min-height: 36px; padding: 8px 16px; }
 
 /* ---------- What's different from a usual drive? The hidebox column on the brand tint ---------- */
