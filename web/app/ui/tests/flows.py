@@ -235,7 +235,7 @@ def home_text(t):
     t.check(not same_origin(t, a), "the home page made no third-party request")
     stored = a.eval("JSON.stringify(Object.fromEntries(Object.entries(localStorage)))")
     t.check(url.split("#")[1] not in stored and "under the plant" not in stored
-            and set(json.loads(stored)) <= {"mutis.recent", "mutis.theme", "mutis.keyAsked"},
+            and set(json.loads(stored)) <= {"mutis.recent", "mutis.theme", "mutis.keyAsked", "mutis.drive"},
             f"localStorage holds no key and no text, only the recent-drops list ({sorted(json.loads(stored))})")
     b = t.actor("android")
     t.check(open_link(b, url, open_it=False) == "ready", "B sees the ready state, nothing used yet")

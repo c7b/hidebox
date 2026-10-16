@@ -11,7 +11,7 @@ import { aesGcmDecrypt, aesGcmEncrypt, hkdf, pbkdf2Sha256, randomBytes } from '.
 import { sha256Sync } from './sha256sync.js';
 import { chainUtxos } from './api-locker.js';
 import { idbDelete, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
-import { set as setState } from './store.js';
+import { localSet, set as setState } from './store.js';
 import { PBKDF2_ITER } from './password.js';
 import { BRAND } from './i18n.js';
 
@@ -95,8 +95,13 @@ function recordOf(identity) {
   return { v: 2, seed, created, createdSeq, dropIndex, drops, keySaved };
 }
 
+// 'mutis.drive' = 1 while this browser holds a drive: the site's pages paint Open my drive from it
+// before their first frame (web/shared/theme.js). A flag, never the key.
+const hasDrive = (yes) => localSet('mutis.drive', yes ? 1 : null);
+
 async function persist(identity) {
   await idbPut('identity', 'current', recordOf(identity));
+  hasDrive(true);
   setState('identity', identity);
   return identity;
 }
@@ -120,6 +125,7 @@ export async function createIdentity({ lazy = false } = {}) {
 
 export async function loadIdentity({ lazy = false } = {}) {
   const rec = await idbGet('identity', 'current');
+  hasDrive(rec?.v === 2);
   if (!rec || rec.v !== 2) return null;
   const identity = await identityFromSeed(new Uint8Array(rec.seed), rec, { lazy });
   identity.persisted = await persistStorage({ ask: false });
@@ -136,6 +142,7 @@ export async function updateIdentity(identity, patch) {
 export async function forgetIdentity() {
   await idbDelete('identity', 'current');
   await idbDelete('inbox', 'current');
+  hasDrive(false);
   setState('identity', null);
 }
 
