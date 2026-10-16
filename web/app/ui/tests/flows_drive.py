@@ -150,6 +150,7 @@ def drive_make(t):
     t.check("Locked key:" in key_text and "MUTIS-" not in key_text, "the key file holds the key locked, never in plain form")
     t.check(a.wait("!document.querySelector('[data-testid=\"key-banner\"]')", 10), "the reminder goes once the key is saved")
     t.shared["drive_key"] = key_text
+    t.check(a.eval("localStorage.getItem('mutis.drive')") == "1", "a new drive sets the site's flag, never the key (the home paints Open my drive)")
     stored = a.eval("JSON.stringify(localStorage)")
     t.check("MUTIS-" not in stored and "Locked key" not in stored, "localStorage holds no key material")
     a.reload()
@@ -187,6 +188,12 @@ def drive_open_keyfile(t):
     b.wait_for("drive-root", 60)
     b.wait("document.querySelectorAll('[data-testid=\"file-row\"]').length === 2", 60)
     t.check(sorted(table_names(b)) == ["lease.txt", "passport.txt"], f"restored elsewhere: the same files, named in this browser ({table_names(b)})")
+    t.check(b.eval("localStorage.getItem('mutis.drive')") == "1", "an opened drive sets the site's flag (the home paints Open my drive)")
+    b.eval("document.querySelector('[data-testid=\"acct-lock\"]').click()")
+    b.wait_for("forget-device", 10)
+    b.click("forget-device")
+    t.check(b.wait("location.pathname === '/' && localStorage.getItem('mutis.drive') === null", 20),
+            "Lock my drive clears the flag (the home paints Make my drive again)")
     bad = t.actor("desktop")
     bad.goto(t.origin + "/drive?open")
     bad.wait_for("open-dialog", 60)
