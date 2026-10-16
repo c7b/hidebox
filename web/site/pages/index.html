@@ -22,6 +22,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/shared/fonts/geist/Geist-Latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
@@ -48,7 +49,7 @@
   <section class="hero" aria-labelledby="hero-h">
     <div class="hero-field" aria-hidden="true" data-field></div>
     <div class="wrap hero-inner">
-      <h1 id="hero-h">Your private drive. <span class="h1-2">Locked here. Shared your way.</span></h1>
+      <h1 id="hero-h" data-quiet>Your private drive. <span class="h1-2">Locked here. Shared your way.</span></h1>
       <p class="lede" data-quiet>Files lock in this browser before upload. You pick how each one opens: once, with a word, or for Tari™.</p>
       <div class="cta-row" data-cta>
         <a class="btn-xl cta-make" href="/drive?make" data-testid="home-make" data-quiet><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-plus"/></svg>Make my drive</a>

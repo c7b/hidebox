@@ -2,7 +2,17 @@
    field (the static grid here; the field module bends it after load), Make my drive in the brand fill, the drive
    slice hanging into Just share one thing (the anonymous widget, its ids and A-06 budget unchanged), then
    Share it your way, the comparison, who sees what, the Tari part with What's tTARI?, and the closing.
-   System faces on this page: Geist and the drive's code load only after a drive action (A-06). */
+   Its words are set in Geist-Latin.woff2, an 18 KB subset of the drive's pinned Geist (400 to 700, Latin-1;
+   17-site-brief §1.2); the drive's code loads only after a drive action (A-06). */
+@font-face {
+  font-family: "Geist";
+  src: url("/shared/fonts/geist/Geist-Latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+2010-2027, U+2030-203A, U+20AC, U+2122, U+2190-2193;
+}
+:root { --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
 
 .home main { overflow-x: clip; }
 
