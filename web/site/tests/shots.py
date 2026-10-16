@@ -34,6 +34,9 @@ def main():
     p.add_argument("--out", type=Path, default=HERE.parent / "shots")
     p.add_argument("--png", action="store_true")
     p.add_argument("--only", default="home,pages")
+    p.add_argument("--pages", help="comma-separated paths, default all six")
+    p.add_argument("--widths", default="1440,390")
+    p.add_argument("--full-dark", action="store_true", help="the whole page in the dark theme too")
     args = p.parse_args()
     only = set(args.only.split(","))
     ext = "png" if args.png else "webp"
@@ -41,12 +44,14 @@ def main():
     if out == HERE.parent / "shots":
         shutil.rmtree(out, ignore_errors=True)
     out.mkdir(parents=True, exist_ok=True)
-    srv, origin = start(["--mode", "direct", "--seallog"])
+    srv, origin = start(["--mode", "direct", "--seallog", "--pay"])
+    pages = args.pages.split(",") if args.pages else PAGES
+    sizes = [s for s in (DESKTOP, IPHONE) if str(s[0]) in args.widths.split(",")]
     with Browser() as browser:
-        for w, h, mobile in (DESKTOP, IPHONE):
+        for w, h, mobile in sizes:
             for dark in (False, True):
                 theme = "dark" if dark else "light"
-                for path in PAGES:
+                for path in pages:
                     name = NAMES.get(path, path.strip("/"))
                     if ("home" if path == "/" else "pages") not in only:
                         continue
@@ -54,7 +59,7 @@ def main():
                     page.goto(origin + path, settle=2)
                     page.eval("document.fonts.ready.then(() => true)", True)
                     page.screenshot(str(out / f"{name}-{w}-{theme}.{ext}"))
-                    if path != "/no-such-page" and not dark:   # the whole page once, in the light theme
+                    if path != "/no-such-page" and (not dark or args.full_dark):   # the whole page in the light theme
                         page.screenshot(str(out / f"{name}-{w}-{theme}-full.{ext}"), full=True)
     srv.shutdown()
     files = list(out.iterdir())

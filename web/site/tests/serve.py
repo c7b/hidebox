@@ -5,7 +5,7 @@ headers of spec §14.2, and answers the public API from tests/fixtures/, so page
 in a real browser without the server stack.
 
 Usage: python3 -I web/site/tests/serve.py [--port 8791] [--wall 24|8|quiet] [--wall-delay S]
-       [--mode relay|direct] [--seallog] [--no-canary] [--dist DIR] [--api URL]
+       [--mode relay|direct] [--seallog] [--pay] [--no-canary] [--dist DIR] [--api URL]
 --wall-delay answers /api/v1/stats/wall S seconds late (a slow network, for the wall's data switch).
 --dist serves a tree built by tools/build.py instead of expanding sources.
 --api forwards /api/* to a running server (e.g. `mutis-api --dev`) instead of the fixtures.
@@ -106,6 +106,8 @@ class Api:
             c["send_mode"] = self.opts.mode
             c["amount_proof"] = "sidecar" if self.opts.mode == "direct" else "wallet"
             c["features"]["seallog"] = self.opts.seallog
+            if self.opts.pay:   # as on the live deployment: pay to open and the sponsor grant on
+                c["features"].update(pay_to_open=True, sponsor=True)
             return 200, c
         if path == "/api/v1/stats":
             return 200, {**self.fixture("stats.json"), "updated_at": now}
@@ -234,6 +236,7 @@ def options(argv=None):
     p.add_argument("--wall-delay", type=float, default=0)
     p.add_argument("--mode", choices=("relay", "direct"), default="relay")
     p.add_argument("--seallog", action="store_true")
+    p.add_argument("--pay", action="store_true", help="pay to open and the sponsor grant on")
     p.add_argument("--no-canary", dest="canary", action="store_false")
     p.add_argument("--dist")
     p.add_argument("--api")
