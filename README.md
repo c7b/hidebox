@@ -18,7 +18,7 @@ repository's address.
 
 - Live: <https://srv2052606.hstgr.cloud> (Esmeralda testnet; tTARI has no monetary value)
 - The judges' guide, two tracks of six steps with what each should show: [/judges](https://srv2052606.hstgr.cloud/judges)
-- How it works, in five pictures: [/how](https://srv2052606.hstgr.cloud/how) · how it was made, who
+- How it works, in five pictures: [/how](https://srv2052606.hstgr.cloud/how) · under the hood (how it was made), who
   sees what and the threat model: [/made](https://srv2052606.hstgr.cloud/made) and
   [docs/threat-model.md](docs/threat-model.md)
 - Space is one real disk: packs and free space have daily limits per network, which slow anyone trying

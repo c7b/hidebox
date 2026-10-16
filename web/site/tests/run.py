@@ -62,7 +62,7 @@ def main() -> int:
                 print(f"     {p}")
         else:
             print(f"PASS {name}")
-    for note in notes:
+    for note in static_checks.NOTES_STATIC + notes:
         print(f"note {note}")
     print(f"{len(results) - failed} of {len(results)} checks without failures, {time.time() - started:.0f} s")
     return 1 if failed else 0

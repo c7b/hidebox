@@ -1,12 +1,15 @@
 <!-- SPDX-License-Identifier: MIT -->
-<header class="site-header">
+<header class="site-header" data-head>
   <div class="wrap top">
     <a class="wm" href="/" aria-label="{{BRAND}}, home"><span class="wm-tile" aria-hidden="true"><svg class="icon" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span><span class="wm-name" aria-hidden="true">{{BRAND}}</span></a>
     <nav class="top-nav" aria-label="Pages">
       <a href="/how">How it works</a>
       <a href="/judges">For judges</a>
-      <a href="/made">How it was made</a>
     </nav>
-    <button type="button" class="lights" data-theme-toggle aria-label="Lights" aria-pressed="true" hidden><svg class="icon" focusable="false" aria-hidden="true"><use href="/shared/ui/icons.svg#i-sun"/></svg></button>
+    <div class="top-end">
+      <button type="button" class="lights" data-theme-toggle aria-label="Lights" aria-pressed="true" hidden><svg class="icon i-sun" focusable="false" aria-hidden="true"><use href="/shared/ui/icons.svg#i-sun"/></svg><svg class="icon i-moon" focusable="false" aria-hidden="true"><use href="/shared/ui/icons.svg#i-moon"/></svg></button>
+      <a class="btn-brand head-cta head-make" href="/drive?make" data-testid="head-make"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-plus"/></svg>Make my drive</a>
+      <a class="btn-outline head-cta head-open" href="/drive" data-testid="head-open"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Open my drive</a>
+    </div>
   </div>
 </header>

@@ -2,12 +2,13 @@
 # The site of hidebox (codename mutis) and its shared design system
 
 The site (`web/site/`) and the design system the app shares with it (`web/shared/`): the six pages of
-16-drive-design §2 and §11 (the home with Make my drive beside a slice of a drive and the anonymous widget,
-how it works in five stills of the real interface, how it was made, for judges, the fine print, 404), SEO
-and static files, the brand tile and the partials.
+16-drive-design §2 and §11, restyled by site v2 (research/17-site-brief.md, 17-brand.md): the home with a
+centred hero over the ripple field, Make my drive, a slice of a drive and the anonymous widget; how it works
+in five stills of the real interface; Under the hood (how it was made); for judges; the fine print; 404),
+SEO and static files, the brand tile and the partials.
 
-No third-party code: our own ES modules and stylesheets, Geist (pinned) on the reading pages and the
-system faces on the home (A-06), Python's
+No third-party code: our own ES modules and stylesheets, Geist (pinned) on the reading pages and its
+pinned 18 KB Latin subset on the home (`tools/subset-geist.sh`), Python's
 standard library for every tool and test, Debian's Chromium. The old Mutis Script fonts stay in
 `../shared/fonts/` for one release; the build no longer copies them.
 
@@ -36,11 +37,11 @@ each amount-proof mode, with `web/app/i18n/en.json`. Last run on ultron: see `AC
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how security pricing faq judges terms privacy abuse status 404`, and `es/` |
-| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js` |
+| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home it loads `field.js` after the load event, A-06h), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js` |
 | `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |
-| `tools/` | `subset-fonts.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
+| `tools/` | `subset-fonts.sh`, `subset-geist.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
 | `tests/` | `run.py`, `static_checks.py`, `browser_checks.py`, `dates.test.mjs`, `serve.py`, `shots.py`, `make-canary.mjs`, `fixtures/` |
 | `shots/` | curated WebP screenshots of the six pages at 1440 and 390, light and dark, made by `tests/shots.py` |
 
