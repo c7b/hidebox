@@ -8,6 +8,9 @@
 // says who sends it (C8) and what the chain shows (C9-d). The result: the rule in one sentence, the link
 // with Copy, a code to scan on computers and Share on phones. A file or folder that already has links
 // opens on two tabs, New link and Links. The row menu's "Copy a once link" is one tap: Once, In a week.
+// Ending a link is found where people look: the row menu, the result and the Links tab all say Stop
+// sharing (a link ends for good: the server can't revive it, and the toast says so) or Stop selling /
+// Sell again (a paid link pauses: its toast offers Undo).
 import { formatDate, t } from '../lib/i18n.js';
 import { activeShares, ruleOf } from '../lib/drive.js';
 import { FEW, FLAG_FOLDER, knownLinks, makeLink, rememberLink, stopLink } from '../lib/links.js';
@@ -34,6 +37,60 @@ function context(drive, item) {
     cfg, firstDay, files, limits: drive.me?.limits ?? cfg.limits?.[firstDay ? 'probation' : 'locker'] ?? null,
     ticketMin: Math.round((cfg.retention?.ticket_s ?? 1800) / 60),
   };
+}
+
+// ---------- stopping ----------
+
+const isPaid = (s) => s.mode === 'pay' || Boolean(s.paid);
+// Where Stop sharing lives, in words: "this file's menu" or "this folder's menu".
+const menuOf = (item) => t(item.folder ? 'share.where_folder' : 'share.where_file');
+
+// After a stop: the drive's rows, and the dialog if it is open on that item.
+async function stopped(drive, item) {
+  await drive.reload();
+  drive.render();
+  if (S?.drive === drive && S.item.id === item.id) {
+    S.item = drive.index.get(item.id) ?? S.item;
+    if (S.tab === 'links' && !activeShares(S.item).length) S.tab = 'new';
+    render();
+  }
+}
+
+// Stop sharing: the item's links that don't sell (or the ones named) end now, DELETE /s/{id}.
+export async function stopSharing(drive, item, ids = activeShares(item).filter((x) => !isPaid(x)).map((x) => x.id)) {
+  for (const shareId of ids) await stopLink(shareId, drive.headers());
+  toast(t('share.stopped'), { type: 'success', description: t('share.stopped_d') });
+  await stopped(drive, item);
+}
+
+// Stop selling / Sell again: PATCH /s/{id} {paused}; buyers who paid keep their opens. Undo flips it back.
+export async function setSelling(drive, item, shareId, paused) {
+  await patchShare(shareId, { paused }, drive.headers());
+  toast(t(paused ? 'sell.stopped' : 'sell.resumed'), { type: 'success', action: { label: t('drive.toast.undo'),
+    onClick: () => setSelling(drive, item, shareId, !paused).catch(() => toast(t('drive.oops'), { type: 'error' })) } });
+  await stopped(drive, item);
+}
+
+// The row menu's Stop sharing, Stop selling and Sell again (ui/drive-list.js).
+export function stopFromMenu(drive, item, value) {
+  if (value === 'stop-share') return stopSharing(drive, item);
+  const sale = activeShares(item).find(isPaid);
+  return sale ? setSelling(drive, item, sale.id, value === 'stop-sell') : null;
+}
+
+// A button that runs `run` once, and says what went wrong in `where` if it fails.
+function stopButton(label, run, where, { variant = 'ghost', glyph = 'x', testid }) {
+  const b = button(label, { variant, size: 'sm', glyph, testid });
+  b.addEventListener('click', async () => {
+    b.disabled = true;
+    try {
+      await run();
+    } catch (e) {
+      b.disabled = false;
+      where.append(errorAlert(e));
+    }
+  });
+  return b;
 }
 
 // ---------- the pieces of a step ----------
@@ -184,7 +241,8 @@ function opensStep(body, footer) {
   const endsId = id('ends-l');
   trigger.setAttribute('aria-labelledby', endsId);
   body.append(h('div', { class: 'ends-row' }, h('span', { class: 'label', id: endsId }, t('share.ends')), trigger),
-    ctx.firstDay ? h('p', { class: 'small muted' }, t('share.end.later')) : null);
+    ctx.firstDay ? h('p', { class: 'small muted' }, t('share.end.later')) : null,
+    S.ends === 'never' ? h('p', { class: 'small muted', 'data-testid': 'share-ends-where' }, t('share.end.where', { menu: menuOf(item) })) : null);
   document.body.append(list);
   body.append(switchRow('word', 'key-round', t('share.word'), t('share.word_d'), {
     testid: 'share-word', extra: S.word ? wordField() : null,
@@ -401,7 +459,7 @@ function sendingStep(body, footer) {
 
 // ---------- the result ----------
 
-function sentence(link, ctx, folder) {
+function sentence(link, ctx, item) {
   const { opens, ends } = link.rule;
   const date = link.expiresAt ? when(link.expiresAt) : '';
   if (opens === 'once') return date ? t('share.say.once', { date }) : t('share.say.once_open');
@@ -409,7 +467,7 @@ function sentence(link, ctx, folder) {
     const few = link.maxViews ?? FEW;
     return date ? t('share.say.few', { few, date }) : t('share.say.few_open', { few });
   }
-  return ends === 'never' || !date ? t('share.say.public') : t('share.say.time', { date });
+  return ends === 'never' || !date ? t('share.say.public', { menu: menuOf(item) }) : t('share.say.time', { date });
 }
 
 async function copy(text) {
@@ -419,6 +477,32 @@ async function copy(text) {
   } catch {
     return false;
   }
+}
+
+// The result says how this link ends and ends it in one click: Stop sharing (the dialog closes), or
+// Stop selling / Sell again for a paid link (the dialog stays, its button flips).
+function stopRow(link, item) {
+  const { drive } = S;
+  const errors = h('div', {});
+  let text;
+  let end;
+  if (link.rule.pay) {
+    const paused = Boolean(activeShares(item).find((x) => x.id === link.shareId)?.paid?.paused);
+    text = t(paused ? 'sell.paused_where' : 'sell.stop_where', { menu: menuOf(item) });
+    end = stopButton(t(paused ? 'sell.resume' : 'sell.stop'), () => setSelling(drive, item, link.shareId, !paused), errors,
+      { variant: 'outline', glyph: paused ? 'rotate-ccw' : 'x', testid: paused ? 'share-resume' : 'share-pause' });
+  } else {
+    text = t('share.stop_where', { menu: menuOf(item) });
+    end = stopButton(t('share.stop'), async () => {
+      await stopSharing(drive, item, [link.shareId]);
+      closeModal(BOX);
+    }, errors, { testid: 'share-stop' });
+  }
+  return h('div', { class: 'stack' },
+    h('div', { class: 'item', 'data-variant': 'outline', 'data-size': 'sm', 'data-testid': 'share-stop-row' },
+      h('div', { class: 'item-content' }, h('div', { class: 'item-description' }, text)),
+      h('div', { class: 'item-actions' }, end)),
+    errors);
 }
 
 function resultStep(body, footer) {
@@ -442,7 +526,7 @@ function resultStep(body, footer) {
   ].filter(Boolean);
   const left = h('div', { class: 'stack' },
     h('div', { class: 'row' }, h('span', { class: 'badge', 'data-variant': 'success' }, icon('check'), t('share.ready'))),
-    h('p', { class: 'say', 'data-testid': 'share-say' }, pay ? t('sell.say', { price: formatTari(link.priceUt) }) : sentence(link, ctx, item.folder)),
+    h('p', { class: 'say', 'data-testid': 'share-say' }, pay ? t('sell.say', { price: formatTari(link.priceUt) }) : sentence(link, ctx, item)),
     extra.length ? h('p', { class: 'small', 'data-testid': 'share-say-more' }, extra.join(' ')) : null,
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'share-link-out' }, t('share.link')), h('div', { class: 'link-row' }, input, copyBtn)),
     link.word ? h('div', { class: 'stack' },
@@ -450,7 +534,8 @@ function resultStep(body, footer) {
         h('div', { class: 'stack' }, h('span', { class: 'small muted' }, t('share.say.word')), h('strong', {}, link.word))),
       h('p', { class: 'small muted' }, t('share.word_apart'))) : null,
     // C34 (seller form) and its boundary for a paid link; C2 for the others.
-    pay ? h('p', { class: 'small muted', 'data-testid': 'pay-split' }, `${t('sell.split')} ${t('sell.split_limit')}`) : h('p', { class: 'small muted' }, t('share.key_note')));
+    pay ? h('p', { class: 'small muted', 'data-testid': 'pay-split' }, `${t('sell.split')} ${t('sell.split_limit')}`) : h('p', { class: 'small muted' }, t('share.key_note')),
+    stopRow(link, item));
   const qrSlot = h('div', { class: 'qr-wrap' });
   body.append(h('div', { class: 'result-grid' }, left, coarse() ? null : qrSlot));
   if (!coarse()) {
@@ -477,42 +562,15 @@ function linksPanel(panel) {
     copyIt.addEventListener('click', async () => {
       if (await copy(mine.url)) toast(t('drive.toast.copied'), { type: 'success' });
     });
-    const stop = button(t('share.stop'), { variant: 'ghost', size: 'sm', testid: 'link-stop' });
-    stop.addEventListener('click', async () => {
-      stop.disabled = true;
-      try {
-        await stopLink(s.id, drive.headers());
-        toast(t('share.stopped'), { type: 'success' });
-        await drive.reload();
-        drive.render();
-        S.item = drive.index.get(item.id) ?? item;
-        S.tab = activeShares(S.item).length ? 'links' : 'new';
-        render();
-      } catch (e) {
-        stop.disabled = false;
-        panel.append(errorAlert(e));
-      }
-    });
+    const stop = stopButton(t('share.stop'), () => stopSharing(drive, item, [s.id]), panel, { testid: 'link-stop' });
     // lane app2: a paid link can stop selling (no new claims; buyers who paid keep their opens) and sell again.
-    let pause = null;
-    if (rule.kind === 'pay' && rule.ready !== false) {
-      pause = button(rule.paused ? t('sell.resume') : t('sell.stop'), { variant: 'outline', size: 'sm', testid: rule.paused ? 'link-resume' : 'link-pause' });
-      pause.addEventListener('click', async () => {
-        pause.disabled = true;
-        try {
-          await patchShare(s.id, { paused: !rule.paused }, drive.headers());
-          toast(rule.paused ? t('sell.resumed') : t('sell.stopped'), { type: 'success' });
-          await drive.reload();
-          drive.render();
-          S.item = drive.index.get(item.id) ?? item;
-          render();
-        } catch (e) {
-          pause.disabled = false;
-          panel.append(errorAlert(e));
-        }
-      });
-    }
-    const meta = [opensText(rule), endsText(rule)].filter(Boolean).join(' · ');
+    const pause = rule.kind === 'pay' && rule.ready !== false
+      ? stopButton(t(rule.paused ? 'sell.resume' : 'sell.stop'), () => setSelling(drive, item, s.id, !rule.paused), panel,
+        { variant: 'outline', glyph: rule.paused ? 'rotate-ccw' : 'x', testid: rule.paused ? 'link-resume' : 'link-pause' })
+      : null;
+    // "When you stop it" says where: this file's menu (or the buttons right here).
+    const ends = rule.kind === 'public' || rule.kind === 'pay' ? t('share.ends_menu', { menu: menuOf(item) }) : endsText(rule);
+    const meta = [opensText(rule), ends].filter(Boolean).join(' · ');
     return h('div', { class: 'item', 'data-variant': 'outline', 'data-size': 'sm', 'data-testid': 'link-row', 'data-id': s.id, 'data-rule': rule.kind },
       h('div', { class: 'item-content' },
         h('div', { class: 'item-title' }, h('span', { class: 'badges' }, ruleBadge(rule))),

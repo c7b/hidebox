@@ -153,7 +153,7 @@ def write_fixture(t, name, data):
 
 # --- §15 step 8: the share dialog -----------------------------------------------------------------------
 
-@scenario("share-once", "Share a file once (step 8): who, how many times, It ends, Make link, Copy, the code; a stranger opens it once; Copy a once link; the Links tab and Stop this link", features=FEATURES)
+@scenario("share-once", "Share a file once (step 8): who, how many times, It ends, Make link, Copy, the code; a stranger opens it once; Copy a once link; the Links tab and Stop sharing", features=FEATURES)
 def share_once(t):
     a = drive_page(t)
     a.wait_for("drive-empty", 30)
@@ -199,7 +199,7 @@ def share_once(t):
     once = clipboard(a)
     t.check(re.fullmatch(re.escape(t.origin) + LINK, once or "") is not None and once != url, "Copy a once link: a new Once link on the clipboard, in one tap")
     t.check(wait_rule(a, "notes.txt", "once"), "the row says Once again")
-    # The Links tab: Copy (this browser made it) and Stop this link.
+    # The Links tab: Copy (this browser made it) and Stop sharing.
     open_share(a, "notes.txt")
     t.check(a.exists("share-tab-links") and a.text("share-tab-links") == "Links (1)", "a file with a link opens on two tabs: New link, Links (1)")
     a.click("share-tab-links")
@@ -209,8 +209,8 @@ def share_once(t):
     a.click("link-copy")
     t.check(a.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(once)})", 10), "Copy on a link this browser made")
     a.click("link-stop")
-    a.wait("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('Link stopped.'))", 30)
-    t.check(wait_rule(a, "notes.txt", "ended"), "Stop this link: the link ends now, the file stays")
+    a.wait("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('Stopped sharing.'))", 30)
+    t.check(wait_rule(a, "notes.txt", "ended"), "Stop sharing: the link ends now, the file stays")
     _, state = stranger(t, once)
     t.check(state == "revoked", f"the stopped link no longer opens ({state})")
 
@@ -264,11 +264,73 @@ def share_rules(t):
     a.click("share-choice", "nolimit")
     pick_end(a, "never")
     t.check(not a.exists("share-then-delete"), "a link that never ends can't take the file with it: the switch goes")
+    t.check(a.text("share-ends-where") == "You stop it from this file's menu: Stop sharing.", "When I stop it says where: this file's menu")
     make_link(a)
-    t.check(a.text("share-say") == "Anyone with the link can open it until you stop it.", "the Public link")
+    t.check(a.text("share-say") == "Anyone with the link can open it until you stop it, from this file's menu.", "the Public link, and where to stop it")
     close_dialog(a)
     t.check(wait_rule(a, "public.txt", "public"), "the row says Public link")
     t.shot(a, "share-390-rows", full_page=True)
+
+
+@scenario("share-stop", "Stop sharing where people look (B): the row menu ends a file's links in one click (the toast says a stopped link can't come back, no Undo); the result has its own Stop sharing; the Links tab says where", features=FEATURES)
+def share_stop(t):
+    a = drive_page(t)
+    a.wait_for("drive-empty", 30)
+    upload_files(t, a, ["notes.txt", "song.txt"])
+    menu = "[...document.querySelectorAll('#row-menu .menu-item')].map((e) => e.dataset.value)"
+    kebab = """[...document.querySelectorAll('[data-testid="file-row"]')].find((e) => e.dataset.name === 'notes.txt').querySelector('[data-testid="row-kebab"]').click()"""
+    a.eval(kebab)
+    a.wait("!document.getElementById('row-menu').hidden", 10)
+    t.check("stop-share" not in a.eval(menu) and "stop-sell" not in a.eval(menu), f"a file without a link has no Stop sharing ({a.eval(menu)})")
+    a.key("Escape")
+    a.wait("document.getElementById('row-menu').hidden", 10)
+    open_share(a, "notes.txt")
+    to_opens(a)
+    url = make_link(a)
+    row = a.text("share-stop-row")
+    t.check(row.startswith("Stop it any time, here or from this file's menu.") and a.text("share-stop") == "Stop sharing",
+            f"the result: Stop sharing, and where else it lives ({row!r})")
+    t.check(a.ax_unnamed() == [], "every control in the result has a name")
+    t.shot(a, "share-1440-result-stop")
+    close_dialog(a)
+    t.check(wait_rule(a, "notes.txt", "once"), "the row wears its link")
+    # The row menu: Stop sharing right under Share, one click, a toast that says it can't come back.
+    a.eval(kebab)
+    a.wait("!document.getElementById('row-menu').hidden", 10)
+    t.check(a.eval(menu)[:3] == ["share", "once", "stop-share"] and a.text("menu-stop-share") == "Stop sharing", f"the menu: Share, Copy a once link, Stop sharing ({a.eval(menu)})")
+    t.shot(a, "share-1440-menu-stop")
+    a.click("menu-stop-share")
+    a.wait("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('Stopped sharing.'))", 30)
+    toast = a.eval("[...document.querySelectorAll('.toast')].find((e) => e.textContent.includes('Stopped sharing.')).textContent")
+    t.check("A stopped link can't come back. To share again, make a new link." in toast
+            and not a.eval("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('Stopped sharing.') && e.querySelector('.toast-action'))"),
+            f"one click; the toast says a stopped link can't come back, and offers no Undo ({toast!r})")
+    t.check(wait_rule(a, "notes.txt", "ended"), "the row says the link ended; the file stays")
+    _, state = stranger(t, url)
+    t.check(state == "revoked", f"the link no longer opens ({state})")
+    # From the result itself: the dialog closes on Stop sharing.
+    open_share(a, "song.txt")
+    to_opens(a)
+    url2 = make_link(a)
+    a.click("share-stop")
+    a.wait("!document.getElementById('share-dialog') || document.getElementById('share-dialog').hidden", 30)
+    t.check(wait_rule(a, "song.txt", "ended"), "Stop sharing in the result: the link ends, the dialog closes")
+    _, state = stranger(t, url2)
+    t.check(state == "revoked", f"that link no longer opens either ({state})")
+    # A Public link (second day): the Links tab says where it stops.
+    grow(t, a)
+    open_share(a, "song.txt")
+    to_opens(a)
+    a.click("share-choice", "nolimit")
+    pick_end(a, "never")
+    make_link(a)
+    close_dialog(a)
+    open_share(a, "song.txt")
+    a.click("share-tab-links")
+    a.wait_for("link-row", 10)
+    t.check("When you stop it, from this file's menu" in a.text("link-row") and a.text("link-stop") == "Stop sharing",
+            f"the Links tab: When you stop it, from this file's menu; Stop sharing ({a.text('link-row')!r})")
+    close_dialog(a)
 
 
 @scenario("share-word-then-delete", "A secret word, and Delete it from my drive after (step 8): the word box; a Once link that takes the file with it (C42)", features=FEATURES)
