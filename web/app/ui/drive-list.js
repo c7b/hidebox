@@ -4,7 +4,7 @@
 // decrypted here; nothing is sent, C43), and the empty drive: the brand moment, one primary (a folder
 // on computers, files on phones: iOS has no folder picker) and the drive's Tari address with Copy.
 import { formatBytes, t } from '../lib/i18n.js';
-import { leavesAt, ruleOf } from '../lib/drive.js';
+import { activeShares, leavesAt, ruleOf } from '../lib/drive.js';
 import { h, icon, init, setChecked, toast } from './behaviors.js';
 import { alert, badges, button, endsText, fileIcon, itemName, leavesBadge, opensText, ruleBadge, shortDay } from './drive-parts.js';
 
@@ -19,9 +19,15 @@ function rowMenu(drive) {
   menu.fill = (it) => {
     const file = !it.folder;
     const folders = drive.folders;
+    // Ending a share sits under Share, in the words the dialog uses: Stop selling or Sell again for a paid
+    // link, Stop sharing for the others (ui/share-dialog.js stopFromMenu).
+    const live = it.row ? activeShares(it) : [];
+    const sale = live.find((s) => s.mode === 'pay' || s.paid);
     menu.replaceChildren(...[   // the entries a folder doesn't have are null: never append them (they'd read "null")
       item('share', 'share-2', 'drive.menu.share'),
       file ? item('once', 'flame', 'drive.menu.once') : null,
+      sale ? (sale.paid?.paused ? item('sell-again', 'rotate-ccw', 'sell.resume') : item('stop-sell', 'x', 'sell.stop')) : null,
+      live.some((s) => s !== sale) ? item('stop-share', 'x', 'share.stop') : null,
       item('activity', 'activity', 'drive.menu.activity'),
       sep(),
       file ? item('download', 'download', 'drive.menu.download') : null,
@@ -47,6 +53,7 @@ export async function act(drive, value, items, trigger = null) {
       const m = await import('./share-dialog.js');
       return value === 'once' ? m.copyOnceLink(drive, items[0], { trigger }) : m.openShare(drive, items[0], { trigger });
     }
+    if (value === 'stop-share' || value === 'stop-sell' || value === 'sell-again') return (await import('./share-dialog.js')).stopFromMenu(drive, items[0], value);
     if (value === 'activity') return (await import('./activity.js')).openActivity(drive, items[0]);
     return (await import('./drive-menu.js')).menuAction(drive, value, items);
   } catch (e) {

@@ -11,7 +11,8 @@ payment the page builds is the product code's; ootle-wasm builds the chain outpu
 one-time-key comparison.
 
 share-pay (the seller), pay-page-states (the buyer page, every state), owner-check (R1 and the release gate),
-pay-drive (Pay from my drive: its steps from the click, a refusal with Try again, a drive short of money)."""
+pay-drive (Pay from my drive: its steps from the click, a refusal with Try again, a drive short of money),
+sell-stop (Stop selling and Sell again from the row menu and the result)."""
 import base64
 import glob
 import hashlib
@@ -730,6 +731,54 @@ def pay_drive(t):
     fake.claims[cids[0]]["owner_check"] = "ok"
     t.check(wait_pay(d, ("open",), 30) == "open" and all(x.endswith(":done") for x in steps(d)), f"Ready to open ({steps(d)})")
     t.check(d.csp_violations() == [] and d.ax_unnamed() == [], "no CSP violation; every control named")
+
+
+@scenario("sell-stop", "Stop selling where people look (B): the pay link's result has Stop selling, then Sell again; the row menu's Stop selling (PATCH paused) with Undo in its toast, and Sell again; the buyer page says it stopped", features=FEATURES)
+def sell_stop(t):
+    fake = PayFake(t)
+    a = seller(t, fake)
+    url = sell(a, "notes.txt", price="100000")
+    sid = re.search(PAY_LINK, url)[1]
+    fake.links[sid]["seller_state"] = "ok"
+    t.check(a.text("share-stop-row").startswith("It sells until you stop it, here or from this file's menu.") and a.text("share-pause") == "Stop selling",
+            f"the pay link's result: Stop selling, and where else it lives ({a.text('share-stop-row')!r})")
+    a.click("share-pause")
+    a.wait_for("share-resume", 30)
+    t.check(fake.links[sid]["paused"] is True and a.text("share-resume") == "Sell again"
+            and a.text("share-stop-row").startswith("It isn't selling. Sell again here or from this file's menu."), "Stop selling in the result: one click, the button flips to Sell again")
+    t.shot(a, "sell-stop-result-1440")
+    a.click("share-resume")
+    a.wait_for("share-pause", 30)
+    t.check(fake.links[sid]["paused"] is False, "Sell again in the result")
+    close_dialog(a)
+    t.check(wait_badge(a, "notes.txt", "Pay 0.1 tTARI"), "the row sells")
+    menu = "[...document.querySelectorAll('#row-menu .menu-item')].map((e) => e.dataset.value)"
+    kebab = """[...document.querySelectorAll('[data-testid="file-row"]')].find((e) => e.dataset.name === 'notes.txt').querySelector('[data-testid="row-kebab"]').click()"""
+    a.eval(kebab)
+    a.wait("!document.getElementById('row-menu').hidden", 10)
+    t.check("stop-sell" in a.eval(menu) and "stop-share" not in a.eval(menu) and a.text("menu-stop-sell") == "Stop selling",
+            f"the row menu of a paid file: Stop selling ({a.eval(menu)})")
+    t.shot(a, "sell-stop-menu-1440")
+    a.click("menu-stop-sell")
+    # The newest toast with those words (the result's own may still be up).
+    toast = "[...document.querySelectorAll('.toast')].filter((e) => e.textContent.includes('It stopped selling.')).pop()"
+    t.check(wait_badge(a, "notes.txt", "Not selling"), "the row says Not selling")
+    t.check(fake.links[sid]["paused"] is True and a.eval(f"{toast}?.querySelector('.toast-action')?.textContent") == "Undo",
+            "Stop selling from the menu: one click, a toast with Undo")
+    q = buyer(t, fake, url)
+    t.check(q.exists("pay-closed") and not q.exists("pay-test"), "the buyer page: not selling, no Pay")
+    a.eval(f"{toast}.querySelector('.toast-action').click()")
+    t.check(wait_badge(a, "notes.txt", "Pay 0.1 tTARI") and fake.links[sid]["paused"] is False, "Undo: it sells again")
+    a.eval(kebab)
+    a.wait("!document.getElementById('row-menu').hidden", 10)
+    a.click("menu-stop-sell")
+    t.check(wait_badge(a, "notes.txt", "Not selling"), "stopped again")
+    a.eval(kebab)
+    a.wait("!document.getElementById('row-menu').hidden", 10)
+    t.check("sell-again" in a.eval(menu) and a.text("menu-sell-again") == "Sell again", f"a paused link's menu: Sell again ({a.eval(menu)})")
+    a.click("menu-sell-again")
+    a.wait("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('It\\'s selling again.'))", 30)
+    t.check(wait_badge(a, "notes.txt", "Pay 0.1 tTARI") and fake.links[sid]["paused"] is False, "Sell again from the menu")
 
 
 # --- §15 step 16: the owner check -----------------------------------------------------------------------
