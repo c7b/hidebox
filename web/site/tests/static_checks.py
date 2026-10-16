@@ -693,6 +693,32 @@ def check_shared_blocks():
     return problems
 
 
+
+def check_internal_links():
+    """Every link from a site page or partial to another site page, or to an anchor (#id, /page#id), lands on
+    a page and an id that exist (the drive's, the API's and static files are checked elsewhere)."""
+    problems = []
+    pages = {"/" if f.stem == "index" else f"/{f.stem}": f for f in PAGES}
+    ids = {path: set(re.findall(r'\sid="([^"]+)"', f.read_text())) for path, f in pages.items()}
+    partial_ids = set().union(*(re.findall(r'\sid="([^"]+)"', f.read_text()) for f in PARTIALS))
+    for f in PAGES + PARTIALS:
+        here = ("/" if f.stem == "index" else f"/{f.stem}") if f in PAGES else None
+        for href in re.findall(r'<a\b[^>]*\shref="([^"]+)"', f.read_text()):
+            path, _, anchor = href.partition("#")
+            if href.startswith("#"):
+                path = here
+            elif not path.startswith("/") or path.startswith("//") or "." in path.rsplit("/", 1)[-1]:
+                continue
+            path = path.split("?")[0].rstrip("/") or "/"
+            if path is None or path not in pages:
+                if path and not path.startswith(("/drive", "/verify", "/watch", "/s/", "/api/", "/status", "/releases")):
+                    problems.append(f"{f.relative_to(WEB)}: {href} is no page")
+                continue
+            if anchor and not anchor.startswith("pass=") and anchor not in ids[path] | partial_ids:
+                problems.append(f"{f.relative_to(WEB)}: {href} has no id=\"{anchor}\" on {path}")
+    return problems
+
+
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
@@ -706,4 +732,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("/judges quotes the app's words, 6 + 6 steps", check_ui_strings),
           ("old pages redirect to pages and anchors that exist", check_redirects),
           ("A-06h: field.js at most 6 KB gzip, home.css at most 3 KB more, field.js only from site.js", check_field_budget),
-          ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks)]
+          ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
+          ("links to site pages and anchors land on something", check_internal_links)]
