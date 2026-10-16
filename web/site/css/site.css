@@ -1,7 +1,9 @@
-/* SPDX-License-Identifier: MIT — the site's chrome (DESIGN.md): what every page shares, the app's pages
-   included: type, buttons and links, the header (the name and the light switch, nothing else), the
-   footer (the deliberate second tap), reading blocks, forms and tables. home.css, how.css and
-   pages.css add the rest. Builds on /shared/tokens.css and base.css. */
+/* SPDX-License-Identifier: MIT — the site's chrome (DESIGN.md, site v2: 17-site-brief §2, 17-brand.md): what
+   every page shares, the app's pages included: type, buttons and links, the sticky header (the name, two
+   pages, the light switch, Make my drive), the footer, the section rhythm (two surfaces, a hairline and a
+   ruler at each seam), the four sides of a file, the tTARI box, reading blocks, forms and tables.
+   home.css, how.css and pages.css add the rest. Builds on /shared/tokens.css and base.css. */
+html { scroll-padding-top: 72px; }   /* anchors land below the sticky header */
 
 /* ---------- type ---------- */
 h1, .h1 { font: var(--t-hero); letter-spacing: -.02em; }
@@ -63,33 +65,110 @@ kbd { font: var(--t-code); font-size: .9em; padding: 1px 6px; border-radius: 6px
 /* ---------- layout ---------- */
 .wrap { width: 100%; max-width: calc(var(--content) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 
-/* ---------- header: the name, three pages, the light switch ---------- */
-.site-header { position: relative; z-index: var(--z-header); border-bottom: 1px solid var(--hair); background: var(--bg); }
-.top { display: flex; align-items: center; gap: var(--s-5); height: 56px; }
-.wm { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; padding: 4px; margin-left: -4px; border-radius: var(--r-input); color: var(--fg); }
-.wm-tile { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-input); background: var(--act); color: var(--on-act); }
-.wm-tile .icon { width: 18px; height: 18px; }
+/* the brand fill (17-brand.md, "The Sea Is Yours Rule"): only the button that makes or opens your drive,
+   one in view at a time; every other primary stays ink (.btn). Outline and ghost are shadcn's. */
+.btn-brand, .btn-outline, .btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 16px;
+  border: 0; border-radius: var(--r-input); font: var(--t-ui); text-decoration: none; white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
+}
+.btn-brand { background: var(--brand-solid); color: var(--on-brand); }
+.btn-brand:hover { background: var(--brand-solid-hover); }
+.btn-outline { border: 1px solid var(--line); background: var(--bg-raised); color: var(--fg); }
+.btn-ghost { background: transparent; color: var(--fg); }
+.btn-outline:hover, .btn-ghost:hover { background: var(--bg-sunken); }
+:is(.btn-brand, .btn-outline, .btn-ghost) .icon { width: 16px; height: 16px; }
+:is(.btn-brand, .btn-outline, .btn-ghost):active { scale: .97; }
+@media (pointer: coarse) { :is(.btn-brand, .btn-outline, .btn-ghost) { min-height: var(--tap); } }
+
+/* ---------- header: sticky and opaque (no blur, no glass) ---------- */
+.site-header { position: sticky; top: 0; z-index: var(--z-header); border-bottom: 1px solid var(--hair); background: var(--bg); }
+.top { display: flex; align-items: center; gap: var(--s-3); min-height: 60px; }
+.wm { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; padding: 4px; margin: 0 var(--s-2) 0 -4px; border-radius: var(--r-input); color: var(--fg); }
+.wm-tile { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-input); background: var(--act); color: var(--on-act); }
+.wm-tile .icon { width: 16px; height: 16px; }
 .wm-name { font: 650 17px/1 var(--font); letter-spacing: -.02em; }
-.top-nav { display: none; gap: var(--s-2); }
-.top-nav a { color: var(--fg-2); text-decoration: none; font: var(--t-small); padding: 8px 8px; border-radius: var(--r-input); }
+.top-nav { display: none; gap: 2px; }
+.top-nav a { color: var(--fg-2); text-decoration: none; font: var(--t-small); padding: 8px 10px; border-radius: var(--r-input); }
 .top-nav a:hover { color: var(--fg); background: var(--bg-sunken); }
-.top-nav a[aria-current="page"] { color: var(--fg); }
+.top-nav a[aria-current="page"] { color: var(--fg); font-weight: 500; }
 @media (min-width: 720px) { .top-nav { display: flex; } }
+.top-end { margin-left: auto; display: flex; align-items: center; gap: var(--s-2); }
 /* the light switch: its name stays "Lights", its state is aria-pressed (pressed = lights on) */
 .lights {
-  margin-left: auto; inline-size: 40px; block-size: 40px; display: grid; place-items: center; border: 0; padding: 0;
+  inline-size: 36px; block-size: 36px; display: grid; place-items: center; border: 0; padding: 0;
   background: transparent; border-radius: var(--r-input); color: var(--fg); transition: background-color var(--dur-1) var(--ease-out);
 }
 .lights:hover { background: var(--bg-sunken); }
 .lights .icon { width: 18px; height: 18px; }
+.lights .i-moon, :root[data-theme="dark"] .lights .i-sun { display: none; }
+:root[data-theme="dark"] .lights .i-moon { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lights .i-sun { display: none; }
+  :root:not([data-theme="light"]) .lights .i-moon { display: block; }
+}
 @media (pointer: coarse) { .lights { inline-size: var(--tap); block-size: var(--tap); } }
+/* Make my drive, or Open my drive (outline, no brand fill) when this browser holds a drive. On the home it
+   steps aside, its place kept, until site.js sees that none of the page's own buttons ([data-cta]) is on
+   screen, so two brand fills are never in view. */
+.head-cta { padding: 8px 14px; transition: background-color var(--dur-1) var(--ease-out), opacity var(--dur-2) var(--ease-out), visibility var(--dur-2); }
+:root[data-has-drive] .head-make, :root:not([data-has-drive]) .head-open { display: none; }
+.home .site-header:not([data-cta-out]) .head-cta { visibility: hidden; opacity: 0; }
 
-/* ---------- footer: everything else, one deliberate tap away ---------- */
-.site-footer { border-top: 1px solid var(--hair); margin-top: var(--s-8); }
-.foot { padding-block: var(--s-6) var(--s-5); color: var(--fg-2); font: var(--t-small); display: grid; gap: var(--s-2); }
+/* ---------- sections: two surfaces that alternate; each seam a hairline and the ruler (5 px ticks on the
+   field's 48 px grid, centred like it, faded toward both edges). Never a coloured band. ---------- */
+.sec { position: relative; padding-block: var(--sec-pad); border-top: 1px solid var(--hair); }
+.sec.alt { background: var(--bg-alt); }
+.sec::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 5px; pointer-events: none;
+  background: linear-gradient(to right, var(--tick) 1px, transparent 1px) calc(50% + 24px) 0 / var(--grid) 5px repeat-x;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+}
+.sec-head { display: grid; gap: 10px; margin-bottom: var(--s-6); max-width: 40rem; }
+.sec-head h2 { font: 650 clamp(26px, 3vw, 36px)/1.15 var(--font); letter-spacing: -.03em; }
+.sec-head p { font: var(--t-say); font-size: clamp(16px, 1.4vw, 18px); color: var(--fg-2); }
+.sec-head.center { margin-inline: auto; text-align: center; justify-items: center; }
+@media (min-width: 1024px) { .sec-head { margin-bottom: var(--s-7); } }
+.icon-tile { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-btn); background: var(--bg-sunken); color: var(--fg); }
+.icon-tile .icon { width: 20px; height: 20px; }
+.icon-tile.chain { background: color-mix(in srgb, var(--tari) 9%, transparent); color: var(--pay-text); }
+.icon-tile.yours { background: var(--brand-tile); color: var(--brand-text); }
+
+/* ---------- who sees what: four sides of every file (the home, /how) ---------- */
+.sides { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+@media (min-width: 640px) { .sides { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .sides { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.side { display: grid; align-content: start; gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); }
+.side.yours { background: var(--brand-subtle); border-color: var(--brand-border); }
+.side-top { display: flex; align-items: center; gap: 12px; }
+.side-top h3 { font: 600 17px/1.25 var(--font); letter-spacing: -.01em; }
+.seen { display: grid; gap: 4px; margin: 0; font: var(--t-small); }
+.seen dt { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1.4 var(--font); color: var(--fg-2); }
+.seen dt .icon { width: 14px; height: 14px; }
+.seen dd { margin: 0 0 var(--s-3); color: var(--fg); }
+.seen dd:last-child { margin-bottom: 0; }
+.sides-foot { margin-top: var(--s-5); font: var(--t-small); color: var(--fg-2); max-width: 62ch; }
+.sides-foot a { color: var(--fg); font-weight: 500; }
+
+/* ---------- What's tTARI? (the box on the home and /how) ---------- */
+.coin-box { display: grid; gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg); font: var(--t-small); font-size: 15px; }
+.coin-top { display: flex; align-items: center; gap: 12px; }
+.coin-top h3 { font: 600 18px/1.25 var(--font); }
+.coin-box ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.coin-box li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; }
+.coin-box li[hidden] { display: none; }
+.coin-box li .icon { width: 16px; height: 16px; margin-top: 3px; color: var(--fg-2); }
+.coin-box a { color: var(--fg); font-weight: 500; }
+.coin-box .status-line { font: var(--t-small); color: var(--fg-2); padding-top: var(--s-3); border-top: 1px solid var(--hair); }
+
+/* ---------- footer: everything else, on the second surface ---------- */
+.site-footer { border-top: 1px solid var(--hair); background: var(--bg-alt); }
+.foot { padding-block: var(--s-7) var(--s-6); color: var(--fg-2); font: var(--t-small); display: grid; gap: var(--s-2); }
 .foot-nav { display: flex; flex-wrap: wrap; gap: 0 20px; margin-left: -4px; }
-.foot-nav a { color: var(--fg); display: inline-flex; align-items: center; min-height: 44px; padding-inline: 4px; }
-.foot-legal { font-size: 13px; line-height: 1.5; max-width: 90ch; }
+.foot-nav a { color: var(--fg); display: inline-flex; align-items: center; min-height: 44px; padding-inline: 4px; text-decoration: none; }
+.foot-nav a:hover { text-decoration: underline; }
+.foot-legal { font-size: 13px; line-height: 1.5; max-width: 72ch; }
 .site-footer { transition: opacity var(--dur-2) var(--ease-out); }
 
 /* ---------- reading ---------- */
