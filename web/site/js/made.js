@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// How it was made: the live parts of "Check us" (14-ghost-design §8). The status line from
+// Under the hood (/made, how it was made): the live parts of "Check us" (14-ghost-design §8). The status line from
 // /status.json, our own test transactions from /evidence.json, and the hourly test file you can try
 // to read (and, once it is a day old, open with its published key). Each loads when it comes near;
 // a failed request leaves its block hidden. Numbers and copy variants come from site.js.
