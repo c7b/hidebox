@@ -282,6 +282,7 @@ def share_stop(t):
     a.eval(kebab)
     a.wait("!document.getElementById('row-menu').hidden", 10)
     t.check("stop-share" not in a.eval(menu) and "stop-sell" not in a.eval(menu), f"a file without a link has no Stop sharing ({a.eval(menu)})")
+    a.wait("document.getElementById('row-menu').contains(document.activeElement)", 10)  # its first item takes the focus on the next frame
     a.key("Escape")
     a.wait("document.getElementById('row-menu').hidden", 10)
     open_share(a, "notes.txt")
