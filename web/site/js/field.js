@@ -18,15 +18,15 @@ void main() { gl_Position = vec4(p, 0., 1.); }`;
 // 14 % at each side. Crossings add up the way two CSS gradient layers do.
 const FRAG = `#version 300 es
 precision highp float;
-uniform vec2 uRes;
+uniform vec2 uRes, uSize;
 uniform float uDpr, uAlpha, uQuiet, uReach;
 uniform vec3 uInk;
 uniform vec4 uZone, uRip[4];
 out vec4 o;
 float cover(float d) { return clamp((.5 + .5 / uDpr - d) * uDpr, 0., 1.); }
 void main() {
-  vec2 size = uRes / uDpr;
-  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr, q = p;
+  vec2 size = uSize;
+  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) * (uSize / uRes), q = p;
   for (int i = 0; i < 4; i++) {
     vec4 r = uRip[i];
     if (r.w < .5) continue;
@@ -64,11 +64,11 @@ export function start(field, canvas, gl) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0);
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  const u = Object.fromEntries(['uRes', 'uDpr', 'uAlpha', 'uQuiet', 'uReach', 'uInk', 'uZone', 'uRip']
+  const u = Object.fromEntries(['uRes', 'uSize', 'uDpr', 'uAlpha', 'uQuiet', 'uReach', 'uInk', 'uZone', 'uRip']
     .map((n) => [n, gl.getUniformLocation(prog, n)]));
 
   let ripples = [], count = 0, last = -1e9, raf = 0, timer = 0, onScreen = true, stopped = false;
-  let dpr = 1, zone = { x: 0, y: 0, rx: 1, ry: 1 }, ink = [0, 0, 0], alpha = 0.3, quiet = 0.4;
+  let dpr = 1, css = { w: 1, h: 1 }, zone = { x: 0, y: 0, rx: 1, ry: 1 }, ink = [0, 0, 0], alpha = 0.3, quiet = 0.4;
 
   // The brand colour and strengths, from the tokens (light, dark, increased contrast).
   const colours = () => {
@@ -83,11 +83,12 @@ export function start(field, canvas, gl) {
 
   function draw(now = performance.now()) {
     const w = canvas.width, h = canvas.height;
-    const reach = Math.hypot(Math.max(...ripples.map((r) => Math.max(r.x, w / dpr - r.x)), 0), h / dpr) + 80;
+    const reach = Math.hypot(Math.max(...ripples.map((r) => Math.max(r.x, css.w - r.x)), 0), css.h) + 80;
     const rip = new Float32Array(16);
     ripples.forEach((r, i) => rip.set([r.x, r.y, Math.min((now - r.t0) / LIFE, 1), 1], i * 4));
     gl.viewport(0, 0, w, h);
     gl.uniform2f(u.uRes, w, h);
+    gl.uniform2f(u.uSize, css.w, css.h);
     gl.uniform1f(u.uDpr, dpr);
     gl.uniform1f(u.uAlpha, alpha);
     gl.uniform1f(u.uQuiet, quiet);
@@ -128,7 +129,10 @@ export function start(field, canvas, gl) {
   }
   function resume() {
     if (!active() || !field.classList.contains('live')) return;
-    draw();
+    const now = performance.now();
+    ripples = ripples.filter((r) => now - r.t0 < LIFE);
+    if (ripples.length) raf ||= requestAnimationFrame(frame);
+    else draw(now);
     schedule(Math.max(300, EVERY - (performance.now() - last)));
   }
   function stop() {
@@ -137,16 +141,19 @@ export function start(field, canvas, gl) {
     field.classList.remove('live');
   }
 
+  colours();
+  field.append(canvas);
   new ResizeObserver(() => {
     const r = field.getBoundingClientRect();
     dpr = Math.min(devicePixelRatio || 1, matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
-    canvas.width = Math.max(1, Math.round(r.width * dpr));
-    canvas.height = Math.max(1, Math.round(r.height * dpr));
-    dpr = canvas.width / r.width;
+    css = { w: Math.max(1, r.width), h: Math.max(1, r.height) };
+    canvas.width = Math.max(1, Math.round(css.w * dpr));
+    canvas.height = Math.max(1, Math.round(css.h * dpr));
+    dpr = canvas.width / css.w;
     zone = quietZone();
     if (!stopped) draw();
   }).observe(field);
-  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; onScreen ? resume() : pause(); }).observe(hero);
+  new IntersectionObserver((entries) => { onScreen = entries.at(-1).isIntersecting; onScreen ? resume() : pause(); }).observe(hero);
   document.addEventListener('visibilitychange', () => (document.hidden ? pause() : resume()));
   for (const b of hero.querySelectorAll('.cta-make, .cta-open')) {
     for (const type of ['pointerenter', 'focus']) {
@@ -162,6 +169,4 @@ export function start(field, canvas, gl) {
   for (const q of ['(prefers-color-scheme: dark)', '(prefers-contrast: more)']) matchMedia(q).addEventListener('change', redraw);
   matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (m) => m.matches && stop());
   canvas.addEventListener('webglcontextlost', stop);
-  colours();
-  field.append(canvas);
 }

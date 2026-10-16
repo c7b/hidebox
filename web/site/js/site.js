@@ -66,14 +66,20 @@ function driveHere() {
     req.onerror = req.onblocked = () => resolve(null);
     req.onsuccess = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains('identity')) return resolve(false, db.close());
-      const n = db.transaction('identity').objectStore('identity').count('current');
-      n.onsuccess = () => resolve(n.result > 0, db.close());
-      n.onerror = () => resolve(null, db.close());
+      const done = (answer) => { db.close(); resolve(answer); };
+      db.onversionchange = () => done(null);   // the drive wants to upgrade: never stand in its way
+      try {
+        if (!db.objectStoreNames.contains('identity')) return done(false);
+        const n = db.transaction('identity').objectStore('identity').count('current');
+        n.onsuccess = () => done(n.result > 0);
+        n.onerror = () => done(null);
+      } catch {
+        done(null);
+      }
     };
-  }), () => null);
+  })).catch(() => null);
 }
-driveHere().then((has) => {
+const checkDrive = () => driveHere().then((has) => {
   if (has === null) return;
   root.toggleAttribute('data-has-drive', has);
   try {
@@ -83,6 +89,8 @@ driveHere().then((has) => {
     // blocked storage: this page still shows the right button
   }
 });
+checkDrive();
+addEventListener('pageshow', (e) => e.persisted && checkDrive());   // back from the drive, from the cache
 
 // The home: the header's button steps aside while one of the page's own ([data-cta]) is on screen
 // below the sticky header.
@@ -119,7 +127,11 @@ if (field) {
     if (!root.classList.contains('motion')) return;
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: 'low-power' });
-    if (gl) import('./field.js').then((m) => m.start(field, canvas, gl), () => null);
+    if (!gl) return;
+    import('./field.js').then((m) => m.start(field, canvas, gl)).catch(() => {
+      field.classList.remove('live');   // the static grid comes back
+      canvas.remove();
+    });
   };
   const idle = () => (globalThis.requestIdleCallback ?? ((f) => setTimeout(f, 1)))(begin, { timeout: 2000 });
   if (document.readyState === 'complete') idle();

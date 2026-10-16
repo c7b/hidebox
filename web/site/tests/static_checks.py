@@ -709,9 +709,11 @@ def check_internal_links():
                 path = here
             elif not path.startswith("/") or path.startswith("//") or "." in path.rsplit("/", 1)[-1]:
                 continue
+            if path is None:   # a partial's own anchor: it lands on whichever page includes it
+                continue
             path = path.split("?")[0].rstrip("/") or "/"
-            if path is None or path not in pages:
-                if path and not path.startswith(("/drive", "/verify", "/watch", "/s/", "/api/", "/status", "/releases")):
+            if path not in pages:
+                if not re.match(r"/(drive|verify|watch|status|releases)(/|$)|/s/|/api/", path):
                     problems.append(f"{f.relative_to(WEB)}: {href} is no page")
                 continue
             if anchor and not anchor.startswith("pass=") and anchor not in ids[path] | partial_ids:
