@@ -14,10 +14,10 @@ The live limits (file sizes, expiry, opens, space, prices) are in the public con
 ## Docs
 
 - [How it works]({{ORIGIN}}/how): five pictures of the drive, two lines each
-- [How it was made]({{ORIGIN}}/made): your key, folders and their keys, pay to open, Send by Tari, who sees what, space and when files go, receipts on the Tari chain, the Tari map, how to check this deployment, what it can't hide
+- [Under the hood]({{ORIGIN}}/made): how it was made: your key, folders and their keys, pay to open, Send by Tari, who sees what, space and when files go, receipts on the Tari chain, the Tari map, how to check this deployment, what it can't hide
 - [The fine print]({{ORIGIN}}/fine-print): privacy (every table the server keeps), terms, and the form to report a link
 - [For judges]({{ORIGIN}}/judges): two six-step tracks with what each step should show
-- [Full text of How it works, How it was made and The fine print]({{ORIGIN}}/llms-full.txt)
+- [Full text of How it works, Under the hood and The fine print]({{ORIGIN}}/llms-full.txt)
 - [Notarized releases]({{ORIGIN}}/releases.json): each release's manifest hash, recorded through SealLog
 
 ## API
