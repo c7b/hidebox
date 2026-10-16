@@ -405,7 +405,7 @@ export async function payPage(root, cfg, shareId) {
     content.append(
       h('div', { class: 'alert', 'data-variant': 'tari' }, icon('shield-check'), h('div', { class: 'alert-title' }, t('buy.trust_h')),
         h('div', { class: 'alert-description' }, h('p', {}, t('buy.trust')), h('p', {}, t('buy.split')))),
-      h('p', { class: 'small muted', 'data-testid': 'pay-chain' }, [t('buy.shows'), testMoney && P.claim?.how !== 'drive' ? t('buy.chain') : null].filter(Boolean).join(' ')),
+      h('p', { class: 'small muted', 'data-testid': 'pay-chain' }, [t('buy.shows'), testMoney && !viaDrive(P) ? t('buy.chain') : null].filter(Boolean).join(' ')),
       h('p', { class: 'small muted' }, t('drive.act.paid_d')));
     const line = testnetLine(cfg);
     line.className = 'small muted';
