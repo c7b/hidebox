@@ -29,55 +29,16 @@
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/judges.js" integrity="{{SRI}}"></script>
 </head>
-<body class="reading">
+<body class="reading judges">
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
-<main id="main" class="wrap page">
-  <div class="page-head">
-    <h1>For judges</h1>
-    <p class="lede">Two short tracks, six steps each. Each step says what you should see. If you see something else, it's a bug: tell us in our thread on the <a href="https://community.tari.com/">Tari™ community forum</a>.</p>
-  </div>
-
-  <div class="tracks">
-    <section class="track" aria-labelledby="t1">
-      <div class="track-head">
-        <h2 id="t1">One device, no wallet</h2>
-        <p class="sub">About two minutes. No sign-up.</p>
-      </div>
-      <ol class="steps">
-        <li><span class="do">Open the <a href="/">home page</a> and tap <b class="ui">Make my drive</b>.</span><span class="see">Your drive opens. Its key was made in this browser, with your Tari address beside it. No email.</span></li>
-        <li><span class="do">On a computer, drop a small folder on your drive<span data-needs="config" hidden> (under <span data-v="probation_quota"></span> on your first day)</span>.</span><span class="see">Each file says Locking, then Uploading. The folder shows Private.</span></li>
-        <li><span class="do">Open the folder. On one file tap <b class="ui">Share</b>, keep <b class="ui">Once</b>, turn on <b class="ui">Delete it from my drive after</b>, then tap <b class="ui">Make link</b>.</span><span class="see">“Your link is ready.” It says the file leaves your drive after its one open.</span></li>
-        <li><span class="do">Open the link in a private window and tap <b class="ui">Open it</b>. Then reload.</span><span class="see">The file opens. After the reload: “This link has ended.”</span></li>
-        <li><span class="do">Back in your drive, open <b class="ui">Activity</b>.</span><span class="see">Opened, then “It left your drive”. <span data-needs="config" hidden>That goes on the Tari chain within <span data-v="checkpoint"></span>.</span></span></li>
-        <li><span class="do">Tap <b class="ui">What our server knows</b>.</span><span class="see">A padded size, the hour, the rule, how many times it opened each hour, and its folder. Never the name, the key or who opened it.</span></li>
-      </ol>
-    </section>
-
-    <section class="track" aria-labelledby="t2">
-      <div class="track-head">
-        <h2 id="t2">Two devices, with Tari</h2>
-        <p class="sub">About five minutes. Test tTARI only.</p>
-      </div>
-      <div data-when="pay_to_open=on" hidden>
-        <ol class="steps">
-          <li><span class="do"><span class="where">Computer</span>On a folder's menu tap <b class="ui">Share</b>, pick <b class="ui">Someone who pays you</b>, keep the first price, tap <b class="ui">Make pay link</b>.</span><span class="see">A pay link and a code to scan.</span></li>
-          <li><span class="do"><span class="where">Phone</span>Scan the code.</span><span class="see">The folder's name, how many files, about how big, the price and the fee. The names inside stay locked.</span></li>
-          <li><span class="do"><span class="where">Phone</span>Tap <b class="ui">Pay with test money</b>.</span><span class="see">Waiting for your payment, Payment seen, On the chain, Ready to open.</span></li>
-          <li><span class="do"><span class="where">Phone</span>Open one photo, then save it.</span><span class="see">It opens. Our server never had the whole key.</span></li>
-          <li><span class="do"><span class="where">Computer</span>Open <b class="ui">Received</b>.</span><span class="see">Under Payments, the payment, marked Yours to spend.</span></li>
-          <li><span class="do"><span class="where">Phone</span>Tap <b class="ui">What the chain sees</b>.</span><span class="see">The amount and the owner are hidden. The fee is public.</span></li>
-        </ol>
-      </div>
-      <div data-when="pay_to_open=off">
-        <ol class="steps">
-          <li><span class="do"><span class="where">Computer</span>Tap <b class="ui">My Tari address</b>, then <b class="ui">Settings</b>.</span><span class="see">Your drive's Tari address, and a code to scan.</span></li>
-          <li><span class="do"><span class="where">Phone</span>Scan that code. Tap <b class="ui">Choose a file</b>, pick one, then tap <b class="ui">Send</b>.</span><span class="see">It goes by Tari. The amount and the owner are hidden. The note is locked.</span></li>
-          <li><span class="do"><span class="where">Computer</span>Open <b class="ui">Received</b>. Open what came.</span><span class="see">Your file. Only this drive's keys could find it.</span></li>
-          <li><span class="do"><span class="where">Either</span>Open <b class="ui">Storage</b> and tap <b class="ui">Get more space</b>. <span data-when="send_mode=relay">Tap <b class="ui">Pay with test money</b>.</span><span data-when="send_mode=direct" hidden>Tap <b class="ui">Pay from my drive</b>.</span></span><span class="see">Checked on the chain, then added.</span></li>
-        </ol>
-      </div>
-      <details class="pass" data-judge-pass hidden>
+<main id="main">
+  <section class="page-hero" aria-labelledby="j-h">
+    <div class="grid-static" aria-hidden="true"></div>
+    <div class="wrap">
+      <h1 id="j-h">For judges</h1>
+      <p class="lede">Two tracks, six steps each. See something else? It's a bug: tell us on <a href="https://community.tari.com/">the Tari™ community forum</a>.</p>
+      <details class="pass" id="pass" data-judge-pass hidden>
         <summary>Have a judge pass?</summary>
         <form class="form pass-form">
           <p class="hint" id="judge-hint">We give them on request. A pass skips the robot check and uses test tTARI we keep for judges. It stays in this browser for a week. Open your pass link on both devices.</p>
@@ -89,25 +50,76 @@
           <p class="form-status" id="judge-status" role="status"></p>
         </form>
       </details>
-    </section>
-  </div>
+    </div>
+  </section>
 
-  <section class="proof" aria-labelledby="check-h">
-    <h2 id="check-h">What to check</h2>
-    <p>Each line is a claim we make, word for word, and the screen where you can see it work. Every claim, with its limits, is on <a href="/made">how it was made</a>.</p>
-    <div class="table-wrap">
-      <table class="data-table claims">
+  <section class="sec alt" aria-label="The two tracks">
+    <div class="wrap tracks">
+      <article class="track" aria-labelledby="t1">
+        <div class="track-top"><span class="track-num" aria-hidden="true">1</span><h2 id="t1">One device, no wallet</h2><p>About two minutes. No sign-up.</p></div>
+        <ol class="steps">
+          <li><span class="do">On the <a href="/">home page</a>, tap <b class="ui">Make my drive</b>.</span><span class="see">Your drive opens, with your Tari address. No email.</span></li>
+          <li><span class="do">On a computer, drop a small folder on your drive<span data-needs="config" hidden> (under <span data-v="probation_quota"></span> on your first day)</span>.</span><span class="see">Each file says Locking, then Uploading. The folder shows Private.</span></li>
+          <li><span class="do">On one file: <b class="ui">Share</b>, keep <b class="ui">Once</b>, turn on <b class="ui">Delete it from my drive after</b>, <b class="ui">Make link</b>.</span><span class="see">“Your link is ready.” The file leaves after its one open.</span></li>
+          <li><span class="do">Open the link in a private window. Tap <b class="ui">Open it</b>, then reload.</span><span class="see">It opens. After the reload: “This link has ended.”</span></li>
+          <li><span class="do">Back in your drive, open <b class="ui">Activity</b>.</span><span class="see">Opened, then “It left your drive.” <span data-needs="config" hidden>That goes on the Tari chain within <span data-v="checkpoint"></span>.</span></span></li>
+          <li><span class="do">Tap <b class="ui">What our server knows</b>.</span><span class="see">A padded size, the hour, the rule, how many times it opened each hour, and its folder. Never the name, the key or who opened it.</span></li>
+        </ol>
+      </article>
+
+      <article class="track" aria-labelledby="t2">
+        <div class="track-top"><span class="track-num" aria-hidden="true">2</span><h2 id="t2">Two devices, with Tari</h2><p>About five minutes. Test tTARI only. <a href="/#ttari">What's tTARI?</a></p></div>
+        <div data-when="pay_to_open=on" hidden>
+        <ol class="steps">
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-laptop"/></svg>Computer</span>On a folder's menu: <b class="ui">Share</b>, <b class="ui">Someone who pays you</b>, keep the first price, <b class="ui">Make pay link</b>.</span><span class="see">A pay link and a code to scan.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-smartphone"/></svg>Phone</span>Scan the code.</span><span class="see">The price and the fee. The names inside stay locked.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-smartphone"/></svg>Phone</span>Tap <b class="ui">Pay with test money</b>.</span><span class="see">Waiting for your payment, Payment seen, On the chain, Ready to open.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-smartphone"/></svg>Phone</span>Open one photo, then save it.</span><span class="see">It opens. Our server never had the whole key.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-laptop"/></svg>Computer</span>Open <b class="ui">Received</b>, then <b class="ui">Payments</b>.</span><span class="see">The payment, marked Yours to spend.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-smartphone"/></svg>Phone</span>Tap <b class="ui">What the chain sees</b>.</span><span class="see">The amount and the owner are hidden. The fee is public.</span></li>
+        </ol>
+        <section class="more-try" aria-labelledby="more-h">
+          <h3 id="more-h">Two more, if you have time</h3>
+          <ul>
+            <li>Send by Tari: scan <b class="ui">My Tari address</b> with the phone, then send a file. <span>It goes by Tari. Only they can open it.</span></li>
+            <li>More space: <b class="ui">Storage</b>, <b class="ui">Get more space</b>, <span data-when="send_mode=relay"><b class="ui">Pay with test money</b></span><span data-when="send_mode=direct" hidden><b class="ui">Pay from my drive</b></span>. <span>Checked on the chain, then added.</span></li>
+          </ul>
+        </section>
+        </div>
+        <div data-when="pay_to_open=off">
+        <ol class="steps">
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-laptop"/></svg>Computer</span>Tap <b class="ui">My Tari address</b>, then <b class="ui">Settings</b>.</span><span class="see">Your drive's Tari address, and a code to scan.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-smartphone"/></svg>Phone</span>Scan that code. Tap <b class="ui">Choose a file</b>, pick one, then tap <b class="ui">Send</b>.</span><span class="see">It goes by Tari. The amount and the owner are hidden. The note is locked.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-laptop"/></svg>Computer</span>Open <b class="ui">Received</b>. Open what came.</span><span class="see">Your file. Only this drive's keys could find it.</span></li>
+          <li><span class="do"><span class="device"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-laptop"/></svg>Either</span>Open <b class="ui">Storage</b> and tap <b class="ui">Get more space</b>. <span data-when="send_mode=relay">Tap <b class="ui">Pay with test money</b>.</span><span data-when="send_mode=direct" hidden>Tap <b class="ui">Pay from my drive</b>.</span></span><span class="see">Checked on the chain, then added.</span></li>
+        </ol>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="check-h" id="check">
+    <div class="wrap">
+      <div class="sec-head center">
+        <h2 id="check-h">What to check</h2>
+        <p>Each claim, word for word, and where you see it.</p>
+      </div>
+      <table class="claim-table">
         <thead><tr><th scope="col">Tari's part</th><th scope="col">What we claim</th><th scope="col">Where you see it</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Stealth payments</th><td data-cue="What we claim">The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</td><td data-cue="Where you see it">What the chain sees, on the pay page after you pay</td></tr>
-          <tr data-when="pay_to_open=on" hidden><th scope="row">A split key</th><td data-cue="What we claim">We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.</td><td data-cue="Where you see it">The pay page</td></tr>
-          <tr><th scope="row">A key inside a payment</th><td data-cue="What we claim">Send by Tari: the key rides inside a payment to their address. Only they can open it.</td><td data-cue="Where you see it">Share, One Tari address</td></tr>
-          <tr><th scope="row">View keys</th><td data-cue="What we claim">A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those.</td><td data-cue="Where you see it"><a href="/made#who">Who sees what</a></td></tr>
-          <tr><th scope="row">Checked on the chain</th><td data-cue="What we claim">Checked on the chain, not a wallet's word.</td><td data-cue="Where you see it"><span data-when="pay_to_open=on" hidden>Received, Payments</span><span data-when="pay_to_open=off">Storage, Get more space</span></td></tr>
-          <tr><th scope="row">Receipts</th><td data-cue="What we claim">When a file leaves your drive, we write that on the Tari chain, for anyone to check.</td><td data-cue="Where you see it">Activity</td></tr>
-          <tr><th scope="row">A key, not an email</th><td data-cue="What we claim">No email, no password. Your key is the account.</td><td data-cue="Where you see it">Make my drive</td></tr>
+          <tr><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg>Stealth payments</th><td>The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</td><td class="where">What the chain sees, on the pay page after you pay</td></tr>
+          <tr data-when="pay_to_open=on" hidden><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>A split key</th><td>We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.</td><td class="where">The pay page</td></tr>
+          <tr><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg>A key inside a payment</th><td>Send by Tari: the key rides inside a payment to their address. Only they can open it.</td><td class="where">Share, One Tari address</td></tr>
+          <tr><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-eye"/></svg>View keys</th><td>A view key can't spend, but it can read everything sent to this address, including files. Give it only to someone allowed to see those.</td><td class="where"><a href="/made#who">Who sees what</a></td></tr>
+          <tr><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-circle-check"/></svg>Checked on the chain</th><td>Checked on the chain, not a wallet's word.</td><td class="where"><span data-when="pay_to_open=on" hidden>Received, Payments</span><span data-when="pay_to_open=off">Storage, Get more space</span></td></tr>
+          <tr><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg>Receipts</th><td>When a file leaves your drive, we write that on the Tari chain, for anyone to check.</td><td class="where">Activity</td></tr>
+          <tr><th scope="row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg>A key, not an email</th><td>No email, no password. Your key is the account.</td><td class="where">Make my drive</td></tr>
         </tbody>
       </table>
+      <div class="hood">
+        <div><h3>Under the hood</h3><p>Every claim, with its limits and a way to check it.</p></div>
+        <a class="btn-outline" href="/made">Read it<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
+      </div>
     </div>
   </section>
 </main>

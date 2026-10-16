@@ -25,8 +25,8 @@
 .reading ::selection { background: color-mix(in srgb, var(--fg) 14%, transparent); }
 .reading :is(h1, h2, h3) { text-wrap: balance; }
 .reading :is(p, li, dd) { text-wrap: pretty; }
-.reading a:not(.btn, .quiet, .toc a) { text-underline-offset: .22em; text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
-.reading a:not(.btn, .quiet, .toc a):hover { text-decoration-color: currentColor; }
+.reading a:not(.btn, .quiet, .btn-brand, .btn-outline, .btn-ghost) { text-underline-offset: .22em; text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+.reading a:not(.btn, .quiet, .btn-brand, .btn-outline, .btn-ghost):hover { text-decoration-color: currentColor; }
 .reading :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 50%, transparent); outline-offset: 2px; border-radius: .375rem; }
 .reading :is(td, .tnum) { font-variant-numeric: tabular-nums; }
 @media (pointer: coarse) { .reading { --tap: 44px; } }
@@ -36,22 +36,20 @@
 .page-head h1 { font: var(--t-hero); letter-spacing: -.025em; }
 .page-head .lede { font: var(--t-say); color: var(--fg-2); max-width: 40rem; }
 
-/* anchor links: shadcn outline buttons, small */
-.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--s-3); }
-.toc a {
-  display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border-radius: var(--r-input);
-  border: 1px solid var(--hair); background: var(--bg-raised); box-shadow: 0 1px 2px rgb(0 0 0 / .05);
-  color: var(--fg); text-decoration: none; font: var(--t-ui); white-space: nowrap;
-  transition: background-color var(--dur-1) var(--ease-out);
-}
-.toc a:hover { background: var(--bg-sunken); }
-@media (pointer: coarse) { .toc a { min-height: var(--tap); } }
-/* phones: one row that scrolls sideways inside itself, so the page starts with its words */
-@media (max-width: 639.98px) {
-  .toc { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding: 2px var(--gutter) 4px; scroll-padding-inline: var(--gutter); }
-  .toc::-webkit-scrollbar { display: none; }
-  .toc a { flex: none; }
-}
+/* Under the hood's jump list: two columns of links on computers, a closed "Jump to a part" on phones */
+.toc ul, .jump ul { list-style: none; margin: 0; padding: 0; }
+.toc { display: none; margin-top: var(--s-3); max-width: 36rem; }
+.toc ul { columns: 2; column-gap: var(--s-6); }
+.toc li, .jump li { break-inside: avoid; }
+.toc a, .jump a { display: inline-flex; align-items: center; min-height: 32px; font: var(--t-ui); font-size: .9375rem; color: var(--fg); }
+.jump { margin-top: var(--s-2); border-block: 1px solid var(--hair); }
+.jump summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; font: var(--t-ui); font-size: 1rem; cursor: pointer; list-style: none; }
+.jump summary::-webkit-details-marker { display: none; }
+.jump summary::after { content: ""; inline-size: 7px; block-size: 7px; border: solid var(--fg-2); border-width: 0 1.5px 1.5px 0; rotate: 45deg; translate: 0 -2px; transition: rotate var(--dur-2) var(--ease-out); }
+.jump[open] summary::after { rotate: 225deg; translate: 0 2px; }
+.jump ul { display: grid; padding-bottom: var(--s-3); }
+.jump a { min-height: 44px; }
+@media (min-width: 720px) { .toc { display: block; } .jump { display: none; } }
 
 /* how it was made: sections with a measure; the wide ones (tables, the Tari map) without */
 .doc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
@@ -133,34 +131,81 @@
 .terminal { background: #0A0A0A; color: #E5E5E5; border: 1px solid var(--hair); }
 .terminal span { color: #A3A3A3; }
 
-/* judge tracks: two cards, numbered steps, "You see" under each */
-.tracks { display: grid; gap: var(--s-5); }
-@media (min-width: 1000px) { .tracks { grid-template-columns: 1fr 1fr; align-items: start; } }
-.track { display: grid; gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); }
-.track-head { display: grid; gap: 4px; }
-.track h2 { font: var(--t-h3); letter-spacing: -.015em; }
-.track .sub { color: var(--fg-2); font: var(--t-small); }
-.track > [hidden] { display: none; }
-.steps { list-style: none; counter-reset: s; padding: 0; display: grid; gap: var(--s-4); }
-.steps li { counter-increment: s; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--s-3); row-gap: 2px; }
-.steps li::before {
-  content: counter(s); grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
-  border: 1px solid var(--hair); background: var(--bg-sunken); color: var(--fg); font: 600 13px/1 var(--font); font-variant-numeric: tabular-nums;
+/* ---------- for judges (site v2, 17-site-brief §6): the head on the field's static grid (its one reuse, no
+   script), two side-by-side tracks of six steps on the second surface, What to check centred ---------- */
+.page-hero { position: relative; isolation: isolate; overflow: clip; padding-block: var(--s-8) var(--s-7); }
+.page-hero .wrap { position: relative; z-index: 1; display: grid; justify-items: center; text-align: center; gap: var(--s-4); }
+.page-hero h1 { font: 650 clamp(36px, 5vw, 56px)/1.05 var(--font); letter-spacing: -.04em; }
+.page-hero .lede { font: var(--t-say); color: var(--fg-2); max-width: 36rem; }
+.grid-static { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.grid-static::before {
+  content: ""; position: absolute; inset: 0; --l: color-mix(in oklab, var(--brand-field) calc(var(--field-alpha) * 60%), transparent);
+  background: linear-gradient(to right, var(--l) 1px, transparent 1px), linear-gradient(to bottom, var(--l) 1px, transparent 1px);
+  background-size: var(--grid) var(--grid); background-position: calc(50% + 24px) -1px;
+  mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, #000 0 30%, transparent 85%);
 }
-.steps .do { font: 400 1rem/1.6 var(--font); color: var(--fg); }
-.steps .see { color: var(--fg-2); font: var(--t-small); }
-.steps .see::before { content: "You see: "; font-weight: 600; color: var(--fg); }
-.steps .ui { font-weight: 600; }
-.where { display: inline-block; padding: 0 8px; margin-right: 6px; border-radius: var(--r-pill); border: 1px solid var(--hair); color: var(--fg-2); font: 500 12px/1.6 var(--font); vertical-align: 1px; }
-.pass { border-top: 1px solid var(--hair); padding-top: var(--s-3); }
-.pass summary { cursor: pointer; font: var(--t-ui); min-height: 44px; display: flex; align-items: center; text-decoration: underline; text-underline-offset: .22em; }
-.pass-form { gap: var(--s-3); margin-top: var(--s-2); }
+@media (forced-colors: active) { .grid-static { display: none; } }
+.pass { font: var(--t-small); color: var(--fg-2); text-align: left; }
+.pass summary { cursor: pointer; font: var(--t-ui); color: var(--fg); min-height: 44px; display: flex; align-items: center; justify-content: center; text-decoration: underline; text-underline-offset: .22em; list-style: none; }
+.pass summary::-webkit-details-marker { display: none; }
+.pass-form { gap: var(--s-3); margin-top: var(--s-2); max-width: 30rem; }
 .pass-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.pass-row input { flex: 1 1 12em; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-input); background: transparent; font: var(--t-code); color: var(--fg); }
+.pass-row input { flex: 1 1 12em; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-input); background: var(--bg); font: var(--t-code); color: var(--fg); }
 .pass-row .btn { min-height: 40px; }
-.proof { display: grid; gap: var(--s-3); max-width: none; }
-.proof h2 { font: var(--t-h2); letter-spacing: -.025em; }
-.proof > p { max-width: var(--read); color: var(--fg-2); }
+
+.tracks { display: grid; gap: var(--s-5); align-items: start; }
+@media (min-width: 1000px) { .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.track { display: grid; gap: var(--s-5); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); }
+.track > [hidden] { display: none; }
+.track-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: center; }
+.track-num { grid-row: span 2; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-btn); background: var(--act); color: var(--on-act); font: 650 18px/1 var(--font); }
+.track-top h2 { font: 650 20px/1.25 var(--font); letter-spacing: -.02em; }
+.track-top p { font: var(--t-small); color: var(--fg-2); }
+.track-top a { color: var(--fg); }
+/* the stepper: numbered circles joined by a hairline; the action, then what you see in grey */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; }
+.steps li { counter-increment: step; position: relative; display: grid; gap: 3px; padding: 0 0 var(--s-4) 44px; font: var(--t-small); }
+.steps li::before {
+  content: counter(step); position: absolute; left: 0; top: -1px; display: grid; place-items: center; width: 28px; height: 28px;
+  border-radius: 50%; border: 1px solid var(--hair); background: var(--bg-raised); font: 600 13px/1 var(--font); font-variant-numeric: tabular-nums;
+}
+.steps li:not(:last-child)::after { content: ""; position: absolute; left: 13.5px; top: 30px; bottom: 4px; width: 1px; background: var(--hair); }
+.steps li:last-child { padding-bottom: 0; }
+.steps .do { font: 500 15px/1.45 var(--font); color: var(--fg); }
+.steps .ui { font-weight: 500; }
+.steps .see { color: var(--fg-2); }
+.device { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; padding: 1px 8px; border: 1px solid var(--hair); border-radius: var(--r-pill); background: var(--bg-sunken); color: var(--fg); font: 500 12px/1.5 var(--font); vertical-align: 1px; white-space: nowrap; }
+.device .icon { width: 12px; height: 12px; }
+.more-try { display: grid; gap: 8px; margin-top: var(--s-5); padding-top: var(--s-4); border-top: 1px solid var(--hair); font: var(--t-small); }
+.more-try h3 { font: 500 12px/1.4 var(--font); color: var(--fg-2); }
+.more-try ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.more-try li span:not([data-when]) { color: var(--fg-2); }
+.more-try .ui { font-weight: 500; }
+
+/* What to check: a compact table on its own surface; on phones each row stacks, "Where:" before the place */
+.claim-table {
+  width: 100%; max-width: 920px; margin-inline: auto; border-collapse: collapse; font: var(--t-small); background: var(--bg-raised);
+  border-radius: var(--r-panel); overflow: hidden; border-style: hidden; box-shadow: 0 0 0 1px var(--hair);
+}
+.claim-table th, .claim-table td { text-align: left; vertical-align: top; padding: 12px 16px; border-top: 1px solid var(--hair); }
+.claim-table thead th { border-top: 0; font: 500 12px/1.4 var(--font); color: var(--fg-2); background: var(--bg-sunken); }
+.claim-table tbody th { font: 500 14px/1.4 var(--font); white-space: nowrap; }
+.claim-table tbody th .icon { display: inline; width: 15px; height: 15px; color: var(--fg-2); vertical-align: -3px; margin-right: 8px; }
+.claim-table td.where { color: var(--fg-2); }
+.claim-table td.where a { color: inherit; }
+@media (min-width: 720px) { .claim-table td.where { white-space: nowrap; } }
+@media (max-width: 719.98px) {
+  .claim-table, .claim-table tbody, .claim-table tr, .claim-table th, .claim-table td { display: block; }
+  .claim-table thead { display: none; }
+  .claim-table tr { border-top: 1px solid var(--hair); padding: 12px 14px; }
+  .claim-table tr:first-child { border-top: 0; }
+  .claim-table tr[hidden] { display: none; }
+  .claim-table th, .claim-table td { padding: 2px 0; border: 0; white-space: normal; }
+  .claim-table td.where::before { content: "Where: "; }
+}
+.hood { max-width: 920px; margin: var(--s-6) auto 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); }
+.hood h3 { font: 600 17px/1.3 var(--font); }
+.hood p { font: var(--t-small); color: var(--fg-2); }
 
 /* forms on reading pages (the abuse report): shadcn inputs */
 .reading .field :is(input[type="url"], input[type="text"], textarea, select) { border-width: 1px; background: transparent; color: var(--fg); font: var(--t-small); font-size: 1rem; }
