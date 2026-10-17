@@ -1,0 +1,19 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "P-JR1",
+   "title": "probe: E-J track one to step 3's switch, logged",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 9.7,
+   "notes": [
+    "before {\"x\": 982, \"y\": 659.9921875, \"rect\": [966, 651, 32, 18], \"stack\": [\"share-then-delete.switch z=auto\", \"DIV.setting-row z=auto\", \"share-step-opens.stack z=auto\", \"share-dialog.dialog z=50\", \"DIV.overlay z=50\", \"DIV.sidebar-inset z=auto\"], \"checked\": \"false\", \"dialogs\": 1, \"judge\": false}",
+    "click took 0.20 s",
+    "after {\"x\": 982, \"y\": 659.9921875, \"rect\": [966, 651, 32, 18], \"stack\": [\"share-then-delete.switch z=auto\", \"DIV.setting-row z=auto\", \"share-step-opens.stack z=auto\", \"share-dialog.dialog z=50\", \"DIV.overlay z=50\", \"DIV.sidebar-inset z=auto\"], \"checked\": \"true\", \"dialogs\": 1, \"judge\": false}",
+    "log [\"30 body+ HTML\", \"41 body+ app\", \"41 body+ NOSCRIPT\", \"510 body+ theme-menu\", \"510 body+ side-sheet\", \"510 body+ d-new-menu\", \"510 body+ d-acct\", \"510 body+ m-new-menu\", \"510 body+ m-acct\", \"536 body+ INPUT\", \"536 body+ INPUT\", \"545 body+ row-menu\", \"548 body+ drop-overlay\", \"1804 body+ card uploads\", \"2218 body- row-menu\", \"2218 body+ row-menu\", \"2433 body- row-menu\", \"2433 body+ row-menu\", \"3164 body+ share-dialog\", \"3164 dialog drawn who\", \"3164 body+ overlay\", \"3164 dialog drawn who\", \"3164 dialog drawn who\", \"3201 focus share-next.btn\", \"3311 pointerdown share-next.btn @969,602\", \"3311 mousedown share-next.btn @969,601\", \"3379 mouseup share-next.btn @969,601\", \"3379 click share-next.btn @969,601\", \"3386 body+ ends-3\", \"3386 dialog drawn opens\", \"3386 switch data-state=unchecked\", \"3535 focus share-choice.radio\", \"3657 pointerdown share-then-delete.switch @982,660\", \"3657 mousedown share-then-delete.switch @982,659\", \"3658 focus share-then-delete.switch\", \"3723 mouseup share-then-delete.switch @982,659\", \"3723 click share-then-delete.switch @982,659\", \"3723 sh:change share-then-delete.switch checked=true\", \"3723 switch aria-checked=true\", \"3723 switch data-state=checked\"]",
+    "ok: the switch is on after one press (true, the press took 0.20 s)"
+   ]
+  }
+ ]
+}
