@@ -1,0 +1,9 @@
+Survivors after the judge-race purges (read-only snapshots before the deploy, 00:10:04Z, and after the purges):
+items that existed before the deploy and changed state since: 1 [('eotNda2roxg1YvEl-xfT1A', 'ready', 'deleted')]
+security drop /d/3w7m8k2v5t: [['active']]
+canary items ready: 47 -> 47
+judge passes: 44 -> 48 (+2 E-J runs' own passes, +2 probe passes; the 20 judges' passes extended, none removed)
+drives holding a pack: 1 -> 1 same: True
+drives: 238 -> 250 ; none removed: True
+E-J's paid share uxGJ2-cybVsptm6taGDvsA ended by E-J (takedown share); paid_shares rows: 20 -> 21
+(eotNda2r… is a canary item that ended by its own expiry at 00:40Z; the canary job made LErIc8q… in its place, so 47 canaries stay ready. No purge touched either.)

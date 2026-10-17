@@ -1,0 +1,17 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "P-JR4",
+   "title": "probe: E-J step 3 exactly, passive logs",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 11.1,
+   "notes": [
+    "at once true; later true",
+    "log [\"47 body+ app\", \"47 body+ NOSCRIPT\", \"145 fetch GET /app/i18n/en.json\", \"154   200 /app/i18n/en.json\", \"163 fetch GET /api/v1/config\", \"169   200 /api/v1/config\", \"236 fetch GET /api/v1/chain/utxos?after=0&limit=1\", \"241   200 /api/v1/chain/utxos?after=0&limit=1\", \"253 fetch POST /api/v1/auth/session\", \"312   404 /api/v1/auth/session\", \"314 fetch POST /api/v1/auth/register\", \"362   201 /api/v1/auth/register\", \"368 fetch GET /api/v1/me\", \"417   200 /api/v1/me\", \"438 body+ theme-menu\", \"438 body+ side-sheet\", \"438 body+ d-new-menu\", \"438 body+ d-acct\", \"438 body+ m-new-menu\", \"438 body+ m-acct\", \"477 fetch GET /api/v1/me/items?limit=50&view=all\", \"481 body+ INPUT\", \"481 body+ INPUT\", \"484   200 /api/v1/me/items?limit=50&view=all\", \"489 body+ row-menu\", \"496 body+ drop-overlay\", \"830 fetch GET /app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm\", \"841   200 /app/vendor/ootle-wasm-0.46.0/ootle_wasm\", \"1010 fetch GET /api/v1/chain/utxos?after=4736&limit=1000\", \"1023   200 /api/v1/chain/utxos?after=4736&limit=100\", \"1046 fetch POST /api/v1/sponsor\", \"1098   202 /api/v1/sponsor\", \"1868 body+ card uploads\", \"1872 fetch POST /api/v1/folders\", \"1881   201 /api/v1/folders\", \"1919 fetch POST /api/v1/uploads\", \"1922 fetch POST /api/v1/uploads\", \"1935   201 /api/v1/uploads\", \"1939   201 /api/v1/uploads\", \"1941 fetch PUT /api/v1/uploads/WgCZsxtBdp_T1biKD_CsrA/chunks/0\", \"1944 fetch PUT /api/v1/uploads/zLL7J-uiMHUjgVVXu_5-GQ/chunks/0\", \"1956   204 /api/v1/uploads/WgCZsxtBdp_T1biKD_CsrA/c\", \"1958 fetch POST /api/v1/uploads/WgCZsxtBdp_T1biKD_CsrA/complete\", \"1971   204 /api/v1/uploads/zLL7J-uiMHUjgVVXu_5-GQ/c\", \"1973 fetch POST /api/v1/uploads/zLL7J-uiMHUjgVVXu_5-GQ/complete\", \"2017   200 /api/v1/uploads/WgCZsxtBdp_T1biKD_CsrA/c\", \"2024   200 /api/v1/uploads/zLL7J-uiMHUjgVVXu_5-GQ/c\", \"2028 fetch POST /api/v1/uploads\", \"2084   201 /api/v1/uploads\", \"2086 fetch PUT /api/v1/uploads/vgw4hzg4zR0CIVZD7rF-pA/chunks/0\", \"2093   204 /api/v1/uploads/vgw4hzg4zR0CIVZD7rF-pA/c\", \"2093 fetch POST /api/v1/uploads/vgw4hzg4zR0CIVZD7rF-pA/complete\", \"2147   200 /api/v1/uploads/vgw4hzg4zR0CIVZD7rF-pA/c\", \"2148 fetch GET /api/v1/me/items?limit=50&view=all\", \"2198   200 /api/v1/me/items?limit=50&view=all\", \"2203 fetch GET /api/v1/me\", \"2255   200 /api/v1/me\", \"2271 body- row-menu\", \"2271 body+ row-menu\", \"2496 body- row-menu\", \"2496 body+ row-menu\", \"3180 body+ share-dialog\", \"3180 dialog data-step=who\", \"3180 dialog drawn who\", \"3180 body+ overlay\", \"3180 dialog hidden=null\", \"3180 dialog data-state=open\", \"3180 dialog drawn who\", \"3180 dialog drawn who\", \"3429 body+ ends-3\", \"3429 dialog data-step=opens\", \"3429 dialog drawn opens\", \"3429 switch data-state=unchecked\", \"3689 switch aria-checked=true\", \"3689 switch data-state=checked\"]",
+    "ok: the switch is on at once after one press (at once true, later true)"
+   ]
+  }
+ ]
+}
