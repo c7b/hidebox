@@ -759,3 +759,27 @@ extend --until` (`61e39c8`) extended the 20 judges' passes through 2026-12-15 UT
 tagged; verify-deploy 0 differences, D-01 passed, E-J with its pass passed (track one 10 s, track two 38 s),
 the non-chain batch 12/13 (E-04 hit the network's daily drive brake the probes had spent). Evidence:
 `docs/evidence/2026-10-16/judge-race/`.
+
+## Eighth pass (site v3): the owner's six changes (2026-10-17)
+
+The owner's words, decided, with no devil's-advocate pass: `docs/review/site-v3.md` has each one, the
+template's motion and what was copied, the decode, the pixel field and the numbers; `research/17-brand.md`
+v2 (outside this repository) and DESIGN.md carry the lime.
+
+| # | The owner asked | What changed |
+|---|---|---|
+| 1 | The header's button always on | It no longer steps aside while the hero's is in view: `site.js`'s observer, `data-cta-out` and its CSS are gone (`cc91c91`) |
+| 2 | "Open your drive" the only CTA | One label in the header, the hero and the closing; two links share it and theme.js shows the one that fits (`/drive?make` without a drive, `/drive?open` or `/drive` with one). /judges step 1, its claim table and /how's first step use it; the app keeps its own words (`cc91c91`, `c5ff11d`) |
+| 3 | Tari's `#bcfe00` as the action colour | The lime ramp replaces Sea in the `--brand-*` roles: `#0A0A0A` on the fill 16.32:1, a lime-700 edge on light pages (4.65:1), olive brand text on light (7.20:1), lime on dark (16.32:1). The public kit sources say `#C9EB00`; the owner's `#BCFE00` shipped as decided, a one-line switch either way (`f319a50`) |
+| 4 | The template's scroll animations | `motion.js`: reveals as things scroll in (headings, paragraphs, cards, pictures, rows, badges; 60 ms steps), a word blur-in, the hero's arrival in CSS, /how's scroll-driven progress line; at most 700 ms, nothing hidden that was on screen or without JavaScript, none with reduced motion (`4e10d3b`) |
+| 5 | The drive picture decodes on load | Hex noise resolving into each word, row after row, 1.1 s, behind an aria-hidden layer; the DOM ends as served; Who sees what's labels too (`4e10d3b`) |
+| 6 | PixelBlast in the kit's green | `pixel.js` behind the home's closing (the page's last ask; /judges stays calm), paused off screen, CSS pixels as the fallback, never under a word (`4e10d3b`, `b7fe15e`) |
+
+Also: the word budget now counts with reduced motion (words waiting for their reveal would not count), and
+the judge race's README quoted C49 in part, which failed check-copy on `main` and would have failed the
+deploy gate (`ffce96f`). Released as `17f6c5b` (release `17f6c5bf…-c6017e701`), tag `spooky-secrets-2026-10`
+moved there and pushed with main; suites lint, copy, core 9/9, UI 691/691, site 35/35; verify-deploy 0
+differences across 161 files, D-01 PASS, the live probe 25/25, the non-chain batch 13/13 (E-04 passed: the
+UTC day's drive brake had reset); 3 items and 1 drop purged by id; `/status.json` green. Evidence:
+`docs/evidence/2026-10-17/site-v3/`.
+

@@ -1,0 +1,47 @@
+PASS SPDX headers
+PASS no HTML/script sinks in JS
+PASS markup: CSP-safe, includes, placeholders, JSON-LD
+PASS banned words
+PASS no typed /config numbers (P-20)
+PASS variables and conditions
+PASS SEO metadata (M-04)
+PASS trademark and mandatory lines (M-05)
+PASS partials in sync
+PASS no page shows the ghost
+PASS privacy inventory covers the schema (M-06)
+PASS contrast table (M-03)
+PASS static files (M-04)
+PASS security.txt contacts answer a stranger (needs the network)
+PASS copy variants set at build time (M11)
+PASS /judges quotes the app's words, 6 + 6 steps
+PASS old pages redirect to pages and anchors that exist
+PASS A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3 KB more, each only from site.js
+PASS the four sides and What's tTARI? are the same on / and /how
+PASS links to site pages and anchors land on something
+PASS llms-full.txt matches /how, /made and /fine-print
+PASS dates.js in two time zones (M-08)
+PASS fonts: the pinned Geist subset on the home, pinned Geist on reading pages
+PASS every page, desktop, 390 and 360 px
+PASS home page budget (M-01)
+PASS live numbers and their failure (M-07)
+PASS home words: 120 above the fold, 800 in all, Open your drive first
+PASS A-06h: the field loads after the load event, ripples, never with reduced motion
+PASS header: Open your drive always on, to /drive?make or /drive
+PASS motion: reveals, the decode, the pixel field; reduced motion and no JavaScript
+PASS copy variants from /config
+PASS status line phase (M-08)
+PASS abuse form: key stripped, never sent without JavaScript
+PASS canary reveal (P1)
+PASS theme, judge pass
+note A-06h: field.js 3,463 B (at most 6,144); motion.js 3,149 B (at most 4,096); pixel.js 3,640 B (at most 8,192), gzip -9; home.css 4,692 B (was 1,770, +2,922 of 3,072)
+note fonts: the pinned Geist subset on /, the pinned Geist on /how (0 problems)
+note budget on /: 34 requests, HTML+CSS+JS 57.9 KB gzip, other 52.3 KB, total 110.2 KB, 1 font files, third-party 0 (with the drop widget's first load)
+note API blocked: /made hides 28 [data-needs] blocks, shows 0
+note home words at 390: 63 above the fold, 667 in all
+note home words at 1440: 68 above the fold, 686 in all
+note A-06h @1440: field.js at 914 ms, load event ended 184 ms; 2 ripples
+note A-06h @390: field.js at 537 ms, load event ended 212 ms; 2 ripples
+note motion @1440: motion.js at 670 ms (load event 183 ms), decode seen: True, pixel field live: True
+note motion @390: motion.js at 515 ms (load event 175 ms), decode seen: True, pixel field live: True
+note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; Test file #789: missed (the verifier restarted).
+35 of 35 checks without failures, 196 s

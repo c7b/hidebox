@@ -1,0 +1,26 @@
+PASS reduced motion: neither module loads
+PASS reduced motion: the picture's words show at once
+PASS / @1440: the picture decodes behind an aria-hidden layer, its real words kept
+PASS / @1440: motion.js at 841 ms, after the load event (541 ms)
+PASS / @1440: the header's Open your drive at the top
+PASS / @1440: the header's Open your drive at the end
+PASS / @1440: nothing left hidden after scrolling through (0)
+PASS / @1440: the picture's DOM after the decode is the page's
+PASS / @1440: the pixel field live (pixel.js at 3224 ms)
+PASS / @1440: the pixel field pauses off screen
+PASS / @1440: no CSP or Trusted Types violation []
+PASS / @390: the picture decodes behind an aria-hidden layer, its real words kept
+PASS / @390: motion.js at 856 ms, after the load event (196 ms)
+PASS / @390: the header's Open your drive at the top
+PASS / @390: the header's Open your drive at the end
+PASS / @390: nothing left hidden after scrolling through (0)
+PASS / @390: the picture's DOM after the decode is the page's
+PASS / @390: the pixel field live (pixel.js at 3514 ms)
+PASS / @390: the pixel field pauses off screen
+PASS / @390: no CSP or Trusted Types violation []
+PASS /how: motion.js loads; the header says Open your drive
+PASS /how: nothing left hidden after scrolling through
+PASS /judges: motion.js loads; the header says Open your drive
+PASS /judges: nothing left hidden after scrolling through
+PASS no JavaScript: every word on / fully shown (0 not)
+live probe: PASS (0 failed)

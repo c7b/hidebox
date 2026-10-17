@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 import sys
 sys.path.insert(0, "<repo>/tests/e2e")
 sys.path.insert(0, "~/.cache/mutis-tmp/probe")
