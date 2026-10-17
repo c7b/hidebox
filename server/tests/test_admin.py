@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: MIT
 """mutis-admin (spec §15.7) and judge passes (brand patch P-12), driven through the CLI entry point."""
+import calendar
 import contextlib
 import io
 import json
 import logging
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from harness import ORIGIN, Stack
 from mutis import admin, auth, budgets, codec, config, db
@@ -208,6 +211,34 @@ class Admin(unittest.TestCase):
                                                               "manage_verifier": codec.b64u(b"\0" * 32)},
                                     headers={"X-Mutis-Judge": code})
         self.assertEqual((status, resp["error"]["details"]), (403, {"judge": "invalid"}))
+
+    def test_judge_pass_extend(self):
+        """The same passes, uses kept, valid through the day named; codes come on stdin; unknown codes change
+        nothing; a pass already valid longer is never cut short; the output never shows a code."""
+        s = self.s
+        first, second = (self.run_admin("judge-pass", "new").strip() for _ in range(2))
+        with db.tx(s.conn):
+            s.conn.execute("UPDATE judge_passes SET created_at = ?, uses_left = 3", (s.now - 29 * 86400,))
+        until = time.strftime("%Y-%m-%d", time.gmtime(s.now + 60 * 86400))
+        ends = calendar.timegm(time.strptime(until, "%Y-%m-%d")) + 86400
+
+        def extend(codes, day=until):
+            with mock.patch("sys.stdin", io.StringIO(codes)):
+                return self.run_admin("judge-pass", "extend", "--until", day)
+
+        with self.assertRaises(SystemExit):
+            extend(f"{first}\njudge-{'0' * 24}\n")
+        self.assertFalse(auth.judge_pass_live(s.conn, first, s.now + 2 * 86400))   # nothing changed
+        out = extend(f"# the judges' passes\n{first}\n\n{second.upper()}\n")
+        self.assertNotIn(first, out)
+        self.assertNotIn(second.lower(), out.lower())
+        self.assertIn("2 passes: valid through", out)
+        for code in (first, second):
+            self.assertTrue(auth.judge_pass_live(s.conn, code, ends - 1))
+            self.assertFalse(auth.judge_pass_live(s.conn, code, ends))
+        self.assertEqual([r[0] for r in s.conn.execute("SELECT uses_left FROM judge_passes")], [3, 3])
+        extend(f"{first}\n", time.strftime("%Y-%m-%d", time.gmtime(s.now + 40 * 86400)))   # earlier: kept as it was
+        self.assertTrue(auth.judge_pass_live(s.conn, first, ends - 1))
 
     def test_budget_overrides_only_lower(self):
         out = io.StringIO()

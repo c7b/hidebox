@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """mutis-admin (spec §15.7): operator commands. Run with sudo as `mutis` (or `drive` for chain commands)."""
 import argparse
+import calendar
 import json
 import os
 import re
@@ -155,6 +156,8 @@ def _force(conn, name: str) -> None:
 
 
 def cmd_judge_pass(cfg, conn, args) -> None:
+    if args.action == "extend":
+        return _extend_judge_passes(conn, args.until, sys.stdin)
     now = codec.now()
     with db.tx(conn):
         for _ in range(args.count):
@@ -162,6 +165,37 @@ def cmd_judge_pass(cfg, conn, args) -> None:
             conn.execute("INSERT INTO judge_passes(code_hash, uses_left, created_at, pow_skips_left) "
                          "VALUES (?, ?, ?, ?)", (auth.judge_hash(code), args.uses, now, args.pow_skips))
             print(code)
+
+
+def _utc(t: int) -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
+
+
+def _extend_judge_passes(conn, until: str | None, codes_in) -> None:
+    """`judge-pass extend --until YYYY-MM-DD < codes`: the passes named on stdin (one code a line, `#` lines
+    skipped; never on the command line) stay valid through that UTC day. Same passes, same uses: a pass
+    works for auth.JUDGE_PASS_DAYS after its created_at, so that moves forward (never back). Every code
+    must be known, or nothing changes. Prints each pass by the first 8 hex of its hash, never its code."""
+    if not until or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", until):
+        raise SystemExit("judge-pass extend: --until YYYY-MM-DD (UTC) is required")
+    day = calendar.timegm(time.strptime(until, "%Y-%m-%d"))   # 00:00 UTC
+    ends = day + 86400                       # valid through that day
+    if ends <= codec.now():
+        raise SystemExit("judge-pass extend: that day has passed")
+    hashes = [auth.judge_hash(line) for line in (x.strip() for x in codes_in) if line and not line.startswith("#")]
+    if not hashes:
+        raise SystemExit("judge-pass extend: no codes on stdin")
+    start = ends - auth.JUDGE_PASS_DAYS * 86400
+    with db.tx(conn):
+        rows = [conn.execute("SELECT created_at FROM judge_passes WHERE code_hash = ?", (h,)).fetchone() for h in hashes]
+        unknown = sum(r is None for r in rows)
+        if unknown:
+            raise SystemExit(f"judge-pass extend: {unknown} of {len(hashes)} codes are not passes here; nothing changed")
+        for h, row in zip(hashes, rows):
+            before = row["created_at"] + auth.JUDGE_PASS_DAYS * 86400
+            conn.execute("UPDATE judge_passes SET created_at = MAX(created_at, ?) WHERE code_hash = ?", (start, h))
+            print(f"{h.hex()[:8]} valid until {_utc(max(before, ends))} (was {_utc(before)})")
+    print(f"{len(hashes)} passes: valid through {until} UTC")
 
 
 def _sanitize(obj, names: dict):
@@ -241,7 +275,8 @@ def parser() -> argparse.ArgumentParser:
     for name, flag in (("canary-now", "canary"), ("evidence-pay-now", "evidence_pay"), ("seal-now", "seal")):
         sub.add_parser(name).set_defaults(fn=lambda cfg, conn, args, flag=flag: _force(conn, flag))
     j = sub.add_parser("judge-pass")
-    j.add_argument("action", choices=("new",))
+    j.add_argument("action", choices=("new", "extend"))
+    j.add_argument("--until", help="extend: the last UTC day (YYYY-MM-DD) the passes named on stdin are valid")
     j.add_argument("--uses", type=int, default=5, help="budgeted sends (courier, demo-pay, sponsor)")
     j.add_argument("--pow-skips", type=int, default=100, help=f"proofs of work it stands in for "
                                                                f"(valid {auth.JUDGE_PASS_DAYS} days)")
