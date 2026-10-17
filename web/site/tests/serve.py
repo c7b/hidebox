@@ -34,7 +34,8 @@ APP_CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript",
          ".mjs": "text/javascript", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
          ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json",
-         ".wasm": "application/wasm"}
+         ".wasm": "application/wasm", ".webm": "video/webm", ".mp4": "video/mp4"}
+MEDIA = {".webm", ".mp4"}   # /v2's loops: answered in byte ranges, as Caddy's file server does
 TEXT = {".html", ".txt", ".webmanifest"}   # the build expands placeholders in pages and static text only
 INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")
 SRI_TAG = re.compile(r'(<(?:script|link)\b[^>]*?(?:src|href)="(/[^"]+)"[^>]*?) integrity="\{\{SRI\}\}"')
@@ -59,7 +60,7 @@ class Site:
         if m and (SITE / "pages" / f"{m[1]}.html").is_file():
             return SITE / "pages" / f"{m[1]}.html"
         for prefix, root in (("/shared/", SHARED), ("/site/js/", SITE / "js"), ("/site/css/", SITE / "css"),
-                             ("/app/", WEB / "app")):
+                             ("/site/media/", SITE / "media"), ("/app/", WEB / "app")):
             if path.startswith(prefix):
                 return root / path[len(prefix):]
         return SITE / "static" / path.lstrip("/")
@@ -195,10 +196,16 @@ class Handler(BaseHTTPRequestHandler):
                 f = Path(self.site.opts.dist) / "404.html"
         else:
             status = 200
-        csp = APP_CSP if path == "/" else SITE_CSP
+        csp = APP_CSP if path in ("/", "/v2", "/v2/") else SITE_CSP   # the pages with the drop widget (Caddyfile)
         body = self.site.render(f, path)
+        m = re.fullmatch(r"bytes=(\d+)-(\d*)", self.headers.get("Range", ""))
+        if f.suffix in MEDIA and status == 200 and m and int(m[1]) < len(body):
+            start, end = int(m[1]), min(int(m[2] or len(body) - 1), len(body) - 1)
+            return self.send(206, body[start:end + 1], TYPES[f.suffix],
+                             [("Content-Range", f"bytes {start}-{end}/{len(body)}"), ("Accept-Ranges", "bytes")])
         self.send(status, body, TYPES.get(f.suffix, "application/octet-stream"),
-                  [("Content-Security-Policy", csp)] if f.suffix == ".html" else [])
+                  [("Content-Security-Policy", csp)] if f.suffix == ".html" else
+                  [("Accept-Ranges", "bytes")] if f.suffix in MEDIA else [])
 
     do_HEAD = do_GET
 

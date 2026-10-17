@@ -225,6 +225,26 @@ http://{$MUTIS_HOST} {
 		file_server
 	}
 
+	# /v2 (docs/review/home-v2.md): the home with the product loops, at an address no page links. It carries the
+	# drop widget too, so it gets the app policy, whose media-src lets the loops play; noindex as its page says.
+	@preview path /v2 /v2/ /v2/index.html
+	handle @preview {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex"
+		rewrite * /v2/index.html
+		file_server
+	}
+
+	# The loops: large files whose names carry no version, kept a day like the font (never immutable), so the
+	# closing's loop reuses the hero's bytes. The file server answers byte ranges, as video players ask.
+	@media path /site/media/*
+	handle @media {
+		import site_csp
+		header Cache-Control "public, max-age=86400"
+		file_server
+	}
+
 	handle {
 		import site_csp
 		import revalidate

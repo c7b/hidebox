@@ -39,7 +39,7 @@ PINNED = {
 }
 # Only these are ever copied into dist/ (an allow-list: notes, reviews, sources and tests never leak).
 SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".webp", ".jpg", ".woff2",
-              ".webmanifest", ".txt", ".xml", ".json"}
+              ".webmanifest", ".txt", ".xml", ".json", ".webm", ".mp4"}
 SERVED_NAMES = re.compile(r"(LICENSE|NOTICE|SHA256SUMS|PROVENANCE\.md|[^/]+\.d\.ts)")
 NEVER_SERVED = re.compile(r"(^|/)package\.json$")
 INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")   # name → partials/name.html; name.svg → partials/name.svg
@@ -174,6 +174,9 @@ def copy_site(web: Path, dist: Path, with_tests: bool) -> list[str]:
     copy_tree(web / "site" / "static", dist)
     copy_tree(web / "site" / "js", dist / "site" / "js")
     copy_tree(web / "site" / "css", dist / "site" / "css")
+    # /v2's product loops (docs/review/home-v2.md): committed like every other served file, so the manifest
+    # lists them and verify-deploy checks their bytes; no other page asks for them.
+    copy_tree(web / "site" / "media", dist / "site" / "media")
     pages = []
     for page in sorted((web / "site" / "pages").glob("*.html")):
         (dist / page_target(page.name)).parent.mkdir(parents=True, exist_ok=True)
