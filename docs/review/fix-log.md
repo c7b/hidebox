@@ -806,3 +806,27 @@ again on the release (87.97 s, 2.13 MB) and copied to the contest kit (the v3 on
 `/status.json` green. Budgets: A-06 unchanged (25,001 / 40,536 B on a phone, 43,503 B on a computer), A-06d
 115,586 B (was 113,793), M-01 57.9 KB, home.css +2,963 of 3,072 B. No purge by id this pass. Evidence:
 `docs/evidence/2026-10-17/site-v4/`.
+
+## Tenth pass (home v2): the home with the product loops, at /v2 (2026-10-17)
+
+The owner's order, no devil's-advocate pass: "put a home page v2 on a new link, with all the videos in transparent
+mode", each placed where it works with its section, in mega.io's style. `docs/review/home-v2.md` has the mapping, the
+design, how the loops load, V-01 and the numbers.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | A new page, not a new home | `web/site/pages/v2.html` (the home's own words, links and widget; only the title differs), `v2.css`, `clips.js`; `/v2` is noindex (meta and header), linked from nowhere, out of the sitemap and the JSON-LD; no file the home serves changed |
+| 2 | The loops | A by the hero and the closing, C by What's different, B by Who sees what (served as `hidebox-B-sides`), D by Tari does the private parts; lazy (nothing below the fold until it comes near), playing only on screen, posters only with reduced motion, the MP4s for WebKit (remuxed with faststart, the stream unchanged), a Pause motion switch (WCAG 2.2.2, remembered) |
+| 3 | Shipping binaries | The pipeline serves only what a commit holds, so the twelve files are committed (11 MB): `build.py` serves `.webm` and `.mp4` and copies `web/site/media/`; the manifest and verify-deploy cover them. Caddy: `/v2` gets the app policy (the widget, and `media-src` for the video), the loops a day's cache |
+| 4 | Its own budget, V-01 | `static_checks.check_v2` (noindex, unlinked, the home's words and links, each video's attributes, files and sizes) and `browser_checks.check_v2` (what loads when, on-screen play, reduced motion, WebKit, light mode, the switch); `/v2` joins the every-page check |
+
+Also: an independent review of the diff (the code-critic agent) passed it with nits, all taken: the static check now
+compares links, variants and labels too; playing waits for a fifth of a loop on screen, as the comment said; the
+review doc lands with the change; the media name with a banned word was replaced; the MP4s were remuxed with their
+index first; the WebKit stage's comments say what dark mode does, and the browser check tests the light-mode black. It
+also raised WCAG 2.2.2, answered by the Pause motion switch. A headless rendering fault (stray rectangles over the
+slice while a loop played) came from an inset highlight beside a large shadow; the highlight became a top border and
+the cards lost their backdrop blur. Released as `8fa0925` (release `8fa09252…-cd224129f`, 177 files), the tag
+`spooky-secrets-2026-10` left at `0e05f27`; suites lint, copy, server 331, deploy 81, core 9/9, UI 723/723, site 37/37;
+verify-deploy 0 differences across 177 files against the release (18 expected against the tag), D-01 PASS. Evidence:
+`docs/evidence/2026-10-17/home-v2/`.
