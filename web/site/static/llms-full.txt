@@ -7,7 +7,7 @@ Live limits and prices: {{ORIGIN}}/api/v1/config
 How it works
 Your drive opens with a key that lives in your browser. Everything you add is locked before it leaves, and Tari™ does the private parts.
 
-## Make your drive
+## Open your drive
 Your browser makes a key. The key is the account. No email, no password.
 
 ## Drop your files

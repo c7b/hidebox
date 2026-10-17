@@ -85,3 +85,20 @@
 .outro { padding-top: var(--s-6); border-top: 1px solid var(--hair); color: var(--fg-2); }
 .ui-bar .w-most { width: 62%; }
 .ui-bar .w-some { width: 18%; }
+
+/* site v3: a line beside the steps fills as they scroll past (the template's "how it works" progress), from
+   when the first reaches 30 % of the screen to when the last leaves 70 %. Scroll-driven, so it needs no
+   script; shown only where the browser supports it, with scripts on and motion allowed (html.motion). */
+@supports (animation-timeline: view()) {
+  @media (min-width: 900px) {
+    .motion .stills { position: relative; view-timeline: --steps block; }
+    .motion .stills::before, .motion .stills::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -20px; width: 2px; background: var(--hair);
+    }
+    .motion .stills::after {
+      background: var(--fg); transform-origin: top; animation: steps-fill linear both;
+      animation-timeline: --steps; animation-range: cover 70vh cover calc(100% - 70vh);
+    }
+  }
+}
+@keyframes steps-fill { from { scale: 1 0; } }

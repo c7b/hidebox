@@ -65,14 +65,17 @@ kbd { font: var(--t-code); font-size: .9em; padding: 1px 6px; border-radius: 6px
 /* ---------- layout ---------- */
 .wrap { width: 100%; max-width: calc(var(--content) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 
-/* the brand fill (17-brand.md, "The Sea Is Yours Rule"): only the button that makes or opens your drive,
-   one in view at a time; every other primary stays ink (.btn). Outline and ghost are shadcn's. */
+/* the brand fill (17-brand.md, "The Lime Is Yours Rule"): only Open your drive, which makes or opens your
+   drive; every other primary stays ink (.btn). On light pages a lime-700 edge outlines it (lime on white is
+   1.21:1). Its arrow turns to the corner on hover (site v3). Outline and ghost are shadcn's. */
 .btn-brand, .btn-outline, .btn-ghost {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 16px;
   border: 0; border-radius: var(--r-input); font: var(--t-ui); text-decoration: none; white-space: nowrap;
   transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
 }
-.btn-brand { background: var(--brand-solid); color: var(--on-brand); }
+.btn-brand { background: var(--brand-solid); color: var(--on-brand); box-shadow: inset 0 0 0 1px var(--brand-edge); font-weight: 600; }
+.go { transition: rotate var(--dur-2) var(--ease-out); }
+a:hover > .go { rotate: -45deg; }
 .btn-brand:hover { background: var(--brand-solid-hover); }
 .btn-outline { border: 1px solid var(--line); background: var(--bg-raised); color: var(--fg); }
 .btn-ghost { background: transparent; color: var(--fg); }
@@ -108,12 +111,35 @@ kbd { font: var(--t-code); font-size: .9em; padding: 1px 6px; border-radius: 6px
   :root:not([data-theme="light"]) .lights .i-moon { display: block; }
 }
 @media (pointer: coarse) { .lights { inline-size: var(--tap); block-size: var(--tap); } }
-/* Make my drive, or Open my drive (outline, no brand fill) when this browser holds a drive. On the home it
-   steps aside, its place kept, until site.js sees that none of the page's own buttons ([data-cta]) is on
-   screen, so two brand fills are never in view. */
-.head-cta { padding: 8px 14px; transition: background-color var(--dur-1) var(--ease-out), opacity var(--dur-2) var(--ease-out), visibility var(--dur-2); }
+/* Open your drive, always on (site v3): one label, two targets. It makes a drive (/drive?make) in a browser
+   without one and opens it (/drive) where theme.js already painted data-has-drive. */
+.head-cta { padding: 8px 12px 8px 14px; }
 :root[data-has-drive] .head-make, :root:not([data-has-drive]) .head-open { display: none; }
-.home .site-header:not([data-cta-out]) .head-cta { visibility: hidden; opacity: 0; }
+
+/* ---------- site v3 motion (the motion module, docs/review/site-v3.md): only on what was below the fold when it ran,
+   only until it has arrived, never without JavaScript or with reduced motion (site.js never loads it) ---------- */
+.mo-h { opacity: 0; translate: 0 var(--mo-y, 20px); scale: var(--mo-s, 1); filter: var(--mo-f, none); }
+.mo-head { --mo-f: blur(8px); --mo-d: .7s; }
+.mo-card { --mo-y: 40px; --mo-d: .7s; }
+.mo-pic { --mo-y: 40px; --mo-s: .97; --mo-d: .7s; }
+.mo-row { --mo-y: 12px; --mo-d: .5s; }
+.mo-badge { --mo-y: 0px; --mo-s: .9; --mo-f: blur(4px); --mo-d: .4s; }
+.mo-h.mo-in {
+  opacity: 1; translate: none; scale: none; filter: none;
+  transition: opacity var(--mo-d, .6s) var(--ease-out), translate var(--mo-d, .6s) var(--ease-out),
+    scale var(--mo-d, .6s) var(--ease-out), filter var(--mo-d, .6s) var(--ease-out);
+}
+.mo-ws .mo-w { display: inline-block; opacity: .15; filter: blur(8px); transition: opacity .5s var(--ease-out), filter .5s var(--ease-out); }
+.mo-ws.mo-in .mo-w { opacity: 1; filter: none; }
+/* a decode: the words wait unseen (.dc-c) under an aria-hidden layer of hex noise that resolves into them */
+.dc-box { position: relative; }
+.dc-c { opacity: 0; }
+.dc-c.dc-ok { opacity: 1; transition: opacity .16s var(--ease-out); }
+.dc-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.dc-layer span { position: absolute; overflow: hidden; white-space: pre; color: var(--fg-2); }
+.dc-layer .dc-ok { opacity: 0; transition: opacity .16s var(--ease-out); }
+@media print { .mo-h, .mo-w, .dc-c { opacity: 1 !important; translate: none !important; scale: none !important; filter: none !important; } .dc-layer { display: none; } }
+::selection { background: var(--brand-solid); color: var(--on-brand); }
 
 /* ---------- sections: two surfaces that alternate; each seam a hairline and the ruler (5 px ticks on the
    field's 48 px grid, centred like it, faded toward both edges). Never a coloured band. ---------- */
