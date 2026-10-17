@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Runs on every site page: the mainnet phase, live numbers and copy variants, the judge-pass chip,
-// copy buttons, the header (the page it is on, Make my drive or Open my drive, stepping aside on the
-// home) and, on the home, the field behind the hero. Other page modules import `config`, `getJson`,
+// copy buttons, the header (the page it is on; Open your drive, always on, makes or opens the drive) and,
+// after the load event: on the home the field behind the hero and the pixel field behind the closing, and
+// on the home, /how and /judges the scroll motion (motion.js). Other page modules import `config`, `getJson`,
 // `locale` and the tx helpers from here.
 import { applyPhase } from '/shared/dates.js';
 import { applyConditions, fillVariables } from './stats.js';
@@ -92,26 +93,13 @@ const checkDrive = () => driveHere().then((has) => {
 checkDrive();
 addEventListener('pageshow', (e) => e.persisted && checkDrive());   // back from the drive, from the cache
 
-// The home: the header's button steps aside while one of the page's own ([data-cta]) is on screen
-// below the sticky header.
-const head = document.querySelector('[data-head]');
-const ctas = document.querySelectorAll('[data-cta]');
-if (head && ctas.length) {
-  const seen = new Set();
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target);
-    head.toggleAttribute('data-cta-out', !seen.size);
-  }, { rootMargin: '-61px 0px 0px 0px' });
-  ctas.forEach((c) => io.observe(c));
-}
-
 // The field behind the home's hero (17-site-brief §1). Its quiet zone, an ellipse over the lede, the
 // buttons and the note, is measured here, so the static grid keeps grey text readable at every width
 // (12 % lines under words) with or without the moving field.
 const field = document.querySelector('[data-field]');
 export function quietZone() {
   const box = field.getBoundingClientRect();
-  const parts = [...field.parentElement.querySelectorAll('[data-quiet]')].map((e) => e.getBoundingClientRect());
+  const parts = [...field.parentElement.querySelectorAll('[data-quiet]')].map((e) => e.getBoundingClientRect()).filter((r) => r.width);
   const edge = (side, pick) => pick(...parts.map((r) => r[side])) - box[side === 'right' ? 'left' : side === 'bottom' ? 'top' : side];
   const [left, right, top, bottom] = [edge('left', Math.min), edge('right', Math.max), edge('top', Math.min), edge('bottom', Math.max)];
   // the words' box, corners included, fits inside 75 % of the ellipse, where the lines are fully quiet
@@ -119,21 +107,39 @@ export function quietZone() {
   for (const [k, v] of Object.entries(zone)) field.style.setProperty(`--q-${k}`, `${Math.round(v)}px`);
   return zone;
 }
-if (field) {
-  new ResizeObserver(quietZone).observe(field);
-  // A-06h: field.js loads after the load event, when the browser is idle, only on the home, only when
-  // motion is allowed and a WebGL2 context exists. Otherwise the static grid stays.
-  const begin = () => {
-    if (!root.classList.contains('motion')) return;
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: 'low-power' });
-    if (!gl) return;
-    import('./field.js').then((m) => m.start(field, canvas, gl)).catch(() => {
-      field.classList.remove('live');   // the static grid comes back
-      canvas.remove();
-    });
-  };
-  const idle = () => (globalThis.requestIdleCallback ?? ((f) => setTimeout(f, 1)))(begin, { timeout: 2000 });
+// A-06h: the effects load after the load event, when the browser is idle, only where a page asks for them,
+// only when motion is allowed (html.motion) and, for the two fields, only when a WebGL2 context exists.
+// Otherwise every word is already on screen and the static grid and pixels stay.
+const motion = root.classList.contains('motion');
+const afterLoad = (f, timeout) => {
+  const idle = () => (globalThis.requestIdleCallback ?? ((g) => setTimeout(g, 1)))(f, { timeout });
   if (document.readyState === 'complete') idle();
   else addEventListener('load', idle, { once: true });
+};
+const webgl = (box, load) => {
+  const canvas = document.createElement('canvas');
+  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: 'low-power' });
+  if (gl) load().then((m) => m.start(box, canvas, gl)).catch(() => {
+    box.classList.remove('live');   // the static pattern comes back
+    canvas.remove();
+  });
+};
+if (field) {
+  new ResizeObserver(quietZone).observe(field);
+  field.parentElement.addEventListener('animationend', quietZone);   // the hero's words have settled
+  if (motion) afterLoad(() => webgl(field, () => import('./field.js')), 2000);
+}
+// Site v3: the scroll motion and the hero picture's decode. Until motion.js takes over (html.mo), the
+// picture's words wait unseen for at most 3 s (home.css); if it can't load they show at once.
+if (motion && document.body.hasAttribute('data-motion')) {
+  afterLoad(() => import('./motion.js').then((m) => m.start(), () => root.classList.add('mo')), 300);
+}
+// The pixel field behind the home's closing (pixel.js), asked for when that section comes near.
+const pixels = document.querySelector('[data-pixel]');
+if (pixels && motion) {
+  afterLoad(() => new IntersectionObserver((seen, io) => {
+    if (!seen.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    webgl(pixels, () => import('./pixel.js'));
+  }, { rootMargin: '50% 0px' }).observe(pixels), 2000);
 }

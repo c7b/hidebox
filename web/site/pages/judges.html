@@ -29,7 +29,7 @@
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/judges.js" integrity="{{SRI}}"></script>
 </head>
-<body class="reading judges">
+<body class="reading judges" data-motion>
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
 <main id="main">
@@ -58,7 +58,7 @@
       <article class="track" aria-labelledby="t1">
         <div class="track-top"><span class="track-num" aria-hidden="true">1</span><h2 id="t1">One device, no wallet</h2><p>About two minutes. No sign-up.</p></div>
         <ol class="steps">
-          <li><span class="do">On the <a href="/">home page</a>, tap <b class="ui">Make my drive</b>.</span><span class="see">Your drive opens, with your Tari address. No email.</span></li>
+          <li><span class="do">On the <a href="/">home page</a>, tap <b class="ui">Open your drive</b>.</span><span class="see">Your drive opens, with your Tari address. No email.</span></li>
           <li><span class="do">On a computer, drop a small folder on your drive<span data-needs="config" hidden> (under <span data-v="probation_quota"></span> on your first day)</span>.</span><span class="see">Each file says Locking, then Uploading. The folder shows Private.</span></li>
           <li><span class="do">On one file: <b class="ui">Share</b>, keep <b class="ui">Once</b>, turn on <b class="ui">Delete it from my drive after</b>, <b class="ui">Make link</b>.</span><span class="see">“Your link is ready.” The file leaves after its one open.</span></li>
           <li><span class="do">Open the link in a private window. Tap <b class="ui">Open it</b>, then reload.</span><span class="see">It opens. After the reload: “This link has ended.”</span></li>

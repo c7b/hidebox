@@ -25,26 +25,20 @@
 .hero-note { margin-top: var(--s-3); font: var(--t-small); color: var(--fg-2); }
 @media (min-width: 1024px) { .hero { padding-top: var(--s-9); } }
 
-/* the two big buttons: the brand fill goes to Make my drive, or to Open my drive when this browser holds a
-   drive (then it comes first); the other is the quiet one */
-.cta-row { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); margin-top: var(--s-6); width: 100%; }
+/* Open your drive (site v3): one big lime button, the page's only action. Two links share the label, and
+   theme.js's data-has-drive shows the one that fits: /drive?make makes a drive, /drive?open opens it. */
+.cta-row { display: flex; justify-content: center; margin-top: var(--s-6); width: 100%; }
 .btn-xl {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; padding: 0 20px;
-  border: 0; border-radius: var(--r-btn); font: 500 17px/1 var(--font); letter-spacing: -.01em; text-decoration: none; white-space: nowrap;
-  background: transparent; color: var(--fg); transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; width: min(100%, 22rem); padding: 0 30px;
+  border: 0; border-radius: var(--r-btn); font: 600 17px/1 var(--font); letter-spacing: -.01em; text-decoration: none; white-space: nowrap;
+  background: var(--brand-solid); color: var(--on-brand); box-shadow: inset 0 0 0 1px var(--brand-edge);
+  transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
 }
 .btn-xl .icon { width: 18px; height: 18px; }
-.btn-xl:hover { background: var(--bg-sunken); }
+.btn-xl:hover { background: var(--brand-solid-hover); }
 .btn-xl:active { scale: .97; }
-.cta-make, :root[data-has-drive] .cta-open { width: min(100%, 22rem); padding-inline: 30px; font-weight: 600; background: var(--brand-solid); color: var(--on-brand); }
-.cta-make:hover, :root[data-has-drive] .cta-open:hover { background: var(--brand-solid-hover); }
-:root[data-has-drive] .cta-make { width: auto; padding-inline: 20px; font-weight: 500; background: transparent; color: var(--fg); }
-:root[data-has-drive] .cta-make:hover { background: var(--bg-sunken); }
-:root[data-has-drive] .cta-open { order: -1; }
-@media (min-width: 640px) {
-  .cta-row { flex-direction: row; justify-content: center; gap: var(--s-3); }
-  .cta-make, :root[data-has-drive] .cta-open { width: auto; min-width: 15rem; }
-}
+:root[data-has-drive] .cta-make, :root:not([data-has-drive]) .cta-open { display: none; }
+@media (min-width: 640px) { .btn-xl { width: auto; min-width: 15rem; } }
 
 /* the field's static grid: the first paint, and what stays without JavaScript, with reduced motion, without
    WebGL2, after a lost context and in print. 48 px cells, a line through the page centre, the brand colour
@@ -66,6 +60,22 @@
 .hero-field.live::before { opacity: 0; }
 @media print { .hero-field canvas { display: none; } .hero-field.live::before { opacity: 1; } }
 @media (forced-colors: active) { .hero-field { display: none; } }
+
+/* site v3: the hero arrives (html.motion: scripts on and motion allowed). Each line rises 20 px out of an 8 px
+   blur, 60 ms apart; the button grows from 95 %; the picture rises 40 px. Its words wait for the motion module to
+   decode them, 3 s at most (then they simply show; .dc-run keeps them unseen until it starts). */
+@keyframes rise { from { opacity: 0; translate: 0 20px; filter: blur(8px); } }
+@keyframes pop { from { opacity: 0; scale: .95; filter: blur(8px); } }
+@keyframes lift { from { opacity: 0; translate: 0 40px; } }
+@keyframes dc-wait { from { opacity: 0; } }
+.motion .hero h1 { animation: rise .7s var(--ease-out) both; }
+.motion .h1-2 { animation: rise .7s 60ms var(--ease-out) both; }
+.motion .hero .lede { animation: rise .7s 120ms var(--ease-out) both; }
+.motion .hero .cta-row { animation: pop .7s 180ms var(--ease-out) both; }
+.motion .hero-note { animation: rise .7s 240ms var(--ease-out) both; }
+.motion .slice { animation: lift .7s 300ms var(--ease-out) both; }
+.motion:not(.mo) .slice :is(.slice-tile, .slice-title, .slice-cols span, li > .icon, .name, .badge, .state) { animation: dc-wait .2s 3s backwards; }
+.dc-run :is(.slice-tile, .slice-title, .slice-cols span, li > .icon, .name, .badge, .state) { opacity: 0; }
 
 /* the picture: a slice of a drive, inert, hanging 56 px into the next section */
 .slice {
@@ -174,7 +184,30 @@
 .chain-rows li:not([hidden]) ~ li { border-top: 1px solid var(--hair); }
 .chain-rows .icon { width: 20px; height: 20px; color: var(--pay-text); margin-top: 1px; }
 
-/* ---------- closing ---------- */
+/* ---------- closing, over the pixel field (site v3): the pixel module draws it after load; these CSS pixels are the
+   first paint and what stays without JavaScript, with reduced motion or without WebGL2. They keep to the
+   section's top and bottom padding and, on wide screens, to the sides of a 640 px column, so no pixel ever
+   sits under a word. ---------- */
+.end { --end-pad: calc(var(--sec-pad) * 1.5); padding-block: var(--end-pad); overflow: hidden; }
+.end .wrap { position: relative; z-index: 1; }
+.px-field { position: absolute; inset: 0; pointer-events: none; }
+.px-field::before, .px-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 300ms var(--ease-out); }
+.px-field canvas { image-rendering: pixelated; opacity: 0; }
+.px-field::before {
+  content: ""; opacity: var(--px-alpha);
+  background: conic-gradient(var(--brand-px) 25%, transparent 0) 0 0 / 8px 8px;
+  mask: linear-gradient(transparent, #000 24px, transparent calc(var(--end-pad) - 16px), transparent calc(100% - var(--end-pad) + 16px), #000 calc(100% - 24px), transparent);
+}
+@media (min-width: 1024px) {
+  .px-field::before {
+    mask: linear-gradient(transparent, #000 24px, transparent calc(var(--end-pad) - 16px), transparent calc(100% - var(--end-pad) + 16px), #000 calc(100% - 24px), transparent),
+      linear-gradient(to right, transparent, #000 8%, transparent calc(50% - 360px), transparent calc(50% + 360px), #000 92%, transparent);
+  }
+}
+.px-field.live canvas { opacity: 1; }
+.px-field.live::before { opacity: 0; }
+@media print { .px-field canvas { display: none; } .px-field.live::before { opacity: var(--px-alpha); } }
+@media (forced-colors: active) { .px-field { display: none; } }
 .closing { display: grid; justify-items: center; text-align: center; gap: var(--s-4); }
 .closing h2 { font: 650 clamp(26px, 3vw, 36px)/1.15 var(--font); letter-spacing: -.03em; }
 .closing p { color: var(--fg-2); font: var(--t-say); font-size: 18px; }

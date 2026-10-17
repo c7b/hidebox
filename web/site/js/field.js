@@ -77,7 +77,7 @@ export function start(field, canvas, gl) {
     alpha = parseFloat(css.getPropertyValue('--field-alpha')) || 0.3;
     quiet = parseFloat(css.getPropertyValue('--field-quiet')) || 0.4;
   };
-  // The button that holds the brand fill: Make my drive, or Open my drive when this browser has a drive.
+  // The button on screen: Open your drive, to /drive?make, or to /drive?open when this browser has a drive.
   const brand = () => hero.querySelector(root.hasAttribute('data-has-drive') ? '.cta-open' : '.cta-make');
   const active = () => onScreen && !document.hidden && !stopped;
 
@@ -165,6 +165,7 @@ export function start(field, canvas, gl) {
     }
   }
   const redraw = () => { colours(); if (!stopped && !raf) draw(); };
+  hero.addEventListener('animationend', () => { zone = quietZone(); redraw(); });   // the words settled (site v3)
   new MutationObserver(redraw).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
   for (const q of ['(prefers-color-scheme: dark)', '(prefers-contrast: more)']) matchMedia(q).addEventListener('change', redraw);
   matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (m) => m.matches && stop());

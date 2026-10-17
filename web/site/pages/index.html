@@ -42,7 +42,7 @@
   "license": "https://spdx.org/licenses/MIT.html", "isPartOf": {"@id": "{{ORIGIN}}/#website"}}]}
 </script>
 </head>
-<body class="home">
+<body class="home" data-motion>
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
 <main id="main">
@@ -51,9 +51,9 @@
     <div class="wrap hero-inner">
       <h1 id="hero-h" data-quiet>Your private drive. <span class="h1-2">Locked here. Shared your way.</span></h1>
       <p class="lede" data-quiet>Files lock in this browser before upload. You pick how each one opens: once, with a word, or for Tari™.</p>
-      <div class="cta-row" data-cta>
-        <a class="btn-xl cta-make" href="/drive?make" data-testid="home-make" data-quiet><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-plus"/></svg>Make my drive</a>
-        <a class="btn-xl cta-open" href="/drive?open" data-testid="home-open" data-quiet><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Open my drive</a>
+      <div class="cta-row">
+        <a class="btn-xl cta-make" href="/drive?make" data-testid="home-make" data-quiet>Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
+        <a class="btn-xl cta-open" href="/drive?open" data-testid="home-open" data-quiet>Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
       </div>
       <p class="hero-note" data-quiet>No email, no password. Your key is the account.</p>
       <figure class="slice" aria-label="A drive whose files each show their rule">
@@ -186,13 +186,14 @@
     </div>
   </section>
 
-  <section class="sec" aria-labelledby="end-h">
+  <section class="sec end" aria-labelledby="end-h">
+    <div class="px-field" aria-hidden="true" data-pixel></div>
     <div class="wrap closing">
       <h2 id="end-h">Make your drive.</h2>
       <p>One tap, and it's yours. No email, no password.</p>
-      <div class="cta-row" data-cta>
-        <a class="btn-xl cta-make" href="/drive?make"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-plus"/></svg>Make my drive</a>
-        <a class="btn-xl cta-open" href="/drive?open"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Open my drive</a>
+      <div class="cta-row">
+        <a class="btn-xl cta-make" href="/drive?make">Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
+        <a class="btn-xl cta-open" href="/drive?open">Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
       </div>
     </div>
   </section>
