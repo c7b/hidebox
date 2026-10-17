@@ -471,11 +471,16 @@ def ej(t: T) -> None:
     desk.click("share-next")
     desk.wait("document.getElementById('share-dialog')?.dataset.step === 'opens'", 10)
     desk.click("share-then-delete")
+    # A switch that didn't take must fail here, not two steps later as "the file stayed" (seventh pass).
+    switch = desk.attr("share-then-delete", "aria-checked")
+    t.check(switch == "true", f"3: Delete it from my drive after is on before Make link (the switch says aria-checked={switch})")
     desk.click("share-make")
     desk.wait("document.getElementById('share-dialog')?.dataset.step === 'result'", 90)
     url = desk.value("share-link")
     t.check("#" in url and bool(desk.wait("!!document.querySelector('[data-testid=\"share-qr\"] svg')", 30)),
             "3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan")
+    said = desk.eval("document.querySelector('[data-testid=\"share-step-result\"]')?.innerText ?? ''")
+    t.check("leaves your drive" in said, f"3: the result says the file leaves your drive after its open ({said[:120]!r})")
     desk.key("Escape")
     done("3")
     t.check(flows.open_link(phone, url) == "opened", "4: the phone taps Open it and has the file")

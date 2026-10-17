@@ -173,10 +173,10 @@ function payStep(body, footer) {
   const { ctx } = S;
   const prices = ctx.cfg.pay_to_open.prices_ut;
   if (!prices.includes(S.price)) S.price = prices[0];
-  body.append(h('p', { class: 'small muted' }, t('sell.price_d')),
+  body.append(...[h('p', { class: 'small muted' }, t('sell.price_d')),
     group('price', t('sell.price'), prices.map((p) => choice('price', p, 'coins', t('sell.chip', { price: formatTari(p) }), null, { tari: true }))),
     switchRow('showName', 'eye', t('sell.names'), t('sell.names_d'), { testid: 'pay-names' }),
-    S.firstSale ? alert({ glyph: 'key-round', variant: 'tari', title: t('sell.key_h'), description: t('sell.key'), testid: 'pay-key-note' }) : null);
+    S.firstSale ? alert({ glyph: 'key-round', variant: 'tari', title: t('sell.key_h'), description: t('sell.key'), testid: 'pay-key-note' }) : null].filter(Boolean));
   footer.append(back('who'), button(t('sell.make'), { glyph: 'coins', testid: 'pay-make', 'data-autofocus': '', onclick: (e) => makePay(e.currentTarget) }));
 }
 
@@ -240,9 +240,10 @@ function opensStep(body, footer) {
   }, 'share-ends');
   const endsId = id('ends-l');
   trigger.setAttribute('aria-labelledby', endsId);
-  body.append(h('div', { class: 'ends-row' }, h('span', { class: 'label', id: endsId }, t('share.ends')), trigger),
+  // Element.append() writes a null as the text "null": the lines a step doesn't have are left out.
+  body.append(...[h('div', { class: 'ends-row' }, h('span', { class: 'label', id: endsId }, t('share.ends')), trigger),
     ctx.firstDay ? h('p', { class: 'small muted' }, t('share.end.later')) : null,
-    S.ends === 'never' ? h('p', { class: 'small muted', 'data-testid': 'share-ends-where' }, t('share.end.where', { menu: menuOf(item) })) : null);
+    S.ends === 'never' ? h('p', { class: 'small muted', 'data-testid': 'share-ends-where' }, t('share.end.where', { menu: menuOf(item) })) : null].filter(Boolean));
   document.body.append(list);
   body.append(switchRow('word', 'key-round', t('share.word'), t('share.word_d'), {
     testid: 'share-word', extra: S.word ? wordField() : null,
@@ -258,9 +259,25 @@ function opensStep(body, footer) {
   footer.append(back('who'), button(t('share.make'), { testid: 'share-make', 'data-autofocus': '', onclick: (e) => make(e.currentTarget) }));
 }
 
+// The rule as the form on screen says it at the moment of the click: the controls in this dialog, not a
+// copy that a redraw or a second opening could have reset (E-J once made a Once link without "Delete it
+// from my drive after" although its step had turned the switch on).
+function liveForm(box) {
+  const on = (testid) => box.querySelector(`[data-testid="${testid}"]`)?.getAttribute('aria-checked') === 'true';
+  return {
+    opens: box.querySelector('[data-testid="share-choice"][data-state="checked"]')?.dataset.value ?? S.opens,
+    ends: box.querySelector('[data-testid="share-ends"]')?.dataset.value ?? S.ends,
+    word: on('share-word'),
+    wordValue: box.querySelector('[data-testid="share-word-input"]')?.value ?? S.wordValue,
+    thenDelete: on('share-then-delete'),
+  };
+}
+
 async function make(btn) {
   const { drive, item, ctx } = S;
   S.error = null;
+  Object.assign(S, liveForm(btn.closest(`#${BOX}`) ?? document.getElementById(BOX)));
+  const thenDelete = Boolean(S.thenDelete && !item.folder && S.ends !== 'never');
   const word = S.word ? S.wordValue.trim() : null;
   const min = ctx.cfg.password?.min_chars_link_password ?? 4;
   if (S.word && Array.from(word ?? '').length < min) {
@@ -270,10 +287,11 @@ async function make(btn) {
   btn.disabled = true;
   btn.replaceChildren(spinner(), t('share.making'));
   try {
-    const link = await makeLink(item, { opens: S.opens, ends: S.ends, word, thenDelete: Boolean(S.thenDelete && !item.folder) },
+    const rule = { opens: S.opens, ends: S.ends, thenDelete };
+    const link = await makeLink(item, { ...rule, word },
       { headers: drive.headers(), origin: ctx.cfg.origin || location.origin, firstDay: ctx.firstDay, limits: ctx.limits });
     await rememberLink(drive.identity, link.shareId, { url: link.url, word });
-    S.link = { ...link, word, rule: { opens: S.opens, ends: S.ends, thenDelete: Boolean(S.thenDelete && !item.folder) } };
+    S.link = { ...link, word, rule };
     S.step = 'result';
     refreshDrive();
     render();
@@ -448,11 +466,11 @@ function sendingStep(body, footer) {
   }
   if (done) {
     const tx = st.tx;
-    body.append(
+    body.append(...[
       h('p', { class: 'say' }, S.sendJob?.kind === 4 ? t('tari.after4') : t('tari.after')),
       tx ? h('p', { class: 'small muted' }, h('a', { class: 'mono tx-link', href: `/verify/tx/${tx}`, 'data-testid': 'send-tx', 'data-tx': tx }, `${tx.slice(0, 8)}…${tx.slice(-8)}`),
         ' ', t('tari.tx')) : null,
-      h('p', { class: 'small muted path-line' }, icon('info'), h('span', {}, st.mode === 'direct' ? t('tari.path_direct') : t('tari.path_relay'))));
+      h('p', { class: 'small muted path-line' }, icon('info'), h('span', {}, st.mode === 'direct' ? t('tari.path_direct') : t('tari.path_relay')))].filter(Boolean));
     footer.append(button(t('drive.done'), { 'data-close': '', 'data-autofocus': '' }));
   }
 }
@@ -643,24 +661,34 @@ function render() {
   }
 }
 
-// From a row's menu, a folder's page head or the selection bar.
+// The latest opening; an earlier one still loading steps aside instead of drawing over it.
+let opening = 0;
+
+// From a row's menu, a folder's page head or the selection bar. The dialog's state is made whole before
+// it replaces anything: an open dialog is never reset or drawn again by a second opening (a second tap on
+// the same item leaves it as it is), so what someone chose in it stays chosen.
 export async function openShare(drive, item, { trigger = null, step = 'who', tab = null } = {}) {
-  if (!item) return;
-  document.getElementById(BOX)?.remove();
-  const box = h('div', { class: 'dialog', role: 'dialog', id: BOX, hidden: true, 'data-size': 'lg', 'data-testid': 'share-dialog' });
-  document.body.append(box);
-  S = {
+  if (!item) return null;
+  const shown = document.getElementById(BOX);
+  if (S && shown && !shown.hidden && S.drive === drive && S.item.id === item.id) return shown;
+  const mine = ++opening;
+  const next = {
     drive, item, ctx: context(drive, item), step, who: 'link', opens: 'once', ends: 'week', word: false, wordValue: '',
     thenDelete: false, tari: '', kind4: false, tab: tab ?? 'new', known: await knownLinks(drive.identity),
     link: null, error: null, send: null, sendJob: null, price: null, showName: true, firstSale: false,
   };
   // C35 shows the first time this drive sells (lane app2): no sales address registered from here yet.
-  if (S.ctx.cfg.features?.pay_to_open) {
-    S.firstSale = !sells(drive) && !(await (await import('../lib/pay.js')).salesState(drive.identity)).registered;
+  if (next.ctx.cfg.features?.pay_to_open) {
+    next.firstSale = !sells(drive) && !(await (await import('../lib/pay.js')).salesState(drive.identity)).registered;
   }
-  const mine = S;
+  const open = document.getElementById(BOX);
+  if (mine !== opening || (S && open && !open.hidden)) return null;
+  open?.remove();
+  const box = h('div', { class: 'dialog', role: 'dialog', id: BOX, hidden: true, 'data-size': 'lg', 'data-testid': 'share-dialog' });
+  document.body.append(box);
+  S = next;
   render();
-  openModal(box, { returnFocus: trigger ?? undefined, onClose: () => { if (S === mine) S = null; for (const old of document.querySelectorAll('body > [data-owner="share"]')) old.remove(); } });
+  openModal(box, { returnFocus: trigger ?? undefined, onClose: () => { if (S === next) S = null; for (const old of document.querySelectorAll('body > [data-owner="share"]')) old.remove(); } });
   return box;
 }
 
@@ -687,7 +715,7 @@ export async function copyOnceLink(drive, item, { trigger = null } = {}) {
     toast(t('share.once_copied'), { type: 'success', description: say });
     return;
   }
-  await openShare(drive, item, { trigger });
+  if (!(await openShare(drive, item, { trigger })) || S?.item.id !== item.id) return;
   S.link = { ...link, word: null, rule: { opens: 'once', ends: 'week', thenDelete: false } };
   go('result');
 }
