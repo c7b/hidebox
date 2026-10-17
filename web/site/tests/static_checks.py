@@ -301,13 +301,16 @@ def check_trademark():
 def check_partials():
     """The footer repeats the status line; they must not drift. The header (site v2, 17-site-brief §2.1) holds
     the name, How it works, For judges (Under the hood left the nav for the footer), the light switch, and
-    Make my drive or Open my drive: no status line."""
+    Open your drive (site v3: one label, always on): no status line."""
     problems = []
     line = (SHARED / "partials" / "status-line.html").read_text().split("\n", 1)[1].strip()
     header = (SHARED / "partials" / "header.html").read_text()
     links = re.findall(r'<a\b[^>]*href="([^"]+)"', header)
-    if links != ["/", "/how", "/judges", "/drive?make", "/drive"] or "data-theme-toggle" not in header or 'aria-label="Lights"' not in header:
-        problems.append("partials/header.html: the header is the wordmark, How it works, For judges, the Lights switch, Make my drive and Open my drive")
+    labels = re.findall(r'data-testid="head-(?:make|open)">([^<]+)<', header)
+    if links != ["/", "/how", "/judges", "/drive?make", "/drive"] or "data-theme-toggle" not in header or 'aria-label="Lights"' not in header \
+            or labels != ["Open your drive", "Open your drive"]:
+        problems.append("partials/header.html: the header is the wordmark, How it works, For judges, the Lights switch and "
+                        "Open your drive (to /drive?make, or /drive with a drive)")
     footer = re.findall(r'<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', (SHARED / "partials" / "footer.html").read_text())
     if [label for _, label in footer] != ["How it works", "For judges", "Under the hood", "The fine print", "My drive"]:
         problems.append(f"partials/footer.html: the footer links are How it works, For judges, Under the hood, The fine print, My drive, not {footer}")
@@ -402,7 +405,10 @@ def check_contrast():
                              ("--brand-text", "--bg", 4.5), ("--brand-text", "--bg-alt", 4.5), ("--brand-text", "--bg-raised", 4.5),
                              ("--brand-text", "--brand-subtle", 4.5), ("--fg", "--brand-subtle", 7), ("--fg-2", "--brand-subtle", 4.5),
                              ("--fg-2", "--bg-alt", 4.5), ("--fg", "--bg-alt", 7), ("--brand-text", "--brand-tile", 3),
-                             ("--brand-solid", "--bg", 3)):
+                             # site v3: the lime fill's label at 7:1 (AAA), and its outline against the page: the
+                             # lime-700 edge on light pages (lime on white is 1.21:1), the fill itself on dark ones
+                             ("--on-brand", "--brand-solid", 7),
+                             ("--brand-edge" if tokens["--brand-edge"] != "transparent" else "--brand-solid", "--bg", 3)):
             ratio = contrast(_rgb(tokens[fg], tokens), _rgb(tokens[bg], tokens))
             if ratio < need:
                 problems.append(f"{theme}: {fg} on {bg} is {ratio:.2f}, needs {need}")
@@ -642,35 +648,39 @@ def check_redirects():
     return problems
 
 
-# A-06h (17-site-brief §1.2): the field behind the home's hero stays small, and the home's own stylesheet
-# grows by at most 3 KB for site v2. HOME_CSS_BEFORE is home.css at the tag spooky-secrets-2026-10 (f89963c).
-FIELD_MAX, HOME_CSS_BEFORE, HOME_CSS_GROWTH = 6144, 1770, 3072
+# A-06h (17-site-brief §1.2, docs/review/site-v3.md): the effects stay small and load late. field.js (the hero's
+# grid) at most 6 KB, motion.js (the reveals and the decode, site v3) at most 4 KB, pixel.js (the closing's pixel
+# field, site v3) at most 8 KB, all gzip -9; the home's own stylesheet grows by at most 3 KB over home.css at the
+# tag spooky-secrets-2026-10 as it was before site v2 (f89963c, 1,770 B): site v2 and v3 together.
+EFFECTS = {"field.js": 6144, "motion.js": 4096, "pixel.js": 8192}
+HOME_CSS_BEFORE, HOME_CSS_GROWTH = 1770, 3072
 
 
 def check_field_budget():
-    """A-06h, the files' half (browser_checks has the loading half): field.js at most 6,144 B gzip -9; home.css
-    at most 1,770 + 3,072 B gzip -9; field.js is named by no page, partial or stylesheet, and only site.js
-    imports it, with import()."""
+    """A-06h, the files' half (browser_checks has the loading half): field.js at most 6,144 B, motion.js at most
+    4,096 B and pixel.js at most 8,192 B gzip -9; home.css at most 1,770 + 3,072 B gzip -9; no page, partial or
+    stylesheet names the three, and only site.js imports them, each with import()."""
     import gzip
-    problems = []
-    field = (SITE / "js" / "field.js").read_bytes()
-    size, home = len(gzip.compress(field, 9)), len(gzip.compress((SITE / "css" / "home.css").read_bytes(), 9))
-    if size > FIELD_MAX:
-        problems.append(f"js/field.js is {size:,} B gzip -9 (at most {FIELD_MAX:,})")
+    problems, notes = [], []
+    for name, limit in EFFECTS.items():
+        size = len(gzip.compress((SITE / "js" / name).read_bytes(), 9))
+        notes.append(f"{name} {size:,} B (at most {limit:,})")
+        if size > limit:
+            problems.append(f"js/{name} is {size:,} B gzip -9 (at most {limit:,})")
+    home = len(gzip.compress((SITE / "css" / "home.css").read_bytes(), 9))
     if home > HOME_CSS_BEFORE + HOME_CSS_GROWTH:
         problems.append(f"css/home.css is {home:,} B gzip -9 (at most {HOME_CSS_BEFORE:,} + {HOME_CSS_GROWTH:,})")
-    for f in PAGES + PARTIALS + sorted((SITE / "css").glob("*.css")):
-        if "field.js" in f.read_text():
-            problems.append(f"{f.relative_to(WEB)} names field.js (it loads only from site.js, after the load event)")
-    for f in JS:
-        if f.name in ("site.js", "field.js"):
-            continue
-        if "field.js" in f.read_text():
-            problems.append(f"{f.relative_to(WEB)} imports field.js (only site.js may, with import())")
     site = (SITE / "js" / "site.js").read_text()
-    if "import('./field.js')" not in site or re.search(r"^import .*field\.js", site, re.M):
-        problems.append("js/site.js: field.js loads with import('./field.js') only")
-    NOTES_STATIC.append(f"A-06h: field.js {size:,} B gzip -9 (at most {FIELD_MAX:,}); home.css {home:,} B "
+    for name in EFFECTS:
+        for f in PAGES + PARTIALS + sorted((SITE / "css").glob("*.css")):
+            if name in f.read_text():
+                problems.append(f"{f.relative_to(WEB)} names {name} (it loads only from site.js, after the load event)")
+        for f in JS:
+            if f.name not in ("site.js", name) and name in f.read_text():
+                problems.append(f"{f.relative_to(WEB)} imports {name} (only site.js may, with import())")
+        if f"import('./{name}')" not in site or re.search(rf"^import .*{re.escape(name)}", site, re.M):
+            problems.append(f"js/site.js: {name} loads with import('./{name}') only")
+    NOTES_STATIC.append(f"A-06h: {'; '.join(notes)}, gzip -9; home.css {home:,} B "
                         f"(was {HOME_CSS_BEFORE:,}, +{home - HOME_CSS_BEFORE:,} of {HOME_CSS_GROWTH:,})")
     return problems
 
@@ -733,6 +743,6 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("copy variants set at build time (M11)", check_build_variants),
           ("/judges quotes the app's words, 6 + 6 steps", check_ui_strings),
           ("old pages redirect to pages and anchors that exist", check_redirects),
-          ("A-06h: field.js at most 6 KB gzip, home.css at most 3 KB more, field.js only from site.js", check_field_budget),
+          ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3 KB more, each only from site.js", check_field_budget),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links)]

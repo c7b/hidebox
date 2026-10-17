@@ -188,11 +188,12 @@ FOLD_WORDS, HOME_WORDS = 120, 800
 
 def check_word_budget(browser):
     """The home page says at most 120 words above the fold and 800 in all, on a phone (390 × 844) and a
-    desktop (1440 × 900); Make my drive is the first thing to press in the page."""
+    desktop (1440 × 900); Open your drive is the first thing to press in the page."""
     problems = []
     with server() as origin:
         for width, height, mobile in ((390, 844, True), (1440, 900, False)):
-            page = browser.page(width, height, mobile=mobile)
+            # with reduced motion, so the words that wait below the fold for their reveal (site v3) count too
+            page = browser.page(width, height, mobile=mobile, reduce=True)
             page.goto(origin + "/", settle=2)
             fold, total = page.eval(f"{WORDS}(true)"), page.eval(f"{WORDS}(false)")
             NOTES.append(f"home words at {width}: {fold} above the fold, {total} in all")
@@ -203,7 +204,7 @@ def check_word_budget(browser):
             first = page.eval("(() => { const b = [...document.querySelectorAll('main button, main a, main input, main textarea')]"
                               ".find((e) => e.checkVisibility() && e.getBoundingClientRect().width > 2); return b ? b.dataset.testid || b.id : ''; })()")
             if first != "home-make":
-                problems.append(f"home @{width}: the first control in the page is {first!r}, not Make my drive")
+                problems.append(f"home @{width}: the first control in the page is {first!r}, not Open your drive")
     return problems
 
 
@@ -383,7 +384,7 @@ FIELD_TIMES = """(() => { const r = performance.getEntriesByType('resource').fin
 
 def check_field(browser):
     """A-06h (17-site-brief §1.2), the loading half: on the home, field.js is requested after the load event,
-    its canvas fades in over the static grid and ripples start from Make my drive (desktop and phone); with
+    its canvas fades in over the static grid and ripples start from Open your drive (desktop and phone); with
     reduced motion it is never requested and the static grid stays; no other page asks for it."""
     problems = []
     with server() as origin:
@@ -403,7 +404,7 @@ def check_field(browser):
             before = int(page.eval(f"{FIELD}.dataset.ripples") or 0)
             page.eval("document.querySelector('[data-testid=\"home-make\"]').dispatchEvent(new PointerEvent('pointerenter'))")
             if int(page.eval(f"{FIELD}.dataset.ripples") or 0) != before + 1:
-                problems.append(f"/ @{width}: the pointer entering Make my drive started no ripple")
+                problems.append(f"/ @{width}: the pointer entering Open your drive started no ripple")
             NOTES.append(f"A-06h @{width}: field.js at {times[0]:.0f} ms, load event ended {times[1]:.0f} ms; "
                          f"{page.eval(FIELD + '.dataset.ripples')} ripples" if times else f"A-06h @{width}: no field")
         page = browser.page(1440, 900, reduce=True)
@@ -423,57 +424,152 @@ SHOWN = "(t) => { const e = document.querySelector(`[data-testid=\"${t}\"]`); co
 
 
 def check_header(browser):
-    """17-site-brief §2.1, §11: the header's Make my drive steps aside on the home while the page's own
-    buttons are on screen, and shows elsewhere; with a drive in this browser it reads Open my drive (the
-    home's brand fill moves to Open my drive too). The drive is detected by counting the drive's key record,
-    never creating its database."""
+    """Site v3 (docs/review/site-v3.md): the header's Open your drive is always on, on the home at the top, in the
+    middle and at the end, and on every other page; one label, two targets: /drive?make without a drive, /drive with
+    one (and the hero's one button follows, in the brand fill). The drive is detected by counting the drive's key
+    record, never creating its database."""
     problems = []
     with server() as origin:
         page = browser.page(1440, 900)
         page.goto(origin + "/", settle=1.5)
         shown = lambda t: page.eval(f"({SHOWN})('{t}')")
-        if shown("head-make"):
-            problems.append("/: the header's Make my drive shows while the hero's is on screen")
-        page.scroll_to(page.eval("document.getElementById('who').offsetTop"), 0.8)
-        if not shown("head-make"):
-            problems.append("/: the header's Make my drive stays hidden away from the page's own buttons")
-        page.scroll_to(page.eval("document.documentElement.scrollHeight"), 0.8)
-        if shown("head-make"):
-            problems.append("/: the header's Make my drive shows beside the closing Make my drive")
+        label = lambda t: page.eval(f"document.querySelector('[data-testid=\"{t}\"]').textContent.trim()")
+        for where in ("top", "who", "end"):
+            if where == "who":
+                page.scroll_to(page.eval("document.getElementById('who').offsetTop"), 0.8)
+            elif where == "end":
+                page.scroll_to(page.eval("document.documentElement.scrollHeight"), 0.8)
+            if not shown("head-make") or shown("head-open") or label("head-make") != "Open your drive":
+                problems.append(f"/ ({where}): the header doesn't show Open your drive (to /drive?make), and only it")
+        if page.eval("[...document.querySelectorAll('main a, header a')].some((a) => /Make my drive/.test(a.textContent))"):
+            problems.append("/: a link still says Make my drive")
         if page.eval("indexedDB.databases().then((l) => l.some((d) => d.name === 'mutis'))", True):
             problems.append("/: a visit without a drive created the drive's database")
         page.goto(origin + "/judges", settle=1)
         if not shown("head-make") or shown("head-open"):
-            problems.append("/judges: the header doesn't show Make my drive (and only it)")
-        # a drive in this browser: the drive's record exists, so the pages say Open my drive
+            problems.append("/judges: the header doesn't show Open your drive (and only it)")
+        # a drive in this browser: the drive's record exists, so Open your drive goes to /drive
         page.eval("""new Promise((ok) => { const r = indexedDB.open('mutis', 1);
           r.onupgradeneeded = () => { r.result.createObjectStore('identity'); r.result.createObjectStore('inbox'); };
           r.onsuccess = () => { const tx = r.result.transaction('identity', 'readwrite'); tx.objectStore('identity').put({ v: 2 }, 'current');
             tx.oncomplete = () => { r.result.close(); ok(true); }; }; })""", True)
         page.goto(origin + "/judges", settle=1.5)
-        if not shown("head-open") or shown("head-make"):
-            problems.append("/judges with a drive: the header doesn't read Open my drive")
+        if not shown("head-open") or shown("head-make") or label("head-open") != "Open your drive":
+            problems.append("/judges with a drive: the header's Open your drive doesn't go to /drive")
         if page.eval("localStorage.getItem('mutis.drive')") != "1":
             problems.append("/judges with a drive: the flag theme.js paints from isn't kept")
         page.goto(origin + "/", settle=1.5)
-        first = page.eval("(() => { const r = document.querySelector('.hero .cta-row'); const [a, b] = [...r.children].sort((x, y) => x.getBoundingClientRect().left - y.getBoundingClientRect().left); return [a.dataset.testid, getComputedStyle(a).backgroundColor !== 'rgba(0, 0, 0, 0)', getComputedStyle(b).backgroundColor]; })()")
-        if first[:2] != ["home-open", True] or first[2] != "rgba(0, 0, 0, 0)":
-            problems.append(f"/ with a drive: Open my drive doesn't come first in the brand fill ({first})")
+        hero = page.eval("""[...document.querySelectorAll('.hero .cta-row a')].filter((a) => a.checkVisibility())
+          .map((a) => [a.dataset.testid, a.textContent.trim(), getComputedStyle(a).backgroundColor !== 'rgba(0, 0, 0, 0)'])""")
+        if hero != [["home-open", "Open your drive", True]]:
+            problems.append(f"/ with a drive: the hero's one button isn't Open your drive to /drive?open in the brand fill ({hero})")
         page.eval("""new Promise((ok) => { const r = indexedDB.open('mutis'); r.onsuccess = () => { const tx = r.result.transaction('identity', 'readwrite');
           tx.objectStore('identity').delete('current'); tx.oncomplete = () => { r.result.close(); ok(true); }; }; })""", True)
         page.goto(origin + "/how", settle=1.5)
         if page.eval("document.documentElement.hasAttribute('data-has-drive') || localStorage.getItem('mutis.drive') !== null"):
-            problems.append("/how after the drive was deleted: still says Open my drive")
+            problems.append("/how after the drive was deleted: still goes to the drive")
         if page.eval("document.querySelector('.top-nav a[aria-current=\"page\"]')?.getAttribute('href')") != "/how":
             problems.append("/how: the header doesn't mark How it works as the page you're on")
     return problems
 
 
+LOADED = "(n) => { const r = performance.getEntriesByType('resource').find((e) => e.name.endsWith('/site/js/' + n)); return r ? r.startTime : null; }"
+HIDDEN = "document.querySelectorAll('.mo-h:not(.mo-in), .dc-c:not(.dc-ok), .mo-w').length"
+SLICE = "document.querySelector('.hero .slice').innerHTML"
+
+
+def check_motion(browser):
+    """Site v3 (docs/review/site-v3.md): motion.js and pixel.js load after the load event, only where asked for;
+    things below the fold wait unseen and arrive as they scroll in, and once a page has been scrolled through
+    nothing is left hidden; the hero's picture decodes behind an aria-hidden layer and ends with the same DOM it
+    started with; the pixel field draws only while on screen. With reduced motion neither file loads and every
+    word shows at once; without JavaScript every word shows."""
+    problems = []
+    with server() as origin:
+        quiet = browser.page(1440, 900, reduce=True)
+        quiet.goto(origin + "/", settle=3)
+        still = quiet.eval(SLICE)
+        for n in ("motion.js", "pixel.js"):
+            if quiet.eval(f"({LOADED})('{n}')") is not None:
+                problems.append(f"reduced motion: {n} was requested")
+        _scroll_through(quiet, "who")
+        if quiet.eval("document.querySelectorAll('.mo-h, .dc-c, .dc-layer, .px-field canvas').length"):
+            problems.append("reduced motion: something waits to be revealed")
+        if quiet.eval("getComputedStyle(document.querySelector('.hero .slice .name')).opacity") != "1":
+            problems.append("reduced motion: the picture's words aren't shown at once")
+        for width, height, mobile in ((1440, 900, False), (390, 844, True)):
+            page = browser.page(width, height, mobile=mobile)
+            page.goto(origin + "/", settle=0.1)
+            mid = page.wait_for("!!document.querySelector('.hero .slice .dc-layer')", 6)
+            if not mid and width == 1440:
+                problems.append(f"/ @{width}: the picture never decoded")
+            elif mid and page.eval("document.querySelector('.dc-layer').getAttribute('aria-hidden')") != "true":
+                problems.append(f"/ @{width}: the decode's noise isn't hidden from screen readers")
+            if mid and "passport-scan.pdf" not in page.eval("document.querySelector('.hero .slice').textContent"):
+                problems.append(f"/ @{width}: the picture's real words left the page while it decoded")
+            times = page.eval(f"[({LOADED})('motion.js'), performance.getEntriesByType('navigation')[0].loadEventEnd]")
+            if times[0] is None or times[0] < times[1]:
+                problems.append(f"/ @{width}: motion.js requested at {times[0]} ms, before the load event ended ({times[1]:.0f} ms)")
+            if page.eval(f"({LOADED})('pixel.js')") is not None:
+                problems.append(f"/ @{width}: pixel.js was requested before the closing came near")
+            step = height * 0.6
+            for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):
+                page.scroll_to(y, 0.25)
+            page.b.pump(1.5)
+            left = page.eval(HIDDEN)
+            if left:
+                problems.append(f"/ @{width}: {left} things still hidden after scrolling through")
+            if page.eval(SLICE) != still:
+                problems.append(f"/ @{width}: the picture's DOM after the decode differs from the page's")
+            live = page.wait_for("document.querySelector('[data-pixel]').classList.contains('live')", 5)
+            if not live:
+                problems.append(f"/ @{width}: the pixel field never took over from the CSS pixels")
+            else:
+                a = page.eval("document.querySelector('[data-pixel]').frames")
+                page.b.pump(0.5)
+                if page.eval("document.querySelector('[data-pixel]').frames") <= a:
+                    problems.append(f"/ @{width}: the pixel field doesn't move while on screen")
+                page.scroll_to(0, 0.6)
+                a = page.eval("document.querySelector('[data-pixel]').frames")
+                page.b.pump(0.6)
+                if page.eval("document.querySelector('[data-pixel]').frames") != a:
+                    problems.append(f"/ @{width}: the pixel field keeps drawing off screen")
+            NOTES.append(f"motion @{width}: motion.js at {times[0]:.0f} ms (load event {times[1]:.0f} ms), decode seen: {bool(mid)}, "
+                         f"pixel field live: {live}" if times[0] is not None else f"motion @{width}: no motion.js")
+        for path in ("/how", "/judges"):
+            page = browser.page(1440, 900)
+            page.goto(origin + path, settle=1.5)
+            if page.eval(f"({LOADED})('motion.js')") is None:
+                problems.append(f"{path}: motion.js never loaded")
+            if page.eval(f"({LOADED})('pixel.js')") is not None:
+                problems.append(f"{path}: pixel.js was requested")
+            for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + 540, 540):
+                page.scroll_to(y, 0.25)
+            page.b.pump(1.5)
+            if page.eval(HIDDEN):
+                problems.append(f"{path}: {page.eval(HIDDEN)} things still hidden after scrolling through")
+        for path in ("/fine-print", "/made"):
+            page = browser.page(1440, 900)
+            page.goto(origin + path, settle=1.5)
+            if page.eval(f"({LOADED})('motion.js')") is not None:
+                problems.append(f"{path}: motion.js loaded where nothing asks for it")
+        page = browser.page(390, 844, mobile=True)
+        page.cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+        page.goto(origin + "/", settle=1.5)
+        page.scroll_to(page.eval("document.documentElement.scrollHeight"), 0.5)
+        hidden = page.eval("""[...document.querySelectorAll('main h1, main h2, main p, main li, main td, main .badge')]
+          .filter((e) => e.checkVisibility() && getComputedStyle(e).opacity !== '1').length""")
+        if hidden:
+            problems.append(f"no JavaScript: {hidden} words on / are not fully shown")
+    return problems
+
+
 CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
-          ("home words: 120 above the fold, 800 in all, Make my drive first", check_word_budget),
+          ("home words: 120 above the fold, 800 in all, Open your drive first", check_word_budget),
           ("A-06h: the field loads after the load event, ripples, never with reduced motion", check_field),
-          ("header: Make my drive steps aside on the home, Open my drive with a drive", check_header),
+          ("header: Open your drive always on, to /drive?make or /drive", check_header),
+          ("motion: reveals, the decode, the pixel field; reduced motion and no JavaScript", check_motion),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions)]
