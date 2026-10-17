@@ -300,17 +300,18 @@ def check_trademark():
 
 def check_partials():
     """The footer repeats the status line; they must not drift. The header (site v2, 17-site-brief §2.1) holds
-    the name, How it works, For judges (Under the hood left the nav for the footer), the light switch, and
-    Open your drive (site v3: one label, always on): no status line."""
+    the name, How it works, For judges (Under the hood left the nav for the footer), the GitHub link to the
+    repository (site/share), the light switch, and Open your drive (site v3: one label, always on): no status line."""
     problems = []
     line = (SHARED / "partials" / "status-line.html").read_text().split("\n", 1)[1].strip()
     header = (SHARED / "partials" / "header.html").read_text()
     links = re.findall(r'<a\b[^>]*href="([^"]+)"', header)
     labels = re.findall(r'data-testid="head-(?:make|open)">([^<]+)<', header)
-    if links != ["/", "/how", "/judges", "/drive?make", "/drive"] or "data-theme-toggle" not in header or 'aria-label="Lights"' not in header \
+    if links != ["/", "/how", "/judges", "{{REPO_URL}}", "/drive?make", "/drive"] or "data-theme-toggle" not in header \
+            or 'aria-label="Lights"' not in header or 'aria-label="Source code on GitHub"' not in header \
             or labels != ["Open your drive", "Open your drive"]:
-        problems.append("partials/header.html: the header is the wordmark, How it works, For judges, the Lights switch and "
-                        "Open your drive (to /drive?make, or /drive with a drive)")
+        problems.append("partials/header.html: the header is the wordmark, How it works, For judges, Source code on GitHub "
+                        "(the repository), the Lights switch and Open your drive (to /drive?make, or /drive with a drive)")
     footer = re.findall(r'<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', (SHARED / "partials" / "footer.html").read_text())
     if [label for _, label in footer] != ["How it works", "For judges", "Under the hood", "The fine print", "My drive"]:
         problems.append(f"partials/footer.html: the footer links are How it works, For judges, Under the hood, The fine print, My drive, not {footer}")
@@ -651,14 +652,15 @@ def check_redirects():
 # A-06h (17-site-brief §1.2, docs/review/site-v3.md): the effects stay small and load late. field.js (the hero's
 # grid) at most 6 KB, motion.js (the reveals and the decode, site v3) at most 4 KB, pixel.js (the closing's pixel
 # field, site v3) at most 8 KB, all gzip -9; the home's own stylesheet grows by at most 3 KB over home.css at the
-# tag spooky-secrets-2026-10 as it was before site v2 (f89963c, 1,770 B): site v2 and v3 together.
+# tag spooky-secrets-2026-10 as it was before site v2 (f89963c, 1,770 B): site v2 and v3 together. site/share raised
+# that 3 KB by 256 B, for the share window drawn in depth so it reads as a picture (the owner's ask; 4,733 B before it).
 EFFECTS = {"field.js": 6144, "motion.js": 4096, "pixel.js": 8192}
-HOME_CSS_BEFORE, HOME_CSS_GROWTH = 1770, 3072
+HOME_CSS_BEFORE, HOME_CSS_GROWTH = 1770, 3328
 
 
 def check_field_budget():
     """A-06h, the files' half (browser_checks has the loading half): field.js at most 6,144 B, motion.js at most
-    4,096 B and pixel.js at most 8,192 B gzip -9; home.css at most 1,770 + 3,072 B gzip -9; no page, partial or
+    4,096 B and pixel.js at most 8,192 B gzip -9; home.css at most 1,770 + 3,328 B gzip -9; no page, partial or
     stylesheet names the three, and only site.js imports them, each with import()."""
     import gzip
     problems, notes = [], []
@@ -995,7 +997,7 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("copy variants set at build time (M11)", check_build_variants),
           ("/judges quotes the app's words, 6 + 6 steps", check_ui_strings),
           ("old pages redirect to pages and anchors that exist", check_redirects),
-          ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3 KB more, each only from site.js", check_field_budget),
+          ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3.25 KB more, each only from site.js", check_field_budget),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
           ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2),

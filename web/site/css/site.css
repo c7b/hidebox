@@ -97,24 +97,32 @@ a:hover > .go { rotate: -45deg; }
 .top-nav a[aria-current="page"] { color: var(--fg); font-weight: 500; }
 @media (min-width: 720px) { .top-nav { display: flex; } }
 .top-end { margin-left: auto; display: flex; align-items: center; gap: var(--s-2); }
-/* the light switch: its name stays "Lights", its state is aria-pressed (pressed = lights on) */
-.lights {
+/* the light switch: its name stays "Lights", its state is aria-pressed (pressed = lights on); the GitHub link
+   (site/share) is the same icon button, before it */
+.lights, .gh {
   inline-size: 36px; block-size: 36px; display: grid; place-items: center; border: 0; padding: 0;
   background: transparent; border-radius: var(--r-input); color: var(--fg); transition: background-color var(--dur-1) var(--ease-out);
 }
-.lights:hover { background: var(--bg-sunken); }
-.lights .icon { width: 18px; height: 18px; }
+.lights:hover, .gh:hover { background: var(--bg-sunken); }
+:is(.lights, .gh) .icon { width: 18px; height: 18px; }
 .lights .i-moon, :root[data-theme="dark"] .lights .i-sun { display: none; }
 :root[data-theme="dark"] .lights .i-moon { display: block; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .lights .i-sun { display: none; }
   :root:not([data-theme="light"]) .lights .i-moon { display: block; }
 }
-@media (pointer: coarse) { .lights { inline-size: var(--tap); block-size: var(--tap); } }
+@media (pointer: coarse) { .lights, .gh { inline-size: var(--tap); block-size: var(--tap); } }
 /* Open your drive, always on (site v3): one label, two targets. It makes a drive (/drive?make) in a browser
    without one and opens it (/drive) where theme.js already painted data-has-drive. */
 .head-cta { padding: 8px 12px 8px 14px; }
 :root[data-has-drive] .head-make, :root:not([data-has-drive]) .head-open { display: none; }
+/* phones (site/share): the gaps close up and Open your drive drops its arrow, so the GitHub link fits at 390 px;
+   under 380 px the link steps aside, and the wordmark, the switch and Open your drive stay */
+@media (max-width: 439.98px) {
+  .top { gap: 8px; } .wm { margin-right: 0; } .top-end { gap: 4px; }
+  .head-cta { padding-inline: 12px; } .head-cta .go { display: none; }
+}
+@media (max-width: 379.98px) { .gh { display: none; } }
 
 /* ---------- site v3 motion (the motion module, docs/review/site-v3.md): only on what was below the fold when it ran,
    only until it has arrived, never without JavaScript or with reduced motion (site.js never loads it) ---------- */

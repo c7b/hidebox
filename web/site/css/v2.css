@@ -103,12 +103,12 @@
 /* ---------- the frosted cards in dark mode: lit from above (a white gradient, 6 % to 2 %, and a brighter top edge) inside
    a white hairline, on an opaque base. No backdrop blur: nothing sits behind them but the page, and a blur near a playing
    loop costs a phone every frame. Light mode keeps the drive's plain cards. ---------- */
-.v2 :is(.slice, .share-pic, .side:not(.yours), .chain-rows, .coin-box) {
+.v2 :is(.slice, .share-card, .side:not(.yours), .chain-rows, .coin-box) {
   background: var(--v2-glass); border-color: var(--v2-glass-line); border-top-color: var(--v2-glass-top);
 }
 .v2 .slice-head { background: var(--v2-glass-sunken); }
 @media (prefers-contrast: more) {
-  .v2 :is(.slice, .share-pic, .side:not(.yours), .chain-rows, .coin-box) { background: var(--bg-raised); border-color: var(--line); }
+  .v2 :is(.slice, .share-card, .side:not(.yours), .chain-rows, .coin-box) { background: var(--bg-raised); border-color: var(--line); }
 }
 @media (prefers-reduced-transparency: reduce) { .loops { background: #0A0A0A; -webkit-backdrop-filter: none; backdrop-filter: none; } }
 

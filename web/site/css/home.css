@@ -126,10 +126,16 @@
 .rule-groups { display: grid; gap: var(--s-4); margin: 0; }
 .rule-groups dt { font: 500 12px/1.4 var(--font); color: var(--fg-2); margin-bottom: 6px; }
 .rule-groups dd { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.share-pic {
-  margin: 0; display: grid; gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel);
-  background: var(--bg-raised); box-shadow: var(--shadow); pointer-events: none; user-select: none;
+/* the share window is a picture, not a window to use (the owner, site/share): tilted in perspective over a second
+   sheet, with no pointer and no hover, and a line under it says what it shows; flatter on phones */
+.share-pic { margin: 0; display: grid; gap: var(--s-5); cursor: default; }
+.share-card {
+  display: grid; gap: var(--s-4); padding: var(--s-5); border: 1px solid var(--hair); border-radius: var(--r-panel);
+  background: var(--bg-raised); pointer-events: none; user-select: none; transform: perspective(1200px) rotateX(8deg) rotateY(-14deg);
+  box-shadow: 0 -12px 0 -7px color-mix(in srgb, var(--bg-raised), var(--bg)), 0 -12px 0 -6px var(--hair), var(--shadow-lg), 0 56px 80px -48px rgb(0 0 0 / .4);
 }
+.share-pic figcaption { display: flex; justify-content: center; align-items: center; gap: 6px; font: var(--t-small); color: var(--fg-2); }
+@media (max-width: 959.98px) { .share-card { transform: perspective(900px) rotateX(8deg) rotateY(-5deg) scale(.96); } }
 .share-top { display: flex; align-items: center; gap: 8px; }
 .share-top b { font: 600 17px/1.3 var(--font); margin-right: auto; }
 .share-top .icon { width: 16px; height: 16px; color: var(--fg-2); }

@@ -309,7 +309,7 @@ Headings and the status pill stay one line.
 - **Home (site v2, v3, v4):** a centred hero over the grid field (the headline "Your private cloud storage." with
   "Privacy isn't an option." and "It's the default." below it in grey, one sentence a line; the 56px lime Open
   your drive, the site's one action), the slice of a drive hanging 56px into Just share one thing (its words decode from hex
-  noise on arrival), then Share it your way (the rules grouped, the share window as the picture), What's
+  noise on arrival), then Share it your way (the rules grouped, the share window as the picture, tilted, with a line under it), What's
   different from a usual drive? (hidebox beside one popular cloud drive), Who sees what (four cards), Tari does the private parts with What's tTARI?, the
   closing over the pixel field, and the footer. Sections alternate two surfaces (`--bg`, `--bg-alt`) and each seam
   is a hairline with a ruler of 5px ticks on the field's 48px grid; their parts arrive as they scroll in.
@@ -318,7 +318,9 @@ Headings and the status pill stay one line.
 
 Flat, with shadcn's four shadows: `xs` on outline buttons and inputs, `sm` on cards and the active tab,
 `md` on menus, `lg` on dialogs, sheets, the upload panel and the hero's drive slice. Overlays dim the
-page with black at 50%. Nothing glows.
+page with black at 50%. Nothing glows. One picture is drawn in depth (site/share, the owner's): the home's share
+window leans back in perspective over a second sheet, takes no pointer, and a line under it says what it shows, so
+nobody takes it for a window to use.
 
 ## Shapes
 
