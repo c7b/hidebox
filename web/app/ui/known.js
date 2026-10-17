@@ -78,7 +78,7 @@ export function knownPanel({ cfg, load, access = null, kdf = null, toggleTestid 
 
   function fill(data) {
     const notStored = ['name', 'contents', 'key', 'password', 'email', 'ip', 'browser'].map((k) => h('li', {}, t(`known.never.${k}`)));
-    panel.replaceChildren(
+    panel.replaceChildren(...[   // without the null lines, which would read "null"
       h('h3', { id: `${id}-h` }, t('known.title')),
       h('p', { class: 'a-known-sub' }, t('known.sub')),
       ...rows(data, kdf),
@@ -89,7 +89,7 @@ export function knownPanel({ cfg, load, access = null, kdf = null, toggleTestid 
         h('p', {}, t('claim.c5', { ticket_min: Math.round(cfg.retention.ticket_s / 60), tombstone_days: cfg.retention.tombstone_days })),
         h('p', {}, t('claim.c5db', { db_backup_days: cfg.retention.db_backup_days })),
         cfg.hosting?.snapshots !== 'off' ? h('p', {}, t('claim.c5snap')) : null,
-        h('p', { class: 'a-known-end' }, t('known.end'))));
+        h('p', { class: 'a-known-end' }, t('known.end')))].filter(Boolean));
   }
 
   // P1: the ciphertext exactly as our disk holds it, without using a view.

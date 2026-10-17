@@ -10,9 +10,11 @@ share-send-tari (+ kind 4), received-list (Tari arrivals, sender hidden, Save to
 purchases, offline), received-folder (a folder by Tari, opened and saved as a tree), folder-zip (Download all, checked with Python's zipfile) and folder-viewer (a visit: countdown,
 phones, one by one, preview)."""
 import glob
+import hashlib
 import json
 import os
 import re
+import secrets
 import sqlite3
 import time
 import zipfile
@@ -61,14 +63,40 @@ def dialog_step(page):
     return page.eval("document.getElementById('share-dialog')?.dataset.step || ''")
 
 
+# Element.append() writes a null child as the text "null" (live, under "It ends", seventh pass): every
+# state the helpers below reach is searched for a text node that reads null or undefined.
+NULL_TEXT = """(() => { const box = document.getElementById('share-dialog'); if (!box) return [];
+  const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT); const out = [];
+  for (let n = w.nextNode(); n; n = w.nextNode()) if (/^(null|undefined)$/.test(n.nodeValue.trim()))
+    out.push((n.parentElement?.className || n.parentElement?.tagName || '?') + ': ' + n.nodeValue.trim());
+  return out; })()"""
+
+
+def seen_null(page, where):
+    """Records the share dialog's stray "null" texts in this state (checked by no_null)."""
+    found = page.eval(NULL_TEXT)
+    page.__dict__.setdefault("nulls", [])
+    page.__dict__.setdefault("null_states", 0)
+    page.null_states += 1
+    if found:
+        page.nulls.append(f"{where}: {found}")
+
+
+def no_null(t, page):
+    t.check(page.__dict__.get("null_states", 0) > 0 and not page.__dict__.get("nulls"),
+            f"no text in the share dialog reads null, in the {page.__dict__.get('null_states', 0)} states this flow saw ({page.__dict__.get('nulls')})")
+
+
 def open_share(page, name):
     row_menu(page, name, "share")
     page.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    seen_null(page, f"{name}: who")
 
 
 def to_opens(page):
     page.click("share-next")
     page.wait("document.getElementById('share-dialog')?.dataset.step === 'opens'", 10)
+    seen_null(page, "opens")
 
 
 def choices(page):
@@ -92,11 +120,13 @@ def pick_end(page, value):
     page.wait("[...document.querySelectorAll('[role=\"listbox\"]')].some((l) => !l.hidden)", 5)
     page.eval(f"[...document.querySelectorAll('[role=\"listbox\"]:not([hidden]) [role=\"option\"]')].find((o) => o.dataset.value === {json.dumps(value)}).click()")
     page.wait(f"document.querySelector('[data-testid=\"share-ends\"]')?.dataset.value === {json.dumps(value)}", 5)
+    seen_null(page, f"opens, It ends: {value}")
 
 
 def make_link(page):
     page.click("share-make")
     page.wait("document.getElementById('share-dialog')?.dataset.step === 'result'", 90)
+    seen_null(page, "result")
     return page.value("share-link")
 
 
@@ -206,6 +236,7 @@ def share_once(t):
     a.wait_for("link-row", 10)
     t.check(a.eval("document.querySelector('[data-testid=\"link-row\"] [data-rule]').dataset.rule") == "once", "the Links tab lists the link with its rule")
     t.shot(a, "share-1440-links")
+    seen_null(a, "links tab")
     a.click("link-copy")
     t.check(a.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(once)})", 10), "Copy on a link this browser made")
     a.click("link-stop")
@@ -213,6 +244,7 @@ def share_once(t):
     t.check(wait_rule(a, "notes.txt", "ended"), "Stop sharing: the link ends now, the file stays")
     _, state = stranger(t, once)
     t.check(state == "revoked", f"the stopped link no longer opens ({state})")
+    no_null(t, a)
 
 
 @scenario("share-rules", "A few times, Until a time and a Public link on a phone (step 8): the first day's limits, then the second day; Share is the primary", features=FEATURES)
@@ -270,6 +302,7 @@ def share_rules(t):
     close_dialog(a)
     t.check(wait_rule(a, "public.txt", "public"), "the row says Public link")
     t.shot(a, "share-390-rows", full_page=True)
+    no_null(t, a)
 
 
 @scenario("share-stop", "Stop sharing where people look (B): the row menu ends a file's links in one click (the toast says a stopped link can't come back, no Undo); the result has its own Stop sharing; the Links tab says where", features=FEATURES)
@@ -671,3 +704,115 @@ def received_folder(t):
     into(b, "Day one")
     b.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].map((e) => e.dataset.name).join() === 'notes.txt'", 60)
     t.check(len(want) == 3, "the nested file came along")
+
+
+# --- the judge's step 3 under a race (E-J failed once at step 5: the switch never reached the server) ------
+
+RACE_FEATURES = ("folders", "pay_to_open")
+# In the page before any of its scripts: a judge pass held as /judges saves it; production's direct mode with
+# the sponsor on (so a new drive asks for its grant in the background, as on the real site); the grant
+# answered __OFFSET__ ms after the share dialog opens, and the drive's view drawn again at that moment (as
+# an index reload does); every share request's body and answer, and the dialog's life, logged.
+RACE_JS = r"""(() => {
+  const R = window.__race = { log: [], shares: [], answers: [], t0: 0 };
+  const now = () => Math.round(performance.now());
+  const log = (m) => R.log.push(now() + ' ' + m);
+  localStorage.setItem('mutis.judge', JSON.stringify({ code: __CODE__, until: Date.now() + 7 * 86400000 }));
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const real = window.fetch;
+  window.fetch = async function (input, init = {}) {
+    const url = String(input?.url ?? input);
+    const method = init.method || 'GET';
+    if (url.endsWith('/api/v1/sponsor') && method === 'POST') {
+      log('grant asked');
+      await gate;
+      log('grant answered');
+      return new Response(JSON.stringify({ job_id: 'race-grant' }), { status: 202, headers: { 'Content-Type': 'application/json' } });
+    }
+    const share = /\/api\/v1\/items\/[^/]+\/shares$/.test(url) && method === 'POST';
+    if (share) { R.shares.push(JSON.parse(init.body)); log('share sent then_delete=' + JSON.parse(init.body).then_delete); }
+    const res = await real.call(this, input, init);
+    if (share) R.answers.push(await res.clone().json().catch(() => null));
+    if (url.endsWith('/api/v1/config') && res.ok) {
+      const c = await res.clone().json();
+      c.send_mode = 'direct';
+      c.features = { ...c.features, direct_send: true, sponsor: true };
+      return new Response(JSON.stringify(c), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return res;
+  };
+  new MutationObserver((ms) => {
+    const box = document.getElementById('share-dialog');
+    for (const m of ms) if (m.target === box && m.type === 'childList') log('dialog drawn ' + box.dataset.step);
+    if (box && !box.hidden && !R.t0) {
+      R.t0 = now();
+      log('dialog open');
+      setTimeout(() => { release(); dispatchEvent(new PopStateEvent('popstate')); log('grant released, view drawn again'); }, __OFFSET__);
+    }
+  }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+  addEventListener('click', (e) => log('click ' + (e.target.closest?.('[data-testid]')?.dataset.testid || e.target.tagName)), true);
+  addEventListener('sh:change', (e) => log('change ' + (e.target.dataset?.testid || e.target.className)), true);
+})();"""
+
+
+def judge_pass_for(t):
+    """A pass in this flow's own database, as `mutis-admin judge-pass new` makes one."""
+    found = glob.glob(os.path.join(t.work, "data-sidecar-" + "-".join(RACE_FEATURES), "**", "mutis.sqlite3"), recursive=True)
+    code = "judge-" + "".join(secrets.choice("0123456789abcdefghjkmnpqrstvwxyz") for _ in range(24))
+    con = sqlite3.connect(found[0], timeout=30)
+    con.execute("INSERT INTO judge_passes(code_hash, uses_left, created_at, pow_skips_left) VALUES (?, 6, ?, 100)",
+                (hashlib.sha256(code.encode()).digest(), int(time.time())))
+    con.commit()
+    con.close()
+    return code
+
+
+@scenario("share-then-delete-race", "The judge's step 3 under a race: a judge-pass drive in direct mode, CPU 4×; its sponsor grant answered 0, 200, 500 or 1500 ms after the share dialog opens (the view drawn again then) and an index reload between the switch and Make link; Delete it from my drive after reaches the server every time and the file leaves after its one open", features=RACE_FEATURES)
+def share_then_delete_race(t):
+    code = judge_pass_for(t)
+    for offset in (0, 200, 500, 1500):
+        a = t.actor("desktop")
+        a.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": RACE_JS.replace("__CODE__", json.dumps(code)).replace("__OFFSET__", str(offset))})
+        a.cmd("Emulation.setCPUThrottlingRate", {"rate": 4})
+        a.goto(t.origin + "/drive?make")
+        a.wait_for("drive-root", 120)
+        a.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
+        folder = f"council-{offset}"
+        root = t.fixture(folder)
+        os.makedirs(root, exist_ok=True)
+        for name in ("minutes.txt", "agenda.txt", "notes.txt"):
+            with open(os.path.join(root, name), "w", encoding="utf-8") as f:
+                f.write(f"The council's {name} ({offset} ms).\n")
+        a.wait("!!document.querySelector('[data-testid=\"upload-dir-input\"]')", 30)
+        a.set_files("upload-dir-input", [root])
+        a.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === {json.dumps(folder)})", 120)
+        into(a, folder)
+        a.wait("(() => { const n = [...document.querySelectorAll('[data-testid=\"file-row\"]')].map((e) => e.dataset.name); return n.includes('minutes.txt') && n.includes('agenda.txt'); })()", 120)
+        open_share(a, "minutes.txt")
+        to_opens(a)
+        a.click("share-then-delete")
+        # Between the switch and Make link: a file lands in this folder (the index reloads, /me and the
+        # view are drawn again under the dialog), and the grant has been answered.
+        a.set_files("upload-files-input", [write_fixture(t, f"late-{offset}.txt", b"a late file\n")])
+        a.wait(f"[...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === 'late-{offset}.txt')", 60)
+        a.wait("window.__race.log.some((x) => x.endsWith('grant released, view drawn again'))", 10)
+        on = a.attr("share-then-delete", "aria-checked")
+        url = make_link(a)
+        race = a.eval("window.__race")
+        sent = race["shares"][-1] if race["shares"] else {}
+        answer = (race["answers"][-1] if race["answers"] else None) or {}
+        ok = on == "true" and sent.get("then_delete") is True and bool(answer.get("item_expires_at"))
+        t.check(ok, f"{offset} ms: the switch still on before Make link ({on}), then_delete sent ({sent.get('then_delete')}), "
+                    f"the file set to leave ({answer.get('item_expires_at')})" + ("" if ok else f"; {race['log']}"))
+        t.check("leaves your drive" in a.text("share-step-result"), f"{offset} ms: the result says the file leaves too")
+        close_dialog(a)
+        no_null(t, a)
+        a.cmd("Emulation.setCPUThrottlingRate", {"rate": 1})
+        v, _ = stranger(t, url)
+        v.click("view-open")
+        t.check(v.wait_state("view-root", VIEW_END, 60) == "opened", f"{offset} ms: the link opens once")
+        a.reload()
+        a.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].length >= 1", 60)
+        names = a.wait("(() => { const n = [...document.querySelectorAll('[data-testid=\"file-row\"]')].map((e) => e.dataset.name); return n.includes('minutes.txt') ? null : n; })()", 60)
+        t.check(sorted(names or []) == ["agenda.txt", f"late-{offset}.txt", "notes.txt"], f"{offset} ms: after its one open minutes.txt left the drive ({names})")

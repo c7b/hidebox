@@ -184,7 +184,7 @@ async function buy(drive, pack, label) {
       drive.refreshMe().then(() => (drive.route.view === 'storage' ? drive.render() : null)).catch(() => null);
     }
   };
-  body.replaceChildren(
+  body.replaceChildren(...[   // without the null lines, which would read "null"
     h('div', { class: 'price-big' }, formatTari(invoice.amount_ut), h('small', {}, 'tTARI')),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'invoice-addr' }, t('upgrade.address')),
       h('div', { class: 'link-row' }, h('input', { class: 'input mono', id: 'invoice-addr', type: 'text', readonly: true, value: invoice.address, 'data-testid': 'invoice-address' }), copy),
@@ -192,7 +192,7 @@ async function buy(drive, pack, label) {
     stepper, status, errors,
     h('p', { class: 'small muted' }, t(cfg.amount_proof === 'wallet' ? 'claim.c11_wallet' : 'claim.c11_proof')),
     demo ? h('p', { class: 'small muted' }, t('pay.demo_note')) : null,
-    testnetLine(cfg));
+    testnetLine(cfg)].filter(Boolean));
   footer.replaceChildren(...[fromDrive, demo].filter(Boolean));
   init(box);
   draw(invoice);
