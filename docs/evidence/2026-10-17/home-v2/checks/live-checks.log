@@ -1,0 +1,50 @@
+# live checks, 2026-10-17T11:13:49Z
+== /v2 status, CSP kind, robots
+HTTP/2 200 
+cache-control: no-cache
+content-security-policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval' … (the app policy)
+x-robots-tag: noindex
+noindex meta tags in /v2: 1
+JSON-LD blocks in /v2: 0
+== /v2/ status
+200
+== links to /v2 elsewhere
+/: 0
+/how: 0
+/made: 0
+/judges: 0
+/fine-print: 0
+/sitemap.xml: 0
+/robots.txt: 0
+/llms.txt: 0
+/llms-full.txt: 0
+== sitemap
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://srv2052606.hstgr.cloud/</loc></url>
+  <url><loc>https://srv2052606.hstgr.cloud/fine-print</loc></url>
+  <url><loc>https://srv2052606.hstgr.cloud/how</loc></url>
+  <url><loc>https://srv2052606.hstgr.cloud/judges</loc></url>
+  <url><loc>https://srv2052606.hstgr.cloud/made</loc></url>
+</urlset>
+== media headers
+HTTP/2 200 
+accept-ranges: bytes
+cache-control: public, max-age=86400
+content-type: video/webm
+x-content-type-options: nosniff
+content-length: 3241933
+== a byte range
+HTTP/2 206 
+content-range: bytes 0-1023/3241933
+content-length: 1024
+== the home: same bytes as the tag's build (verify-deploy against the tag lists only the 15 new files, made/ and llms-full.txt)
+c0608fb74b2a6fcc8cee32e387c1ee95a6bc47f05af3dfdad8aad1d9ad8298a0  -
+c0608fb74b2a6fcc8cee32e387c1ee95a6bc47f05af3dfdad8aad1d9ad8298a0  (the tag 0e05f27, built with the live config: dist/index.html)
+== made/index.html and llms-full.txt against the tag's build (the two changed files verify-deploy lists)
+made/index.html: 4 changed lines, all the commit id
+   - ... python3 tools/verify-deploy.py https://srv2052606.hstgr.cloud 0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5
+   + ... python3 tools/verify-deploy.py https://srv2052606.hstgr.cloud 8fa092522902ceaa22cc26c068f233392f05a3d8
+   - ... the records are in the repository ... This deployment runs commit 0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5 ...
+   + ... the records are in the repository ... This deployment runs commit 8fa092522902ceaa22cc26c068f233392f05a3d8 ...
+llms-full.txt: 4 changed lines, the same two sentences

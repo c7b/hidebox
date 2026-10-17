@@ -1,0 +1,671 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "shots": 23,
+ "frames": {
+  "t1": 1.28,
+  "t2": 2.52,
+  "frames_differ": true
+ },
+ "probe": {
+  "desktop": {
+   "at_load": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238998,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.webm",
+      "status": 206,
+      "bytes": 2376949,
+      "failed": null
+     }
+    ],
+    "bytes": 2712418,
+    "clips": [
+     {
+      "stage": "stage stage-a",
+      "live": "on",
+      "src": "hidebox-A-hero.webm",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": false,
+      "t": 4.04,
+      "shown": true
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end mo-h mo-up",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     }
+    ]
+   },
+   "after_scroll": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238998,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.webm",
+      "status": 206,
+      "bytes": 2376949,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt_poster.png",
+      "status": 200,
+      "bytes": 232418,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt.webm",
+      "status": 206,
+      "bytes": 2565953,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides_poster.png",
+      "status": 200,
+      "bytes": 219468,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides.webm",
+      "status": 206,
+      "bytes": 886575,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay_poster.png",
+      "status": 200,
+      "bytes": 181688,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay.webm",
+      "status": 206,
+      "bytes": 3243786,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.webm",
+      "status": 206,
+      "bytes": 2376926,
+      "failed": null
+     }
+    ],
+    "bytes": 12419232,
+    "clips": [
+     {
+      "stage": "stage stage-a",
+      "live": "on",
+      "src": "hidebox-A-hero.webm",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": true,
+      "t": 0.76,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "on",
+      "src": "hidebox-C-encrypt.webm",
+      "poster": "hidebox-C-encrypt_poster.png",
+      "paused": true,
+      "t": 1.79,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "on",
+      "src": "hidebox-B-sides.webm",
+      "poster": "hidebox-B-sides_poster.png",
+      "paused": true,
+      "t": 2.72,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "on",
+      "src": "hidebox-D-pay.webm",
+      "poster": "hidebox-D-pay_poster.png",
+      "paused": true,
+      "t": 2.71,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end",
+      "live": "on",
+      "src": "hidebox-A-hero.webm",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": false,
+      "t": 0.41,
+      "shown": true
+     }
+    ]
+   },
+   "playing_off_screen": [],
+   "console": []
+  },
+  "android": {
+   "at_load": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238990,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.webm",
+      "status": 206,
+      "bytes": 2376971,
+      "failed": null
+     }
+    ],
+    "bytes": 2712369,
+    "clips": [
+     {
+      "stage": "stage stage-a",
+      "live": "on",
+      "src": "hidebox-A-hero.webm",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": false,
+      "t": 3.82,
+      "shown": true
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end mo-h mo-up",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     }
+    ]
+   },
+   "after_scroll": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238990,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.webm",
+      "status": 206,
+      "bytes": 2376971,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt_poster.png",
+      "status": 200,
+      "bytes": 232396,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt.webm",
+      "status": 206,
+      "bytes": 2565763,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides_poster.png",
+      "status": 200,
+      "bytes": 219468,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides.webm",
+      "status": 206,
+      "bytes": 886575,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay_poster.png",
+      "status": 200,
+      "bytes": 181688,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay.webm",
+      "status": 206,
+      "bytes": 3243786,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.webm",
+      "status": 206,
+      "bytes": 2376926,
+      "failed": null
+     }
+    ],
+    "bytes": 12418971,
+    "clips": [
+     {
+      "stage": "stage stage-a",
+      "live": "on",
+      "src": "hidebox-A-hero.webm",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": true,
+      "t": 0.55,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "on",
+      "src": "hidebox-C-encrypt.webm",
+      "poster": "hidebox-C-encrypt_poster.png",
+      "paused": true,
+      "t": 2.71,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "on",
+      "src": "hidebox-B-sides.webm",
+      "poster": "hidebox-B-sides_poster.png",
+      "paused": true,
+      "t": 1.8,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "on",
+      "src": "hidebox-D-pay.webm",
+      "poster": "hidebox-D-pay_poster.png",
+      "paused": true,
+      "t": 1.81,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end",
+      "live": "on",
+      "src": "hidebox-A-hero.webm",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": false,
+      "t": 0.42,
+      "shown": true
+     }
+    ]
+   },
+   "playing_off_screen": [],
+   "console": []
+  },
+  "iphone": {
+   "at_load": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238990,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.mp4",
+      "status": 206,
+      "bytes": 404295,
+      "failed": null
+     }
+    ],
+    "bytes": 739779,
+    "clips": [
+     {
+      "stage": "stage stage-a is-opaque",
+      "live": "on",
+      "src": "hidebox-A-hero.mp4",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": false,
+      "t": 4.11,
+      "shown": true
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end mo-h mo-up",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     }
+    ]
+   },
+   "after_scroll": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238990,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.mp4",
+      "status": 206,
+      "bytes": 404295,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt_poster.png",
+      "status": 200,
+      "bytes": 232418,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt.mp4",
+      "status": 206,
+      "bytes": 314889,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides_poster.png",
+      "status": 200,
+      "bytes": 219468,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides.mp4",
+      "status": 206,
+      "bytes": 143809,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay_poster.png",
+      "status": 200,
+      "bytes": 181688,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay.mp4",
+      "status": 206,
+      "bytes": 379932,
+      "failed": null
+     },
+     {
+      "file": "hidebox-A-hero.mp4",
+      "status": 206,
+      "bytes": 403838,
+      "failed": null
+     }
+    ],
+    "bytes": 2615821,
+    "clips": [
+     {
+      "stage": "stage stage-a is-opaque",
+      "live": "on",
+      "src": "hidebox-A-hero.mp4",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": true,
+      "t": 0.86,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-c is-opaque",
+      "live": "on",
+      "src": "hidebox-C-encrypt.mp4",
+      "poster": "hidebox-C-encrypt_poster.png",
+      "paused": true,
+      "t": 2.71,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b is-opaque",
+      "live": "on",
+      "src": "hidebox-B-sides.mp4",
+      "poster": "hidebox-B-sides_poster.png",
+      "paused": true,
+      "t": 1.81,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d is-opaque",
+      "live": "on",
+      "src": "hidebox-D-pay.mp4",
+      "poster": "hidebox-D-pay_poster.png",
+      "paused": true,
+      "t": 1.82,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end is-opaque",
+      "live": "on",
+      "src": "hidebox-A-hero.mp4",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": false,
+      "t": 0.43,
+      "shown": true
+     }
+    ]
+   },
+   "playing_off_screen": [],
+   "console": []
+  },
+  "reduced": {
+   "at_load": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238990,
+      "failed": null
+     }
+    ],
+    "bytes": 331777,
+    "clips": [
+     {
+      "stage": "stage stage-a",
+      "live": "",
+      "src": "",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": true,
+      "t": 0,
+      "shown": true
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end",
+      "live": "",
+      "src": "",
+      "poster": "",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     }
+    ]
+   },
+   "after_scroll": {
+    "media": [
+     {
+      "file": "hidebox-A-hero_poster.png",
+      "status": 200,
+      "bytes": 238990,
+      "failed": null
+     },
+     {
+      "file": "hidebox-C-encrypt_poster.png",
+      "status": 200,
+      "bytes": 232856,
+      "failed": null
+     },
+     {
+      "file": "hidebox-B-sides_poster.png",
+      "status": 200,
+      "bytes": 219468,
+      "failed": null
+     },
+     {
+      "file": "hidebox-D-pay_poster.png",
+      "status": 200,
+      "bytes": 181688,
+      "failed": null
+     }
+    ],
+    "bytes": 965789,
+    "clips": [
+     {
+      "stage": "stage stage-a",
+      "live": "",
+      "src": "",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-c",
+      "live": "",
+      "src": "",
+      "poster": "hidebox-C-encrypt_poster.png",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-b",
+      "live": "",
+      "src": "",
+      "poster": "hidebox-B-sides_poster.png",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-d",
+      "live": "",
+      "src": "",
+      "poster": "hidebox-D-pay_poster.png",
+      "paused": true,
+      "t": 0,
+      "shown": false
+     },
+     {
+      "stage": "stage stage-end",
+      "live": "",
+      "src": "",
+      "poster": "hidebox-A-hero_poster.png",
+      "paused": true,
+      "t": 0,
+      "shown": true
+     }
+    ]
+   },
+   "playing_off_screen": [],
+   "console": []
+  }
+ }
+}

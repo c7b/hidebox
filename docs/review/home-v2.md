@@ -211,3 +211,45 @@ flush against it (the point of a stage). One was fixed: it read the headline's s
 text (it resolves the em against an unstyled heading); the size is now written as `clamp(17px, 5vw, 34px)`, the
 same values in the browser, which the detector then lists as off the ramp like the hero's. The impeccable interview could not run (the owner was away and said to
 proceed), so every decision came from the brief, the clips and the page, as recorded here.
+
+## Release
+
+Commit `8fa0925` on `main` (from `da8f943`), deployed with `deploy/scripts/deploy.sh 8fa0925`: release
+`8fa092522902ceaa22cc26c068f233392f05a3d8-cd224129f`, 177 files (162 before; the 15 new ones are v2's), the Caddyfile
+validated and reloaded, smoke PASS, the manifest `74d9d0bc69bc…` notarized through SealLog in tx
+`a7a1e1a35bb206a88ceda904d63820ff5f6d97bd9ae61009b77a028368e09f5a`. **The tag `spooky-secrets-2026-10` was not moved**:
+the judged surface is unchanged, so it stays at `0e05f27`.
+
+| Check | Result |
+|---|---|
+| Suites before the release (the server, as build) | lint PASS, check-copy PASS, server 331 OK (5 skipped), deploy 81 OK, app core ALL PASS (9 steps), UI 723/723, site 37/37 (V-01's static and browser checks are the two new ones). The deploy gate: server 328 OK (6 skipped), deploy OK, lint, copy |
+| verify-deploy against the release (`8fa0925`) | 0 differences across 177 files; SealLog's template on chain byte for byte |
+| verify-deploy against the tag (`0e05f27`) | 18 differences, each expected: the commit; the 15 new files; `made/index.html` and `llms-full.txt`, where the only changed lines name the commit a visitor should verify (/made prints the deployed commit, so a judge following it gets 0) |
+| The home | `/` is byte for byte the tag's build (the same SHA-256, `c0608fb7…`); the sitemap lists the same five pages; no page, sitemap, robots or llms file mentions `/v2` |
+| D-01 (`test_headers.py`) | PASS on production, `/v2` and `/v2/` included (the app policy, `X-Robots-Tag: noindex`), and the loops' type, ranges and cache |
+| Live probe (production, headless Chromium, cache off) | at load: a computer 2,712,418 B and an Android phone 2,712,369 B (the hero's WebM and poster only), an iPhone 739,779 B (the MP4), reduced motion 331,777 B (the poster only); after scrolling through: 12,419,232 B on a computer with the cache off (the closing fetches the hero's file again), 10,043,206 B with the cache on (it doesn't), 2,615,821 B on an iPhone, 965,789 B with reduced motion; no loop played off screen; no console error |
+
+Evidence: [`docs/evidence/2026-10-17/home-v2/`](../evidence/2026-10-17/home-v2/).
+
+## Screenshots
+
+All from production, headless Chromium on the server as `build` (`docs/evidence/2026-10-17/home-v2/shots_v2.py`). The
+best four:
+
+- `v2-1440-dark.webp`: the hero, dark first, the drive beside the words.
+- `v2-1440-light-who.webp`: Who sees what in light mode, the four sides beside the box on its dark stage.
+- `v2-1440-dark-tari.webp`: Tari does the private parts, the coin held beside the rows and What's tTARI?.
+- `v2-390-dark-full-1.webp`: the phone, the words and the button first, each loop under its section's intro.
+
+Also: both themes' whole pages at 1440 and 390, each loop's section at 1440 in both themes, the iPhone's MP4 in both
+themes, reduced motion, and two frames of the hero a second apart.
+
+## Not done, and open
+
+- **Real devices.** Every browser here was headless Chromium on the server (software GL), with an iPhone's user agent for
+  the WebKit path. Safari's handling of the MP4, the edge mask over it and the Pause motion switch on a real iPhone
+  were not seen.
+- **No E2E batch and no film** this pass: the app, the API and the home are as released at `0e05f27`.
+- **The judges' tag** stays at `0e05f27`; if v2 is ever to become the home, that is a new release and a new tag.
+- **Weight.** After a full scroll a computer has fetched about 10 MB (the WebMs are 0.9 to 3.2 MB each). Re-encoding
+  them smaller (shorter GOPs, a lower bitrate, or 640 px wide) would cut that; the owner's files were shipped as made.
