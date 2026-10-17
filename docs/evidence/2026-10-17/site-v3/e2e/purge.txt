@@ -1,0 +1,8 @@
+Eighth pass purge, 2026-10-17T01:39:30Z: a read-only diff of ids against a snapshot taken at 2026-10-17T01:31:22Z, before the deploy and the non-chain batch (e2e/dbsnap.py, as mutis, mode=ro). The database was never reset.
+New since the snapshot: 11 items (7 deleted and 1 removed by the runs; 2 ready and 1 doomed, all anonymous), 13 shares, 2 drops (1 removed by E-17, 1 active), 4 drives (the batch's; none holds a pack; no invoice, no claim, no paid share). No judge pass was used.
+Taken down by id (sudo mutis-admin takedown <kind> --note 'eighth pass e2e purge' -- <id>); each answered 'removed':
+item T7GRiCeOPEgRctfXwcVp2A -> removed
+item x_mGHCJMV6OYYIsVtJDBjQ -> removed
+item 5XHtxTJ_rCaSEF7CyGNIjw -> removed
+drop f31vhjpsbn -> removed
+After: the 11 test items are removed (4) or deleted (7); no item that existed before the snapshot changed state (e2e/survivors.txt).

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 import sys
 sys.path.insert(0, "/home/lcam/mutis/tests/e2e")
 sys.path.insert(0, "/home/lcam/.cache/mutis-tmp/probe")

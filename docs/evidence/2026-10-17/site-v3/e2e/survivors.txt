@@ -1,0 +1,10 @@
+Survivors after the eighth pass purge, 2026-10-17T01:39:30Z (read-only, as mutis; snapshot before the deploy and the batch at 2026-10-17T01:31:22Z)
+security drop 3w7m8k2v5t: [['active']]
+canary items ready: 48 before -> 48 after
+judge passes: 48 before -> 48 after (no E-J ran in this pass)
+items that existed before the run and changed state: 0
+packs held (identities with paid_bytes): 2 before -> 2 after
+meta keys (owner/robot) unchanged: True
+test items after the purge: 11 {'deleted': 7, 'removed': 4}
+test drops after the purge: [['f2066q9n43', 'removed'], ['f31vhjpsbn', 'removed']]
+test drives (made by the batch, no pack, left as they are): ['90AgAI_ABdLBFAhYp24jRw', 'jvG1NG3D7nkPoLfLmO5Zkw', 'Uae2o_7abNhGaboQyi7Jxg', 'Skw5Bjyw5GD6rx7D87yhxw']
