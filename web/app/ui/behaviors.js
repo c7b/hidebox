@@ -64,7 +64,7 @@ export function openModal(target, { returnFocus, onClose } = {}) {
     if (stack[stack.length - 1]?.box !== box) return;
     // lane app2: Escape closes the innermost layer first (an open select or menu), as Radix does.
     if (e.key === 'Escape' && (openSelect || openMenu)) { e.preventDefault(); if (openSelect) closeSelect(); else closeMenu(); }
-    else if (e.key === 'Escape') { e.preventDefault(); closeModal(box); }
+    else if (e.key === 'Escape') { e.preventDefault(); if (!box.dataset.busy) closeModal(box); }   // busy: a run that can't stop halfway
     else trap(e, box);
   };
   const onDown = (e) => { if (!alert && e.target === overlay) closeModal(box); };
