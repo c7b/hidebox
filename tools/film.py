@@ -25,6 +25,7 @@ by id afterwards (its pay link is ended here).
 """
 import argparse
 import bisect
+import datetime
 import io
 import json
 import shlex
@@ -34,7 +35,7 @@ import tarfile
 import tempfile
 import time
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -68,11 +69,19 @@ OPENS = "It opens on the phone."
 PAID = "Checked on the chain, not a wallet's word."                    # C11 short form
 CHAIN_SEES = "The chain shows a payment with a hidden amount and a hidden owner. The fee is public."   # C36
 TAGLINE = "Your private drive. Locked here. Shared your way."
+# The home as served: its reveals and the hero picture's decode (web/site/js/motion.js) have finished.
+SETTLED = ("!document.querySelector('.hero .slice.dc-run, .hero .slice.dc-box') && document.getAnimations()"
+           ".every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity)")
 
 
 def end_lines(cfg: dict) -> tuple:
     network = str(cfg.get("network", "esmeralda")).capitalize()
     mainnet = (cfg.get("ootle") or {}).get("mainnet_date", "")
+    try:                                   # as the footer writes it: "Nov 11, 2026"
+        day = datetime.date.fromisoformat(mainnet)
+        mainnet = f"{day:%b} {day.day}, {day.year}"
+    except ValueError:
+        pass
     return ((BRAND, 72, MOON), (TAGLINE, 44, MOON),
             (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet}.", 30, MOON_DIM))
 
@@ -83,6 +92,22 @@ class Shot:
     seconds: float
     start: float
     end: float
+    cuts: list = field(default_factory=list)       # (start, end) waits inside the shot, left out of the film
+
+
+def kept(shot: Shot) -> list[tuple[float, float]]:
+    """The shot's real time minus its cuts, as spans in order."""
+    spans, at = [], shot.start
+    for a, b in sorted(shot.cuts):
+        a, b = max(a, shot.start), min(b, shot.end)
+        if b <= a:
+            continue
+        if a > at:
+            spans.append((at, a))
+        at = max(at, b)
+    if shot.end > at:
+        spans.append((at, shot.end))
+    return spans or [(shot.start, shot.end)]
 
 
 class Take:
@@ -97,9 +122,18 @@ class Take:
     @contextmanager
     def shot(self, caption: str, seconds: float):
         start = self.desk.clock()
+        self.cuts: list[tuple[float, float]] = []
         yield
         self.hold(0.3)
-        self.shots.append(Shot(caption, seconds, start, self.desk.clock()))
+        self.shots.append(Shot(caption, seconds, start, self.desk.clock(), self.cuts))
+
+    @contextmanager
+    def cut(self, lead: float = 0.25):
+        """Leave a wait out of the current shot (a page loading shows as a blank page), keeping its first `lead`
+        seconds (the press) and everything after the block."""
+        start = self.desk.clock() + lead
+        yield
+        self.cuts.append((start, self.desk.clock()))
 
     def hold(self, seconds: float) -> None:
         """Let the pages paint (frames keep arriving and are saved) without acting."""
@@ -121,11 +155,16 @@ def story(t: T, take: Take) -> None:
     desk, phone = take.desk, take.phone
     flows.home(desk, t.origin)
     flows.home(phone, t.origin)
+    for page in (desk, phone):              # the film opens on the page as served, not mid-reveal
+        page.wait(SETTLED, 20)
+    take.hold(0.5)
     # Track one (16-drive-design §10): one computer, then the phone opens the link.
     with take.shot(MAKE, 5):
         take.hold(1.0)
-        desk.click("home-make")
-        desk.wait_for("drive-root", 120)
+        with take.cut():                       # the drive app loading: a blank page for about 1.5 s
+            desk.click("home-make")
+            desk.wait_for("drive-root", 120)
+            take.hold(0.4)
         desk.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
         take.hold(1.5)
     base = drv.remote_tree(t, "secrets", {"letter.txt": b"Meet me at the old lighthouse at midnight. Bring the map.\n"})
@@ -241,8 +280,15 @@ def frame_list(frames: list[tuple[float, str]], shots: list[Shot], folder: str) 
     names = []
     for shot in shots:
         n = round(shot.seconds * FPS)
+        spans = kept(shot)
+        total = sum(b - a for a, b in spans)
         for k in range(n):
-            moment = shot.start + (shot.end - shot.start) * k / n
+            left = total * k / n
+            for a, b in spans:                   # walk the kept spans to the real moment
+                if left <= b - a or (a, b) == spans[-1]:
+                    moment = a + left
+                    break
+                left -= b - a
             names.append(frames[max(bisect.bisect_right(times, moment) - 1, 0)][1])
     runs = []
     for name in names:
