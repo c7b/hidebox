@@ -1,0 +1,32 @@
+/* SPDX-License-Identifier: MIT — /v3 only (docs/review/home-v3.md): /v2's page with stills in place of every loop (no
+   video at all: the hero and the closing show the open box with the files rising out of it) and the open box as the
+   mark. It loads after v2.css and keeps all of it (body.v2 v3): the cards, rhythm, tokens and layout are v2's. A
+   still is opaque on the page's own ink (#0A0A0A), so in dark mode it needs no stage at all, and in light mode it sits
+   on v2's gunmetal card through `lighten`: the picture's ink takes the card's light and nothing brighter than the
+   card changes. Touches nothing outside body.v3. */
+
+:root { --v3-blend: lighten; --v3-pool: block; }
+:root[data-theme="dark"] { --v3-blend: normal; --v3-pool: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --v3-blend: normal; --v3-pool: none; } }
+
+/* ---------- a still on its stage: its own ratio, no crop; only the floor fades out at the foot ---------- */
+.v3 .stage.is-still::before { display: var(--v3-pool); }   /* in dark mode the light pool would outline the frame */
+.v3 .stage .pic {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: var(--v3-blend);
+  -webkit-mask: linear-gradient(to bottom, #000 var(--fade), transparent);
+  mask: linear-gradient(to bottom, #000 var(--fade), transparent);
+}
+.v3 .hero .stage, .v3 .closing .stage { --ar: 1 / 1; --fade: 90%; }   /* the open box, the files rising out of it */
+.v3 .closing .stage { width: min(100%, 360px); }   /* v2's 440 px at 5:4 was 352 px tall; this is 360 */
+.v3 .stage-c { --ar: 16 / 9; --fade: 84%; }   /* the file locked in the browser, leaving still locked, the server */
+.v3 .stage-b { --ar: 1 / 1; --fade: 86%; }    /* one file, four sides: you, a glimpse, a frosted lid, the gem */
+.v3 .stage-d { --ar: 4 / 3; --fade: 82%; }    /* the file and its key in, through the gem, a locked tile out */
+
+/* ---------- the open box (the owner's mark, final-a-open): lime on ink in both themes, in the header's tile and the
+   comparison's. The ink tile stays on light pages: the lime alone on white would be 1.21:1. ---------- */
+.v3 .wm-tile {
+  background: #0A0A0A url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='2.6 1.6 26.8 29.8'%3E%3Cg fill='none' stroke='%23BCFE00' stroke-width='2.4' stroke-linejoin='round'%3E%3Cpath d='M16 3 L27 9 L16 15 L5 9 Z'/%3E%3Cpath d='M6 15 L4 16 L4 23 L16 30 L28 23 L28 16 L26 15'/%3E%3Cpath d='M4 16 L16 23 L28 16 M16 23 L16 30'/%3E%3C/g%3E%3C/svg%3E") 50% 50% / auto 20px no-repeat;
+}
+.v3 .wm-tile > svg { display: none; }
+.v3 .us-name .wm-tile { background-size: auto 15px; }
+@media (forced-colors: active) { .v3 .wm-tile { forced-color-adjust: none; } }

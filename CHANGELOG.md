@@ -1,6 +1,19 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- eleventh pass, home v3 -->
+## 2026-10-18: the eleventh pass (home v3, a preview at /v3)
+
+- **The home with stills**, at `/v3` only: `/v2`'s page, words, buttons and widget, with a picture in place of every
+  loop. The hero and the closing show the open box with the files rising out of it; What's different from a usual
+  drive? shows a file locked in the browser, leaving still locked, and the server; Who sees what shows one file's four
+  sides; Tari does the private parts shows the file and its key going through Tari's gem and coming out locked. No
+  video on the page: it weighs about a quarter of a megabyte after a full scroll.
+- **The open box** is the mark in `/v3`'s header and its favicon, lime on ink. The home, the sitemap, the JSON-LD
+  and every other page are as they were. Its own budget (V-02) is checked by the site suite. Review:
+  `docs/review/home-v3.md`.
+<!-- /eleventh pass, home v3 -->
+
 <!-- tenth pass, home v2 -->
 ## 2026-10-17: the tenth pass (home v2, a preview at /v2)
 

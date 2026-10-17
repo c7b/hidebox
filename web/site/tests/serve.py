@@ -34,7 +34,8 @@ APP_CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript",
          ".mjs": "text/javascript", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
          ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json",
-         ".wasm": "application/wasm", ".webm": "video/webm", ".mp4": "video/mp4"}
+         ".wasm": "application/wasm", ".webm": "video/webm", ".mp4": "video/mp4", ".webp": "image/webp",
+         ".avif": "image/avif"}
 MEDIA = {".webm", ".mp4"}   # /v2's loops: answered in byte ranges, as Caddy's file server does
 TEXT = {".html", ".txt", ".webmanifest"}   # the build expands placeholders in pages and static text only
 INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")
@@ -196,7 +197,7 @@ class Handler(BaseHTTPRequestHandler):
                 f = Path(self.site.opts.dist) / "404.html"
         else:
             status = 200
-        csp = APP_CSP if path in ("/", "/v2", "/v2/") else SITE_CSP   # the pages with the drop widget (Caddyfile)
+        csp = APP_CSP if path in ("/", "/v2", "/v2/", "/v3", "/v3/") else SITE_CSP   # the pages with the drop widget (Caddyfile)
         body = self.site.render(f, path)
         m = re.fullmatch(r"bytes=(\d+)-(\d*)", self.headers.get("Range", ""))
         if f.suffix in MEDIA and status == 200 and m and int(m[1]) < len(body):

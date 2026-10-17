@@ -14,8 +14,9 @@ import serve
 from cdp import Browser
 
 # The six pages of the ghost (14-ghost-design §4.1); the old ones are 301s (deploy/caddy/Caddyfile).
-# /v2 (docs/review/home-v2.md) is the home with the product loops at its own, unlisted address.
-ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page", "/v2"]
+# /v2 (docs/review/home-v2.md) is the home with the product loops at its own, unlisted address; /v3
+# (docs/review/home-v3.md) is /v2 with stills in place of the loops and the open box as the mark.
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page", "/v2", "/v3"]
 NOTES: list[str] = []
 
 
@@ -692,6 +693,92 @@ def check_v2(browser):
     return problems
 
 
+# V-02 (docs/review/home-v3.md), the loading half: /v3 has no video. At load it asks for the page, the drop widget's
+# first load and the hero's still (one AVIF in Chromium); the section stills come with native lazy loading as they near
+# the screen, and the closing shows the hero's file again. The test server caches nothing (DevTools' cache is off).
+V3_AT_LOAD, V3_SCROLLED = 512 * 1024, 1024 * 1024
+V3_STILLS = ("hero-", "different-", "who-", "gem-")
+V3_NAMES = {"stage-c": "different-", "stage-b": "who-", "stage-d": "gem-"}   # each section's still, by its stage
+V3_PICS = """[...document.querySelectorAll('.stage .pic')].map((i) => { const r = i.getBoundingClientRect();
+  return { stage: i.closest('.stage').classList[1], src: i.currentSrc.split('/').pop(), done: i.complete && i.naturalWidth > 0,
+           top: r.top + scrollY, blend: getComputedStyle(i).mixBlendMode,
+           card: getComputedStyle(i.closest('.stage')).backgroundImage }; })"""
+
+
+def _v3_files(page):
+    return [r["url"].rsplit("/", 1)[-1] for r in page.requests() if "/site/media/" in r["url"]]
+
+
+def check_v3(browser):
+    """V-02, /v3: dark first; no video and nothing from the loops' folder; at load the hero's still (an AVIF here), and
+    no section still that sits more than 2,500 px below the screen; scrolling through, each section's still once, every
+    picture decoded from its AVIF, the closing on the hero's file; the bytes stay in V-02, at 1440 and at 390. Light mode:
+    every still on v2's gunmetal card through `lighten`; dark mode: no card, no blend. Reduced motion: the hero's still
+    shows (nothing on /v3 depends on motion). The open box in the header's tile. No console error and no CSP violation.
+    The lazy rule here only bites when a section still sits more than 2,500 px down; static_checks pins loading="lazy"."""
+    problems = []
+    with server("--mode", "direct", "--seallog", "--pay") as origin:
+        for width, height, mobile in ((1440, 900, False), (390, 844, True)):
+            page = _v2_page(browser, width=width, height=height, mobile=mobile, android=mobile)
+            page.goto(origin + "/v3", settle=2.5)
+            at = f"/v3 @{width}"
+            if page.eval("document.documentElement.dataset.theme") != "dark" or \
+                    page.eval("getComputedStyle(document.body).backgroundColor") != "rgb(10, 10, 10)":
+                problems.append(f"{at}: not dark first")
+            if page.eval("document.querySelectorAll('video').length") or any("/site/media/motion/" in r["url"] for r in page.requests()):
+                problems.append(f"{at}: a video or a loop's file (v3 has stills only)")
+            if not page.wait_for("(() => { const i = document.querySelector('.stage-a .pic'); return i.complete && i.naturalWidth > 0; })()", 10):
+                problems.append(f"{at}: the hero's still isn't shown")
+            pics = page.eval(V3_PICS)
+            files = _v3_files(page)
+            stills = [f for f in files if f.startswith(V3_STILLS)]
+            if [f for f in stills if f.startswith("hero-")] != [pics[0]["src"]] or not pics[0]["src"].endswith(".avif"):
+                problems.append(f"{at}: at load the hero's still was asked for as {stills}, shown as {pics[0]['src']!r} (one AVIF expected)")
+            far = [V3_NAMES[p["stage"]] for p in pics if p["top"] > height + 2500 and p["stage"] in V3_NAMES]
+            early = [f for f in stills if f.startswith(tuple(far))] if far else []
+            if early:
+                problems.append(f"{at}: at load asked for {early}, more than 2,500 px below the screen (lazy: {far})")
+            loaded = sum(r["bytes"] for r in page.requests())
+            if loaded > V3_AT_LOAD:
+                problems.append(f"{at}: {loaded:,} B at load (V-02: at most {V3_AT_LOAD:,})")
+            step = height * 0.5
+            for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):
+                page.scroll_to(y, 0.3)
+            page.b.pump(1.0)
+            pics = page.eval(V3_PICS)
+            stills = [f for f in _v3_files(page) if f.startswith(V3_STILLS)]
+            for p in pics:
+                if not p["done"] or not p["src"].endswith(".avif"):
+                    problems.append(f"{at}: {p['stage']}'s still isn't decoded from its AVIF ({p['src']!r})")
+            if pics and pics[-1]["src"] != pics[0]["src"]:
+                problems.append(f"{at}: the closing shows {pics[-1]['src']}, not the hero's {pics[0]['src']}")
+            for name in V3_STILLS[1:]:
+                if len([f for f in stills if f.startswith(name)]) != 1:
+                    problems.append(f"{at}: after scrolling asked for {[f for f in stills if f.startswith(name)]} ({name}*: once)")
+            scrolled = sum(r["bytes"] for r in page.requests())
+            if scrolled > V3_SCROLLED:
+                problems.append(f"{at}: {scrolled:,} B after scrolling through (V-02: at most {V3_SCROLLED:,})")
+            mark = page.eval("(() => { const t = document.querySelector('.site-header .wm-tile'); return [getComputedStyle(t).backgroundImage.startsWith('url(\"data:image/svg+xml,'), getComputedStyle(t.querySelector('svg')).display]; })()")
+            if mark != [True, "none"]:
+                problems.append(f"{at}: the header's tile isn't the open box ({mark})")
+            problems += [f"{at}: {e}" for e in real_errors(page) + [l for l in page.console() if "Content Security Policy" in l]]
+            NOTES.append(f"V-02 /v3 @{width}: {loaded:,} B at load (the hero's still {pics[0]['src'] if pics else '?'}), {scrolled:,} B after "
+                         f"scrolling through, uncached; stills asked for: {', '.join(stills)}")
+            if any(p["blend"] != "normal" or p["card"] != "none" for p in pics):
+                problems.append(f"{at}: dark mode, a still on a card or blended: {[(p['stage'], p['blend'], p['card'][:20]) for p in pics]}")
+        light = _v2_page(browser, light=True, width=1440, height=900)
+        light.goto(origin + "/v3", settle=1.5)
+        pics = light.eval(V3_PICS)
+        if light.eval("document.documentElement.dataset.theme") != "light" or len(pics) != 5 or \
+                any(p["blend"] != "lighten" or "gradient" not in p["card"] for p in pics):
+            problems.append(f"light mode: a still without v2's gunmetal card and lighten: {[(p['stage'], p['blend'], p['card'][:20]) for p in pics]}")
+        quiet = _v2_page(browser, width=1440, height=900, reduce=True)
+        quiet.goto(origin + "/v3", settle=2.0)
+        if not quiet.wait_for("(() => { const i = document.querySelector('.stage-a .pic'); return i.complete && i.naturalWidth > 0; })()", 10):
+            problems.append("reduced motion: the hero's still isn't shown")
+    return problems
+
+
 CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("home words: 120 above the fold, 800 in all, Open your drive first", check_word_budget),
@@ -701,7 +788,8 @@ CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading 
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
-          ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2)]
+          ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2),
+          ("V-02: /v3's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode", check_v3)]
 
 
 def run_all():

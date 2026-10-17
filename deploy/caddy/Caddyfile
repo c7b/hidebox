@@ -236,7 +236,18 @@ http://{$MUTIS_HOST} {
 		file_server
 	}
 
-	# The loops: large files whose names carry no version, kept a day like the font (never immutable), so the
+	# /v3 (docs/review/home-v3.md): /v2 with stills in place of the loops and the open box as the mark, at an address
+	# no page links. The drop widget again, so the app policy; noindex as its page says.
+	@preview3 path /v3 /v3/ /v3/index.html
+	handle @preview3 {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex"
+		rewrite * /v3/index.html
+		file_server
+	}
+
+	# The loops and /v3's stills: files whose names carry no version, kept a day like the font (never immutable), so the
 	# closing's loop reuses the hero's bytes. The file server answers byte ranges, as video players ask.
 	@media path /site/media/*
 	handle @media {

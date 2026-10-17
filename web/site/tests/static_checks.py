@@ -22,7 +22,7 @@ PAGES = sorted((SITE / "pages").glob("*.html"))
 PARTIALS = sorted((SHARED / "partials").glob("*.html"))
 JS = sorted((SITE / "js").glob("*.js")) + sorted(SHARED.glob("*.js"))
 PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI", "BRAND"}
-DATA_FILES = {".json", ".png", ".ico", ".webp", ".woff2", ".bin", ".webmanifest", ".pyc", ".webm", ".mp4"}
+DATA_FILES = {".json", ".png", ".ico", ".webp", ".avif", ".woff2", ".bin", ".webmanifest", ".pyc", ".webm", ".mp4"}
 NOT_SOURCE = {"OFL.txt", "NOTICE", "llms.txt", "llms-full.txt"}
 
 # 11-brand §7.4 (and 12-integration "not promises"); "encriptado" per §7.7. Word-bounded, any case.
@@ -776,9 +776,9 @@ def check_v2():
         body = f.read_text()
         if re.search(r'href="(\{\{ORIGIN\}\})?/v2[/"#?]', body) or "{{ORIGIN}}/v2" in body:
             problems.append(f"{f.relative_to(WEB)}: links to /v2 (the preview stays out of nav, footer, sitemap and the graph)")
-    for f in [p for p in PAGES if p != v2] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
+    for f in [p for p in PAGES if p.name not in ("v2.html", "v3.html")] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
         if "/site/media/" in f.read_text() and f.name not in ("v2.css", "clips.js"):
-            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2 loads the loops)")
+            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2 and /v3 load media)")
     videos = re.findall(r"<video\b([^>]*)>(.*?)</video>\s*(<noscript>.*?</noscript>)?", text, re.S)
     if not videos:
         problems.append("pages/v2.html: no loops")
@@ -808,8 +808,11 @@ def check_v2():
         for url in files:
             if not url.startswith("/site/media/") or not (SITE / url.removeprefix("/site/")).is_file():
                 problems.append(f"{where}: {url!r} is not a file in web/site/media/")
-    media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())
-    for f in media:
+    media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())   # the folder's total counts /v3's stills too
+    for f in media:   # only the two previews' folders: the loops (V-01, here) and /v3's stills (V-02, check_v3)
+        if f.parent not in (SITE / "media" / "motion", SITE / "media" / "v3"):
+            problems.append(f"{f.relative_to(WEB)}: outside media/motion and media/v3 (V-01 and V-02 hold only those folders)")
+    for f in [m for m in media if m.parent == SITE / "media" / "motion"]:
         limit = V2_FILE_LIMITS.get(f.suffix)
         if limit is None:
             problems.append(f"{f.relative_to(WEB)}: not a loop's WebM, MP4 or poster")
@@ -829,6 +832,157 @@ def check_v2():
     return problems
 
 
+# V-02 (docs/review/home-v3.md): /v3 is /v2 with stills in place of every loop (the hero and the closing show the
+# open box with the files rising out of it) and the open box as the mark. Its own budget, outside M-01, A-06 and V-01's
+# loops: each still's AVIF and WebP, the folder, the mark, and v3.css (gzip -9). The browser half is browser_checks.
+V3_STILL_LIMITS = {".avif": 64_000, ".webp": 96_000}
+V3_FOLDER_LIMIT = 512 * 1024
+V3_MARK_LIMIT = 2048
+V3_CODE_LIMITS = {"css/v3.css": 2048}
+V3_STAGES = ["stage-a", "stage-c", "stage-b", "stage-d", "stage-end"]   # the hero, the four sections in page order
+V3_BAD_SVG = re.compile(r"<(image|script|foreignObject|use|a|style|animate\w*|set|iframe)\b|href=|\son[a-z]+=|data:|url\(", re.I)
+
+
+def image_size(f):
+    """(width, height) of a lossy WebP (no alpha), an AVIF (its ispe box) or a PNG, from the bytes; None otherwise."""
+    data = f.read_bytes()
+    if f.suffix == ".webp":
+        if data[:4] != b"RIFF" or data[8:16] != b"WEBPVP8 ":
+            return None
+        return int.from_bytes(data[26:28], "little") & 0x3FFF, int.from_bytes(data[28:30], "little") & 0x3FFF
+    if f.suffix == ".avif":
+        at = data.find(b"ispe")
+        if data[4:12] != b"ftypavif" or at < 0:
+            return None
+        return int.from_bytes(data[at + 8:at + 12], "big"), int.from_bytes(data[at + 12:at + 16], "big")
+    if f.suffix == ".png" and data[:8] == b"\x89PNG\r\n\x1a\n":
+        return struct.unpack(">II", data[16:24])
+    return None
+
+
+def check_v3():
+    """V-02, the files' half: /v3 is noindex, outside the JSON-LD graph, linked from no page, partial or static file,
+    and carries every visible string, link, variant and label of the home (only its title differs); it has no video and
+    loads no loop. Each of its five stages (the hero, What's different, Who sees what, Tari, the closing) is one
+    <picture>: an AVIF then a WebP srcset of three widths with one sizes, an <img> with its width and height, empty alt,
+    the hero's with fetchpriority="high", every other one lazy; each candidate is a file whose pixels match its w
+    descriptor and the img's ratio, within V-02's sizes; the closing names the hero's srcset and sizes (the browser
+    reuses its bytes). The favicon and the mark are clean SVG (no raster, script, link or data), the favicon PNG 32 px;
+    every file in media/v3 is named by the page or v3.css; the folder and v3.css stay in V-02."""
+    import gzip
+    problems = []
+    v3 = SITE / "pages" / "v3.html"
+    text = v3.read_text()
+    d, home = parse(v3), parse(SITE / "pages" / "index.html")
+    if not any("noindex" in a.get("content", "") for a in attr(d, "meta", name="robots")):
+        problems.append("pages/v3.html: no <meta name=\"robots\" content=\"noindex\">")
+    if "application/ld+json" in text:
+        problems.append("pages/v3.html: carries JSON-LD (the preview is no part of the graph)")
+    words = lambda doc: [w for w in (" ".join(t.split()) for t in doc.text) if w and w not in ("".join(doc.titles),)]   # noqa: E731
+    keys = ("href", "data-when", "hidden", "data-testid", "aria-label", "aria-labelledby", "id", "role")
+    def marks(doc):
+        body = doc.tags[next(i for i, (tag, _) in enumerate(doc.tags) if tag == "body"):]
+        return sorted(str((tag, [(k, a.get(k)) for k in keys if k in a])) for tag, a in body if any(k in a for k in keys))
+    if marks(d) != marks(home):
+        extra, missing = sorted(set(marks(d)) - set(marks(home))), sorted(set(marks(home)) - set(marks(d)))
+        problems.append(f"pages/v3.html: its links, variants or labels differ from the home's: only in v3 {extra[:3]}, only on / {missing[:3]}")
+    if words(d) != words(home):
+        a, b = words(home), words(d)
+        first = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
+        problems.append(f"pages/v3.html: its words differ from the home's at {first}: "
+                        f"{a[first] if first < len(a) else None!r} / {b[first] if first < len(b) else None!r}")
+    for f in [p for p in PAGES if p != v3] + PARTIALS + sorted((SITE / "static").rglob("*.txt")):
+        body = f.read_text()
+        if re.search(r'href="(\{\{ORIGIN\}\})?/v3[/"#?]', body) or "{{ORIGIN}}/v3" in body:
+            problems.append(f"{f.relative_to(WEB)}: links to /v3 (the preview stays out of nav, footer, sitemap and the graph)")
+    for gone in ("<video", "clips.js", "/site/media/motion/", "data-loops"):
+        if gone in text:
+            problems.append(f"pages/v3.html: {gone!r} (v3 has no loops: every stage is a still)")
+    named = set()
+    stages = re.findall(r'<div class="stage ([a-z-]+) is-still" aria-hidden="true">\s*<picture>(.*?)</picture>\s*</div>', text, re.S)
+    if [s for s, _ in stages] != V3_STAGES or text.count("<picture>") != len(V3_STAGES):
+        problems.append(f"pages/v3.html: stills {[s for s, _ in stages]}, expected one <picture> on each of {V3_STAGES}")
+    sets = {}
+    for i, (stage, inner) in enumerate(stages):
+        where = f"pages/v3.html {stage}"
+        sources = re.findall(r'<source type="(image/[a-z]+)" srcset="([^"]+)" sizes="([^"]+)">', inner)
+        img = re.search(r'<img class="pic" src="([^"]+)" alt="" width="(\d+)" height="(\d+)" ([a-z]+)="([a-z]+)" decoding="async">', inner)
+        if [s[0] for s in sources] != ["image/avif", "image/webp"] or len({s[2] for s in sources}) != 1 or not img:
+            problems.append(f"{where}: needs an AVIF then a WebP <source> with one sizes, and <img class=\"pic\"> with width, height and alt=\"\"")
+            continue
+        load = (img.group(4), img.group(5))
+        if load != (("fetchpriority", "high") if i == 0 else ("loading", "lazy")):
+            problems.append(f"{where}: {'=' .join(load)} (the hero's picture is fetched first, with fetchpriority=\"high\"; every other one is lazy)")
+        w, h = int(img.group(2)), int(img.group(3))
+        sets[stage] = sources
+        widths = []
+        for kind, srcset, _ in sources:
+            cands = [c.split() for c in srcset.split(",")]
+            if len(cands) != 3 or any(len(c) != 2 or not re.fullmatch(r"\d+w", c[1]) for c in cands):
+                problems.append(f"{where}: {kind} srcset {srcset!r}, expected three 'url Nw' candidates")
+                continue
+            widths.append([c[1] for c in cands])
+            for url, desc in cands:
+                f = SITE / url.removeprefix("/site/")
+                named.add(f.name)
+                if not url.startswith("/site/media/v3/") or not f.is_file():
+                    problems.append(f"{where}: {url!r} is not a file in web/site/media/v3/")
+                    continue
+                size = image_size(f)
+                if f.suffix != "." + kind.split("/")[1] or not size:
+                    problems.append(f"{where}: {url} is not a {kind} we can read (a lossy WebP without alpha, or an AVIF)")
+                    continue
+                if f"{size[0]}w" != desc or abs(size[1] * w - size[0] * h) > w:
+                    problems.append(f"{where}: {url} is {size[0]}x{size[1]}, its descriptor says {desc} at {w}:{h}")
+                if f.stat().st_size > V3_STILL_LIMITS[f.suffix]:
+                    problems.append(f"{where}: {url} is {f.stat().st_size:,} B (V-02: at most {V3_STILL_LIMITS[f.suffix]:,})")
+        if len(widths) == 2 and widths[0] != widths[1]:
+            problems.append(f"{where}: the AVIF and WebP srcsets list different widths {widths}")
+        if img.group(1) not in sources[1][1]:
+            problems.append(f"{where}: the img's src {img.group(1)} is none of its WebP candidates")
+    if sets.get("stage-a") != sets.get("stage-end"):
+        problems.append("pages/v3.html: the closing doesn't name the hero's srcset and sizes (it would fetch another file)")
+    icons = attr(d, "link", rel="icon")
+    if [(a.get("href"), a.get("type")) for a in icons] != [("/site/media/v3/favicon-32.png", "image/png"), ("/site/media/v3/hidebox-mark.svg", "image/svg+xml")]:
+        problems.append(f"pages/v3.html: favicons {[(a.get('href'), a.get('type')) for a in icons]}, expected v3's PNG then its SVG")
+    for a in icons:
+        f = SITE / a.get("href", "").removeprefix("/site/")
+        named.add(f.name)
+        if not f.is_file():
+            problems.append(f"pages/v3.html: favicon {a.get('href')} is no file")
+    mark = SITE / "media" / "v3" / "hidebox-mark.svg"
+    if mark.is_file():
+        body = mark.read_text()
+        if mark.stat().st_size > V3_MARK_LIMIT or V3_BAD_SVG.search(body) or body.count("<svg") != 1:
+            problems.append(f"media/v3/hidebox-mark.svg: {mark.stat().st_size} B, or it carries a raster, script, link or data (V-02: clean, at most {V3_MARK_LIMIT:,} B)")
+    png = SITE / "media" / "v3" / "favicon-32.png"
+    if png.is_file() and image_size(png) != (32, 32):
+        problems.append(f"media/v3/favicon-32.png: {image_size(png)}, expected 32 x 32")
+    css = (SITE / "css" / "v3.css").read_text()
+    if not re.search(r'\.v3 \.wm-tile \{[^}]*url\("data:image/svg\+xml,', css):
+        problems.append("css/v3.css: the header's tile doesn't carry the open box (a data URI on .v3 .wm-tile)")
+    for uri in re.findall(r'url\("data:image/svg\+xml,([^"]+)"\)', css):
+        svg = urllib.parse.unquote(uri)
+        if V3_BAD_SVG.search(svg) or len(svg) > V3_MARK_LIMIT:
+            problems.append("css/v3.css: the mark's data URI carries a raster, script or link, or is too large")
+    media = sorted(p for p in (SITE / "media" / "v3").glob("*") if p.is_file())
+    for f in media:
+        if f.name not in named and f"/site/media/v3/{f.name}" not in css:
+            problems.append(f"{f.relative_to(WEB)}: named by no page or stylesheet (V-02 serves only what /v3 shows)")
+    folder = sum(f.stat().st_size for f in media)
+    if folder > V3_FOLDER_LIMIT:
+        problems.append(f"web/site/media/v3: {folder:,} B (V-02: at most {V3_FOLDER_LIMIT:,})")
+    code = []
+    for rel, limit in V3_CODE_LIMITS.items():
+        size = len(gzip.compress((SITE / rel).read_bytes(), 9))
+        code.append(f"{rel} {size:,} B")
+        if size > limit:
+            problems.append(f"{rel}: {size:,} B gzip -9 (V-02: at most {limit:,})")
+    NOTES_STATIC.append(f"V-02 files: {len(stages)} stills on /v3, web/site/media/v3 {folder:,} B in {len(media)} files "
+                        f"(at most {V3_FOLDER_LIMIT:,}); {', '.join(code)} gzip -9")
+    return problems
+
+
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
@@ -844,4 +998,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3 KB more, each only from site.js", check_field_budget),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
-          ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2)]
+          ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2),
+          ("V-02: /v3 is noindex and unlinked, keeps the home's words, its stills are sized and lazy, its mark is clean", check_v3)]

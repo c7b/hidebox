@@ -86,6 +86,23 @@ class CaddyfileTest(unittest.TestCase):
         self.assertLess(site.index("handle @preview"), catch_all, "before the catch-all")
         self.assertLess(site.index("handle @media"), catch_all, "before the catch-all")
 
+    def test_the_v3_preview_gets_the_app_policy(self):
+        """/v3 (docs/review/home-v3.md), v2 with stills: the drop widget again, so the app policy, noindex as its page
+        says, ahead of the catch-all; its stills are under /site/media/, kept a day like the loops."""
+        preview = re.search(r"(?m)^\t@preview3 path (.+)$", self.text).group(1).split()
+        self.assertEqual(sorted(preview), ["/v3", "/v3/", "/v3/index.html"])
+        body = re.search(r"(?ms)^\thandle @preview3 \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn("import app_csp", body)
+        self.assertIn('header X-Robots-Tag "noindex"', body)
+        self.assertIn("rewrite * /v3/index.html", body)
+        for route in ("/v3", "/v3/"):
+            self.assertIs(headers_spec.ROUTES[route][0], headers_spec.APP_CSP, route)
+            self.assertEqual(headers_spec.ROUTES[route][1], {"x-robots-tag": "noindex"}, route)
+        self.assertTrue(any(path.startswith("/site/media/v3/") for path in headers_spec.MEDIA))
+        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
+        catch_all = re.search(r"(?m)^\thandle \{$", site).start()
+        self.assertLess(site.index("handle @preview3"), catch_all, "before the catch-all")
+
     def test_no_access_log_and_filtered_errors(self):
         site = self.text.split("{$MUTIS_HOST} {", 1)[1]
         self.assertNotRegex(site, r"(?m)^\s*log\b")
