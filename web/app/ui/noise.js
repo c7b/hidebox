@@ -3,7 +3,7 @@
 // grey pixel, in a softened range so it reads as static, not as a code. Beside it, the visitor's own
 // file, drawn locally: a raster image through createImageBitmap (no blob: URL), a note's text, or the
 // file's extension. Neither leaves the tab.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { t } from '../lib/i18n.js';
 
 const SIDE = 96;

@@ -5,7 +5,7 @@
 // its steps naming exactly the checks this deployment runs), and the rules of space in words, each true
 // to quota.py and cleanup.py, numbers from /config.
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
-import { h, icon, init, openModal } from './behaviors.js';
+import { h, icon, init, lines, openModal } from './behaviors.js';
 import { alert, button, closeX, errorAlert, formatTari } from './drive-parts.js';
 import { formatDuration } from './core.js';
 import { testnetLine } from './marks.js';
@@ -167,10 +167,10 @@ async function buy(drive, pack, label) {
   copy.addEventListener('click', () => navigator.clipboard.writeText(invoice.address).catch(() => null));
   const draw = (inv) => {
     status.dataset.status = inv.status;
-    status.textContent = t(`upgrade.status.${inv.status}`, {
+    status.replaceChildren(...lines(t(`upgrade.status.${inv.status}`, {
       x: formatTari(inv.received_ut ?? '0'), y: formatTari(inv.amount_ut), z: formatTari(BigInt(inv.amount_ut) - BigInt(inv.received_ut ?? '0')),
       underpaid_days: cfg.invoices.underpaid_grace_days,
-    });
+    })));
     const reached = list.map(([, done]) => done(inv));
     stepper.replaceChildren(...list.map(([name], i) => {
       const state = reached[i] && (reached[i + 1] || inv.status === 'credited') ? 'done' : reached[i] ? 'now' : 'todo';

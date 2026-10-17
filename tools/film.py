@@ -68,7 +68,7 @@ TEST = "Our demo wallet pays the owner for you, with test money."      # C33
 OPENS = "It opens on the phone."
 PAID = "Checked on the chain, not a wallet's word."                    # C11 short form
 CHAIN_SEES = "The chain shows a payment with a hidden amount and a hidden owner. The fee is public."   # C36
-TAGLINE = "Your private drive. Locked here. Shared your way."
+TAGLINE = "Your private cloud storage. Privacy isn't an option. It's the default."   # the home's headline (site v4)
 # The home as served: its reveals and the hero picture's decode (web/site/js/motion.js) have finished.
 SETTLED = ("!document.querySelector('.hero .slice.dc-run, .hero .slice.dc-box') && document.getAnimations()"
            ".every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity)")

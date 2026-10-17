@@ -14,7 +14,7 @@
 import { formatDate, t } from '../lib/i18n.js';
 import { activeShares, ruleOf } from '../lib/drive.js';
 import { FEW, FLAG_FOLDER, knownLinks, makeLink, rememberLink, stopLink } from '../lib/links.js';
-import { h, icon, id, init, openModal, closeModal, toast } from './behaviors.js';
+import { h, icon, id, init, lines, openModal, closeModal, toast } from './behaviors.js';
 import { alert, button, closeX, endsText, errorAlert, formatTari, itemName, opensText, ruleBadge, safetyGrid, shortAddress } from './drive-parts.js';
 import { patchShare } from '../lib/api.js';
 
@@ -328,7 +328,7 @@ function tariStep(body, footer) {
       const bad = addressErrorCode(classifyAddressInput(value));
       if (mine !== checking) return;
       if (bad) {
-        message.textContent = t(`error.${bad}`, { network: ctx.cfg.network });
+        message.replaceChildren(...lines(t(`error.${bad}`, { network: ctx.cfg.network })));
         message.classList.add('field-error');
         return;
       }

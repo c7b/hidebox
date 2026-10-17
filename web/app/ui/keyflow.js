@@ -3,7 +3,7 @@
 // with a passphrase by default, or the browser's password manager; no copy button), the one-time
 // prompt when something worth keeping first exists, the banner until it is saved, and restoring a
 // locker from its key on another device.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { t } from '../lib/i18n.js';
 import { utf8 } from '../lib/bytes.js';
 import { saveFile } from '../lib/download.js';

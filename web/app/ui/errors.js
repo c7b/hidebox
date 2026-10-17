@@ -2,7 +2,7 @@
 // Every error the app can meet, mapped to one sentence of copy (spec §6.4, §12.4.2; 14-ghost-design §10.2):
 // what happened, what did not happen, what to do. The server's English `message` only ever appears
 // inside "Technical details".
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { icon } from './core.js';
 import { cloneGhost } from '/shared/ghost.js';

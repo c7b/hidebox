@@ -4,7 +4,7 @@
 // before the first open); a password or a kept file means a new link, and the old one is revoked:
 // until our server confirms that, nothing changes. Choices beyond the anonymous limits open a free
 // locker in this browser first.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { adoptItem } from '../lib/api-locker.js';
 import { deleteItem, deleteShare, manageShare, patchShare } from '../lib/api.js';

@@ -3,7 +3,7 @@
 // the browser locks it, makes a link to it, seals that link to the drop owner's Tari address, and our
 // relay delivers it inside a stealth output. No account and no wallet on this side. The drop's label
 // was written by whoever made the link, so the page quotes it as theirs and never as ours.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatBytes, t } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { prefetchPow } from '../lib/pow.js';

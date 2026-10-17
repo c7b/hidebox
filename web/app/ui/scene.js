@@ -3,7 +3,8 @@
 // says the screen's state, the screen's one line, and its sentence under it. Fifth pass: the ghost is
 // gone (16-drive-design §0, the owner); the tile is the drive's empty-state tile with a Lucide icon from
 // /shared/ui/icons.svg. "Tari™" words are set in Tari purple, the one thing purple may mean.
-import { h, svg } from '../lib/dom.js';
+import { svg } from '../lib/dom.js';
+import { h } from './lines.js';
 
 // What each old pose now shows: a plain Lucide glyph.
 const GLYPH = {

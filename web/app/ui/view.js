@@ -5,7 +5,7 @@
 // report link. Each screen starts with an icon tile for its state; an ended link says "This link has
 // ended", the reason, and (C42) only when the file left our server, that we wrote so on the Tari chain
 // (or when it lands there). Previews follow the allowlist of §12.3.4.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
 import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';

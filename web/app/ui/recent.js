@@ -2,7 +2,7 @@
 // "Your recent drops (only on this device)" (11-brand §10.2): what this browser sealed lately, with
 // no names (the device keeps only ids and manage tokens). States (and the strings for them) load only
 // when the list is opened, one manage request per link.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatDate, formatRelative, t } from '../lib/i18n.js';
 import { deleteItem, manageShare } from '../lib/api.js';
 import { recentDrops, removeRecentDrop } from '../lib/store.js';

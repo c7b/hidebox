@@ -182,6 +182,8 @@
 .more-try li span:not([data-when]) { color: var(--fg-2); }
 .more-try .ui { font-weight: 500; }
 
+/* site v4: a table cell holds one sentence a line; balance keeps a lone word off each sentence's last line */
+main td { text-wrap: balance; }
 /* What to check: a compact table on its own surface; on phones each row stacks, "Where:" before the place */
 .claim-table {
   width: 100%; max-width: 920px; margin-inline: auto; border-collapse: collapse; font: var(--t-small); background: var(--bg-raised);

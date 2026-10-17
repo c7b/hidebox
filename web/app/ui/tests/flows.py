@@ -214,7 +214,7 @@ def home_text(t):
             and a.wait("navigator.clipboard.readText()", 10) == url, "the copy was made the moment the link existed, and the button says so")
     say = a.eval("document.querySelector('.md-say').textContent")
     # the server keeps a link until the hour after its time (spec §5.3), so a day reads 24 or 25 hours
-    t.check(re.fullmatch(r"It opens one time in the next 2[45] hours\. Then it's gone\.", say) is not None,
+    t.check(re.fullmatch(r"It opens one time in the next 2[45] hours\.\sThen it's gone\.", say) is not None,
             f"one sentence says the rule, with its time ({say!r})")
     t.shot(a, "home-390-sealed")
     a.click("card-change")
@@ -1072,6 +1072,7 @@ def budget(t):
     desk, files = size(d)
     t.check(desk <= QR_CEILING and "/app/ui/qr.js" in files,
             f"computer: {desk} B after a drop with the code to scan (≤ {int(QR_CEILING)} B, the QR waiver)")
+    print(f"  A-06 measured: computer {desk} B gzip -9, files: {', '.join(files)}")
     p = t.actor("iphone")
     home(t, p)
     p.set_files("drop-input", [t.fixture("photo-gps.jpg")])

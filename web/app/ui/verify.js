@@ -3,7 +3,7 @@
 // output's amount and owner as the chain reveals them, the public fee; and an explicit button to ask
 // Tari's indexer directly (the only cross-origin request the app makes). /verify (P1): SealLog
 // receipts for this device's links, each proof checked here against the root on the Ootle.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, hex, unhex } from '../lib/b64.js';
 import { config, exitReceipt } from '../lib/api.js';

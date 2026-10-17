@@ -6,7 +6,8 @@
 // switch, checkbox and radio group. The ARIA mirrors what Radix emits. Every node comes from lib/dom.js's
 // h() (createElement and text nodes only); positions reach CSS through CSSOM, never a style attribute.
 // The command palette was cut in the fix pass (search filters the list in place).
-import { h, svg } from '../lib/dom.js';
+import { svg } from '../lib/dom.js';
+import { h, lines } from './lines.js';   // site v4: lib/dom.js's h, one sentence a line in paragraphs
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -14,7 +15,7 @@ let uid = 0;
 export const id = (p = 'sh') => `${p}-${++uid}`;
 
 // ---------- icons: the Lucide sprite (web/shared/ui/icons.svg) ----------
-export { h };
+export { h, lines };
 export function icon(name, size) {
   return svg('svg', { class: 'icon', 'aria-hidden': 'true', focusable: 'false', 'data-size': size ?? null },
     svg('use', { href: `${ICONS}#i-${name}` }));

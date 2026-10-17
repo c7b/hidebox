@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // What the Tari side of the app shows: tTARI amounts, short addresses, the 12-emoji safety code and
 // the testnet line (claim C19).
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { phase } from '/shared/dates.js';
 

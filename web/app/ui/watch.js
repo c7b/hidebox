@@ -2,7 +2,7 @@
 // /watch, "See what a view key sees" (spec §12.3.3): a Tari address and its view key show every delivery
 // and payment to that address, and how many of those files the view key could open (none sealed to a
 // locker; kind-4 "other wallet" sends are the labelled exception). The key stays in this tab.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { t } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { equal } from '../lib/bytes.js';

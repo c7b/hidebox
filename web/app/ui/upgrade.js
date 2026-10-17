@@ -2,7 +2,7 @@
 // /upgrade (spec §12.3.3, §10.5): the free share of the disk, the packs, and an invoice paid in tTARI.
 // A payment counts only after the chain checks of this deployment's mode (amount_proof): the stepper
 // names exactly the checks that run, never more. Purple marks the buttons that move tTARI.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { config, getStats } from '../lib/api.js';
 import { copyButton, formatDuration, icon } from './core.js';

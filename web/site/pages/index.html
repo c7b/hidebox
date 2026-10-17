@@ -5,17 +5,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{BRAND}}: your private drive</title>
-<meta name="description" content="A private drive. Files lock in this browser before upload. You pick how each one opens: once, with a word, or for Tari.">
+<meta name="description" content="Your private cloud storage. Files lock in this browser before upload. You pick how each one opens: once, with a word, or for Tari.">
 <link rel="canonical" href="{{ORIGIN}}/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{BRAND}}">
-<meta property="og:title" content="Your private drive.">
-<meta property="og:description" content="Files lock in this browser before upload. You pick how each one opens: once, with a word, or for Tari.">
+<meta property="og:title" content="Your private cloud storage.">
+<meta property="og:description" content="Privacy isn't an option. It's the default. Files lock in this browser before upload.">
 <meta property="og:url" content="{{ORIGIN}}/">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A drive in {{BRAND}}: four files, each wearing its rule. Your private drive. Locked here. Shared your way.">
+<meta property="og:image:alt" content="A drive in {{BRAND}}: four files, each wearing its rule. Your private cloud storage. Privacy isn't an option. It's the default.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
@@ -34,7 +34,7 @@
 {"@context": "https://schema.org", "@graph": [
  {"@type": "WebSite", "@id": "{{ORIGIN}}/#website", "url": "{{ORIGIN}}/", "name": "{{BRAND}}", "inLanguage": "en"},
  {"@type": "SoftwareApplication", "@id": "{{ORIGIN}}/#app", "name": "{{BRAND}}", "url": "{{ORIGIN}}/",
-  "description": "A private drive: files lock in this browser before upload, and each one opens by its own rule. The browser encrypts each file before upload and the server stores only ciphertext. A file's key can travel to a Tari address sealed inside a stealth tTARI payment, and every exit is written to a public log on the Tari Ootle testnet.",
+  "description": "Your private cloud storage: files lock in this browser before upload, and each one opens by its own rule. The browser encrypts each file before upload and the server stores only ciphertext. A file's key can travel to a Tari address sealed inside a stealth tTARI payment, and every exit is written to a public log on the Tari Ootle testnet.",
   "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
   "featureList": ["A drive with folders, opened with a key made in the browser (no email)", "Encryption in the browser (AES-256-GCM, WebCrypto)", "Exit rules: once, a few times, a set time, or until deleted", "Send a file's key to a Tari address inside a stealth payment", "Dead-drop links delivered over Tari Ootle", "SealLog: a public record of stored files and exits on the Ootle"],
@@ -49,13 +49,13 @@
   <section class="hero" aria-labelledby="hero-h">
     <div class="hero-field" aria-hidden="true" data-field></div>
     <div class="wrap hero-inner">
-      <h1 id="hero-h" data-quiet>Your private drive. <span class="h1-2">Locked here. Shared your way.</span></h1>
-      <p class="lede" data-quiet>Files lock in this browser before upload. You pick how each one opens: once, with a word, or for Tari™.</p>
+      <h1 id="hero-h" data-quiet>Your private cloud storage. <span class="h1-2">Privacy isn't an option. <br>It's the default.</span></h1>
+      <p class="lede" data-quiet>Files lock in this browser before upload. <br>You pick how each one opens: once, with a word, or for Tari™.</p>
       <div class="cta-row">
         <a class="btn-xl cta-make" href="/drive?make" data-testid="home-make" data-quiet>Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
         <a class="btn-xl cta-open" href="/drive?open" data-testid="home-open" data-quiet>Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
       </div>
-      <p class="hero-note" data-quiet>No email, no password. Your key is the account.</p>
+      <p class="hero-note" data-quiet>No email, no password. <br>Your key is the account.</p>
       <figure class="slice" aria-label="A drive whose files each show their rule">
         <div class="slice-head"><span class="slice-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hard-drive"/></svg></span><span class="slice-title">My drive</span><span class="badge" data-variant="outline"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg>Locked</span></div>
         <div class="slice-cols" aria-hidden="true"><span></span><span>Name</span><span>Rule</span><span>State</span></div>
@@ -74,7 +74,7 @@
     <div class="wrap quick">
       <div class="quick-head">
         <h2 id="quick-h">Just share one thing</h2>
-        <p>No drive needed. It opens once, then the link ends.</p>
+        <p>No drive needed. <br>It opens once, then the link ends.</p>
       </div>
       <div class="quick-body">
         <div id="mutis-drop" data-variant="hero"></div>
@@ -89,7 +89,7 @@
       <div>
         <div class="sec-head">
           <h2 id="ways-h">Share it your way.</h2>
-          <p>Each file or folder gets its own rule. You can stop a link any time.</p>
+          <p>Each file or folder gets its own rule. <br>You can stop a link any time.</p>
         </div>
         <dl class="rule-groups">
           <div><dt>How it opens</dt><dd><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-repeat"/></svg>A few times</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-timer"/></svg>Until a time</span></dd></div>
@@ -101,9 +101,9 @@
         <div class="share-top"><b>Share trip-photos</b><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg></div>
         <p class="share-q">Who can open it?</p>
         <ul class="choices" role="list">
-          <li class="choice" data-checked><span class="icon-tile"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><span><b>Anyone with the link</b><span>You send the link. You pick how many opens.</span></span><span class="radio"></span></li>
+          <li class="choice" data-checked><span class="icon-tile"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><span><b>Anyone with the link</b><span>You send the link. <br>You pick how many opens.</span></span><span class="radio"></span></li>
           <li class="choice" data-when="pay_to_open=on" hidden><span class="icon-tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><span><b>Someone who pays you</b><span>They pay you <a href="#ttari">tTARI</a>, then it opens.</span></span><span class="radio"></span></li>
-          <li class="choice"><span class="icon-tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg></span><span><b>One Tari address</b><span>Send by Tari. Only that address can open it.</span></span><span class="radio"></span></li>
+          <li class="choice"><span class="icon-tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg></span><span><b>One Tari address</b><span>Send by Tari. <br>Only that address can open it.</span></span><span class="radio"></span></li>
         </ul>
         <div class="share-foot"><span class="btn">Next</span></div>
       </figure>
@@ -114,21 +114,21 @@
     <div class="wrap">
       <div class="sec-head center">
         <h2 id="diff-h">What's different from a usual drive?</h2>
-        <p>Files lock in this browser before upload. A usual drive locks them on its own servers, with its own key.</p>
+        <p>Your files lock here, in your browser. <br>A usual drive locks them on its own servers, with its own key.</p>
       </div>
       <table class="compare">
-        <thead><tr><th scope="col"><span class="sr-only">Question</span></th><th scope="col" class="us"><span class="us-name"><span class="wm-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span>{{BRAND}}</span></th><th scope="col">A usual cloud drive</th><th scope="col">A file-sending site</th></tr></thead>
+        <thead><tr><th scope="col"><span class="sr-only">Question</span></th><th scope="col" class="us"><span class="us-name"><span class="wm-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span>{{BRAND}}</span></th><th scope="col">A popular cloud drive</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Where your files get locked</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Files lock in this browser before upload.</td><td data-label="A usual cloud drive">On their servers</td><td data-label="A file-sending site">On their servers</td></tr>
-          <tr><th scope="row">What the server gets</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Our server gets scrambled noise. Never the key.</td><td data-label="A usual cloud drive">Your files and their key</td><td data-label="A file-sending site">Your files and their key</td></tr>
-          <tr><th scope="row">Your file names</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Search runs in this browser. Our server can't read your file names.</td><td data-label="A usual cloud drive">The company can read them</td><td data-label="A file-sending site">The company can read them</td></tr>
-          <tr><th scope="row">A link that opens once</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>It opens one time. Then the link ends.</td><td data-label="A usual cloud drive">Not usually. A link works until you turn it off.</td><td data-label="A file-sending site">Not usually. It ends after some days.</td></tr>
-          <tr data-when="pay_to_open=on" hidden><th scope="row">Get paid to open it</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Pay to open, in <a href="#ttari">tTARI</a>.</td><td data-label="A usual cloud drive">No</td><td data-label="A file-sending site">No</td></tr>
-          <tr><th scope="row">A public record when a file leaves</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>We write that on the Tari chain.</td><td data-label="A usual cloud drive">No</td><td data-label="A file-sending site">No</td></tr>
-          <tr><th scope="row">If you lose access</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg>Save your key. If this browser forgets it, nobody can let you back in, not even us.</td><td data-label="A usual cloud drive">Reset it with your email</td><td data-label="A file-sending site">Ask for a new link</td></tr>
+          <tr><th scope="row">Where your files get locked</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Files lock in this browser before upload.</td><td data-label="A popular cloud drive">On their servers</td></tr>
+          <tr><th scope="row">What the server gets</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Our server gets scrambled noise. <br>Never the key.</td><td data-label="A popular cloud drive">Your files and their key</td></tr>
+          <tr><th scope="row">Your file names</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Search runs in this browser. <br>Our server can't read your file names.</td><td data-label="A popular cloud drive">The company can read them</td></tr>
+          <tr><th scope="row">A link that opens once</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>It opens one time. <br>Then the link ends.</td><td data-label="A popular cloud drive">Not usually. <br>A link works until you turn it off.</td></tr>
+          <tr data-when="pay_to_open=on" hidden><th scope="row">Get paid to open it</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Pay to open, in <a href="#ttari">tTARI</a>.</td><td data-label="A popular cloud drive">No</td></tr>
+          <tr><th scope="row">A public record when a file leaves</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>We write that on the Tari chain.</td><td data-label="A popular cloud drive">No</td></tr>
+          <tr><th scope="row">If you lose access</th><td class="us" data-label="{{BRAND}}"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg>Save your key. <br>If this browser forgets it, nobody can let you back in, not even us.</td><td data-label="A popular cloud drive">Reset it with your email</td></tr>
         </tbody>
       </table>
-      <p class="compare-note">Some drives can lock files on your device too, as an extra setting. This table compares what they do by default.</p>
+      <p class="compare-note">Some drives can lock files on your device too, as an extra setting. <br>This table compares what they do by default.</p>
     </div>
   </section>
 
@@ -136,12 +136,12 @@
     <div class="wrap">
       <div class="sec-head">
         <h2 id="who-h">Who sees what</h2>
-        <p>Four sides of every file. Here is what each one can see.</p>
+        <p>Four sides of every file. <br>Here is what each one can see.</p>
       </div>
       <ul class="sides" role="list">
         <li class="side yours">
           <div class="side-top"><span class="icon-tile yours" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-user-round"/></svg></span><h3>You</h3></div>
-          <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>Your files, their names, and what happened to each link.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Who opened a link. You see how many times it opened.</dd></dl>
+          <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>Your files, their names, and what happened to each link.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Who opened a link. <br>You see how many times it opened.</dd></dl>
         </li>
         <li class="side">
           <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-share-2"/></svg></span><h3>The person you share with</h3></div>
@@ -156,7 +156,7 @@
           <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>That a payment happened, and its fee.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The amount, who got it, or the key.</dd></dl>
         </li>
       </ul>
-      <p class="sides-foot">Our server sees your IP address while you're connected. We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. Every detail: <a href="/made#who">Under the hood</a>.</p>
+      <p class="sides-foot">Our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. <br>Every detail: <a href="/made#who">Under the hood</a>.</p>
     </div>
   </section>
 
@@ -165,11 +165,11 @@
       <div>
         <div class="sec-head">
           <h2 id="tari-h">Tari does the private parts.</h2>
-          <p>The chain shows a payment with a hidden amount and a hidden owner. The fee is public.</p>
+          <p>The chain shows a payment with a hidden amount and a hidden owner. <br>The fee is public.</p>
         </div>
         <ul class="chain-rows" role="list">
-          <li data-when="pay_to_open=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>Pay to open: they pay your Tari address, then it opens. The chain hides the amount and who got it. The fee is public.</span></li>
-          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg><span>Send by Tari: the key rides inside a payment to their address. Only they can open it.</span></li>
+          <li data-when="pay_to_open=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>Pay to open: they pay your Tari address, then it opens. <br>The chain hides the amount and who got it. <br>The fee is public.</span></li>
+          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg><span>Send by Tari: the key rides inside a payment to their address. <br>Only they can open it.</span></li>
           <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg><span>When a file leaves your drive, we write that on the Tari chain, for anyone to check.</span></li>
         </ul>
       </div>
@@ -178,8 +178,8 @@
         <ul role="list">
           <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg><span>tTARI is the coin on Tari's test network.</span></li>
           <li data-when="sponsor=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hard-drive"/></svg><span>When your drive opens, our sponsor wallet sends it some tTARI to try things.</span></li>
-          <li data-when="test_pay=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>On a pay page, tap Pay with test money. Our demo wallet pays the owner for you, with test money.</span></li>
-          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg><span>Judging? <a href="/judges#pass">Get a judge pass</a>.</span></li>
+          <li data-when="test_pay=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>On a pay page, tap Pay with test money. <br>Our demo wallet pays the owner for you, with test money.</span></li>
+          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg><span>Judging? <br><a href="/judges#pass">Get a judge pass</a>.</span></li>
         </ul>
         <!--#include status-line-->
       </aside>
@@ -190,7 +190,7 @@
     <div class="px-field" aria-hidden="true" data-pixel></div>
     <div class="wrap closing">
       <h2 id="end-h">Make your drive.</h2>
-      <p>One tap, and it's yours. No email, no password.</p>
+      <p>One tap, and it's yours. <br>No email, no password.</p>
       <div class="cta-row">
         <a class="btn-xl cta-make" href="/drive?make">Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
         <a class="btn-xl cta-open" href="/drive?open">Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
