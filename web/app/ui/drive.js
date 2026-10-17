@@ -102,6 +102,7 @@ class Drive {
     this.route = parseRoute(location.pathname);
     const { view } = this.route;
     this.shell.setView(view === 'missing' ? null : view);
+    this.shell.setNew(false);
     this.shell.search.value = '';
     this.query = '';
     // Each render draws into its own box (display: contents, so the page's grid still lays it out): a

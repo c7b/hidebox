@@ -132,6 +132,14 @@ export function mountShell({ folders }) {
     page,
     root,
     search: search.querySelector('input'),
+    // Site v4: New (the rail's, the sheet's and the phone's floating one) is the view's one lime primary while
+    // My drive or a folder lists files and nothing is picked; otherwise it is the white button.
+    setNew(on) {
+      for (const b of document.querySelectorAll('.btn[aria-controls$="-new-menu"]')) {
+        if (on) b.removeAttribute('data-variant');
+        else b.setAttribute('data-variant', 'secondary');
+      }
+    },
     setView(view) {
       for (const a of document.querySelectorAll('.sidebar-menu-button[data-view]')) {
         if (a.dataset.view === view) a.setAttribute('aria-current', 'page');

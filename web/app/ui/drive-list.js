@@ -134,9 +134,11 @@ function fileTable(drive, list, { label }) {
   const count = h('span', { class: 'count', 'aria-live': 'polite' });
   const picked = () => [...tbody.querySelectorAll('tr')].filter((tr) => tr.querySelector('.checkbox')?.getAttribute('aria-checked') === 'true')
     .map((tr) => drive.index.get(tr.dataset.id)).filter(Boolean);
+  // Site v4: one picked file shares from here, in lime (the view's primary while something is picked).
+  const share = button(t('drive.share'), { size: 'sm', glyph: 'share-2', testid: 'sel-share', onclick: (e) => act(drive, 'share', picked(), e.currentTarget) });
   const selbar = h('div', { class: 'selbar', hidden: true, role: 'toolbar', 'aria-label': t('drive.sel.bar'), 'data-testid': 'selbar' },
     button('', { variant: 'ghost', size: 'icon-sm', glyph: 'x', 'aria-label': t('drive.sel.clear'), onclick: () => clear() }),
-    count,
+    count, share,
     drive.folders ? button(t('drive.menu.move'), { variant: 'ghost', size: 'sm', glyph: 'folder-input', onclick: () => act(drive, 'move', picked()) }) : null,
     button(t('drive.menu.download'), { variant: 'ghost', size: 'sm', glyph: 'download', onclick: () => act(drive, 'download', picked().filter((x) => !x.folder)) }),
     button(t(drive.folders ? 'drive.menu.trash' : 'drive.menu.delete'), { variant: 'ghost', size: 'sm', glyph: 'trash', onclick: () => act(drive, drive.folders ? 'trash' : 'delete', picked()) }));
@@ -145,6 +147,8 @@ function fileTable(drive, list, { label }) {
     for (const tr of tbody.querySelectorAll('tr')) tr.dataset.state = tr.querySelector('.checkbox').getAttribute('aria-checked') === 'true' ? 'selected' : '';
     selbar.hidden = n === 0;
     count.textContent = t('drive.sel.count', { count: n });
+    share.hidden = n !== 1;
+    if (drive.route.view === 'mine' && tbody.isConnected) drive.shell.setNew(n === 0);
     setChecked(all, n === 0 ? false : n === list.length ? true : 'mixed');
   };
   const clear = () => {
@@ -287,6 +291,7 @@ export async function renderMine(drive, page) {
   wireKebabs(page, menu, drive);
   filterable(page, drive);
   page.dataset.folder = folderId ?? '';
+  if (page.isConnected) drive.shell.setNew(children.length > 0);
 }
 
 // Files and folders with a link that still opens.

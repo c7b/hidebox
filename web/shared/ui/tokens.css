@@ -67,6 +67,9 @@
   --scrim: oklch(0 0 0 / 0.5);                  /* shadcn overlay: bg-black/50 */
   --qr-ink: oklch(0.145 0 0);                   /* the QR stays dark on white in both themes */
   --qr-paper: oklch(1 0 0);
+  /* Site v4 (17-brand.md v3): Tari's lime fills the one primary of each view, under the ink label (16.32:1);
+     a 1px lime-700 edge on light (lime on white is 1.21:1); picked rows sit on the lime tint. Hex, as the site's. */
+  --brand-solid: #BCFE00; --brand-solid-hover: #B1EC20; --on-brand: #0A0A0A; --brand-edge: #59800B; --brand-subtle: #F4FFE6;
 
   /* Radius steps (shadcn @theme inline) */
   --radius-xs: 0.125rem;
@@ -155,6 +158,7 @@
     --success-soft: oklch(0.696 0.17 162.48 / 0.16);
     --warning: oklch(0.879 0.169 91.605);       /* amber chart-1 */
     --warning-soft: oklch(0.769 0.188 70.08 / 0.16);
+    --brand-edge: transparent; --brand-subtle: #161D0B;
   }
 }
 
@@ -197,7 +201,10 @@
   --success-soft: oklch(0.696 0.17 162.48 / 0.16);
   --warning: oklch(0.879 0.169 91.605);
   --warning-soft: oklch(0.769 0.188 70.08 / 0.16);
+  --brand-edge: transparent; --brand-subtle: #161D0B;
 }
+/* increased contrast: an ink edge round the lime on light pages (the dark blocks outrank this) */
+@media (prefers-contrast: more) { :root { --brand-edge: var(--foreground); } }
 
 /* shadcn @layer base: border colour and ring outline everywhere, page colours on body */
 *, *::before, *::after { box-sizing: border-box; border: 0 solid var(--border); outline-color: color-mix(in oklab, var(--ring) 50%, transparent); }
