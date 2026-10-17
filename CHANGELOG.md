@@ -1,6 +1,21 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- eighth pass, site v3 -->
+## 2026-10-17: the eighth pass (site v3: the owner's six changes)
+
+- **One action:** Open your drive in the header (always on, never stepping aside), the hero and the closing; it
+  makes a drive in a browser without one (`/drive?make`) and opens the one this browser has. /judges and /how
+  use the new label; the drive app keeps its own words.
+- **Tari's lime** (`#BCFE00`, the owner's copy of the Tari brand kit) replaces Sea as the action colour: a
+  `#0A0A0A` label at 16.32:1, a lime-700 edge on light pages, olive brand text on light, lime text on dark.
+- **Motion** (`web/site/js/motion.js`, after the load event): the template's kinds of motion on the home, /how
+  and /judges (reveals as things scroll in, word blur-in, the hero's arrival, a progress line on /how) and the
+  hero picture's decode from hex noise. Reduced motion and no JavaScript show everything at once.
+- **Pixel field** (`web/site/js/pixel.js`): a WebGL2 port of PixelBlast's idea in the lime, behind the home's
+  closing. A-06h covers both modules. Review: `docs/review/site-v3.md`.
+<!-- /eighth pass, site v3 -->
+
 <!-- sixth pass, anti-griefing -->
 ## 2026-10-14: the sixth pass (anti-griefing: the space)
 
