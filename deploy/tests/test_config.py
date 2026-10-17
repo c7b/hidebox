@@ -67,6 +67,25 @@ class CaddyfileTest(unittest.TestCase):
         self.assertEqual(sorted(home), ["/", "/index.html"])
         self.assertIs(headers_spec.ROUTES["/"][0], headers_spec.APP_CSP, "the drop widget runs on /")
 
+    def test_the_preview_gets_the_app_policy_and_its_loops_a_day(self):
+        """/v2 (docs/review/home-v2.md) carries the drop widget and plays video: the app policy (media-src 'self'),
+        noindex as its page says; the loops under /site/media/ are kept a day, never immutable."""
+        preview = re.search(r"(?m)^\t@preview path (.+)$", self.text).group(1).split()
+        self.assertEqual(sorted(preview), ["/v2", "/v2/", "/v2/index.html"])
+        body = re.search(r"(?ms)^\thandle @preview \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn("import app_csp", body)
+        self.assertIn('header X-Robots-Tag "noindex"', body)
+        self.assertIn("media-src 'self'", headers_spec.APP_CSP)
+        for route in ("/v2", "/v2/"):
+            self.assertIs(headers_spec.ROUTES[route][0], headers_spec.APP_CSP, route)
+        self.assertEqual(re.search(r"(?m)^\t@media path (.+)$", self.text).group(1), "/site/media/*")
+        media = re.search(r"(?ms)^\thandle @media \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn(f'header Cache-Control "{headers_spec.MEDIA_CACHE["cache-control"]}"', media)
+        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
+        catch_all = re.search(r"(?m)^\thandle \{$", site).start()
+        self.assertLess(site.index("handle @preview"), catch_all, "before the catch-all")
+        self.assertLess(site.index("handle @media"), catch_all, "before the catch-all")
+
     def test_no_access_log_and_filtered_errors(self):
         site = self.text.split("{$MUTIS_HOST} {", 1)[1]
         self.assertNotRegex(site, r"(?m)^\s*log\b")

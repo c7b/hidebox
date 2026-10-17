@@ -22,7 +22,7 @@ PAGES = sorted((SITE / "pages").glob("*.html"))
 PARTIALS = sorted((SHARED / "partials").glob("*.html"))
 JS = sorted((SITE / "js").glob("*.js")) + sorted(SHARED.glob("*.js"))
 PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI", "BRAND"}
-DATA_FILES = {".json", ".png", ".ico", ".webp", ".woff2", ".bin", ".webmanifest", ".pyc"}
+DATA_FILES = {".json", ".png", ".ico", ".webp", ".woff2", ".bin", ".webmanifest", ".pyc", ".webm", ".mp4"}
 NOT_SOURCE = {"OFL.txt", "NOTICE", "llms.txt", "llms-full.txt"}
 
 # 11-brand §7.4 (and 12-integration "not promises"); "encriptado" per §7.7. Word-bounded, any case.
@@ -731,6 +731,104 @@ def check_internal_links():
     return problems
 
 
+# V-01 (docs/review/home-v2.md): /v2, the home with the product loops, is a preview at its own address. Its files
+# have their own budget (it is outside M-01 and A-06, which stay the home's): each loop's WebM, MP4 and poster, the
+# media folder, and its own stylesheet and script (gzip -9). The browser half (what loads when) is browser_checks.
+V2_FILE_LIMITS = {".webm": 3_500_000, ".mp4": 512_000, ".png": 256_000}
+V2_FOLDER_LIMIT = 12 * 1024 * 1024
+V2_CODE_LIMITS = {"css/v2.css": 4096, "js/clips.js": 2048}
+WEBM_TYPE = 'video/webm; codecs="vp9"'
+
+
+def check_v2():
+    """V-01, the files' half: /v2 is noindex, outside the JSON-LD graph, linked from no page, partial or static file,
+    and carries every visible string of the home (only its title differs, titles being unique); each <video data-clip>
+    is muted, autoplay, loop, playsinline, its sources waiting in data-src (WebM with its codec first, then MP4), the
+    first with preload="metadata" and its poster, the rest preload="none" with data-poster and a lazy still for readers
+    without JavaScript; every file they name exists, no other page names the media folder, and the budget holds."""
+    import gzip
+    problems = []
+    v2 = SITE / "pages" / "v2.html"
+    text = v2.read_text()
+    d, home = parse(v2), parse(SITE / "pages" / "index.html")
+    if not any("noindex" in a.get("content", "") for a in attr(d, "meta", name="robots")):
+        problems.append("pages/v2.html: no <meta name=\"robots\" content=\"noindex\">")
+    if "application/ld+json" in text:
+        problems.append("pages/v2.html: carries JSON-LD (the preview is no part of the graph)")
+    words = lambda doc: [w for w in (" ".join(t.split()) for t in doc.text) if w and w not in ("".join(doc.titles),)]   # noqa: E731
+    # and the same links, buttons, variants and labels in the body (the Pause motion switch is v2's own)
+    keys = ("href", "data-when", "hidden", "data-testid", "aria-label", "aria-labelledby", "id", "role")
+    def marks(doc):
+        body = doc.tags[next(i for i, (tag, _) in enumerate(doc.tags) if tag == "body"):]
+        return sorted(str((tag, [(k, a.get(k)) for k in keys if k in a])) for tag, a in body
+                      if any(k in a for k in keys) and "data-loops" not in a)
+    extra, missing = sorted(set(marks(d)) - set(marks(home))), sorted(set(marks(home)) - set(marks(d)))
+    if marks(d) != marks(home):
+        problems.append(f"pages/v2.html: its links, variants or labels differ from the home's: only in v2 {extra[:3]}, only on / {missing[:3]}")
+    if not re.search(r'<button type="button" class="loops" data-loops aria-label="Pause motion" aria-pressed="false" hidden>', text):
+        problems.append("pages/v2.html: no Pause motion switch (WCAG 2.2.2: the loops run longer than five seconds)")
+    if words(d) != words(home):
+        a, b = words(home), words(d)
+        first = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
+        problems.append(f"pages/v2.html: its words differ from the home's at {first}: "
+                        f"{a[first] if first < len(a) else None!r} / {b[first] if first < len(b) else None!r}")
+    for f in [p for p in PAGES if p != v2] + PARTIALS + sorted((SITE / "static").rglob("*.txt")):
+        body = f.read_text()
+        if re.search(r'href="(\{\{ORIGIN\}\})?/v2[/"#?]', body) or "{{ORIGIN}}/v2" in body:
+            problems.append(f"{f.relative_to(WEB)}: links to /v2 (the preview stays out of nav, footer, sitemap and the graph)")
+    for f in [p for p in PAGES if p != v2] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
+        if "/site/media/" in f.read_text() and f.name not in ("v2.css", "clips.js"):
+            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2 loads the loops)")
+    videos = re.findall(r"<video\b([^>]*)>(.*?)</video>\s*(<noscript>.*?</noscript>)?", text, re.S)
+    if not videos:
+        problems.append("pages/v2.html: no loops")
+    for i, (attrs, inner, fallback) in enumerate(videos):
+        a = dict(re.findall(r'([a-z-]+)(?:="([^"]*)")?', attrs))
+        where = f"pages/v2.html video {i + 1}"
+        for flag in ("data-clip", "muted", "autoplay", "loop", "playsinline"):
+            if flag not in a:
+                problems.append(f"{where}: no {flag}")
+        if "src" in a:
+            problems.append(f"{where}: a src on the video itself (the sources wait in data-src)")
+        want = ("metadata", "poster") if i == 0 else ("none", "data-poster")
+        if a.get("preload") != want[0] or want[1] not in a or ("poster" in a) != (i == 0):
+            problems.append(f"{where}: needs preload=\"{want[0]}\" and {want[1]} (the hero's loop alone is asked for at load)")
+        sources = re.findall(r"<source\b([^>]*)>", inner)
+        kinds = [(re.search(r'data-src="([^"]+)"', s), re.search(r"type='([^']+)'|type=\"([^\"]+)\"", s)) for s in sources]
+        if any(re.search(r"\ssrc=", s) for s in sources):
+            problems.append(f"{where}: a <source> with src (it must wait in data-src)")
+        types = [(m.group(1) or m.group(2)) if m else None for _, m in kinds]
+        if types != [WEBM_TYPE, "video/mp4"]:
+            problems.append(f"{where}: sources {types}, expected [{WEBM_TYPE!r}, 'video/mp4']")
+        files = [m.group(1) for m, _ in kinds if m] + [a.get("poster") or a.get("data-poster") or ""]
+        if i:
+            still = re.fullmatch(r'<noscript><img class="still" src="([^"]+)" alt="" width="832" height="480" loading="lazy"></noscript>', fallback)
+            if not still or still.group(1) != a.get("data-poster"):
+                problems.append(f"{where}: no lazy still of its poster for readers without JavaScript")
+        for url in files:
+            if not url.startswith("/site/media/") or not (SITE / url.removeprefix("/site/")).is_file():
+                problems.append(f"{where}: {url!r} is not a file in web/site/media/")
+    media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())
+    for f in media:
+        limit = V2_FILE_LIMITS.get(f.suffix)
+        if limit is None:
+            problems.append(f"{f.relative_to(WEB)}: not a loop's WebM, MP4 or poster")
+        elif f.stat().st_size > limit:
+            problems.append(f"{f.relative_to(WEB)}: {f.stat().st_size:,} B (V-01: at most {limit:,})")
+    folder = sum(f.stat().st_size for f in media)
+    if folder > V2_FOLDER_LIMIT:
+        problems.append(f"web/site/media: {folder:,} B (V-01: at most {V2_FOLDER_LIMIT:,})")
+    code = []
+    for rel, limit in V2_CODE_LIMITS.items():
+        size = len(gzip.compress((SITE / rel).read_bytes(), 9))
+        code.append(f"{rel} {size:,} B")
+        if size > limit:
+            problems.append(f"{rel}: {size:,} B gzip -9 (V-01: at most {limit:,})")
+    NOTES_STATIC.append(f"V-01 files: {len(videos)} loops on /v2, web/site/media {folder:,} B in {len(media)} files "
+                        f"(at most {V2_FOLDER_LIMIT:,}); {', '.join(code)} gzip -9")
+    return problems
+
+
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
@@ -745,4 +843,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("old pages redirect to pages and anchors that exist", check_redirects),
           ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3 KB more, each only from site.js", check_field_budget),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
-          ("links to site pages and anchors land on something", check_internal_links)]
+          ("links to site pages and anchors land on something", check_internal_links),
+          ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2)]

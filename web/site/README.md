@@ -36,9 +36,10 @@ each amount-proof mode, with `web/app/i18n/en.json`. Last run on the server: see
 | `../shared/brand/` | `symbol.svg`, `favicon.svg`: the brand tile (ink square, Lucide lock), light and dark |
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
-| `pages/` | `index how security pricing faq judges terms privacy abuse status 404`, and `es/` |
-| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home it loads `field.js` after the load event, A-06h), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js` |
-| `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), on `../shared/tokens.css` and `base.css` |
+| `pages/` | `index how made judges fine-print 404`, and `v2` (the home with the product loops at `/v2`: noindex, linked from nowhere; [docs/review/home-v2.md](../../docs/review/home-v2.md)) |
+| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home it loads `field.js` after the load event, A-06h), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js`; `clips.js` (`/v2` only: its loops, asked for as they come near, playing only on screen) |
+| `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), `v2.css` (`/v2` only, over `home.css`), on `../shared/tokens.css` and `base.css` |
+| `media/motion/` | `/v2`'s four loops, each a VP9 WebM with alpha, an H.264 MP4 on black (WebKit's) and its RGBA first frame as the poster. Committed like every other served file, so the build's manifest lists them and `tools/verify-deploy.py` checks their bytes; the pipeline has no other way to serve static files (`/srv/mutis/status` holds only the timers' JSON). Budget V-01 in `tests/static_checks.py` and `browser_checks.py` |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |
 | `tools/` | `subset-fonts.sh`, `subset-geist.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |

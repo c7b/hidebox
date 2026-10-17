@@ -39,6 +39,8 @@ ROUTES = {
     "/drive/received": (APP_CSP, NOINDEX),
     "/drive/activity": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
+    "/v2": (APP_CSP, {"x-robots-tag": "noindex"}),      # the home with the product loops (docs/review/home-v2.md)
+    "/v2/": (APP_CSP, {"x-robots-tag": "noindex"}),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
     "/judges": (SITE_CSP, {}),
@@ -70,6 +72,9 @@ REDIRECTS = {
 # error response is never stored. The one font served is the drive's Geist (DESIGN.md "Typography",
 # pinned in tools/build.py); any other font path answers 404 like any missing file (MISSING below).
 REVALIDATE = {"cache-control": "no-cache"}
+# /v2's loops: kept a day (their names carry no version), served as video, in byte ranges.
+MEDIA = {"/site/media/motion/hidebox-A-hero.webm": "video/webm", "/site/media/motion/hidebox-A-hero.mp4": "video/mp4"}
+MEDIA_CACHE = {"cache-control": "public, max-age=86400"}
 ERROR_CACHE = {"cache-control": "no-store"}
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
 STATUS_FILES = ("/status.json", "/evidence.json", "/releases.json")

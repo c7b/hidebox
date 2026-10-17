@@ -1,6 +1,18 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- tenth pass, home v2 -->
+## 2026-10-17: the tenth pass (home v2, a preview at /v2)
+
+- **The home with the product loops**, at `/v2` only: the same words, buttons and widget as the home, dark first, in
+  the treatment of mega.io's product pages. Four short loops (a VP9 WebM with alpha each, an H.264 MP4 for Safari,
+  a still poster) sit beside the hero, What's different from a usual drive?, Who sees what and Tari does the
+  private parts, and over the closing. Each is asked for only as it comes near and plays only while on screen;
+  with reduced motion only its still shows.
+- `/v2` is noindex and linked from nowhere: the home, the sitemap, the JSON-LD and every other page are as they
+  were. Its own budget (V-01) is checked by the site suite. Review: `docs/review/home-v2.md`.
+<!-- /tenth pass, home v2 -->
+
 <!-- ninth pass, site v4 -->
 ## 2026-10-17: the ninth pass (site v4: the owner's four changes)
 
