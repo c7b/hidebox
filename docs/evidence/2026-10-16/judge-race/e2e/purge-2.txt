@@ -1,0 +1,6 @@
+Judge-race purge 2, 2026-10-17T01:09:08Z: a read-only diff of ids against a snapshot taken at 01:03:15Z, right before the non-chain batch (dbsnap.py, as mutis, mode=ro); the API had no other traffic from 18:56 to 19:08 local, so every new row is the batch's. New: 10 items (4 anonymous ready or doomed, the others already deleted or removed by their scenarios), 2 drops (E-17's removed by E-17; E-20's 'E2E E-20' active), 3 drives (no items left, no pack, no invoice). Taken down by id (sudo mutis-admin takedown <kind> --note 'judge-race e2e purge' -- <id>):
+item cPK_c3bx_KsIClKd84mWhA -> removed
+item 0WEeoxz3AHxy5tSxOr2FCQ -> removed
+item AbXHfQ-8NfRe-wRnwDW7hA -> removed
+item o0QiA0F-HU3qZijelQkMNw -> removed
+drop wgf30r4ay6 -> removed

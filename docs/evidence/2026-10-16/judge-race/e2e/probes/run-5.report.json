@@ -1,0 +1,16 @@
+{
+ "origin": "https://srv2052606.hstgr.cloud",
+ "results": [
+  {
+   "id": "P-JR3",
+   "title": "probe: E-J step 3's click with nothing in between, read at once and later",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 8.5,
+   "notes": [
+    "at once true; a second later true; ",
+    "ok: the switch is on a second after one press (at once true, later true)"
+   ]
+  }
+ ]
+}
