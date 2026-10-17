@@ -40,18 +40,20 @@ colors:
   tari-dark: "oklch(0.811 0.111 293.571)"
   success-dark: "oklch(0.845 0.143 164.978)"
   warning-dark: "oklch(0.879 0.169 91.605)"
-  brand: "oklch(0.52 0.083 220)"            # Sea 600, the Make my drive fill (site v2, research/17-brand.md)
-  brand-text: "oklch(0.45 0.07 220)"
-  brand-subtle: "oklch(0.98 0.008 220)"
-  brand-border: "oklch(0.895 0.053 220)"
-  brand-tile: "oklch(0.94 0.025 220)"
-  brand-field: "oklch(0.62 0.099 220)"
-  brand-dark: "oklch(0.8 0.08 220)"
-  brand-text-dark: "oklch(0.82 0.073 220)"
-  brand-subtle-dark: "oklch(0.235 0.024 220)"
-  brand-border-dark: "oklch(0.4 0.044 220)"
-  brand-tile-dark: "oklch(0.3 0.034 220)"
-  brand-field-dark: "oklch(0.74 0.084 220)"
+  brand: "oklch(0.918 0.235 126.3)"         # Lime 400 = Tari's green #BCFE00, the Open your drive fill, both themes (site v3, research/17-brand.md v2)
+  on-brand: "oklch(0.145 0 0)"              # #0A0A0A, 16.32:1 on the fill
+  brand-hover: "oklch(0.871 0.215 126.1)"
+  brand-edge: "oklch(0.55 0.14 128.2)"      # light only: the fill's 1 px outline (lime on white is 1.21:1)
+  brand-text: "oklch(0.45 0.11 128.1)"
+  brand-subtle: "oklch(0.985 0.035 126.5)"
+  brand-border: "oklch(0.93 0.131 126.1)"
+  brand-tile: "oklch(0.966 0.07 125.9)"
+  brand-field: "oklch(0.62 0.16 127.9)"     # the grid's lines and the closing's pixels
+  brand-text-dark: "oklch(0.918 0.235 126.3)"
+  brand-subtle-dark: "oklch(0.218 0.034 126.5)"
+  brand-border-dark: "oklch(0.381 0.08 126)"
+  brand-tile-dark: "oklch(0.3 0.061 126.2)"
+  brand-field-dark: "oklch(0.75 0.18 125.9)"
 typography:
   display:
     fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif"
@@ -214,12 +216,14 @@ something.
   New and the phone's floating New are white bordered buttons, like Google's.
 
 ### Brand
-- **Sea** (`brand`, OKLCH hue 220, one computed ramp, `web/shared/tokens.css` `--sea-*` and the `--brand-*`
-  roles; research/17-brand.md has the ramp and every measured pair): the public pages' one brand colour, beside
-  Ink. It fills the button that makes or opens your drive (Make my drive, Open my drive when this browser
-  holds one), tints the You card in Who sees what and the hidebox column of the comparison, and draws the
-  home's field. Dark is tuned, not reversed: a light sea fill with a near-black label. The drive app keeps Ink
-  as its primary; Sea never goes on links, focus rings, badges, status or anything Tari.
+- **Lime** (`brand`, Tari's green `#BCFE00`, OKLCH hue 126, one computed ramp, `web/shared/tokens.css` `--lime-*`
+  and the `--brand-*` roles; research/17-brand.md v2 has the ramp, the reasoning and every measured pair): the
+  public pages' one action colour, beside Ink, chosen by the owner for site v3 in place of Sea. It fills
+  **Open your drive**, the site's one action (header, hero, closing), under a near-black label (16.32:1), with
+  a 1px lime-700 edge on light pages; tints the You card in Who sees what and the hidebox column of the
+  comparison; draws the home's two fields (the grid behind the hero, the pixels behind the closing). Light pages
+  never write lime as text: brand text there is the olive lime-800 (7.20:1). The drive app keeps Ink as its
+  primary; lime never goes on links, focus rings, badges, status or anything that is a Tari payment.
 
 ### Secondary
 - **Tari Violet** (`tari`, from shadcn's own "violet" theme; `tari-dark` on dark): only for things that
@@ -245,9 +249,9 @@ violet. Nothing decorative is ever violet.
 **The Colour Is A Word Rule.** Green, amber and red appear only next to the word they qualify (Paid,
 Full, Delete); never as decoration, dots or backgrounds of whole sections.
 **The QR Is Ink On White Rule.** QR codes stay dark on white in both themes so every camera reads them.
-**The Sea Is Yours Rule.** Sea marks your side of hidebox: the field, the button that makes or opens your
-drive, the You card, the hidebox column. If it is not yours, it is not sea, and it is spent once per view: one
-brand fill on screen at a time (the header's button steps aside while the page's own is in view).
+**The Lime Is Yours Rule.** Lime marks your side of hidebox: Open your drive, the two fields, the You card, the
+hidebox column. If it is not yours, it is not lime. Open your drive is always on in the sticky header (site v3:
+the owner's call; it no longer steps aside while the page's own is in view).
 
 ## Typography
 
@@ -287,11 +291,12 @@ label 15px, caption 12px) on top of this one. Addresses, links and keys use the 
 - **Folder cards** flow in an auto-fill grid (min 15rem) on computers. **Reading pages** keep a 44rem column.
 - **Empty drive:** the brand moment (the ink tile taking in two Lucide file icons), one primary (Upload a
   folder on computers, Upload files on phones), and the Tari address row with Copy.
-- **Home (site v2):** a centred hero over the field (two-line headline, the 56px Make my drive, Open my drive
-  quiet beside it), the slice of a drive hanging 56px into Just share one thing, then Share it your way (the
-  rules grouped, the share window as the picture), What's different from a usual drive?, Who sees what (four
-  cards), Tari does the private parts with What's tTARI?, the closing and the footer. Sections alternate two
-  surfaces (`--bg`, `--bg-alt`) and each seam is a hairline with a ruler of 5px ticks on the field's 48px grid.
+- **Home (site v2, v3):** a centred hero over the grid field (two-line headline, the 56px lime Open your drive,
+  the site's one action), the slice of a drive hanging 56px into Just share one thing (its words decode from hex
+  noise on arrival), then Share it your way (the rules grouped, the share window as the picture), What's
+  different from a usual drive?, Who sees what (four cards), Tari does the private parts with What's tTARI?, the
+  closing over the pixel field, and the footer. Sections alternate two surfaces (`--bg`, `--bg-alt`) and each seam
+  is a hairline with a ruler of 5px ticks on the field's 48px grid; their parts arrive as they scroll in.
 
 ## Elevation & Depth
 
@@ -370,9 +375,12 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 - **Don't** bring back a mascot or any illustration beyond Lucide line icons in empty states (the empty
   drive's tile with two file icons is the one composed moment).
 - **Don't** say a link's end goes on the chain: only a file that leaves gets a receipt.
-- **Don't** add gradients, glows, glass panels or coloured bands. One field, behind the home hero, in the brand
-  colour at low alpha (`web/site/js/field.js`; its static grid is the fallback and /judges' one reuse); no
-  glows, no glass, no coloured bands.
+- **Don't** add gradients, glows, glass panels or coloured bands. Two fields on the home, in the brand colour,
+  never under a word: the grid behind the hero (`web/site/js/field.js`; its static grid is the fallback and
+  /judges' one reuse) and the pixels behind the closing (`web/site/js/pixel.js`, static CSS pixels as fallback).
+- **Don't** hide content for motion's sake: the site's reveals and the hero picture's decode
+  (`web/site/js/motion.js`) touch only what is below the fold when they run, never run without JavaScript or
+  with reduced motion, stay within 700 ms and 60 ms a step, and leave the DOM as it was served.
 - **Don't** use an eyebrow or kicker label above a heading; the heading speaks alone.
 - **Don't** put an em dash or en dash in visible text; empty table cells stay empty (with a hidden
   "None" for screen readers).
