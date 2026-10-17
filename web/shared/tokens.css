@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT — tokens v4 (16-drive-design §8, DESIGN.md): the drive's neutral look
    (shadcn new-york, neutral base) under the names the site, the anonymous widget and the older app pages
    already read, so they match the drive (web/shared/ui/tokens.css) without growing the widget's bytes.
-   Violet means Tari, nothing else. Sea (17-brand.md) is the brand: your side of hidebox, spent once per
-   view (the home's field and the Make my drive fill). System faces here; Geist comes with home.css, pages.css
+   Violet means Tari, nothing else. Lime (17-brand.md v2, Tari's green) is the action colour: your side of
+   hidebox, spent once per view (the Open your drive fill and the home's fields). System faces here; Geist comes with home.css, pages.css
    and the drive.
    The --ghost-* names stay for the pages that still draw the old figure until they are restyled.
    Consumers use only these names; the block marked "compat" keeps the names older stylesheets read. */
@@ -28,18 +28,17 @@
   --scrim: rgb(0 0 0 / .5);
   --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 12px 28px -14px rgb(0 0 0 / .2);
   --shadow-lg: 0 1px 2px rgb(0 0 0 / .05), 0 24px 48px -24px rgb(0 0 0 / .28);
-  /* site v2 (17-brand.md §9): the second section surface, the ruler on its seams, and the sea ramp.
-     Primitives by hue (--sea-*); components read only the --brand-* roles. sea-300, -400 and -950 are
-     reserved: no role yet, so no component may use them. */
+  /* site v2/v3 (17-brand.md §9): the second section surface, the ruler on its seams, and the lime ramp
+     (Tari's green, #BCFE00, as the action fill). Primitives by hue (--lime-*); components read only the
+     --brand-* roles. Green text never sits on a light surface: light pages write it in lime-800. */
   --bg-alt: #FAFAFA; --tick: rgb(10 10 10 / .16);
-  --sea-50: #F3FAFC; --sea-100: #DAF0F7; --sea-200: #B6E5F5; --sea-300: #6FD4F2; --sea-400: #41B4D4;
-  --sea-500: #2E94AF; --sea-600: #22748A; --sea-700: #1D5E70; --sea-800: #1B4B58; --sea-900: #173842;
-  --sea-950: #12262C;
-  --sea-d-solid: #81CAE1; --sea-d-solid-hover: #B1D9E6; --sea-d-text: #8ED0E5; --sea-d-fx: #6AB8D0;
-  --sea-d-line: #2B4D58; --sea-d-tile: #19323A; --sea-d-soft: #112126;
-  --brand-solid: var(--sea-600); --brand-solid-hover: var(--sea-700); --on-brand: #FFFFFF;
-  --brand-text: var(--sea-700); --brand-subtle: var(--sea-50); --brand-border: var(--sea-200);
-  --brand-tile: var(--sea-100); --brand-field: var(--sea-500);
+  --lime-50: #F4FFE6; --lime-100: #E8FDCA; --lime-200: #D2F896; --lime-400: #BCFE00; --lime-500: #B1EC20;
+  --lime-600: #6A9708; --lime-700: #59800B; --lime-800: #43600E; --lime-900: #39510E;
+  --lime-d-fx: #92C124; --lime-d-line: #384A15; --lime-d-tile: #26330E; --lime-d-soft: #161D0B;
+  --brand-solid: var(--lime-400); --brand-solid-hover: var(--lime-500); --on-brand: #0A0A0A;
+  --brand-edge: var(--lime-700); --brand-text: var(--lime-800); --brand-subtle: var(--lime-50);
+  --brand-border: var(--lime-200); --brand-tile: var(--lime-100); --brand-field: var(--lime-600);
+  --brand-px: var(--lime-600); --px-alpha: .5;   /* the closing's pixel field (site v3) */
   --field-alpha: .30; --field-quiet: .40;   /* lines 30 %, times .40 under words = 12 % */
 }
 :root[data-theme="dark"] {                   /* dark, chosen with the switch */
@@ -57,9 +56,8 @@
   --shadow: 0 0 0 1px var(--hair), 0 16px 32px -18px rgb(0 0 0 / .7);
   --shadow-lg: 0 0 0 1px var(--hair), 0 28px 56px -24px rgb(0 0 0 / .8);
   --bg-alt: #111111; --tick: rgb(255 255 255 / .18);
-  --brand-solid: var(--sea-d-solid); --brand-solid-hover: var(--sea-d-solid-hover); --on-brand: #0A0A0A;
-  --brand-text: var(--sea-d-text); --brand-subtle: var(--sea-d-soft); --brand-border: var(--sea-d-line);
-  --brand-tile: var(--sea-d-tile); --brand-field: var(--sea-d-fx);
+  --brand-edge: transparent; --brand-text: var(--lime-400); --brand-subtle: var(--lime-d-soft);
+  --brand-border: var(--lime-d-line); --brand-tile: var(--lime-d-tile); --brand-field: var(--lime-d-fx); --brand-px: var(--lime-d-fx); --px-alpha: .6;
 }
 @media (prefers-color-scheme: dark) {        /* dark: follow the OS until the switch is pressed */
   :root:not([data-theme="light"]) {
@@ -77,19 +75,14 @@
     --shadow: 0 0 0 1px var(--hair), 0 16px 32px -18px rgb(0 0 0 / .7);
     --shadow-lg: 0 0 0 1px var(--hair), 0 28px 56px -24px rgb(0 0 0 / .8);
     --bg-alt: #111111; --tick: rgb(255 255 255 / .18);
-    --brand-solid: var(--sea-d-solid); --brand-solid-hover: var(--sea-d-solid-hover); --on-brand: #0A0A0A;
-    --brand-text: var(--sea-d-text); --brand-subtle: var(--sea-d-soft); --brand-border: var(--sea-d-line);
-    --brand-tile: var(--sea-d-tile); --brand-field: var(--sea-d-fx);
+    --brand-edge: transparent; --brand-text: var(--lime-400); --brand-subtle: var(--lime-d-soft);
+    --brand-border: var(--lime-d-line); --brand-tile: var(--lime-d-tile); --brand-field: var(--lime-d-fx); --brand-px: var(--lime-d-fx); --px-alpha: .6;
   }
 }
 @media (prefers-contrast: more) { :root { --line: var(--fg); --hair: color-mix(in srgb, var(--fg) 40%, transparent); } }
-/* increased contrast for the brand, one block per appearance (17-brand.md §9): the dark blocks outrank the
-   light :root, so a dark page never gets sea-900 under a dark label */
-@media (prefers-contrast: more) { :root { --brand-solid: var(--sea-900); --brand-text: var(--sea-800); --field-alpha: .15; } }
-@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --brand-solid: #D9F4FD; --brand-text: #D9F4FD; }
-}
-@media (prefers-contrast: more) { :root[data-theme="dark"] { --brand-solid: #D9F4FD; --brand-text: #D9F4FD; } }
+/* increased contrast for the brand (17-brand.md §9): the fill keeps its 16:1 label, an ink edge outlines it
+   on light pages and light-page brand text darkens; the dark blocks outrank this :root and need nothing */
+@media (prefers-contrast: more) { :root { --brand-edge: var(--fg); --brand-text: var(--lime-900); --field-alpha: .15; } }
 
 :root {
   /* system faces only: the platform sans (Geist is the drive's, and loads only there) */
