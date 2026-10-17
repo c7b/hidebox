@@ -48,6 +48,11 @@
 .btn:disabled, .btn[aria-disabled="true"] { pointer-events: none; opacity: 0.5; }
 .btn[aria-invalid="true"] { border-color: var(--destructive); box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent); }
 .btn:active { transform: translateY(0.5px); }                      /* CHANGED: a half-pixel press, no scale */
+/* Site v4 (17-brand.md v3): the default variant is each view's one primary, in Tari's lime with the ink label and,
+   on light pages, the lime-700 edge (the home's Open your drive). Every other action names its variant. */
+.btn:not([data-variant]) { background: var(--brand-solid); color: var(--on-brand); box-shadow: inset 0 0 0 1px var(--brand-edge); font-weight: 600; }
+.btn:not([data-variant]):hover { background: var(--brand-solid-hover); }
+.btn:not([data-variant]):focus-visible { box-shadow: inset 0 0 0 1px var(--brand-edge), 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); }
 .btn[data-variant="destructive"] { background: var(--destructive); color: oklch(1 0 0); }
 .btn[data-variant="destructive"]:hover { background: color-mix(in oklab, var(--destructive) 90%, transparent); }
 .btn[data-variant="destructive"]:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent); }
@@ -113,7 +118,7 @@ a.badge[data-variant="outline"]:hover { background: var(--accent); }
 .table tbody tr { border-bottom: 1px solid var(--border); transition: background-color var(--duration) var(--ease); }
 .table tbody tr:last-child { border-bottom: 0; }
 .table tbody tr:hover, .table tbody tr:has([aria-expanded="true"]) { background: color-mix(in oklab, var(--muted) 50%, transparent); }
-.table tbody tr[data-state="selected"] { background: var(--muted); }
+.table tbody tr[data-state="selected"] { background: var(--brand-subtle); }   /* site v4: picked rows are yours */
 .table th { height: 2.5rem; padding-inline: 0.5rem; text-align: left; vertical-align: middle; font-weight: 500; white-space: nowrap; color: var(--foreground); }
 .table td { padding: 0.5rem; vertical-align: middle; white-space: nowrap; }
 .table th:has([role="checkbox"]), .table td:has([role="checkbox"]) { padding-right: 0; }
