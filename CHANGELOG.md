@@ -1,6 +1,22 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- ninth pass, site v4 -->
+## 2026-10-17: the ninth pass (site v4: the owner's four changes)
+
+- **The drive shows what to do next:** the one primary of each view is Tari's lime under the ink label, the
+  home's Open your drive style (Upload a folder on the empty drive, New once there are files, Share when one file
+  is picked, the share dialog's Next, Make link and Copy link, Make my drive, Save key file, each dialog's
+  confirm, Get space, the pay page's Pay with test money and Open it, the folder viewer's open). Everything else
+  stays neutral, destructive stays red (Delete it after too), picked rows sit on the lime tint.
+- **The comparison** sets hidebox beside one column, "A popular cloud drive", on computers and phones.
+- **The headline:** "Your private cloud storage. Privacy isn't an option. It's the default." "Drive" stays the
+  product's noun everywhere else. The meta, Open Graph and JSON-LD descriptions, the share card (`og.png`) and
+  the film follow it.
+- **One sentence a line** in every paragraph, lede, step, card, table cell, dialog and empty state with two or
+  more sentences, on every page and in the app (`web/app/ui/lines.js`). Review: `docs/review/site-v4.md`.
+<!-- /ninth pass, site v4 -->
+
 <!-- eighth pass, site v3 -->
 ## 2026-10-17: the eighth pass (site v3: the owner's six changes)
 

@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 # hidebox
 
-**Your private drive. Locked here. Shared your way.** A drive on the Tari™ Ootle.
+**Your private cloud storage. Privacy isn't an option. It's the default.** A drive on the Tari™ Ootle.
 
 **hidebox** is a drive for your files that opens only with your key, made in your browser: no email,
 no password. Files and folder names lock in your browser before upload, and the server stores only

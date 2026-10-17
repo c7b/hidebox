@@ -114,9 +114,9 @@ spacing:
   "12": "3rem"
   "24": "6rem"
 components:
-  button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.primary-foreground}"
+  button-primary:                           # site v4: each view's one primary is the lime (Ink before)
+    backgroundColor: "{colors.brand}"
+    textColor: "{colors.on-brand}"
     typography: "{typography.label}"
     rounded: "{rounded.md}"
     padding: "0.5rem 1rem"
@@ -210,10 +210,11 @@ Restrained: shadcn's neutral scale carries the whole interface; colour appears o
 something.
 
 ### Primary
-- **Ink** (`primary`): primary buttons, the checked radio card ring, the active switch, the progress
-  fill, the brand square (pinned to `primary` in both themes, never shadcn's blue dark `sidebar-primary`). In
-  dark mode it flips to near-white (`primary-dark`) with dark text. One filled primary per screen: the sidebar
-  New and the phone's floating New are white bordered buttons, like Google's.
+- **Ink** (`primary`): the checked radio card ring, the active switch and checkbox, the progress fill, the
+  brand square (pinned to `primary` in both themes, never shadcn's blue dark `sidebar-primary`). In dark mode it
+  flips to near-white (`primary-dark`) with dark text. Until site v4 it also filled the primary buttons; now
+  the one filled primary of each view is lime (below). The sidebar New and the phone's floating New are white
+  bordered buttons, like Google's, except where they are that view's primary.
 
 ### Brand
 - **Lime** (`brand`, Tari's green `#BCFE00`, OKLCH hue 126, one computed ramp, `web/shared/tokens.css` `--lime-*`
@@ -222,8 +223,16 @@ something.
   **Open your drive**, the site's one action (header, hero, closing), under a near-black label (16.32:1), with
   a 1px lime-700 edge on light pages; tints the You card in Who sees what and the hidebox column of the
   comparison; draws the home's two fields (the grid behind the hero, the pixels behind the closing). Light pages
-  never write lime as text: brand text there is the olive lime-800 (7.20:1). The drive app keeps Ink as its
-  primary; lime never goes on links, focus rings, badges, status or anything that is a Tari payment.
+  never write lime as text: brand text there is the olive lime-800 (7.20:1). **In the drive (site v4)** lime
+  fills the one next step of each view, the shadcn default variant (`components.css`, the drive's
+  `ui/tokens.css` `--brand-*`): Upload a folder (or Upload files) on the empty drive, New while My drive or a
+  folder lists files, Share in the bar once one file is picked, Next, Make link and Copy link in the share
+  dialog, Make my drive and Open on the start screen, Save key file, each dialog's confirm, Get space, Pay with
+  test money and Open it on the pay page, the folder viewer's open and save; picked rows sit on the lime tint
+  (`--brand-subtle`). Everything else names its variant (outline, secondary, ghost); destructive actions,
+  Delete it after included, stay red. Lime never goes on links, focus rings (lime on white is 1.21:1), badges,
+  status or anything that is a Tari payment. The single-file link page keeps its ink Open it under the header's
+  lime Open your drive, so it still has one lime.
 
 ### Secondary
 - **Tari Violet** (`tari`, from shadcn's own "violet" theme; `tari-dark` on dark): only for things that
@@ -250,7 +259,7 @@ violet. Nothing decorative is ever violet.
 Full, Delete); never as decoration, dots or backgrounds of whole sections.
 **The QR Is Ink On White Rule.** QR codes stay dark on white in both themes so every camera reads them.
 **The Lime Is Yours Rule.** Lime marks your side of hidebox: Open your drive, the two fields, the You card, the
-hidebox column. If it is not yours, it is not lime. Open your drive is always on in the sticky header (site v3:
+hidebox column, and in the drive the one thing to do next. If it is not yours, it is not lime; one lime a view. Open your drive is always on in the sticky header (site v3:
 the owner's call; it no longer steps aside while the page's own is in view).
 
 ## Typography
@@ -274,6 +283,12 @@ label 15px, caption 12px) on top of this one. Addresses, links and keys use the 
 - **Caption** (500, 0.75rem): badges, table heads, meta lines, kbd.
 
 ### Named Rules
+**The One Sentence A Line Rule (site v4, the owner's).** In any paragraph, lede, intro, note, step, card, table
+cell, dialog or empty state with two or more sentences, each sentence starts on its own line: the pages put a
+`<br>` after each sentence's end (the space stays, so the text reads the same to search, screen readers and
+check-copy); the app's `ui/lines.js` does it for `<p>`, `<dd>` and the alert and choice text it builds; the home's
+drop widget breaks its two card sentences with a newline under `white-space: pre-line` (A-06 unchanged).
+Headings and the status pill stay one line.
 **The One Breath Rule.** Product strings read at Flesch-Kincaid grade 5 or lower (measured with
 `research/design/copy/fk.py`); How it was made at grade 8 or lower.
 **The No Digits Rule.** Numbers in copy are `{variables}` from `/api/v1/config`.
@@ -285,16 +300,17 @@ label 15px, caption 12px) on top of this one. Addresses, links and keys use the 
   browser, Upgrade, theme, help). Page padding 1rem on phones, 1.5rem from 768px.
 - **Phones:** the sidebar becomes an 18rem sheet from the left; folders become a two-column compact grid so
   files show in the first screen; the file table becomes a list (icon, name, then the badges and the state on
-  a second line that wraps); a white floating New button sits bottom right and the page pads its end by the
-  button's height; dialogs fill the width minus 1rem gutters with stacked footers (primary on top); the QR
+  a second line that wraps); a floating New button sits bottom right (white, lime while it is the view's primary)
+  and the page pads its end by the button's height; dialogs fill the width minus 1rem gutters with stacked footers (primary on top); the QR
   code is hidden and Share becomes the primary action.
 - **Folder cards** flow in an auto-fill grid (min 15rem) on computers. **Reading pages** keep a 44rem column.
 - **Empty drive:** the brand moment (the ink tile taking in two Lucide file icons), one primary (Upload a
   folder on computers, Upload files on phones), and the Tari address row with Copy.
-- **Home (site v2, v3):** a centred hero over the grid field (two-line headline, the 56px lime Open your drive,
-  the site's one action), the slice of a drive hanging 56px into Just share one thing (its words decode from hex
+- **Home (site v2, v3, v4):** a centred hero over the grid field (the headline "Your private cloud storage." with
+  "Privacy isn't an option." and "It's the default." below it in grey, one sentence a line; the 56px lime Open
+  your drive, the site's one action), the slice of a drive hanging 56px into Just share one thing (its words decode from hex
   noise on arrival), then Share it your way (the rules grouped, the share window as the picture), What's
-  different from a usual drive?, Who sees what (four cards), Tari does the private parts with What's tTARI?, the
+  different from a usual drive? (hidebox beside one popular cloud drive), Who sees what (four cards), Tari does the private parts with What's tTARI?, the
   closing over the pixel field, and the footer. Sections alternate two surfaces (`--bg`, `--bg-alt`) and each seam
   is a hairline with a ruler of 5px ticks on the field's 48px grid; their parts arrive as they scroll in.
 
