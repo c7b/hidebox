@@ -434,6 +434,14 @@ def e30(t: T) -> None:
     t.env.remote.admin("takedown", "share", "--", sid)
 
 
+# What a press on the share dialog's switch met (E-J step 3, when the switch didn't take).
+SWITCH_DIAG = """(() => { const e = document.querySelector('[data-testid="share-then-delete"]'); const b = document.getElementById('share-dialog');
+  if (!e || !b) return 'no switch'; const r = e.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+  return JSON.stringify({ at: [Math.round(x), Math.round(y)], top: document.elementsFromPoint(x, y).slice(0, 4).map((n) => n.dataset?.testid || n.id || String(n.className).split(' ')[0] || n.tagName),
+    step: b.dataset.step, transform: getComputedStyle(b).transform, animations: b.getAnimations().map((a) => a.playState),
+    focus: document.activeElement?.dataset?.testid || document.activeElement?.tagName, overlays: document.querySelectorAll('.overlay').length }); })()"""
+
+
 @scenario("E-J", "The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed", CHAIN)
 def ej(t: T) -> None:
     import scenarios_drive as drv
@@ -471,9 +479,14 @@ def ej(t: T) -> None:
     desk.click("share-next")
     desk.wait("document.getElementById('share-dialog')?.dataset.step === 'opens'", 10)
     desk.click("share-then-delete")
-    # A switch that didn't take must fail here, not two steps later as "the file stayed" (seventh pass).
+    # A switch that didn't take must fail here, not two steps later as "the file stayed" (seventh pass),
+    # with what was under the press.
     switch = desk.attr("share-then-delete", "aria-checked")
-    t.check(switch == "true", f"3: Delete it from my drive after is on before Make link (the switch says aria-checked={switch})")
+    if switch != "true":
+        late = desk.eval("new Promise((ok) => setTimeout(() => ok(document.querySelector('[data-testid=\"share-then-delete\"]')?.getAttribute('aria-checked')), 2000))", await_promise=True)
+        seen = desk.eval(SWITCH_DIAG)
+        t.check(False, f"3: Delete it from my drive after is on before Make link (aria-checked={switch} at once, {late} 2 s later; {seen})")
+    t.note("3: the switch is on before Make link")
     desk.click("share-make")
     desk.wait("document.getElementById('share-dialog')?.dataset.step === 'result'", 90)
     url = desk.value("share-link")
