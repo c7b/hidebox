@@ -741,3 +741,21 @@ be reproduced: two probes on production (four shares) applied it, and so did E-J
 which passed both tracks (track one 9 s, track two 38 s). The task allowed one judge-pass drive, so E-J
 with a pass was not rerun. Open: E-J should check the switch is on after the click (as the UI flow does),
 and a rerun with a pass is the owner's call.
+
+## The judge race: E-J step 3's "Delete it from my drive after" (2026-10-17)
+
+E-J with a judge pass had made its Once link without `then_delete` (the database shows the share without it
+and the file still kept; the server never drops the field). Not a grant race: nothing redraws an open share
+dialog on wallet, grant, `/me`, index or toast events, and the server takes `then_delete` for any kept file
+of its owner in any class. Not reproduced on the dev stack (UI flow `share-then-delete-race`: a judge-pass
+drive in direct mode, CPU 4×, the grant answered 0 to 1500 ms after the dialog opens, an index reload between
+the switch and Make link; also with ultron's CPU saturated). On production E-J's new step-3 check caught the
+switch off once, on the first run after the deploy; six logged probes and the E-J rerun had it on. Cause not
+established. Hardened (`992bee2`): the link is built from the dialog's own controls at the click, and an open
+dialog is never reset or redrawn by another opening. E-J step 3 fails at once if the switch is off, and says
+what the press met (`ff9597e`). Also: no line in the share dialog (and four other places) reads "null" any
+more, with a UI check over every dialog state share-once and share-rules reach; `mutis-admin judge-pass
+extend --until` (`61e39c8`) extended the 20 judges' passes through 2026-12-15 UTC. Released as `61e39c8` and
+tagged; verify-deploy 0 differences, D-01 passed, E-J with its pass passed (track one 10 s, track two 38 s),
+the non-chain batch 12/13 (E-04 hit the network's daily drive brake the probes had spent). Evidence:
+`docs/evidence/2026-10-16/judge-race/`.
