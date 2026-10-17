@@ -2,7 +2,8 @@
 // The result's slower parts (14-ghost-design §5), loaded with their first tap: the secret word, More
 // rules (the full rules panel, unchanged, and what our server got) and "Send it to a Tari address
 // instead". `ui` is what card.js hands over: its state (st), elements and a few moves.
-import { announce, copyText, h } from '../lib/dom.js';
+import { announce, copyText } from '../lib/dom.js';
+import { h } from './lines.js';
 import { t } from '../lib/i18n.js';
 import { deleteItem, manageShare } from '../lib/api.js';
 import { removeRecentDrop } from '../lib/store.js';

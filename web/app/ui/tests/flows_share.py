@@ -816,3 +816,123 @@ def share_then_delete_race(t):
         a.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].length >= 1", 60)
         names = a.wait("(() => { const n = [...document.querySelectorAll('[data-testid=\"file-row\"]')].map((e) => e.dataset.name); return n.includes('minutes.txt') ? null : n; })()", 60)
         t.check(sorted(names or []) == ["agenda.txt", f"late-{offset}.txt", "notes.txt"], f"{offset} ms: after its one open minutes.txt left the drive ({names})")
+
+
+# --- site v4: one lime action a view, one sentence a line -----------------------------------------------
+
+LIME = "rgb(188, 254, 0)"
+# The lime buttons a person can see now: inside the open dialog or sheet when one is open, else the page.
+LIMES = """(() => { const top = [...document.querySelectorAll('.dialog, .sheet')].filter((d) => !d.hidden && d.dataset.state !== 'closed').pop();
+  return [...(top ?? document).querySelectorAll('button, a')].filter((e) => e.getClientRects().length
+    && getComputedStyle(e).backgroundColor === %s).map((e) => e.dataset.testid || e.textContent.trim()); })()""" % json.dumps(LIME)
+# Every paragraph with two or more sentences: the next sentence starts below the period (a new line); and no
+# <br> sits straight inside a flex or grid box (it would lay the sentences side by side).
+LINES = r"""(() => { const END = /[.!?][”’")]?\s+(?=[“‘"(]?[A-Z])/g; const out = [];
+  for (const el of document.querySelectorAll('p, dd, .alert-title, .choice-desc, .item-description')) {
+    if (!el.getClientRects().length || el.closest('[hidden]') || el.querySelector('p, dd')) continue;
+    const nodes = []; let full = '';
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n; (n = w.nextNode());) { nodes.push([n, full.length]); full += n.data; }
+    const box = (i) => { for (let k = nodes.length - 1; k >= 0; k--) { const [n, o] = nodes[k]; if (o > i) continue;
+      if (i - o >= n.data.length) return null; const r = document.createRange(); r.setStart(n, i - o); r.setEnd(n, i - o + 1);
+      return [...r.getClientRects()].find((x) => x.width > 0) ?? null; } return null; };
+    for (const m of full.matchAll(END)) { const a = box(m.index), b = box(m.index + m[0].length);
+      if (a && b && Math.abs(b.top - a.top) < 2) out.push(full.replace(/\s+/g, ' ').trim().slice(0, 70)); }
+  }
+  for (const br of document.querySelectorAll('br')) { const d = getComputedStyle(br.parentElement).display;
+    if (/flex|grid/.test(d) && br.getClientRects().length) out.push('a <br> in a ' + d + ' box: ' + br.parentElement.className); }
+  return out; })()"""
+
+
+def focus_ring(page, selector):
+    """The box-shadow of `selector` once it has keyboard focus (Tab first, so :focus-visible applies)."""
+    page.key("Tab")
+    page.eval(f"document.querySelector({json.dumps(selector)}).focus()")
+    time.sleep(0.3)
+    ring = page.eval(f"getComputedStyle(document.querySelector({json.dumps(selector)})).boxShadow")
+    page.eval("document.activeElement?.blur()")
+    return ring
+
+
+def one_lime(t, page, want, where):
+    page.settle()
+    got = page.eval(LIMES)
+    t.check(got == [want], f"{where}: one lime action, {want} ({got})")
+    lines = page.eval(LINES)
+    t.check(not lines, f"{where}: every sentence of a paragraph starts on its own line ({lines[:3]})")
+
+
+@scenario("drive-primary", "Site v4: Tari's lime on the one next step of each state (empty drive, files, one picked, the share dialog's steps, "
+          "the key, a new folder, Delete it after in red), the picked row on the lime tint, one sentence a line in the app's paragraphs", features=FEATURES)
+def drive_primary(t):
+    s = t.actor("iphone")
+    s.goto(t.origin + "/drive")
+    s.wait_for("drive-start", 60)
+    one_lime(t, s, "drive-make", "no drive yet, a phone")
+    t.shot(s, "v4-drive-390-start")
+    a = drive_page(t)
+    a.wait_for("drive-empty", 30)
+    one_lime(t, a, "empty-upload-dir", "the empty drive")
+    t.check(a.attr("new-button", "data-variant") == "secondary", "the empty drive: New stays the white button")
+    t.check("0px 0px 0px 3px" in focus_ring(a, "[data-testid='new-button']"), "the white New shows the focus ring on keyboard focus")
+    t.shot(a, "v4-drive-1440-empty")
+    upload_files(t, a, ["notes.txt", "agenda.txt"])
+    a.wait("document.querySelectorAll('[data-testid=\"file-row\"]').length === 2", 60)
+    a.eval("document.querySelector('[data-testid=\"upload-panel\"] .uploads-head .btn')?.click()")
+    one_lime(t, a, "new-button", "a drive with files")
+    ring = focus_ring(a, "[data-testid='new-button']")
+    t.check("0px 0px 0px 3px" in ring and "inset" in ring, f"the lime New keeps its edge beside the focus ring ({ring})")
+    t.shot(a, "v4-drive-1440-files")
+    a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'notes.txt').querySelector('.checkbox').click()")
+    a.wait("!document.querySelector('[data-testid=\"selbar\"]').hidden", 10)
+    one_lime(t, a, "sel-share", "one file picked")
+    tint = a.eval("getComputedStyle([...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'notes.txt')).backgroundColor")
+    t.check(tint == "rgb(244, 255, 230)", f"the picked row sits on the lime tint ({tint})")
+    t.shot(a, "v4-drive-1440-picked")
+    a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'agenda.txt').querySelector('.checkbox').click()")
+    a.wait("document.querySelector('[data-testid=\"selbar\"] .count').textContent.startsWith('2')", 10)
+    t.check(a.eval(LIMES) == [] and a.attr("new-button", "data-variant") == "secondary", "two picked: no Share (it shares one file), New stays white")
+    a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'agenda.txt').querySelector('.checkbox').click()")
+    a.wait("document.querySelector('[data-testid=\"selbar\"] .count').textContent.startsWith('1')", 10)
+    a.click("sel-share")
+    a.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    one_lime(t, a, "share-next", "the share dialog: who")
+    t.shot(a, "v4-share-1440-who")
+    to_opens(a)
+    one_lime(t, a, "share-make", "the share dialog: how many times")
+    t.shot(a, "v4-share-1440-opens")
+    make_link(a)
+    one_lime(t, a, "share-copy", "the share dialog: the link")
+    t.shot(a, "v4-share-1440-result")
+    close_dialog(a)
+    row_menu(a, "agenda.txt", "later")
+    a.wait("document.querySelector('[data-testid=\"delete-after\"]')?.hidden === false", 10)
+    t.check(a.attr("later-go", "data-variant") == "destructive" and a.eval(LIMES) == [], "Delete it after: its button is red, never lime")
+    a.key("Escape")
+    a.wait("document.querySelector('[data-testid=\"delete-after\"]').hidden", 10)
+    a.eval("document.dispatchEvent(new CustomEvent('drive:new', { detail: 'folder' }))")
+    a.wait("[...document.querySelectorAll('[data-testid=\"new-folder-dialog\"]')].some((d) => !d.hidden && d.dataset.state === 'open')", 10)
+    one_lime(t, a, "folder-create", "the new folder dialog")
+    a.key("Escape")
+    a.click("key-reminder-save")
+    a.wait("document.querySelector('[data-testid=\"key-dialog\"]')?.hidden === false", 10)
+    one_lime(t, a, "key-save-file", "Save my key")
+    t.shot(a, "v4-key-1440")
+    a.key("Escape")
+    a.eval("document.documentElement.dataset.theme = 'dark'")
+    a.wait("document.querySelector('[data-testid=\"key-dialog\"]').hidden", 10)
+    t.check(a.eval(LIMES) == ["new-button"], "dark: the same one lime New")
+    t.shot(a, "v4-drive-1440-files-dark")
+    p = drive_page(t, "iphone")
+    p.wait_for("drive-empty", 30)
+    one_lime(t, p, "empty-upload", "the empty drive, a phone")
+    t.check("0px 0px 0px 3px" in focus_ring(p, ".fab"), "the white floating New shows the focus ring on keyboard focus")
+    upload_files(t, p, ["notes.txt"])
+    p.wait("document.querySelectorAll('[data-testid=\"file-row\"]').length === 1", 60)
+    p.eval("document.querySelector('[data-testid=\"upload-panel\"] .uploads-head .btn')?.click()")
+    for _ in range(20):   # the floating New turns lime with a 150 ms transition
+        if p.eval(LIMES) == ["New"]:
+            break
+        time.sleep(0.25)
+    t.check(p.eval(LIMES) == ["New"], f"a phone with files: the floating New is the lime ({p.eval(LIMES)})")
+    t.shot(p, "v4-drive-390-files")

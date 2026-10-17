@@ -7,7 +7,7 @@ import { hex } from '../lib/b64.js';
 import { utf8 } from '../lib/bytes.js';
 import { saveFile } from '../lib/download.js';
 import { t } from '../lib/i18n.js';
-import { h, icon, init, openModal, closeModal, toast } from './behaviors.js';
+import { h, icon, init, lines, openModal, closeModal, toast } from './behaviors.js';
 import { alert, button, dialogBox, errorAlert, safetyGrid } from './drive-parts.js';
 
 const identityLib = () => import('../lib/identity.js');
@@ -58,7 +58,7 @@ export function openKeyDialog(drive) {
       const text = locked() ? await lib.lockedKeyFileText(identity, pass.value) : lib.keyFileText(identity);
       saveFile([utf8(text)], lib.keyFileName(identity));
       await lib.updateIdentity(identity, { keySaved: true });
-      msg.textContent = t(locked() ? 'drive.key.saved_locked' : 'drive.key.saved_plain');
+      msg.replaceChildren(...lines(t(locked() ? 'drive.key.saved_locked' : 'drive.key.saved_plain')));
       document.querySelectorAll('[data-testid="key-banner"]').forEach((b) => b.remove());
     } finally {
       save.disabled = false;

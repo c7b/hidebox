@@ -2,7 +2,7 @@
 // /inbox, "See what came" (spec §12.3.3): deliveries found on the Ootle by this browser alone. Every browser downloads
 // the same mirror of all TARI outputs and tries to open each one with its own view key, so our
 // server never learns which outputs are yours. Nothing opens by itself; Open runs the viewer here.
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatRelative, t } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { icon } from './core.js';

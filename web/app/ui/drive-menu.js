@@ -5,7 +5,7 @@
 // Move to trash with Undo (its links stop now; it can come back for {trash_days} days, C47), and, from the
 // trash, bring back or delete now. Names change in this browser only: the server gets new ciphertext.
 import { formatDate, t } from '../lib/i18n.js';
-import { h, icon, init, openModal, closeModal, toast } from './behaviors.js';
+import { h, icon, init, lines, openModal, closeModal, toast } from './behaviors.js';
 import { button, dialogBox, errorAlert, itemName } from './drive-parts.js';
 
 const api = () => import('../lib/api-drive.js');
@@ -102,7 +102,7 @@ function move(drive, items) {
   const sync = () => {
     const shared = picked ? index.sharedAbove(picked) : null;
     warn.hidden = !shared || items.every((it) => index.sharedAbove(it)?.id === shared.id);
-    warnText.textContent = shared ? t('drive.move.shares_d', { folder: itemName(shared) }) : '';
+    warnText.replaceChildren(...(shared ? [h('span', {}, ...lines(t('drive.move.shares_d', { folder: itemName(shared) })))] : []));   // one grid item
   };
   radios.addEventListener('sh:change', (e) => {
     picked = e.detail.value ? index.get(e.detail.value) : null;
@@ -172,7 +172,7 @@ function later(drive, item) {
     toast(t('drive.later.set', { date: formatDate(at * 1000, { month: 'short', day: 'numeric' }) }), { type: 'success',
       action: { label: t('drive.toast.undo'), onClick: () => set(before).then(() => drive.render(), () => toast(t('drive.oops'), { type: 'error' })) } });
     drive.render();
-  }, { glyph: 'hourglass', errors, testid: 'later-go' });
+  }, { variant: 'destructive', glyph: 'hourglass', errors, testid: 'later-go' });   // site v4: a delete, never lime
   const keep = item.row.expires_at ? primary(t('drive.later.keep'), async () => {
     await set(null);
     closeModal('later');

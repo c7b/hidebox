@@ -2,7 +2,7 @@
 // Send to a Tari address (spec §12.3.3 /send, 11-brand §10.3): the file is already locked; its link's
 // secret is sealed to the recipient's owner and view keys and travels inside a stealth output's memo.
 // The copy after a send follows how that send actually went (direct or by our relay).
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { t } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { createLink } from '../lib/seal.js';

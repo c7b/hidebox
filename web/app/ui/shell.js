@@ -2,7 +2,7 @@
 // What every app and viewer page does first: its strings, the judge pass carried from /judges, the
 // page title, and on app pages, once this browser holds a locker, the bottom bar of phones (spec §12.2:
 // Locker · What came · Send).
-import { h } from '../lib/dom.js';
+import { h } from './lines.js';
 import { BRAND, loadStrings, t } from '../lib/i18n.js';
 import { setJudgePass } from '../lib/pow.js';
 import { idbGet } from '../lib/idb.js';

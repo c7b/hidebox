@@ -207,11 +207,13 @@
    "condition": "always",
    "backed_by": "spec §4.4, §4.14 (16-drive-design §9.3)",
    "markers": [
-    "lock in this browser before"
+    "lock in this browser before",
+    "lock here, in your browser"
    ],
    "sentences": [
     "Files lock in this browser before upload.",
-    "They lock in this browser before they upload."
+    "They lock in this browser before they upload.",
+    "Your files lock here, in your browser."
    ]
   },
   {
@@ -479,7 +481,7 @@
   },
   {
    "id": "C52",
-   "condition": "the comparison's cells for a usual cloud drive and a file-sending site: their defaults, \"Not usually\" where products differ; C51 under the table",
+   "condition": "the comparison's cells for a popular cloud drive (site v4: one column, it was a usual cloud drive and a file-sending site): its defaults, \"Not usually\" where products differ; C51 under the table",
    "backed_by": "17-site-brief §3.4, §10",
    "markers": [
     "your files and their key",

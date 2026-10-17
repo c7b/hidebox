@@ -5,7 +5,8 @@
 // can be added afterwards), and making one opens the locker silently. With a locker: its Tari address
 // (and on a computer the code a phone scans), the drop link, a drop zone that locks files as the
 // locker, kept files, the space, the key (asked once, "Later" is fine), the view key, and leaving.
-import { h, setVar } from '../lib/dom.js';
+import { setVar } from '../lib/dom.js';
+import { h } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, hex } from '../lib/b64.js';
 import { config, deleteItem } from '../lib/api.js';

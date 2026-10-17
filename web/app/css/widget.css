@@ -53,7 +53,7 @@
 @media (pointer: coarse) { .md-idle { width: 100%; } .md-choose { width: 100%; } }
 
 .md-compose { width: 100%; display: grid; gap: var(--s-3); }
-.md-say { font: var(--t-say); text-wrap: balance; }
+.md-say { font: var(--t-say); text-wrap: balance; white-space: pre-line; }
 .md-textarea {
   width: 100%; min-height: 9em; resize: vertical; padding: 16px 18px; border: 2px solid var(--line);
   border-radius: var(--r-input); background: var(--bg-raised); color: var(--fg); font: var(--t-body);
@@ -65,7 +65,7 @@
 :is(.md-root, .a-page) .a-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
 .md-working { align-self: center; justify-self: center; font: var(--t-small); color: var(--fg-2); }
 
-/* --- busy: the ghost chews; one line, the percent only for a long upload ------------------------ */
+/* --- busy: one line, the percent only for a long upload --- */
 .md-sealing { min-height: inherit; display: grid; justify-items: center; align-content: start; gap: var(--s-2); text-align: center; }
 .md-progress { font: var(--t-say); color: var(--fg-2); font-variant-numeric: tabular-nums; }
 
@@ -77,7 +77,7 @@
 .md-chip .a-linkbtn { min-height: 32px; font: var(--t-small); }
 .md-chip--note { color: var(--fg-2); }
 
-/* --- the result: the ghost holds the rule, the card holds the link ---------------------------- */
+/* --- the result: the rule beside, the card holds the link --- */
 .md-result { display: grid; gap: var(--s-5); justify-items: center; min-width: 0; }
 .md-result-figure { display: grid; justify-items: center; gap: var(--s-2); }
 .md-figure { display: block; inline-size: 128px; padding: 4px; border: 0; border-radius: var(--r-panel); background: none; color: var(--fg); cursor: pointer; }
@@ -122,7 +122,7 @@
 .md-qr { display: grid; justify-items: center; gap: var(--s-2); margin: 0; text-align: center; }
 .md-qr svg { width: 200px; height: 200px; border-radius: 14px; background: #fff; }
 .md-qr path { fill: #151A3B; }
-.md-qr figcaption { font: var(--t-small); color: var(--fg-2); max-width: 22ch; }
+.md-qr figcaption { font: var(--t-small); color: var(--fg-2); max-width: 22ch; white-space: pre-line; }
 /* its place is kept from the first frame, so nothing under the card moves when the code is drawn */
 .md-qr-slot { justify-self: center; width: 200px; min-height: 276px; }
 .md-next { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--s-2) var(--s-5); max-width: 560px; }

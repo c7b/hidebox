@@ -284,7 +284,7 @@ def check_trademark():
         if first and not first[1]:
             problems.append(f"{f.relative_to(WEB)}: first mention of Tari in the page has no ™")
     required = ["Built on the Tari™ Ootle testnet.", "It is not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project.", "“Tari” is a trademark of Tari Labs. All rights reserved."]
-    text = (SHARED / "partials" / "footer.html").read_text()
+    text = (SHARED / "partials" / "footer.html").read_text().replace("<br>", "")   # site v4: one sentence a line
     problems += [f"partials/footer.html: missing mandatory line {line!r}" for line in required if line not in text]
     for f in PAGES:
         if "<!--#include footer-->" not in f.read_text():

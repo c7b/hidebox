@@ -4,7 +4,7 @@
 // drive takes the saved key, pasted or as its file (/drive?open opens that dialog). No email, no
 // password: the key is the account (C17).
 import { t, BRAND } from '../lib/i18n.js';
-import { h, icon, init, openModal, closeModal } from './behaviors.js';
+import { h, icon, init, lines, openModal, closeModal } from './behaviors.js';
 import { alert, button, dialogBox, errorAlert } from './drive-parts.js';
 import { mmss } from './errors.js';
 
@@ -107,7 +107,7 @@ export function renderStart(app, { onReady, make = false, open = false }) {
       if (!box.isConnected) return;
       const left = Math.ceil((until - Date.now()) / 1000);
       if (left <= 0) return start();
-      text.textContent = t('drive.start.busy', { wait: mmss(left) });
+      text.replaceChildren(...lines(t('drive.start.busy', { wait: mmss(left) })));
       setTimeout(tick, 1000);
     };
     tick();

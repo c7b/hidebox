@@ -11,7 +11,7 @@ body { background: #FFFFFF; color: #0A0A0A; font-family: "Geist", ui-sans-serif,
 .brandrow { display: flex; align-items: center; gap: 16px; }
 .tile { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: #171717; color: #FAFAFA; font-size: 30px; }
 .name { font-size: 38px; font-weight: 600; letter-spacing: -.03em; }
-h1 { text-wrap: balance; font-size: 80px; line-height: 1.0; font-weight: 600; letter-spacing: -.045em; }
+h1 { text-wrap: balance; font-size: 64px; line-height: 1.0; font-weight: 600; letter-spacing: -.045em; }
 .tagline { font-size: 34px; line-height: 1.25; font-weight: 500; color: #525252; letter-spacing: -.015em; }
 .stage { position: relative; display: grid; align-content: center; padding: 0 0 0 40px; background: #F5F5F5; border-left: 1px solid #E5E5E5; }
 .drive { width: 620px; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 18px; overflow: hidden;
