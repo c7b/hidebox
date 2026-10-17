@@ -188,7 +188,7 @@
    first paint and what stays without JavaScript, with reduced motion or without WebGL2. They keep to the
    section's top and bottom padding and, on wide screens, to the sides of a 640 px column, so no pixel ever
    sits under a word. ---------- */
-.end { --end-pad: calc(var(--sec-pad) * 1.5); padding-block: var(--end-pad); overflow: hidden; }
+.end { --end-pad: max(128px, calc(var(--sec-pad) * 1.5)); padding-block: var(--end-pad); overflow: hidden; }
 .end .wrap { position: relative; z-index: 1; }
 .px-field { position: absolute; inset: 0; pointer-events: none; }
 .px-field::before, .px-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 300ms var(--ease-out); }
