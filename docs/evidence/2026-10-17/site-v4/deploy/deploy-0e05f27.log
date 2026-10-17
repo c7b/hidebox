@@ -1,0 +1,26 @@
+== checks on the server as build (the server's Python)
+Ran 328 tests in 67.444s
+
+OK (skipped=6)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 4 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "41ca02e6", "files": 162, "git_sha": "0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5", "holding": false, "origin": "https://srv2052606.hstgr.cloud", "pages": 6, "vendored_checked": 6, "version": "spooky-secrets-2026-10-5-g0e05f27"}
+== upload and activate 0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5-c41ca02e6
+sidecar: hello ok, pinned ootle-wasm
+schema version 6
+switched current → releases/0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5-c41ca02e6
+restarted mutis-api
+restarted mutis-chain
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: 0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5-c41ca02e6 manifest a8f29841b1be… in tx 072495e2f4d143feb6a2442a8d092dd12c1a1028f3a5aa4af59dc2a64325c5df
+== deployed 0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5-c41ca02e6 to https://srv2052606.hstgr.cloud
