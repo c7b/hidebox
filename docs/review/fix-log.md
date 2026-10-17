@@ -783,3 +783,26 @@ differences across 161 files, D-01 PASS, the live probe 25/25, the non-chain bat
 UTC day's drive brake had reset); 3 items and 1 drop purged by id; `/status.json` green. Evidence:
 `docs/evidence/2026-10-17/site-v3/`.
 
+## Ninth pass (site v4): the owner's four changes (2026-10-17)
+
+The owner's notes with the coordinator's decisions, no devil's-advocate pass: `docs/review/site-v4.md` has each
+change, the drive's states and their one lime, how one sentence a line is done, the skills' findings and the
+numbers; `research/17-brand.md` v3 (jarvis side) and DESIGN.md carry the rules.
+
+| # | The owner asked | What changed |
+|---|---|---|
+| 1 | The accent inside /drive: "hard to see what to do when" | The shadcn default variant is each view's one primary, in Tari's lime with the ink label and a lime-700 edge on light (`components.css`, `--brand-*` in the drive's `ui/tokens.css`): Upload a folder on the empty drive, New once a drive lists files (`setNew`), Share in the bar for one picked file (new), the share dialog's Next, Make link and Copy link, Make my drive, Save key file, each dialog's confirm, Get it, Pay with test money, Open it. Destructive stays red (Delete it after's Set it too); picked rows on the lime tint; focus rings stay neutral (lime on white is 1.21:1). UI scenario `drive-primary` |
+| 2 | One competitor column | hidebox beside A popular cloud drive, a two-column table on computers and cards on phones; the compare note kept; C52's condition updated, its markers kept |
+| 3 | "Drive" or "cloud storage"? | The headline: Your private cloud storage. / Privacy isn't an option. It's the default.; "drive" stays the product noun; the meta, Open Graph and JSON-LD descriptions (home and `app.html`), the share card (re-rendered), its alt text, the README and the film follow |
+| 4 | One sentence a line, everywhere | A `<br>` after each sentence's end on every page and in the footer (the space kept, so the words read the same); `web/app/ui/lines.js` in the app; the widget's two card sentences by `pre-line` (A-06 unchanged); the comparison's intro reworded ("Your files lock here, in your browser.", registered under C32) so the hero's sentence is not repeated |
+
+Also: an independent review of the diff (the code-critic agent) found the white New and floating New without a
+focus ring, fixed with a check in `drive-primary`; the first site run failed M-05 (the footer's mandatory trademark
+line is two sentences, so the check now reads the footer without the breaks). Released as `0e05f27` (release
+`0e05f27d…-c41ca02e6`, commits `6603383`, `4303362`, `0e05f27`), tag `spooky-secrets-2026-10` moved there from
+`17f6c5b` and pushed with main; suites lint, copy, core 9/9, UI 723/723, site 35/35; verify-deploy 0 differences
+across 162 files, D-01 PASS, the live probe 18/18, the non-chain batch 13/13 (E-04 passed); the film rendered
+again on the release (87.97 s, 2.13 MB) and copied to the contest kit (the v3 one kept as `film-17f6c5b.mp4`);
+`/status.json` green. Budgets: A-06 unchanged (25,001 / 40,536 B on a phone, 43,503 B on a computer), A-06d
+115,586 B (was 113,793), M-01 57.9 KB, home.css +2,963 of 3,072 B. No purge by id this pass. Evidence:
+`docs/evidence/2026-10-17/site-v4/`.
