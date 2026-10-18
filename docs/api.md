@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: MIT -->
-# bye HTTP API (v1)
+# hidebox HTTP API (v1)
 
 The API the app and the site use, served under `/api/v1` by `mutis-api` behind Caddy. The routes are
 `server/mutis/router.py`; each handler is in `server/mutis/handlers/`; `server/tests/test_contract.py`

@@ -45,6 +45,19 @@ Only `drive` and root can open walletd's port; only `caddy`, `drive`, root and t
 the API's, because the API believes `X-Real-IP` from loopback. These are owner-match rules in ufw,
 listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
 
+## The repository
+
+| Directory | What |
+|---|---|
+| [`web/app`](../web/app) | the app (ES modules, no build step) and its crypto and protocol library, the sidecar, the vendored ootle-wasm |
+| [`web/site`](../web/site), [`web/shared`](../web/shared) | the site's pages, styles, fonts and partials |
+| [`server`](../server) | the API, the chain worker, cleanup and the admin CLI |
+| [`template`](../template) | SealLog, the Ootle template (Rust, compiled to WASM), with its byte-for-byte on-chain check |
+| [`deploy`](../deploy) | Caddy, systemd units, provisioning, deploy and rollback, backups, health, the operator runbook |
+| [`tools`](../tools) | the build, lint and copy checks, `verify-deploy.py` |
+| [`tests/e2e`](../tests/e2e) | the end-to-end suite (headless Chromium with phone and desktop emulation), the griefer |
+| [`docs`](README.md) | API, threat model, self-hosting, privacy, Tari, verification, evidence and reviews |
+
 ## Trust boundaries
 
 1. **Browser → server.** Everything that touches a file or a key happens in the browser: the file
@@ -79,7 +92,7 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
 | That a file exists, its arrival hour, rule and opens | yes | counts only, in steps of 64 per checkpoint (SealLog) | partly (state, opens left) | — |
 | Your IP address | while connected; never on disk | no, unless you press "Check it on Tari's indexer" | no | no |
 | Who you send to | direct sends from your browser: no; relay sends and dead-drop deliveries: yes, while the job is queued, then scrubbed | no (a one-time stealth address) | — | they know it's them |
-| That **bye** sent a payment | yes | relay sends: one wallet, one fee; browser sends trace back to our sponsor wallet's grant and to each other | — | — |
+| That **hidebox** sent a payment | yes | relay sends: one wallet, one fee; browser sends trace back to our sponsor wallet's grant and to each other | — | — |
 | Payment amounts | for space rented from us (we're the seller) | no (a Pedersen commitment) | — | — |
 | Folder structure: which files share a folder, how deep, how many | yes (never a name) | no | yes, for the folder the link opens | — |
 | How many times a link opened, per hour | yes (a count per link per UTC hour; never who or from where) | no | no | — |

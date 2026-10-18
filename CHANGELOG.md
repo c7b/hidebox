@@ -1,6 +1,18 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- repository front page -->
+## 2026-10-18: the README, shorter (docs only)
+
+- **The README** is now a short tour: the mark and the one-line pitch, the home and two screens of the drive,
+  Try it in 2 minutes, one diagram of who sees what (`docs/media/how-it-works.svg`), the exit rules, what the
+  server never sees, Run it yourself, the architecture in five lines, status and roadmap.
+- **Nothing was dropped:** the long parts moved to `docs/` (`tari.md`, `privacy.md`, `verify.md`, the repository
+  table in `architecture.md`), with an index at `docs/README.md`. New: `CONTRIBUTING.md`, and
+  `docs/media/social-preview.png` for the repository's social card. `SECURITY.md`, `NOTICE`, `docs/api.md`,
+  `docs/self-host.md` and `docs/threat-model.md` use the name hidebox. No code, page or deployment changed.
+<!-- /repository front page -->
+
 <!-- eleventh pass, home v3 -->
 ## 2026-10-18: the eleventh pass (home v3, a preview at /v3)
 

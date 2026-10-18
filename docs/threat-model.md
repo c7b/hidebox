@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Threat model
 
-What **bye** defends against, what it doesn't, and where each guarantee comes from. The live pages
+What **hidebox** defends against, what it doesn't, and where each guarantee comes from. The live pages
 [/made](https://srv2052606.hstgr.cloud/made) and [/fine-print](https://srv2052606.hstgr.cloud/fine-print)
 say the same things for this deployment's settings (`send_mode`, `amount_proof` and `features` in
 [`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config)); this file covers both send modes.
@@ -28,7 +28,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | A dishonest seller | sell something other than the preview says | none: no disputes, no refunds (stated before paying) | stated |
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours; direct sends link to our sponsor wallet and to each other |
 | A view-key holder | read arrivals, amounts and memo text | files sealed to a locker need its owner key too | files sent with "The recipient uses another Ootle wallet" open with the view key (labelled at send time) |
-| Phishing through our sends | make someone receive a **bye** link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact **bye** delivery as plain text | someone can send unwanted **bye** deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
+| Phishing through our sends | make someone receive a **hidebox** link | relay mode: the server writes every memo our relay sends, from its own address; a client supplies only a 125-byte sealed blob; sends need a locker; drop deliveries only go to the drop's own address. Direct mode: sends are bounded by the daily sponsor budget, and the inbox shows any memo that isn't an exact **hidebox** delivery as plain text | someone can send unwanted **hidebox** deliveries to an address: daily caps, closable drops, a separate inbox section, no automatic preview, a warning before programs |
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small files and files without a locker, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts, a cap on requests in flight per network | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working |
 | Griefer, the space (sixth pass) | buy packs from many drives fast so paid space sells out; make many drives and fill free space so uploads freeze for everyone | a judges' slice of the paid cap; one pack per drive; open invoices count against the cap; daily sales brakes per network (in memory) and per deployment (from the invoices); daily brakes on new drives and free uploads per network (in memory); the hard freezes at the disk's margins; `/status.json` amber and a kill switch ("Griefing the space" below) | many networks (a botnet, or one IPv6 /32) still get through at the deployment's daily pace; a restart forgets the per-network counts |
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
@@ -40,7 +40,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 - **Relay** (the default): our wallet posts the stealth payment that carries a file's sealed key. The
   server learns the destination address while the job is queued and scrubs it once the job is done; it
   writes the memo itself, so a client can only supply the 125-byte sealed blob. Relay sends all come
-  from one wallet with one fee, so an observer can group them as "sent by **bye**", but not see to whom.
+  from one wallet with one fee, so an observer can group them as "sent by **hidebox**", but not see to whom.
   The chain worker puts the outputs of its own transactions (deliveries, change and decoys alike) into
   the public UTXO mirror as soon as they commit, instead of waiting for the indexers' streams (which
   list an output only once the network's consensus epoch reaches it); the chain already shows those
@@ -60,7 +60,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 ## Payments
 
 A wallet saying "sent" isn't enough (in September 2026 a testnet wallet showed deposits that never
-happened), so **bye** credits rented space only after its own checks. With `amount_proof = "sidecar"`
+happened), so **hidebox** credits rented space only after its own checks. With `amount_proof = "sidecar"`
 the official Tari library (ootle-wasm 0.46.0, in a Node process under the permission model that can
 only read its own directory) opens the output's commitment to the exact amount, and a Tari-run public
 indexer shows the output committed. walletd never decides a credit. With `amount_proof = "wallet"`
