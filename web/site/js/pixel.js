@@ -9,7 +9,7 @@
 // (at most once per 1.5 s), and draws only while it is on screen in a visible tab. site.js loads it after the
 // load event, when the section comes near, never with reduced motion or Data Saver; a lost context, or a device
 // too slow for it (the hero field's check, box.dataset.slow), brings the CSS pixels back.
-const PX = 4, GAP = 1500, INTRO = 1400, SLOW = 40, FRAMES = 20;   // too slow: the median frame gap of the first FRAMES
+const PX = 4, GAP = 1500, INTRO = 1400, SLOW = 40, FRAMES = 10;   // too slow: the median frame gap of the first FRAMES
 const VERT = `#version 300 es
 in vec2 p;
 void main() { gl_Position = vec4(p, 0., 1.); }`;

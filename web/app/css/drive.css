@@ -4,6 +4,17 @@
  * the app shell, folders, the file table, uploads, the share dialog parts, activity, received and storage,
  * then the fix pass. The home, reading pages, viewer and buyer page keep their own stylesheets.
  * Nothing here restyles a component; it lays components out. */
+/* Phones on slow networks: the drive's words come from the home's 18 KB Latin subset of the same pinned Geist
+   (400 to 700, every weight the drive uses); the 70 KB full face (tokens.css) loads only for a character outside it. */
+@font-face {
+  font-family: "Geist";
+  src: url("/shared/fonts/geist/Geist-Latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+2010-2027, U+2030-203A, U+20AC, U+2122, U+2190-2193;
+}
+
 /* ---------- containers and type (shadcn "Typography" page values) ---------- */
 .container { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: 1rem; }
 @media (min-width: 640px) { .container { padding-inline: 1.5rem; } }

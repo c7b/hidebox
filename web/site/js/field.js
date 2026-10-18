@@ -11,7 +11,7 @@
 // the CSS grid back for good too, so a phone never janks every 7 s (field.dataset.slow says so).
 import { quietZone } from './site.js';
 
-const LIFE = 2400, EVERY = 7000, GAP = 1500, AMP = 0.6 * 12, SLOW = 40, FRAMES = 12;
+const LIFE = 2400, EVERY = 7000, GAP = 1500, AMP = 0.6 * 12, SLOW = 40, FRAMES = 6;
 const VERT = `#version 300 es
 in vec2 p;
 void main() { gl_Position = vec4(p, 0., 1.); }`;

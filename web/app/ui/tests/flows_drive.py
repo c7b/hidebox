@@ -83,7 +83,7 @@ def drive_shell(t):
     fonts = a.wait("document.fonts.ready.then(() => document.fonts.check('14px Geist') && getComputedStyle(document.body).fontFamily.startsWith('Geist'))", 20)
     t.check(fonts, "the drive is set in Geist")
     woff = sorted({r["url"][len(t.origin):] for r in a.requests if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))})
-    t.check(woff == ["/shared/fonts/geist/Geist-Variable.woff2"], f"one font file, the pinned Geist ({woff})")
+    t.check(woff == ["/shared/fonts/geist/Geist-Latin.woff2"], f"one font file, the pinned Geist's 18 KB Latin subset ({woff})")
     t.check(not same_origin(t, a), f"no third-party request ({same_origin(t, a)[:3]})")
     t.check(a.ax_unnamed() == [], f"every control has a name ({a.ax_unnamed()[:5]})")
     t.shot(a, "drive-1440-empty")
