@@ -163,8 +163,9 @@ export function waiting(text, { testid = null } = {}) {
 }
 
 // The moment it worked. art: the glyph of what went in ('file-image', 'file-text', 'file'), or null for the box
-// alone; tone 'bad' lands a red cross instead of the check (a transaction the chain refused); title: the one line (an h1 by default); say: what happened, in people's words; chain: the Tari chain's
-// line, with receipt: {href, tx, label, testid, txTestid} under it; more: nodes beside them (a photo's chip); actions: buttons;
+// alone; tone 'bad' lands a red cross instead of the check (a transaction the chain refused); title: the one
+// line (an h1 by default); say: what happened, in people's words; chain: the Tari chain's line, with receipt:
+// {href, tx, label, testid, txTestid} under it; more: nodes beside them (a photo's chip); actions: buttons;
 // foot: a closing note. -> the element (its heading focusable, id `${id}-h`).
 export function done({ id = 'done', art = 'file', tone = 'ok', title, say = null, chain = null, receipt = null, more = [], actions = [],
   foot = null, heading = 'h1', testid = null } = {}) {
@@ -177,7 +178,7 @@ export function done({ id = 'done', art = 'file', tone = 'ok', title, say = null
     box,
     h(heading, { class: 'done-title', id: `${id}-h`, tabindex: '-1' }, title),
     say ? h('p', { class: 'done-say' }, say) : null,
-    chain || receipt ? h('div', { class: 'done-chain' },
+    chain || receipt ? h('div', { class: 'done-chain', 'data-tari': '' },   // Tari's violet: a Tari receipt
       chain ? h('p', { class: 'done-chain-line' }, glyph('shield-check'), h('span', {}, chain)) : null,
       receipt ? h('a', { class: 'done-receipt', href: receipt.href, 'data-testid': receipt.testid ?? null, 'data-tx': tx || null },
         glyph('receipt-text'), h('span', {}, receipt.label),

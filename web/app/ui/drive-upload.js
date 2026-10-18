@@ -7,7 +7,7 @@
 // Locked and saved. Also New folder and Write a note.
 import { formatBytes, t } from '../lib/i18n.js';
 import { h, icon, init, openModal, closeModal } from './behaviors.js';
-import { button, dialogBox, driveErrorText as errorText, errorAlert, itemName } from './drive-parts.js';
+import { button, dialogBox, driveErrorText as errorText, errorAlert, itemName, turning } from './drive-parts.js';
 
 const AT_ONCE = 2;
 let inputs = null;
@@ -218,6 +218,7 @@ function newFolderDialog(drive) {
     if (!name) return input.focus();
     go.disabled = true;
     errors.replaceChildren();
+    const stop = turning(go);
     try {
       await addFolder(drive, name, parent);
       closeModal('new-folder');
@@ -225,6 +226,7 @@ function newFolderDialog(drive) {
     } catch (e) {
       errors.replaceChildren(errorAlert(e));
     } finally {
+      stop();
       go.disabled = false;
     }
   });
@@ -246,6 +248,7 @@ function noteDialog(drive) {
     if (!text.value.trim()) return text.focus();
     go.disabled = true;
     errors.replaceChildren();
+    const stop = turning(go);
     try {
       const { sealItem } = await import('../lib/seal.js');
       const parent = target(drive);
@@ -256,6 +259,7 @@ function noteDialog(drive) {
     } catch (e) {
       errors.replaceChildren(errorAlert(e));
     } finally {
+      stop();
       go.disabled = false;
     }
   });

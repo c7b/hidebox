@@ -432,7 +432,7 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 - **One done moment**: the open box (the mark, on its ink tile) rises, the thing that went drops into it, a green check
   lands on its corner; then the line in people's words, the Tari chain's line in plain words and the transaction as a
   violet Receipt pill, then what's next. One axis, on one card. It runs once (about a second), never loops, and with
-  reduced motion it is simply there. The drop page's Delivered, /verify/tx's Confirmed (a red cross for a refused one),
+  reduced motion it is there at once. The drop page's Delivered, /verify/tx's Confirmed (a red cross for a refused one),
   /send's and the share dialog's Sent.
 - **Failure says what to retry**: the failed step stays in the list, marked, and the alert under it names what still
   stands ("Your file is stored.") beside Try again.

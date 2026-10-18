@@ -6,7 +6,7 @@
 // trash, bring back or delete now. Names change in this browser only: the server gets new ciphertext.
 import { formatDate, t } from '../lib/i18n.js';
 import { h, icon, init, lines, openModal, closeModal, toast } from './behaviors.js';
-import { button, dialogBox, errorAlert, itemName } from './drive-parts.js';
+import { button, dialogBox, errorAlert, itemName, turning } from './drive-parts.js';
 
 const api = () => import('../lib/api-drive.js');
 
@@ -24,11 +24,13 @@ function primary(label, run, { variant = null, glyph = null, testid = null, erro
   b.addEventListener('click', async () => {
     b.disabled = true;
     errors.replaceChildren();
+    const stop = turning(b);
     try {
       await run();
     } catch (e) {
       errors.replaceChildren(errorAlert(e));
     } finally {
+      stop();
       b.disabled = false;
     }
   });

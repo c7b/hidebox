@@ -70,6 +70,7 @@
   box-shadow: 0 0 0 .1875rem var(--fl-bg), 0 .5rem 1rem -.5rem rgb(0 0 0 / .45); animation: fl-pop .4s .76s var(--fl-ease) both;
 }
 .done-check svg { width: 1.0625rem; height: 1.0625rem; stroke-width: 3; }
+.done-art[data-tone="bad"] .done-check { background: var(--fl-bad); }
 .done-title { font-size: 1.5rem; font-weight: 600; line-height: 1.25; letter-spacing: -.02em; color: var(--fl-fg); outline: none; text-wrap: balance; }
 .done-say { max-width: 40ch; font-size: 1.0625rem; line-height: 1.6; color: var(--fl-fg); text-wrap: balance; }
 .done-chain { display: grid; justify-items: center; gap: .5rem; margin-top: .375rem; }
@@ -87,6 +88,14 @@
 .done > :not(.done-art) { animation: fl-up .45s .55s var(--fl-ease) both; }
 .done > :nth-child(3) { animation-delay: .62s; }
 .done > :nth-child(n + 4) { animation-delay: .7s; }
+
+/* --- before the scripts run: a turning ring where the page will be (the link and task pages' "…", the drive's boot) --- */
+.a-main > .a-working[aria-hidden="true"]:only-child, .drive-boot { display: grid; place-items: center; font-size: 0; color: var(--muted-foreground, var(--fg-2)); }
+.a-main > .a-working[aria-hidden="true"]:only-child { min-height: 40vh; }
+.a-main > .a-working[aria-hidden="true"]:only-child::before, .drive-boot::before {
+  content: ""; width: 1.5rem; height: 1.5rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: fl-spin .9s linear infinite;
+}
 
 @keyframes fl-spin { to { transform: rotate(360deg); } }
 @keyframes fl-tick { from { opacity: 0; transform: scale(.4); } }

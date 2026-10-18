@@ -21,6 +21,7 @@ import { errorBanner, mmss } from './errors.js';
 import { knownPanel } from './known.js';
 import { scene, tariText } from './scene.js';
 import { abuseHref, setTitle, startPage } from './shell.js';
+import { waiting } from './progress.js';
 
 const REASON_STATE = { burned: 'burned', expired: 'expired', revoked: 'revoked', owner_deleted: 'revoked', removed: 'removed' };
 
@@ -116,7 +117,7 @@ export function viewer(root, opts) {
 
   async function start() {
     root.dataset.state = 'loading';
-    root.replaceChildren(h('p', { class: 'a-working' }, t('viewer.checking')));
+    root.replaceChildren(waiting(t('viewer.checking'), { testid: 'view-checking' }).el);
     try {
       status = await linkStatus(shareId);
     } catch (e) {
@@ -207,7 +208,7 @@ export function viewer(root, opts) {
     const progress = h('span', { class: 'a-opening' }, t('viewer.opening', { n: 0 }));
     if (root.dataset.kind === 'folder') {
       root.dataset.state = 'opening';
-      root.replaceChildren(h('p', { class: 'row muted working', role: 'status' }, t('viewer.opening_h')));
+      root.replaceChildren(waiting(t('viewer.opening_h'), { testid: 'view-opening' }).el);
     } else {
       set('opening', sceneOf('busy', t('viewer.opening_h'), progress).head);
     }

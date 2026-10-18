@@ -45,7 +45,7 @@ function dropCard(drive) {
       const b = e.currentTarget;
       const before = [...b.childNodes];
       b.disabled = true;
-      b.replaceChildren(t(label));
+      b.replaceChildren(spinner(), t(label));   // Tari's library and a proof of work: seconds on a phone, so it turns
       errors.replaceChildren();
       try {
         const { withOotle } = await import('../lib/identity.js');
