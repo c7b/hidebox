@@ -3,8 +3,11 @@
 Chromium (Debian package), over the DevTools pipe, and wraps the 192 px icon as favicon.ico (an ICO
 may hold PNG data; Bing, feed readers and some unfurlers ask for that path by name). Each card gets
 the public name from tools/build.py (BRAND) and Geist from web/shared/fonts/geist/ (the pinned file,
-handed to the page as data, since a file:// page can't load a font file). Python standard library
-only; run as `build` on the server: python3 -I web/site/tools/render-images.py
+handed to the page as data, since a file:// page can't load a font file); a card's pictures (the home's
+hero still on og.html, from web/site/media/) are decoded before the picture is taken. The favicon itself,
+static/favicon.svg (the open box), is drawn at 32 px with its corners transparent as favicon-32.png, for
+browsers without SVG favicons. Python standard library only; run as `build` on the server:
+python3 -I web/site/tools/render-images.py
 """
 import base64
 import json
@@ -34,12 +37,14 @@ PREPARE = """((font, name) => {
   document.fonts.add(face);
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n; (n = walk.nextNode());) n.nodeValue = n.nodeValue.replaceAll('{{BRAND}}', name);
-  return face.load().then(() => document.fonts.ready).then(() => true);
+  return face.load().then(() => document.fonts.ready)
+    .then(() => Promise.all([...document.images].map((i) => i.decode()))).then(() => true);
 })"""
 OG_MAX_BYTES = 150 * 1024   # 11-brand §13.10
 JOBS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630),
         ("icon.html", "icon-512.png", 512, 512), ("icon.html", "icon-192.png", 192, 192),
         ("icon.html", "apple-touch-icon.png", 180, 180))
+FAVICON = ("favicon.svg", "favicon-32.png", 32)   # static/ to static/, the open box at its own size
 
 
 def write_ico(png: Path, out: Path) -> None:
@@ -69,6 +74,12 @@ def main() -> int:
             for line in page.console():
                 print("  console:", line)
                 failed = failed or "OTS parsing error" in line
+        source, target, size = FAVICON
+        page = browser.page(size, size)
+        page.cmd("Emulation.setDefaultBackgroundColorOverride", {"color": {"r": 0, "g": 0, "b": 0, "a": 0}})
+        page.goto((SITE / "static" / source).as_uri(), settle=0.5)
+        page.screenshot(str(SITE / "static" / target))
+        print(f"{target}: {size}x{size}, {(SITE / 'static' / target).stat().st_size} bytes")
     write_ico(SITE / "static" / "icon-192.png", SITE / "static" / "favicon.ico")
     print(f"favicon.ico: {(SITE / 'static' / 'favicon.ico').stat().st_size} bytes")
     return 1 if failed else 0

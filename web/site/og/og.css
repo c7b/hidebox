@@ -1,6 +1,8 @@
-/* SPDX-License-Identifier: MIT — OG cards and app icons, rendered to PNG by tools/render-images.py: the drive's
-   light look (DESIGN.md: neutral ink on white, violet only for Tari), set in Geist, which the tool loads from
-   web/shared/fonts/geist/ (the pinned file) before it takes the picture. Lucide symbols inline, and the open box, hidebox's own mark. */
+/* SPDX-License-Identifier: MIT — OG cards and app icons, rendered to PNG by tools/render-images.py: the shared-link
+   card in the drive's light look (DESIGN.md: neutral ink on white, violet only for Tari), the site's card (og.html) dark
+   like the home since the v3 design (docs/review/promote-v3.md), with the home's hero still; set in Geist, which the
+   tool loads from web/shared/fonts/geist/ (the pinned file) before it takes the picture. Lucide symbols inline, and the
+   open box, hidebox's own mark. */
 * { margin: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; }
 body { background: #FFFFFF; color: #0A0A0A; font-family: "Geist", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -41,3 +43,11 @@ h1 { text-wrap: balance; font-size: 64px; line-height: 1.0; font-weight: 600; le
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 64px; border-radius: 10px; background: #171717; color: #FAFAFA; font-size: 25px; font-weight: 500; }
 .icon { display: grid; place-items: center; background: #0A0A0A; color: #BCFE00; }
 .icon .i { width: 62%; height: 62%; }
+/* the site's card (og.html): the home's first screen, dark first. The words on the ink, the hero's still (opaque on the
+   same #0A0A0A, so its frame disappears) in the right column, its floor faded into the ink as the home fades it. 420 px
+   keeps the PNG under 150 KB (render-images.py OG_MAX_BYTES): the still is the card's heaviest part. */
+.night { background: #0A0A0A; color: #FAFAFA; grid-template-columns: 600px 1fr; }
+.night .tagline { color: #A3A3A3; }
+.night .still { display: grid; place-items: center; padding-right: 40px; }
+.night .still img { display: block; width: 420px; height: 420px;
+  -webkit-mask: linear-gradient(to bottom, #000 86%, transparent); mask: linear-gradient(to bottom, #000 86%, transparent); }
