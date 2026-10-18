@@ -5,10 +5,9 @@
 
 # hidebox
 
-**Your private cloud storage. Privacy isn't an option. It's the default.**
+**Your private cloud storage. Files lock in your browser first.**
 
-A private drive. Files lock in this browser before upload.<br>
-You pick how each one opens: once, with a word, or for Tari™.
+You pick how each file opens: once, with a word, or for Tari™.
 
 [**Open the live drive**](https://srv2052606.hstgr.cloud) · [For judges](https://srv2052606.hstgr.cloud/judges) ·
 [How it works](https://srv2052606.hstgr.cloud/how) · [Under the hood](https://srv2052606.hstgr.cloud/made) · [Docs](docs/README.md)
@@ -24,10 +23,10 @@ You pick how each one opens: once, with a word, or for Tari™.
 
 ## Try it in 2 minutes
 
-One device, no wallet, no sign-up. The second track, with a phone and Tari, is on
+You need one device and no wallet. The second track, with a phone and Tari, is on
 [/judges](https://srv2052606.hstgr.cloud/judges).
 
-1. On the [home page](https://srv2052606.hstgr.cloud), tap **Open your drive**. Your drive opens, with your Tari address. No email.
+1. On the [home page](https://srv2052606.hstgr.cloud), tap **Open your drive**. Your drive opens, with your Tari address. No email, no password. Your key is the account.
 2. On a computer, drop a small folder on it. Each file says Locking, then Uploading.
 3. On one file: **Share**, keep **Once**, turn on **Delete it from my drive after**, **Make link**.
 4. Open the link in a private window and tap **Open it**. Reload: "This link has ended."
@@ -60,7 +59,7 @@ Each file or folder gets its own rule. You can stop a link any time, from its me
 | **Secret word** | They need the link and the word. Send the word a different way than the link. |
 | **One Tari address** | Send by Tari: the key rides inside a payment to their address. Only they can open it. |
 | **Pay to open** | They pay your Tari address, then it opens. The chain shows a payment with a hidden amount and a hidden owner. The fee is public. |
-| **Delete it after** | When the link ends, the file leaves your drive too. When a file leaves your drive, we write that on the Tari chain, for anyone to check. |
+| **Delete it after** | When the link ends, the file leaves your drive too. We write that on the Tari chain, for anyone to check. |
 
 ## What the server never sees
 
@@ -73,7 +72,6 @@ Our server gets scrambled noise. Never the key.
 | Who opened a link, or who holds one | How many times a link opened in each hour |
 | Your IP address on disk: it sees it while you're connected and never writes it to a log | The hour a file arrived, its rule, and which files share a folder (never a name) |
 
-We count opens per hour. We never store who opened it or their IP address.
 Pay links: we keep half of the key and give it to each buyer once the chain shows their payment. The other half is in the link. Neither half opens it alone.
 
 ## Run it yourself
@@ -97,7 +95,7 @@ commit, and run the tests: [docs/verify.md](docs/verify.md).
 - **SealLog:** an Ootle template (Rust, compiled to WASM): a public Merkle log of stored-file hashes, exit receipts and release notarizations, checked in your browser at `/verify`.
 - **Release:** a per-route CSP, SRI on each page's top-level scripts and stylesheets, and a hash manifest of every served file, notarized on chain; `tools/verify-deploy.py` compares the live site with a commit.
 
-Nothing is installed from npm or pip; one pinned, hash-checked third-party piece (`ootle-wasm`, see [NOTICE](NOTICE)).
+Nothing is installed from npm or pip. The one third-party piece, `ootle-wasm`, is pinned and hash-checked (see [NOTICE](NOTICE)).
 More: [docs/architecture.md](docs/architecture.md) · [docs/threat-model.md](docs/threat-model.md) · [docs/api.md](docs/api.md).
 
 ## Status and roadmap
@@ -117,5 +115,5 @@ Evidence for every pass: [docs/evidence](docs/evidence). Security reports: [SECU
 MIT, see [LICENSE](LICENSE); third-party work is listed in [NOTICE](NOTICE). Built with AI coding agents
 under the author's direction ([how it's built](docs/verify.md#how-its-built)).
 
-Built on Tari Ootle™. **hidebox** is an independent project, not affiliated with, endorsed by, or sponsored
-by Tari Labs, the Tari Council, or the Tari project. "Tari" is a trademark of Tari Labs.
+Built on the Tari™ Ootle testnet. **hidebox** is an independent project, not affiliated with, endorsed by, or
+sponsored by Tari Labs, the Tari Council, or the Tari project. "Tari" is a trademark of Tari Labs. All rights reserved.
