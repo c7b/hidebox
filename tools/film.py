@@ -69,9 +69,16 @@ OPENS = "It opens on the phone."
 PAID = "Checked on the chain, not a wallet's word."                    # C11 short form
 CHAIN_SEES = "The chain shows a payment with a hidden amount and a hidden owner. The fee is public."   # C36
 TAGLINE = "Your private cloud storage. Privacy isn't an option. It's the default."   # the home's headline (site v4)
-# The home as served: its reveals and the hero picture's decode (web/site/js/motion.js) have finished.
-SETTLED = ("!document.querySelector('.hero .slice.dc-run, .hero .slice.dc-box') && document.getAnimations()"
-           ".every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity)")
+# The home as served (the v3 design, docs/review/promote-v3.md): motion.js has started (html.mo, or no motion at all),
+# the hero's arrival has finished, and the drive slice has decoded if the camera sees it. The slice sits under the
+# hero's still: on the computer its top is on the first screen and decodes at load (motion.js decodes it once 30 % of it
+# is in view), on the phone it is far below and waits, unseen, for a scroll the film never makes there.
+SETTLED = ("(() => { const root = document.documentElement, s = document.querySelector('.hero .slice');"
+           " const r = s ? s.getBoundingClientRect() : null;"
+           " const seen = !!r && r.height > 0 && (Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height >= 0.3;"
+           " return (!root.classList.contains('motion') || root.classList.contains('mo'))"
+           " && !(seen && s.matches('.dc-run, .dc-box')) && document.getAnimations()"
+           ".every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity); })()")
 
 
 def end_lines(cfg: dict) -> tuple:
