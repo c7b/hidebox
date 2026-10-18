@@ -5,7 +5,7 @@
 // report link. Each screen starts with an icon tile for its state; an ended link says "This link has
 // ended", the reason, and (C42) only when the file left our server, that we wrote so on the Tari chain
 // (or when it lands there). Previews follow the allowlist of §12.3.4.
-import { h } from './lines.js';
+import { h, lines } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
 import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';
@@ -194,9 +194,9 @@ export function viewer(root, opts) {
       : until ? t('viewer.until', { date: until }) : t('viewer.until_taken');
     const known = knownPanel({ cfg, load: async () => peek(shareId, access), access: async () => access.headers, kdf: status.kdf, toggleTestid: 'view-known', id: 'a-view-known' });
     const { head: top } = sceneOf(once ? 'once' : left !== null ? 'few' : 'keep', t('viewer.h'),
-      h('span', { 'data-testid': 'view-views-left', 'data-left': left ?? '' }, rule));
+      h('span', { 'data-testid': 'view-views-left', 'data-left': left ?? '' }, lines(rule)));
     set('ready', [top,
-      h('p', { class: 'a-scan' }, icon('warning'), h('span', {}, t('viewer.scan'))),
+      h('p', { class: 'a-scan' }, icon('warning'), h('span', {}, lines(t('viewer.scan')))),
       h('div', { class: 'a-row a-row--center' }, h('button', { type: 'button', class: 'a-btn a-btn--primary a-btn--big', 'data-testid': 'view-open', onclick: open }, t('viewer.open'))),
       until && left !== null ? h('p', { class: 'a-caption a-center' }, t('viewer.not_now', { date: until })) : null,
       h('div', { class: 'a-view-more' }, known.toggle), known.panel]);
