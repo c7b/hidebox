@@ -460,7 +460,7 @@ def check_static():
             problems.append(f"manifest icon {icon['src']} missing")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
-                              ("apple-touch-icon.png", (180, 180), None)):
+                              ("apple-touch-icon.png", (180, 180), None), ("favicon-32.png", (32, 32), None)):
         f = s / name
         if not f.is_file() or png_size(f) != size:
             problems.append(f"{name}: missing or not {size}")
@@ -649,20 +649,28 @@ def check_redirects():
     return problems
 
 
-# A-06h (17-site-brief §1.2, docs/review/site-v3.md): the effects stay small and load late. field.js (the hero's
-# grid) at most 6 KB, motion.js (the reveals and the decode, site v3) at most 4 KB, pixel.js (the closing's pixel
-# field, site v3) at most 8 KB, stills.js (/how's stills replaying what they show) at most 2 KB, all gzip -9; the
-# home's own stylesheet grows by at most 3 KB over home.css at the tag spooky-secrets-2026-10 as it was before
-# site v2 (f89963c, 1,770 B): site v2 and v3 together. site/share raised
-# that 3 KB by 256 B, for the share window drawn in depth so it reads as a picture (the owner's ask; 4,733 B before it).
-EFFECTS = {"field.js": 6144, "motion.js": 4096, "pixel.js": 8192, "stills.js": 2048}
+# A-06h (17-site-brief §1.2, docs/review/site-v3.md): the effects stay small and load late. motion.js (the reveals and
+# the decode, site v3) at most 4 KB, stills.js (/how's stills replaying what they show) at most 2 KB, all gzip -9.
+# field.js (the hero's WebGL grid) and pixel.js (the closing's pixel field) left with the v3 design
+# (docs/review/promote-v3.md): no page asks for a WebGL field, and site.js names neither. The home's own stylesheet
+# grows by at most 3 KB over home.css at the tag spooky-secrets-2026-10 as it was before site v2 (f89963c, 1,770 B):
+# site v2 and v3 together; site/share raised that 3 KB by 256 B, for the share window drawn in depth so it reads as a
+# picture (the owner's ask; 4,733 B before it). Since the v3 design the home also loads v2.css and v3.css after
+# home.css (its layout and its stills, each in its own V-01 / V-02 limit): the home's own stylesheets together (every
+# /site/css/ file index.html links but site.css, each gzip -9 as served) stay at most 8,704 B (promote-v3.md: 8,303 B
+# measured, home.css 4,128 + v2.css 3,185 + v3.css 990).
+EFFECTS = {"motion.js": 4096, "stills.js": 2048}
+GONE_EFFECTS = ("field.js", "pixel.js")
 HOME_CSS_BEFORE, HOME_CSS_GROWTH = 1770, 3328
+HOME_STYLES_LIMIT = 8704
 
 
 def check_field_budget():
-    """A-06h, the files' half (browser_checks has the loading half): field.js at most 6,144 B, motion.js at most
-    4,096 B, pixel.js at most 8,192 B and stills.js at most 2,048 B gzip -9; home.css at most 1,770 + 3,328 B gzip -9;
-    no page, partial or stylesheet names the four, and only site.js imports them, each with import()."""
+    """A-06h, the files' half (browser_checks has the loading half): motion.js at most 4,096 B and stills.js at most
+    2,048 B gzip -9, no page, partial or stylesheet names them, and only site.js imports them, each with import();
+    field.js and pixel.js are gone, nothing names them and no page or partial carries data-field or data-pixel (the v3
+    design has no WebGL field); home.css at most 1,770 + 3,328 B gzip -9, and the home's own stylesheets (home.css,
+    v2.css, v3.css) at most 8,704 B together."""
     import gzip
     problems, notes = [], []
     for name, limit in EFFECTS.items():
@@ -673,6 +681,13 @@ def check_field_budget():
     home = len(gzip.compress((SITE / "css" / "home.css").read_bytes(), 9))
     if home > HOME_CSS_BEFORE + HOME_CSS_GROWTH:
         problems.append(f"css/home.css is {home:,} B gzip -9 (at most {HOME_CSS_BEFORE:,} + {HOME_CSS_GROWTH:,})")
+    linked = re.findall(r'<link rel="stylesheet" href="/site/css/([a-z0-9-]+\.css)"', (SITE / "pages" / "index.html").read_text())
+    own = [n for n in linked if n != "site.css"]
+    if own != ["home.css", "v2.css", "v3.css"]:
+        problems.append(f"pages/index.html: its own stylesheets are {own}, expected home.css, v2.css, v3.css in that order")
+    styles = {n: len(gzip.compress((SITE / "css" / n).read_bytes(), 9)) for n in own if (SITE / "css" / n).is_file()}
+    if sum(styles.values()) > HOME_STYLES_LIMIT:
+        problems.append(f"the home's stylesheets are {sum(styles.values()):,} B gzip -9 together (at most {HOME_STYLES_LIMIT:,}): {styles}")
     site = (SITE / "js" / "site.js").read_text()
     for name in EFFECTS:
         for f in PAGES + PARTIALS + sorted((SITE / "css").glob("*.css")):
@@ -683,8 +698,18 @@ def check_field_budget():
                 problems.append(f"{f.relative_to(WEB)} imports {name} (only site.js may, with import())")
         if f"import('./{name}')" not in site or re.search(rf"^import .*{re.escape(name)}", site, re.M):
             problems.append(f"js/site.js: {name} loads with import('./{name}') only")
+    for name in GONE_EFFECTS:
+        if (SITE / "js" / name).exists():
+            problems.append(f"js/{name} is back (the v3 design has no WebGL field)")
+        for f in PAGES + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
+            if name in f.read_text():
+                problems.append(f"{f.relative_to(WEB)} names {name} (the v3 design has no WebGL field)")
+    for f in PAGES + PARTIALS:
+        if re.search(r"\sdata-(field|pixel)\b", f.read_text()):
+            problems.append(f"{f.relative_to(WEB)}: data-field or data-pixel (the v3 design has no WebGL field)")
     NOTES_STATIC.append(f"A-06h: {'; '.join(notes)}, gzip -9; home.css {home:,} B "
-                        f"(was {HOME_CSS_BEFORE:,}, +{home - HOME_CSS_BEFORE:,} of {HOME_CSS_GROWTH:,})")
+                        f"(was {HOME_CSS_BEFORE:,}, +{home - HOME_CSS_BEFORE:,} of {HOME_CSS_GROWTH:,}); the home's stylesheets "
+                        f"{sum(styles.values()):,} B ({', '.join(f'{n} {b:,}' for n, b in styles.items())}; at most {HOME_STYLES_LIMIT:,})")
     return problems
 
 
@@ -852,9 +877,9 @@ def check_v2():
         body = f.read_text()
         if re.search(r'href="(\{\{ORIGIN\}\})?/v2[/"#?]', body) or "{{ORIGIN}}/v2" in body:
             problems.append(f"{f.relative_to(WEB)}: links to /v2 (the preview stays out of nav, footer, sitemap and the graph)")
-    for f in [p for p in PAGES if p.name not in ("v2.html", "v3.html")] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
+    for f in [p for p in PAGES if p.name not in ("v2.html", "index.html")] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
         if "/site/media/" in f.read_text() and f.name not in ("v2.css", "clips.js"):
-            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2 and /v3 load media)")
+            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2 and the home load media)")
     videos = re.findall(r"<video\b([^>]*)>(.*?)</video>\s*(<noscript>.*?</noscript>)?", text, re.S)
     if not videos:
         problems.append("pages/v2.html: no loops")
@@ -884,8 +909,8 @@ def check_v2():
         for url in files:
             if not url.startswith("/site/media/") or not (SITE / url.removeprefix("/site/")).is_file():
                 problems.append(f"{where}: {url!r} is not a file in web/site/media/")
-    media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())   # the folder's total counts /v3's stills too
-    for f in media:   # only the two previews' folders: the loops (V-01, here) and /v3's stills (V-02, check_v3)
+    media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())   # the folder's total counts the home's stills too
+    for f in media:   # only two folders: /v2's loops (V-01, here) and the home's stills (V-02, check_home_stills)
         if f.parent not in (SITE / "media" / "motion", SITE / "media" / "v3"):
             problems.append(f"{f.relative_to(WEB)}: outside media/motion and media/v3 (V-01 and V-02 hold only those folders)")
     for f in [m for m in media if m.parent == SITE / "media" / "motion"]:
@@ -908,15 +933,19 @@ def check_v2():
     return problems
 
 
-# V-02 (docs/review/home-v3.md): /v3 is /v2 with stills in place of every loop (the hero and the closing show the
-# open box with the files rising out of it) and the open box as the mark. Its own budget, outside M-01, A-06 and V-01's
-# loops: each still's AVIF and WebP, the folder, the mark, and v3.css (gzip -9). The browser half is browser_checks.
+# V-02 (docs/review/home-v3.md): the stills first shown at /v3, /v2 with a still in place of every loop (the hero and
+# the closing show the open box with the files rising out of it) and the open box as the mark. Since the twelfth pass
+# (docs/review/promote-v3.md) that page is the home and V-02 is the home's own image budget: each still's AVIF and
+# WebP, the folder, the mark (the favicon), and v3.css (gzip -9), beside M-01 and A-06, which stay the home's.
+# The browser half is browser_checks.check_home_stills.
 V3_STILL_LIMITS = {".avif": 64_000, ".webp": 96_000}
 V3_FOLDER_LIMIT = 512 * 1024
 V3_MARK_LIMIT = 2048
 V3_CODE_LIMITS = {"css/v3.css": 2048}
 V3_STAGES = ["stage-a", "stage-c", "stage-b", "stage-d", "stage-end"]   # the hero, the four sections in page order
 V3_BAD_SVG = re.compile(r"<(image|script|foreignObject|use|a|style|animate\w*|set|iframe)\b|href=|\son[a-z]+=|data:|url\(", re.I)
+# the open box (docs/review/home-v3.md, "The mark"): its three paths, as the sprite, the favicon and the brand files draw it
+OPEN_BOX = ('d="M16 3 L27 9 L16 15 L5 9 Z"', 'd="M6 15 L4 16 L4 23 L16 30 L28 23 L28 16 L26 15"', 'd="M4 16 L16 23 L28 16 M16 23 L16 30"')
 
 
 def image_size(f):
@@ -936,51 +965,39 @@ def image_size(f):
     return None
 
 
-def check_v3():
-    """V-02, the files' half: /v3 is noindex, outside the JSON-LD graph, linked from no page, partial or static file,
-    and carries every visible string, link, variant and label of the home (only its title differs); it has no video and
-    loads no loop. Each of its five stages (the hero, What's different, Who sees what, Tari, the closing) is one
+def check_home_stills():
+    """V-02, the files' half, on the home (the v3 design since docs/review/promote-v3.md): / is indexable (no noindex)
+    and dark first (<html data-theme="dark">, the light switch still works: browser_checks); no video, no loop and no
+    WebGL field. Each of its five stages (the hero, What's different, Who sees what, Tari, the closing) is one
     <picture>: an AVIF then a WebP srcset of three widths with one sizes, an <img> with its width and height, empty alt,
     the hero's with fetchpriority="high", every other one lazy; each candidate is a file whose pixels match its w
     descriptor and the img's ratio, within V-02's sizes; the closing names the hero's srcset and sizes (the browser
-    reuses its bytes). The favicon and the mark are clean SVG (no raster, script, link or data), the favicon PNG 32 px;
-    every file in media/v3 is named by the page or v3.css; the folder and v3.css stay in V-02."""
+    reuses its bytes). The favicons are /favicon-32.png (32 px) then /favicon.svg; the favicon and the brand files are
+    the open box in clean SVG (no raster, script, link or data), and the header's tile draws it from the sprite. Every
+    file in media/v3 is named by the home; the folder and v3.css stay in V-02; no page links /v3, which is a 301."""
     import gzip
     problems = []
-    v3 = SITE / "pages" / "v3.html"
-    text = v3.read_text()
-    d, home = parse(v3), parse(SITE / "pages" / "index.html")
-    if not any("noindex" in a.get("content", "") for a in attr(d, "meta", name="robots")):
-        problems.append("pages/v3.html: no <meta name=\"robots\" content=\"noindex\">")
-    if "application/ld+json" in text:
-        problems.append("pages/v3.html: carries JSON-LD (the preview is no part of the graph)")
-    words = lambda doc: [w for w in (" ".join(t.split()) for t in doc.text) if w and w not in ("".join(doc.titles),)]   # noqa: E731
-    keys = ("href", "data-when", "hidden", "data-testid", "aria-label", "aria-labelledby", "id", "role")
-    def marks(doc):
-        body = doc.tags[next(i for i, (tag, _) in enumerate(doc.tags) if tag == "body"):]
-        return sorted(str((tag, [(k, a.get(k)) for k in keys if k in a])) for tag, a in body if any(k in a for k in keys))
-    if marks(d) != marks(home):
-        extra, missing = sorted(set(marks(d)) - set(marks(home))), sorted(set(marks(home)) - set(marks(d)))
-        problems.append(f"pages/v3.html: its links, variants or labels differ from the home's: only in v3 {extra[:3]}, only on / {missing[:3]}")
-    if words(d) != words(home):
-        a, b = words(home), words(d)
-        first = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
-        problems.append(f"pages/v3.html: its words differ from the home's at {first}: "
-                        f"{a[first] if first < len(a) else None!r} / {b[first] if first < len(b) else None!r}")
-    for f in [p for p in PAGES if p != v3] + PARTIALS + sorted((SITE / "static").rglob("*.txt")):
+    home_page = SITE / "pages" / "index.html"
+    text = home_page.read_text()
+    d = parse(home_page)
+    if attr(d, "meta", name="robots"):
+        problems.append("pages/index.html: a robots meta (the home is indexable)")
+    if (attr(d, "html") or [{}])[0].get("data-theme") != "dark":
+        problems.append("pages/index.html: not dark first (<html data-theme=\"dark\">, as the v3 design)")
+    for f in [p for p in PAGES if p != home_page] + PARTIALS + sorted((SITE / "static").rglob("*.txt")) + [home_page]:
         body = f.read_text()
         if re.search(r'href="(\{\{ORIGIN\}\})?/v3[/"#?]', body) or "{{ORIGIN}}/v3" in body:
-            problems.append(f"{f.relative_to(WEB)}: links to /v3 (the preview stays out of nav, footer, sitemap and the graph)")
+            problems.append(f"{f.relative_to(WEB)}: links to /v3 (a 301 to / since the v3 design became the home)")
     for gone in ("<video", "clips.js", "/site/media/motion/", "data-loops"):
         if gone in text:
-            problems.append(f"pages/v3.html: {gone!r} (v3 has no loops: every stage is a still)")
+            problems.append(f"pages/index.html: {gone!r} (the home has no loops: every stage is a still)")
     named = set()
     stages = re.findall(r'<div class="stage ([a-z-]+) is-still" aria-hidden="true">\s*<picture>(.*?)</picture>\s*</div>', text, re.S)
     if [s for s, _ in stages] != V3_STAGES or text.count("<picture>") != len(V3_STAGES):
-        problems.append(f"pages/v3.html: stills {[s for s, _ in stages]}, expected one <picture> on each of {V3_STAGES}")
+        problems.append(f"pages/index.html: stills {[s for s, _ in stages]}, expected one <picture> on each of {V3_STAGES}")
     sets = {}
     for i, (stage, inner) in enumerate(stages):
-        where = f"pages/v3.html {stage}"
+        where = f"pages/index.html {stage}"
         sources = re.findall(r'<source type="(image/[a-z]+)" srcset="([^"]+)" sizes="([^"]+)">', inner)
         img = re.search(r'<img class="pic" src="([^"]+)" alt="" width="(\d+)" height="(\d+)" ([a-z]+)="([a-z]+)" decoding="async">', inner)
         if [s[0] for s in sources] != ["image/avif", "image/webp"] or len({s[2] for s in sources}) != 1 or not img:
@@ -1017,34 +1034,30 @@ def check_v3():
         if img.group(1) not in sources[1][1]:
             problems.append(f"{where}: the img's src {img.group(1)} is none of its WebP candidates")
     if sets.get("stage-a") != sets.get("stage-end"):
-        problems.append("pages/v3.html: the closing doesn't name the hero's srcset and sizes (it would fetch another file)")
+        problems.append("pages/index.html: the closing doesn't name the hero's srcset and sizes (it would fetch another file)")
     icons = attr(d, "link", rel="icon")
-    if [(a.get("href"), a.get("type")) for a in icons] != [("/site/media/v3/favicon-32.png", "image/png"), ("/site/media/v3/hidebox-mark.svg", "image/svg+xml")]:
-        problems.append(f"pages/v3.html: favicons {[(a.get('href'), a.get('type')) for a in icons]}, expected v3's PNG then its SVG")
-    for a in icons:
-        f = SITE / a.get("href", "").removeprefix("/site/")
-        named.add(f.name)
-        if not f.is_file():
-            problems.append(f"pages/v3.html: favicon {a.get('href')} is no file")
-    mark = SITE / "media" / "v3" / "hidebox-mark.svg"
-    if mark.is_file():
+    if [(a.get("href"), a.get("type")) for a in icons] != [("/favicon-32.png", "image/png"), ("/favicon.svg", "image/svg+xml")]:
+        problems.append(f"pages/index.html: favicons {[(a.get('href'), a.get('type')) for a in icons]}, expected /favicon-32.png then /favicon.svg")
+    png = SITE / "static" / "favicon-32.png"
+    if not png.is_file() or image_size(png) != (32, 32):
+        problems.append(f"static/favicon-32.png: {image_size(png) if png.is_file() else 'missing'}, expected 32 x 32")
+    for mark in (SITE / "static" / "favicon.svg", SHARED / "brand" / "favicon.svg", SHARED / "brand" / "symbol.svg"):
         body = mark.read_text()
-        if mark.stat().st_size > V3_MARK_LIMIT or V3_BAD_SVG.search(body) or body.count("<svg") != 1:
-            problems.append(f"media/v3/hidebox-mark.svg: {mark.stat().st_size} B, or it carries a raster, script, link or data (V-02: clean, at most {V3_MARK_LIMIT:,} B)")
-    png = SITE / "media" / "v3" / "favicon-32.png"
-    if png.is_file() and image_size(png) != (32, 32):
-        problems.append(f"media/v3/favicon-32.png: {image_size(png)}, expected 32 x 32")
-    css = (SITE / "css" / "v3.css").read_text()
-    if not re.search(r'\.v3 \.wm-tile \{[^}]*url\("data:image/svg\+xml,', css):
-        problems.append("css/v3.css: the header's tile doesn't carry the open box (a data URI on .v3 .wm-tile)")
-    for uri in re.findall(r'url\("data:image/svg\+xml,([^"]+)"\)', css):
-        svg = urllib.parse.unquote(uri)
-        if V3_BAD_SVG.search(svg) or len(svg) > V3_MARK_LIMIT:
-            problems.append("css/v3.css: the mark's data URI carries a raster, script or link, or is too large")
+        if mark.stat().st_size > V3_MARK_LIMIT or V3_BAD_SVG.search(body) or body.count("<svg") != 1 \
+                or not all(path in body for path in OPEN_BOX) or "#BCFE00" not in body:
+            problems.append(f"{mark.relative_to(WEB)}: {mark.stat().st_size} B; not the open box in lime, or it carries a raster, "
+                            f"script, link or data (V-02: clean, at most {V3_MARK_LIMIT:,} B)")
+    sprite = (SHARED / "ui" / "icons.svg").read_text()
+    symbol = re.search(r'<symbol id="i-hidebox"[^>]*>(.*?)</symbol>', sprite, re.S)
+    if not symbol or V3_BAD_SVG.search(symbol.group(1)) or not all(path in symbol.group(0) for path in OPEN_BOX):
+        problems.append("shared/ui/icons.svg: no clean i-hidebox symbol drawing the open box")
+    header = (SHARED / "partials" / "header.html").read_text()
+    if not re.search(r'<span class="wm-tile" aria-hidden="true"><svg class="icon" focusable="false"><use href="/shared/ui/icons.svg#i-hidebox"/></svg></span>', header):
+        problems.append("partials/header.html: the tile doesn't draw the open box (#i-hidebox)")
     media = sorted(p for p in (SITE / "media" / "v3").glob("*") if p.is_file())
     for f in media:
-        if f.name not in named and f"/site/media/v3/{f.name}" not in css:
-            problems.append(f"{f.relative_to(WEB)}: named by no page or stylesheet (V-02 serves only what /v3 shows)")
+        if f.name not in named:
+            problems.append(f"{f.relative_to(WEB)}: named by no picture on the home (V-02 serves only what the home shows)")
     folder = sum(f.stat().st_size for f in media)
     if folder > V3_FOLDER_LIMIT:
         problems.append(f"web/site/media/v3: {folder:,} B (V-02: at most {V3_FOLDER_LIMIT:,})")
@@ -1054,7 +1067,7 @@ def check_v3():
         code.append(f"{rel} {size:,} B")
         if size > limit:
             problems.append(f"{rel}: {size:,} B gzip -9 (V-02: at most {limit:,})")
-    NOTES_STATIC.append(f"V-02 files: {len(stages)} stills on /v3, web/site/media/v3 {folder:,} B in {len(media)} files "
+    NOTES_STATIC.append(f"V-02 files: {len(stages)} stills on the home, web/site/media/v3 {folder:,} B in {len(media)} files "
                         f"(at most {V3_FOLDER_LIMIT:,}); {', '.join(code)} gzip -9")
     return problems
 
@@ -1071,9 +1084,9 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("copy variants set at build time (M11)", check_build_variants),
           ("/judges quotes the app's words, 6 + 6 steps", check_ui_strings),
           ("old pages redirect to pages and anchors that exist", check_redirects),
-          ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB, stills.js 2 KB gzip at most, home.css 3.25 KB more, each only from site.js", check_field_budget),
+          ("A-06h: motion.js 4 KB, stills.js 2 KB gzip at most, each only from site.js; no WebGL field; home.css 3.25 KB more, the home's stylesheets 8.5 KB", check_field_budget),
           ("/how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch", check_how_loops),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
           ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2),
-          ("V-02: /v3 is noindex and unlinked, keeps the home's words, its stills are sized and lazy, its mark is clean", check_v3)]
+          ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills)]

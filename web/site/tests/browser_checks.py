@@ -14,9 +14,11 @@ import serve
 from cdp import Browser
 
 # The six pages of the ghost (14-ghost-design §4.1); the old ones are 301s (deploy/caddy/Caddyfile).
-# /v2 (docs/review/home-v2.md) is the home with the product loops at its own, unlisted address; /v3
-# (docs/review/home-v3.md) is /v2 with stills in place of the loops and the open box as the mark.
-ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page", "/v2", "/v3"]
+# /v2 (docs/review/home-v2.md) is the home with the product loops at its own, unlisted address. /v3
+# (docs/review/home-v3.md), /v2 with stills in place of the loops and the open box as the mark, is the home since
+# the twelfth pass (docs/review/promote-v3.md), and /v3 answers 301 to /.
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page", "/v2"]
+GONE = {"/v3": "/", "/v3/": "/"}
 NOTES: list[str] = []
 
 
@@ -64,9 +66,15 @@ def check_fonts(browser):
 
 
 def check_pages(browser):
-    """Every page on a 1440 desktop and on 390 and 360 phones: no errors, no CSP violation, no sideways scroll."""
+    """Every page on a 1440 desktop and on 390 and 360 phones: no errors, no CSP violation, no sideways scroll. /v3
+    and /v3/ land on the home (a 301, as the Caddyfile says)."""
     problems = []
     with server() as origin:
+        for path, target in GONE.items():
+            page = browser.page(1440, 900)
+            page.goto(origin + path, settle=1)
+            if page.eval("location.pathname") != target or page.eval("document.body.classList.contains('home')") is not True:
+                problems.append(f"{path}: lands on {page.eval('location.pathname')!r}, not the home at {target}")
         for width, height, mobile in ((1440, 900, False), (390, 844, True), (360, 740, True)):
             for path in ALL_PAGES:
                 page = browser.page(width, height, mobile=mobile)
@@ -436,54 +444,32 @@ def check_interactions(browser):
     return problems
 
 
-FIELD = "document.querySelector('[data-field]')"
-FIELD_TIMES = """(() => { const r = performance.getEntriesByType('resource').find((e) => e.name.endsWith('/site/js/field.js'));
-  const n = performance.getEntriesByType('navigation')[0]; return r ? [r.startTime, n.loadEventEnd] : null; })()"""
+GONE_FX = "performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => n === 'field.js' || n === 'pixel.js')"
 
 
-def check_field(browser):
-    """A-06h (17-site-brief §1.2), the loading half: on the home, field.js is requested after the load event,
-    its canvas fades in over the static grid and ripples start from Open your drive (desktop and phone); with
-    reduced motion it is never requested and the static grid stays; no other page asks for it."""
+def check_no_field(browser):
+    """A-06h, the loading half, since the v3 design (docs/review/promote-v3.md): the home draws no WebGL field. With
+    motion allowed, at 1440 and 390, after the load event and after scrolling through, / asks for neither field.js nor
+    pixel.js, holds no canvas and no [data-field] or [data-pixel]; its stills are what stands beside the words. /how and
+    /judges ask for neither."""
     problems = []
     with server() as origin:
         for width, height, mobile in ((1440, 900, False), (390, 844, True)):
             page = browser.page(width, height, mobile=mobile)
-            page.goto(origin + "/", settle=0.2)
-            rippled = page.wait_for(f"{FIELD}.dataset.ripples >= 1 && {FIELD}.classList.contains('live')", 10)
-            times = page.eval(FIELD_TIMES)
-            if not times:
-                problems.append(f"/ @{width}: field.js never requested")
-            elif times[0] < times[1]:
-                problems.append(f"/ @{width}: field.js requested at {times[0]:.0f} ms, before the load event ended ({times[1]:.0f} ms)")
-            if not rippled:
-                problems.append(f"/ @{width}: no ripple, or the canvas never took over from the static grid")
-            # the button's own ripple: the pointer entering it starts one at once (at most one per 1.5 s)
-            page.b.pump(1.6)
-            slow = page.eval(f"{FIELD}.dataset.slow || null")
-            if slow:
-                # too slow a device (software GL here): the field stopped itself and the static grid is back
-                page.b.pump(0.5)
-                if page.eval(f"{FIELD}.classList.contains('live')") or page.eval(f"getComputedStyle({FIELD}, '::before').opacity") != "1":
-                    problems.append(f"/ @{width}: judged slow ({slow} ms a frame) but the static grid didn't come back")
-                NOTES.append(f"A-06h @{width}: frames {slow} ms apart, the field stopped itself (the static grid stays)")
-            else:
-                before = int(page.eval(f"{FIELD}.dataset.ripples") or 0)
-                page.eval("document.querySelector('[data-testid=\"home-make\"]').dispatchEvent(new PointerEvent('pointerenter'))")
-                if int(page.eval(f"{FIELD}.dataset.ripples") or 0) != before + 1:
-                    problems.append(f"/ @{width}: the pointer entering Open your drive started no ripple")
-            NOTES.append(f"A-06h @{width}: field.js at {times[0]:.0f} ms, load event ended {times[1]:.0f} ms; "
-                         f"{page.eval(FIELD + '.dataset.ripples')} ripples" if times else f"A-06h @{width}: no field")
-        page = browser.page(1440, 900, reduce=True)
-        page.goto(origin + "/", settle=4)
-        if page.eval(FIELD_TIMES) or page.eval(f"!!{FIELD}.querySelector('canvas')"):
-            problems.append("reduced motion: field.js was requested")
-        if page.eval(f"getComputedStyle({FIELD}, '::before').opacity") != "1":
-            problems.append("reduced motion: the static grid isn't shown")
-        page = browser.page(1440, 900)
-        page.goto(origin + "/how", settle=3)
-        if page.eval(FIELD_TIMES):
-            problems.append("/how asked for field.js")
+            page.goto(origin + "/", settle=2.5)
+            for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + height, height):
+                page.scroll_to(y, 0.2)
+            page.b.pump(1.0)
+            asked = page.eval(GONE_FX)
+            canvases = page.eval("document.querySelectorAll('canvas, [data-field], [data-pixel]').length")
+            if asked or canvases:
+                problems.append(f"/ @{width}: asked for {asked}, {canvases} canvas or field elements (the v3 design has no WebGL field)")
+            NOTES.append(f"A-06h @{width}: no field.js or pixel.js asked for, {canvases} canvases on /")
+        for path in ("/how", "/judges"):
+            page = browser.page(1440, 900)
+            page.goto(origin + path, settle=2.5)
+            if page.eval(GONE_FX):
+                problems.append(f"{path} asked for {page.eval(GONE_FX)}")
     return problems
 
 
@@ -543,31 +529,34 @@ def check_header(browser):
 LOADED = "(n) => { const r = performance.getEntriesByType('resource').find((e) => e.name.endsWith('/site/js/' + n)); return r ? r.startTime : null; }"
 HIDDEN = "document.querySelectorAll('.mo-h:not(.mo-in), .dc-c:not(.dc-ok), .mo-w').length"
 SLICE = "document.querySelector('.hero .slice').innerHTML"
+TO_SLICE = "document.querySelector('.hero .slice').getBoundingClientRect().top + scrollY - innerHeight * .25"
 
 
 def check_motion(browser):
-    """Site v3 (docs/review/site-v3.md): motion.js and pixel.js load after the load event, only where asked for;
-    things below the fold wait unseen and arrive as they scroll in, and once a page has been scrolled through
-    nothing is left hidden; the hero's picture decodes behind an aria-hidden layer and ends with the same DOM it
-    started with; the pixel field draws only while on screen. With reduced motion neither file loads and every
-    word shows at once; without JavaScript every word shows."""
+    """Site v3 (docs/review/site-v3.md): motion.js loads after the load event, only where asked for; things below the
+    fold wait unseen and arrive as they scroll in, and once a page has been scrolled through nothing is left hidden;
+    the drive slice decodes behind an aria-hidden layer when it comes into view and ends with the same DOM it started
+    with. Since the v3 design (docs/review/promote-v3.md) the slice sits under the hero's still, below the first screen,
+    so the check scrolls to it before it waits for the decode (before, it was on screen at load). With reduced motion
+    motion.js doesn't load and every word shows at once; without JavaScript every word shows."""
     problems = []
     with server() as origin:
         quiet = browser.page(1440, 900, reduce=True)
         quiet.goto(origin + "/", settle=3)
         still = quiet.eval(SLICE)
-        for n in ("motion.js", "pixel.js"):
-            if quiet.eval(f"({LOADED})('{n}')") is not None:
-                problems.append(f"reduced motion: {n} was requested")
+        if quiet.eval(f"({LOADED})('motion.js')") is not None:
+            problems.append("reduced motion: motion.js was requested")
         _scroll_through(quiet, "who")
-        if quiet.eval("document.querySelectorAll('.mo-h, .dc-c, .dc-layer, .px-field canvas').length"):
+        if quiet.eval("document.querySelectorAll('.mo-h, .dc-c, .dc-layer').length"):
             problems.append("reduced motion: something waits to be revealed")
         if quiet.eval("getComputedStyle(document.querySelector('.hero .slice .name')).opacity") != "1":
             problems.append("reduced motion: the picture's words aren't shown at once")
         for width, height, mobile in ((1440, 900, False), (390, 844, True)):
             page = browser.page(width, height, mobile=mobile)
             page.goto(origin + "/", settle=0.1)
-            mid = page.wait_for("!!document.querySelector('.hero .slice .dc-layer')", 6)
+            started = page.wait_for("document.documentElement.classList.contains('mo')", 6)
+            page.scroll_to(page.eval(TO_SLICE), 0.05)
+            mid = started and page.wait_for("!!document.querySelector('.hero .slice .dc-layer')", 6)
             if not mid and width == 1440:
                 problems.append(f"/ @{width}: the picture never decoded")
             elif mid and page.eval("document.querySelector('.dc-layer').getAttribute('aria-hidden')") != "true":
@@ -577,8 +566,7 @@ def check_motion(browser):
             times = page.eval(f"[({LOADED})('motion.js'), performance.getEntriesByType('navigation')[0].loadEventEnd]")
             if times[0] is None or times[0] < times[1]:
                 problems.append(f"/ @{width}: motion.js requested at {times[0]} ms, before the load event ended ({times[1]:.0f} ms)")
-            if page.eval(f"({LOADED})('pixel.js')") is not None:
-                problems.append(f"/ @{width}: pixel.js was requested before the closing came near")
+            page.scroll_to(0, 0.3)
             step = height * 0.6
             for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):
                 page.scroll_to(y, 0.25)
@@ -588,35 +576,13 @@ def check_motion(browser):
                 problems.append(f"/ @{width}: {left} things still hidden after scrolling through")
             if page.eval(SLICE) != still:
                 problems.append(f"/ @{width}: the picture's DOM after the decode differs from the page's")
-            live = page.wait_for("document.querySelector('[data-pixel]').classList.contains('live')", 5)
-            page.b.pump(1.2)
-            slow = page.eval("document.querySelector('[data-pixel]').dataset.slow || null")
-            if slow:
-                # too slow a device: the pixel field stopped itself and the CSS pixels are back
-                if page.eval("document.querySelector('[data-pixel]').classList.contains('live')"):
-                    problems.append(f"/ @{width}: pixel field judged slow ({slow} ms) but still live")
-                NOTES.append(f"motion @{width}: pixel frames {slow} ms apart, the field stopped itself")
-            elif not live:
-                problems.append(f"/ @{width}: the pixel field never took over from the CSS pixels")
-            else:
-                a = page.eval("document.querySelector('[data-pixel]').frames")
-                page.b.pump(0.5)
-                if page.eval("document.querySelector('[data-pixel]').frames") <= a:
-                    problems.append(f"/ @{width}: the pixel field doesn't move while on screen")
-                page.scroll_to(0, 0.6)
-                a = page.eval("document.querySelector('[data-pixel]').frames")
-                page.b.pump(0.6)
-                if page.eval("document.querySelector('[data-pixel]').frames") != a:
-                    problems.append(f"/ @{width}: the pixel field keeps drawing off screen")
-            NOTES.append(f"motion @{width}: motion.js at {times[0]:.0f} ms (load event {times[1]:.0f} ms), decode seen: {bool(mid)}, "
-                         f"pixel field live: {live}" if times[0] is not None else f"motion @{width}: no motion.js")
+            NOTES.append(f"motion @{width}: motion.js at {times[0]:.0f} ms (load event {times[1]:.0f} ms), decode seen: {bool(mid)}"
+                         if times[0] is not None else f"motion @{width}: no motion.js")
         for path in ("/how", "/judges"):
             page = browser.page(1440, 900)
             page.goto(origin + path, settle=1.5)
             if page.eval(f"({LOADED})('motion.js')") is None:
                 problems.append(f"{path}: motion.js never loaded")
-            if page.eval(f"({LOADED})('pixel.js')") is not None:
-                problems.append(f"{path}: pixel.js was requested")
             for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + 540, 540):
                 page.scroll_to(y, 0.25)
             page.b.pump(1.5)
@@ -765,9 +731,10 @@ def check_v2(browser):
     return problems
 
 
-# V-02 (docs/review/home-v3.md), the loading half: /v3 has no video. At load it asks for the page, the drop widget's
-# first load and the hero's still (one AVIF in Chromium); the section stills come with native lazy loading as they near
-# the screen, and the closing shows the hero's file again. The test server caches nothing (DevTools' cache is off).
+# V-02 (docs/review/home-v3.md), the loading half, on the home since the twelfth pass (docs/review/promote-v3.md): the
+# home has no video. At load it asks for the page, the drop widget's first load and the hero's still (one AVIF in
+# Chromium); the section stills come with native lazy loading as they near the screen, and the closing shows the hero's
+# file again. The test server caches nothing (DevTools' cache is off).
 V3_AT_LOAD, V3_SCROLLED = 512 * 1024, 1024 * 1024
 V3_STILLS = ("hero-", "different-", "who-", "gem-")
 V3_NAMES = {"stage-c": "different-", "stage-b": "who-", "stage-d": "gem-"}   # each section's still, by its stage
@@ -775,30 +742,39 @@ V3_PICS = """[...document.querySelectorAll('.stage .pic')].map((i) => { const r 
   return { stage: i.closest('.stage').classList[1], src: i.currentSrc.split('/').pop(), done: i.complete && i.naturalWidth > 0,
            top: r.top + scrollY, blend: getComputedStyle(i).mixBlendMode,
            card: getComputedStyle(i.closest('.stage')).backgroundImage }; })"""
+# The header's tile and the comparison's: the open box from the sprite, lime on ink (docs/review/home-v3.md, "The mark").
+MARKS = """[...document.querySelectorAll('.site-header .wm-tile, .us-name .wm-tile')].map((t) => { const svg = t.querySelector('svg');
+  return [t.closest('.site-header') ? 'header' : 'compare', (svg?.querySelector('use')?.getAttribute('href') || '').split('#')[1],
+          getComputedStyle(t).backgroundColor, svg ? getComputedStyle(svg).color : null, !!svg && getComputedStyle(svg).display !== 'none']; })"""
+OPEN_BOX_TILES = [["header", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True],
+                  ["compare", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True]]
+SWITCH = "document.querySelector('[data-theme-toggle]')"
 
 
 def _v3_files(page):
     return [r["url"].rsplit("/", 1)[-1] for r in page.requests() if "/site/media/" in r["url"]]
 
 
-def check_v3(browser):
-    """V-02, /v3: dark first; no video and nothing from the loops' folder; at load the hero's still (an AVIF here), and
-    no section still that sits more than 2,500 px below the screen; scrolling through, each section's still once, every
-    picture decoded from its AVIF, the closing on the hero's file; the bytes stay in V-02, at 1440 and at 390. Light mode:
-    every still on v2's gunmetal card through `lighten`; dark mode: no card, no blend. Reduced motion: the hero's still
-    shows (nothing on /v3 depends on motion). The open box in the header's tile. No console error and no CSP violation.
-    The lazy rule here only bites when a section still sits more than 2,500 px down; static_checks pins loading="lazy"."""
+def check_home_stills(browser):
+    """V-02 on the home (the v3 design since docs/review/promote-v3.md): dark first; no video and nothing from the
+    loops' folder; at load the hero's still (an AVIF here), and no section still that sits more than 2,500 px below the
+    screen; scrolling through, each section's still once, every picture decoded from its AVIF, the closing on the hero's
+    file; the bytes stay in V-02, at 1440 and at 390. Light mode (a stored choice): every still on v2's gunmetal card
+    through `lighten`, and the Lights switch takes the page back to dark. Dark mode: no card, no blend. Reduced motion:
+    the hero's still shows (nothing on the home depends on motion). The open box, lime on ink, in the header's tile and
+    the comparison's, in both themes. No console error and no CSP violation. The lazy rule here only bites when a
+    section still sits more than 2,500 px down; static_checks pins loading="lazy"."""
     problems = []
     with server("--mode", "direct", "--seallog", "--pay") as origin:
         for width, height, mobile in ((1440, 900, False), (390, 844, True)):
             page = _v2_page(browser, width=width, height=height, mobile=mobile, android=mobile)
-            page.goto(origin + "/v3", settle=2.5)
-            at = f"/v3 @{width}"
+            page.goto(origin + "/", settle=2.5)
+            at = f"/ @{width}"
             if page.eval("document.documentElement.dataset.theme") != "dark" or \
                     page.eval("getComputedStyle(document.body).backgroundColor") != "rgb(10, 10, 10)":
                 problems.append(f"{at}: not dark first")
             if page.eval("document.querySelectorAll('video').length") or any("/site/media/motion/" in r["url"] for r in page.requests()):
-                problems.append(f"{at}: a video or a loop's file (v3 has stills only)")
+                problems.append(f"{at}: a video or a loop's file (the home has stills only)")
             if not page.wait_for("(() => { const i = document.querySelector('.stage-a .pic'); return i.complete && i.naturalWidth > 0; })()", 10):
                 problems.append(f"{at}: the hero's still isn't shown")
             pics = page.eval(V3_PICS)
@@ -813,6 +789,8 @@ def check_v3(browser):
             loaded = sum(r["bytes"] for r in page.requests())
             if loaded > V3_AT_LOAD:
                 problems.append(f"{at}: {loaded:,} B at load (V-02: at most {V3_AT_LOAD:,})")
+            if page.eval(MARKS) != OPEN_BOX_TILES:
+                problems.append(f"{at}: the tiles aren't the open box, lime on ink ({page.eval(MARKS)})")
             step = height * 0.5
             for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):
                 page.scroll_to(y, 0.3)
@@ -830,22 +808,29 @@ def check_v3(browser):
             scrolled = sum(r["bytes"] for r in page.requests())
             if scrolled > V3_SCROLLED:
                 problems.append(f"{at}: {scrolled:,} B after scrolling through (V-02: at most {V3_SCROLLED:,})")
-            mark = page.eval("(() => { const t = document.querySelector('.site-header .wm-tile'); return [getComputedStyle(t).backgroundImage.startsWith('url(\"data:image/svg+xml,'), getComputedStyle(t.querySelector('svg')).display]; })()")
-            if mark != [True, "none"]:
-                problems.append(f"{at}: the header's tile isn't the open box ({mark})")
             problems += [f"{at}: {e}" for e in real_errors(page) + [l for l in page.console() if "Content Security Policy" in l]]
-            NOTES.append(f"V-02 /v3 @{width}: {loaded:,} B at load (the hero's still {pics[0]['src'] if pics else '?'}), {scrolled:,} B after "
+            NOTES.append(f"V-02 / @{width}: {loaded:,} B at load (the hero's still {pics[0]['src'] if pics else '?'}), {scrolled:,} B after "
                          f"scrolling through, uncached; stills asked for: {', '.join(stills)}")
             if any(p["blend"] != "normal" or p["card"] != "none" for p in pics):
                 problems.append(f"{at}: dark mode, a still on a card or blended: {[(p['stage'], p['blend'], p['card'][:20]) for p in pics]}")
         light = _v2_page(browser, light=True, width=1440, height=900)
-        light.goto(origin + "/v3", settle=1.5)
+        light.goto(origin + "/", settle=1.5)
         pics = light.eval(V3_PICS)
         if light.eval("document.documentElement.dataset.theme") != "light" or len(pics) != 5 or \
                 any(p["blend"] != "lighten" or "gradient" not in p["card"] for p in pics):
             problems.append(f"light mode: a still without v2's gunmetal card and lighten: {[(p['stage'], p['blend'], p['card'][:20]) for p in pics]}")
+        if light.eval(MARKS) != OPEN_BOX_TILES:
+            problems.append(f"light mode: the tiles aren't the open box, lime on ink ({light.eval(MARKS)})")
+        if light.eval(f"{SWITCH}.getAttribute('aria-pressed')") != "true":
+            problems.append("light mode: the Lights switch isn't pressed")
+        light.eval(f"{SWITCH}.click()")
+        light.b.pump(0.4)
+        back = light.eval(f"[document.documentElement.dataset.theme, getComputedStyle(document.body).backgroundColor, {SWITCH}.getAttribute('aria-pressed')]")
+        if back != ["dark", "rgb(10, 10, 10)", "false"]:
+            problems.append(f"the Lights switch doesn't take the home back to dark ({back})")
+        light.eval("localStorage.removeItem('mutis.theme')")
         quiet = _v2_page(browser, width=1440, height=900, reduce=True)
-        quiet.goto(origin + "/v3", settle=2.0)
+        quiet.goto(origin + "/", settle=2.0)
         if not quiet.wait_for("(() => { const i = document.querySelector('.stage-a .pic'); return i.complete && i.naturalWidth > 0; })()", 10):
             problems.append("reduced motion: the hero's still isn't shown")
     return problems
@@ -937,18 +922,18 @@ def check_how_loops(browser):
     return problems
 
 
-CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px", check_pages),
+CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px; /v3 lands on the home", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("home words: 120 above the fold, 800 in all, Open your drive first", check_word_budget),
-          ("A-06h: the field loads after the load event, ripples, never with reduced motion", check_field),
+          ("A-06h: no WebGL field on the home (the v3 design), nor on /how and /judges", check_no_field),
           ("header: Open your drive always on, to /drive?make or /drive", check_header),
-          ("motion: reveals, the decode, the pixel field; reduced motion and no JavaScript", check_motion),
+          ("motion: reveals, the decode as the slice comes into view; reduced motion and no JavaScript", check_motion),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("/made as docs: the contents follow the part being read, links open their disclosure, On this page", check_contents),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
           ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2),
-          ("V-02: /v3's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode", check_v3),
+          ("V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box", check_home_stills),
           ("/how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled", check_how_loops)]
 
 
