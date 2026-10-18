@@ -10,6 +10,12 @@
  *
  * Theme switching: light by default; dark when the system asks for it and the page has no
  * data-theme="light", or always with data-theme="dark" (the shadcn ".dark" class, as an attribute).
+ *
+ * Drive v3 (docs/review/drive-v3.md): the drive in the home's v3 look. Light is the site's light (white, the
+ * #FAFAFA rail, #666666 secondary text, as web/shared/tokens.css); dark is v3's black void (#0A0A0A) with gunmetal
+ * panels (one cool ramp, OKLCH hue 258, from v3's stage #17191C to #2B2F35), frosted glass on the raised surfaces
+ * (--glass*: a soft light from above inside a white hairline, v2.css's recipe).
+ * Violet stays Tari's; in dark it takes the site's pay-text (#A684FF) so a Tari badge reads as on the home.
  */
 
 @font-face {
@@ -36,7 +42,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.51 0 0);         /* v3: the site's --fg-2 #666666 (shadcn's #737373 is 4.35:1 on --muted) */
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -62,7 +68,7 @@
   --tari-soft: oklch(0.491 0.27 292.581 / 0.09);
   --success: oklch(0.508 0.118 165.612);        /* emerald theme primary: paid, delivered, done */
   --success-soft: oklch(0.508 0.118 165.612 / 0.1);
-  --warning: oklch(0.555 0.163 48.998);         /* amber theme primary: ends soon, space nearly full */
+  --warning: oklch(0.53 0.163 48.998);          /* amber theme primary, a step darker (v3: 4.8:1 on its own wash; 4.37 before) */
   --warning-soft: oklch(0.555 0.163 48.998 / 0.1);
   --scrim: oklch(0 0 0 / 0.5);                  /* shadcn overlay: bg-black/50 */
   --qr-ink: oklch(0.145 0 0);                   /* the QR stays dark on white in both themes */
@@ -70,6 +76,12 @@
   /* Site v4 (17-brand.md v3): Tari's lime fills the one primary of each view, under the ink label (16.32:1);
      a 1px lime-700 edge on light (lime on white is 1.21:1); picked rows sit on the lime tint. Hex, as the site's. */
   --brand-solid: #BCFE00; --brand-solid-hover: #B1EC20; --on-brand: #0A0A0A; --brand-edge: #59800B; --brand-subtle: #F4FFE6;
+  /* Drive v3: light keeps v3's plain cards (no glass); dark fills these in below. The stage is v3's
+     gunmetal card under a picture in light mode (the start screen's open box, drawn on it with lighten). */
+  --glass: none; --glass-edge: var(--border); --glass-top: var(--border); --tile-edge: 0 0 #0000;
+  --chip: var(--secondary); --tile-fill: var(--muted);   /* a badge's fill; an icon tile's fill (dark: frosted) */
+  --stage: radial-gradient(130% 95% at 50% 28%, #2B2F35 0%, #17191C 55%, #0A0A0A 100%); --stage-blend: lighten;
+  --stage-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.1), 0 1px 2px rgb(10 10 10 / 0.06), 0 32px 64px -36px rgb(10 10 10 / 0.5);
 
   /* Radius steps (shadcn @theme inline) */
   --radius-xs: 0.125rem;
@@ -123,17 +135,17 @@
     color-scheme: dark;
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
+    --card: oklch(0.192 0.0055 258.4);          /* gunmetal 850 #131417 (v3) */
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
+    --popover: oklch(0.212 0.0067 258.4);       /* gunmetal 800 #17191C, v3's stage */
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.922 0 0);
     --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
+    --secondary: oklch(0.25 0.0088 258.4);      /* gunmetal 700 #1F2226 */
     --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
+    --muted: oklch(0.25 0.0088 258.4);
     --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
+    --accent: oklch(0.25 0.0088 258.4);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
@@ -144,21 +156,26 @@
     --chart-3: oklch(0.769 0.188 70.08);
     --chart-4: oklch(0.627 0.265 303.9);
     --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
+    --sidebar: oklch(0.178 0.0045 258.4);       /* gunmetal 900 #101113: the panel beside the void */
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.488 0.243 264.376);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent: oklch(0.25 0.0088 258.4);
     --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-border: oklch(1 0 0 / 8%);
     --sidebar-ring: oklch(0.556 0 0);
-    --tari: oklch(0.811 0.111 293.571);         /* violet chart-1: legible on dark */
-    --tari-soft: oklch(0.606 0.25 292.717 / 0.18);
+    --tari: oklch(0.699 0.176 294.1);           /* v3: the site's pay-text #A684FF, 5.4:1 or more on --tari-soft here */
+    --tari-soft: oklch(0.491 0.27 292.581 / 0.12);
     --success: oklch(0.845 0.143 164.978);      /* emerald chart-1 */
     --success-soft: oklch(0.696 0.17 162.48 / 0.16);
     --warning: oklch(0.879 0.169 91.605);       /* amber chart-1 */
     --warning-soft: oklch(0.769 0.188 70.08 / 0.16);
     --brand-edge: transparent; --brand-subtle: #161D0B;
+    --glass: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
+    --glass-edge: rgb(255 255 255 / 0.085); --glass-top: rgb(255 255 255 / 0.16);
+    --tile-edge: inset 0 0 0 1px rgb(255 255 255 / 0.09), inset 0 1px 0 rgb(255 255 255 / 0.18);
+    --stage: none; --stage-blend: normal; --stage-shadow: 0 0 #0000;
+    --chip: rgb(255 255 255 / 0.07); --tile-fill: rgb(255 255 255 / 0.06);
   }
 }
 
@@ -166,17 +183,17 @@
   color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.192 0.0055 258.4);          /* gunmetal 850 #131417 (v3) */
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.212 0.0067 258.4);       /* gunmetal 800 #17191C, v3's stage */
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.25 0.0088 258.4);      /* gunmetal 700 #1F2226 */
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.25 0.0088 258.4);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.25 0.0088 258.4);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -187,21 +204,26 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.178 0.0045 258.4);       /* gunmetal 900 #101113: the panel beside the void */
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.25 0.0088 258.4);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.556 0 0);
-  --tari: oklch(0.811 0.111 293.571);
-  --tari-soft: oklch(0.606 0.25 292.717 / 0.18);
+  --tari: oklch(0.699 0.176 294.1);           /* v3: the site's pay-text #A684FF, 5.4:1 or more on --tari-soft here */
+  --tari-soft: oklch(0.491 0.27 292.581 / 0.12);
   --success: oklch(0.845 0.143 164.978);
   --success-soft: oklch(0.696 0.17 162.48 / 0.16);
   --warning: oklch(0.879 0.169 91.605);
   --warning-soft: oklch(0.769 0.188 70.08 / 0.16);
   --brand-edge: transparent; --brand-subtle: #161D0B;
+  --glass: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
+  --glass-edge: rgb(255 255 255 / 0.085); --glass-top: rgb(255 255 255 / 0.16);
+  --tile-edge: inset 0 0 0 1px rgb(255 255 255 / 0.09), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  --stage: none; --stage-blend: normal; --stage-shadow: 0 0 #0000;
+  --chip: rgb(255 255 255 / 0.07); --tile-fill: rgb(255 255 255 / 0.06);
 }
 /* increased contrast: an ink edge round the lime on light pages (the dark blocks outrank this) */
 @media (prefers-contrast: more) { :root { --brand-edge: var(--foreground); } }

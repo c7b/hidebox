@@ -10,7 +10,7 @@ colors:
   primary-foreground: "oklch(0.985 0 0)"
   secondary: "oklch(0.97 0 0)"
   muted: "oklch(0.97 0 0)"
-  muted-foreground: "oklch(0.556 0 0)"
+  muted-foreground: "oklch(0.51 0 0)"       # drive v3: the site's --fg-2 #666666 (shadcn's #737373 was 4.35:1 on muted)
   accent: "oklch(0.97 0 0)"
   destructive: "oklch(0.577 0.245 27.325)"
   border: "oklch(0.922 0 0)"
@@ -20,24 +20,27 @@ colors:
   sidebar-primary: "oklch(0.205 0 0)"
   tari: "oklch(0.491 0.27 292.581)"
   success: "oklch(0.508 0.118 165.612)"
-  warning: "oklch(0.555 0.163 48.998)"
+  warning: "oklch(0.53 0.163 48.998)"        # drive v3: a step darker, 4.8:1 on its own wash
   chart-1: "oklch(0.646 0.222 41.116)"
   chart-2: "oklch(0.6 0.118 184.704)"
   chart-3: "oklch(0.398 0.07 227.392)"
   chart-4: "oklch(0.828 0.189 84.429)"
   background-dark: "oklch(0.145 0 0)"
   foreground-dark: "oklch(0.985 0 0)"
-  card-dark: "oklch(0.205 0 0)"
+  card-dark: "oklch(0.192 0.0055 258.4)"   # drive v3: gunmetal 850 #131417 under the glass
+  popover-dark: "oklch(0.212 0.0067 258.4)"  # gunmetal 800 #17191C, v3's stage
   primary-dark: "oklch(0.922 0 0)"
   primary-foreground-dark: "oklch(0.205 0 0)"
-  muted-dark: "oklch(0.269 0 0)"
+  muted-dark: "oklch(0.25 0.0088 258.4)"   # gunmetal 700 #1F2226 (secondary and accent too)
   muted-foreground-dark: "oklch(0.708 0 0)"
   destructive-dark: "oklch(0.704 0.191 22.216)"
   border-dark: "oklch(1 0 0 / 10%)"
   input-dark: "oklch(1 0 0 / 15%)"
-  sidebar-dark: "oklch(0.205 0 0)"
+  sidebar-dark: "oklch(0.178 0.0045 258.4)" # gunmetal 900 #101113, the panel beside the void
   sidebar-primary-dark: "oklch(0.488 0.243 264.376)"   # shadcn's value; the brand tile does NOT use it (pinned to primary)
-  tari-dark: "oklch(0.811 0.111 293.571)"
+  tari-dark: "oklch(0.699 0.176 294.1)"     # drive v3: the site's pay-text #A684FF, on a 12% violet wash
+  gunmetal-600: "#2B2F35"                   # v3's stage light; the start screen's card in light mode (radial to #0A0A0A)
+  chip-dark: "rgb(255 255 255 / 0.07)"      # a rule badge's fill in dark (light: secondary)
   success-dark: "oklch(0.845 0.143 164.978)"
   warning-dark: "oklch(0.879 0.169 91.605)"
   brand: "oklch(0.918 0.235 126.3)"         # Lime 400 = Tari's green #BCFE00, the Open your drive fill, both themes (site v3, research/17-brand.md v2)
@@ -201,7 +204,10 @@ share step, activity sheet and on the home page's slice of a drive, with a secon
 is set to leave ("Leaves Oct 20").
 
 The mood is calm, bright and exact: neutral greys, near-black ink, one violet that only ever means
-Tari. Anti-references: the retired ghost (mascot, indigo night, phosphor), crypto dashboards (neon on
+Tari. **Drive v3** (docs/review/drive-v3.md, the owner's "match the same vibe of v3"): in dark the drive is the home's
+v3 world, the black void (`#0A0A0A`) with gunmetal panels (one cool ramp at OKLCH hue 258, from v3's stage `#17191C` to
+`#2B2F35`) and frosted glass on every raised surface; in light it is the site's light (white, the `#FAFAFA` rail,
+`#666666` secondary text). The mark is the open box, lime on its ink tile in both themes. Anti-references: the retired ghost (mascot, indigo night, phosphor), crypto dashboards (neon on
 black, glowing edges), and generic landing pages (gradient hero, three equal feature cards, eyebrows).
 
 ## Colors
@@ -311,8 +317,11 @@ Headings and the status pill stay one line.
   contents on the left in four groups that fold, the part being read on the lime tint; on phones the same contents
   in a closed On this page. Long detail waits in the accordions and What we can't hide is eleven rows that open;
   every word of the page is still there, for readers without JavaScript too.
-- **Empty drive:** the brand moment (the ink tile taking in two Lucide file icons), one primary (Upload a
+- **Empty drive:** the brand moment (the open box's ink tile taking in two Lucide file icons), one primary (Upload a
   folder on computers, Upload files on phones), and the Tari address row with Copy.
+- **No drive yet (`/drive`, drive v3):** the words and Make my drive left, the home's hero still (the open box with the
+  files rising out of it, `web/site/media/v3/hero-*`) right on a computer and under the words on a phone; on the void in
+  dark, on v3's gunmetal card through `lighten` in light.
 - **Home (the v3 design since the twelfth pass, docs/review/promote-v3.md; its words from site v4):** dark first.
   The hero's words on the left (the headline "Your private cloud storage." with "Privacy isn't an option." and
   "It's the default." below it in grey, one sentence a line; the 56px lime Open your drive, the site's one action)
@@ -329,7 +338,11 @@ Headings and the status pill stay one line.
 
 Flat, with shadcn's four shadows: `xs` on outline buttons and inputs, `sm` on cards and the active tab,
 `md` on menus, `lg` on dialogs, sheets, the upload panel and the hero's drive slice. Overlays dim the
-page with black at 50%. Nothing glows. One picture is drawn in depth (site/share, the owner's): the home's share
+page with black at 50%. Nothing glows. **Drive v3, dark only:** cards, the file table, folder cards, dialogs, sheets,
+menus, toasts and alerts are frosted glass (a white light from above, 5% to 1.5%, inside an 8.5% hairline whose top
+edge is 16%) on an opaque gunmetal base, so no backdrop blur sits under text; icon tiles and the mark's tile are small
+frosted tiles (a 6% wash, the same lit edge); the drive's header is the one blur (it is sticky, the list passes under
+it), solid with reduced transparency. Light mode stays flat, as v3's light mode does. One picture is drawn in depth (site/share, the owner's): the home's share
 window leans back in perspective over a second sheet, takes no pointer, and a line under it says what it shows, so
 nobody takes it for a window to use.
 
@@ -405,7 +418,9 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
   drive's tile with two file icons is the one composed moment).
 - **Don't** say a link's end goes on the chain: only a file that leaves gets a receipt.
 - **Don't** add gradients, glows, glass panels or coloured bands. The home's light lives in its stills (and v2's
-  gunmetal card under them in light mode), never under a word; the static grid stays /judges' one field.
+  gunmetal card under them in light mode), never under a word; the static grid stays /judges' one field. The drive's exceptions are v3's too, by the owner's
+  choice: its frosted glass in dark mode and the gunmetal card under the start screen's still in light mode
+  (Elevation & Depth).
 - **Don't** hide content for motion's sake: the site's reveals and the hero picture's decode
   (`web/site/js/motion.js`) touch only what is below the fold when they run, never run without JavaScript or
   with reduced motion, stay within 700 ms and 60 ms a step, and leave the DOM as it was served. The one motion that

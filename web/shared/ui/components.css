@@ -455,3 +455,15 @@ a.item:hover, button.item:hover { background: color-mix(in oklab, var(--accent) 
 .sidebar-menu-badge { pointer-events: none; position: absolute; right: 0.25rem; top: 50%; translate: 0 -50%; display: flex; height: 1.25rem; min-width: 1.25rem; align-items: center; justify-content: center; border-radius: var(--radius-md); padding-inline: 0.25rem; font-size: var(--text-xs); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--sidebar-foreground); user-select: none; }
 .sidebar-separator { margin-inline: 0.5rem; width: auto; height: 1px; background: var(--sidebar-border); }
 .sidebar-inset { position: relative; display: flex; width: 100%; min-width: 0; flex: 1; flex-direction: column; background: var(--background); }
+
+/* ---------- CHANGED (drive v3, docs/review/drive-v3.md): the home's v3 look ----------
+   Dark mode: the raised surfaces are frosted glass, v2.css's recipe (tokens.css --glass*): a light from above inside
+   a white hairline with a brighter top edge, on an opaque gunmetal base, so nothing needs a backdrop blur and text
+   contrast never depends on what is behind. Light mode keeps shadcn's plain surfaces (--glass is none there).
+   Badges take v3's chip: a white wash over whatever they sit on, so a rule still reads on a glass card. */
+.card, .dialog, .sheet, .menu, .toast, .alert { background-image: var(--glass); border-color: var(--glass-edge); border-top-color: var(--glass-top); }
+.dialog, .sheet { background-color: var(--card); }
+.badge[data-variant="secondary"] { background: var(--chip); }
+@media (prefers-contrast: more) {
+  .card, .dialog, .sheet, .menu, .toast, .alert { background-image: none; border-color: var(--border); }
+}

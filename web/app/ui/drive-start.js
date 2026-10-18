@@ -76,6 +76,18 @@ export function openDialog(onOpened) {
   openModal(opener);
 }
 
+// Drive v3: the home's open box with the files rising out of it (its hero still, the same files under
+// /site/media/v3/), so /drive opens on the picture the home ends with. Decorative: the words say it all.
+const STILL = '/site/media/v3/hero-';
+function still() {
+  const set = (ext) => [480, 720, 1024].map((w) => `${STILL}${w}.${ext} ${w}w`).join(', ');
+  const sizes = '(min-width: 900px) 26rem, min(calc(100vw - 2rem), 24rem)';
+  return h('div', { class: 'start-pic', 'aria-hidden': 'true', 'data-testid': 'start-pic' }, h('picture', {},
+    h('source', { type: 'image/avif', srcset: set('avif'), sizes }),
+    h('source', { type: 'image/webp', srcset: set('webp'), sizes }),
+    h('img', { src: `${STILL}720.webp`, alt: '', width: '1024', height: '1024', decoding: 'async' })));
+}
+
 // The screen itself. onReady(identity, {made}) boots the drive.
 export function renderStart(app, { onReady, make = false, open = false }) {
   const status = h('div', { class: 'stack', 'aria-live': 'polite' });
@@ -121,7 +133,8 @@ export function renderStart(app, { onReady, make = false, open = false }) {
       h('p', { class: 'lead' }, t('drive.start.lede')),
       h('div', { class: 'row wrap' }, makeBtn, openBtn),
       status,
-      h('p', { class: 'small muted' }, t('drive.start.no_email')))));
+      h('p', { class: 'small muted' }, t('drive.start.no_email'))),
+    still()));
   if (make) start();
   else if (open) openDialog((identity) => onReady(identity, { made: false }));
 }

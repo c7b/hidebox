@@ -936,3 +936,89 @@ def drive_primary(t):
         time.sleep(0.25)
     t.check(p.eval(LIMES) == ["New"], f"a phone with files: the floating New is the lime ({p.eval(LIMES)})")
     t.shot(p, "v4-drive-390-files")
+
+
+# --- drive v3: the home's v3 look in the drive (docs/review/drive-v3.md) --------------------------------------
+
+# Computed colours given in OKLCH serialize as oklch(); RGB() draws one on a canvas pixel and reads it back as rgb()
+# (rgba() with its alpha out of 255 when it is see-through).
+RGB = """((c) => { const x = document.createElement('canvas').getContext('2d', { willReadFrequently: true }); x.clearRect(0, 0, 1, 1);
+  x.fillStyle = c; x.fillRect(0, 0, 1, 1); const d = x.getImageData(0, 0, 1, 1).data;
+  return d[3] === 255 ? `rgb(${d[0]}, ${d[1]}, ${d[2]})` : `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${d[3]})`; })"""
+STYLE = """((sel, props) => { const rgb = %s; const e = document.querySelector(sel); if (!e) return null; const s = getComputedStyle(e);
+  return Object.fromEntries(props.map((p) => { const v = s.getPropertyValue(p); return [p, /color$/.test(p) ? rgb(v) : v]; })); })""" % RGB
+
+
+def style(page, sel, *props):
+    return page.eval(f"{STYLE}({json.dumps(sel)}, {json.dumps(list(props))})") or {}
+
+
+def near(css, want, tol=2):
+    """rgb(r, g, b) within `tol` of `want` per channel (a colour converted from OKLCH may land a unit away)."""
+    got = [int(x) for x in re.findall(r"\d+", css or "")[:3]]
+    return len(got) == 3 and (css or "").startswith("rgb(") and all(abs(a - b) <= tol for a, b in zip(got, want))
+
+
+def look(page, theme):
+    page.eval(f"document.documentElement.dataset.theme = {json.dumps(theme)}")
+    time.sleep(0.3)
+
+
+@scenario("drive-v3", "Drive v3: the start screen's open box (AVIF, on v3's gunmetal card in light, on the void in dark), the void and "
+          "gunmetal panels, frosted glass on the raised surfaces in dark only, v3's chip on the badges, Tari's violet only on Tari, "
+          "the site's #666666 secondary text in light, the frosted header and the mark's frosted tile", features=FEATURES)
+def drive_v3(t):
+    s = t.actor("desktop")
+    s.goto(t.origin + "/drive")
+    s.wait_for("drive-start", 60)
+    s.wait("(() => { const i = document.querySelector('[data-testid=\"start-pic\"] img'); return i && i.complete && i.naturalWidth > 0; })()", 30)
+    src = s.eval("document.querySelector('[data-testid=\"start-pic\"] img').currentSrc")
+    t.check(src.startswith(t.origin + "/site/media/v3/hero-") and src.endswith(".avif"), f"the start screen shows the home's open box, from its AVIF ({src})")
+    t.check(s.eval("document.querySelector('[data-testid=\"start-pic\"]').getAttribute('aria-hidden')") == "true", "the picture is decoration (aria-hidden; the words say it all)")
+    look(s, "light")
+    st, im = style(s, ".start-pic", "background-image"), style(s, ".start-pic img", "mix-blend-mode")
+    t.check("radial-gradient" in st.get("background-image", "") and im.get("mix-blend-mode") == "lighten",
+            f"light: the open box on v3's gunmetal card, drawn with lighten ({st}, {im})")
+    look(s, "dark")
+    st, im = style(s, ".start-pic", "background-image"), style(s, ".start-pic img", "mix-blend-mode")
+    t.check(st.get("background-image") == "none" and im.get("mix-blend-mode") == "normal", f"dark: on the void itself, no card ({st}, {im})")
+    t.check(s.eval("(() => { const r = document.querySelector('[data-testid=\"start-pic\"]').getBoundingClientRect(); return r.right <= innerWidth && r.bottom <= innerHeight; })()"),
+            "a computer: the picture sits beside the words, inside the first screen")
+    t.check(no_hscroll(s), "no sideways scroll")
+
+    a = drive_page(t)
+    upload_files(t, a, ["notes.txt", "agenda.txt"])
+    a.eval("document.querySelector('[data-testid=\"upload-panel\"] .uploads-head .btn')?.click()")
+    open_share(a, "notes.txt")
+    to_opens(a)
+    make_link(a)
+    close_dialog(a)
+    wait_rule(a, "notes.txt", "once")
+    look(a, "dark")
+    body, rail = style(a, "body", "background-color"), style(a, "aside.sidebar", "background-color")
+    t.check(near(body.get("background-color"), (10, 10, 10), 0), f"dark: the black void, #0A0A0A ({body})")
+    t.check(near(rail.get("background-color"), (16, 17, 19)), f"dark: the rail is the gunmetal panel, #101113 ({rail})")
+    files = style(a, ".files", "background-image", "border-top-color", "border-left-color", "background-color")
+    t.check("linear-gradient" in files.get("background-image", "") and files.get("border-top-color") != files.get("border-left-color")
+            and near(files.get("background-color"), (19, 20, 23)), f"dark: the file table is frosted glass on gunmetal, its top edge lit ({files})")
+    alert_bg = style(a, "[data-testid='key-banner']", "background-image").get("background-image", "")
+    t.check("linear-gradient" in alert_bg, f"dark: the key reminder is glass too ({alert_bg[:60]})")
+    chip = a.eval("getComputedStyle(document.querySelector('[data-testid=\"file-row\"] .badge[data-variant=\"secondary\"]')).backgroundColor")
+    t.check(chip == "rgba(255, 255, 255, 0.07)", f"dark: a rule badge is v3's chip, a white wash ({chip})")
+    tile = style(a, "aside .brand-mark", "background-color", "box-shadow")
+    t.check(near(tile.get("background-color"), (10, 10, 10), 0) and "inset" in tile.get("box-shadow", ""), f"dark: the mark's ink tile is a frosted tile ({tile})")
+    head = style(a, ".app-header", "backdrop-filter")
+    t.check("blur" in head.get("backdrop-filter", ""), f"the header is frosted ({head})")
+    look(a, "light")
+    files = style(a, ".files", "background-image", "border-top-color", "border-left-color")
+    t.check(files.get("background-image") == "none" and files.get("border-top-color") == files.get("border-left-color"), f"light: plain cards, as v3's light mode ({files})")
+    muted = style(a, ".files .table th", "color").get("color")
+    t.check(near(muted, (102, 102, 102), 1), f"light: secondary text is the site's #666666 ({muted})")
+    tile = style(a, "aside .brand-mark", "background-color", "color")
+    t.check(near(tile.get("background-color"), (10, 10, 10), 0) and near(tile.get("color"), (188, 254, 0), 0),
+            f"light: the lime box on its ink tile (lime alone on white is 1.21:1) ({tile})")
+    violet = a.eval("""(() => { const rgb = %s; const tari = rgb(getComputedStyle(document.documentElement).getPropertyValue('--tari'));
+      return [...document.querySelectorAll('body *')].filter((e) => e.getClientRects().length && rgb(getComputedStyle(e).color) === tari)
+        .map((e) => e.closest('[data-tari], .tari-row, [data-variant="tari"], .tari-text, .price-big, .pack-price') ? null : (e.className.baseVal ?? e.className) || e.tagName)
+        .filter(Boolean); })()""" % RGB)
+    t.check(not violet, f"violet text only on Tari things ({violet[:4]})")

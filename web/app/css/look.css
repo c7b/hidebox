@@ -47,3 +47,18 @@
   .a-page .a-choice:first-child { grid-template-columns: 2.5rem minmax(0, 1fr); }
   .a-page .a-choice:first-child .a-figure.a-choice-ghost { inline-size: 2.5rem; }
 }
+
+/* drive v3 (docs/review/drive-v3.md): in dark mode the link and task pages' raised surfaces are v3's frosted glass,
+   as the drive's and the home's cards (v2.css): a light from above (5 % to 1.5 % white) on the opaque raised fill,
+   with a lit top edge over the hairline the dark --shadow already draws. The screen's icon tile gets the same edge.
+   Light mode keeps the flat cards. The site tokens stay as they are (the home reads them). */
+:root { --lk-glass: none; --lk-top: 0 0 #0000; }
+:root[data-theme="dark"] { --lk-glass: linear-gradient(180deg, rgb(255 255 255 / .05), rgb(255 255 255 / .015)); --lk-top: inset 0 1px 0 rgb(255 255 255 / .1); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --lk-glass: linear-gradient(180deg, rgb(255 255 255 / .05), rgb(255 255 255 / .015)); --lk-top: inset 0 1px 0 rgb(255 255 255 / .1); }
+}
+.a-page :is(.a-choice:first-child, .a-dropcard, .a-keybanner, .a-modal, .a-receipt, .a-filecard, .a-dd-safety, .a-item, .a-plan, .a-invoice) {
+  background-image: var(--lk-glass); box-shadow: var(--lk-top), var(--shadow);
+}
+.a-page .a-figure { box-shadow: var(--lk-top); }
+@media (prefers-contrast: more) { .a-page :is(.a-choice:first-child, .a-dropcard, .a-keybanner, .a-modal, .a-receipt, .a-filecard, .a-dd-safety, .a-item, .a-plan, .a-invoice) { background-image: none; } }
