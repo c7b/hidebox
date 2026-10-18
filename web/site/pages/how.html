@@ -42,24 +42,26 @@
   <div class="stills">
     <section class="still" aria-labelledby="s1">
       <div class="still-copy"><h2 id="s1">Open your drive</h2><p>Your browser makes a key. <br>The key is the account. <br>No email, no password.</p></div>
-      <div class="still-frame" aria-hidden="true">
-        <div class="ui-card">
+      <div class="still-frame" data-loop="5000">
+        <div class="ui-card" aria-hidden="true">
           <div class="ui-title">Your drive is ready.</div>
           <p class="ui-desc">Save your key. <br>If this browser forgets it, nobody can let you back in, not even us.</p>
-          <div class="ui-key"><span class="ui-input">••••••••••••••••••••••••</span><span class="ui-btn"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-download"/></svg>Save my key</span></div>
-          <div class="ui-addr"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wallet"/></svg><span>Your Tari address</span><code>otl_esm_…</code></div>
+          <div class="ui-key"><span class="ui-input"><span class="dots" data-beats="key@400">••••••••••••••••••••••••</span></span><span class="ui-btn"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-download"/></svg>Save my key</span></div>
+          <div class="ui-addr"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wallet"/></svg><span>Your Tari address</span><code data-beats="addr@1900">otl_esm_…</code></div>
         </div>
+        <!-- Pause motion (WCAG 2.2.2), as on /v2: one switch for every loop on the page; Lucide pause and play (ISC, unmodified paths) -->
+        <button type="button" class="loops" data-loops aria-label="Pause motion" aria-pressed="false" hidden><svg class="icon i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" /></svg><svg class="icon i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></svg></button>
       </div>
     </section>
 
     <section class="still" aria-labelledby="s2">
       <div class="still-copy"><h2 id="s2">Drop your files</h2><p>Drop a file or a whole folder. <br>It gets locked right here, before it goes anywhere. <br>Our server gets scrambled noise. <br>Never the key.</p></div>
-      <div class="still-frame" aria-hidden="true">
+      <div class="still-frame" aria-hidden="true" data-loop="7000">
         <div class="ui-card flush">
-          <div class="ui-head"><span>Uploads</span><span class="badge" data-variant="outline"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg>Private</span></div>
-          <div class="ui-row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-image"/></svg><span class="name">beach-at-mazunte.jpg</span><span class="stage done"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-circle-check"/></svg></span></div>
-          <div class="ui-row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-text"/></svg><span class="name">lease-signed.pdf</span><span class="stage">Uploading</span><span class="ui-bar"><i class="w-most"></i></span></div>
-          <div class="ui-row"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-video-camera"/></svg><span class="name">first-steps.mov</span><span class="stage">Locking</span><span class="ui-bar"><i class="w-some"></i></span></div>
+          <div class="ui-head"><span class="ui-say" data-beats="done@4100"><span class="b-was">Uploads</span><span class="b-wait">Locking 3 files</span><span class="b-done">3 uploads done</span></span><span class="badge" data-variant="outline"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg>Private</span></div>
+          <div class="ui-row" data-beat="ok" data-beats="lock@300 send@650 ok@2100"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-image"/></svg><span class="name">beach-at-mazunte.jpg</span><span class="stage"><span class="b-lock">Locking</span><span class="b-send">Uploading</span><span class="b-ok"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Locked and saved</span></span><span class="ui-bar"><i></i></span></div>
+          <div class="ui-row" data-beat="send" data-beats="lock@700 send@1100 ok@2900"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-text"/></svg><span class="name">lease-signed.pdf</span><span class="stage"><span class="b-lock">Locking</span><span class="b-send">Uploading</span><span class="b-ok"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Locked and saved</span></span><span class="ui-bar"><i class="w-most"></i></span></div>
+          <div class="ui-row" data-beat="lock" data-beats="lock@1100 send@1600 ok@3800"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-file-video-camera"/></svg><span class="name">first-steps.mov</span><span class="stage"><span class="b-lock">Locking</span><span class="b-send">Uploading</span><span class="b-ok"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Locked and saved</span></span><span class="ui-bar"><i class="w-some"></i></span></div>
         </div>
       </div>
     </section>
@@ -69,15 +71,15 @@
         <p data-when="pay_to_open=off">Pick who can open it: anyone with the link, or one Tari address. <br>Then pick how many opens and when the link ends.</p>
         <p data-when="pay_to_open=on" hidden>Pick who can open it: anyone with the link, someone who pays you, or one Tari address. <br>Then pick how many opens and when the link ends.</p>
       </div>
-      <div class="still-frame" aria-hidden="true">
+      <div class="still-frame" aria-hidden="true" data-loop="5500">
         <div class="ui-card">
           <div class="ui-q">Who can open it?</div>
           <div class="ui-choices">
-            <div class="ui-choice" data-checked><span class="tile"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><div><b>Anyone with the link</b><span>You send the link. <br>You pick how many opens.</span></div><span class="ui-radio"></span></div>
+            <div class="ui-choice" data-checked data-beats="on@500"><span class="tile"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><div><b>Anyone with the link</b><span>You send the link. <br>You pick how many opens.</span></div><span class="ui-radio"></span></div>
             <div class="ui-choice" data-when="pay_to_open=on" hidden><span class="tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><div><b>Someone who pays you</b><span>They pay you tTARI, then it opens.</span></div><span class="ui-radio"></span></div>
             <div class="ui-choice"><span class="tile chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg></span><div><b>One Tari address</b><span>Send by Tari. <br>Only that address can open it.</span></div><span class="ui-radio"></span></div>
           </div>
-          <div class="row-badges"><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-repeat"/></svg>A few times</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-timer"/></svg>Until a time</span><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Secret word</span></div>
+          <div class="row-badges"><span class="badge" data-beats="on@1100"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span><span class="badge" data-beats="on@1300"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-repeat"/></svg>A few times</span><span class="badge" data-beats="on@1500"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-timer"/></svg>Until a time</span><span class="badge" data-beats="on@1700"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Secret word</span></div>
         </div>
       </div>
     </section>
@@ -88,13 +90,13 @@
         <p data-when="pay_to_open=on" hidden>Pay to open: they pay your Tari address, then it opens. <br>The chain hides the amount and who got it. <br>The fee is public.</p>
         <p data-when="pay_to_open=off">The chain shows a payment with a hidden amount and a hidden owner. <br>The fee is public.</p>
       </div>
-      <div class="still-frame" aria-hidden="true">
+      <div class="still-frame" aria-hidden="true" data-loop="6000">
         <div class="ui-card">
           <div class="ui-title">Send by Tari</div>
           <ol class="ui-steps">
-            <li><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg></span>Locking the key to their address</li>
-            <li><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg></span>Sending on the Ootle</li>
-            <li><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg></span>Sent</li>
+            <li data-beats="now@300 done@1500"><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg><svg class="icon spin" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-loader-circle"/></svg></span>Locking the key to their address</li>
+            <li data-beats="now@1500 done@2900"><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg><svg class="icon spin" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-loader-circle"/></svg></span>Sending on the Ootle</li>
+            <li data-beats="done@2900"><span class="dot"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg><svg class="icon spin" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-loader-circle"/></svg></span>Sent</li>
           </ol>
           <p class="ui-note"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg><span>The chain shows a payment with a hidden amount and a hidden owner. <br>The fee is public.</span></p>
         </div>
@@ -116,14 +118,14 @@
 
     <section class="still" aria-labelledby="s5">
       <div class="still-copy"><h2 id="s5">See what happened</h2><p>Each file shows its rule, how many times it opened, and when it ends. <br>When a file leaves your drive, we write that on the Tari chain, for anyone to check.</p></div>
-      <div class="still-frame" aria-hidden="true">
+      <div class="still-frame" aria-hidden="true" data-loop="6000">
         <div class="ui-card">
           <div class="ui-title">Activity</div>
           <ol class="ui-events">
-            <li class="ui-event"><span class="mark chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><b>It left your drive</b><span>We wrote that on the Tari chain. <span class="tx">tx abfe…cdea</span></span></li>
-            <li class="ui-event"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-eye"/></svg></span><b>Opened</b><span>Today</span></li>
-            <li class="ui-event"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><b>Link made</b><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span></li>
-            <li class="ui-event"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span><b>Locked and uploaded</b><span>Earlier</span></li>
+            <li class="ui-event" data-beats="on@2100"><span class="mark chain"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><b>It left your drive</b><span>We wrote that on the Tari chain. <span class="tx">tx abfe…cdea</span></span></li>
+            <li class="ui-event" data-beats="on@1500"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-eye"/></svg></span><b>Opened</b><span>Today</span></li>
+            <li class="ui-event" data-beats="on@900"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-link"/></svg></span><b>Link made</b><span class="badge"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-flame"/></svg>Once</span></li>
+            <li class="ui-event" data-beats="on@300"><span class="mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span><b>Locked and uploaded</b><span>Earlier</span></li>
           </ol>
         </div>
       </div>

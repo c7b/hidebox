@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT — how it works (16-drive-design §2 "Read", the prototype's how.html): five
    stills of the real interface, each beside its two lines of words. The stills are the drive's own parts
    (cards, upload rows, the share dialog's choices, the activity timeline) drawn inert, so they follow the
-   theme and stay sharp; nothing in them can be pressed. No mascot, no animation. */
+   theme and stay sharp; nothing in them can be pressed. No mascot. With motion allowed each still replays
+   what it shows, in a calm loop that site.js loads (the states are at the end of this file). */
 .how-page { gap: var(--s-8); }
 .stills { display: grid; gap: var(--s-8); }
 .still { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: center; }
@@ -39,9 +40,10 @@
 .ui-row > .icon { color: var(--fg-2); }
 .ui-row .name { color: var(--fg); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-row .stage { font: 500 12px/1.4 var(--font); color: var(--fg-2); }
-.ui-row .stage.done { color: var(--ok-text); }
+.ui-row .stage .b-ok { color: var(--ok-text); }
+.ui-row .stage .icon { width: 12px; height: 12px; }
 .ui-bar { grid-column: 2 / 4; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 10%, transparent); overflow: hidden; }
-.ui-bar i { display: block; height: 100%; border-radius: inherit; background: var(--act); }
+.ui-bar i { display: block; height: 100%; border-radius: inherit; background: var(--act); translate: -100% 0; }   /* 0 % */
 
 /* the share dialog's question */
 .ui-q { font: 600 1rem/1.3 var(--font); color: var(--fg); }
@@ -59,8 +61,9 @@
 /* the Tari send's steps */
 .ui-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .ui-steps li { display: flex; align-items: center; gap: 12px; color: var(--fg); }
-.ui-steps .dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--act); color: var(--on-act); flex: none; }
-.ui-steps .dot .icon { width: 14px; height: 14px; }
+.ui-steps .dot { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid transparent; border-radius: 50%; background: var(--act); color: var(--on-act); flex: none; }
+.ui-steps .dot .icon { grid-area: 1 / 1; width: 14px; height: 14px; }
+.ui-steps .dot .spin { opacity: 0; }
 .ui-note { display: flex; gap: 10px; padding: 12px; border-radius: var(--r-input); background: color-mix(in srgb, var(--tari) 7%, transparent); color: var(--fg); font: var(--t-small); }
 .ui-note .icon { width: 16px; height: 16px; color: var(--pay-text); flex: none; margin-top: 3px; }
 
@@ -83,8 +86,6 @@
 .coin-row { display: grid; }
 .coin-row .coin-box { max-width: 30rem; }
 .outro { padding-top: var(--s-6); border-top: 1px solid var(--hair); color: var(--fg-2); }
-.ui-bar .w-most { width: 62%; }
-.ui-bar .w-some { width: 18%; }
 
 /* site v3: a line beside the steps fills as they scroll past (the template's "how it works" progress), from
    when the first reaches 30 % of the screen to when the last leaves 70 %. Scroll-driven, so it needs no
@@ -102,3 +103,83 @@
   }
 }
 @keyframes steps-fill { from { scale: 1 0; } }
+
+/* ---------- the stills, played (the loop site.js loads after the load event): each part's states, by its
+   data-beat. The served page sets the upload rows' own (one saved, one uploading, one locking); the loop sets every
+   part's from then on, and empty is a loop's start. Transitions run only while a loop plays (.playing), so a still
+   that stops rests at once on its last beat. Without JavaScript the stills stay as served; with reduced motion they
+   never play and the uploads show done (the end of this file). The words are the app's (web/app/i18n/en.json). */
+.playing .ui-card *, .playing .ui-card {
+  transition: opacity .3s var(--ease-out), translate .3s var(--ease-out), scale .3s var(--ease-out), border-width .2s var(--ease-out),
+    color .2s var(--ease-out), background-color .2s var(--ease-out), border-color .2s var(--ease-out), box-shadow .2s var(--ease-out);
+}
+
+/* Open your drive: the browser makes the key, a dot at a time, then its Tari address shows */
+.ui-input .dots { flex: none; clip-path: inset(0); }
+.dots[data-beat=""] { opacity: 0; clip-path: inset(0 100% 0 0); }
+.playing .dots[data-beat=""] { transition: opacity .3s var(--ease-out), clip-path 0s .3s; }
+.playing .dots[data-beat="key"] { transition: clip-path 1.2s steps(24, end); }
+.ui-addr code[data-beat=""] { opacity: 0; translate: -4px 0; }
+
+/* Drop your files: each row locks (to 10 %), uploads (to 100 %, over its beat), then says Locked and saved, and the
+   panel's title counts them (drive.up.*). One label of each stack shows; the stack keeps the widest one's room. */
+.ui-head .ui-say, .ui-row .stage { display: grid; }
+.ui-head .ui-say > *, .ui-row .stage > * { grid-area: 1 / 1; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; opacity: 0; translate: 0 3px; }
+.ui-row .stage > * { justify-self: end; }
+.ui-row:is([data-beat=""], [data-beat="lock"]) .b-lock, .ui-row[data-beat="send"] .b-send, .ui-row[data-beat="ok"] .b-ok,
+.ui-say:not([data-beat]) .b-was, .ui-say[data-beat=""] .b-wait, .ui-say[data-beat="done"] .b-done { opacity: 1; translate: none; }
+/* while it plays, the old word leaves first and the new one follows */
+.playing .ui-head .ui-say > *, .playing .ui-row .stage > * { transition-duration: .12s; }
+.playing :is(.ui-row:is([data-beat=""], [data-beat="lock"]) .b-lock, .ui-row[data-beat="send"] .b-send, .ui-row[data-beat="ok"] .b-ok,
+  .ui-say[data-beat=""] .b-wait, .ui-say[data-beat="done"] .b-done) { transition-duration: .25s; transition-delay: .1s; }
+.ui-row[data-beat="lock"] .ui-bar i { translate: -90% 0; }
+.ui-row:is([data-beat="send"], [data-beat="ok"]) .ui-bar i { translate: none; }
+.ui-row[data-beat="ok"] .ui-bar { opacity: 0; }   /* done says so in words, as in the app */
+.still-frame:not(.playing) .ui-bar .w-most { translate: -38% 0; }   /* the served still: 62 % and 18 % */
+.still-frame:not(.playing) .ui-bar .w-some { translate: -82% 0; }
+.playing .ui-row[data-beat=""] .ui-bar i { transition: none; }   /* back to 0 % while the bar is out of sight */
+.playing .ui-row[data-beat="lock"] .ui-bar i { transition: translate var(--next) var(--ease-out); }
+.playing .ui-row[data-beat="send"] .ui-bar i { transition: translate var(--next) cubic-bezier(.4, .1, .6, 1); }
+
+/* Share it your way: the first choice is picked, then the rules arrive, one after another */
+.ui-choice[data-checked][data-beat=""] { border-color: var(--hair); box-shadow: 0 0 0 0 transparent; }
+.ui-choice[data-checked][data-beat=""] > .ui-radio { border-width: 1px; border-color: var(--line); }
+.row-badges .badge[data-beat=""] { opacity: 0; scale: .9; }
+
+/* Tari does the private parts: each step waits, turns (the app's spinner), then is checked */
+.ui-steps li:is([data-beat=""], [data-beat="now"]) .dot { background: var(--bg-raised); border-color: var(--line); color: var(--fg); }
+.ui-steps li[data-beat=""] { color: var(--fg-2); }
+.ui-steps li[data-beat="now"] .dot { border-color: var(--fg); }
+.ui-steps li:is([data-beat=""], [data-beat="now"]) .dot .icon:not(.spin) { opacity: 0; scale: .6; }
+.ui-steps li[data-beat="now"] .dot .spin { opacity: 1; }
+.playing .ui-steps li[data-beat="now"] .spin { animation: still-spin 1s linear infinite; }
+@keyframes still-spin { to { rotate: 1turn; } }
+
+/* See what happened: the file's life, oldest first, each event taking its place in the timeline */
+.ui-event[data-beat=""] { opacity: 0; translate: 0 -6px; }
+
+/* Pause motion (WCAG 2.2.2), as on /v2: one switch for every loop, in the first still's lower corner, outside
+   its aria-hidden card; the stage grows by the switch's height so it never covers the card. The loop shows it. */
+.still-frame:has(> .loops) { position: relative; }
+.still-frame:has(> .loops:not([hidden])) { padding-bottom: calc(32px + 2 * var(--s-3)); }
+.still-frame > .loops {
+  position: absolute; right: var(--s-3); bottom: var(--s-3); display: grid; place-items: center; width: 32px; max-width: none; height: 32px;
+  padding: 0; border: 1px solid var(--hair); border-radius: var(--r-pill); background: var(--bg-raised); color: var(--fg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .05); pointer-events: auto; transition: background-color var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
+}
+.still-frame > .loops:hover { background: var(--bg); }
+.still-frame > .loops:active { scale: .94; }
+.loops .icon { width: 14px; height: 14px; }
+.loops .i-play, .loops[aria-pressed="true"] .i-pause { display: none; }
+.loops[aria-pressed="true"] .i-play { display: block; }
+@media (pointer: coarse) {
+  .still-frame > .loops { width: var(--tap); height: var(--tap); right: var(--s-2); bottom: var(--s-2); }
+  .still-frame:has(> .loops:not([hidden])) { padding-bottom: calc(var(--tap) + 2 * var(--s-2)); }
+}
+
+/* reduced motion: the stills settle, so the uploads show done (the loop never loads to say so) */
+@media (prefers-reduced-motion: reduce) {
+  .still-frame .ui-row .stage > :not(.b-ok), .still-frame .ui-head .ui-say > :not(.b-done) { opacity: 0; }
+  .still-frame .ui-row .stage > .b-ok, .still-frame .ui-head .ui-say > .b-done { opacity: 1; translate: none; }
+  .still-frame .ui-row .ui-bar { opacity: 0; }
+}

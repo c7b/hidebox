@@ -651,17 +651,18 @@ def check_redirects():
 
 # A-06h (17-site-brief §1.2, docs/review/site-v3.md): the effects stay small and load late. field.js (the hero's
 # grid) at most 6 KB, motion.js (the reveals and the decode, site v3) at most 4 KB, pixel.js (the closing's pixel
-# field, site v3) at most 8 KB, all gzip -9; the home's own stylesheet grows by at most 3 KB over home.css at the
-# tag spooky-secrets-2026-10 as it was before site v2 (f89963c, 1,770 B): site v2 and v3 together. site/share raised
+# field, site v3) at most 8 KB, stills.js (/how's stills replaying what they show) at most 2 KB, all gzip -9; the
+# home's own stylesheet grows by at most 3 KB over home.css at the tag spooky-secrets-2026-10 as it was before
+# site v2 (f89963c, 1,770 B): site v2 and v3 together. site/share raised
 # that 3 KB by 256 B, for the share window drawn in depth so it reads as a picture (the owner's ask; 4,733 B before it).
-EFFECTS = {"field.js": 6144, "motion.js": 4096, "pixel.js": 8192}
+EFFECTS = {"field.js": 6144, "motion.js": 4096, "pixel.js": 8192, "stills.js": 2048}
 HOME_CSS_BEFORE, HOME_CSS_GROWTH = 1770, 3328
 
 
 def check_field_budget():
     """A-06h, the files' half (browser_checks has the loading half): field.js at most 6,144 B, motion.js at most
-    4,096 B and pixel.js at most 8,192 B gzip -9; home.css at most 1,770 + 3,328 B gzip -9; no page, partial or
-    stylesheet names the three, and only site.js imports them, each with import()."""
+    4,096 B, pixel.js at most 8,192 B and stills.js at most 2,048 B gzip -9; home.css at most 1,770 + 3,328 B gzip -9;
+    no page, partial or stylesheet names the four, and only site.js imports them, each with import()."""
     import gzip
     problems, notes = [], []
     for name, limit in EFFECTS.items():
@@ -731,6 +732,79 @@ def check_internal_links():
             if anchor and not anchor.startswith("pass=") and anchor not in ids[path] | partial_ids:
                 problems.append(f"{f.relative_to(WEB)}: {href} has no id=\"{anchor}\" on {path}")
     return problems
+
+
+# /how's stills replay what they show (js/stills.js, css/how.css). Each loop lasts 4 to 7 s and rests at least
+# 1.5 s on its settled still before it starts over; the words that change are the app's own.
+HOW_LOOP_MS, HOW_REST_MS = (4000, 7000), 1500
+
+
+def check_how_loops():
+    """/how's loops: every .still-frame[data-loop] is a picture nobody reads out (it, or its card, is aria-hidden) of
+    4 to 7 s; its parts' data-beats are name@ms in order, inside the loop, with a rest of 1.5 s or more at the end; the
+    words its states show (the upload stages and title, the Tari send's steps) are strings of web/app/i18n/en.json;
+    and the page has one Pause motion switch (WCAG 2.2.2), hidden until stills.js shows it, outside every
+    aria-hidden picture."""
+    problems = []
+    text = (SITE / "pages" / "how.html").read_text()
+    frames = re.findall(r'<div class="still-frame"([^>]*)>(.*?)\n      </div>\n    </section>', text, re.S)
+    if len(frames) != 5 or any("data-loop" not in a for a, _ in frames):
+        problems.append(f"pages/how.html: {sum('data-loop' in a for a, _ in frames)} of its {len(frames)} stills loop (all five should)")
+    for i, (attrs, inner) in enumerate(frames, 1):
+        where = f"pages/how.html still {i}"
+        length = int(m[1]) if (m := re.search(r'data-loop="(\d+)"', attrs)) else 0
+        if not HOW_LOOP_MS[0] <= length <= HOW_LOOP_MS[1]:
+            problems.append(f"{where}: a loop of {length} ms (4,000 to 7,000)")
+        if 'aria-hidden="true"' not in attrs and not re.match(r'\s*<div class="ui-card[^"]*" aria-hidden="true">', inner):
+            problems.append(f"{where}: neither the picture nor its card is aria-hidden")
+        beats = [b.split() for b in re.findall(r'data-beats="([^"]*)"', inner)]
+        if not beats:
+            problems.append(f"{where}: nothing in it has data-beats")
+        last = 0
+        for part in beats:
+            times = [int(b.split("@")[1]) if re.fullmatch(r"[a-z]+@\d+", b) else -1 for b in part]
+            if -1 in times or times != sorted(times) or any(not 0 < x < length for x in times):
+                problems.append(f"{where}: data-beats=\"{' '.join(part)}\" isn't name@ms in order inside the loop")
+            last = max([last, *times])
+        if beats and length - last < HOW_REST_MS:
+            problems.append(f"{where}: rests {length - last} ms before it starts over (at least {HOW_REST_MS:,})")
+    strings = json.loads((WEB / "app" / "i18n" / "en.json").read_text())
+    patterns = [re.compile(re.sub(r"\\\{[^}]*\\\}", ".+", re.escape(s.strip())) + "$") for s in _strings(strings)]
+    shown = re.findall(r'<span class="b-(?:wait|done|lock|send|ok)">(?:<svg.*?</svg>)?([^<]+)</span>', text)
+    shown += re.findall(r'<li data-beats="[^"]*"><span class="dot">.*?</span>([^<]+)</li>', text)
+    if len(shown) < 10:
+        problems.append(f"pages/how.html: only {len(shown)} words of the loops found to check against the app")
+    problems += [f"pages/how.html: the loop says “{w}”, which web/app/i18n/en.json doesn't" for w in sorted(set(shown))
+                 if not any(p.match(w) for p in patterns)]
+    switches = re.findall(r'<button type="button" class="loops" data-loops aria-label="Pause motion" aria-pressed="false" hidden>', text)
+    if len(switches) != 1 or text.count("data-loops") != 1:
+        problems.append("pages/how.html: needs one Pause motion switch (WCAG 2.2.2: the loops run longer than five seconds)")
+    elif _under_aria_hidden(text, "data-loops"):
+        problems.append("pages/how.html: the Pause motion switch sits inside an aria-hidden picture")
+    return problems
+
+
+def _under_aria_hidden(text, marker):
+    """Whether the first element carrying the attribute `marker` has an aria-hidden="true" ancestor."""
+    VOID = {"br", "img", "input", "meta", "link", "use", "path", "rect", "source", "col", "hr", "wbr"}
+
+    class Walk(HTMLParser):
+        stack, found = [], None
+
+        def handle_starttag(self, tag, attrs):
+            a = dict(attrs)
+            if marker in a and self.found is None:
+                self.found = any(self.stack)
+            if tag not in VOID:
+                self.stack.append(a.get("aria-hidden") == "true")
+
+        def handle_endtag(self, tag):
+            if tag not in VOID and self.stack:
+                self.stack.pop()
+    w = Walk()
+    w.stack = []
+    w.feed(text)
+    return bool(w.found)
 
 
 # V-01 (docs/review/home-v2.md): /v2, the home with the product loops, is a preview at its own address. Its files
@@ -997,7 +1071,8 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("copy variants set at build time (M11)", check_build_variants),
           ("/judges quotes the app's words, 6 + 6 steps", check_ui_strings),
           ("old pages redirect to pages and anchors that exist", check_redirects),
-          ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB gzip at most, home.css 3.25 KB more, each only from site.js", check_field_budget),
+          ("A-06h: field.js 6 KB, motion.js 4 KB, pixel.js 8 KB, stills.js 2 KB gzip at most, home.css 3.25 KB more, each only from site.js", check_field_budget),
+          ("/how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch", check_how_loops),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
           ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2),

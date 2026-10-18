@@ -779,6 +779,92 @@ def check_v3(browser):
     return problems
 
 
+# /how's stills, played (js/stills.js): every loop's state, and what its parts would rest on (their last beats).
+HOW_STILLS = """[...document.querySelectorAll('.still-frame[data-loop]')].map((f) => { const r = f.getBoundingClientRect(),
+  parts = [...f.querySelectorAll('[data-beats]')];
+  return { playing: f.classList.contains('playing'), beats: parts.map((e) => e.dataset.beat ?? '-').join(','),
+           last: parts.map((e) => e.dataset.beats.split(' ').at(-1).split('@')[0]).join(','), out: r.bottom <= 0 || r.top >= innerHeight }; })"""
+HOW_UP = "document.querySelector('[aria-labelledby=\"s2\"] .still-frame')"
+HOW_LABELS = "[...document.querySelectorAll('.ui-row .stage')].map((s) => [...s.children].filter((c) => getComputedStyle(c).opacity === '1').map((c) => c.textContent).join('|'))"
+
+
+def check_how_loops(browser):
+    """/how's stills replay what they show: stills.js loads after the load event, only with motion allowed; the upload
+    still plays while on screen (from its start, Locking, to 3 uploads done, and over again) at 1440 and 390, and every
+    still off screen rests on its last beats, as all do once reduced motion is turned on; Pause motion (WCAG 2.2.2) shows unpressed, stops every loop, is remembered
+    on the next visit, and pressed again plays the still in view. Reduced motion: stills.js never loads, nothing plays,
+    no switch, and the uploads show Locked and saved. Without JavaScript the still reads as served: one Locked and
+    saved, one Uploading, one Locking. No console error."""
+    problems = []
+    with server() as origin:
+        for width, height, mobile in ((1440, 900, False), (390, 844, True)):
+            at = f"/how @{width}"
+            page = browser.page(width, height, mobile=mobile)
+            page.goto(origin + "/how", settle=0.5)
+            page.eval("localStorage.removeItem('mutis.loops')")   # once: the choice must survive the reload below
+            page.goto(origin + "/how", settle=2.5)
+            times = page.eval(f"[({LOADED})('stills.js'), performance.getEntriesByType('navigation')[0].loadEventEnd]")
+            if times[0] is None or times[0] < times[1]:
+                problems.append(f"{at}: stills.js requested at {times[0]} ms, the load event ended at {times[1]:.0f} ms")
+            page.scroll_to(page.eval(f"{HOW_UP}.getBoundingClientRect().top + scrollY - 80"), 0.5)
+            if not page.wait_for(f"{HOW_UP}.classList.contains('playing')", 5):
+                problems.append(f"{at}: the upload still doesn't play on screen")
+            states = set()
+            for _ in range(36):   # 9 s: more than one 7 s loop
+                states.add(page.eval(HOW_STILLS)[1]["beats"])
+                page.b.pump(0.25)
+            if not {",,,", "done,ok,ok,ok"} <= states or len(states) < 6:
+                problems.append(f"{at}: the upload loop went through {sorted(states)}, not from its start to 3 uploads done")
+            for i, s in enumerate(page.eval(HOW_STILLS), 1):
+                if s["out"] and (s["playing"] or s["beats"] != s["last"]):
+                    problems.append(f"{at}: still {i} is off screen but plays or doesn't rest on its last beats ({s})")
+            if width == 1440:   # reduced motion turned on while the page is open: every loop rests, the switch goes
+                media = lambda v: page.cmd("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-reduced-motion", "value": v}]})  # noqa: E731
+                media("reduce")
+                page.b.pump(0.5)
+                if any(s["playing"] for s in page.eval(HOW_STILLS)) or not page.eval("document.querySelector('[data-loops]').hidden"):
+                    problems.append(f"{at}: reduced motion turned on, a loop still plays or the switch shows")
+                media("no-preference")
+                if not page.wait_for(f"{HOW_UP}.classList.contains('playing')", 5):
+                    problems.append(f"{at}: reduced motion turned off again, the still in view doesn't play")
+            problems += [f"{at}: {e}" for e in real_errors(page) + [l for l in page.console() if "Content Security Policy" in l]]
+        switch = "document.querySelector('[data-loops]')"
+        if page.eval(f"{switch}.hidden") or page.eval(f"{switch}.getAttribute('aria-pressed')") != "false":
+            problems.append("Pause motion: the switch isn't shown, unpressed, with motion allowed")
+        page.eval(f"{switch}.click()")
+        page.b.pump(0.5)
+        before = page.eval(HOW_STILLS)
+        page.b.pump(1.5)
+        if page.eval(f"{switch}.getAttribute('aria-pressed')") != "true" or any(s["playing"] for s in before) \
+                or page.eval(HOW_STILLS) != before or page.eval("localStorage.getItem('mutis.loops')") != "off":
+            problems.append("Pause motion: pressed, a loop still plays or the choice isn't kept")
+        page.cmd("Page.reload")
+        page.b.pump(3)
+        page.scroll_to(page.eval(f"{HOW_UP}.getBoundingClientRect().top + scrollY - 80"), 1.5)
+        if page.eval(f"{switch}.getAttribute('aria-pressed')") != "true" or any(s["playing"] for s in page.eval(HOW_STILLS)):
+            problems.append("Pause motion: not remembered on the next visit")
+        page.eval(f"{switch}.click()")
+        if not page.wait_for(f"{HOW_UP}.classList.contains('playing')", 5):
+            problems.append("Pause motion: pressed again, the still in view doesn't play")
+        page.eval("localStorage.removeItem('mutis.loops')")
+        quiet = browser.page(1440, 900, reduce=True)
+        quiet.goto(origin + "/how", settle=2.5)
+        quiet.scroll_to(quiet.eval(f"{HOW_UP}.getBoundingClientRect().top + scrollY - 80"), 1.5)
+        if quiet.eval(f"({LOADED})('stills.js')") is not None or any(s["playing"] for s in quiet.eval(HOW_STILLS)) \
+                or not quiet.eval(f"{switch}.hidden"):
+            problems.append("reduced motion: stills.js loaded, a still plays or the Pause motion switch shows")
+        if quiet.eval(HOW_LABELS) != ["Locked and saved"] * 3:
+            problems.append(f"reduced motion: the uploads read {quiet.eval(HOW_LABELS)}, not all Locked and saved")
+        bare = browser.page(390, 844, mobile=True)
+        bare.cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+        bare.goto(origin + "/how", settle=1.5)
+        if bare.eval(HOW_LABELS) != ["Locked and saved", "Uploading", "Locking"]:
+            problems.append(f"no JavaScript: the uploads read {bare.eval(HOW_LABELS)}, not as served")
+        NOTES.append(f"/how loops: stills.js at {times[0]:.0f} ms (load event {times[1]:.0f} ms) at 390; the upload loop "
+                     f"went through {len(states)} states" if times[0] is not None else "/how loops: no stills.js")
+    return problems
+
+
 CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("home words: 120 above the fold, 800 in all, Open your drive first", check_word_budget),
@@ -789,7 +875,8 @@ CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading 
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
           ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2),
-          ("V-02: /v3's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode", check_v3)]
+          ("V-02: /v3's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode", check_v3),
+          ("/how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled", check_how_loops)]
 
 
 def run_all():

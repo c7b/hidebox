@@ -398,7 +398,9 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
   /judges' one reuse) and the pixels behind the closing (`web/site/js/pixel.js`, static CSS pixels as fallback).
 - **Don't** hide content for motion's sake: the site's reveals and the hero picture's decode
   (`web/site/js/motion.js`) touch only what is below the fold when they run, never run without JavaScript or
-  with reduced motion, stay within 700 ms and 60 ms a step, and leave the DOM as it was served.
+  with reduced motion, stay within 700 ms and 60 ms a step, and leave the DOM as it was served. The one motion that
+  repeats is /how's stills replaying what they show (`web/site/js/stills.js`): loops of 4 to 7 s that rest on the
+  finished still, only while on screen, with the app's words, under one Pause motion switch; never with reduced motion.
 - **Don't** use an eyebrow or kicker label above a heading; the heading speaks alone.
 - **Don't** put an em dash or en dash in visible text; empty table cells stay empty (with a hidden
   "None" for screen readers).

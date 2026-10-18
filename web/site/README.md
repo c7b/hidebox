@@ -37,7 +37,7 @@ each amount-proof mode, with `web/app/i18n/en.json`. Last run on the server: see
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how made judges fine-print 404`, `v2` (the home with the product loops at `/v2`: noindex, linked from nowhere; [docs/review/home-v2.md](../../docs/review/home-v2.md)) and `v3` (`/v2` with stills in place of every loop and the open box as the mark, at `/v3`, the same terms; [docs/review/home-v3.md](../../docs/review/home-v3.md)) |
-| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home it loads `field.js` after the load event, A-06h), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js`; `clips.js` (`/v2` only: its loops, asked for as they come near, playing only on screen) |
+| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home it loads `field.js` after the load event, A-06h), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js`; `clips.js` (`/v2` only: its loops, asked for as they come near, playing only on screen); `stills.js` (`/how` only: its stills replay what they show, from `site.js` after the load event, with motion allowed) |
 | `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), `v2.css` (`/v2` and `/v3`, over `home.css`), `v3.css` (`/v3` only, over `v2.css`), on `../shared/tokens.css` and `base.css` |
 | `media/motion/` | `/v2`'s four loops, each a VP9 WebM with alpha, an H.264 MP4 on black (WebKit's) and its RGBA first frame as the poster. Committed like every other served file, so the build's manifest lists them and `tools/verify-deploy.py` checks their bytes; the pipeline has no other way to serve static files (`/srv/mutis/status` holds only the timers' JSON). Budget V-01 in `tests/static_checks.py` and `browser_checks.py` |
 | `media/v3/` | `/v3`'s four stills (the hero's, which the closing shows again, What's different's, Who sees what's and Tari's), each an AVIF and a WebP at three widths for `srcset`, made with ffmpeg on the server from the owner's PNGs (not committed); the open box as `hidebox-mark.svg` (the favicon) and `favicon-32.png`. Budget V-02 in `tests/static_checks.py` and `browser_checks.py` |
@@ -67,7 +67,14 @@ line, which spec §3.4.2 pins in the partial and `stats.js` then overwrites from
 beside an inert slice of a drive, then Just share one thing (the anonymous widget that
 `/app/drop-widget.js` mounts, its ids and the A-06 budget unchanged), the three ways to share and the
 Tari rows. `/how` is five stills of the real interface, drawn inert from the drive's parts in
-`css/how.css`, so they follow the theme; no mascot, no animation.
+`css/how.css`, so they follow the theme; no mascot. With motion allowed each still replays what it shows, in a loop of 4
+to 7 s that rests on the finished still (the key made a dot at a time; three uploads going Locking, Uploading, Locked and
+saved; a choice picked and its rules; the Tari send's steps; the activity filling in). Each part names its beats in the
+page (`data-beats="lock@300 send@650 ok@2100"`), `js/stills.js` sets them in time and `css/how.css` draws each state with
+the app's own words. A loop plays only while it is on screen and the tab shows; one Pause motion switch (WCAG 2.2.2, as on
+`/v2`, remembered with it) stops them all. The pictures stay aria-hidden, so the words beside each still are what a
+screen reader hears; with reduced motion the stills never play and the uploads show done; without JavaScript they stay
+as served.
 
 ## Tools (run as `build` on the server)
 

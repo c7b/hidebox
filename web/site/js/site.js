@@ -2,8 +2,8 @@
 // Runs on every site page: the mainnet phase, live numbers and copy variants, the judge-pass chip,
 // copy buttons, the header (the page it is on; Open your drive, always on, makes or opens the drive) and,
 // after the load event: on the home the field behind the hero and the pixel field behind the closing, and
-// on the home, /how and /judges the scroll motion (motion.js). Other page modules import `config`, `getJson`,
-// `locale` and the tx helpers from here.
+// on the home, /how and /judges the scroll motion (motion.js), and on /how the stills' loops (stills.js). Other
+// page modules import `config`, `getJson`, `locale` and the tx helpers from here.
 import { applyPhase } from '/shared/dates.js';
 import { applyConditions, fillVariables } from './stats.js';
 
@@ -133,6 +133,10 @@ if (field) {
 // picture's words wait unseen for at most 3 s (home.css); if it can't load they show at once.
 if (motion && document.body.hasAttribute('data-motion')) {
   afterLoad(() => import('./motion.js').then((m) => m.start(), () => root.classList.add('mo')), 300);
+}
+// /how's stills replay what they show (stills.js), with its Pause motion switch.
+if (motion && document.querySelector('.still-frame[data-loop]')) {
+  afterLoad(() => import('./stills.js').then((m) => m.start(), () => null), 2000);
 }
 // The pixel field behind the home's closing (pixel.js), asked for when that section comes near.
 const pixels = document.querySelector('[data-pixel]');
