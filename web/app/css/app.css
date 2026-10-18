@@ -239,8 +239,6 @@
 .a-tx-fact-h { display: flex; align-items: center; gap: var(--s-2); font: var(--t-ui); color: var(--fg); }
 .a-tx-fact > p { text-wrap: pretty; }
 .a-tx-fact > p:not(.a-caption) { font: var(--t-small); }
-.a-tx-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; }
-.a-tx-chips li { padding: 1px 10px; border: 1px solid var(--hair); border-radius: var(--r-pill); background: var(--bg-sunken); font: var(--t-small); }
 .a-fold { border-top: 1px solid var(--hair); }
 .a-fold > summary { display: flex; align-items: center; gap: var(--s-2); min-height: var(--tap); font: var(--t-ui); cursor: pointer; list-style: none; }
 .a-fold > summary::-webkit-details-marker { display: none; }

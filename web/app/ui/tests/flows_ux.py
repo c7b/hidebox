@@ -84,9 +84,9 @@ def ux_drop(t):
     mode(b, "hold-upload")
     b.set_files("dd-input", [t.fixture("photo-gps.jpg")])
     b.wait("document.querySelector('[data-testid=\"dd-steps\"] li[data-step=\"upload\"]')?.dataset.state === 'now'", 60)
-    t.check(b.attr("dd-root", "data-state") == "sealing" and step(b, "lock") == "done", "picked: Locking it in this browser is done, Uploading lit")
+    t.check(b.attr("dd-root", "data-state") == "sealing" and step(b, "lock") == "done", "picked: Locking it in your browser is done, Uploading lit")
     t.check([x.strip() for x in b.eval("[...document.querySelectorAll('[data-testid=\"dd-steps\"] .step-label')].map((e) => e.textContent)")]
-            == ["Locking it in this browser", "Uploading", "Waiting for the Tari chain", "Delivered"], "four steps, in people's words")
+            == ["Locking it in your browser", "Uploading", "Waiting for the Tari chain", "Delivered"], "four steps, in people's words")
     t.check(bool(re.search(r"\d", note(b, "upload"))), f"the upload step says how big it is ({note(b, 'upload')!r})")
     time.sleep(2.4)
     clock = b.eval("document.querySelector('[data-testid=\"dd-steps\"] li[data-step=\"upload\"] .step-time')?.textContent ?? ''")
@@ -156,15 +156,14 @@ def ux_drop(t):
     summary = b.text("tx-summary")
     t.check(summary.startswith("Confirmed.") and "epoch" in summary and "a tick of its clock" in summary,
             f"the status first, the epoch in one phrase ({summary[:90]!r})")
-    chips = b.eval("[...document.querySelectorAll('[data-testid=\"tx-hidden\"] li')].map((e) => e.textContent)")
-    want = b.eval("""(() => { const o = [...document.querySelectorAll('[data-testid="tx-output"]')]; if (!o.length) return [];
-      const dd = (e, i) => e.querySelectorAll('dd')[i].textContent;
-      return [o.every((e) => e.dataset.amount === 'hidden') && 'The amount', o.every((e) => dd(e, 2) === 'a one-time key') && 'Who got it',
-        o.every((e) => dd(e, 3).startsWith('sealed')) && 'What it carries'].filter(Boolean); })()""")
-    t.check(chips == want and "Who got it" in chips and "What it carries" in chips,
-            f"what stays hidden, read from this transaction's own outputs ({chips}; the record says {want})")
-    t.check("The Tari chain accepted this transaction, and it is final." in b.text("tx-root")
-            and "Anyone can see the fee, and that it happened." in b.text("tx-hidden"), "what this proves; what is public")
+    hid = b.eval("""(() => { const o = [...document.querySelectorAll('[data-testid="tx-output"]')];
+      return o.length > 0 && o.every((e) => e.dataset.amount === 'hidden' && e.querySelectorAll('dd')[2].textContent === 'a one-time key'); })()""")
+    words = b.text("tx-hidden")
+    t.check(b.attr("tx-hidden", "data-hidden") == str(hid).lower()
+            and ("The chain shows a payment with a hidden amount and a hidden owner. The fee is public." in words) == hid,
+            f"what stays hidden: C36's registered sentence only when this transaction's own outputs show it ({hid}, {words[:80]!r})")
+    t.check("The Tari chain accepted this transaction, and it is final." in b.text("tx-root") and "Anyone can check it" in b.text("tx-root"),
+            "what this proves, in two lines")
     t.check(b.eval("document.querySelector('[data-testid=\"tx-details\"]').open && document.querySelector('[data-testid=\"tx-check\"]').open"),
             "a computer opens Details and the check")
     t.check(b.exists("tx-fee") and len(b.eval("[...document.querySelectorAll('[data-testid=\"tx-output\"]')]")) >= 1

@@ -67,11 +67,9 @@ export async function renderTx(main, { txId }) {
   const ok = view.status === 'Commit';
   const outs = view.outputs ?? [];
   const all = (test) => outs.length > 0 && outs.every(test);
-  const hidden = [
-    all((o) => o.amount === 'hidden') && t('chain.hidden_amount'),
-    all((o) => o.owner === 'one-time key') && t('chain.hidden_owner'),
-    all((o) => o.sealed_bytes > 0) && t('chain.hidden_memo'),
-  ].filter(Boolean);
+  // C36's registered sentence, only when this transaction's own outputs show it: every amount a Pedersen
+  // commitment, every owner a one-time key (the same fields Details lists).
+  const hidden = all((o) => o.amount === 'hidden') && all((o) => o.owner === 'one-time key');
   const wide = matchMedia('(min-width: 768px)').matches;
   const moment = done({
     id: 'tx-done', art: null, tone: ok ? 'ok' : 'bad', testid: 'tx-summary',
@@ -82,10 +80,9 @@ export async function renderTx(main, { txId }) {
   const facts = h('div', { class: 'a-tx-facts' },
     ok ? h('section', { class: 'a-tx-fact' }, h('h2', { class: 'a-tx-fact-h' }, glyph('circle-check'), h('span', {}, t('chain.proves_h'))),
       h('p', {}, t('chain.proves'))) : null,
-    h('section', { class: 'a-tx-fact', 'data-testid': 'tx-hidden' },
-      hidden.length ? [h('h2', { class: 'a-tx-fact-h' }, glyph('lock'), h('span', {}, t('chain.hidden_h'))),
-        h('ul', { class: 'a-tx-chips' }, hidden.map((x) => h('li', {}, x)))] : null,
-      h('p', { class: 'a-caption' }, t('chain.fee_note'))));
+    h('section', { class: 'a-tx-fact', 'data-testid': 'tx-hidden', 'data-hidden': String(hidden) },
+      h('h2', { class: 'a-tx-fact-h' }, glyph(hidden ? 'lock' : 'eye'), h('span', {}, t(hidden ? 'chain.hidden_h' : 'chain.public_h'))),
+      h('p', {}, hidden ? t('buy.shows') : t('chain.fee_note'))));
   const record = [
     h('dl', { class: 'a-kv' },
       h('dt', {}, t('chain.tx')), h('dd', { class: 'mono a-wrap' }, txId),
