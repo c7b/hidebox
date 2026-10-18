@@ -200,6 +200,11 @@ another session deploy `main`, so **this session did not run `deploy.sh`**: `/v3
 fields), both deployed by that session from `main`. Every change of this pass is in both. **The tag
 `spooky-secrets-2026-10` was not moved**: it stays at `0e05f27`.
 
+Then, at the coordinator's request, this session deployed `8351f18` (this review and its evidence on top of `b749cdd`:
+the same served files, but the commit /made names) with `deploy/scripts/deploy.sh`: the gate passed, 206 files, smoke
+PASS, the manifest notarized in tx `085c0f721c095709e98292b9add8a2e63fb74865593e85fa94e726b016404546`; verify-deploy 0
+differences across 206 files, D-01 PASS, the site suite 41/41 on that tree.
+
 | Check | Result |
 |---|---|
 | Suites on `6c25119`'s tree (the server, as build) | lint PASS, check-copy PASS, server 331 OK (5 skipped), deploy 83 OK, app core ALL PASS (9 steps), site 39/39 (V-02's static and browser checks are the two new ones), UI 731/731 (eight more than /v2's run: Delete my drive's flow) |
