@@ -211,6 +211,8 @@ export function sendStep(container, opts) {
 // way to end it) until our server confirms that. onSent(sentence): the card drops its link.
 export async function sendFromCard(slot, st, hooks) {
   slot.replaceChildren(h('p', { class: 'md-working mono' }, t('locker.opening')));
+  // the home page has no flow.css until now (the steps and the done moment); app pages already link it
+  import('./more.js').then((m) => m.stylesheet('/app/css/flow.css'));
   const { adopt, revokeLink } = await import('./rules.js');
   try {
     if (!st.locker) await adopt(st, await hooks.lockerContext());
