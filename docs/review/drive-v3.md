@@ -121,7 +121,7 @@ grey highlight 4.38:1; now a deeper red, `--destructive-text`, on the red wash i
 
 | | Before | After |
 |---|---|---|
-| A-06d, /drive until the table renders (of 131,072 B) | 116,965 B, 37 files (`b749cdd`) | **119,760 B**, 37 files (+2,795 B: the token file's gunmetal, glass and chip tokens, the components' glass, the drive's v3 section; the promotion's `i-hidebox` symbol is about 200 B of it) |
+| A-06d, /drive until the table renders (of 131,072 B) | 116,965 B, 37 files (`b749cdd`); 117,471 B with the promotion (its `i-hidebox` symbol and the drive's mark, promote-v3.md) | **119,760 B**, 37 files (+2,289 B over the promotion: the token file's gunmetal, glass, chip and red-text tokens, the components' glass, the drive's v3 section) |
 | The modulepreload list in `drive.html` | 23 modules | unchanged: no static import was added or removed (`view.js` gained `lines`, from a module it already imported) |
 | Fonts on /drive | one, the 18 KB Latin Geist | unchanged |
 | M-01, the home (of 60 KB) | 58.5 KB | not touched by this pass (no file the home loads changed); 58.4 KB with the promotion in the tree |
