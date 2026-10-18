@@ -13,8 +13,8 @@ caching (pages revalidate, errors are never stored). The same for the status fil
 404 through every other route of the Caddyfile. Also: a 6 MB upload chunk is refused with a 413 in
 the API's error shape (never a bare 502), plain HTTP answers a 308 to HTTPS with no Server header, a
 made-up Host name gets a 421 with the same headers on both ports (never a redirect to that name), the
-certificate verifies and has more than 14 days left, .wasm is served as application/wasm, /v2's loops and /v3's
-stills with their types in byte ranges, kept a day, and each --redirect-from host answers 308 to the same path on the origin (browsers carry
+certificate verifies and has more than 14 days left, .wasm is served as application/wasm, /v2's loops and the
+home's stills with their types in byte ranges, kept a day, and each --redirect-from host answers 308 to the same path on the origin (browsers carry
 the #fragment across it). --holding accepts 404 for pages that the holding build doesn't have.
 A header sent twice counts as its values joined, so a header both Caddy and the API set fails.
 --local runs everything but the certificate on the server's private copy of the stack: every route

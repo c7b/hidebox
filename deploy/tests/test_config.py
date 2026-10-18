@@ -86,22 +86,17 @@ class CaddyfileTest(unittest.TestCase):
         self.assertLess(site.index("handle @preview"), catch_all, "before the catch-all")
         self.assertLess(site.index("handle @media"), catch_all, "before the catch-all")
 
-    def test_the_v3_preview_gets_the_app_policy(self):
-        """/v3 (docs/review/home-v3.md), v2 with stills: the drop widget again, so the app policy, noindex as its page
-        says, ahead of the catch-all; its stills are under /site/media/, kept a day like the loops."""
-        preview = re.search(r"(?m)^\t@preview3 path (.+)$", self.text).group(1).split()
-        self.assertEqual(sorted(preview), ["/v3", "/v3/", "/v3/index.html"])
-        body = re.search(r"(?ms)^\thandle @preview3 \{\n(.*?)^\t\}", self.text).group(1)
-        self.assertIn("import app_csp", body)
-        self.assertIn('header X-Robots-Tag "noindex"', body)
-        self.assertIn("rewrite * /v3/index.html", body)
-        for route in ("/v3", "/v3/"):
-            self.assertIs(headers_spec.ROUTES[route][0], headers_spec.APP_CSP, route)
-            self.assertEqual(headers_spec.ROUTES[route][1], {"x-robots-tag": "noindex"}, route)
+    def test_the_v3_preview_became_the_home(self):
+        """/v3 (docs/review/home-v3.md) became the home (docs/review/promote-v3.md): no route serves it any more, /v3 and
+        /v3/ answer 301 to / (headers_spec.REDIRECTS, which the test above compares), and its stills, now the home's,
+        stay under /site/media/ (kept a day, the @media route ahead of the catch-all)."""
+        self.assertNotIn("@preview3", self.text)
+        self.assertNotIn("/v3/index.html", self.text)
+        self.assertEqual(re.search(r'(?m)^\tredir @old_preview "([^"]+)" 301$', self.text).group(1), "/")
+        self.assertEqual(sorted(re.search(r"(?m)^\t@old_preview path (.+)$", self.text).group(1).split()), ["/v3", "/v3/"])
+        self.assertEqual(headers_spec.REDIRECTS["/v3"], "/")
+        self.assertNotIn("/v3", headers_spec.ROUTES)
         self.assertTrue(any(path.startswith("/site/media/v3/") for path in headers_spec.MEDIA))
-        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
-        catch_all = re.search(r"(?m)^\thandle \{$", site).start()
-        self.assertLess(site.index("handle @preview3"), catch_all, "before the catch-all")
 
     def test_no_access_log_and_filtered_errors(self):
         site = self.text.split("{$MUTIS_HOST} {", 1)[1]

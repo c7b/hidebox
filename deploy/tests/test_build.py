@@ -138,24 +138,25 @@ class BuildTest(unittest.TestCase):
         self.assertNotIn("/v2", (dist / "sitemap.xml").read_text())
         self.assertGreater(summary["files"], 3)
 
-    def test_the_v3_preview_and_its_stills_are_served_and_kept_out_of_the_sitemap(self):
-        """/v3 (docs/review/home-v3.md): pages/v3.html builds to v3/index.html, its AVIF and WebP stills and its mark
-        reach dist/site/media/v3 byte for byte (and the manifest), and noindex keeps it out of the sitemap."""
-        (self.web / "site" / "pages" / "v3.html").write_text(PAGE.replace("<title>", '<meta name="robots" content="noindex"><title>'))
+    def test_the_homes_stills_are_served_and_the_home_is_in_the_sitemap(self):
+        """The home (since docs/review/promote-v3.md the v3 design): its AVIF and WebP stills under web/site/media/v3 reach
+        dist/site/media/v3 byte for byte (and the manifest), and the sitemap lists / (indexable, canonical) and no
+        /v3, which is a redirect now, not a page."""
         stills = self.web / "site" / "media" / "v3"
         stills.mkdir(parents=True)
-        files = {"hero-480.avif": b"\0\0\0\x1cftypavif", "hero-480.webp": b"RIFF\0\0\0\0WEBPVP8 ",
-                 "hidebox-mark.svg": b"<!-- SPDX-License-Identifier: MIT -->\n<svg/>", "favicon-32.png": b"\x89PNG\r\n"}
+        files = {"hero-480.avif": b"\0\0\0\x1cftypavif", "hero-480.webp": b"RIFF\0\0\0\0WEBPVP8 "}
         for name, data in files.items():
             (stills / name).write_bytes(data)
         self.build()
         dist = self.tmp / "dist"
-        self.assertTrue((dist / "v3" / "index.html").is_file())
         manifest = json.loads((dist / ".well-known" / "mutis-manifest.json").read_text())["files"]
         for name, data in files.items():
             self.assertEqual((dist / "site" / "media" / "v3" / name).read_bytes(), data, name)
             self.assertIn(f"site/media/v3/{name}", manifest)
-        self.assertNotIn("/v3", (dist / "sitemap.xml").read_text())
+        sitemap = (dist / "sitemap.xml").read_text()
+        self.assertIn("<loc>https://example.test/</loc>", sitemap)
+        self.assertNotIn("/v3", sitemap)
+        self.assertFalse((dist / "v3").exists())
 
     def test_test_evidence_is_never_served(self):
         (self.web / "app" / "shots").mkdir()

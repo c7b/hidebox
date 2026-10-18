@@ -13,6 +13,7 @@ Usage: python3 -I web/site/tests/serve.py [--port 8791] [--wall 24|8|quiet] [--w
 import argparse
 import base64
 import hashlib
+import importlib.util
 import json
 import re
 import time
@@ -41,6 +42,21 @@ TEXT = {".html", ".txt", ".webmanifest"}   # the build expands placeholders in p
 INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")
 SRI_TAG = re.compile(r'(<(?:script|link)\b[^>]*?(?:src|href)="(/[^"]+)"[^>]*?) integrity="\{\{SRI\}\}"')
 PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
+
+
+def _redirects():
+    """The Caddyfile's 301s (tests/e2e/headers_spec.py REDIRECTS), each with and without its trailing slash: an
+    old page's address, and /v3 since it became the home (docs/review/promote-v3.md)."""
+    spec_file = WEB.parent / "tests" / "e2e" / "headers_spec.py"
+    if not spec_file.is_file():
+        return {}
+    spec = importlib.util.spec_from_file_location("headers_spec", spec_file)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return {path: new for old, new in module.REDIRECTS.items() for path in (old, old + "/")}
+
+
+REDIRECTS = _redirects()
 
 
 class Site:
@@ -190,6 +206,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.raw(self.api.canary_raw(query))
         if path.startswith("/api/") or path in ("/evidence.json", "/status.json"):
             return self.json(*self.api.get(path, query))
+        if path in REDIRECTS:
+            return self.send(301, b"", "text/html; charset=utf-8", [("Location", REDIRECTS[path])])
         f = self.site.file_for(path)
         if ".." in path or not f.is_file():
             f, status = self.site.file_for("/404"), 404
@@ -197,7 +215,7 @@ class Handler(BaseHTTPRequestHandler):
                 f = Path(self.site.opts.dist) / "404.html"
         else:
             status = 200
-        csp = APP_CSP if path in ("/", "/v2", "/v2/", "/v3", "/v3/") else SITE_CSP   # the pages with the drop widget (Caddyfile)
+        csp = APP_CSP if path in ("/", "/v2", "/v2/") else SITE_CSP   # the pages with the drop widget (Caddyfile)
         body = self.site.render(f, path)
         m = re.fullmatch(r"bytes=(\d+)-(\d*)", self.headers.get("Range", ""))
         if f.suffix in MEDIA and status == 200 and m and int(m[1]) < len(body):
