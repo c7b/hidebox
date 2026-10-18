@@ -495,5 +495,5 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
   -webkit-mask: linear-gradient(to bottom, #000 88%, transparent); mask: linear-gradient(to bottom, #000 88%, transparent); }
 @media (min-width: 900px) {   /* only the start screen: Opening your drive and its errors use .start with one child */
   .start:has(> .start-pic) { grid-template-columns: minmax(0, 30rem) minmax(0, 26rem); column-gap: clamp(2rem, 6vw, 5rem); align-items: center; justify-content: center; align-content: center; padding-block: 2.5rem; }
-  .start > .start-pic { width: 100%; margin-top: 0; }
+  .start:has(> .start-pic) > .start-pic { width: 100%; margin-top: 0; }   /* without :has(), the phone's stack */
 }
