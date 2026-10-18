@@ -119,6 +119,21 @@ def static_checks(r):
         code += " 'view-text 'view-image 'view-video 'view-audio"
     absent = [i for i in TESTIDS if f"'{i}" not in code and f'"{i}' not in code and f"`{i}" not in code]
     r.check(not absent, f"every data-testid of spec §3.4.9 is in the UI ({len(TESTIDS)} ids; missing {absent})")
+    # drive.html preloads drive.js's static import graph: the list is exactly that graph, so a phone on a slow
+    # network fetches it in one round trip and never a module the page doesn't import.
+    web = os.path.dirname(APP)
+    seen = set()
+    def walk(path):
+        for m in re.finditer(r"^\s*(?:import|export)\s+(?:[^'\"]*?from\s+)?['\"]([^'\"]+)['\"]", open(path, encoding="utf-8").read(), re.M):
+            u = m.group(1)
+            dep = os.path.normpath(os.path.join(os.path.dirname(path), u)) if u.startswith(".") else os.path.join(web, u.lstrip("/"))
+            if dep not in seen:
+                seen.add(dep)
+                walk(dep)
+    walk(os.path.join(UI, "drive.js"))
+    want = {"/" + os.path.relpath(f, web) for f in seen}
+    have = set(re.findall(r'<link rel="modulepreload" href="([^"]+)"', open(os.path.join(APP, "drive.html"), encoding="utf-8").read()))
+    r.check(want == have, f"drive.html preloads drive.js's static imports exactly (missing {sorted(want - have)[:4]}, extra {sorted(have - want)[:4]})")
 
 
 # --- build and serve ---------------------------------------------------------------------------------

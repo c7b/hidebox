@@ -403,10 +403,18 @@ def check_field(browser):
                 problems.append(f"/ @{width}: no ripple, or the canvas never took over from the static grid")
             # the button's own ripple: the pointer entering it starts one at once (at most one per 1.5 s)
             page.b.pump(1.6)
-            before = int(page.eval(f"{FIELD}.dataset.ripples") or 0)
-            page.eval("document.querySelector('[data-testid=\"home-make\"]').dispatchEvent(new PointerEvent('pointerenter'))")
-            if int(page.eval(f"{FIELD}.dataset.ripples") or 0) != before + 1:
-                problems.append(f"/ @{width}: the pointer entering Open your drive started no ripple")
+            slow = page.eval(f"{FIELD}.dataset.slow || null")
+            if slow:
+                # too slow a device (software GL here): the field stopped itself and the static grid is back
+                page.b.pump(0.5)
+                if page.eval(f"{FIELD}.classList.contains('live')") or page.eval(f"getComputedStyle({FIELD}, '::before').opacity") != "1":
+                    problems.append(f"/ @{width}: judged slow ({slow} ms a frame) but the static grid didn't come back")
+                NOTES.append(f"A-06h @{width}: frames {slow} ms apart, the field stopped itself (the static grid stays)")
+            else:
+                before = int(page.eval(f"{FIELD}.dataset.ripples") or 0)
+                page.eval("document.querySelector('[data-testid=\"home-make\"]').dispatchEvent(new PointerEvent('pointerenter'))")
+                if int(page.eval(f"{FIELD}.dataset.ripples") or 0) != before + 1:
+                    problems.append(f"/ @{width}: the pointer entering Open your drive started no ripple")
             NOTES.append(f"A-06h @{width}: field.js at {times[0]:.0f} ms, load event ended {times[1]:.0f} ms; "
                          f"{page.eval(FIELD + '.dataset.ripples')} ripples" if times else f"A-06h @{width}: no field")
         page = browser.page(1440, 900, reduce=True)
@@ -524,7 +532,14 @@ def check_motion(browser):
             if page.eval(SLICE) != still:
                 problems.append(f"/ @{width}: the picture's DOM after the decode differs from the page's")
             live = page.wait_for("document.querySelector('[data-pixel]').classList.contains('live')", 5)
-            if not live:
+            page.b.pump(1.2)
+            slow = page.eval("document.querySelector('[data-pixel]').dataset.slow || null")
+            if slow:
+                # too slow a device: the pixel field stopped itself and the CSS pixels are back
+                if page.eval("document.querySelector('[data-pixel]').classList.contains('live')"):
+                    problems.append(f"/ @{width}: pixel field judged slow ({slow} ms) but still live")
+                NOTES.append(f"motion @{width}: pixel frames {slow} ms apart, the field stopped itself")
+            elif not live:
                 problems.append(f"/ @{width}: the pixel field never took over from the CSS pixels")
             else:
                 a = page.eval("document.querySelector('[data-pixel]').frames")

@@ -108,9 +108,10 @@ export function quietZone() {
   return zone;
 }
 // A-06h: the effects load after the load event, when the browser is idle, only where a page asks for them,
-// only when motion is allowed (html.motion) and, for the two fields, only when a WebGL2 context exists.
+// only when motion is allowed (html.motion) and, for the two fields, without Data Saver and only when a WebGL2 context exists.
 // Otherwise every word is already on screen and the static grid and pixels stay.
 const motion = root.classList.contains('motion');
+const saveData = Boolean(navigator.connection?.saveData);   // Data Saver: the static grid and pixels only
 const afterLoad = (f, timeout) => {
   const idle = () => (globalThis.requestIdleCallback ?? ((g) => setTimeout(g, 1)))(f, { timeout });
   if (document.readyState === 'complete') idle();
@@ -127,7 +128,7 @@ const webgl = (box, load) => {
 if (field) {
   new ResizeObserver(quietZone).observe(field);
   field.parentElement.addEventListener('animationend', quietZone);   // the hero's words have settled
-  if (motion) afterLoad(() => webgl(field, () => import('./field.js')), 2000);
+  if (motion && !saveData) afterLoad(() => webgl(field, () => import('./field.js')), 2000);
 }
 // Site v3: the scroll motion and the hero picture's decode. Until motion.js takes over (html.mo), the
 // picture's words wait unseen for at most 3 s (home.css); if it can't load they show at once.
@@ -140,7 +141,7 @@ if (motion && document.querySelector('.still-frame[data-loop]')) {
 }
 // The pixel field behind the home's closing (pixel.js), asked for when that section comes near.
 const pixels = document.querySelector('[data-pixel]');
-if (pixels && motion) {
+if (pixels && motion && !saveData) {
   afterLoad(() => new IntersectionObserver((seen, io) => {
     if (!seen.some((e) => e.isIntersecting)) return;
     io.disconnect();

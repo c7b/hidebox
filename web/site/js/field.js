@@ -6,10 +6,12 @@
 // frame, one every 7 s while the hero is on screen and the tab visible, and one when the pointer enters
 // the button or it takes focus (at most one per 1.5 s). Each travels and fades in 2.4 s. Between them
 // nothing is drawn: frames run only while a ripple moves. site.js loads this after the load event, with a
-// WebGL2 context already made, and never with reduced motion; a lost context brings the CSS grid back.
+// WebGL2 context already made, and never with reduced motion or Data Saver; a lost context brings the CSS grid back.
+// A device too slow for it (the first ripple's frames come slower than SLOW ms apart, median of FRAMES) gets
+// the CSS grid back for good too, so a phone never janks every 7 s (field.dataset.slow says so).
 import { quietZone } from './site.js';
 
-const LIFE = 2400, EVERY = 7000, GAP = 1500, AMP = 0.6 * 12;
+const LIFE = 2400, EVERY = 7000, GAP = 1500, AMP = 0.6 * 12, SLOW = 40, FRAMES = 12;
 const VERT = `#version 300 es
 in vec2 p;
 void main() { gl_Position = vec4(p, 0., 1.); }`;
@@ -68,6 +70,7 @@ export function start(field, canvas, gl) {
     .map((n) => [n, gl.getUniformLocation(prog, n)]));
 
   let ripples = [], count = 0, last = -1e9, raf = 0, timer = 0, onScreen = true, stopped = false;
+  let gaps = [], prev = 0, judged = false;   // the slow-device check, over the first ripple's frames
   let dpr = 1, css = { w: 1, h: 1 }, zone = { x: 0, y: 0, rx: 1, ry: 1 }, ink = [0, 0, 0], alpha = 0.3, quiet = 0.4;
 
   // The brand colour and strengths, from the tokens (light, dark, increased contrast).
@@ -108,6 +111,15 @@ export function start(field, canvas, gl) {
     raf = 0;
     ripples = ripples.filter((r) => now - r.t0 < LIFE);
     draw(now);
+    if (!judged) {
+      if (prev) gaps.push(now - prev);
+      prev = now;
+      if (gaps.length >= FRAMES) {
+        judged = true;
+        const median = gaps.sort((a, b) => a - b)[gaps.length >> 1];
+        if (median > SLOW) { field.dataset.slow = String(Math.round(median)); return stop(); }
+      }
+    }
     if (ripples.length && active()) raf = requestAnimationFrame(frame);
   }
   function ripple() {
@@ -125,6 +137,7 @@ export function start(field, canvas, gl) {
   function pause() {
     cancelAnimationFrame(raf);
     raf = 0;
+    prev = 0;   // a hidden tab's gap isn't the device's
     clearTimeout(timer);
   }
   function resume() {

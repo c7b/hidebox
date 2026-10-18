@@ -7,8 +7,9 @@
 // (alpha 0 there, so their contrast is the page's own) and a fade at every edge. It opens with a blast from
 // Open your drive the first time it is seen, ripples again when the pointer meets that button or it takes focus
 // (at most once per 1.5 s), and draws only while it is on screen in a visible tab. site.js loads it after the
-// load event, when the section comes near, never with reduced motion; a lost context brings the CSS pixels back.
-const PX = 4, GAP = 1500, INTRO = 1400;
+// load event, when the section comes near, never with reduced motion or Data Saver; a lost context, or a device
+// too slow for it (the hero field's check, box.dataset.slow), brings the CSS pixels back.
+const PX = 4, GAP = 1500, INTRO = 1400, SLOW = 40, FRAMES = 20;   // too slow: the median frame gap of the first FRAMES
 const VERT = `#version 300 es
 in vec2 p;
 void main() { gl_Position = vec4(p, 0., 1.); }`;
@@ -126,9 +127,17 @@ export function start(box, canvas, gl) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     box.frames = ++frames;   // for the tests
   }
+  let gaps = [], last0 = 0;
   function frame(now) {
     raf = 0;
     draw(now);
+    if (gaps && last0) gaps.push(now - last0);
+    last0 = now;
+    if (gaps?.length >= FRAMES) {
+      const median = gaps.sort((a, b) => a - b)[gaps.length >> 1];
+      gaps = null;
+      if (median > SLOW) { box.dataset.slow = String(Math.round(median)); return stop(); }
+    }
     if (intro0 && now - intro0 > INTRO) intro0 = 0;
     if (active()) raf = requestAnimationFrame(frame);
   }
@@ -144,6 +153,7 @@ export function start(box, canvas, gl) {
   function pause() {
     cancelAnimationFrame(raf);
     raf = 0;
+    last0 = 0;   // a hidden tab's gap isn't the device's
   }
   function ripple() {
     const b = button();

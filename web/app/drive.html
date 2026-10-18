@@ -17,6 +17,30 @@
 <link rel="stylesheet" href="/app/css/drive.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/app/ui/drive.js" integrity="{{SRI}}"></script>
+<!-- drive.js's static imports, fetched at once rather than one level per round trip (ui/tests/run.py keeps this list exact) -->
+<link rel="modulepreload" href="/app/lib/api.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/drive.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/i18n.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/links.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/pow.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/store.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/ui/behaviors.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/ui/drive-parts.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/ui/drive-shell.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/api-drive.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/b64.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/dom.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/folder.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/idb.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/sha256sync.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/ui/errors.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/ui/lines.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/bytes.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/crypto.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/format.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/lib/share.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/app/ui/core.js" integrity="{{SRI}}">
+<link rel="modulepreload" href="/shared/ghost.js" integrity="{{SRI}}">
 </head>
 <body>
 <div id="app" class="drive-app"><p class="drive-boot" aria-hidden="true"></p></div>
