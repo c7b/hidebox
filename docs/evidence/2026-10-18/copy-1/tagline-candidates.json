@@ -1,0 +1,174 @@
+{
+ "390": {
+  "font": "19.5px 650",
+  "lh": 23.79,
+  "width": 358,
+  "cands": {
+   "Privacy isn't an option.": {
+    "lines": 1,
+    "textWidth": 200
+   },
+   "Files lock in your browser first.": {
+    "lines": 1,
+    "textWidth": 274
+   },
+   "Your browser locks every file.": {
+    "lines": 1,
+    "textWidth": 261
+   },
+   "Each file is locked before upload.": {
+    "lines": 1,
+    "textWidth": 294
+   },
+   "Locked in your browser before upload.": {
+    "lines": 1,
+    "textWidth": 341
+   },
+   "Locked in this browser before upload.": {
+    "lines": 1,
+    "textWidth": 335
+   },
+   "Files lock in this browser before upload.": {
+    "lines": 1,
+    "textWidth": 355
+   },
+   "Every file locks before it leaves.": {
+    "lines": 1,
+    "textWidth": 282
+   },
+   "Your files lock before they upload.": {
+    "lines": 1,
+    "textWidth": 304
+   }
+  }
+ },
+ "1440": {
+  "font": "34px 650",
+  "lh": 41.48,
+  "width": 549.421875,
+  "cands": {
+   "Privacy isn't an option.": {
+    "lines": 1,
+    "textWidth": 349
+   },
+   "Files lock in your browser first.": {
+    "lines": 1,
+    "textWidth": 478
+   },
+   "Your browser locks every file.": {
+    "lines": 1,
+    "textWidth": 456
+   },
+   "Each file is locked before upload.": {
+    "lines": 1,
+    "textWidth": 512
+   },
+   "Locked in your browser before upload.": {
+    "lines": 2,
+    "textWidth": 594
+   },
+   "Locked in this browser before upload.": {
+    "lines": 2,
+    "textWidth": 584
+   },
+   "Files lock in this browser before upload.": {
+    "lines": 2,
+    "textWidth": 618
+   },
+   "Every file locks before it leaves.": {
+    "lines": 1,
+    "textWidth": 491
+   },
+   "Your files lock before they upload.": {
+    "lines": 1,
+    "textWidth": 530
+   }
+  }
+ },
+ "360": {
+  "font": "18px 650",
+  "lh": 21.96,
+  "width": 328,
+  "cands": {
+   "Privacy isn't an option.": {
+    "lines": 1,
+    "textWidth": 185
+   },
+   "Files lock in your browser first.": {
+    "lines": 1,
+    "textWidth": 253
+   },
+   "Your browser locks every file.": {
+    "lines": 1,
+    "textWidth": 241
+   },
+   "Each file is locked before upload.": {
+    "lines": 1,
+    "textWidth": 271
+   },
+   "Locked in your browser before upload.": {
+    "lines": 1,
+    "textWidth": 315
+   },
+   "Locked in this browser before upload.": {
+    "lines": 1,
+    "textWidth": 309
+   },
+   "Files lock in this browser before upload.": {
+    "lines": 1,
+    "textWidth": 327
+   },
+   "Every file locks before it leaves.": {
+    "lines": 1,
+    "textWidth": 260
+   },
+   "Your files lock before they upload.": {
+    "lines": 1,
+    "textWidth": 280
+   }
+  }
+ },
+ "1280": {
+  "font": "34px 650",
+  "lh": 41.48,
+  "width": 549.421875,
+  "cands": {
+   "Privacy isn't an option.": {
+    "lines": 1,
+    "textWidth": 349
+   },
+   "Files lock in your browser first.": {
+    "lines": 1,
+    "textWidth": 478
+   },
+   "Your browser locks every file.": {
+    "lines": 1,
+    "textWidth": 456
+   },
+   "Each file is locked before upload.": {
+    "lines": 1,
+    "textWidth": 512
+   },
+   "Locked in your browser before upload.": {
+    "lines": 2,
+    "textWidth": 594
+   },
+   "Locked in this browser before upload.": {
+    "lines": 2,
+    "textWidth": 584
+   },
+   "Files lock in this browser before upload.": {
+    "lines": 2,
+    "textWidth": 618
+   },
+   "Every file locks before it leaves.": {
+    "lines": 1,
+    "textWidth": 491
+   },
+   "Your files lock before they upload.": {
+    "lines": 1,
+    "textWidth": 530
+   }
+  }
+ }
+}

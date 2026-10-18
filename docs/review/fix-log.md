@@ -932,3 +932,25 @@ devices and tap: before 4/12 taps opened the text box, after 12/12. Gate: lint, 
 site 42/42, UI 751/751. Deployed with `deploy.sh` (203 files, smoke PASS, notarized); verify-deploy 0 differences, D-01
 PASS; E-01 PASS, E-19 PASS twice on both profiles. Tag `spooky-secrets-2026-10` left at `d0f08ed`. `docs/review/promote-v3.md`
 ("After the release"), evidence in `docs/evidence/2026-10-18/promote-v3/e19/`.
+
+## Copy pass 1: the owner's findings on the words (2026-10-18)
+
+The owner found AI tics and repetition on the home and in the README. Branch `copy/pass-1`, pushed to `main` commit
+by commit; **the coordinator deploys it**. `docs/review/copy-1.md` has every finding (file, before, after, the skill
+that caught it), the headline candidates, the key statements, the word counts and the suites; evidence in
+`docs/evidence/2026-10-18/copy-1/`.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | The tagline | "Privacy isn't an option. It's the default." (not X, it's Y) is now "Files lock in your browser first." on one line at 360, 390, 1280 and 1440 px: the h1, the share card (`og.png` re-rendered), the drive page's metas, the README's title, the film's end card. Candidates measured: "Your browser locks every file.", "Each file is locked before upload." |
+| 2 | Repetition | DESIGN.md's Say It Once rule: eight key statements, each once a page in its best place. On the home each now shows once (the lock was 3, "No email, no password" 3, the chain's hidden amount 2, the chain record 2, the testnet line 2); "Here is what each one can see." is gone. The two testnet lines were the same pre and mainnet pair switched by `dates.js`, neither date-gated, so the footer's stays and the What's tTARI? box's goes (on / and /how) |
+| 3 | README, /how, /judges, docs | The same rule; the docs' humanizer pass changed little (they were clean); Tari™ on each doc's first mention, "All rights reserved." in the attribution lines |
+| 4 | The drive's words | Errors lose "Oops" and "Easy." and say how to recover; buttons start with a verb; an empty search says how to clear it; "room" is "space" |
+| 5 | The host | README, SECURITY.md and `docs/*.md` name <https://hidebox.app> |
+| 6 | Skills | humanizer, copy-editing and better-writing in `.claude/skills/` (text and MIT licences) |
+
+Suites on the server as build: lint PASS, check-copy PASS, deploy 84 OK, core 9/9, site 42/42 (twice), UI 743/744 with
+`drive-delete-account`'s known timeout under another session's load, 15/15 alone. M-01 58.3 KB (58.4 before), home
+words at 390 38 above the fold and 586 in all (46 and 650 before), A-06 unchanged. `/v2` keeps its old words on
+purpose; V-01 no longer compares them with the home's. The site-v4 live probe (`docs/evidence/2026-10-17/site-v4/
+checks/live_probe.py`) still expects the old headline and fails against this release by design.

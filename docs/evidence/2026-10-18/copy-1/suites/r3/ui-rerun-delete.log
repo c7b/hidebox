@@ -1,0 +1,18 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 17 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- drive-delete-account Delete my drive: the count, the tick before the button, each file into the can, the check, the done screen
+PASS drive-delete-account: the alert says how many files go, the Trash's too (We'll delete 3 files from your drive and its Trash. Every link stops. This can't be undone. Are you sure?)
+PASS drive-delete-account: the button waits for the tick
+PASS drive-delete-account: the button says what it does
+PASS drive-delete-account: the alert fits its width (the long button wraps)
+PASS drive-delete-account: the done screen says what went (We deleted 3 files, and every link stopped.)
+PASS drive-delete-account: each file is deleted on our server
+PASS drive-delete-account: Done goes back to /drive with no drive in this browser
+PASS drive-delete-account: no CSP or Trusted Types violation ([])
+
+UI PASS 15/15

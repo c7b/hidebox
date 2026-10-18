@@ -1,0 +1,78 @@
+{
+ "statements_after": {
+  "/": {
+   "words": 682,
+   "1 the lock": 1,
+   "2 the server": 1,
+   "3 the names": 1,
+   "4 the exit rules": 1,
+   "5 the chain hides the amount": 1,
+   "6 the chain record": 1,
+   "7 no email, no password": 1,
+   "8 losing the key": 1,
+   "the testnet line": 1
+  },
+  "/how": {
+   "words": 584,
+   "1 the lock": 1,
+   "2 the server": 1,
+   "3 the names": 0,
+   "4 the exit rules": 0,
+   "5 the chain hides the amount": 1,
+   "6 the chain record": 2,
+   "7 no email, no password": 1,
+   "8 losing the key": 1,
+   "the testnet line": 1
+  },
+  "/judges": {
+   "words": 626,
+   "1 the lock": 0,
+   "2 the server": 0,
+   "3 the names": 0,
+   "4 the exit rules": 0,
+   "5 the chain hides the amount": 2,
+   "6 the chain record": 2,
+   "7 no email, no password": 1,
+   "8 losing the key": 0,
+   "the testnet line": 1
+  }
+ },
+ "statements_before": {
+  "/": {
+   "words": 759,
+   "1 the lock": 3,
+   "2 the server": 1,
+   "3 the names": 1,
+   "4 the exit rules": 1,
+   "5 the chain hides the amount": 2,
+   "6 the chain record": 2,
+   "7 no email, no password": 3,
+   "8 losing the key": 1,
+   "the testnet line": 2
+  },
+  "/how": {
+   "words": 625,
+   "1 the lock": 2,
+   "2 the server": 1,
+   "3 the names": 0,
+   "4 the exit rules": 0,
+   "5 the chain hides the amount": 2,
+   "6 the chain record": 2,
+   "7 no email, no password": 2,
+   "8 losing the key": 1,
+   "the testnet line": 2
+  },
+  "/judges": {
+   "words": 628,
+   "1 the lock": 0,
+   "2 the server": 0,
+   "3 the names": 0,
+   "4 the exit rules": 0,
+   "5 the chain hides the amount": 2,
+   "6 the chain record": 2,
+   "7 no email, no password": 4,
+   "8 losing the key": 0,
+   "the testnet line": 1
+  }
+ }
+}

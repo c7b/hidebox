@@ -1,6 +1,20 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- copy pass 1 -->
+## 2026-10-18: the copy pass
+
+- **The home's headline** is "Your private cloud storage." with "Files lock in your browser first." under it, in
+  place of "Privacy isn't an option. It's the default." The share card, the drive page's description, the README's
+  title and the film's end card say the same.
+- **Each key statement is said once a page**, in its best place (DESIGN.md, the Say It Once rule): the home no longer
+  repeats the lock, the chain record, the chain's hidden amount, "No email, no password" or the testnet line, and
+  /how, /judges and the README follow the same rule. The docs had a humanizer pass and name Tari™ on first mention.
+- **The drive's words:** errors say what to do and lose "Oops", buttons start with a verb, an empty search says how
+  to clear it, and "room" is "space" everywhere. The live site is <https://hidebox.app>. Review:
+  `docs/review/copy-1.md`.
+<!-- /copy pass 1 -->
+
 <!-- twelfth pass, the v3 design is the home -->
 ## 2026-10-18: the twelfth pass (the v3 design becomes the home)
 

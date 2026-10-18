@@ -311,8 +311,8 @@ best place and in its registered words (`tools/claim-registry.json`); anywhere e
 
 On the home: 1 in the hero, 7 under Open your drive, 4 in Share it your way, 2, 3 and 8 in the comparison, 5 and 6 in
 Tari does the private parts. The testnet line is the footer's, on every page; no block repeats it. /judges' What to
-check table quotes each claim with where it shows, so its steps say what you see, not the claim again. Pictures of
-the app (/how's stills) show the app's own words.
+check table is the one place a page lists the claims, word for word with where each shows; its steps say what the
+app shows at that step. Pictures of the app (/how's stills) show the app's own words.
 **The One Breath Rule.** Product strings read at Flesch-Kincaid grade 5 or lower (measured with
 `research/design/copy/fk.py`); How it was made at grade 8 or lower.
 **The No Digits Rule.** Numbers in copy are `{variables}` from `/api/v1/config`.

@@ -1,0 +1,76 @@
+[
+ {
+  "page": "/",
+  "width": 1440,
+  "theme": "dark",
+  "height": 6396,
+  "files": [
+   "home-1440-dark-full.webp"
+  ]
+ },
+ {
+  "page": "/",
+  "width": 1440,
+  "theme": "light",
+  "height": 6372,
+  "files": [
+   "home-1440-light-full.webp"
+  ]
+ },
+ {
+  "page": "/how",
+  "width": 1440,
+  "theme": "light",
+  "height": 3741,
+  "files": [
+   "how-1440-full.webp"
+  ]
+ },
+ {
+  "page": "/judges",
+  "width": 1440,
+  "theme": "light",
+  "height": 2810,
+  "files": [
+   "judges-1440-full.webp"
+  ]
+ },
+ {
+  "page": "/",
+  "width": 390,
+  "theme": "dark",
+  "height": 8476,
+  "files": [
+   "home-390-dark-full-1.webp",
+   "home-390-dark-full-2.webp"
+  ]
+ },
+ {
+  "page": "/",
+  "width": 390,
+  "theme": "light",
+  "height": 8476,
+  "files": [
+   "home-390-light-full-1.webp",
+   "home-390-light-full-2.webp"
+  ]
+ },
+ {
+  "page": "/how",
+  "width": 390,
+  "theme": "light",
+  "height": 5318,
+  "files": [
+   "how-390-full.webp"
+  ]
+ },
+ {
+  "page": "/judges",
+  "width": 390,
+  "theme": "light",
+  "height": 4067,
+  "files": [
+   "judges-390-full.webp"
+  ]
+ }
+]
