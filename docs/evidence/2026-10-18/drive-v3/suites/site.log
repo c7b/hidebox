@@ -51,12 +51,12 @@ note home words at 390: 46 above the fold, 650 in all
 note home words at 1440: 64 above the fold, 666 in all
 note A-06h @1440: no field.js or pixel.js asked for, 0 canvases on /
 note A-06h @390: no field.js or pixel.js asked for, 0 canvases on /
-note motion @1440: motion.js at 287 ms (load event 143 ms), decode seen: True
-note motion @390: motion.js at 437 ms (load event 274 ms), decode seen: True
+note motion @1440: motion.js at 234 ms (load event 190 ms), decode seen: True
+note motion @390: motion.js at 312 ms (load event 174 ms), decode seen: True
 note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; Test file #789: missed (the verifier restarted).
-note V-01 /v2 @1440: 2,850,449 B at load (the hero's loop and poster), 12,792,148 B after scrolling through, uncached
-note V-01 /v2 @390: 2,849,758 B at load (the hero's loop and poster), 12,791,457 B after scrolling through, uncached
+note V-01 /v2 @1440: 2,877,939 B at load (the hero's loop and poster), 12,819,638 B after scrolling through, uncached
+note V-01 /v2 @390: 2,849,758 B at load (the hero's loop and poster), 12,552,424 B after scrolling through, uncached
 note V-02 / @1440: 258,489 B at load (the hero's still hero-720.avif), 272,816 B after scrolling through, uncached; stills asked for: hero-720.avif, different-640.avif, who-480.avif, gem-480.avif
 note V-02 / @390: 244,572 B at load (the hero's still hero-480.avif), 266,022 B after scrolling through, uncached; stills asked for: hero-480.avif, different-640.avif, who-480.avif, gem-480.avif
-note /how loops: stills.js at 104 ms (load event 89 ms) at 390; the upload loop went through 9 states
-42 of 42 checks without failures, 396 s
+note /how loops: stills.js at 184 ms (load event 126 ms) at 390; the upload loop went through 9 states
+42 of 42 checks without failures, 391 s

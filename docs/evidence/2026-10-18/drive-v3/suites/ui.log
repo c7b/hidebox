@@ -7,14 +7,14 @@ PASS static: no string in the dictionaries goes unused ([])
 PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
 PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
 --- home-text Home: a text secret, Once; copy; open; reload and a second browser see it burned
-PASS home-text: the sealed link has the key after # (BkrOA#1pn0c3BvQKkkrEY12d2ORMQj4fl9Hhjy_Gg90h_VRy1k)
-PASS home-text: from text to link in 0.6 s on a 390×844 phone (< 10 s)
+PASS home-text: the sealed link has the key after # (3hKBw#1d9dLZZgq5csYOMwjfJUlkLXBC9d_KvoZ-6lg6pspAZ4)
+PASS home-text: from text to link in 0.4 s on a 390×844 phone (< 10 s)
 PASS home-text: mutis:state events ['composing', 'sealing', 'sealed']
 PASS home-text: the one live region: 'Link made. Copied.'
 PASS home-text: the copy was made the moment the link existed, and the button says so
 PASS home-text: one sentence says the rule, with its time ("It opens one time in the next 24 hours.\nThen it's gone.")
 PASS home-text: More rules: what our server got opens the glass box
-PASS home-text: and the noise strip draws real ciphertext bytes (226 grey levels)
+PASS home-text: and the noise strip draws real ciphertext bytes (230 grey levels)
 PASS home-text: Copy link puts the full link on the clipboard
 PASS home-text: the home page made no third-party request
 PASS home-text: localStorage holds no key and no text, only the recent-drops list (['mutis.recent'])
@@ -68,7 +68,7 @@ PASS card-fresh: Sent
 PASS card-fresh: the old link isn't confirmed closed: the card still shows it, and says so
 PASS card-fresh: it still works
 PASS card-fresh: once closed, the card drops the link and Copy link
-PASS card-fresh: and says where the file went (Sent to otl_esm_1l2rfke…9pv5au instead. The link no longer works: only)
+PASS card-fresh: and says where the file went (Sent to otl_esm_1acrpjk…uyjxvt instead. The link no longer works: only)
 PASS card-fresh: the old link answers revoked
 PASS card-fresh: 7 days applies to the same link (7.00 days)
 PASS card-fresh: no CSP or Trusted Types violation ([])
@@ -103,7 +103,7 @@ PASS safety: no CSP or Trusted Types violation ([])
 PASS locker: no Locker · Inbox · Send tabs before a locker exists
 PASS locker: the first screen: what a locker is, and its three things by name
 PASS locker: a drop link asks nothing before it exists
-PASS locker: a short drop link (http://127.0.0.1:34649/d/7krde7p7xs)
+PASS locker: a short drop link (http://127.0.0.1:53745/d/wx9qwc1skm)
 PASS locker: the key modal asks once, now that something persistent exists
 PASS locker: with the passphrase box ticked (P-15) an empty passphrase stops the download
 PASS locker: the key file is locked with the passphrase; the plain key isn't in it
@@ -124,14 +124,14 @@ PASS deaddrop: the drop page is ready
 PASS deaddrop: it shows the owner's 12-emoji safety code
 PASS deaddrop: the drop's label, isolated in a <bdi> inside the quotes
 PASS deaddrop: the page says the link's maker wrote the label and we don't check it
-PASS deaddrop: a Report this drop link in the page, filled in (/fine-print#link=http%3A%2F%2F127.0.0.1%3A34649%2Fd%2Fg2bhab)
+PASS deaddrop: a Report this drop link in the page, filled in (/fine-print#link=http%3A%2F%2F127.0.0.1%3A53745%2Fd%2Ffx3h28)
 PASS deaddrop: a program can't be left in a drop; nothing was uploaded
 PASS deaddrop: Delivered
 PASS deaddrop: the delivery has a transaction id
 PASS deaddrop: What the chain sees: no output amount is shown
 PASS deaddrop: the fee is shown, as public
 PASS deaddrop: no request to Tari's indexer before the button is pressed
-PASS deaddrop: the explicit button asks Tari's indexer directly (['https://ootle-indexer-b.tari.com/transaction-receipts/cd74ec', 'https://ootle-indexer-b.tari.com/transaction-receipts/cd74ec'])
+PASS deaddrop: the explicit button asks Tari's indexer directly (['https://ootle-indexer-b.tari.com/transaction-receipts/6c0346', 'https://ootle-indexer-b.tari.com/transaction-receipts/6c0346'])
 PASS deaddrop: the scan line says how many outputs it checked
 PASS deaddrop: the owner opens what was left
 PASS deaddrop: the photo and What the chain saw
@@ -140,7 +140,7 @@ PASS deaddrop: Keep a copy in my locker: the photo is listed under Kept in your 
 PASS deaddrop: no CSP or Trusted Types violation ([])
 --- send Send to a Tari address (relay); the locker's codes to scan; a scanned address fills the phone's send step; the recipient's inbox opens it; /watch sees it and opens nothing
 PASS send: a drop link asks nothing before it exists
-PASS send: a computer's locker shows its address and its drop link as codes a phone reads (famrmpaappva70r09fsacgwsghwcah, http://127.0.0.1:34649/d/v6kcx12zbz)
+PASS send: a computer's locker shows its address and its drop link as codes a phone reads (j2rldzxd6zemq9zh2vcvcycgmdgfvs, http://127.0.0.1:53745/d/sn3zp4gmt5)
 PASS send: the send screen shows the recipient's safety code
 PASS send: Sent
 PASS send: the send has a transaction id
@@ -244,7 +244,7 @@ PASS budget: computer: 43503 B after a drop with the code to scan (≤ 43520 B, 
 PASS budget: phone, after a photo: 45574 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
 PASS budget: no CSP or Trusted Types violation ([])
 --- ten-seconds A first visit on a phone (4× slower CPU): landing to a copied link of a photo in under 10 s
-PASS ten-seconds: landing 1.2 s, then photo to copied link: 2.0 s in all (< 10 s, no human pauses)
+PASS ten-seconds: landing 2.2 s, then photo to copied link: 3.6 s in all (< 10 s, no human pauses)
 PASS ten-seconds: no CSP or Trusted Types violation ([])
 --- states Every remaining state: expired (a real 60-second link), removed, locked, integrity-error; drop closed and not found; empty inbox
 PASS states: the 60-second preset sets the link to leave within a minute
@@ -257,7 +257,7 @@ PASS states: no plaintext and no Save after an integrity failure
 PASS states: a drop link asks nothing before it exists
 PASS states: a closed drop: This drop is closed.
 PASS states: an unknown drop: No drop here.
-PASS states: recent drops on this device list the links with their state (Opened Oct 17, 2026, 8:11 PM. Was that them?)
+PASS states: recent drops on this device list the links with their state (Opened Oct 17, 2026, 9:03 PM. Was that them?)
 PASS states: a new locker's inbox: Nothing for you yet
 PASS states: 65 seconds later the real server answers: expired
 PASS states: This link has ended. Its time ran out.
@@ -293,7 +293,7 @@ PASS ghost-screens: 390: the viewer is ready
 PASS ghost-screens: 390: the viewer's first screen: the Once tile, one sentence, C18, Open it focused (once)
 PASS ghost-screens: 390: opened, its only look
 PASS ghost-screens: 390: the gone page (done)
-PASS ghost-screens: 390: ended, done: the receipt says 'The file left our server. We wrote that on the Tari™ chain.' and links /verify#ybslbMfFgSnz5gwcBOUmYA
+PASS ghost-screens: 390: ended, done: the receipt says 'The file left our server. We wrote that on the Tari™ chain.' and links /verify#ZFSzag6pCA3xTqGN3bqfJg
 PASS ghost-screens: 390: the gone page (pending)
 PASS ghost-screens: 390: ended, pending: the receipt says 'The file left our server. That goes on the Tari™ chain within 15 minutes.' and links /verify#latest
 PASS ghost-screens: 390: the key question, with Later
@@ -306,7 +306,7 @@ PASS ghost-screens: 1440: the viewer is ready
 PASS ghost-screens: 1440: the viewer's first screen: the Once tile, one sentence, C18, Open it focused (once)
 PASS ghost-screens: 1440: opened, its only look
 PASS ghost-screens: 1440: the gone page (done)
-PASS ghost-screens: 1440: ended, done: the receipt says 'The file left our server. We wrote that on the Tari™ chain.' and links /verify#GGuaaqSTwjnB1OAI9ueJ3Q
+PASS ghost-screens: 1440: ended, done: the receipt says 'The file left our server. We wrote that on the Tari™ chain.' and links /verify#-vcw8a-PewB1Dv77XudbrQ
 PASS ghost-screens: 1440: the gone page (pending)
 PASS ghost-screens: 1440: ended, pending: the receipt says 'The file left our server. That goes on the Tari™ chain within 15 minutes.' and links /verify#latest
 PASS ghost-screens: 1440: the key question, with Later
@@ -392,8 +392,8 @@ PASS storage-meter: no CSP or Trusted Types violation ([])
 PASS drive-budget: a drive of 20 items
 PASS drive-budget: no ootle-wasm before the file table renders
 PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.woff2'])
-PASS drive-budget: A-06d: 119760 B compressed until the table renders, 37 files (≤ 131072 B)
-  A-06d measured: 119760 B gzip -9, files: app/css/drive.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
+PASS drive-budget: A-06d: 118441 B compressed until the table renders, 36 files (≤ 131072 B)
+  A-06d measured: 118441 B gzip -9, files: app/css/drive.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
 PASS drive-budget: no CSP or Trusted Types violation ([])
 --- drive-upload-files Upload files (step 7): each locks here, then uploads; the panel says so; the owner downloads the same bytes, the photo without its location
 PASS drive-upload-files: the panel: each file Locked and saved (['Locked and saved', 'Locked and saved', 'Locked and saved'])
@@ -475,8 +475,8 @@ PASS share-once: How many times? Once (the default), A few times, No limit (['on
 PASS share-once: It ends: In a week by default
 PASS share-once: a drive's first day: Tomorrow or In a week; When I stop it waits for the second day, and the dialog says so
 PASS share-once: the secret word and Delete it from my drive after are switches on the same step
-PASS share-once: a link with its own key after the # (PZthA#1qBWturBM5gBtyWjX-qGzqGVc2RrFDUetZJ92Gg9vDek)
-PASS share-once: the rule in one sentence (C26: It opens one time, until Oct 24, 9:00 PM. Then the link ends.)
+PASS share-once: a link with its own key after the # (hn0_A#1rZnrYoO5Ae2mBRxo_1r-It0fd_-WgSQcCdx4rq2a2Rs)
+PASS share-once: the rule in one sentence (C26: It opens one time, until Oct 24, 10:00 PM. Then the link ends.)
 PASS share-once: the code on a computer reads back as the same link
 PASS share-once: under a Once code: scanning uses its one open (C27, child form)
 PASS share-once: the key note under the link (C2)
@@ -499,16 +499,16 @@ PASS share-once: no CSP or Trusted Types violation ([])
 PASS share-rules: this flow's server has features.folders on (the real folder API, no fake)
 PASS share-rules: A few times says how many
 PASS share-rules: no horizontal scroll in the dialog at 390
-PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 18, 9:00 PM. Then the link ends.)
+PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 18, 10:00 PM. Then the link ends.)
 PASS share-rules: a phone: Share is the primary, no code to scan
 PASS share-rules: one filled button: Share; Copy link is outline
 PASS share-rules: Share hands the link to the phone's share sheet
 PASS share-rules: the row says 3 opens
 PASS share-rules: No limit on a first day says its cap
-PASS share-rules: and the result says it (It opens up to 50 times, until Oct 24, 9:00 PM. Then the link ends.)
+PASS share-rules: and the result says it (It opens up to 50 times, until Oct 24, 10:00 PM. Then the link ends.)
 PASS share-rules: from the second day: When I stop it
 PASS share-rules: No limit means no count
-PASS share-rules: Until a time (Anyone with the link can open it until Oct 24, 9:00 PM.)
+PASS share-rules: Until a time (Anyone with the link can open it until Oct 24, 10:00 PM.)
 PASS share-rules: the row says Until {date}
 PASS share-rules: a link that never ends can't take the file with it: the switch goes
 PASS share-rules: When I stop it says where: this file's menu
@@ -532,7 +532,7 @@ PASS share-stop: the Links tab: When you stop it, from this file's menu; Stop sh
 PASS share-stop: no CSP or Trusted Types violation ([])
 --- share-word-then-delete A secret word, and Delete it from my drive after (step 8): the word box; a Once link that takes the file with it (C42)
 PASS share-word-then-delete: this flow's server has features.folders on (the real folder API, no fake)
-PASS share-word-then-delete: turning the word on fills in four words from the list (boardwalk-hamster-limerick-peacock)
+PASS share-word-then-delete: turning the word on fills in four words from the list (lanyard-cymbal-lucky-duck)
 PASS share-word-then-delete: a link with a word carries only its half of the key (#2)
 PASS share-word-then-delete: the word box, and keep them apart
 PASS share-word-then-delete: the row says Secret word
@@ -588,7 +588,7 @@ PASS folder-zip: the result says what a visit is
 PASS folder-zip: the folder card wears its rule
 PASS folder-zip: a folder link's first screen (ready)
 PASS folder-zip: a folder link takes the drive's look
-PASS folder-zip: what it is, before anything is used (Someone shared a folder with you.One visit of 30 minutes. Then the link ends.The link works until Oct 24, 9:00 PM.6 thin)
+PASS folder-zip: what it is, before anything is used (Someone shared a folder with you.One visit of 30 minutes. Then the link ends.The link works until Oct 24, 10:00 PM.6 thi)
 PASS folder-zip: folders first, then files, names opened in this browser (['Day one', 'Later', 'map.txt', 'photo-gps.jpg', 'report.dat'])
 PASS folder-zip: the visit's countdown
 PASS folder-zip: a Once folder: this was its open
@@ -620,29 +620,29 @@ PASS received-folder: this flow's server has features.folders on (the real folde
 PASS received-folder: this flow's server has features.folders on (the real folder API, no fake)
 PASS received-folder: a folder goes by Tari like a file
 PASS received-folder: the folder card wears Sent by Tari
-PASS received-folder: it arrives as a locked folder, sender hidden (A locked folderBy Tari, sender hidden· 1 second agoNewBy Tari, sender hidden1 se)
+PASS received-folder: it arrives as a locked folder, sender hidden (A locked folderBy Tari, sender hidden· nowNewBy Tari, sender hiddennowNewOpen)
 PASS received-folder: it opens here as a visit, names opened in this browser (['Day one', 'Later', 'map.txt', 'photo-gps.jpg', 'report.dat'])
 PASS received-folder: with its visit and Download all
 PASS received-folder: Save to my drive: the folder and its folders are the drive's own now (['Day one', 'Later', 'map.txt', 'photo-gps.jpg', 'report.dat'])
 PASS received-folder: the nested file came along
 PASS received-folder: no CSP or Trusted Types violation ([])
 --- share-then-delete-race The judge's step 3 under a race: a judge-pass drive in direct mode, CPU 4×; its sponsor grant answered 0, 200, 500 or 1500 ms after the share dialog opens (the view drawn again then) and an index reload between the switch and Make link; Delete it from my drive after reaches the server every time and the file leaves after its one open
-PASS share-then-delete-race: 0 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792897200)
+PASS share-then-delete-race: 0 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792900800)
 PASS share-then-delete-race: 0 ms: the result says the file leaves too
 PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
 PASS share-then-delete-race: 0 ms: the link opens once
 PASS share-then-delete-race: 0 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-0.txt', 'notes.txt'])
-PASS share-then-delete-race: 200 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792897200)
+PASS share-then-delete-race: 200 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792900800)
 PASS share-then-delete-race: 200 ms: the result says the file leaves too
 PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
 PASS share-then-delete-race: 200 ms: the link opens once
 PASS share-then-delete-race: 200 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-200.txt', 'notes.txt'])
-PASS share-then-delete-race: 500 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792897200)
+PASS share-then-delete-race: 500 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792900800)
 PASS share-then-delete-race: 500 ms: the result says the file leaves too
 PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
 PASS share-then-delete-race: 500 ms: the link opens once
 PASS share-then-delete-race: 500 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-500.txt', 'notes.txt'])
-PASS share-then-delete-race: 1500 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792897200)
+PASS share-then-delete-race: 1500 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1792900800)
 PASS share-then-delete-race: 1500 ms: the result says the file leaves too
 PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
 PASS share-then-delete-race: 1500 ms: the link opens once
@@ -682,7 +682,7 @@ PASS drive-primary: the white floating New shows the focus ring on keyboard focu
 PASS drive-primary: a phone with files: the floating New is the lime (['New'])
 PASS drive-primary: no CSP or Trusted Types violation ([])
 --- drive-v3 Drive v3: the start screen's open box (AVIF, on v3's gunmetal card in light, on the void in dark), the void and gunmetal panels, frosted glass on the raised surfaces in dark only, v3's chip on the badges, Tari's violet only on Tari, the site's #666666 secondary text in light, the frosted header and the mark's frosted tile
-PASS drive-v3: the start screen shows the home's open box, from its AVIF (http://127.0.0.1:46901/site/media/v3/hero-480.avif)
+PASS drive-v3: the start screen shows the home's open box, from its AVIF (http://127.0.0.1:51389/site/media/v3/hero-480.avif)
 PASS drive-v3: the picture is decoration (aria-hidden; the words say it all)
 PASS drive-v3: light: the open box on v3's gunmetal card, drawn with lighten ({'background-image': 'radial-gradient(130% 95% at 50% 28%, rgb(43, 47, 53) 0%, rgb(23, 25, 28) 55%, rgb(10, 10, 10) 100%)'}, {'mix-blend-mode': 'lighten'})
 PASS drive-v3: dark: on the void itself, no card ({'background-image': 'none'}, {'mix-blend-mode': 'normal'})
@@ -709,7 +709,7 @@ PASS share-pay: Show the name before they pay: on by default
 PASS share-pay: C35, the first time this drive sells
 PASS share-pay: every control has a name ([])
 PASS share-pay: Make pay link makes it ()
-PASS share-pay: a /p/ link with half of the key after the # (kind 5: F81UPpcFZPB_YuA#5D-U2evB7cDTXFwh2-G69MOK1SAAPxKM6HMDHdk3G74A)
+PASS share-pay: a /p/ link with half of the key after the # (kind 5: CgSqjpMw0sG64iQ#5xHcc6-AnIAD6GeekPziEkAPsjOtfNvtPsuE1QRRg9E4)
 PASS share-pay: the sales address and its sealed view key went to our server once (PUT /me/sales, 125 bytes)
 PASS share-pay: the server half (32 bytes) is not the link's half, and the link doesn't carry it
 PASS share-pay: the teaser is sealed and padded to 256 bytes
@@ -766,7 +766,7 @@ PASS pay-page-states: no CSP or Trusted Types violation ([])
 PASS pay-drive: a drive short of the price and the fee: no Pay from my drive, and why ('Your drive here has 0.05 tTARI. Paying from it takes 0.13 tTARI with the fee.')
 PASS pay-drive: no sideways scroll at 390
 PASS pay-drive: a browser with a drive: the pay page's top bar says Open my drive, not Make your own drive
-PASS pay-drive: the click shows the payment's steps at once (11 ms, at most 300)
+PASS pay-drive: the click shows the payment's steps at once (10 ms, at most 300)
 PASS pay-drive: step one turns: Building the payment from your drive…; the steps take the focus ({'steps': ['build:now:Building the payment from your drive…', 'chain:todo:Seen on the chain', "owner:todo:Waiting for the owner's check", 'open:todo:Ready to open'], 'status': 'Your drive is paying. Keep this page open.', 'focus': 'pay-claim-step'})
 PASS pay-drive: refused: an alert in a plain sentence, with Try again ("Your drive didn't pay.The Ootle refused that transaction. Nothing was spent.Try again")
 PASS pay-drive: the alert is on screen
@@ -795,8 +795,8 @@ PASS sell-stop: Sell again from the menu
 PASS sell-stop: no CSP or Trusted Types violation ([])
 --- owner-check The owner check (step 16, R1): the seller's drive finds its sales outputs, compares each one-time key with its own, confirms the genuine one and voids the one the payer kept; Received lists both
 PASS owner-check: the drive kept what it confirmed
-PASS owner-check: the genuine payment: its one-time key is ours, confirmed ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_0e7b8813d3af9a81d0fa0a99af802a6ae77300a9b164ce2d814ebaa44a4ecd5a', 'spendable': True})
-PASS owner-check: the payer kept control: the claim is voided ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_60cbc2e240cf6d865247ae78b1e097730c1462f4f4e3070f59143aff665ff065', 'spendable': False})
+PASS owner-check: the genuine payment: its one-time key is ours, confirmed ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_fe808cfe9a03534a33aa771f6ad08ba3edf07d47e99842115b2e432f13b88115', 'spendable': True})
+PASS owner-check: the payer kept control: the claim is voided ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_2a3924ec5d5281814673b6282a5a28332f12a0c7c1b18193891a3418ad9f9235', 'spendable': False})
 PASS owner-check: the release gate moved: one to release, one void
 PASS owner-check: each output's one-time key was read from the indexer
 PASS owner-check: a claim our server doesn't wait on yet (not paid) gets no answer
