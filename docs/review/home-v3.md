@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Home v3: /v2 with stills and the open box, at /v3 (2026-10-18)
 
+> **Since the twelfth pass this design is the home** and `/v3` answers 301 to `/`: [promote-v3.md](promote-v3.md). What
+> follows is the preview as it was built and released; V-02 now reads the home (`check_home_stills`), and the open box
+> is the mark on every page.
+
 The owner's notes on /v2, as the coordinator passed them on: the padlock in a square isn't recognizable and he wants a
 more useful, memorable mark; "What's different from a usual drive?" (clip C) says nothing, he doesn't get the
 concept; "Who sees what" (clip B) is fine but can improve; "Tari does the private parts" (clip D) is wrong, a generic

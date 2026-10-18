@@ -1,0 +1,22 @@
+/v2 at 390 x 844, reduced motion, the first 6,000 px in 400 px bands (v2_tiles.py, the server as build, 2026-10-18).
+Columns: this branch's tree, run 1 and run 2; the one-mark commit's tree (408f08f, before this pass's own commits), run 1 and run 2.
+Every band is identical across the four captures except y 2000-2400, where the before tree's two runs disagree with each
+other: run-to-run noise in that band (the drop widget's area), not a change. shots_promote.py's single comparison met
+the same band (v2-compare.json, 390: part 1 differs, part 2 and the first screen equal; 1440: every byte equal).
+
+y     branch#1 branch#2 before#1 before#2
+0     b9c62fec b9c62fec b9c62fec b9c62fec
+400   d840d486 d840d486 d840d486 d840d486
+800   87d8f290 87d8f290 87d8f290 87d8f290
+1200  03c8d136 03c8d136 03c8d136 03c8d136
+1600  5320127b 5320127b 5320127b 5320127b
+2000  1e4b878d 1e4b878d 1e4b878d 48ecb93b
+2400  6217751c 6217751c 6217751c 6217751c
+2800  8c10265b 8c10265b 8c10265b 8c10265b
+3200  6b5cea33 6b5cea33 6b5cea33 6b5cea33
+3600  672bd9cd 672bd9cd 672bd9cd 672bd9cd
+4000  dbc52c5d dbc52c5d dbc52c5d dbc52c5d
+4400  8eebf89e 8eebf89e 8eebf89e 8eebf89e
+4800  77f71a00 77f71a00 77f71a00 77f71a00
+5200  33d2db75 33d2db75 33d2db75 33d2db75
+5600  f41bfd43 f41bfd43 f41bfd43 f41bfd43

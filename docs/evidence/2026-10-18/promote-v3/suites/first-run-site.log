@@ -1,0 +1,63 @@
+== site: python3 -I web/site/tests/run.py
+PASS SPDX headers
+PASS no HTML/script sinks in JS
+PASS markup: CSP-safe, includes, placeholders, JSON-LD
+PASS banned words
+PASS no typed /config numbers (P-20)
+PASS variables and conditions
+PASS SEO metadata (M-04)
+PASS trademark and mandatory lines (M-05)
+PASS partials in sync
+PASS no page shows the ghost
+PASS privacy inventory covers the schema (M-06)
+PASS contrast table (M-03)
+PASS static files (M-04)
+PASS security.txt contacts answer a stranger (needs the network)
+PASS copy variants set at build time (M11)
+PASS /judges quotes the app's words, 6 + 6 steps
+PASS old pages redirect to pages and anchors that exist
+PASS A-06h: motion.js 4 KB, stills.js 2 KB gzip at most, each only from site.js; no WebGL field; home.css 3.25 KB more, the home's stylesheets 8.5 KB
+PASS /how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch
+PASS the four sides and What's tTARI? are the same on / and /how
+PASS links to site pages and anchors land on something
+PASS V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget
+PASS V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video
+PASS llms-full.txt matches /how, /made and /fine-print
+PASS dates.js in two time zones (M-08)
+PASS fonts: the pinned Geist subset on the home, pinned Geist on reading pages
+PASS every page, desktop, 390 and 360 px; /v3 lands on the home
+PASS home page budget (M-01)
+PASS live numbers and their failure (M-07)
+PASS home words: 120 above the fold, 800 in all, Open your drive first
+PASS A-06h: no WebGL field on the home (the v3 design), nor on /how and /judges
+PASS header: Open your drive always on, to /drive?make or /drive
+PASS motion: reveals, the decode as the slice comes into view; reduced motion and no JavaScript
+PASS copy variants from /config
+PASS status line phase (M-08)
+PASS abuse form: key stripped, never sent without JavaScript
+PASS /made as docs: the contents follow the part being read, links open their disclosure, On this page
+PASS canary reveal (P1)
+PASS theme, judge pass
+FAIL V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light
+     /v2 @1440 y=2700: stage-c plays off screen
+PASS V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box
+PASS /how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled
+note A-06h: motion.js 3,149 B (at most 4,096); stills.js 1,800 B (at most 2,048), gzip -9; home.css 4,128 B (was 1,770, +2,358 of 3,328); the home's stylesheets 8,303 B (home.css 4,128, v2.css 3,185, v3.css 990; at most 8,704)
+note V-01 files: 5 loops on /v2, web/site/media 11,661,323 B in 36 files (at most 12,582,912); css/v2.css 3,185 B, js/clips.js 1,533 B gzip -9
+note V-02 files: 5 stills on the home, web/site/media/v3 480,262 B in 24 files (at most 524,288); css/v3.css 990 B gzip -9
+note fonts: the pinned Geist subset on /, the pinned Geist on /how (0 problems)
+note budget on /: 37 requests, HTML+CSS+JS 58.4 KB gzip, other 75.0 KB, total 133.3 KB, 1 font files, third-party 0 (with the drop widget's first load)
+note API blocked: /made hides 28 [data-needs] blocks, shows 0
+note home words at 390: 46 above the fold, 650 in all
+note home words at 1440: 64 above the fold, 666 in all
+note A-06h @1440: no field.js or pixel.js asked for, 0 canvases on /
+note A-06h @390: no field.js or pixel.js asked for, 0 canvases on /
+note motion @1440: motion.js at 636 ms (load event 380 ms), decode seen: True
+note motion @390: motion.js at 307 ms (load event 199 ms), decode seen: True
+note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; Test file #789: missed (the verifier restarted).
+note V-01 /v2 @1440: 2,877,939 B at load (the hero's loop and poster), 12,580,605 B after scrolling through, uncached
+note V-01 /v2 @390: 2,877,248 B at load (the hero's loop and poster), 12,579,914 B after scrolling through, uncached
+note V-02 / @1440: 258,489 B at load (the hero's still hero-720.avif), 272,816 B after scrolling through, uncached; stills asked for: hero-720.avif, different-640.avif, who-480.avif, gem-480.avif
+note V-02 / @390: 272,062 B at load (the hero's still hero-480.avif), 293,512 B after scrolling through, uncached; stills asked for: hero-480.avif, different-640.avif, who-480.avif, gem-480.avif
+note /how loops: stills.js at 242 ms (load event 221 ms) at 390; the upload loop went through 9 states
+41 of 42 checks without failures, 401 s

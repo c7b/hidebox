@@ -854,3 +854,39 @@ window reached `/v3` in `6c25119`; `/v3` went live in their releases `6c640f5` a
 `spooky-secrets-2026-10` left at `0e05f27`; suites lint, copy, server 331, deploy 83, core 9/9, UI 731/731, site 39/39;
 verify-deploy 0 differences across 206 files against both live releases, D-01 PASS; /v3 weighs 135,202 B after a full
 scroll on a computer (/v2: 12.4 MB). Evidence: `docs/evidence/2026-10-18/home-v3/`.
+
+## Twelfth pass (promote v3): the v3 design becomes the home (2026-10-18)
+
+**Prepared on branch `site/promote-v3`; deployed by the coordinator.** The owner approved `/v3` as it is, with one mark.
+`docs/review/promote-v3.md` has what `/` serves now, every check that was re-pointed and why, the budgets before and
+after, the suites and the screenshots; evidence in `docs/evidence/2026-10-18/promote-v3/`.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | One mark | The previous agent's patch, kept: the open box (`i-hidebox` in the shared sprite) in every header's tile, the comparison's tile, the drive's brand tile and empty drive, `symbol.svg` and `favicon.svg`, the OG and icon templates, the film's end card |
+| 2 | The home is the v3 design | `pages/index.html` is `v3.html`'s body under the home's head (title "your private drive", canonical and `og:url` `/`, both theme-color metas, the JSON-LD graph, indexable, `data-theme="dark"`, `/favicon-32.png` then `/favicon.svg`); the stylesheet chain `home.css`, `v2.css`, `v3.css` (not one file: `/v2` shares the first two); `field.js` and `pixel.js` deleted with their CSS and loaders |
+| 3 | `/v3` | 301 to `/` with and without the slash (Caddyfile `@old_preview`, `headers_spec.REDIRECTS`), no route, no page; `/v2` stays, noindex and unlinked; the sitemap names `/` and never `/v2` or `/v3` |
+| 4 | Checks | V-02 is the home's own image budget (`check_home_stills`, static and browser); A-06h without the two fields, plus a row for the home's three stylesheets (8,704 B; 8,303 measured); the decode check scrolls to the slice; `/v3` lands on `/`; deploy tests and D-01's spec follow. Every new static rule was tried against a broken copy and failed it |
+| 5 | Share cards and icons | `render-images.py` (waits for a card's pictures; draws `favicon-32.png` from `favicon.svg`): `og.png` is the home's first screen with its still (145,788 B), the icons and `favicon.ico` the open box; the cards' alt text follows |
+| 6 | `/favicon.ico` | Rendered by every pass but never served (`.ico` was not a served type): production answers 404. The build serves it now, with a deploy test |
+
+Suites on the server as build, on the final tree: lint PASS, check-copy PASS, server 331 OK (5 skipped), deploy 84 OK, core
+9/9, site 42/42, UI 732/732 (an earlier run met two timing failures under another session's load, `/v2`'s V-01 and the
+UI's `drive-delete-account`; neither recurred). An independent review (code-critic) returned PASS_WITH_NITS, its nits
+taken or recorded. M-01 58.4 KB
+(58.9 before), A-06 unchanged (25,001 / 40,536 / 43,503 B), V-02 on `/` 258,489 B at load at 1440 and 272,816 B
+after a full scroll. No deploy, verify-deploy, D-01 on production, E2E batch, film or tag move in this session.
+
+For the coordinator, from a clean checkout at the branch's head (`git fetch origin && git checkout site/promote-v3`, or
+fast-forward `main` to it first and deploy `main`'s head):
+
+```
+deploy/scripts/deploy.sh <head sha>                                    # gate, build, upload, activate, smoke, notarize
+python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <head sha>
+python3 -I tests/e2e/test_headers.py --origin https://srv2052606.hstgr.cloud      # D-01: /v3 and /v3/ now 301 to /
+python3 -I tests/e2e/run.py                                            # the non-chain batch
+git tag -f spooky-secrets-2026-10 <head sha> && git push -f origin spooky-secrets-2026-10   # if the judges' tag moves
+python3 -I tools/film.py --origin https://srv2052606.hstgr.cloud --host hidebox --out film   # then purge its drive by id
+```
+
+The Caddyfile changed (the `/v3` handler became a redirect), so `activate-release.sh` validates and reloads Caddy.

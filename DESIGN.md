@@ -48,7 +48,7 @@ colors:
   brand-subtle: "oklch(0.985 0.035 126.5)"
   brand-border: "oklch(0.93 0.131 126.1)"
   brand-tile: "oklch(0.966 0.07 125.9)"
-  brand-field: "oklch(0.62 0.16 127.9)"     # the grid's lines and the closing's pixels
+  brand-field: "oklch(0.62 0.16 127.9)"     # the static grid's lines (/judges)
   brand-text-dark: "oklch(0.918 0.235 126.3)"
   brand-subtle-dark: "oklch(0.218 0.034 126.5)"
   brand-border-dark: "oklch(0.381 0.08 126)"
@@ -222,7 +222,7 @@ something.
   public pages' one action colour, beside Ink, chosen by the owner for site v3 in place of Sea. It fills
   **Open your drive**, the site's one action (header, hero, closing), under a near-black label (16.32:1), with
   a 1px lime-700 edge on light pages; tints the You card in Who sees what and the hidebox column of the
-  comparison; draws the home's two fields (the grid behind the hero, the pixels behind the closing). Light pages
+  comparison; draws the open box, the mark, on its ink tile (both themes). Light pages
   never write lime as text: brand text there is the olive lime-800 (7.20:1). **In the drive (site v4)** lime
   fills the one next step of each view, the shadcn default variant (`components.css`, the drive's
   `ui/tokens.css` `--brand-*`): Upload a folder (or Upload files) on the empty drive, New while My drive or a
@@ -259,8 +259,8 @@ violet. Nothing decorative is ever violet.
 **The Colour Is A Word Rule.** Green, amber and red appear only next to the word they qualify (Paid,
 Full, Delete); never as decoration, dots or backgrounds of whole sections.
 **The QR Is Ink On White Rule.** QR codes stay dark on white in both themes so every camera reads them.
-**The Lime Is Yours Rule.** Lime marks your side of hidebox: Open your drive, the two fields, the You card, the
-hidebox column, and in the drive the one thing to do next. If it is not yours, it is not lime; one lime a view (the tint of a picked row or of the part being read is not a second lime). Open your drive is always on in the sticky header (site v3:
+**The Lime Is Yours Rule.** Lime marks your side of hidebox: Open your drive, the open box (the mark), the You card,
+the hidebox column, and in the drive the one thing to do next. If it is not yours, it is not lime; one lime a view (the tint of a picked row or of the part being read is not a second lime). Open your drive is always on in the sticky header (site v3:
 the owner's call; it no longer steps aside while the page's own is in view).
 
 ## Typography
@@ -313,13 +313,17 @@ Headings and the status pill stay one line.
   every word of the page is still there, for readers without JavaScript too.
 - **Empty drive:** the brand moment (the ink tile taking in two Lucide file icons), one primary (Upload a
   folder on computers, Upload files on phones), and the Tari address row with Copy.
-- **Home (site v2, v3, v4):** a centred hero over the grid field (the headline "Your private cloud storage." with
-  "Privacy isn't an option." and "It's the default." below it in grey, one sentence a line; the 56px lime Open
-  your drive, the site's one action), the slice of a drive hanging 56px into Just share one thing (its words decode from hex
-  noise on arrival), then Share it your way (the rules grouped, the share window as the picture, tilted, with a line under it), What's
-  different from a usual drive? (hidebox beside one popular cloud drive), Who sees what (four cards), Tari does the private parts with What's tTARI?, the
-  closing over the pixel field, and the footer. Sections alternate two surfaces (`--bg`, `--bg-alt`) and each seam
-  is a hairline with a ruler of 5px ticks on the field's 48px grid; their parts arrive as they scroll in.
+- **Home (the v3 design since the twelfth pass, docs/review/promote-v3.md; its words from site v4):** dark first.
+  The hero's words on the left (the headline "Your private cloud storage." with "Privacy isn't an option." and
+  "It's the default." below it in grey, one sentence a line; the 56px lime Open your drive, the site's one action)
+  and its still on the right: the open box with the files rising out of it in its light. Under them the slice of a
+  drive hanging 56px into Just share one thing (its words decode from hex noise as it comes into view), then Share it
+  your way (the rules grouped, the share window as the picture, tilted, with a line under it), What's different from
+  a usual drive? (its still beside the question, hidebox beside one popular cloud drive under them), Who sees what
+  (four cards beside the box with four faces), Tari does the private parts with What's tTARI? (beside the gem), the
+  closing under the hero's still again, and the footer. Each still is opaque on the page's ink in dark mode and sits
+  on a gunmetal card through `lighten` in light mode; AVIF and WebP at three widths, only the hero's fetched first.
+  No WebGL field. Sections alternate two surfaces (`--bg`, `--bg-alt`); their parts arrive as they scroll in.
 
 ## Elevation & Depth
 
@@ -400,9 +404,8 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 - **Don't** bring back a mascot or any illustration beyond Lucide line icons in empty states (the empty
   drive's tile with two file icons is the one composed moment).
 - **Don't** say a link's end goes on the chain: only a file that leaves gets a receipt.
-- **Don't** add gradients, glows, glass panels or coloured bands. Two fields on the home, in the brand colour,
-  never under a word: the grid behind the hero (`web/site/js/field.js`; its static grid is the fallback and
-  /judges' one reuse) and the pixels behind the closing (`web/site/js/pixel.js`, static CSS pixels as fallback).
+- **Don't** add gradients, glows, glass panels or coloured bands. The home's light lives in its stills (and v2's
+  gunmetal card under them in light mode), never under a word; the static grid stays /judges' one field.
 - **Don't** hide content for motion's sake: the site's reveals and the hero picture's decode
   (`web/site/js/motion.js`) touch only what is below the fold when they run, never run without JavaScript or
   with reduced motion, stay within 700 ms and 60 ms a step, and leave the DOM as it was served. The one motion that

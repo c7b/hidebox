@@ -1,6 +1,21 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- twelfth pass, the v3 design is the home -->
+## 2026-10-18: the twelfth pass (the v3 design becomes the home)
+
+- **The home is the v3 design**, as the owner approved it: dark first, the words beside the open box with the files
+  rising out of it, a still beside What's different from a usual drive?, Who sees what and Tari does the private
+  parts, and the open box again over the closing. The words, buttons, links and the anonymous widget are the home's
+  as they were; the light switch still turns the lights on. The moving grid behind the hero and the pixel field behind
+  the closing are gone with it (two scripts fewer).
+- **One mark:** the open box, lime on ink, is the tile in every page's header, the comparison's hidebox column, the
+  drive's brand tile and empty drive, the favicon (`/favicon.svg`, and a 32 px PNG), the app icons and both share
+  cards; the share card (`og.png`) is the home's first screen with its still.
+- **`/v3` answers 301 to `/`**; `/v2` (the loops) stays where it was, noindex and linked from nowhere. Review:
+  `docs/review/promote-v3.md`.
+<!-- /twelfth pass, the v3 design is the home -->
+
 <!-- under the hood as docs -->
 ## 2026-10-18: Under the hood reads as docs
 

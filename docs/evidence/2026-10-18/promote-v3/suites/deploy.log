@@ -1,0 +1,7 @@
+== deploy: python3 -I -m unittest discover -s deploy/tests
+....................................................................................
+----------------------------------------------------------------------
+Ran 84 tests in 2.960s
+
+OK
+SealLog: this deployment names no log

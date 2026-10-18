@@ -2,8 +2,9 @@
 # The site of hidebox (codename mutis) and its shared design system
 
 The site (`web/site/`) and the design system the app shares with it (`web/shared/`): the six pages of
-16-drive-design §2 and §11, restyled by site v2 (research/17-site-brief.md, 17-brand.md): the home with a
-centred hero over the ripple field, Make my drive, a slice of a drive and the anonymous widget; how it works
+16-drive-design §2 and §11, restyled by site v2 (research/17-site-brief.md, 17-brand.md): the home (the v3
+design since the twelfth pass, docs/review/promote-v3.md: dark first, its words beside the open box with the files
+rising out of it, a still by every section, a slice of a drive and the anonymous widget); how it works
 in five stills of the real interface; Under the hood (how it was made); for judges; the fine print; 404),
 SEO and static files, the brand tile and the partials.
 
@@ -33,15 +34,15 @@ each amount-proof mode, with `web/app/i18n/en.json`. Last run on the server: see
 | `../shared/dates.js` | `MAINNET`, `phase()`, `isOctober31()`, `msToNextLocalMidnight()`, `applyPhase(root, now)` |
 | `../shared/theme.js` | classic script in `<head>`, before the first paint: "Lights off / Lights on", and `html.motion` when scripts run and motion is allowed |
 | `../shared/icons.svg` | the icon sprite of 11-brand §13.8, plus drop slot, watch and the wall's `keyhole` |
-| `../shared/brand/` | `symbol.svg`, `favicon.svg`: the brand tile (ink square, Lucide lock), light and dark |
+| `../shared/brand/` | `symbol.svg`, `favicon.svg`: the mark, the open box in lime on its ink tile (docs/review/home-v3.md), the same in both themes; `../shared/ui/icons.svg#i-hidebox` draws it in the header's tile |
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
-| `pages/` | `index how made judges fine-print 404`, `v2` (the home with the product loops at `/v2`: noindex, linked from nowhere; [docs/review/home-v2.md](../../docs/review/home-v2.md)) and `v3` (`/v2` with stills in place of every loop and the open box as the mark, at `/v3`, the same terms; [docs/review/home-v3.md](../../docs/review/home-v3.md)) |
-| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home it loads `field.js` after the load event, A-06h), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click; it also marks the part being read in /made's contents and breadcrumb, and opens the disclosure a link points into), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js`; `clips.js` (`/v2` only: its loops, asked for as they come near, playing only on screen); `stills.js` (`/how` only: its stills replay what they show, from `site.js` after the load event, with motion allowed) |
-| `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), `v2.css` (`/v2` and `/v3`, over `home.css`), `v3.css` (`/v3` only, over `v2.css`), on `../shared/tokens.css` and `base.css` |
+| `pages/` | `index how made judges fine-print 404`, `v2` (the home with the product loops at `/v2`: noindex, linked from nowhere; [docs/review/home-v2.md](../../docs/review/home-v2.md)). `/v3` (`/v2` with stills, [docs/review/home-v3.md](../../docs/review/home-v3.md)) became `index` and answers 301 to `/` ([docs/review/promote-v3.md](../../docs/review/promote-v3.md)) |
+| `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home, /how and /judges it loads `motion.js` after the load event, A-06h; the home has no WebGL field since the v3 design), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click; it also marks the part being read in /made's contents and breadcrumb, and opens the disclosure a link points into), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js`; `clips.js` (`/v2` only: its loops, asked for as they come near, playing only on screen); `stills.js` (`/how` only: its stills replay what they show, from `site.js` after the load event, with motion allowed) |
+| `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), `v2.css` (`/v2` and the home, over `home.css`), `v3.css` (the home only, over `v2.css`), on `../shared/tokens.css` and `base.css` |
 | `media/motion/` | `/v2`'s four loops, each a VP9 WebM with alpha, an H.264 MP4 on black (WebKit's) and its RGBA first frame as the poster. Committed like every other served file, so the build's manifest lists them and `tools/verify-deploy.py` checks their bytes; the pipeline has no other way to serve static files (`/srv/mutis/status` holds only the timers' JSON). Budget V-01 in `tests/static_checks.py` and `browser_checks.py` |
-| `media/v3/` | `/v3`'s four stills (the hero's, which the closing shows again, What's different's, Who sees what's and Tari's), each an AVIF and a WebP at three widths for `srcset`, made with ffmpeg on the server from the owner's PNGs (not committed); the open box as `hidebox-mark.svg` (the favicon) and `favicon-32.png`. Budget V-02 in `tests/static_checks.py` and `browser_checks.py` |
-| `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg`, icons, `og.png`, `og-s.png` |
+| `media/v3/` | The home's four stills, first shown at `/v3` (the hero's, which the closing shows again, What's different's, Who sees what's and Tari's), each an AVIF and a WebP at three widths for `srcset`, made with ffmpeg on the server from the owner's PNGs (not committed). Budget V-02 in `tests/static_checks.py` and `browser_checks.py` (`check_home_stills`) |
+| `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg` (the open box) and `favicon-32.png`, icons, `og.png` (the home's first screen with its still), `og-s.png` |
 | `og/` | HTML sources of the OG cards and app icons (not served) |
 | `tools/` | `subset-fonts.sh`, `subset-geist.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
 | `tests/` | `run.py`, `static_checks.py`, `browser_checks.py`, `dates.test.mjs`, `serve.py`, `shots.py`, `make-canary.mjs`, `fixtures/` |

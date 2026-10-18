@@ -1,0 +1,16 @@
+{
+ "/v3": {
+  "status": 301,
+  "location": "/"
+ },
+ "/v3/": {
+  "status": 301,
+  "location": "/"
+ },
+ "browser": {
+  "asked": "/v3",
+  "landed": "/",
+  "title": "hidebox: your private drive",
+  "body": "home v2 v3"
+ }
+}
