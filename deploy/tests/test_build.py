@@ -158,6 +158,16 @@ class BuildTest(unittest.TestCase):
         self.assertNotIn("/v3", sitemap)
         self.assertFalse((dist / "v3").exists())
 
+    def test_the_favicon_ico_is_served(self):
+        """/favicon.ico, which Bing, feed readers and old browsers ask for by name, reaches dist/ (render-images.py
+        writes it; before promote-v3 the build left .ico out and production answered 404)."""
+        data = b"\0\0\1\0\1\0" + b"\x89PNG\r\n"
+        (self.web / "site" / "static" / "favicon.ico").write_bytes(data)
+        self.build()
+        self.assertEqual((self.tmp / "dist" / "favicon.ico").read_bytes(), data)
+        manifest = json.loads((self.tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text())["files"]
+        self.assertIn("favicon.ico", manifest)
+
     def test_test_evidence_is_never_served(self):
         (self.web / "app" / "shots").mkdir()
         (self.web / "app" / "shots" / "home-390.webp").write_bytes(b"RIFF")

@@ -38,7 +38,7 @@ PINNED = {
     "ootle-wasm-0.46.0/ootle_wasm_bg.js": "2a338a3c8ef81b314c41487c9e2dc3d1f77942ea9f47c672fd971ab40d3ac36b",
 }
 # Only these are ever copied into dist/ (an allow-list: notes, reviews, sources and tests never leak).
-SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".webp", ".avif", ".jpg", ".woff2",
+SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".ico", ".webp", ".avif", ".jpg", ".woff2",
               ".webmanifest", ".txt", ".xml", ".json", ".webm", ".mp4"}
 SERVED_NAMES = re.compile(r"(LICENSE|NOTICE|SHA256SUMS|PROVENANCE\.md|[^/]+\.d\.ts)")
 NEVER_SERVED = re.compile(r"(^|/)package\.json$")
