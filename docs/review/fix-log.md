@@ -890,3 +890,28 @@ python3 -I tools/film.py --origin https://srv2052606.hstgr.cloud --host hidebox 
 ```
 
 The Caddyfile changed (the `/v3` handler became a redirect), so `activate-release.sh` validates and reloads Caddy.
+
+## Thirteenth pass (drive v3): the drive in the home's v3 look (2026-10-18)
+
+The owner's order, with the v3 look approved: "update all the other icons and colors in /drive to match the same vibe
+of v3." No devil's-advocate pass. `docs/review/drive-v3.md` has the tokens before and after, the contrast table, the
+budgets and the screenshots. Built on the home promotion's branch (its mark commit `408f08f`, another session's), so the drive's
+mark is that branch's open box (`i-hidebox`, `/favicon.svg`) and no copy of it was added.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | The mark | The open box on its ink tile in the sidebar, the start screen, the empty drive and the pay page's and folder viewer's top bar (the promotion's change); in dark the tile is frosted (a 9 % hairline, an 18 % lit top edge). Light: the ink tile, since lime alone on white is 1.21:1 (lime on ink 16.32:1, the tile on white 19.80:1) |
+| 2 | Colours | `web/shared/ui/tokens.css`: dark is v3's void `#0A0A0A` with one gunmetal ramp (OKLCH hue 258: rail `#101113`, cards `#131417`, menus `#17191C`, fills `#1F2226`), Tari's violet the site's `#A684FF`; light is the site's light (secondary text `#666666`, 5.27:1 on the fills where `#737373` was 4.35:1), the warning a step darker (4.87:1 on its wash, 4.37 before). The site's `web/shared/tokens.css` untouched |
+| 3 | Glass and chips | Dark only: frosted glass (v2.css's recipe, opaque base, no blur under text) on cards, the file table, folders, dialogs, sheets, menus, toasts, alerts and the white New buttons; icon tiles as small frosted tiles; the rule badges as v3's chip (a 7 % white wash; on glass the old fill was the card's colour); the header frosted (the one blur, solid with reduced transparency). The link and task pages' cards take the same glass in dark (`look.css`) and their theme colours leave the ghost's indigo |
+| 4 | The start screen | `/drive` with no drive: the home's open box still (its AVIF and WebP, no new file) beside the words on a computer, under them on a phone; on the void in dark, on v3's gunmetal card through `lighten` in light |
+
+
+Also: the link page's rule and scan note now break one sentence a line (they sat in a `<span>`, out of `lines.js`'s
+reach), and the drive and the link pages name the home's 32 px PNG favicon and touch icon beside the SVG. An
+independent review of the diff (the code-critic agent) failed it on three points, fixed before release: a word
+check-copy bans in the evidence README; the link pages' glass lifting two surfaces `app.css` keeps flat (/locker's
+second choice row, /upgrade's free plan); the two-column start catching the one-child Opening your drive and error
+screens. Its nits and three contrast risks outside the diff were taken (a red badge in dark 2.89:1 → 6.85:1, a
+highlighted Move to trash in light 4.01:1 → 5.06:1, a destructive alert's text). Suites on the branch with the
+promotion under it: lint, copy, core 9/9, server 331, deploy 83, site 42/42, UI 751/751 (`drive-v3` adds 19 checks;
+no expectation changed). A-06d 119,760 B (was 116,965). RELEASE-TBD
