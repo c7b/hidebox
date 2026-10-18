@@ -229,8 +229,9 @@ something.
   folder lists files, Share in the bar once one file is picked, Next, Make link and Copy link in the share
   dialog, Make my drive and Open on the start screen, Save key file, each dialog's confirm, Get space, Pay with
   test money and Open it on the pay page, the folder viewer's open and save; picked rows sit on the lime tint
-  (`--brand-subtle`). Everything else names its variant (outline, secondary, ghost); destructive actions,
-  Delete it after included, stay red. Lime never goes on links, focus rings (lime on white is 1.21:1), badges,
+  (`--brand-subtle`). On Under the hood the part being read sits on that tint in the contents, its words and its group's
+  name in brand text, like a picked row: the one link that wears the tint, and never the fill. Everything else names its variant (outline, secondary, ghost); destructive actions,
+  Delete it after included, stay red. Lime never goes on links (but for that one, on the tint), focus rings (lime on white is 1.21:1), badges,
   status or anything that is a Tari payment. The single-file link page keeps its ink Open it under the header's
   lime Open your drive, so it still has one lime.
 
@@ -259,7 +260,7 @@ violet. Nothing decorative is ever violet.
 Full, Delete); never as decoration, dots or backgrounds of whole sections.
 **The QR Is Ink On White Rule.** QR codes stay dark on white in both themes so every camera reads them.
 **The Lime Is Yours Rule.** Lime marks your side of hidebox: Open your drive, the two fields, the You card, the
-hidebox column, and in the drive the one thing to do next. If it is not yours, it is not lime; one lime a view. Open your drive is always on in the sticky header (site v3:
+hidebox column, and in the drive the one thing to do next. If it is not yours, it is not lime; one lime a view (the tint of a picked row or of the part being read is not a second lime). Open your drive is always on in the sticky header (site v3:
 the owner's call; it no longer steps aside while the page's own is in view).
 
 ## Typography
@@ -304,6 +305,12 @@ Headings and the status pill stay one line.
   and the page pads its end by the button's height; dialogs fill the width minus 1rem gutters with stacked footers (primary on top); the QR
   code is hidden and Share becomes the primary action.
 - **Folder cards** flow in an auto-fill grid (min 15rem) on computers. **Reading pages** keep a 44rem column.
+- **Under the hood (/made) reads as docs (2026-10-17, the owner's):** the page on the second surface (`--bg-alt`),
+  each part a card on it (an icon tile beside its heading, violet only for the Tari parts), the cards inside a part
+  turned into wells; a breadcrumb that sticks under the header and names the part being read; from 1024px a sticky
+  contents on the left in four groups that fold, the part being read on the lime tint; on phones the same contents
+  in a closed On this page. Long detail waits in the accordions and What we can't hide is eleven rows that open;
+  every word of the page is still there, for readers without JavaScript too.
 - **Empty drive:** the brand moment (the ink tile taking in two Lucide file icons), one primary (Upload a
   folder on computers, Upload files on phones), and the Tari address row with Copy.
 - **Home (site v2, v3, v4):** a centred hero over the grid field (the headline "Your private cloud storage." with

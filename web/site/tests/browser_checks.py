@@ -126,13 +126,15 @@ HIDDEN_NEEDS = "[...document.querySelectorAll('[data-needs]')].filter(e => e.hid
 
 def check_live_numbers(browser):
     """M-07: numbers come from /config, /stats, /canary, /evidence.json and /status.json, and disappear when
-    those fail. They live on /made since the ghost (the limits table, the status line, the test file)."""
+    those fail. They live on /made since the ghost (the limits table, the status line, the test file); since /made
+    became docs (2026-10-17) the evidence waits one click deep, in Live evidence, so its disclosures are opened first."""
     problems = []
     blocks = ("[data-canary]", "[data-evidence]", "[data-status-line]")
     with server() as origin:
         page = browser.page(1440, 900)
         page.goto(origin + "/made", settle=2.5)
         _scroll_through(page, "check", "limits")
+        page.eval("document.querySelectorAll('main details').forEach((d) => { d.open = true; })")
         text = page.eval("document.body.innerText")
         for expected in ("per drive", "Largest file", "budget for sponsor grants is used", "test deliveries"):
             if expected.lower() not in text.lower():
@@ -308,6 +310,61 @@ def check_abuse(browser):
             field, hash_ = page.eval("[document.getElementById('abuse-link').value, location.hash]")
             if field != expected or hash_:
                 problems.append(f"prefill {reported!r}: field {field!r}, fragment {hash_!r}")
+    return problems
+
+
+CONTENTS = "[document.querySelector('.side-toc a[aria-current]')?.textContent, document.querySelector('[data-crumb]').textContent]"
+PART_NAMES = "[...document.querySelectorAll('.side-toc a')].map((a) => [a.hash.slice(1), a.textContent])"
+LANDED = "(id) => [Math.round(document.getElementById(id).getBoundingClientRect().top), document.querySelector('[data-crumb]').textContent]"
+
+
+def check_contents(browser):
+    """/made as docs (2026-10-17): from 1024 px the contents stick on the left and, with the breadcrumb, name the part
+    being read; each contents link brings its part under the breadcrumb and marks it (1440 and 1920 wide, SealLog off,
+    the HTML's default, where Receipts is short); a fresh /made#<part> lands there too, on a phone and a computer,
+    after /config has filled the page; a link to something inside a closed disclosure (security.txt's
+    /made#disclosure) opens it; on a phone the contents are a closed On this page that closes after a tap."""
+    problems = []
+    with server() as origin:
+        page = browser.page(1280, 800)
+        page.goto(origin + "/made", settle=1.5)
+        names = page.eval(PART_NAMES)
+        if page.eval(CONTENTS) != ["The short version", "The short version"]:
+            problems.append(f"at the top the contents mark {page.eval(CONTENTS)}")
+        page.scroll_to(page.eval("document.getElementById('limits').getBoundingClientRect().top + scrollY - 100"), 0.8)
+        if page.eval(CONTENTS) != ["Space", "Space"] or page.eval("document.querySelector('.docs-side').getBoundingClientRect().top") < 60:
+            problems.append(f"at Space the contents mark {page.eval(CONTENTS)}, or they scrolled away")
+        for width, height in ((1440, 900), (1920, 1080)):
+            page = browser.page(width, height)
+            page.goto(origin + "/made", settle=1.5)
+            for part, name in names:
+                page.eval(f"document.querySelector('.side-toc a[href=\"#{part}\"]').click()")
+                page.b.pump(0.4)
+                if page.eval(CONTENTS) != [name, name]:
+                    problems.append(f"@{width}: the contents link {name} marks {page.eval(CONTENTS)}")
+        for width, height, mobile in ((1280, 800, False), (390, 844, True)):
+            for part, name in names:
+                fresh = browser.page(width, height, mobile=mobile)
+                fresh.goto(f"{origin}/made#{part}", settle=1.2)
+                top, said = fresh.eval(f"({LANDED})('{part}')")
+                if not 100 <= top < 200 or said != name:
+                    problems.append(f"@{width}: /made#{part} lands at {top} px, the breadcrumb says {said!r}")
+                fresh.close()
+        page = browser.page(1280, 800)
+        page.goto(origin + "/made#disclosure", settle=1.5)
+        landed = page.eval("(() => { const t = document.getElementById('disclosure'); return [t.closest('details').open, t.getBoundingClientRect().top, "
+                           "document.querySelector('.crumbs').getBoundingClientRect().bottom]; })()")
+        if not landed[0] or not landed[2] <= landed[1] < 200:
+            problems.append(f"/made#disclosure: open {landed[0]}, lands at {landed[1]:.0f} px (breadcrumb ends at {landed[2]:.0f})")
+        phone = browser.page(390, 844, mobile=True)
+        phone.goto(origin + "/made", settle=1.5)
+        jump = "document.querySelector('.page-jump')"
+        if phone.eval(f"{jump}.open") or phone.eval("document.querySelector('.docs-side').checkVisibility()"):
+            problems.append("phone: On this page starts open, or the sidebar shows")
+        phone.eval(f"{jump}.open = true; {jump}.querySelector('a[href=\"#check\"]').click()")
+        phone.b.pump(0.8)
+        if phone.eval(f"{jump}.open") or not 0 < phone.eval("document.getElementById('check').getBoundingClientRect().top") < 160:
+            problems.append("phone: a tap in On this page doesn't close it, or Check us doesn't land under the breadcrumb")
     return problems
 
 
@@ -888,6 +945,7 @@ CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading 
           ("motion: reveals, the decode, the pixel field; reduced motion and no JavaScript", check_motion),
           ("copy variants from /config", check_variants), ("status line phase (M-08)", check_phase),
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
+          ("/made as docs: the contents follow the part being read, links open their disclosure, On this page", check_contents),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
           ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2),
           ("V-02: /v3's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode", check_v3),

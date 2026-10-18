@@ -63,7 +63,7 @@ Want every detail? Read Under the hood (/made).
 
 Under the hood
 How it was made. Each claim names its limits and a way to check it.
-Jump to a part
+On this page
 
 ## The short version
 Your browser encrypts each file with AES-256-GCM before upload. We store ciphertext and never receive the key. Everything after # is the key. Browsers don't send it to any server, including ours.
@@ -120,13 +120,14 @@ Moving a file into a folder that has a link shares it too, and the drive says so
 ## Pay to open
 Pay to open is built and switched off on this deployment. Until it is on, this is how it will work.
 The money goes straight to the owner's Tari address; our server keeps half of the key and hands it to the buyer once Tari's chain shows the payment, so the owner can be offline and we never hold the money or the whole key.
+Next: the locked payment, a Tari payment with a refund built in, so a buyer gets the money back if the owner never delivers. It isn't built yet.
+The split key, and its limits
 - We keep half of the key and give it to you once the chain shows your payment. The other half is in the link, which we never see. Neither half opens it alone.
 - If the link leaks, our server could open it too.
 - We check the amount and that the payment is on the chain. Only the owner's drive can check the money is theirs to spend.
 - Test money comes from our demo wallet, so it can be grouped with our other payments. It opens at once, because our wallet built it. Paid from your own wallet? It opens after the owner's drive checks it.
 - Payments can't be taken back, by us or by Tari. Pay only if what you see here is enough.
 - To see who paid you, we keep your sales view key. It is sealed, so a copy of our database can't read it. Our payment checker on our server can. A view key can see payments, never spend them.
-Next: the locked payment, a Tari payment with a refund built in, so a buyer gets the money back if the owner never delivers. It isn't built yet.
 
 ## Send by Tari
 Send by Tari: the key rides inside a payment to their address. Only they can open it.
@@ -188,16 +189,16 @@ The free quota; our disk's size and free space, rounded; whether uploads or the 
 Everything our server stores, plus the disk and any snapshots it keeps; in principle, live memory.
 
 ## Space, and when files go
-
-### Free
-If the disk ever truly fills, new uploads pause for everyone, and nothing already stored is lost.
-When the number goes down, nothing of yours is deleted. You can't add more until you're under it again.
-Files shared without a drive have their own reserved space, and small files have a reserved lane of their own, so a busy day of big uploads can't crowd out a quick note.
 The limits below come live from our server; they're also at /api/v1/config (/api/v1/config).
 
 ### Limits
 | | No drive | Free drive | More space
 | Files in your drive | no | until you delete them | until you delete them
+
+### Free space, and when files go
+If the disk ever truly fills, new uploads pause for everyone, and nothing already stored is lost.
+When the number goes down, nothing of yours is deleted. You can't add more until you're under it again.
+Files shared without a drive have their own reserved space, and small files have a reserved lane of their own, so a busy day of big uploads can't crowd out a quick note.
 
 ### More space, paid in tTARI
 | Pack | Price (testnet) |
@@ -244,6 +245,13 @@ Read the code that does it ({{REPO_URL}}/blob/main/server/mutis/payments.py)
 
 ## Check us
 SRI only pins files to this page; it can't protect you from us. What can: comparing what we serve with the published source, and running your own copy.
+
+### Try to read one of our files
+Every hour we lock a test file. Here it is, exactly as our disk holds it.
+Download the stored bytes (/api/v1/canary/raw) curl -OJ {{ORIGIN}}/api/v1/canary/raw
+It shows what our disk holds. It can't prove we can't read your files: we locked this one ourselves, and we publish its key a day later.
+
+### Compare what we serve with the source
 - Every build writes a manifest (/.well-known/mutis-manifest.json) with the SHA-256 of every file this site serves and the git commit it came from.
 - tools/verify-deploy.py rebuilds the site from a clean checkout of that commit, downloads every file in the live manifest, and prints any difference.
 $ git clone {{REPO_URL}} $ cd hidebox $ python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}
@@ -258,11 +266,6 @@ No analytics, no trackers, no third-party scripts or fonts. Your browser contact
 ### Headers and content security policy
 Every response carries HSTS, X-Content-Type-Options: nosniff, Referrer-Policy: no-referrer, Cross-Origin-Opener-Policy and Cross-Origin-Resource-Policy: same-origin, X-Frame-Options: DENY and a Permissions-Policy that turns off the camera, microphone, location, payment and USB APIs.
 Pages allow scripts, styles, fonts and requests only from this origin, and nothing inline is allowed to run. The app pages add WebAssembly for the official Tari library, Trusted Types where the browser supports them, and the two Tari-run indexers for the “Check it on Tari's indexer” button.
-
-### Try to read one of our files
-Every hour we lock a test file. Here it is, exactly as our disk holds it.
-Download the stored bytes (/api/v1/canary/raw) curl -OJ {{ORIGIN}}/api/v1/canary/raw
-It shows what our disk holds. It can't prove we can't read your files: we locked this one ourselves, and we publish its key a day later.
 
 ### Live evidence
 Our own test transactions, never a user's. They come from /evidence.json (/evidence.json), refreshed every hour; older ones are archived in the repository ({{REPO_URL}}/tree/main/docs/evidence)

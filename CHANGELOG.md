@@ -1,6 +1,20 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- under the hood as docs -->
+## 2026-10-18: Under the hood reads as docs
+
+- **`/made`, shorter and easier to scan**, at the owner's request: the page sits on the second surface with each part
+  a card, a sticky contents on the left from 1024px (four groups that fold, the part being read on the lime tint) and a
+  breadcrumb under the header that names it; on phones the contents are a closed On this page. Long detail (the
+  cryptography, the threat table, every party fact by fact, how free space and paid space work, how SealLog and
+  payment checks work, the ways to check us, the logs, how it was built) waits in accordions, and What we can't hide
+  is eleven numbered rows that open. At 1280 × 800 on the test server, scrolled through so the live parts have loaded: 14,609 px
+  before, 9,163 after (its defaults; 16,144 and 9,949 with every feature on).
+- No word, claim or anchor is gone: `/made#locks`, `#limits`, `#check`, `#who`, `#disclosure` and the rest still land,
+  and a link into a closed accordion opens it. Without JavaScript the contents are plain links. `llms-full.txt` follows.
+<!-- /under the hood as docs -->
+
 <!-- repository front page -->
 ## 2026-10-18: the README, shorter (docs only)
 

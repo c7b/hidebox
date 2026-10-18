@@ -36,20 +36,112 @@
 .page-head h1 { font: var(--t-hero); letter-spacing: -.025em; }
 .page-head .lede { font: var(--t-say); color: var(--fg-2); max-width: 40rem; }
 
-/* Under the hood's jump list: two columns of links on computers, a closed "Jump to a part" on phones */
-.toc ul, .jump ul { list-style: none; margin: 0; padding: 0; }
+/* the fine print's jump list: its links on computers */
+.toc ul { list-style: none; margin: 0; padding: 0; }
 .toc { display: none; margin-top: var(--s-3); max-width: 36rem; }
 .toc ul { columns: 2; column-gap: var(--s-6); }
-.toc li, .jump li { break-inside: avoid; }
-.toc a, .jump a { display: inline-flex; align-items: center; min-height: 32px; font: var(--t-ui); font-size: .9375rem; color: var(--fg); }
-.jump { margin-top: var(--s-2); border-block: 1px solid var(--hair); }
-.jump summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; font: var(--t-ui); font-size: 1rem; cursor: pointer; list-style: none; }
-.jump summary::-webkit-details-marker { display: none; }
-.jump summary::after { content: ""; inline-size: 7px; block-size: 7px; border: solid var(--fg-2); border-width: 0 1.5px 1.5px 0; rotate: 45deg; translate: 0 -2px; transition: rotate var(--dur-2) var(--ease-out); }
-.jump[open] summary::after { rotate: 225deg; translate: 0 2px; }
-.jump ul { display: grid; padding-bottom: var(--s-3); }
-.jump a { min-height: 44px; }
-@media (min-width: 720px) { .toc { display: block; } .jump { display: none; } }
+.toc li { break-inside: avoid; }
+.toc a { display: inline-flex; align-items: center; min-height: 32px; font: var(--t-ui); font-size: .9375rem; color: var(--fg); }
+@media (min-width: 720px) { .toc { display: block; } }
+
+/* ---------- Under the hood as docs (the owner, 2026-10-17): the page on the second surface, each part a card
+   on it; from 1024px a sticky contents on the left (four groups that fold), the part being read on the lime tint
+   like a picked row; on phones the same contents in a closed "On this page". A breadcrumb sticks under the header
+   and names the part being read (made.js); long detail waits in the accordions. ---------- */
+.docs-page { background: var(--bg-alt); }
+.docs { gap: var(--s-6); padding-top: var(--s-5); }
+.docs-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-content: start; min-width: 0; }
+.docs-side { display: none; }
+@media (min-width: 1024px) {
+  .docs { grid-template-columns: 14rem minmax(0, 1fr); column-gap: var(--s-7); align-items: start; }
+  .docs-side {
+    display: block; position: sticky; top: calc(60px + var(--s-5)); max-height: calc(100svh - 60px - 2 * var(--s-5));
+    overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 6px; margin: -6px;
+  }
+}
+.side-toc { display: grid; gap: var(--s-2); }
+.side-toc ul, .page-jump ul { list-style: none; margin: 0; padding: 0; }
+.side-group > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-height: 36px; padding: 6px 10px;
+  border-radius: var(--r-input); font: 600 .875rem/1.3 var(--font); color: var(--fg); cursor: pointer; list-style: none;
+}
+.side-group > summary::-webkit-details-marker, .page-jump > summary::-webkit-details-marker { display: none; }
+.side-group > summary::after, .page-jump > summary::after, .crumbs li + li::before, .truths-list summary::after {
+  content: ""; inline-size: 7px; block-size: 7px; flex: none; border: solid var(--fg-2); border-width: 0 1.5px 1.5px 0;
+  rotate: -45deg; transition: rotate var(--dur-2) var(--ease-out), translate var(--dur-2) var(--ease-out);
+}
+.side-group[open] > summary::after { rotate: 45deg; translate: 0 -2px; }
+.side-group > summary:hover, .side-toc a:hover { background: var(--bg-sunken); color: var(--fg); }
+.side-group:has([aria-current="location"]) > summary { color: var(--brand-text); }
+.side-toc ul { display: grid; gap: 2px; padding: 2px 0 var(--s-2) var(--s-3); }
+.side-toc a {
+  display: flex; align-items: center; min-height: 32px; padding: 5px 10px; border-radius: var(--r-input);
+  font: 500 .875rem/1.35 var(--font); color: var(--fg-2); text-decoration: none;
+}
+.side-toc a[aria-current="location"] { background: var(--brand-subtle); color: var(--brand-text); box-shadow: inset 0 0 0 1px var(--brand-border); font-weight: 600; }
+
+/* the breadcrumb: Home, Under the hood, and (with JavaScript) the part being read; it stays under the header */
+.crumbs {
+  position: sticky; top: 60px; z-index: 2; margin: calc(-1 * var(--s-3)) -6px calc(-1 * var(--s-2)); padding: var(--s-3) 6px var(--s-2);
+  background: var(--bg-alt);
+}
+.crumbs::after { content: ""; position: absolute; inset: auto 6px 0; height: 1px; background: var(--hair); }
+.crumbs ol { display: flex; align-items: center; min-width: 0; margin: 0; padding: 0; list-style: none; font: var(--t-small); color: var(--fg-2); }
+.crumbs li { min-width: 0; flex: none; white-space: nowrap; }
+.crumbs li + li::before { display: inline-block; inline-size: 6px; block-size: 6px; margin-inline: 6px 10px; vertical-align: 1px; opacity: .7; }
+.crumbs a { color: inherit; text-decoration: none; border-radius: var(--r-input); }
+.crumbs a:hover { color: var(--fg); text-decoration: underline; }
+.crumbs li:has(+ [hidden]) a, .crumbs [data-crumb] { color: var(--fg); font-weight: 500; }
+.crumbs [data-crumb] { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.docs .page-head { gap: var(--s-2); }
+
+/* phones and tablets: On this page, closed, the four groups under their names (two columns from 640px) */
+.page-jump { border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow-sm); }
+.page-jump > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 48px; padding: 0 var(--s-4); font: var(--t-ui); font-size: 1rem; cursor: pointer; list-style: none; border-radius: var(--r-panel); }
+.page-jump > summary::after { rotate: 45deg; translate: 0 -2px; }
+.page-jump[open] > summary::after { rotate: 225deg; translate: 0 2px; }
+.page-jump nav { padding: 0 var(--s-4) var(--s-3); border-top: 1px solid var(--hair); }
+.page-jump nav > ul { display: grid; gap: var(--s-2) var(--s-6); }
+@media (min-width: 640px) { .page-jump nav > ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.jump-group { display: block; padding-top: var(--s-3); font: 500 12px/1.4 var(--font); color: var(--fg-2); }
+.page-jump a { display: flex; align-items: center; min-height: 44px; font: var(--t-ui); font-size: .9375rem; color: var(--fg); text-decoration: none; }
+.page-jump a[aria-current="location"] { color: var(--brand-text); font-weight: 600; }
+@media (min-width: 1024px) { .page-jump { display: none; } }
+
+/* each part a card (never nested: the cards inside become wells on the page's surface) */
+.docs .doc { gap: var(--s-4); }
+.docs .doc > section {
+  max-width: none; padding: var(--s-5) var(--s-4); border: 1px solid var(--hair); border-radius: var(--r-panel);
+  background: var(--bg-raised); box-shadow: var(--shadow-sm); scroll-margin-top: 0;
+}
+@media (min-width: 640px) { .docs .doc > section { padding: var(--s-6); } }
+.docs .doc h2 { padding-top: 0; border-top: 0; }
+/* every part lands just under the breadcrumb (112 px), whatever fills in above it later; a part's own scroll-margin
+   let Chrome's scroll anchoring drift deep links (/made#record) while /config filled the page */
+html:has(.docs-page) { scroll-padding-top: 112px; }
+.docs-main [id]:not(section) { scroll-margin-top: var(--s-2); }
+.part-head { display: flex; align-items: center; gap: var(--s-3); }
+.part-head .icon-tile { width: 36px; height: 36px; }
+.part-head .icon-tile .icon { width: 18px; height: 18px; }
+.docs :is(.who > div, .try) { background: var(--bg-alt); box-shadow: none; }
+.docs .bands { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
+@media (min-width: 640px) { .docs .band dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5) var(--s-6); } }
+
+/* the accordions at the end of a part, and what we can't hide as eleven rows that open */
+.boxes { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: var(--s-1); }
+.more-box > summary > h3 { font: inherit; letter-spacing: inherit; margin: 0; }
+.docs .truths-list { list-style: none; padding: 0; counter-reset: truth; display: grid; border-block: 1px solid var(--hair); gap: 0; }
+.truths-list > li { counter-increment: truth; max-width: none; }
+.truths-list > li + li { border-top: 1px solid var(--hair); }
+.truths-list summary { display: flex; align-items: center; gap: var(--s-3); min-height: 44px; padding: 8px 2px; cursor: pointer; list-style: none; border-radius: var(--r-input); }
+.truths-list summary::-webkit-details-marker { display: none; }
+.truths-list summary::before { content: counter(truth); flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--bg-sunken); font: 600 12px/1 var(--font); font-variant-numeric: tabular-nums; color: var(--fg-2); }
+.truths-list summary strong { font-weight: 500; margin-right: auto; }
+.truths-list summary:hover strong { text-decoration: underline; text-underline-offset: .22em; }
+.truths-list summary::after { rotate: 45deg; translate: 0 -2px; }
+.truths-list details[open] > summary::after { rotate: 225deg; translate: 0 2px; }
+.truths-list details > div { padding: 0 2px var(--s-4) calc(24px + var(--s-3) + 2px); max-width: calc(70ch + 40px); }
+@media print { .docs-side, .page-jump, .crumbs { display: none; } .docs .doc > section { box-shadow: none; } }
 
 /* how it was made: sections with a measure; the wide ones (tables, the Tari map) without */
 .doc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
@@ -108,6 +200,7 @@
 
 /* check us: the live status line, the test file, the evidence */
 .live-line { display: inline-flex; align-items: center; gap: 10px; font: var(--t-ui); padding: 6px 12px; border-radius: var(--r-pill); border: 1px solid var(--hair); justify-self: start; }
+.live-line:not([data-status-line]) { display: block; }   /* text and numbers: one run of words that wraps */
 .live-line .dot { inline-size: 8px; block-size: 8px; border-radius: 50%; background: var(--fg-2); }
 .live-line[data-overall="green"] .dot { background: var(--ok-text); }
 .live-line[data-overall="amber"] .dot { background: var(--sand); }

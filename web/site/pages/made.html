@@ -29,34 +29,44 @@
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/made.js" integrity="{{SRI}}"></script>
 </head>
-<body class="reading">
+<body class="reading docs-page">
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
-<main id="main" class="wrap page">
-  <div class="page-head">
-    <h1>Under the hood</h1>
-    <p class="lede">How it was made. <br>Each claim names its limits and a way to check it.</p>
-    <nav class="toc" aria-label="On this page"><ul role="list"><li><a href="#short">The short version</a></li><li><a href="#key">Your key</a></li><li><a href="#locks">The locks</a></li><li><a href="#folders">Folders</a></li><li><a href="#pay">Pay to open</a></li><li><a href="#send">Send by Tari™</a></li><li><a href="#who">Who sees what</a></li><li><a href="#limits">Space</a></li><li><a href="#record">Receipts</a></li><li><a href="#tari">The Tari map</a></li><li><a href="#check">Check us</a></li><li><a href="#cant">What we can't hide</a></li><li><a href="#built">How it was built</a></li></ul></nav>
-    <details class="jump"><summary>Jump to a part</summary><nav aria-label="On this page"><ul role="list"><li><a href="#short">The short version</a></li><li><a href="#key">Your key</a></li><li><a href="#locks">The locks</a></li><li><a href="#folders">Folders</a></li><li><a href="#pay">Pay to open</a></li><li><a href="#send">Send by Tari™</a></li><li><a href="#who">Who sees what</a></li><li><a href="#limits">Space</a></li><li><a href="#record">Receipts</a></li><li><a href="#tari">The Tari map</a></li><li><a href="#check">Check us</a></li><li><a href="#cant">What we can't hide</a></li><li><a href="#built">How it was built</a></li></ul></nav></details>
-  </div>
+<main id="main" class="wrap page docs">
+  <aside class="docs-side">
+    <nav class="side-toc" aria-label="On this page" data-toc>
+      <details class="side-group" open><summary>The basics</summary><ul role="list"><li><a href="#short">The short version</a></li><li><a href="#key">Your key</a></li><li><a href="#locks">The locks</a></li><li><a href="#folders">Folders</a></li></ul></details>
+      <details class="side-group" open><summary>Sharing</summary><ul role="list"><li><a href="#pay">Pay to open</a></li><li><a href="#send">Send by Tari™</a></li><li><a href="#who">Who sees what</a></li></ul></details>
+      <details class="side-group" open><summary>Space and the chain</summary><ul role="list"><li><a href="#limits">Space</a></li><li><a href="#record">Receipts</a></li><li><a href="#tari">The Tari map</a></li></ul></details>
+      <details class="side-group" open><summary>Trust</summary><ul role="list"><li><a href="#check">Check us</a></li><li><a href="#cant">What we can't hide</a></li><li><a href="#built">How it was built</a></li></ul></details>
+    </nav>
+  </aside>
+
+  <div class="docs-main">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol role="list"><li><a href="/">Home</a></li><li><a href="#main" aria-current="page">Under the hood</a></li><li data-crumb hidden></li></ol></nav>
+    <div class="page-head">
+      <h1>Under the hood</h1>
+      <p class="lede">How it was made. <br>Each claim names its limits and a way to check it.</p>
+    </div>
+    <details class="page-jump"><summary>On this page</summary><nav aria-label="On this page" data-toc><ul role="list"><li><span class="jump-group">The basics</span><ul role="list"><li><a href="#short">The short version</a></li><li><a href="#key">Your key</a></li><li><a href="#locks">The locks</a></li><li><a href="#folders">Folders</a></li></ul></li><li><span class="jump-group">Sharing</span><ul role="list"><li><a href="#pay">Pay to open</a></li><li><a href="#send">Send by Tari™</a></li><li><a href="#who">Who sees what</a></li></ul></li><li><span class="jump-group">Space and the chain</span><ul role="list"><li><a href="#limits">Space</a></li><li><a href="#record">Receipts</a></li><li><a href="#tari">The Tari map</a></li></ul></li><li><span class="jump-group">Trust</span><ul role="list"><li><a href="#check">Check us</a></li><li><a href="#cant">What we can't hide</a></li><li><a href="#built">How it was built</a></li></ul></li></ul></nav></details>
 
   <div class="doc">
     <section id="short" aria-labelledby="short-h">
-      <h2 id="short-h">The short version</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-book-open"/></svg></span><h2 id="short-h">The short version</h2></div>
       <p>Your browser encrypts each file with AES-256-GCM before upload. <br>We store ciphertext and never receive the key. <br>Everything after # is the key. <br>Browsers don't send it to any server, including ours.</p>
       <p data-needs="config" hidden>We delete the ciphertext from our disk within a minute of its exit. <br>If the exit was a download, we wait for it to finish (at most <span data-v="ticket"></span>). <br>We keep a <span data-v="tombstone_days"></span> note that the link existed, so we can tell you why it's gone. <br>We never had the key, so any leftover bytes are noise.</p>
       <p data-when="seallog=on" hidden>Every exit goes on the public record: we add it to SealLog on the Ootle at the next checkpoint (within <span data-v="checkpoint"></span>). <br>It proves we said we deleted it, publicly and permanently. <br>It can't prove we kept no copy.</p>
     </section>
 
     <section id="key" aria-labelledby="key-h">
-      <h2 id="key-h">Your key is the account</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg></span><h2 id="key-h">Your key is the account</h2></div>
       <p>No email, no password. <br>Your key is the account. <br>Keep it like a house key: lose it and nobody, including us, can let you back in.</p>
       <p>We store a random id and a hash of your login key. <br>No email and no public key; a drop link stores its own address, by design.</p>
       <p><b class="ui">Make my drive</b> makes the key in this browser at once. <br>Save it as a key file, locked with a passphrase if you like, and <b class="ui">Open my drive</b> takes it back on any device. <br>Your drive's Tari keys come from the same key, the first time a Tari feature needs them.</p>
     </section>
 
     <section id="locks" aria-labelledby="locks-h">
-      <h2 id="locks-h">The locks</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg></span><h2 id="locks-h">The locks</h2></div>
       <ul>
         <li>Files: AES-256-GCM in your browser, in chunks; size padded so the exact size stays hidden.</li>
         <li>Names: file and folder names are locked too. <br>Search runs in this browser. <br>Our server can't read your file names.</li>
@@ -64,6 +74,7 @@
         <li><span data-needs="config" hidden>Secret words: stretched in your browser with PBKDF2, <span data-v="pbkdf2_iter"></span> rounds; we slow down guessing after <span data-v="pw_lock_after"></span> wrong tries.</span></li>
         <li>Photos: location and camera data removed before locking, unless you keep the original.</li>
       </ul>
+      <div class="boxes">
       <details class="more-box">
         <summary>The cryptography, in full</summary>
         <div class="prose">
@@ -112,10 +123,11 @@
   </table>
 </div>
       </details>
+      </div>
     </section>
 
     <section id="folders" aria-labelledby="folders-h">
-      <h2 id="folders-h">Folders and their keys</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-folder"/></svg></span><h2 id="folders-h">Folders and their keys</h2></div>
       <p>Folders are a tree of keys. <br>Each file's key is locked under its folder's key, so one folder link opens the files below it and nothing above.</p>
       <p>Our server sees which files share a folder, how deep it goes and how many files are in it. <br>Never a name.</p>
       <p data-needs="config" hidden>A folder link counts visits, not files. <br>A Once folder link is one visit of <span data-v="ticket"></span>; then the link ends.</p>
@@ -123,9 +135,14 @@
     </section>
 
     <section id="pay" aria-labelledby="pay-h">
-      <h2 id="pay-h">Pay to open</h2>
+      <div class="part-head"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><h2 id="pay-h">Pay to open</h2></div>
       <p data-when="pay_to_open=off">Pay to open is built and switched off on this deployment. <br>Until it is on, this is how it will work.</p>
       <p>The money goes straight to the owner's Tari address; our server keeps half of the key and hands it to the buyer once Tari's chain shows the payment, so the owner can be offline and we never hold the money or the whole key.</p>
+      <p>Next: the locked payment, a Tari payment with a refund built in, so a buyer gets the money back if the owner never delivers. <br>It isn't built yet.</p>
+      <div class="boxes">
+      <details class="more-box">
+        <summary>The split key, and its limits</summary>
+        <div class="prose">
       <ul>
         <li>We keep half of the key and give it to you once the chain shows your payment. <br>The other half is in the link, which we never see. <br>Neither half opens it alone.</li>
         <li>If the link leaks, our server could open it too.</li>
@@ -135,11 +152,13 @@
         <li>Payments can't be taken back, by us or by Tari. <br>Pay only if what you see here is enough.</li>
         <li>To see who paid you, we keep your sales view key. <br>It is sealed, so a copy of our database can't read it. <br>Our payment checker on our server can. <br>A view key can see payments, never spend them.</li>
       </ul>
-      <p>Next: the locked payment, a Tari payment with a refund built in, so a buyer gets the money back if the owner never delivers. <br>It isn't built yet.</p>
+        </div>
+      </details>
+      </div>
     </section>
 
     <section id="send" aria-labelledby="send-h">
-      <h2 id="send-h">Send by Tari</h2>
+      <div class="part-head"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg></span><h2 id="send-h">Send by Tari</h2></div>
       <p>Send by Tari: the key rides inside a payment to their address. <br>Only they can open it.</p>
       <p data-when="send_mode=relay">In relay mode we post the payment for you, so we learn the address you send to, never the key.</p>
       <p data-when="send_mode=direct" hidden>In relay mode we post the payment for you, so we learn the address you send to, never the key. <br>In direct mode your browser sends it and we learn nothing.</p>
@@ -149,7 +168,7 @@
     </section>
 
     <section id="who" aria-labelledby="who-h" class="wide">
-      <h2 id="who-h">Who sees what</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-eye"/></svg></span><h2 id="who-h">Who sees what</h2></div>
       <div class="who">
         <div><h3>Our server</h3><p>We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, its exit rule and how often it's opened. <br>Not the name, the type, the contents or the key.</p><p>We count opens per hour. <br>We never store who opened it or their IP address.</p><p>Our server sees which files share a folder, how deep it goes and how many files are in it. <br>Never a name.</p><p>Our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day.</p></div>
         <div><h3>The Tari™ chain</h3><p data-when="send_mode=relay">The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. <br>The fee is public. <br>Our courier payments all come from one wallet with the same fee, so someone watching could group them as “sent by <b class="brand">{{BRAND}}</b>”, but not see to whom.</p><p data-when="send_mode=direct" hidden>The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. <br>The fee is public. <br>Sends from your browser spend a grant from our sponsor wallet, then each send's change, so anyone reading the Ootle can link them to each other and to our sponsor wallet, but not see to whom or how much.</p><p data-when="send_mode=relay">In relay mode we post the payment for you, so we learn the address you send to, never the key.</p></div>
@@ -158,6 +177,7 @@
       </div>
       <p>For space you rent from us we see the amount, because we're the seller. <br>Nobody else does.</p>
       <p data-when="pay_to_open=on" hidden>To see who paid you, we keep your sales view key. <br>It is sealed, so a copy of our database can't read it. <br>Our payment checker on our server can. <br>A view key can see payments, never spend them.</p>
+      <div class="boxes">
       <details class="more-box">
         <summary>Every party, fact by fact</summary>
         <div class="table-wrap">
@@ -199,13 +219,33 @@
   </dl>
         </div>
       </details>
+      </div>
     </section>
 
     <section id="limits" aria-labelledby="limits-h" class="wide">
-      <h2 id="limits-h">Space, and when files go</h2>
-      <div class="prose">
-        <h3 id="free">Free</h3>
-          <p class="live-line" data-needs="stats" hidden>Today: <span data-v="free_each"></span> per drive · <span data-v="disk_free"></span> of <span data-v="disk_total"></span> free</p>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hard-drive"/></svg></span><h2 id="limits-h">Space, and when files go</h2></div>
+      <p class="live-line" data-needs="stats" hidden>Today: <span data-v="free_each"></span> per drive · <span data-v="disk_free"></span> of <span data-v="disk_total"></span> free</p>
+      <noscript><p>The limits below come live from our server; they're also at <a href="/api/v1/config">/api/v1/config</a>.</p></noscript>
+      <h3 id="limits-table">Limits</h3>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><td></td><th scope="col">No drive</th><th scope="col">Free drive</th><th scope="col">More space</th></tr></thead>
+    <tbody>
+      <tr data-needs="config" hidden><th scope="row">Largest file</th><td data-cue="No drive"><span data-v="anon_max_file"></span></td><td data-cue="Free drive"><span data-v="key_max_file"></span></td><td data-cue="More space"><span data-v="paid_max_file"></span></td></tr>
+      <tr data-needs="config" hidden><th scope="row">Opens per link</th><td data-cue="No drive">1 to <span data-v="anon_max_views"></span></td><td data-cue="Free drive">1 to <span data-v="key_max_views"></span></td><td data-cue="More space">1 to <span data-v="paid_max_views"></span></td></tr>
+      <tr data-needs="config" hidden><th scope="row">Longest life of a link</th><td data-cue="No drive"><span data-v="anon_max_expiry"></span></td><td data-cue="Free drive"><span data-v="key_max_expiry"></span></td><td data-cue="More space"><span data-v="paid_max_expiry"></span></td></tr>
+      <tr data-when="kept=on"><th scope="row">Files in your drive</th><td data-cue="No drive">no</td><td data-cue="Free drive">until you delete them</td><td data-cue="More space">until you delete them</td></tr>
+      <tr data-needs="config" hidden><th scope="row">Text secrets</th><td data-cue="No drive"><span data-v="text_max"></span> characters</td><td data-cue="Free drive"><span data-v="text_max"></span> characters</td><td data-cue="More space"><span data-v="text_max"></span> characters</td></tr>
+      <tr data-needs="config" hidden><th scope="row">Sends to a Tari address</th><td data-cue="No drive">a free drive opens for you</td><td data-cue="Free drive"><span data-v="locker_sends"></span> a day</td><td data-cue="More space"><span data-v="paid_sends"></span> a day</td></tr>
+    </tbody>
+  </table>
+</div>
+      <p data-needs="config" hidden><strong>A drive's first day</strong> is smaller, so a burst of new drives can't take the disk (and new uploads pause before it fills): files up to <span data-v="probation_max_file"></span>, <span data-v="probation_quota"></span> in total, links up to <span data-v="probation_max_expiry"></span>, <span data-v="probation_sends"></span> sends to a Tari address. <br>From its second active day, the free share applies.</p>
+      <p data-needs="config" hidden><strong>Files left in a drop link</strong> can be up to <span data-v="drop_max_file"></span> and open up to <span data-v="drop_views"></span> times within <span data-v="drop_expiry"></span>.</p>
+      <div class="boxes">
+      <details class="more-box">
+        <summary><h3 id="free">Free space, and when files go</h3></summary>
+        <div class="prose">
   <p data-needs="config" hidden>How we decide: every hour we take the disk, set aside what the system needs, what people have rented and a share for uploads without a drive, and divide the rest among drives used in the last <span data-v="active_days"></span>. <br>We overbook like an airline (<span data-v="overbook"></span>×): most people use a fraction of their share. <br>The number moves slowly, never below <span data-v="quota_floor"></span> or above <span data-v="quota_ceiling"></span>.</p>
   <p>If the disk ever truly fills, new uploads pause for everyone, and nothing already stored is lost.</p>
   <p>When the number goes down, nothing of yours is deleted. <br>You can't add more until you're under it again.</p>
@@ -214,41 +254,22 @@
         <p data-needs="config" hidden>Files in the trash still use space. <br>We empty it after <span data-v="trash_n"></span> days. <br>Links add no space.</p>
         <p data-needs="config" hidden>Any file can be set to leave on its own: <b class="ui">Delete it after</b> takes a day, a week or up to <span data-v="max_days"></span>. <br>When it leaves, it gets a receipt like any other exit.</p>
         <p data-needs="config" hidden>When extra space ends, nothing goes for <span data-v="lapse_grace_n"></span> days. <br>Then files in the trash go first, then the oldest, until you fit.</p>
-  <noscript><p>The limits below come live from our server; they're also at <a href="/api/v1/config">/api/v1/config</a>.</p></noscript>
-
-  <h3 id="limits-table">Limits</h3>
-</div>
-<div class="table-wrap">
-  <table class="data-table">
-    <thead><tr><td></td><th scope="col">No drive</th><th scope="col">Free drive</th><th scope="col">More space</th></tr></thead>
-    <tbody>
-      <tr data-needs="config" hidden><th scope="row">Largest file</th><td><span data-v="anon_max_file"></span></td><td><span data-v="key_max_file"></span></td><td><span data-v="paid_max_file"></span></td></tr>
-      <tr data-needs="config" hidden><th scope="row">Opens per link</th><td>1 to <span data-v="anon_max_views"></span></td><td>1 to <span data-v="key_max_views"></span></td><td>1 to <span data-v="paid_max_views"></span></td></tr>
-      <tr data-needs="config" hidden><th scope="row">Longest life of a link</th><td><span data-v="anon_max_expiry"></span></td><td><span data-v="key_max_expiry"></span></td><td><span data-v="paid_max_expiry"></span></td></tr>
-      <tr data-when="kept=on"><th scope="row">Files in your drive</th><td>no</td><td>until you delete them</td><td>until you delete them</td></tr>
-      <tr data-needs="config" hidden><th scope="row">Text secrets</th><td><span data-v="text_max"></span> characters</td><td><span data-v="text_max"></span> characters</td><td><span data-v="text_max"></span> characters</td></tr>
-      <tr data-needs="config" hidden><th scope="row">Sends to a Tari address</th><td>a free drive opens for you</td><td><span data-v="locker_sends"></span> a day</td><td><span data-v="paid_sends"></span> a day</td></tr>
-    </tbody>
-  </table>
-</div>
-<div class="prose page-body">
-  <p data-needs="config" hidden><strong>A drive's first day</strong> is smaller, so a burst of new drives can't take the disk (and new uploads pause before it fills): files up to <span data-v="probation_max_file"></span>, <span data-v="probation_quota"></span> in total, links up to <span data-v="probation_max_expiry"></span>, <span data-v="probation_sends"></span> sends to a Tari address. <br>From its second active day, the free share applies.</p>
-  <p data-needs="config" hidden><strong>Files left in a drop link</strong> can be up to <span data-v="drop_max_file"></span> and open up to <span data-v="drop_views"></span> times within <span data-v="drop_expiry"></span>.</p>
-
-  <h3 id="rent">More space, paid in tTARI</h3>
-</div>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="rent">More space, paid in tTARI</h3></summary>
 <div class="table-wrap">
   <table class="data-table">
     <thead><tr><th scope="col">Pack</th><th scope="col">Price (testnet)</th><th scope="col"></th></tr></thead>
     <tbody>
-      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_s30_size"></span> for <span data-v="pack_s30_days"></span></th><td><span class="price"><span data-v="pack_s30_price"></span> tTARI</span></td><td>Pay in tTARI<span data-when="send_mode=relay">, or try it with demo tTARI</span><span data-when="send_mode=direct" hidden> from the testnet grant your browser's wallet gets</span>.</td></tr>
-      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_m30_size"></span> for <span data-v="pack_m30_days"></span></th><td><span class="price"><span data-v="pack_m30_price"></span> tTARI</span></td><td>The same, for people who keep more.</td></tr>
-      <tr data-needs="config" hidden><th scope="row">One at a time</th><td>none</td><td>One pack at a time. <br>In its last <span data-v="pack_renew_days"></span> you can renew it, which adds days, not space. <br>Packs are limited to a few a day while we're small.</td></tr>
-      <tr><th scope="row">Sold out</th><td>none</td><td>The disk is finite. <br>We'd rather say no than overbook paid space. <br>Free space still works.</td></tr>
+      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_s30_size"></span> for <span data-v="pack_s30_days"></span></th><td data-cue="Price (testnet)"><span class="price"><span data-v="pack_s30_price"></span> tTARI</span></td><td>Pay in tTARI<span data-when="send_mode=relay">, or try it with demo tTARI</span><span data-when="send_mode=direct" hidden> from the testnet grant your browser's wallet gets</span>.</td></tr>
+      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_m30_size"></span> for <span data-v="pack_m30_days"></span></th><td data-cue="Price (testnet)"><span class="price"><span data-v="pack_m30_price"></span> tTARI</span></td><td>The same, for people who keep more.</td></tr>
+      <tr data-needs="config" hidden><th scope="row">One at a time</th><td data-cue="Price (testnet)">none</td><td>One pack at a time. <br>In its last <span data-v="pack_renew_days"></span> you can renew it, which adds days, not space. <br>Packs are limited to a few a day while we're small.</td></tr>
+      <tr><th scope="row">Sold out</th><td data-cue="Price (testnet)">none</td><td>The disk is finite. <br>We'd rather say no than overbook paid space. <br>Free space still works.</td></tr>
     </tbody>
   </table>
 </div>
-<div class="prose page-body">
+<div class="prose">
   <h3>How paying works</h3>
   <p><span data-when="proof=proven" hidden>We credit a payment only after the official Tari library opens its commitment to the exact amount and a Tari-run public indexer shows it committed on the chain.</span><span data-when="proof=wallet">We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. <br>The amount is the one our wallet reads.</span> <br>You pay our receiving address with this invoice's reference inside it; the reference travels in the payment's encrypted memo, so the chain doesn't show which invoice was paid, or by whom. <br>The network fee is public on the chain. <br>The amount and who paid are not. <br>For space you rent from us we see the amount, because we're the seller. <br>Nobody else does.</p>
   <div data-needs="config" hidden>
@@ -263,17 +284,23 @@
     <p><strong>Testnet.</strong> tTARI has no monetary value. <br>These prices are real logic with play money.</p>
     <p><span data-needs="config" hidden>Ootle mainnet launches <span data-v="mainnet_date"></span>. <br></span>Paid features stay on the testnet until our code has been reviewed.</p>
   </div>
+</div>
+      </details>
       </div>
     </section>
 
     <section id="record" aria-labelledby="record-h">
-      <h2 id="record-h">Receipts on the Tari chain</h2>
+      <div class="part-head"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><h2 id="record-h">Receipts on the Tari chain</h2></div>
       <p data-when="seallog=on" hidden>When a file leaves your drive, we write that on the Tari chain, for anyone to check.</p>
       <p>A link that ends on a file you keep gets no receipt: the file is still in your drive.</p>
       <p data-when="seallog=on" hidden>Every exit goes on the public record: we add it to SealLog on the Ootle at the next checkpoint (within <span data-v="checkpoint"></span>). <br>It proves we said we deleted it, publicly and permanently. <br>It can't prove we kept no copy.</p>
       <p data-when="seallog=on" hidden>Every stored file's ciphertext hash goes into SealLog on the Ootle. <br>Your browser can check that your file is in it, unaltered. <br>It proves what we held and when, not what we did with it later.</p>
       <p data-when="seallog=off">This deployment keeps no public record yet: SealLog is off here.</p>
-      <div class="prose" data-when="seallog=on" hidden>
+      <p data-when="seallog=on" hidden><a class="more" href="/verify">See the receipts<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></p>
+      <div class="boxes" data-when="seallog=on" hidden>
+      <details class="more-box">
+        <summary>How SealLog works</summary>
+        <div class="prose">
           <p data-when="seallog=on" hidden>SealLog is a template on the Ootle. <br>At each checkpoint<span data-needs="config" hidden>, at most <span data-v="checkpoint"></span> apart,</span> we add one Merkle root over the ciphertext hash of every file we stored and a record of every exit. <br>The log in use is the one <a href="/api/v1/config"><code>/api/v1/config</code></a> names.</p>
   <ul data-when="seallog=on" hidden>
     <li><strong>What a proof shows:</strong> that the tree we committed to at that epoch contains your file's ciphertext hash, or the record of its exit. <br>Not that we held the bytes, and not that we deleted them.</li>
@@ -282,12 +309,13 @@
     <li><strong>What it shows everyone:</strong> a rough upper bound on how many records (stored files plus exits) we've written, in steps of 64; for each checkpoint window, how many whole multiples of 64 records arrived (usually none); and the writer key.</li>
     <li><strong>The code it runs:</strong> anyone can check that the template on the chain is our published <code>seal_log.wasm</code>, byte for byte, with <code>template/check.sh --onchain</code> and the template's address.</li>
   </ul>
-        <p><a class="more" href="/verify">See the receipts<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></p>
+        </div>
+      </details>
       </div>
     </section>
 
     <section id="tari" aria-labelledby="tari-h" class="wide">
-      <h2 id="tari-h">The Tari map</h2>
+      <div class="part-head"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-globe"/></svg></span><h2 id="tari-h">The Tari map</h2></div>
       <p>The Ootle is Tari's layer for applications, where payments are private by default and can carry sealed messages. <br>We use it to deliver keys and move money, and every use below is something you can check.</p>
       <div class="bands">
         <div class="band">
@@ -314,41 +342,24 @@
           </dl>
         </div>
       </div>
-      <div class="prose">
-        <p>Why not an escrow template? <br>On the Ootle, TARI held by a template reveals its amount. <br>Native stealth outputs keep it hidden, so that's what we use.</p>
-        <h3 id="payments">How payments are checked</h3>
+      <p>Why not an escrow template? <br>On the Ootle, TARI held by a template reveals its amount. <br>Native stealth outputs keep it hidden, so that's what we use.</p>
+      <div class="boxes">
+      <details class="more-box">
+        <summary><h3 id="payments">How payments are checked</h3></summary>
+        <div class="prose">
           <p>In September a wallet bug on the testnet showed deposits that never happened (<a href="https://community.tari.com/t/402">forum thread</a>). <br>A wallet saying “sent” isn't enough, so we credit rented space only after our own checks.</p>
   <p data-when="proof=proven" hidden>We credit a payment only after the official Tari library opens its commitment to the exact amount and a Tari-run public indexer shows it committed on the chain. <br>The check runs in a separate process that can only read; walletd never decides a credit.</p>
   <p data-when="proof=wallet">We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. <br>The amount is the one our wallet reads; this deployment doesn't prove it with the official Tari library.</p>
   <p><a class="more" href="{{REPO_URL}}/blob/main/server/mutis/payments.py">Read the code that does it<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a></p>
+        </div>
+      </details>
       </div>
     </section>
 
     <section id="check" aria-labelledby="check-h">
-      <h2 id="check-h">Check us</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-shield-check"/></svg></span><h2 id="check-h">Check us</h2></div>
       <p class="live-line" data-status-line hidden><span class="dot" data-status-dot></span><span data-status-text></span></p>
-      <div class="prose">
-          <p>SRI only pins files to this page; it can't protect you from us. <br>What can: comparing what we serve with the published source<span data-when="seallog=on" hidden>, release hashes notarized on the Ootle</span>, and running your own copy.</p>
-  <ol>
-    <li>Every build writes <a href="/.well-known/mutis-manifest.json">a manifest</a> with the SHA-256 of every file this site serves and the git commit it came from.</li>
-    <li><code>tools/verify-deploy.py</code> rebuilds the site from a clean checkout of that commit, downloads every file in the live manifest, and prints any difference.</li>
-    <li data-when="seallog=on" hidden>Since SealLog went on, each release's manifest hash is also notarized through it; <a href="/releases.json">/releases.json</a> lists them with their transactions. <br>Anyone can notarize, so only events whose signer is the log's writer key are ours.</li>
-  </ol>
-  <pre class="terminal" aria-label="Commands to check this deployment"><span>$ </span>git clone {{REPO_URL}}
-<span>$ </span>cd hidebox
-<span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
-  <p>It needs git and Python 3.11 or newer. <br>This checks the site now. <br>A browser can't pin it for you between visits.</p>
-        <h3 id="devtools">Check it in your devtools</h3>
-          <p>No analytics, no trackers, no third-party scripts or fonts. <br>Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”. <br>To see it for yourself:</p>
-  <ol>
-    <li>Open your browser's developer tools and choose the Network tab.</li>
-    <li>Reload this page, then drop a file on the home page.</li>
-    <li>Every request goes to this site's own address. <br>Nothing else appears unless you press “Check it on Tari's indexer”.</li>
-  </ol>
-        <h3 id="headers">Headers and content security policy</h3>
-          <p>Every response carries HSTS, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: no-referrer</code>, <code>Cross-Origin-Opener-Policy</code> and <code>Cross-Origin-Resource-Policy: same-origin</code>, <code>X-Frame-Options: DENY</code> and a <code>Permissions-Policy</code> that turns off the camera, microphone, location, payment and USB APIs.</p>
-  <p>Pages allow scripts, styles, fonts and requests only from this origin, and nothing inline is allowed to run. <br>The app pages add WebAssembly for the official Tari library, Trusted Types where the browser supports them, and the two Tari-run indexers for the “Check it on Tari's indexer” button.</p>
-      </div>
+      <p>SRI only pins files to this page; it can't protect you from us. <br>What can: comparing what we serve with the published source<span data-when="seallog=on" hidden>, release hashes notarized on the Ootle</span>, and running your own copy.</p>
       <div class="try" id="try" aria-labelledby="try-h">
         <h3 id="try-h">Try to read one of our files</h3>
         <p class="direction" data-canary-missing hidden>(Our hourly test file is between takes. <br>Check back in a few minutes.)</p>
@@ -375,8 +386,42 @@
       </div>
       <p class="caption missed" data-reveal-missed hidden></p>
       </div>
-      <div class="prose">
-        <h3 id="evidence">Live evidence</h3>
+      <div class="boxes">
+      <details class="more-box">
+        <summary><h3>Compare what we serve with the source</h3></summary>
+        <div class="prose">
+  <ol>
+    <li>Every build writes <a href="/.well-known/mutis-manifest.json">a manifest</a> with the SHA-256 of every file this site serves and the git commit it came from.</li>
+    <li><code>tools/verify-deploy.py</code> rebuilds the site from a clean checkout of that commit, downloads every file in the live manifest, and prints any difference.</li>
+    <li data-when="seallog=on" hidden>Since SealLog went on, each release's manifest hash is also notarized through it; <a href="/releases.json">/releases.json</a> lists them with their transactions. <br>Anyone can notarize, so only events whose signer is the log's writer key are ours.</li>
+  </ol>
+  <pre class="terminal" aria-label="Commands to check this deployment"><span>$ </span>git clone {{REPO_URL}}
+<span>$ </span>cd hidebox
+<span>$ </span>python3 tools/verify-deploy.py {{ORIGIN}} {{GIT_SHA}}</pre>
+  <p>It needs git and Python 3.11 or newer. <br>This checks the site now. <br>A browser can't pin it for you between visits.</p>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="devtools">Check it in your devtools</h3></summary>
+        <div class="prose">
+          <p>No analytics, no trackers, no third-party scripts or fonts. <br>Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”. <br>To see it for yourself:</p>
+  <ol>
+    <li>Open your browser's developer tools and choose the Network tab.</li>
+    <li>Reload this page, then drop a file on the home page.</li>
+    <li>Every request goes to this site's own address. <br>Nothing else appears unless you press “Check it on Tari's indexer”.</li>
+  </ol>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="headers">Headers and content security policy</h3></summary>
+        <div class="prose">
+          <p>Every response carries HSTS, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: no-referrer</code>, <code>Cross-Origin-Opener-Policy</code> and <code>Cross-Origin-Resource-Policy: same-origin</code>, <code>X-Frame-Options: DENY</code> and a <code>Permissions-Policy</code> that turns off the camera, microphone, location, payment and USB APIs.</p>
+  <p>Pages allow scripts, styles, fonts and requests only from this origin, and nothing inline is allowed to run. <br>The app pages add WebAssembly for the official Tari library, Trusted Types where the browser supports them, and the two Tari-run indexers for the “Check it on Tari's indexer” button.</p>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="evidence">Live evidence</h3></summary>
+        <div class="prose">
           <p>Our own test transactions, never a user's. <br>They come from <a href="/evidence.json">/evidence.json</a>, refreshed every hour; older ones are archived in <a class="more" href="{{REPO_URL}}/tree/main/docs/evidence">the repository<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a></p>
   <div class="evidence" data-evidence hidden>
     <dl class="detail">
@@ -386,7 +431,11 @@
       <dt>Test payments (our demo wallet paying our own invoice)</dt><dd><ul class="tx-list" data-ev="payments"></ul></dd>
     </dl>
   </div>
-        <h3 id="disclosure">Report a vulnerability</h3>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="disclosure">Report a vulnerability</h3></summary>
+        <div class="prose">
           <p>Please tell us privately before you tell anyone else. <br>We'll answer, fix what's real, and credit you if you want.</p>
   <ul class="link-list">
     <li data-when="security_drop=on" hidden><a class="more" data-href="security_drop" href="/fine-print#report">Leave us a file through our own drop link<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></li>
@@ -394,27 +443,31 @@
     <li><a class="more" href="/fine-print#report">Report a link that hosts something harmful<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></li>
   </ul>
   <p>The full threat model, with the findings of our own review, is in <a class="more" href="{{REPO_URL}}/blob/main/docs/threat-model.md">docs/threat-model.md<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a>.</p>
+        </div>
+      </details>
       </div>
     </section>
 
     <section id="cant" aria-labelledby="cant-h">
-      <h2 id="cant-h">What we can't hide</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-triangle-alert"/></svg></span><h2 id="cant-h">What we can't hide</h2></div>
       <p>Beyond what our server sees (<a href="#who">who sees what</a>), here is what we can't protect you from:</p>
         <ol class="truths-list">
-    <li><strong>The person you send it to.</strong> <br>They can save, screenshot or forward it.</li>
-    <li><strong>Anyone who gets the full link.</strong> <br>The link is the key. <br>Add a secret word (sent another way) or send it to one Tari address.</li>
-    <li><strong>Chat apps that preview links.</strong> <br>Their servers see the full link. <br>They can't use up a view (opening takes a click), but they could open it.</li>
-    <li><strong>Your own browser.</strong> <br>Your browser history, and any history sync, can keep the full link, key included. <br>We clear the key from the address bar once it's opened, but we can't reach your history. <br>Extensions allowed to read your tabs can see the link. <br>Clipboard history (and cloud clipboards) can keep a copied link.</li>
-    <li><strong>A compromised device or extension.</strong> <br>Encryption in the browser can't beat malware in the browser.</li>
-    <li><strong>A malicious version of this website.</strong> <br>It's the known weak spot of all web encryption: if our server were compromised, it could serve code that leaks keys. <br>SRI only pins files to this page; it can't protect you from us. <br>What can: our verify-deploy script and running your own copy.</li>
-    <li><strong>Metadata.</strong> <br>We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, when it leaves (rounded up to the hour when that's an hour or more away; “midnight” is your own local midnight, which shows your time zone), its exit rule and how often it's opened. <br>Not the name, the type, the contents or the key. <br>Our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. <br>A VPN or Tor hides your IP from us; links without a drive work in Tor Browser's Safer mode, and Tari features need WebAssembly.</li>
-    <li><strong>On-chain facts.</strong> <br>The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. <br>The fee is public. <br>Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as “sent by <b class="brand">{{BRAND}}</b>”, but not see to whom.<span data-when="send_mode=direct" hidden> <br>Sends from your browser spend a grant from our sponsor wallet, then each send's change, so anyone reading the Ootle can link them to each other and to our sponsor wallet, but not see to whom or how much.</span><span data-when="seallog=on" hidden> <br>SealLog shows roughly how many records (stored files plus exits) we write, in steps of 64, and when.</span></li>
-    <li><strong>Deletion you can't see.</strong> <br>We delete on cue, and nothing can prove we kept no copy. <br>Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. <br>Without the key it's noise.<span data-when="snapshots=weekly"> <br>Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. <br>A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</span></li>
-    <li><strong>Testnet resets.</strong> <br>Esmeralda can be reset. <br>Payments and on-chain records from before a reset are archived in our repository; files on our server are not affected.</li>
-    <li><strong>Legal requests.</strong> <br>If compelled, we can hand over what we have: ciphertext, the columns “What our server knows” prints, invoices. <br>Not contents. <br>Not keys.</li>
+    <li><details><summary><strong>The person you send it to.</strong></summary> <div>They can save, screenshot or forward it.</div></details></li>
+    <li><details><summary><strong>Anyone who gets the full link.</strong></summary> <div>The link is the key. <br>Add a secret word (sent another way) or send it to one Tari address.</div></details></li>
+    <li><details><summary><strong>Chat apps that preview links.</strong></summary> <div>Their servers see the full link. <br>They can't use up a view (opening takes a click), but they could open it.</div></details></li>
+    <li><details><summary><strong>Your own browser.</strong></summary> <div>Your browser history, and any history sync, can keep the full link, key included. <br>We clear the key from the address bar once it's opened, but we can't reach your history. <br>Extensions allowed to read your tabs can see the link. <br>Clipboard history (and cloud clipboards) can keep a copied link.</div></details></li>
+    <li><details><summary><strong>A compromised device or extension.</strong></summary> <div>Encryption in the browser can't beat malware in the browser.</div></details></li>
+    <li><details><summary><strong>A malicious version of this website.</strong></summary> <div>It's the known weak spot of all web encryption: if our server were compromised, it could serve code that leaks keys. <br>SRI only pins files to this page; it can't protect you from us. <br>What can: our verify-deploy script and running your own copy.</div></details></li>
+    <li><details><summary><strong>Metadata.</strong></summary> <div>We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, when it leaves (rounded up to the hour when that's an hour or more away; “midnight” is your own local midnight, which shows your time zone), its exit rule and how often it's opened. <br>Not the name, the type, the contents or the key. <br>Our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. <br>A VPN or Tor hides your IP from us; links without a drive work in Tor Browser's Safer mode, and Tari features need WebAssembly.</div></details></li>
+    <li><details><summary><strong>On-chain facts.</strong></summary> <div>The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. <br>The fee is public. <br>Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as “sent by <b class="brand">{{BRAND}}</b>”, but not see to whom.<span data-when="send_mode=direct" hidden> <br>Sends from your browser spend a grant from our sponsor wallet, then each send's change, so anyone reading the Ootle can link them to each other and to our sponsor wallet, but not see to whom or how much.</span><span data-when="seallog=on" hidden> <br>SealLog shows roughly how many records (stored files plus exits) we write, in steps of 64, and when.</span></div></details></li>
+    <li><details><summary><strong>Deletion you can't see.</strong></summary> <div>We delete on cue, and nothing can prove we kept no copy. <br>Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. <br>Without the key it's noise.<span data-when="snapshots=weekly"> <br>Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. <br>A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</span></div></details></li>
+    <li><details><summary><strong>Testnet resets.</strong></summary> <div>Esmeralda can be reset. <br>Payments and on-chain records from before a reset are archived in our repository; files on our server are not affected.</div></details></li>
+    <li><details><summary><strong>Legal requests.</strong></summary> <div>If compelled, we can hand over what we have: ciphertext, the columns “What our server knows” prints, invoices. <br>Not contents. <br>Not keys.</div></details></li>
   </ol>
-      <div class="prose">
-        <h3 id="logs">What never touches a disk</h3>
+      <div class="boxes">
+      <details class="more-box">
+        <summary><h3 id="logs">What never touches a disk</h3></summary>
+        <div class="prose">
           <p>Our server and web server never write your IP address, your links or your files' ids to a log. <br>The database holds file and link ids, never keys; <a href="/fine-print#inventory">Privacy</a> lists every table.</p>
   <ul>
     <li><strong>Web server:</strong> no access log, and the error log drops addresses, paths, hosts and headers.</li>
@@ -424,22 +477,39 @@
     <li><strong>The firewall:</strong> logging is off. <br><strong>System journal:</strong> kept for seven days.</li>
   </ul>
   <p>That's not the same as “nobody ever sees your IP”: our server sees it while you're connected, and so could our host.</p>
+        </div>
+      </details>
       </div>
     </section>
 
     <section id="built" aria-labelledby="built-h">
-      <h2 id="built-h">How it was built, and tested</h2>
+      <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hammer"/></svg></span><h2 id="built-h">How it was built, and tested</h2></div>
       <p>No analytics, no trackers, no third-party scripts or fonts. <br>Your browser contacts a Tari-run indexer only when you press “Check it on Tari's indexer”.</p>
       <p>Built with AI coding agents under the author's direction. <br>The design, threat model and crypto choices were reviewed by the author. <br>Python's standard library on the server, plain JavaScript in the browser. <br><span data-needs="config" hidden>One runtime dependency: Tari's official ootle-wasm <span data-v="ootle_wasm_version"></span>, pinned by its sha512.</span></p>
       <p>Every release runs the server, site, browser and end-to-end test suites first; the records are in <a class="more" href="{{REPO_URL}}/tree/main/docs/evidence">the repository<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a>. <br>This deployment runs commit <code>{{GIT_SHA}}</code>.</p>
-      <h3 id="self-host">Run your own</h3>
+      <div class="boxes">
+      <details class="more-box">
+        <summary><h3 id="self-host">Run your own</h3></summary>
+        <div class="prose">
       <p>File sharing needs Python's standard library and a web server. <br>The Tari features also need a walletd on the Ootle testnet and Node for the payment checker. <br><a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Self-host guide<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a></p>
-      <h3 id="about">Who's behind it</h3>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="about">Who's behind it</h3></summary>
+        <div class="prose">
       <p><b class="brand">{{BRAND}}</b> is built by an independent developer in Mexico, for the Tari community's October 2026 “Spooky Secrets” build contest, and it's meant to outlive it.</p>
       <p>The fine print (privacy, terms and how to report a link) is on one page: <a href="/fine-print">the fine print</a>.</p>
-      <h3 id="tested">How we tested</h3>
+        </div>
+      </details>
+      <details class="more-box">
+        <summary><h3 id="tested">How we tested</h3></summary>
+        <div class="prose">
       <p>Every release runs the server's tests, the site's checks, the browser flows of the drive, and the deploy checks; then the end-to-end scenarios run against this deployment through the drive, as a stranger would. <br>Our own security review found that a pack payment could count when its one-time key wasn't ours. <br>Now a payment counts only if its one-time key is ours. <br>We tested that fix on a fake chain, never on the public testnet.</p>
+        </div>
+      </details>
+      </div>
     </section>
+  </div>
   </div>
 </main>
 
