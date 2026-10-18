@@ -58,6 +58,7 @@ DYNAMIC = {
     "upgrade.short": ["_pending", "_refused"],
     "watch.kind": ["payment", "sealed_file", "file_link"],
     "chain.amount": ["_hidden", "_viewable", "_lower", "_unknown"],
+    "drop.done_say": ["photo", "file", "note"],   # ux-feedback-1: the drop page's done moment names what went
     "known.never": ["name", "contents", "key", "password", "email", "ip", "browser"],
     "nav": ["locker", "inbox", "send"],
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
@@ -248,6 +249,7 @@ def main():
     import flows_drive  # noqa: E402,F401 (lane app1: the drive's flows register themselves)
     import flows_share  # noqa: E402,F401 (lane app2: the share dialog, the folder viewer and Received)
     import flows_pay  # noqa: E402,F401 (lane app2: pay to open, the seller, the buyer page and the owner check)
+    import flows_ux  # noqa: E402,F401 (ux-feedback-1: the waits and the done moment)
 
     r = Results()
     static_checks(r)

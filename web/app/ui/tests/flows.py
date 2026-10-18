@@ -639,7 +639,7 @@ def deaddrop(t):
     indexer = lambda: [r["url"] for r in b.requests if "ootle-indexer" in r["url"]]
     t.check(not indexer(), "no request to Tari's indexer before the button is pressed")
     b.eval("[...document.querySelectorAll('button')].find((e) => e.textContent.includes(\"Tari's indexer\")).click()")
-    b.wait("!document.querySelector('.a-direct .a-working')", 30)
+    b.wait("!document.querySelector('.a-direct [data-testid=\"tx-asking\"]') && document.querySelector('.a-direct').childElementCount > 0", 30)
     t.check(len(indexer()) >= 1 and all(u.startswith(("https://ootle-indexer-a.tari.com/", "https://ootle-indexer-b.tari.com/")) for u in indexer()),
             f"the explicit button asks Tari's indexer directly ({[u[:60] for u in indexer()]})")
 
