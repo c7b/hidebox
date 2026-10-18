@@ -172,8 +172,15 @@
 .a-droppage { display: grid; gap: var(--s-5); width: 100%; max-width: 720px; justify-self: center; }
 .a-droppage .md-root { margin-inline: 0; }
 .a-dd-safety { display: grid; gap: var(--s-2); justify-items: start; padding: var(--s-4) var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
-.a-dd-progress { display: flex; gap: var(--s-3); align-items: center; justify-content: center; padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-sunken); }
-.a-dd-progress .a-icon { width: 32px; height: 32px; }
+/* ux-feedback-1: the run (ui/progress.js's steps) and the done moment, each on one card in the column */
+.a-dd-run { display: grid; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.a-dd-run > .a-linkbtn { justify-self: start; min-height: 32px; }
+.a-dd-run > .md-chip, .a-dd-run > .md-exif-slot > .md-chip { justify-self: start; }
+.a-dd-run > .md-exif-slot:empty { display: none; }
+.a-dd-run > .a-banner { margin: 0; }
+.a-droppage > .done { padding: var(--s-6) var(--s-5) var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.a-droppage > .done .md-chip { margin-top: var(--s-1); }
+.a-droppage > .done .a-dd-foot { justify-self: stretch; margin-top: var(--s-3); text-align: left; max-width: none; }
 .a-dd-foot { padding-top: var(--s-3); border-top: 1px solid var(--hair); }
 .a-droppage > .a-btn, .a-droppage > .a-tx, .a-droppage > .a-onchain, .a-droppage > .a-more { justify-self: center; }
 
@@ -224,6 +231,23 @@
 .a-inputs li { font: var(--t-code); overflow-wrap: anywhere; }
 .a-raw pre { max-height: 50svh; overflow: auto; padding: var(--s-3); border-radius: var(--r-input); background: var(--bg-sunken); font: var(--t-code); white-space: pre-wrap; overflow-wrap: anywhere; }
 .a-direct { display: grid; gap: var(--s-2); }
+/* /verify/tx (ux-feedback-1): the summary first; the chain's whole record and the direct check fold under it */
+.a-tx-view > .done { padding-top: var(--s-2); }
+.a-tx-facts { display: grid; gap: var(--s-3); }
+@media (min-width: 768px) { .a-tx-facts { grid-template-columns: 1fr 1fr; } }
+.a-tx-fact { display: grid; gap: var(--s-2); align-content: start; padding: var(--s-4) var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.a-tx-fact-h { display: flex; align-items: center; gap: var(--s-2); font: var(--t-ui); color: var(--fg); }
+.a-tx-fact > p { text-wrap: pretty; }
+.a-tx-fact > p:not(.a-caption) { font: var(--t-small); }
+.a-tx-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; }
+.a-tx-chips li { padding: 1px 10px; border: 1px solid var(--hair); border-radius: var(--r-pill); background: var(--bg-sunken); font: var(--t-small); }
+.a-fold { border-top: 1px solid var(--hair); }
+.a-fold > summary { display: flex; align-items: center; gap: var(--s-2); min-height: var(--tap); font: var(--t-ui); cursor: pointer; list-style: none; }
+.a-fold > summary::-webkit-details-marker { display: none; }
+.a-fold > summary svg { transition: transform var(--dur-2) var(--ease-out); }
+.a-fold[open] > summary svg { transform: rotate(90deg); }
+.a-fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: var(--r-input); }
+.a-fold-body { display: grid; gap: var(--s-4); padding-bottom: var(--s-5); min-width: 0; }
 
 /* --- the bottom bar of phones (spec §12.2) ------------------------------------------------------ */
 .a-bottom { display: none; }

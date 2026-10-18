@@ -10,6 +10,7 @@ import { prefetchPow } from '../lib/pow.js';
 import { formatDuration, icon } from './core.js';
 import { safetyGrid } from './marks.js';
 import { errorBanner } from './errors.js';
+import { done, relayWait, steps, waiting } from './progress.js';
 import { wasmOk } from './locker-ctx.js';
 import { scene } from './scene.js';
 import { abuseHref, setTitle } from './shell.js';
@@ -32,7 +33,7 @@ export async function render(main, { dropId }) {
     root.dataset.state = state;
     root.replaceChildren(...children.flat().filter(Boolean));
   };
-  set('loading', h('p', { class: 'a-working mono' }, t('drop.checking')));
+  set('loading', waiting(t('drop.checking'), { testid: 'dd-loading' }).el);   // Tari's library can take a while on a phone
   if (!(await wasmOk())) {
     return set('error', h('h1', { class: 'a-h1' }, t('drop.page_h_plain')), errorBanner({ code: 'needs_wasm' }, { key: 'error.needs_wasm_drop' }));
   }
@@ -82,6 +83,11 @@ export async function render(main, { dropId }) {
 
   let run = 0; // a newer attempt (Keep original) makes an older one moot
 
+  // The run, one step lit at a time (ui/progress.js): locking, uploading, the Tari chain, delivered.
+  const runSteps = () => steps([['lock', t('drop.step.lock')], ['upload', t('drop.step.upload')], ['chain', t('drop.step.chain')],
+    ['done', t('drop.step.done')]], { label: t('seal.progress'), testid: 'dd-steps', live });
+  const runCard = (progress, ...rest) => h('div', { class: 'a-dd-run' }, progress.el, ...rest);
+
   async function leave(source, keepOriginal = false) {
     const mine = ++run;
     banner.replaceChildren();
@@ -89,24 +95,38 @@ export async function render(main, { dropId }) {
     if (problem) return banner.replaceChildren(errorBanner(problem, { params: problem.params }));
     const meta = s.describeSource(source);
     const ctl = new AbortController();
-    const view = s.progressView({ meta, live, onStop: () => ctl.abort() });
-    const chipSlot = h('div', {});
-    set('sealing', intro, h('div', { class: 'md-root' }, view.el), chipSlot);
+    const progress = runSteps();
+    const chipSlot = h('div', { class: 'md-exif-slot' });
+    const stop = h('button', { type: 'button', class: 'a-linkbtn', onclick: () => ctl.abort() }, t('seal.stop'));
+    set('sealing', intro, runCard(progress, chipSlot, stop));
+    progress.at('lock');
+    // sealItem's phases, forward only (a later chunk is still encrypting while an earlier one uploads); the bar fills
+    // with the first chunk's encryption, then with what reached our server, and sweeps while one chunk is on its way.
+    const size = formatBytes(meta.size);
+    const onPhase = (phase, f = 0) => {
+      if (mine !== run) return;
+      if (phase === 'encrypting' && progress.now === 'lock') progress.fraction(f > 0 && f < 1 ? f : null);
+      else if (phase === 'pow') progress.at('upload', { note: t('drop.note.pow'), fraction: f });
+      else if (phase === 'uploading' || phase === 'finishing') progress.at('upload', { note: size, fraction: f > 0 && f < 1 ? f : null });
+    };
     try {
-      view.phase('encrypting');
-      const stripped = await s.stripPhoto(source, { keepOriginal, onStrip: () => view.phase('stripping') });
-      view.exif(stripped.exif, stripped.exif?.removed ? () => { ctl.abort(); leave(source, true); } : null);
+      const stripped = await s.stripPhoto(source, { keepOriginal, onStrip: () => progress.note(t('seal.stripping')) });
+      progress.note(null);
+      const chip = stripped.exif && (stripped.exif.removed || stripped.exif.notice)
+        ? s.exifChip(stripped.exif, stripped.exif.removed ? () => { ctl.abort(); leave(source, true); } : null) : null;
+      chipSlot.replaceChildren(chip ?? '');
       const expiresAt = Math.floor(Date.now() / 1000) + drop.limits.expiry_s;
       const { item } = await s.encryptAndUpload(stripped.source, {
-        anonymous: true, dropId: drop.drop_id, expiresAt, onPhase: (p, f) => view.phase(p, f), signal: ctl.signal,
+        anonymous: true, dropId: drop.drop_id, expiresAt, onPhase, signal: ctl.signal,
       });
       const link = await createLink(item, { mode: 'link', maxViews: drop.limits.views, expiresAt });
       if (mine !== run) return;
-      view.done();
-      const chip = stripped.exif && (stripped.exif.removed || stripped.exif.notice) ? s.exifChip(stripped.exif, null) : null;
-      await send(link, meta, chip);
+      stop.remove();
+      const kept = stripped.exif && (stripped.exif.removed || stripped.exif.notice) ? s.exifChip(stripped.exif, null) : null;
+      await send(link, meta, kept, progress);
     } catch (e) {
       if (mine !== run) return;
+      progress.stop();
       if (ctl.signal.aborted) return ready();
       ready();
       banner.replaceChildren(errorBanner(e));
@@ -114,32 +134,49 @@ export async function render(main, { dropId }) {
     }
   }
 
-  // The file is stored and its link made; this part can be tried again on its own.
-  async function send(link, meta, chip) {
-    set('sending', intro, chip, h('div', { class: 'a-dd-progress' }, icon('lock'), h('p', { class: 'a-working' }, t('drop.sending'))));
-    live.textContent = t('drop.sending');
+  // The file is stored and its link made; this part can be tried again on its own. The relay says when it will
+  // send (not_before, a moment it picks), the job says when it is on its way and when the chain has it.
+  async function send(link, meta, chip, progress = null) {
+    progress?.stop();
+    const steps2 = progress && progress.el.isConnected ? progress : runSteps();
+    set('sending', intro, runCard(steps2, chip));
+    steps2.at('chain', { note: t('drop.sending') });
     const again = { label: t('send.retry'), onClick: () => send(link, meta, chip) };
     let job;
     let unsure;
     try {
-      const { job_id: jobId } = await leaveInDrop(drop, link);
+      const { job_id: jobId, not_before: notBefore } = await leaveInDrop(drop, link, { onProgress: (f) => steps2.fraction(f) });
+      const relay = relayWait(steps2, notBefore);
       const courier = await import('../lib/courier.js');
-      job = await courier.waitJob(jobId, {});
+      job = await courier.waitJob(jobId, { onState: (state) => state === 'sending' && relay.sending() });
       unsure = courier.unconfirmed(job);
     } catch (e) {
-      return set('error', intro, chip, errorBanner(e, { action: again }));
+      steps2.fail();
+      return set('error', intro, runCard(steps2, chip, errorBanner(e, { action: again })));
     }
-    if (job.state !== 'done') return set('error', intro, chip, errorBanner({ code: 'chain_unavailable' }, { key: unsure ? 'drop.unsure' : 'drop.failed', action: again }));
+    if (job.state !== 'done') {
+      steps2.fail();
+      return set('error', intro, runCard(steps2, chip,
+        errorBanner({ code: 'chain_unavailable' }, { key: unsure ? 'drop.unsure' : 'drop.failed', action: again })));
+    }
     const tx = job.result?.tx_id ?? '';
+    steps2.finish();
     live.textContent = t('drop.delivered');
-    set('delivered',
-      scene({ state: 'courier', title: t('drop.delivered'), say: t('drop.delivered_body') }).head,
-      chip,
-      h('p', { class: 'a-onchain' }, icon('check'), h('span', {}, t('onchain'))),
-      h('p', { class: 'mono a-tx', 'data-testid': 'dd-tx', 'data-tx': tx }, t('send.tx', { tx: `${tx.slice(0, 8)}…${tx.slice(-8)}` })),
-      h('a', { class: 'a-more', 'data-testid': 'dd-chain-link', href: `/verify/tx/${tx}` }, t('chain.sees'), icon('arrow')),
-      h('button', { type: 'button', class: 'a-btn', onclick: ready }, t('drop.another')),
-      footNote);
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    await new Promise((r) => setTimeout(r, still ? 0 : 450));   // the last check lands, then the moment
+    const kind = meta.kind === 'text' ? 'note' : /^image\//.test(meta.type ?? '') ? 'photo' : 'file';
+    const moment = done({
+      id: 'dd-done', art: { note: 'file-text', photo: 'file-image', file: 'file' }[kind], title: t('drop.delivered'), testid: 'dd-done',
+      say: `${t(`drop.done_say.${kind}`)} ${t('drop.delivered_body')}`,
+      chain: tx ? t('drop.done_chain') : null,
+      receipt: tx ? { href: `/verify/tx/${tx}`, tx, label: t('drop.receipt'), testid: 'dd-chain-link', txTestid: 'dd-tx' } : null,
+      more: chip ? [chip] : [],
+      actions: [h('button', { type: 'button', class: 'a-btn', onclick: ready }, t('drop.another'))],
+      foot: footNote,
+    });
+    set('delivered', moment);
+    moment.querySelector('.done-title').focus({ preventScroll: true });
+    if (root.getBoundingClientRect().top < 0) scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
   }
 
   ready();

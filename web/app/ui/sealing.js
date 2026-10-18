@@ -74,8 +74,7 @@ export async function encryptAndUpload(source, opts) {
   return { item, noise: item.head };
 }
 
-// --- the busy view (14-ghost-design §4.2, §6): while the ghost chews, one line; the percent shows only
-// for an upload still running after 1.5 s (the busy ghost covers short ones) ----------------------------
+// --- the busy view: one line over a sweep (widget.css); the percent for an upload still running after 1.5 s
 
 // -> {el, phase(name, fraction), exif(chip info, onKeep), done()}
 export function progressView({ live, onStop }) {

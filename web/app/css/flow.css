@@ -1,0 +1,110 @@
+/* SPDX-License-Identifier: MIT — one vocabulary for a wait and its result (ui/progress.js; docs/review/ux-feedback-1.md):
+   the steps of a run with the time the current one has taken, a bar that fills or sweeps but never stands still, and
+   the done moment (the open box takes the thing in, a check lands on it). The link and task pages (the site's tokens)
+   and the drive (shadcn's) both load this file, so each colour names the drive's token first and the site's second. */
+.flow, .done {
+  --fl-fg: var(--foreground, var(--fg)); --fl-muted: var(--muted-foreground, var(--fg-2));
+  --fl-line: var(--border, var(--hair)); --fl-well: var(--muted, var(--bg-sunken)); --fl-bg: var(--background, var(--bg));
+  --fl-ok: var(--success, var(--ok-text)); --fl-bad: var(--destructive, var(--exit-text)); --fl-tari: var(--tari-text, var(--tari));
+  --fl-ease: cubic-bezier(.16, 1, .3, 1);
+  min-width: 0;
+}
+.fl-icon { width: 1rem; height: 1rem; flex: none; }
+
+/* --- the steps: a dot, the words, the clock; the note under the words ---------------------------------------- */
+.flow { display: grid; gap: .875rem; }
+.steps { display: grid; gap: 0; list-style: none; margin: 0; padding: 0; }
+.steps li {
+  display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) auto; column-gap: .75rem; align-items: center;
+  padding-block: .4375rem; color: var(--muted-foreground, var(--fg-2)); font-size: .875rem; line-height: 1.25rem;
+}
+.steps .dot {
+  display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  border: 1px solid var(--border, var(--line)); background: transparent;
+  transition: background-color .2s ease-out, border-color .2s ease-out;
+}
+.steps .dot svg { width: .875rem; height: .875rem; }
+.steps li[data-state="done"] { color: var(--foreground, var(--fg)); }
+.steps li[data-state="done"] .dot { background: var(--success, var(--ok-text)); border-color: var(--success, var(--ok-text)); color: var(--background, var(--bg)); }
+.flow .steps li[data-state="done"] .dot svg { animation: fl-tick .3s cubic-bezier(.16, 1, .3, 1) both; }
+.steps li[data-state="now"] { color: var(--foreground, var(--fg)); font-weight: 500; }
+.steps li[data-state="now"] .dot { border-color: var(--foreground, var(--fg)); }
+.steps li[data-state="failed"] { color: var(--destructive, var(--exit-text)); font-weight: 500; }
+.steps li[data-state="failed"] .dot { background: var(--destructive, var(--exit-text)); border-color: var(--destructive, var(--exit-text)); color: var(--background, var(--bg)); }
+.spinner, .a-figure[data-pose="busy"] .a-tile-icon { animation: fl-spin 1s linear infinite; }   /* components.css turns the drive's the same way */
+.step-time { font: 400 .75rem/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--fl-muted); }
+.step-note { grid-column: 2 / -1; font-weight: 400; font-size: .8125rem; line-height: 1.25rem; color: var(--fl-muted); }
+.step-note:empty { display: none; }
+
+/* --- the bar: it fills when the step knows how far it got, and sweeps when it can't --------------------------- */
+.flow-bar { position: relative; height: .25rem; overflow: hidden; border-radius: 9999px; background: var(--fl-well); }
+.flow-bar > span {
+  position: absolute; inset: 0; border-radius: inherit; background: var(--fl-fg);
+  transform-origin: left; transform: scaleX(var(--value, 0)); transition: transform .3s var(--fl-ease);
+}
+.flow-bar[data-mode="busy"] > span { right: auto; width: 32%; transform: translateX(-100%); animation: fl-sweep 1.5s cubic-bezier(.65, 0, .35, 1) infinite; }
+.flow[data-state="failed"] .flow-bar > span { background: var(--fl-bad); transform: none; animation: none; }
+.flow[data-state="done"] .flow-bar > span { background: var(--fl-ok); transform: none; animation: none; }
+.flow--one .flow-bar { display: none; }
+.flow--one .steps li { padding-block: 0; }
+
+/* --- done: the open box takes it in, a check lands on it; then the words, the receipt, what's next ------------ */
+.done { display: grid; justify-items: center; gap: .625rem; text-align: center; }
+.done-art { position: relative; width: 8rem; height: 6.75rem; margin-bottom: .5rem; perspective: 40rem; }
+.done-box {
+  position: absolute; z-index: 1; left: 50%; bottom: .5rem; width: 4.5rem; height: 4.5rem; margin-left: -2.25rem;
+  display: grid; place-items: center; border-radius: 1.125rem; background: #0A0A0A; color: var(--brand-solid);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), 0 0 0 1px rgb(255 255 255 / .07), 0 1.25rem 2rem -1rem rgb(0 0 0 / .55);
+  transform-origin: 50% 100%; animation: fl-rise .5s var(--fl-ease) both, fl-gulp .3s .66s ease-out both;
+}
+.done-box svg { width: 2.75rem; height: 2.75rem; }
+.done-file {
+  position: absolute; left: 50%; top: 0; width: 2.25rem; height: 2.75rem; margin-left: -1.125rem;
+  display: grid; place-items: center; border: 1px solid var(--fl-line); border-radius: .5rem; background: var(--fl-bg); color: var(--fl-muted);
+  box-shadow: 0 .375rem .875rem -.5rem rgb(0 0 0 / .4); opacity: 0; animation: fl-drop .7s .2s cubic-bezier(.55, 0, .45, 1) both;
+}
+.done-file svg { width: 1.25rem; height: 1.25rem; }
+.done-check {
+  position: absolute; z-index: 2; left: calc(50% + 1.375rem); bottom: 3.75rem; width: 1.875rem; height: 1.875rem;
+  display: grid; place-items: center; border-radius: 50%; background: var(--fl-ok); color: var(--fl-bg);
+  box-shadow: 0 0 0 .1875rem var(--fl-bg), 0 .5rem 1rem -.5rem rgb(0 0 0 / .45); animation: fl-pop .4s .76s var(--fl-ease) both;
+}
+.done-check svg { width: 1.0625rem; height: 1.0625rem; stroke-width: 3; }
+.done-title { font-size: 1.5rem; font-weight: 600; line-height: 1.25; letter-spacing: -.02em; color: var(--fl-fg); outline: none; text-wrap: balance; }
+.done-say { max-width: 40ch; font-size: 1.0625rem; line-height: 1.6; color: var(--fl-fg); text-wrap: balance; }
+.done-chain { display: grid; justify-items: center; gap: .5rem; margin-top: .375rem; }
+.done-chain-line { display: inline-flex; align-items: center; gap: .5rem; font-size: .875rem; line-height: 1.4; color: var(--fl-muted); }
+.done-chain-line svg { color: var(--fl-tari); }
+.done-receipt {
+  display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .375rem .5rem .375rem .875rem;
+  border: 1px solid var(--fl-line); border-radius: 9999px; color: var(--fl-tari); font-size: .875rem; font-weight: 500; text-decoration: none;
+  transition: background-color .15s ease-out;
+}
+.done-receipt .mono { font: 400 .8125rem/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--fl-muted); }
+.done-receipt:hover { background: var(--fl-well); }
+.done-receipt:focus-visible { outline: 3px solid var(--ring, var(--focus)); outline-offset: 2px; }
+.done-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: .5rem; }
+.done > :not(.done-art) { animation: fl-up .45s .55s var(--fl-ease) both; }
+.done > :nth-child(3) { animation-delay: .62s; }
+.done > :nth-child(n + 4) { animation-delay: .7s; }
+
+@keyframes fl-spin { to { transform: rotate(360deg); } }
+@keyframes fl-tick { from { opacity: 0; transform: scale(.4); } }
+@keyframes fl-sweep { to { transform: translateX(320%); } }
+@keyframes fl-rise { from { opacity: 0; transform: translateY(.75rem) rotateX(38deg) scale(.86); } }
+@keyframes fl-gulp { 45% { scale: 1.06 .93; } }
+@keyframes fl-drop {
+  0% { opacity: 0; transform: translateY(-.5rem) rotate(-12deg); }
+  22% { opacity: 1; }
+  72% { opacity: 1; transform: translateY(2.4rem) rotate(3deg) scale(.74); }
+  100% { opacity: 0; transform: translateY(3rem) scale(.55); }
+}
+@keyframes fl-pop { from { opacity: 0; transform: scale(.4) rotate(-20deg); } }
+@keyframes fl-up { from { opacity: 0; transform: translateY(.5rem); } }
+
+/* Reduced motion: no sweep, no flight; the steps, their clock and the bar's fill still say where it is. */
+@media (prefers-reduced-motion: reduce) {
+  .flow-bar[data-mode="busy"] > span { width: 100%; transform: none; opacity: .3; animation: none; }
+  .done-file { display: none; }
+  .done > *, .done-box, .done-check { animation: none; }
+}

@@ -10,6 +10,7 @@ import { saveFile } from '../lib/download.js';
 import { localGet, localSet } from '../lib/store.js';
 import { icon } from './core.js';
 import { errorBanner } from './errors.js';
+import { glyph } from './progress.js';
 
 const ASKED = 'mutis.keyAsked'; // the locker ids this device already asked about (no secret)
 
@@ -37,9 +38,15 @@ function keySavePanel(identity) {
       return pass.focus();
     }
     download.disabled = true;
-    const text = protect.checked ? await lockedKeyFileText(identity, pass.value) : keyFileText(identity);
-    saveFile([utf8(text)], keyFileName(identity));
-    download.disabled = false;
+    const label = [...download.childNodes];
+    download.replaceChildren(glyph('loader-circle', 'a-icon spinner'), h('span', {}, t('drive.key.locking')));
+    try {
+      const text = protect.checked ? await lockedKeyFileText(identity, pass.value) : keyFileText(identity);
+      saveFile([utf8(text)], keyFileName(identity));
+    } finally {
+      download.replaceChildren(...label);
+      download.disabled = false;
+    }
     msg.textContent = t(protect.checked ? 'key.downloaded_locked' : 'key.downloaded_plain');
   });
 

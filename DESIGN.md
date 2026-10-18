@@ -420,6 +420,23 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 - Move into a folder that has a link shows a `warning` alert inside the dialog ("This shares it too.").
 - Toasts follow Sonner: bottom right (full width on phones), 4 seconds, an Undo action where it applies.
 
+### Waits and their results (ux-feedback-1)
+- **One vocabulary for a wait** (`web/app/ui/progress.js`, `web/app/css/flow.css`, loaded by the link and task pages and
+  the drive): the run's real steps in people's words, each lit as it happens (a turning dot, then a green check; a red
+  cross where it failed, the steps before it still checked), the time the lit step has taken once past two seconds, one
+  line under it that can change while it waits (our relay's countdown, "The chain usually takes a few seconds."), and a
+  4px bar that fills when the step knows how far it got (encryption, uploaded chunks, the relay's moment) and sweeps when
+  it can't. Nothing that waits stands still; with reduced motion the clock and the words still move. Used by the drop
+  page, /send, Send by Tari in the share dialog; the pay page's steps share its look. A single wait (reading a
+  transaction) is the same dot and clock on one line.
+- **One done moment**: the open box (the mark, on its ink tile) rises, the thing that went drops into it, a green check
+  lands on its corner; then the line in people's words, the Tari chain's line in plain words and the transaction as a
+  violet Receipt pill, then what's next. One axis, on one card. It runs once (about a second), never loops, and with
+  reduced motion it is simply there. The drop page's Delivered, /verify/tx's Confirmed (a red cross for a refused one),
+  /send's and the share dialog's Sent.
+- **Failure says what to retry**: the failed step stays in the list, marked, and the alert under it names what still
+  stands ("Your file is stored.") beside Try again.
+
 ## Do's and Don'ts
 
 ### Do:

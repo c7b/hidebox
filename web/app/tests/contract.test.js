@@ -112,7 +112,7 @@ export default [
     const stop = new AbortController();
     // Four chunks: the fourth starts only after one of the first three is done, which is when Stop is pressed.
     const { result, log } = await recording(() => rejects(() => sealItem({ file: new Blob([randomBytes(13 * 1024 * 1024)]), name: 'big.bin', type: '' },
-      { anonymous: true, expiresAt: now() + 3600, signal: stop.signal, onPhase: (phase) => phase === 'uploading' && stop.abort() }), SealError));
+      { anonymous: true, expiresAt: now() + 3600, signal: stop.signal, onPhase: (phase, f) => phase === 'uploading' && f > 0 && stop.abort() }), SealError));
     eq(result.code, 'aborted');
     const del = log.find((r) => r.method === 'DELETE');
     eq(del?.status, 204, 'DELETE /uploads/{id}');

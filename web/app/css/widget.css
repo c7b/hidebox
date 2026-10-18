@@ -1,7 +1,5 @@
-/* SPDX-License-Identifier: MIT — the drop widget (spec §3.4.4; 14-ghost-design §5; DESIGN.md): what a
-   first drop needs. Scoped to the widget's root (.md-root) or to app pages (.a-page), which reuse the
-   shared components (a- classes). The rest (the rules panel, the glass box, errors, the send step)
-   is in parts.css, which the home page loads the first time one of them shows. Shared tokens only. */
+/* SPDX-License-Identifier: MIT — the drop widget (spec §3.4.4, DESIGN.md), scoped to .md-root; app pages (.a-page)
+   reuse its a- classes; the rest (rules, the glass box, errors, the send step) is parts.css. Shared tokens only. */
 
 /* --- the root ----------------------------------------------------------------------------------- */
 .md-root {
@@ -68,6 +66,8 @@
 /* --- busy: one line, the percent only for a long upload --- */
 .md-sealing { min-height: inherit; display: grid; justify-items: center; align-content: start; gap: var(--s-2); text-align: center; }
 .md-progress { font: var(--t-say); color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.md-progress::after { content: ""; display: block; width: 48px; height: 3px; margin: 12px auto 0; border-radius: 3px; background: var(--fg-2); animation: md-run .9s ease-in-out infinite alternate; }
+@keyframes md-run { from { translate: -64px; } to { translate: 64px; } }
 
 /* --- the photo chip ------------------------------------------------------------------------------ */
 .md-chip {

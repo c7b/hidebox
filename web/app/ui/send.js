@@ -10,6 +10,7 @@ import { addRecentDrop } from '../lib/store.js';
 import { formatDuration, icon } from './core.js';
 import { formatTari, safetyGrid, shortAddress, testnetLine } from './marks.js';
 import { errorBanner } from './errors.js';
+import { done, relayWait, steps } from './progress.js';
 import { setTitle } from './shell.js';
 
 const STEPS = ['sealing', 'waiting', 'sending', 'delivered'];
@@ -129,10 +130,14 @@ export function sendStep(container, opts) {
       let txId = sent.tx_id ?? null;
       if (sent.mode === 'relay') {
         show('waiting');
+        const relay = relayWait(run, sent.not_before);
         const { unconfirmed, waitJob } = await import('../lib/courier.js');
-        const done = await waitJob(sent.job_id, { onState: (s) => show(s === 'sending' ? 'sending' : 'waiting') });
-        if (done.state !== 'done') return failed(done.error ?? done.state, unconfirmed(done));
-        txId = done.result?.tx_id ?? null;
+        const job2 = await waitJob(sent.job_id, { onState: (s) => {
+          show(s === 'sending' ? 'sending' : 'waiting');
+          if (s === 'sending') relay.sending();
+        } });
+        if (job2.state !== 'done') return failed(job2.error ?? job2.state, unconfirmed(job2));
+        txId = job2.result?.tx_id ?? null;
       }
       delivered(sent.mode, txId);
     } catch (e) {
@@ -158,34 +163,36 @@ export function sendStep(container, opts) {
     return ready.job;
   }
 
+  let run = null;     // the steps on screen (ui/progress.js), kept across a send's states
   function show(step) {
     status.hidden = !step;
-    if (!step) return;
+    if (!step) return run?.stop();
     status.dataset.state = step;
-    const at = STEPS.indexOf(step);
-    const finished = step === 'delivered';
-    status.replaceChildren(h('ol', { class: 'a-steps' }, STEPS.map((s, i) => h('li', {
-      class: ['a-step', (i < at || finished) && 'a-step--done', i === at && !finished && 'a-step--now'],
-      'aria-current': i === at ? 'step' : null,
-    }, t(`send.step.${s}`)))));
+    if (!run || step === 'sealing') {
+      run?.stop();
+      run = steps(STEPS.map((s) => [s, t(`send.step.${s}`)]), { label: t('send.h'), testid: 'send-steps' });
+      status.replaceChildren(run.el);
+    }
+    if (step === 'delivered') run.finish();
+    else if (step === 'failed') run.fail();
+    else run.at(step);
   }
 
   function failed(code, unsure) {
     show('failed');
-    status.dataset.state = 'failed';
     status.append(h('p', { class: 'a-warn' }, icon('warning'), h('span', {}, t(unsure ? 'send.unsure' : 'send.failed', { code: String(code) }))),
       h('button', { type: 'button', class: 'a-btn', onclick: () => go() }, t('send.retry')));
   }
 
   function delivered(mode, txId) {
     show('delivered');
-    status.append(
-      h('div', { class: 'a-sent' },
-        h('p', { class: 'a-onchain' }, icon('check'), h('span', {}, t('onchain'))),
-        txId ? h('p', { class: 'mono a-tx', 'data-testid': 'send-tx', 'data-tx': txId }, t('send.tx', { tx: `${txId.slice(0, 8)}…${txId.slice(-8)}` })) : null,
-        txId ? h('a', { class: 'a-more', href: `/verify/tx/${txId}` }, t('chain.sees'), icon('arrow')) : null,
-        h('p', {}, t(state.kind === 4 ? 'send.after4' : 'send.after3')),
-        h('p', { class: 'a-caption' }, t(mode === 'direct' ? 'claim.c8_direct' : 'claim.c8_relay'))));
+    status.append(done({
+      id: 'send-done', art: 'file', heading: 'h4', title: t('send.step.delivered'),
+      say: t(state.kind === 4 ? 'send.after4' : 'send.after3'),
+      chain: txId ? t('drop.done_chain') : null,
+      receipt: txId ? { href: `/verify/tx/${txId}`, tx: txId, label: t('drop.receipt'), txTestid: 'send-tx' } : null,
+      more: [h('p', { class: 'a-caption' }, t(mode === 'direct' ? 'claim.c8_direct' : 'claim.c8_relay'))],
+    }));
     opts.onSent?.({ txId, address: state.address });
   }
 

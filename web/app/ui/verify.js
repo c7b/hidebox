@@ -11,6 +11,7 @@ import { recentDrops } from '../lib/store.js';
 import { icon } from './core.js';
 import { formatTari, shortAddress } from './marks.js';
 import { errorBanner } from './errors.js';
+import { done, glyph, waiting } from './progress.js';
 import { scene } from './scene.js';
 import { setTitle } from './shell.js';
 
@@ -21,27 +22,33 @@ const TX_RETRY_MS = 5000;
 export async function renderTx(main, { txId }) {
   setTitle('chain.sees');
   const root = h('div', { class: 'a-tx-view', 'data-testid': 'tx-root' });
-  main.replaceChildren(scene({ state: 'courier', title: t('chain.sees_h') }).head, root);
-  root.replaceChildren(h('p', { class: 'a-working mono' }, t('chain.loading')));
+  const head = scene({ state: 'courier', title: t('chain.sees_h') }).head;
+  main.replaceChildren(head, root);
+  // A transaction committed seconds ago can take a few more to reach the indexers: the wait says so.
+  const wait = waiting(t('chain.loading'), { testid: 'tx-loading' });
+  wait.note((s) => (s >= 6 ? t('chain.loading_new') : ''));
+  root.replaceChildren(wait.el);
   const { txView } = await import('../lib/api-locker.js');
   let view;
   for (let attempt = 1; !view; attempt++) {
     try {
       view = await txView(txId);
     } catch (e) {
-      // A transaction committed seconds ago can take a few more to reach the indexers.
       if (e?.code === 'not_found' && attempt < TX_TRIES) {
         await new Promise((r) => setTimeout(r, TX_RETRY_MS));
         continue;
       }
+      wait.stop();
       return root.replaceChildren(errorBanner(e, { key: e?.code === 'not_found' ? 'chain.unknown_tx' : null }));
     }
   }
+  wait.stop();
   const direct = h('div', { class: 'a-direct', 'aria-live': 'polite' });
   const ask = h('button', { type: 'button', class: 'a-btn' }, icon('external'), h('span', {}, t('chain.check_direct')));
   ask.addEventListener('click', async () => {
     ask.disabled = true;
-    direct.replaceChildren(h('p', { class: 'a-working mono' }, t('chain.asking')));
+    const asking = waiting(t('chain.asking'), { testid: 'tx-asking' });
+    direct.replaceChildren(asking.el);
     try {
       const { checkTxWithIndexer } = await import('../lib/ootle.js');
       const res = await checkTxWithIndexer(txId);
@@ -51,17 +58,42 @@ export async function renderTx(main, { txId }) {
     } catch (e) {
       direct.replaceChildren(errorBanner(e));
     } finally {
+      asking.stop();
       ask.disabled = false;
     }
   });
-  root.replaceChildren(
+  // The summary first (did it happen, what that proves, what stays hidden), every field of the chain's own
+  // record under Details: open on a computer, closed on a phone.
+  const ok = view.status === 'Commit';
+  const outs = view.outputs ?? [];
+  const all = (test) => outs.length > 0 && outs.every(test);
+  const hidden = [
+    all((o) => o.amount === 'hidden') && t('chain.hidden_amount'),
+    all((o) => o.owner === 'one-time key') && t('chain.hidden_owner'),
+    all((o) => o.sealed_bytes > 0) && t('chain.hidden_memo'),
+  ].filter(Boolean);
+  const wide = matchMedia('(min-width: 768px)').matches;
+  const moment = done({
+    id: 'tx-done', art: null, tone: ok ? 'ok' : 'bad', testid: 'tx-summary',
+    title: t(ok ? 'chain.confirmed' : 'chain.not_confirmed'),
+    say: !ok ? t('chain.when_other', { status: String(view.status) }) : view.epoch == null ? t('chain.when_plain') : t('chain.when', { epoch: String(view.epoch) }),
+  });
+  moment.dataset.status = String(view.status);
+  const facts = h('div', { class: 'a-tx-facts' },
+    ok ? h('section', { class: 'a-tx-fact' }, h('h2', { class: 'a-tx-fact-h' }, glyph('circle-check'), h('span', {}, t('chain.proves_h'))),
+      h('p', {}, t('chain.proves'))) : null,
+    h('section', { class: 'a-tx-fact', 'data-testid': 'tx-hidden' },
+      hidden.length ? [h('h2', { class: 'a-tx-fact-h' }, glyph('lock'), h('span', {}, t('chain.hidden_h'))),
+        h('ul', { class: 'a-tx-chips' }, hidden.map((x) => h('li', {}, x)))] : null,
+      h('p', { class: 'a-caption' }, t('chain.fee_note'))));
+  const record = [
     h('dl', { class: 'a-kv' },
       h('dt', {}, t('chain.tx')), h('dd', { class: 'mono a-wrap' }, txId),
-      h('dt', {}, t('chain.status')), h('dd', {}, view.status === 'Commit' ? [icon('check'), ' ', t('chain.committed')] : String(view.status)),
+      h('dt', {}, t('chain.status')), h('dd', {}, ok ? [icon('check'), ' ', t('chain.committed')] : String(view.status)),
       h('dt', {}, t('chain.epoch')), h('dd', { class: 'mono' }, String(view.epoch ?? '—')),
       h('dt', {}, t('chain.fee')), h('dd', { 'data-testid': 'tx-fee' }, view.fee_ut ? t('chain.fee_value', { fee: formatTari(view.fee_ut) }) : '—')),
     h('h2', { class: 'a-h2' }, t('chain.outputs')),
-    h('ul', { class: 'a-outputs' }, view.outputs.map((o) => h('li', { class: 'a-output', 'data-testid': 'tx-output', 'data-amount': o.amount },
+    h('ul', { class: 'a-outputs' }, outs.map((o) => h('li', { class: 'a-output', 'data-testid': 'tx-output', 'data-amount': o.amount },
       h('dl', { class: 'a-kv' },
         h('dt', {}, t('chain.commitment')), h('dd', { class: 'mono a-wrap' }, o.commitment),
         h('dt', {}, t('chain.amount')), h('dd', {}, t(`chain.amount_${o.amount === 'lower_bound' ? 'lower' : o.amount}`, { min: o.min_value_ut ? formatTari(o.min_value_ut) : '' })),
@@ -70,10 +102,14 @@ export async function renderTx(main, { txId }) {
     h('h2', { class: 'a-h2' }, t('chain.inputs')),
     h('ul', { class: 'a-inputs mono' }, view.inputs.map((id) => h('li', {}, short(id)))),
     h('p', { class: 'a-caption' }, t('chain.source', { source: view._source ?? '—' })),
-    h('details', { class: 'a-raw' }, h('summary', {}, t('chain.raw')), h('pre', { class: 'mono' }, JSON.stringify(view, null, 2))),
-    h('div', { class: 'a-row' }, ask),
-    h('p', { class: 'a-caption' }, t('chain.direct_note')),
-    direct);
+    h('details', { class: 'a-raw' }, h('summary', {}, t('chain.raw')), h('pre', { class: 'mono' }, JSON.stringify(view, null, 2)))];
+  const fold = (title, testid, ...body) => h('details', { class: 'a-fold', open: wide, 'data-testid': testid },
+    h('summary', {}, glyph('chevron-right'), h('span', {}, title)), h('div', { class: 'a-fold-body' }, ...body));
+  head.remove();
+  root.replaceChildren(moment, facts,
+    fold(t('chain.details'), 'tx-details', ...record),
+    fold(t('chain.check_h'), 'tx-check', h('div', { class: 'a-row' }, ask), h('p', { class: 'a-caption' }, t('chain.direct_note')), direct));
+  moment.querySelector('.done-title').focus({ preventScroll: true });
 }
 
 // --- /verify: SealLog receipts (P1) ------------------------------------------------------------------

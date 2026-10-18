@@ -102,13 +102,17 @@ function panelRow(p, name) {
       bar.setAttribute('aria-valuenow', String(pct));
       stage.textContent = t(phase === 'uploading' || phase === 'finishing' ? 'drive.up.send_one' : 'drive.up.lock_one');
       row.dataset.phase = phase;
+      // a chunk on its way moves the bar only when it lands: until then it sweeps (ux-feedback-1)
+      row.toggleAttribute('data-busy', (phase === 'uploading' && fraction === 0) || phase === 'finishing');
     },
     done() {
+      row.removeAttribute('data-busy');
       row.dataset.done = '';
       bar.style.setProperty('--value', '100');
       stage.replaceChildren(icon('check', '3'), ' ', t('drive.up.ok'));
     },
     fail(e, retry) {
+      row.removeAttribute('data-busy');
       row.dataset.failed = '';
       stage.replaceChildren(h('span', { class: 'failed' }, errorText(e)));
       if (retry) stage.append(' ', h('button', { class: 'link-btn', type: 'button', onclick: retry }, t('drive.retry')));

@@ -83,6 +83,7 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
       : await createUpload(body, { ...headers, ...judgeHeaders() });
     up = { uploadId: res.upload_id, itemId: res.item_id, manageToken: res.manage_token, expiresAt: body.expires_at, uploadExpiresAt: res.expires_at };
   }
+  onPhase?.('uploading', 0);
   const itemHeaders = up.manageToken ? { ...headers, 'X-Mutis-Manage': up.manageToken } : headers;
   const hashes = resume?.hashes ?? [];
   let head = resume?.head ?? null;

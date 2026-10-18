@@ -52,6 +52,11 @@ export function openKeyDialog(drive) {
       return pass.focus();
     }
     save.disabled = true;
+    // the passphrase's lock (PBKDF2) and Tari's library can take a few seconds on a phone: the button says so
+    const label = [...save.childNodes];
+    const turning = icon('loader-circle');
+    turning.classList.add('spinner');
+    save.replaceChildren(turning, t('drive.key.locking'));
     try {
       const lib = await identityLib();
       await lib.withOotle(identity).catch(() => null);   // the file names the address when Tari is here
@@ -61,6 +66,7 @@ export function openKeyDialog(drive) {
       msg.replaceChildren(...lines(t(locked() ? 'drive.key.saved_locked' : 'drive.key.saved_plain')));
       document.querySelectorAll('[data-testid="key-banner"]').forEach((b) => b.remove());
     } finally {
+      save.replaceChildren(...label);
       save.disabled = false;
     }
   });

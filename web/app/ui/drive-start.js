@@ -44,6 +44,11 @@ export function openDialog(onOpened) {
   go.addEventListener('click', async () => {
     errors.replaceChildren();
     go.disabled = true;
+    // a key file locked with a passphrase takes a moment to open (PBKDF2): the button turns and says so
+    const label = [...go.childNodes];
+    const turning = icon('loader-circle');
+    turning.classList.add('spinner');
+    go.replaceChildren(turning, t('drive.opening'));
     try {
       const { restoreFromText } = await import('../lib/identity.js');
       const identity = await restoreFromText(text.value, pass.value, { lazy: true });
@@ -55,6 +60,7 @@ export function openDialog(onOpened) {
         ? alert({ glyph: 'triangle-alert', title: t('drive.open.bad'), variant: 'destructive', role: 'alert', testid: 'error-banner' })
         : errorAlert(e));
     } finally {
+      go.replaceChildren(...label);
       go.disabled = false;
     }
   });

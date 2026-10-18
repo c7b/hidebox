@@ -17,6 +17,7 @@ import { FEW, FLAG_FOLDER, knownLinks, makeLink, rememberLink, stopLink } from '
 import { h, icon, id, init, lines, openModal, closeModal, toast } from './behaviors.js';
 import { alert, button, closeX, endsText, errorAlert, formatTari, itemName, opensText, ruleBadge, safetyGrid, shortAddress } from './drive-parts.js';
 import { patchShare } from '../lib/api.js';
+import { done, relayWait, steps } from './progress.js';
 
 const coarse = () => matchMedia('(pointer: coarse)').matches;
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -402,7 +403,11 @@ async function prepared({ views, span }) {
 
 async function sendIt(opts) {
   const { drive } = S;
-  S.send = { at: 'sealing', error: null, tx: null, mode: null };
+  // one run of steps for the whole send (ui/progress.js), kept across the dialog's renders
+  const run = steps(STEPS.map((x, i) => [x, t(['tari.step.lock', 'tari.step.queue', 'tari.step.send', 'tari.step.done'][i])]),
+    { label: t('tari.step.send') });
+  S.send = { at: 'sealing', error: null, tx: null, mode: null, run };
+  run.at('sealing');
   go('sending');
   try {
     const { withOotle } = await import('../lib/identity.js');
@@ -415,13 +420,18 @@ async function sendIt(opts) {
     let tx = sent.tx_id ?? null;
     if (sent.mode === 'relay') {
       sending('waiting');
+      const relay = relayWait(run, sent.not_before);
       const { unconfirmed, waitJob } = await import('../lib/courier.js');
-      const done = await waitJob(sent.job_id, { onState: (s) => sending(s === 'sending' ? 'sending' : 'waiting') });
-      if (done.state !== 'done') return failed(done.error ?? done.state, unconfirmed(done));
-      tx = done.result?.tx_id ?? null;
+      const job2 = await waitJob(sent.job_id, { onState: (x) => {
+        sending(x === 'sending' ? 'sending' : 'waiting');
+        if (x === 'sending') relay.sending();
+      } });
+      if (job2.state !== 'done') return failed(job2.error ?? job2.state, unconfirmed(job2));
+      tx = job2.result?.tx_id ?? null;
     }
     S.send.tx = tx;
     S.send.at = 'delivered';
+    run.finish();
     await rememberLink(drive.identity, job.link.shareId, { sent: { address: job.address, kind: job.kind, tx } });
     render();
   } catch (e) {
@@ -432,30 +442,24 @@ async function sendIt(opts) {
 function sending(at) {
   if (!S || S.step !== 'sending' || S.send.at === at) return;
   S.send.at = at;
+  S.send.run?.at(at);
   render();
 }
 
 // The step that failed keeps its place in the list, marked.
 function failed(code, unsure, e = null) {
   if (!S?.send) return;
-  S.send.failedAt = Math.max(0, STEPS.indexOf(S.send.at));
   S.send.at = 'failed';
   S.send.error = { code: String(code), unsure, e };
+  S.send.run?.fail();
   if (S.step === 'sending') render();
 }
 
 
 function sendingStep(body, footer) {
   const st = S.send;
-  const at = st.at === 'failed' ? st.failedAt : STEPS.indexOf(st.at);
-  const labels = [t('tari.step.lock'), t('tari.step.queue'), t('tari.step.send'), t('tari.step.done')];
-  const done = st.at === 'delivered';
-  body.append(h('div', { 'data-testid': 'send-status', 'data-state': st.at, class: 'stack' },
-    h('ol', { class: 'steps', 'aria-live': 'polite' }, labels.map((label, i) => {
-      const state = done || i < at ? 'done' : i === at ? (st.at === 'failed' ? 'failed' : 'now') : 'todo';
-      const dot = state === 'done' ? icon('check') : state === 'failed' ? icon('x') : state === 'now' ? spinner() : null;
-      return h('li', { 'data-state': state, 'aria-current': state === 'now' ? 'step' : null }, h('span', { class: 'dot' }, dot), h('span', {}, label));
-    }))));
+  const done2 = st.at === 'delivered';
+  body.append(h('div', { 'data-testid': 'send-status', 'data-state': st.at, class: 'stack' }, done2 ? null : st.run.el));
   if (st.at === 'failed') {
     body.append(h('div', { class: 'alert', 'data-variant': 'destructive', role: 'alert' }, icon('triangle-alert'),
       h('div', { class: 'alert-title' }, t('tari.failed_h')),
@@ -464,13 +468,15 @@ function sendingStep(body, footer) {
       button(t('tari.retry'), { glyph: 'rotate-ccw', 'data-autofocus': '', testid: 'send-retry', onclick: () => sendIt(S.sendOpts) }));
     return;
   }
-  if (done) {
+  if (done2) {
     const tx = st.tx;
-    body.append(...[
-      h('p', { class: 'say' }, S.sendJob?.kind === 4 ? t('tari.after4') : t('tari.after')),
-      tx ? h('p', { class: 'small muted' }, h('a', { class: 'mono tx-link', href: `/verify/tx/${tx}`, 'data-testid': 'send-tx', 'data-tx': tx }, `${tx.slice(0, 8)}…${tx.slice(-8)}`),
-        ' ', t('tari.tx')) : null,
-      h('p', { class: 'small muted path-line' }, icon('info'), h('span', {}, st.mode === 'direct' ? t('tari.path_direct') : t('tari.path_relay')))].filter(Boolean));
+    body.querySelector('[data-testid="send-status"]').append(done({
+      id: 'tari-done', art: 'file', heading: 'h3', title: t('tari.step.done'),
+      say: S.sendJob?.kind === 4 ? t('tari.after4') : t('tari.after'),
+      chain: tx ? t('drop.done_chain') : null,
+      receipt: tx ? { href: `/verify/tx/${tx}`, tx, label: t('drop.receipt'), txTestid: 'send-tx' } : null,
+      more: [h('p', { class: 'small muted path-line' }, icon('info'), h('span', {}, st.mode === 'direct' ? t('tari.path_direct') : t('tari.path_relay')))],
+    }));
     footer.append(button(t('drive.done'), { 'data-close': '', 'data-autofocus': '' }));
   }
 }
