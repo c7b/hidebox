@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: MIT — the home (site v2: 17-site-brief §3, 17-brand.md): a centred hero over the
-   field (the static grid here; the field module bends it after load), Make my drive in the brand fill, the drive
-   slice hanging into Just share one thing (the anonymous widget, its ids and A-06 budget unchanged), then
-   Share it your way, the comparison, who sees what, the Tari part with What's tTARI?, and the closing.
+/* SPDX-License-Identifier: MIT — the home (site v2: 17-site-brief §3, 17-brand.md; since the twelfth pass the v3
+   design, docs/review/promote-v3.md): the words, Open your drive in the brand fill, the drive slice, Just share one
+   thing (the anonymous widget, its ids and A-06 budget unchanged), Share it your way, the comparison, who sees what,
+   the Tari part with What's tTARI?, and the closing. v2.css and v3.css load after this file and lay the page out
+   (body.home.v2.v3: the stills beside each section, dark first); /v2 loads this file and v2.css.
    Its words are set in Geist-Latin.woff2, an 18 KB subset of the drive's pinned Geist (400 to 700, Latin-1;
    17-site-brief §1.2); the drive's code loads only after a drive action (A-06). */
 @font-face {
@@ -18,7 +19,6 @@
 
 /* ---------- hero ---------- */
 .hero { position: relative; z-index: 2; isolation: isolate; padding-top: var(--s-8); }
-.hero-inner { position: relative; z-index: 1; display: grid; justify-items: center; text-align: center; }
 .hero h1 { font: 650 clamp(34px, 8.6vw, 68px)/1.04 var(--font); letter-spacing: -.045em; }
 .h1-2 { display: block; color: var(--fg-2); }
 .hero .lede { font: var(--t-say); font-size: clamp(17px, 1.6vw, 20px); max-width: 40rem; margin-top: var(--s-5); }
@@ -39,27 +39,6 @@
 .btn-xl:active { scale: .97; }
 :root[data-has-drive] .cta-make, :root:not([data-has-drive]) .cta-open { display: none; }
 @media (min-width: 640px) { .btn-xl { width: auto; min-width: 15rem; } }
-
-/* the field's static grid: the first paint, and what stays without JavaScript, with reduced motion, without
-   WebGL2, after a lost context and in print. 48 px cells, a line through the page centre, the brand colour
-   at --field-alpha; quiet (x --field-quiet) in the ellipse site.js measures over the words (without
-   JavaScript a wider one that covers them from 360 to 1920 px: measured 4.5:1 or more for grey words); fading out at
-   the bottom and both sides. The field module draws the same grid and fades in over it (.live). */
-.hero-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: var(--brand-field); }
-.hero-field::before, .hero-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 300ms var(--ease-out); }
-.hero-field::before {
-  content: ""; --l: color-mix(in oklab, var(--brand-field) calc(var(--field-alpha) * 100%), transparent);
-  background: linear-gradient(to right, var(--l) 1px, transparent 1px), linear-gradient(to bottom, var(--l) 1px, transparent 1px);
-  background-size: var(--grid) var(--grid); background-position: calc(50% + 24px) -1px;
-  mask-image: radial-gradient(var(--q-rx, 80%) var(--q-ry, 46%) at var(--q-x, 50%) var(--q-y, 32%), rgb(0 0 0 / var(--field-quiet)) 0 75%, #000 100%),
-              linear-gradient(to bottom, #000 40%, transparent 92%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
-  mask-composite: intersect;
-}
-.hero-field canvas { opacity: 0; }
-.hero-field.live canvas { opacity: 1; }
-.hero-field.live::before { opacity: 0; }
-@media print { .hero-field canvas { display: none; } .hero-field.live::before { opacity: 1; } }
-@media (forced-colors: active) { .hero-field { display: none; } }
 
 /* site v3: the hero arrives (html.motion: scripts on and motion allowed). Each line rises 20 px out of an 8 px
    blur, 60 ms apart; the button grows from 95 %; the picture rises 40 px. Its words wait for the motion module to
@@ -183,37 +162,14 @@
 }
 
 /* ---------- Tari does the private parts, beside What's tTARI? ---------- */
-.chain-grid { display: grid; gap: var(--s-6); align-items: start; }
-@media (min-width: 960px) { .chain-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: var(--s-7); } }
 .chain-rows { list-style: none; margin: 0; padding: 0; border: 1px solid var(--hair); border-radius: var(--r-panel); background: var(--bg-raised); }
 .chain-rows li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; padding: 16px 18px; font: var(--t-small); font-size: 15px; }
 .chain-rows li:not([hidden]) ~ li { border-top: 1px solid var(--hair); }
 .chain-rows .icon { width: 20px; height: 20px; color: var(--pay-text); margin-top: 1px; }
 
-/* ---------- closing, over the pixel field (site v3): the pixel module draws it after load; these CSS pixels are the
-   first paint and what stays without JavaScript, with reduced motion or without WebGL2. They keep to the
-   section's top and bottom padding and, on wide screens, to the sides of a 640 px column, so no pixel ever
-   sits under a word. ---------- */
+/* ---------- closing: the last ask (v2.css sets its padding and the still over it) ---------- */
 .end { --end-pad: max(128px, calc(var(--sec-pad) * 1.5)); padding-block: var(--end-pad); overflow: hidden; }
 .end .wrap { position: relative; z-index: 1; }
-.px-field { position: absolute; inset: 0; pointer-events: none; }
-.px-field::before, .px-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 300ms var(--ease-out); }
-.px-field canvas { image-rendering: pixelated; opacity: 0; }
-.px-field::before {
-  content: ""; opacity: var(--px-alpha);
-  background: conic-gradient(var(--brand-px) 25%, transparent 0) 0 0 / 8px 8px;
-  mask: linear-gradient(transparent, #000 24px, transparent calc(var(--end-pad) - 16px), transparent calc(100% - var(--end-pad) + 16px), #000 calc(100% - 24px), transparent);
-}
-@media (min-width: 1024px) {
-  .px-field::before {
-    mask: linear-gradient(transparent, #000 24px, transparent calc(var(--end-pad) - 16px), transparent calc(100% - var(--end-pad) + 16px), #000 calc(100% - 24px), transparent),
-      linear-gradient(to right, transparent, #000 8%, transparent calc(50% - 360px), transparent calc(50% + 360px), #000 92%, transparent);
-  }
-}
-.px-field.live canvas { opacity: 1; }
-.px-field.live::before { opacity: 0; }
-@media print { .px-field canvas { display: none; } .px-field.live::before { opacity: var(--px-alpha); } }
-@media (forced-colors: active) { .px-field { display: none; } }
 .closing { display: grid; justify-items: center; text-align: center; gap: var(--s-4); }
 .closing h2 { font: 650 clamp(26px, 3vw, 36px)/1.15 var(--font); letter-spacing: -.03em; }
 .closing p { color: var(--fg-2); font: var(--t-say); font-size: 18px; }

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: MIT — /v2 only: a preview of the home in the treatment of mega.io's product pages, the
-   owner's reference (docs/review/home-v2.md). Dark first, generous dark space, the product loops as each section's
-   object (/site/js/clips.js plays them), soft studio light under them and glass-lit cards in dark mode. It builds on
-   home.css and touches nothing outside body.v2; the home keeps its own look. In light mode every loop sits on a
+/* SPDX-License-Identifier: MIT — /v2 (a preview of the home in the treatment of mega.io's product pages, the owner's
+   reference, docs/review/home-v2.md) and, since the twelfth pass, the home's layout under v3.css (body.home.v2.v3,
+   docs/review/promote-v3.md). Dark first, generous dark space, each section's object beside it (on /v2 the product
+   loops, which /site/js/clips.js plays; on the home v3.css's stills), soft studio light under them and glass-lit
+   cards in dark mode. It builds on home.css and touches nothing outside body.v2. In light mode every loop sits on a
    dark stage, because the alpha shows floor smudges on white and one pedestal's matte is rough. A browser that
    ignores the WebM's alpha (WebKit) gets the MP4, made on black (.is-opaque): in light mode its card turns that
    black, in dark mode the stage drops its light and the frame's black fades into the page through the edge mask. */

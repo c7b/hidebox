@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: MIT -->
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -19,6 +19,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -28,6 +29,8 @@
 <link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/site/css/home.css" integrity="{{SRI}}">
 <link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/v2.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/v3.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
 <script type="application/ld+json">
@@ -42,20 +45,35 @@
   "license": "https://spdx.org/licenses/MIT.html", "isPartOf": {"@id": "{{ORIGIN}}/#website"}}]}
 </script>
 </head>
-<body class="home" data-motion>
+<body class="home v2 v3" data-motion>
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
 <main id="main">
   <section class="hero" aria-labelledby="hero-h">
-    <div class="hero-field" aria-hidden="true" data-field></div>
-    <div class="wrap hero-inner">
-      <h1 id="hero-h" data-quiet>Your private cloud storage. <span class="h1-2">Privacy isn't an option. <br>It's the default.</span></h1>
-      <p class="lede" data-quiet>Files lock in this browser before upload. <br>You pick how each one opens: once, with a word, or for Tari™.</p>
-      <div class="cta-row">
-        <a class="btn-xl cta-make" href="/drive?make" data-testid="home-make" data-quiet>Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
-        <a class="btn-xl cta-open" href="/drive?open" data-testid="home-open" data-quiet>Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
+    <div class="wrap v2-hero">
+      <div class="v2-hero-copy">
+        <h1 id="hero-h">Your private cloud storage. <span class="h1-2">Privacy isn't an option. <br>It's the default.</span></h1>
+        <p class="lede">Files lock in this browser before upload. <br>You pick how each one opens: once, with a word, or for Tari™.</p>
+        <div class="cta-row">
+          <a class="btn-xl cta-make" href="/drive?make" data-testid="home-make">Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
+          <a class="btn-xl cta-open" href="/drive?open" data-testid="home-open">Open your drive<svg class="icon go" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a>
+        </div>
+        <p class="hero-note">No email, no password. <br>Your key is the account.</p>
       </div>
-      <p class="hero-note" data-quiet>No email, no password. <br>Your key is the account.</p>
+      <div class="v2-object">
+        <!-- HERO MEDIA, the swap point (docs/review/home-v3.md): this .stage-a block is the hero's picture, the open box
+             with the files rising out of it in its light (eager, fetchpriority high). The closing below shows the same files. -->
+        <div class="stage stage-a is-still" aria-hidden="true">
+          <picture>
+            <source type="image/avif" srcset="/site/media/v3/hero-480.avif 480w, /site/media/v3/hero-720.avif 720w, /site/media/v3/hero-1024.avif 1024w" sizes="(min-width: 552px) 520px, calc(100vw - 32px)">
+            <source type="image/webp" srcset="/site/media/v3/hero-480.webp 480w, /site/media/v3/hero-720.webp 720w, /site/media/v3/hero-1024.webp 1024w" sizes="(min-width: 552px) 520px, calc(100vw - 32px)">
+            <img class="pic" src="/site/media/v3/hero-720.webp" alt="" width="1024" height="1024" fetchpriority="high" decoding="async">
+          </picture>
+        </div>
+        <!-- /HERO MEDIA -->
+      </div>
+    </div>
+    <div class="wrap">
       <figure class="slice" aria-label="A drive whose files each show their rule">
         <div class="slice-head"><span class="slice-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hard-drive"/></svg></span><span class="slice-title">My drive</span><span class="badge" data-variant="outline"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-lock"/></svg>Locked</span></div>
         <div class="slice-cols" aria-hidden="true"><span></span><span>Name</span><span>Rule</span><span>State</span></div>
@@ -115,9 +133,18 @@
 
   <section class="sec alt" aria-labelledby="diff-h" id="different">
     <div class="wrap">
-      <div class="sec-head center">
-        <h2 id="diff-h">What's different from a usual drive?</h2>
+      <div class="v2-lead">
+        <div class="sec-head">
+          <h2 id="diff-h">What's different from a usual drive?</h2>
         <p>Your files lock here, in your browser. <br>A usual drive locks them on its own servers, with its own key.</p>
+        </div>
+        <div class="stage stage-c is-still" aria-hidden="true">
+          <picture>
+            <source type="image/avif" srcset="/site/media/v3/different-640.avif 640w, /site/media/v3/different-960.avif 960w, /site/media/v3/different-1536.avif 1536w" sizes="(min-width: 900px) 520px, (min-width: 592px) 560px, calc(100vw - 32px)">
+            <source type="image/webp" srcset="/site/media/v3/different-640.webp 640w, /site/media/v3/different-960.webp 960w, /site/media/v3/different-1536.webp 1536w" sizes="(min-width: 900px) 520px, (min-width: 592px) 560px, calc(100vw - 32px)">
+            <img class="pic" src="/site/media/v3/different-960.webp" alt="" width="1536" height="864" loading="lazy" decoding="async">
+          </picture>
+        </div>
       </div>
       <table class="compare">
         <thead><tr><th scope="col"><span class="sr-only">Question</span></th><th scope="col" class="us"><span class="us-name"><span class="wm-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hidebox"/></svg></span>{{BRAND}}</span></th><th scope="col">A popular cloud drive</th></tr></thead>
@@ -141,41 +168,55 @@
         <h2 id="who-h">Who sees what</h2>
         <p>Four sides of every file. <br>Here is what each one can see.</p>
       </div>
-      <ul class="sides" role="list">
-        <li class="side yours">
-          <div class="side-top"><span class="icon-tile yours" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-user-round"/></svg></span><h3>You</h3></div>
-          <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>Your files, their names, and what happened to each link.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Who opened a link. <br>You see how many times it opened.</dd></dl>
-        </li>
-        <li class="side">
-          <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-share-2"/></svg></span><h3>The person you share with</h3></div>
-          <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>What the rule still allows.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Your other files.</dd></dl>
-        </li>
-        <li class="side">
-          <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-server"/></svg></span><h3>Our server</h3></div>
-          <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>A padded size, the hour it arrived, its rule, and how many times it opened each hour.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The name, the type, what's inside, the key, or who opened it.</dd></dl>
-        </li>
-        <li class="side">
-          <div class="side-top"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><h3>The Tari chain</h3></div>
-          <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>That a payment happened, and its fee.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The amount, who got it, or the key.</dd></dl>
-        </li>
-      </ul>
+      <div class="v2-who">
+        <div class="stage stage-b is-still" aria-hidden="true">
+          <picture>
+            <source type="image/avif" srcset="/site/media/v3/who-480.avif 480w, /site/media/v3/who-720.avif 720w, /site/media/v3/who-1024.avif 1024w" sizes="(min-width: 1000px) 440px, (min-width: 512px) 480px, calc(100vw - 32px)">
+            <source type="image/webp" srcset="/site/media/v3/who-480.webp 480w, /site/media/v3/who-720.webp 720w, /site/media/v3/who-1024.webp 1024w" sizes="(min-width: 1000px) 440px, (min-width: 512px) 480px, calc(100vw - 32px)">
+            <img class="pic" src="/site/media/v3/who-720.webp" alt="" width="1024" height="1024" loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <ul class="sides" role="list">
+          <li class="side yours">
+            <div class="side-top"><span class="icon-tile yours" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-user-round"/></svg></span><h3>You</h3></div>
+            <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>Your files, their names, and what happened to each link.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Who opened a link. <br>You see how many times it opened.</dd></dl>
+          </li>
+          <li class="side">
+            <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-share-2"/></svg></span><h3>The person you share with</h3></div>
+            <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>What the rule still allows.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>Your other files.</dd></dl>
+          </li>
+          <li class="side">
+            <div class="side-top"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-server"/></svg></span><h3>Our server</h3></div>
+            <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>A padded size, the hour it arrived, its rule, and how many times it opened each hour.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The name, the type, what's inside, the key, or who opened it.</dd></dl>
+          </li>
+          <li class="side">
+            <div class="side-top"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg></span><h3>The Tari chain</h3></div>
+            <dl class="seen"><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-check"/></svg>Sees</dt><dd>That a payment happened, and its fee.</dd><dt><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-x"/></svg>Never sees</dt><dd>The amount, who got it, or the key.</dd></dl>
+          </li>
+        </ul>
+      </div>
       <p class="sides-foot">Our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. <br>Every detail: <a href="/made#who">Under the hood</a>.</p>
     </div>
   </section>
 
   <section class="sec alt" aria-labelledby="tari-h" id="tari">
-    <div class="wrap chain-grid">
-      <div>
-        <div class="sec-head">
-          <h2 id="tari-h">Tari does the private parts.</h2>
-          <p>The chain shows a payment with a hidden amount and a hidden owner. <br>The fee is public.</p>
-        </div>
-        <ul class="chain-rows" role="list">
-          <li data-when="pay_to_open=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>Pay to open: they pay your Tari address, then it opens. <br>The chain hides the amount and who got it. <br>The fee is public.</span></li>
-          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg><span>Send by Tari: the key rides inside a payment to their address. <br>Only they can open it.</span></li>
-          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg><span>When a file leaves your drive, we write that on the Tari chain, for anyone to check.</span></li>
-        </ul>
+    <div class="wrap v2-chain">
+      <div class="sec-head">
+        <h2 id="tari-h">Tari does the private parts.</h2>
+        <p>The chain shows a payment with a hidden amount and a hidden owner. <br>The fee is public.</p>
       </div>
+      <div class="stage stage-d is-still" aria-hidden="true">
+        <picture>
+          <source type="image/avif" srcset="/site/media/v3/gem-480.avif 480w, /site/media/v3/gem-720.avif 720w, /site/media/v3/gem-1024.avif 1024w" sizes="(min-width: 960px) 470px, (min-width: 592px) 560px, calc(100vw - 32px)">
+          <source type="image/webp" srcset="/site/media/v3/gem-480.webp 480w, /site/media/v3/gem-720.webp 720w, /site/media/v3/gem-1024.webp 1024w" sizes="(min-width: 960px) 470px, (min-width: 592px) 560px, calc(100vw - 32px)">
+          <img class="pic" src="/site/media/v3/gem-720.webp" alt="" width="1024" height="768" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <ul class="chain-rows" role="list">
+        <li data-when="pay_to_open=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>Pay to open: they pay your Tari address, then it opens. <br>The chain hides the amount and who got it. <br>The fee is public.</span></li>
+        <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-send"/></svg><span>Send by Tari: the key rides inside a payment to their address. <br>Only they can open it.</span></li>
+        <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-receipt-text"/></svg><span>When a file leaves your drive, we write that on the Tari chain, for anyone to check.</span></li>
+      </ul>
       <aside class="coin-box" id="ttari" aria-labelledby="ttari-h">
         <div class="coin-top"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><h3 id="ttari-h">What's tTARI?</h3></div>
         <ul role="list">
@@ -190,8 +231,17 @@
   </section>
 
   <section class="sec end" aria-labelledby="end-h">
-    <div class="px-field" aria-hidden="true" data-pixel></div>
     <div class="wrap closing">
+      <!-- CLOSING MEDIA, the swap point (docs/review/home-v3.md): this .stage-end block is the closing's picture, the
+           hero's files with the hero's srcset and sizes, so the browser reuses the hero's bytes; lazy. -->
+      <div class="stage stage-end is-still" aria-hidden="true">
+        <picture>
+          <source type="image/avif" srcset="/site/media/v3/hero-480.avif 480w, /site/media/v3/hero-720.avif 720w, /site/media/v3/hero-1024.avif 1024w" sizes="(min-width: 552px) 520px, calc(100vw - 32px)">
+          <source type="image/webp" srcset="/site/media/v3/hero-480.webp 480w, /site/media/v3/hero-720.webp 720w, /site/media/v3/hero-1024.webp 1024w" sizes="(min-width: 552px) 520px, calc(100vw - 32px)">
+          <img class="pic" src="/site/media/v3/hero-720.webp" alt="" width="1024" height="1024" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <!-- /CLOSING MEDIA -->
       <h2 id="end-h">Make your drive.</h2>
       <p>One tap, and it's yours. <br>No email, no password.</p>
       <div class="cta-row">
