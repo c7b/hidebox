@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Run your own hidebox (codename mutis)
 
-File sharing needs Python's standard library and a web server. The Tari features (sending to a Tari
+File sharing needs Python's standard library and a web server. The Tari™ features (sending to a Tari
 address, dead drops, packs paid in tTARI, SealLog) also need the official wallet daemon on the Ootle
 testnet and Node for the payment checker. Nothing is installed from npm or pip.
 

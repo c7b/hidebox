@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: MIT -->
-# Where Tari comes in
+# Where Tari™ comes in
 
 **hidebox** runs on the [Tari™ Ootle](https://ootle.tari.com) testnet (Esmeralda). Tari does the private parts:
 a file's key travels to an address inside a stealth payment, more space is paid in tTARI and checked on the
@@ -22,4 +22,4 @@ Where each part lives in the code: [architecture.md, "The Tari parts"](architect
 judges' walk-through of the same claims, step by step: [/judges](https://srv2052606.hstgr.cloud/judges).
 
 **hidebox** is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari
-Council, or the Tari project. "Tari" is a trademark of Tari Labs.
+Council, or the Tari project. "Tari" is a trademark of Tari Labs. All rights reserved.

@@ -35,7 +35,7 @@ of every route is in [api.md](api.md); what each guarantee defends against is in
 | Part | Runs as | Reaches | Holds |
 |---|---|---|---|
 | Caddy | `caddy` | the internet (80, 443), the API on loopback | the release's `dist/`, the TLS key; no access log |
-| `mutis-api` | `mutis` | the Tari indexers (reads, and the submit proxy); never walletd (a firewall guard on port 5100 answers it with a reset) | the database and `blobs/`; `secret.key` for PoW and canary tokens |
+| `mutis-api` | `mutis` | the Tari™ indexers (reads, and the submit proxy); never walletd (a firewall guard on port 5100 answers it with a reset) | the database and `blobs/`; `secret.key` for PoW and canary tokens |
 | `mutis-chain` and its sidecar | `drive` | walletd, the indexers, the API's loopback port (the canary upload) | the same database; the receiver and robot keys; the wallet's keyring password as a systemd credential |
 | `tari_ootle_walletd` | `drive` | Esmeralda through the indexers | the `service` and `sponsor` accounts' testnet keys |
 | timers (`cleanup`, `health`, `evidence`, `backup`, `backup-wallet`) | `mutis` or `drive` | the database, `/srv/mutis/status` | nothing new |
@@ -75,8 +75,8 @@ listed in [deploy/ufw/README.md](../deploy/ufw/README.md).
    transaction shaped like the app's own send.
 4. **Server → visitor's IP.** Seen while connected, hashed with a key that lives one day in memory
    for rate limits, never written: no access log, an error log with every request field removed,
-   fixed event codes in the API's and worker's logs (`server/mutis/logsafe.py`). The price of that
-   key never touching disk: a restart of `mutis-api` (a deploy, a reboot, a crash) forgets every
+   fixed event codes in the API's and worker's logs (`server/mutis/logsafe.py`). Because that key
+   never touches disk, a restart of `mutis-api` (a deploy, a reboot, a crash) forgets every
    per-network and per-locker counter (rate limits, the daily caps on sponsor grants, demo payments,
    registrations and drop uploads, proof-of-work escalation, wrong-password tries per network on
    password-only links), so a visitor starts that day afresh. A link's own wrong-password count and
@@ -183,6 +183,7 @@ scripts and stylesheets, and the manifest covers the modules they import.
 ## How it's built
 
 Built with AI coding agents under the author's direction. The design, threat model and crypto choices
-were reviewed by the author; the verification evidence is in [evidence/](evidence/). Python's
-standard library, the browser's WebCrypto, Debian's Node and Caddy, and one pinned, hash-checked
-piece of third-party code (`ootle-wasm`, see [NOTICE](../NOTICE)). Nothing is installed from npm or pip.
+were reviewed by the author; the verification evidence is in [evidence/](evidence/). The project
+depends on Python's standard library, the browser's WebCrypto, Debian's Node and Caddy, and one
+pinned, hash-checked piece of third-party code (`ootle-wasm`, see [NOTICE](../NOTICE)). Nothing is
+installed from npm or pip.

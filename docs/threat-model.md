@@ -61,7 +61,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 
 A wallet saying "sent" isn't enough (in September 2026 a testnet wallet showed deposits that never
 happened), so **hidebox** credits rented space only after its own checks. With `amount_proof = "sidecar"`
-the official Tari library (ootle-wasm 0.46.0, in a Node process under the permission model that can
+the official Tari™ library (ootle-wasm 0.46.0, in a Node process under the permission model that can
 only read its own directory) opens the output's commitment to the exact amount, and a Tari-run public
 indexer shows the output committed. walletd never decides a credit. With `amount_proof = "wallet"`
 (the fallback when the sidecar can't run) the amount is the one our wallet reads, and the site says
@@ -123,7 +123,7 @@ drives and fill free space until uploads pause for everyone. Sixth pass
 - **Kill switch:** `mutis-admin feature packs off` stops new invoices and test-money payments at once
   (503, "Space packs are paused."); a payment someone already sent on chain still credits.
 
-What this does and doesn't do. The per-network counts live only in memory, keyed with the day key
+The per-network counts live only in memory, keyed with the day key
 that is never written, so a restart (a deploy) forgets them and gives each network a fresh day; the
 deployment's ceilings survive it. The brakes slow a griefer to the deployment's daily pace and make it
 visible; they don't stop someone with many networks: a botnet, or anyone with an IPv6 /32 (65,536 /48s),

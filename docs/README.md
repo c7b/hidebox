@@ -5,10 +5,10 @@ The [README](../README.md) is the short version. Everything longer lives here.
 
 ## About
 
-**hidebox** is a drive for your files that opens only with your key, made in your browser: no email,
+**hidebox** is a drive that opens only with a key made in your browser: no email,
 no password. Files and folder names lock in your browser before upload, and the server stores only
 ciphertext. Each file or folder is shared by its own rule (once, a few times, until a time, with a
-secret word, as a public link, or to one Tari address), and you always see what happened: how many
+secret word, as a public link, or to one Tari™ address), and you always see what happened: how many
 times it opened each hour, links that ended, files that left. Tari does the private parts: a file's
 key travels to an address inside a stealth payment on the [Tari™ Ootle](https://ootle.tari.com)
 testnet, more space is paid in tTARI and checked on the chain, and every file that leaves gets a

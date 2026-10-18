@@ -32,7 +32,7 @@ to take it ([threat model, "Griefing the space"](threat-model.md#griefing-the-sp
   extension fail.
 - A per-link 32-byte secret after the `#` unwraps the file key and derives an access token; the server
   keeps only the token's SHA-256. Link + password combines that secret with PBKDF2-SHA256.
-- A drive is one 32-byte seed made in your browser; its login key, Tari keys, wallet key and drop
+- A drive is one 32-byte seed made in your browser; its login key, Tari™ keys, wallet key and drop
   tags are derived from it with HKDF-SHA256. The server keeps only a hash of the login key.
 - Sending to a Tari address seals the link's secret to the address's owner and view keys with the
   official Tari library; the 125-byte blob is the stealth output's memo.
