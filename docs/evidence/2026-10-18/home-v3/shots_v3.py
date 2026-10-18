@@ -10,7 +10,9 @@ shots: /v3 at 1440 and 390, dark (the page's default) and light (the switch pres
 after scrolling through it (in parts when it is taller than one capture), each section with a still on its own, the
 header's tile, and the first screen with reduced motion. probe: the network log at load and after scrolling, with the
 browser cache off and on (which stills were asked for, and the bytes), for a computer, an Android phone, an iPhone's
-user agent and reduced motion; writes probe.json (probe-live.json with --origin) beside the shots.
+user agent and reduced motion; writes probe.json (probe-live.json with --origin) beside the shots. Each probe runs in
+a browser of its own: Chromium remembers a page's largest picture from an earlier visit (here, the shots') and fetches
+it early on the next one, which would make a lazy still look eager.
 """
 import argparse
 import base64
@@ -102,13 +104,14 @@ def shots(b, origin, out):
     return n + 1
 
 
-def probe(b, origin):
+def probe(origin):
     report = {}
     for name, kw in (("desktop", dict(width=1440, height=900, mobile=False)),
                      ("android", dict(width=390, height=844, mobile=True, android=True)),
                      ("iphone", dict(width=390, height=844, mobile=True)),
                      ("reduced", dict(width=1440, height=900, mobile=False, reduce=True))):
         for cache in (False, True):
+            b = Browser()
             page = new_page(b, cache=cache, **kw)
             page.goto(origin + "/v3", settle=3.0)
             at_load = {"stills": stills(page), "bytes": total(page), "requests": len(page.requests())}
@@ -118,6 +121,7 @@ def probe(b, origin):
                 "at_load": at_load, "after_scroll": after, "videos": page.eval("document.querySelectorAll('video').length"),
                 "console": [l for l in page.console() if l.startswith(("error", "exception")) or "Content Security Policy" in l]}
             page.close()
+            b.close()
     return report
 
 
@@ -135,11 +139,11 @@ def main():
         srv, origin = serve.make_server(serve.options(["--port", "0", "--mode", "direct", "--seallog", "--pay"]))
         threading.Thread(target=srv.serve_forever, daemon=True).start()
     result = {"origin": origin if args.origin else "web/site/tests/serve.py"}
-    with Browser() as b:
-        if "shots" in args.only:
+    if "probe" in args.only:
+        result["probe"] = probe(origin)
+    if "shots" in args.only:
+        with Browser() as b:
             result["shots"] = shots(b, origin, args.out)
-        if "probe" in args.only:
-            result["probe"] = probe(b, origin)
     if srv:
         srv.shutdown()
     if "probe" in args.only:

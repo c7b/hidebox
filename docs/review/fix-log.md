@@ -830,3 +830,27 @@ the cards lost their backdrop blur. Released as `8fa0925` (release `8fa09252…-
 `spooky-secrets-2026-10` left at `0e05f27`; suites lint, copy, server 331, deploy 81, core 9/9, UI 723/723, site 37/37;
 verify-deploy 0 differences across 177 files against the release (18 expected against the tag), D-01 PASS. Evidence:
 `docs/evidence/2026-10-17/home-v2/`.
+
+## Eleventh pass (home v3): /v2 with stills and the open box, at /v3 (2026-10-18)
+
+The owner's notes on /v2 (the padlock mark isn't recognizable; clip C says nothing; clip B can improve; clip D is a
+generic coin with nothing of Tari) and his limit (the Tari kit is not a redesign: hidebox keeps its look, Tari only as
+a detail), with new stills and a new mark generated for them; no devil's-advocate pass. `docs/review/home-v3.md` has
+each picture and why, the owner's swaps, the mark and its contrast, the compression and V-02.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | A new page, not a new home | `web/site/pages/v3.html` (/v2's words, links and widget; only the title, canonical, favicons, stylesheets and pictures differ), `v3.css` over `v2.css`; `/v3` is noindex (meta and header), linked from nowhere, out of the sitemap and the JSON-LD; no file the home or /v2 serves changed |
+| 2 | Stills, no video | The hero and the closing: the open box with the files rising out of it (the owner's `hero-v3-03-final`, replacing clip A); What's different: `C-03` (swapped from `C-01-final`: its clasp had no keyhole and read as a tag at phone width), its server's lime light greyed; Who sees what: `B-03-color`; Tari: `D-03-color` (both the owner's swaps). AVIF and WebP at three widths each from ffmpeg on the server, `srcset`, `sizes`, `width` and `height`, the hero's eager with `fetchpriority="high"`, the rest lazy, the closing on the hero's file; no `clips.js`, no Pause switch |
+| 3 | The open box | The owner's mark (`final-a-open`, after the folded h), lime `#BCFE00` on ink in `/v3`'s header tile, its comparison tile and its favicon only: 16.32:1, the ink tile 19.80:1 on the light header (the lime alone on white would be 1.21:1) |
+| 4 | Its own budget, V-02 | `static_checks.check_v3` (noindex, unlinked, the home's words and links, every picture's sources, sizes, real pixel widths and ratios, lazy and eager, the clean mark, the budget) and `browser_checks.check_v3` (what loads when, AVIF, the closing's reuse, the gunmetal card in light mode, the header's mark); `/v3` joins the every-page check; V-01's per-file rule reads `media/motion/` only, its folder total still counts all of `media/` |
+
+Also: an independent review of the diff (the code-critic agent) failed it on one point, fixed before the release: V-01's
+per-file rule, narrowed to the loops' folder, let a stray file elsewhere under `media/` pass; any file outside
+`media/motion/` and `media/v3/` now fails. Its nits were taken (a malformed `srcset` reports instead of crashing, the
+mark's check refuses styles and animations too, `v3.css` must carry the open box). Two other sessions worked on `main`
+meanwhile: `481e626` (the share window in depth, Source code on GitHub, the footer) landed on `3e3e9bc` and its share
+window reached `/v3` in `6c25119`; `/v3` went live in their releases `6c640f5` and `b749cdd`. Tag
+`spooky-secrets-2026-10` left at `0e05f27`; suites lint, copy, server 331, deploy 83, core 9/9, UI 731/731, site 39/39;
+verify-deploy 0 differences across 206 files against both live releases, D-01 PASS; /v3 weighs 135,202 B after a full
+scroll on a computer (/v2: 12.4 MB). Evidence: `docs/evidence/2026-10-18/home-v3/`.

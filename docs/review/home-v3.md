@@ -141,8 +141,8 @@ hero's `srcset` and `sizes`, which the site suite checks).
 | `web/site/media/v3/` in all | 524,288 B | 482,013 B (26 files); V-01's limit for all of `web/site/media/` (12,582,912 B) still holds: 11,663,074 B |
 | The mark | 2,048 B, no raster, script, link or data | 439 B |
 | `v3.css`, gzip -9 | 2,048 B | 1,365 B |
-| At load, a computer or an Android phone | 512 KiB | see the release table |
-| After scrolling through | 1 MiB | see the release table |
+| At load, a computer or a phone (the test server, uncached) | 512 KiB | 262,395 B at 1440, 248,500 B at 390 (production, compressed: 114,164 and 108,061 B) |
+| After scrolling through | 1 MiB | 276,722 B at 1440, 269,950 B at 390 (production: 135,202 and 129,099 B; /v2's was 12,419,232 B) |
 
 - `web/site/tests/static_checks.py` `check_v3`: `/v3` is noindex, has no JSON-LD and no page, partial or static text
   links it; its words, links, buttons, copy variants, test ids and labels equal the home's; no `<video>`, `clips.js`,
@@ -190,11 +190,44 @@ alpha, not a colour anyone sees.
 
 ## Release
 
-The release, its checks and the live numbers are added here once it is deployed.
+/v3 was committed as `3e3e9bc` on `main` (the page, its stills, the mark, the pipeline, the tests, this review). While it
+was being checked, two other sessions worked on the same `main`: `343ccee` (Delete my drive) landed under it, and
+`481e626` (the share window drawn in depth on / and /v2, Source code on GitHub in the header, the footer without Made in
+Mexico) landed on top of it. The share window's new markup reached `/v3` in `6c25119` (the same tree, `dd0acca`, as this
+session's own `00ff8a3`, which was dropped for it), since V-02 wants /v3's words to be the home's. The coordinator had
+another session deploy `main`, so **this session did not run `deploy.sh`**: `/v3` went live with release `6c640f5`
+(2026-10-18 00:39 UTC) and is served now by `b749cdd` (00:49 UTC; it changed only the drive and the home's WebGL
+fields), both deployed by that session from `main`. Every change of this pass is in both. **The tag
+`spooky-secrets-2026-10` was not moved**: it stays at `0e05f27`.
+
+| Check | Result |
+|---|---|
+| Suites on `6c25119`'s tree (the server, as build) | lint PASS, check-copy PASS, server 331 OK (5 skipped), deploy 83 OK, app core ALL PASS (9 steps), site 39/39 (V-02's static and browser checks are the two new ones), UI 731/731 (eight more than /v2's run: Delete my drive's flow) |
+| An independent review of the diff (the code-critic agent) | FAIL on one point, fixed before the release: V-01's per-file rule, narrowed to `media/motion/`, let a stray file elsewhere under `media/` pass; now any file outside `media/motion/` and `media/v3/` fails (its three mutants each fail). Its nits were taken: a malformed `srcset` reports instead of crashing, the mark's check also refuses `<style>`, animations and `url(`, `v3.css` must carry the open box, `v3.css` left the `/site/media/` allow-list, C's `sizes` names v2's 560 px cap |
+| verify-deploy against the live releases | `6c640f5`: 0 differences across 206 files; `b749cdd`: 0 differences across 206 files; SealLog's template on chain byte for byte |
+| verify-deploy against the tag (`0e05f27`) | 66 differences across 162 files (run while `6c640f5` was live), as expected from the commits since the tag: /v2, /v3, the share window, Delete my drive, /how's loops, the phones pass |
+| D-01 (`test_headers.py`) | PASS on production at `6c640f5` and again at `b749cdd`: `/v3` and `/v3/` under the app policy with `X-Robots-Tag: noindex`; `hero-1024.avif` as `image/avif`, `hero-1024.webp` as `image/webp`, `hidebox-mark.svg` as `image/svg+xml`, in byte ranges, kept a day |
+| Live checks (`checks/live-checks.log`) | `/v3` and `/v3/` 200 with noindex (meta and header), no JSON-LD, no `<video>`, five `<picture>`s, v3's two favicons; no link to `/v3` from `/`, `/v2`, `/how`, `/made`, `/judges`, `/fine-print`, the sitemap, `robots.txt`, `llms.txt` or `llms-full.txt`; the sitemap's five pages; a 206 for a byte range of an AVIF; the production `/favicon.svg` the tag's, byte for byte |
+| Live probe (`probe-live.json`, headless Chromium on the server, each case in a fresh browser) | at load: a computer 114,164 B (the hero's `hero-720.avif`, 15,377 B, and the mark), an Android phone and an iPhone's user agent 108,061 B (`hero-480.avif`), reduced motion 107,643 B; after a full scroll: 135,202 B on a computer, 129,099 B on a phone, 128,674 B with reduced motion; the same with the HTTP cache on; the hero's file asked for once in every case (the closing shows it again); no video; no console error, but for one run (reduced motion, uncached) that met a 502 from the API while the other session's `b749cdd` deploy restarted it |
+
+The probe's browser draws at one device pixel per CSS pixel, so its phone takes the 480 px files; a real iPhone at 3×
+takes the 1024 and 1536 px AVIFs, about 100 KB of pictures, about 230 KB for the whole page after a full scroll. /v2 on
+production weighed 12,419,232 B after the same scroll when its review measured it (10,043,206 B with the cache on).
 
 ## Screenshots
 
-From production, once it is deployed (`docs/evidence/2026-10-18/home-v3/shots_v3.py`).
+All from production at `6c640f5` (`/v3` is the same at `b749cdd`), headless Chromium on the server as `build`
+(`docs/evidence/2026-10-18/home-v3/shots_v3.py`). The best four:
+
+- `v3-1440-dark.webp`: the hero, dark first, the open box with the files rising beside the words; the open box in the
+  header's tile.
+- `v3-1440-light-different.webp`: What's different in light mode, the locked file on v2's gunmetal card beside the
+  question, the comparison under it.
+- `v3-1440-dark-who.webp`: Who sees what, the four sides beside the box with its four faces.
+- `v3-390-dark.webp`: the phone's first screen, the words and Open your drive first, the hero's picture under them.
+
+Also: both themes' whole pages at 1440 and 390 (a phone's in two parts), every section with a picture at 1440 and 390
+in both themes, the header's tile in both themes (`-mark.png`), and reduced motion.
 
 ## Not done, and open
 
