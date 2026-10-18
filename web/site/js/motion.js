@@ -4,12 +4,13 @@
 // by word; the hero picture's decode (hex noise resolving into its words, 1.1 s) and Who sees what's labels.
 // Real words never leave the page (the noise is aria-hidden) and every element ends as served. Only what is
 // below the fold when this runs is hidden; without it (no JavaScript, reduced motion, a failed load) all shows.
+// The home's drop widget (.quick-body) is a tool: never hidden or moved by a reveal (a tap as it rose missed; E-19).
 const root = document.documentElement;
 const STEP = 60, MAX = 8, HEX = '0123456789abcdef';
 const KINDS = [
   ['main h2, .more-try h3', 'head'],
   ['.share-pic, .still-frame', 'pic'],
-  ['.sides > li, .track, .coin-box, .quick-body, .chain-rows, .hood', 'card'],
+  ['.sides > li, .track, .coin-box, .chain-rows, .hood', 'card'],
   ['.compare tr, .claim-table tr, .steps > li, .chain-rows > li, .rule-groups > div, .more-try li', 'row'],
   ['.rule-groups .badge', 'badge'],
   ['.sec-head > p, .quick-head > p, .closing > :not(h2), .still-copy > p, .track-top > p, .compare-note, .sides-foot, .outro', 'up'],

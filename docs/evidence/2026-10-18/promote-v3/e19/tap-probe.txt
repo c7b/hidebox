@@ -1,0 +1,28 @@
+E-19's tap on "Or write one", reproduced without sealing anything (tap_probe.py: the E2E test harness's own device
+profiles, touch, user agents and 4x CPU throttle, its center() and touch press), 2026-10-18, browser on the server as build.
+
+Production (6e20248), 3 trials each: android 3/3 opened the text box; iphone 2/3 (trial 0 MISSED: at the tap the
+widget's .quick-body was "mo-h mo-card", opacity 0, translate 0 40px).
+
+Test server on the server (web/site/tests/serve.py, direct, SealLog, pay), 6 trials per phone:
+  before the fix (motion.js reveals .quick-body)        android 2/6, iphone 2/6 opened; every miss tapped while the
+                                                          widget was "mo-h mo-card" or "mo-h mo-card mo-in" at 0 40px
+  after the fix (.quick-body out of motion.js's kinds)   android 6/6, iphone 6/6 opened; the widget never hidden or moved
+
+Per trial (port 18901 = before, 18902 = after; "quick at tap" = the widget's classes and its translate when the tap was sent):
+== before
+android 0 ok      quick-body none
+android 1 MISSED  quick-body mo-h mo-card 0px 40px
+android 2 MISSED  quick-body mo-h mo-card 0px 40px
+android 3 ok      quick-body mo-h mo-card mo-in 0px 40px
+android 4 MISSED  quick-body mo-h mo-card mo-in 0px 40px
+android 5 MISSED  quick-body mo-h mo-card mo-in 0px 40px
+iphone 0 MISSED   quick-body mo-h mo-card 0px 40px
+iphone 1 MISSED   quick-body mo-h mo-card mo-in 0px 40px
+iphone 2 ok       quick-body mo-h mo-card mo-in 0px 40px
+iphone 3 ok       quick-body mo-h mo-card 0px 40px
+iphone 4 MISSED   quick-body mo-h mo-card 0px 40px
+iphone 5 MISSED   quick-body mo-h mo-card 0px 40px
+== after
+android 0-5 ok    quick-body none
+iphone 0-5 ok     quick-body none

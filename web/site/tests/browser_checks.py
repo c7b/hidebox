@@ -530,6 +530,8 @@ LOADED = "(n) => { const r = performance.getEntriesByType('resource').find((e) =
 HIDDEN = "document.querySelectorAll('.mo-h:not(.mo-in), .dc-c:not(.dc-ok), .mo-w').length"
 SLICE = "document.querySelector('.hero .slice').innerHTML"
 TO_SLICE = "document.querySelector('.hero .slice').getBoundingClientRect().top + scrollY - innerHeight * .25"
+WIDGET = ("(() => { const q = document.querySelector('.quick-body'), s = getComputedStyle(q);"
+          " return [[...q.classList].filter((c) => c.startsWith('mo-')).join(' '), s.opacity, s.translate]; })()")
 
 
 def check_motion(browser):
@@ -566,6 +568,10 @@ def check_motion(browser):
             times = page.eval(f"[({LOADED})('motion.js'), performance.getEntriesByType('navigation')[0].loadEventEnd]")
             if times[0] is None or times[0] < times[1]:
                 problems.append(f"/ @{width}: motion.js requested at {times[0]} ms, before the load event ended ({times[1]:.0f} ms)")
+            # the drop widget is never hidden or moved by a reveal: a tap as it scrolls in must land on its button (E-19)
+            widget = page.eval(WIDGET)
+            if widget != ["", "1", "none"]:
+                problems.append(f"/ @{width}: the drop widget waits for a reveal ({widget}): a tap as it arrives would miss")
             page.scroll_to(0, 0.3)
             step = height * 0.6
             for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):

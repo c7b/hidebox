@@ -204,3 +204,25 @@ screen: the words and Open your drive first, the still under them), `home-1440-d
 - **Real devices** were not seen (headless Chromium only), as in home-v3.md: Safari's AVIF and `mix-blend-mode` on the
   light card, the SVG favicon on an iPhone.
 - The README's picture of the home (`docs/media/home.webp`) already shows this design (it was taken from `/v3`).
+
+## After the release: E-19 and the drop widget's reveal
+
+The drive-v3 session's E2E batch on production (`6e20248`) failed E-19 twice on the Android profile (412 × 915, touch,
+4× CPU throttle): the tap on Or write one opened nothing. **Cause:** `motion.js` counted the drop widget's box
+(`.quick-body`) among the cards it reveals. On the v3 home the widget sits further down (under the hero's still), so
+on a phone it is below the first screen when `motion.js` starts, and it was hidden (`mo-h mo-card`: opacity 0, 40 px
+low) until it scrolled in, then rose 40 px over 0.7 s. The E2E test harness scrolls the button to the middle of the screen,
+measures its centre and taps at once: when the tap fell inside that rise it landed about 18 px under the 44 px
+button. A race with the throttled CPU decides when `motion.js` starts against when the page is ready to tap, which is
+why it showed on one profile and not the other; a person tapping the widget as it arrives would miss the same way.
+It was there on the old home too, where the widget usually sat in or near the first screen.
+
+**Fix:** the widget is the page's tool, not a picture, so it leaves `motion.js`'s reveal list; it is never hidden or
+moved by a reveal. Its heading and line ("Just share one thing", "No drive needed. / It opens once, then the link
+ends.") still arrive as before. `check_motion` now holds it: after load, at 1440 and at 390, the widget carries no
+`mo-` class, its opacity is 1 and it has no translate. Against the old `motion.js` that check fails at both widths
+(`mo-h mo-card mo-in`, opacity 0, `0px 40px`); with the fix it passes. The E2E check is unchanged.
+
+**Reproduced and confirmed** with the test harness's own devices and tap (`e19/tap_probe.py`, nothing sealed): on the
+test server, before the fix 4 of 12 taps opened the text box (2 of 6 on each phone), every miss made while the widget
+was hidden or rising; after it 12 of 12. Production before the fix: 5 of 6. Record: `e19/tap-probe.txt`.
