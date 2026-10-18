@@ -843,7 +843,8 @@ WEBM_TYPE = 'video/webm; codecs="vp9"'
 
 def check_v2():
     """V-01, the files' half: /v2 is noindex, outside the JSON-LD graph, linked from no page, partial or static file,
-    and carries every visible string of the home (only its title differs, titles being unique); each <video data-clip>
+    and has the home's links, variants and labels (its words stay the ones it was made with: the copy pass,
+    docs/review/copy-1.md, changed the home's and left the preview's on purpose); each <video data-clip>
     is muted, autoplay, loop, playsinline, its sources waiting in data-src (WebM with its codec first, then MP4), the
     first with preload="metadata" and its poster, the rest preload="none" with data-poster and a lazy still for readers
     without JavaScript; every file they name exists, no other page names the media folder, and the budget holds."""
@@ -856,7 +857,6 @@ def check_v2():
         problems.append("pages/v2.html: no <meta name=\"robots\" content=\"noindex\">")
     if "application/ld+json" in text:
         problems.append("pages/v2.html: carries JSON-LD (the preview is no part of the graph)")
-    words = lambda doc: [w for w in (" ".join(t.split()) for t in doc.text) if w and w not in ("".join(doc.titles),)]   # noqa: E731
     # and the same links, buttons, variants and labels in the body (the Pause motion switch is v2's own)
     keys = ("href", "data-when", "hidden", "data-testid", "aria-label", "aria-labelledby", "id", "role")
     def marks(doc):
@@ -868,11 +868,6 @@ def check_v2():
         problems.append(f"pages/v2.html: its links, variants or labels differ from the home's: only in v2 {extra[:3]}, only on / {missing[:3]}")
     if not re.search(r'<button type="button" class="loops" data-loops aria-label="Pause motion" aria-pressed="false" hidden>', text):
         problems.append("pages/v2.html: no Pause motion switch (WCAG 2.2.2: the loops run longer than five seconds)")
-    if words(d) != words(home):
-        a, b = words(home), words(d)
-        first = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
-        problems.append(f"pages/v2.html: its words differ from the home's at {first}: "
-                        f"{a[first] if first < len(a) else None!r} / {b[first] if first < len(b) else None!r}")
     for f in [p for p in PAGES if p != v2] + PARTIALS + sorted((SITE / "static").rglob("*.txt")):
         body = f.read_text()
         if re.search(r'href="(\{\{ORIGIN\}\})?/v2[/"#?]', body) or "{{ORIGIN}}/v2" in body:
@@ -1088,5 +1083,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("/how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch", check_how_loops),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
-          ("V-01: /v2 is noindex and unlinked, keeps the home's words, its loops wait to be asked for, its budget", check_v2),
+          ("V-01: /v2 is noindex and unlinked, keeps the home's links and labels, its loops wait to be asked for, its budget", check_v2),
           ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills)]

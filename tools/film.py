@@ -68,7 +68,7 @@ TEST = "Our demo wallet pays the owner for you, with test money."      # C33
 OPENS = "It opens on the phone."
 PAID = "Checked on the chain, not a wallet's word."                    # C11 short form
 CHAIN_SEES = "The chain shows a payment with a hidden amount and a hidden owner. The fee is public."   # C36
-TAGLINE = "Your private cloud storage. Privacy isn't an option. It's the default."   # the home's headline (site v4)
+TAGLINE = "Your private cloud storage. Files lock in your browser first."   # the home's headline (copy-1)
 # The home as served (the v3 design, docs/review/promote-v3.md): motion.js has started (html.mo, or no motion at all),
 # the hero's arrival has finished, and the drive slice has decoded if the camera sees it. The slice sits under the
 # hero's still: on the computer its top is on the first screen and decodes at load (motion.js decodes it once 30 % of it

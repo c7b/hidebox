@@ -296,6 +296,23 @@ cell, dialog or empty state with two or more sentences, each sentence starts on 
 check-copy); the app's `ui/lines.js` does it for `<p>`, `<dd>` and the alert and choice text it builds; the home's
 drop widget breaks its two card sentences with a newline under `white-space: pre-line` (A-06 unchanged).
 Headings and the status pill stay one line.
+**The Say It Once Rule (copy-1, the owner's).** hidebox has eight key statements. Each is said once per page, in its
+best place and in its registered words (`tools/claim-registry.json`); anywhere else on that page it is a short answer
+(a comparison cell: "In your browser.") or a link to where it is said, never the sentence again:
+1. The lock: "Files lock in your browser first." (the home's headline; C32 "Files lock in this browser before upload." elsewhere).
+2. The server: "Our server gets scrambled noise. Never the key." (C1-n)
+3. The names: "Search runs in this browser. Our server can't read your file names." (C43)
+4. The exit rules: "Each file or folder gets its own rule. You can stop a link any time."
+5. Pay to open: "Pay to open: they pay your Tari address, then it opens." and, said once for Send by Tari and Pay to
+   open together, "The chain shows a payment with a hidden amount and a hidden owner. The fee is public." (C36)
+6. The chain record: "When a file leaves your drive, we write that on the Tari chain, for anyone to check." (C42)
+7. The account: "No email, no password. Your key is the account."
+8. Losing the key: "Save your key. If this browser forgets it, nobody can let you back in, not even us." (C17-k)
+
+On the home: 1 in the hero, 7 under Open your drive, 4 in Share it your way, 2, 3 and 8 in the comparison, 5 and 6 in
+Tari does the private parts. The testnet line is the footer's, on every page; no block repeats it. /judges' What to
+check table quotes each claim with where it shows, so its steps say what you see, not the claim again. Pictures of
+the app (/how's stills) show the app's own words.
 **The One Breath Rule.** Product strings read at Flesch-Kincaid grade 5 or lower (measured with
 `research/design/copy/fk.py`); How it was made at grade 8 or lower.
 **The No Digits Rule.** Numbers in copy are `{variables}` from `/api/v1/config`.
@@ -323,8 +340,8 @@ Headings and the status pill stay one line.
   files rising out of it, `web/site/media/v3/hero-*`) right on a computer and under the words on a phone; on the void in
   dark, on v3's gunmetal card through `lighten` in light.
 - **Home (the v3 design since the twelfth pass, docs/review/promote-v3.md; its words from site v4):** dark first.
-  The hero's words on the left (the headline "Your private cloud storage." with "Privacy isn't an option." and
-  "It's the default." below it in grey, one sentence a line; the 56px lime Open your drive, the site's one action)
+  The hero's words on the left (the headline "Your private cloud storage." with "Files lock in your browser first."
+  below it in grey, on one line at 390 px and 1440 px; the 56px lime Open your drive, the site's one action)
   and its still on the right: the open box with the files rising out of it in its light. Under them the slice of a
   drive hanging 56px into Just share one thing (its words decode from hex noise as it comes into view), then Share it
   your way (the rules grouped, the share window as the picture, tilted, with a line under it), What's different from

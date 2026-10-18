@@ -108,7 +108,8 @@
     "Same link. Now it opens one time.",
     "It opens one time. When you open it, the link ends.",
     "It opens one time, until {date}. Then the link ends.",
-    "It opens one time. Then the link ends."
+    "It opens one time. Then the link ends.",
+    "Yes, by default."
    ]
   },
   {
@@ -208,12 +209,15 @@
    "backed_by": "spec §4.4, §4.14 (16-drive-design §9.3)",
    "markers": [
     "lock in this browser before",
-    "lock here, in your browser"
+    "lock here, in your browser",
+    "lock in your browser first"
    ],
    "sentences": [
     "Files lock in this browser before upload.",
     "They lock in this browser before they upload.",
-    "Your files lock here, in your browser."
+    "Your files lock here, in your browser.",
+    "Files lock in your browser first.",
+    "In your browser."
    ]
   },
   {
@@ -361,7 +365,8 @@
     "The file left our server. We wrote that on the Tari chain.",
     "We write that on the Tari chain.",
     "We wrote that on the Tari chain.",
-    "That goes on the Tari chain within {checkpoint}."
+    "That goes on the Tari chain within {checkpoint}.",
+    "Yes, on the Tari chain."
    ]
   },
   {
