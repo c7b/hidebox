@@ -480,6 +480,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 @media (prefers-reduced-transparency: reduce) { .app-header { background: var(--background); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 /* Glass on the drive's own raised surfaces (components.css has the shadcn ones). The phone's list has no box. */
 .folder, .folder:hover, .tari-row, .empty-art .ea-file, .side-new .btn[data-variant], .side-new .btn[data-variant]:hover, .fab[data-variant="secondary"] { background-image: var(--glass); border-color: var(--glass-edge); border-top-color: var(--glass-top); }
+.folder:focus-visible, .side-new .btn[data-variant]:focus-visible { border-color: var(--ring); }   /* the ring's border wins over a hovered edge */
 @media (min-width: 768px) { .files { background-image: var(--glass); border-color: var(--glass-edge); border-top-color: var(--glass-top); } }
 @media (prefers-contrast: more) { .folder, .tari-row, .files, .side-new .btn[data-variant], .fab[data-variant="secondary"] { background-image: none; border-color: var(--border); } }
 /* Icon tiles are small frosted tiles in dark mode (a white wash, the lit edge); Tari's keep their violet wash. */
