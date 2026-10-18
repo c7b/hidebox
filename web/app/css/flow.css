@@ -115,5 +115,5 @@
 @media (prefers-reduced-motion: reduce) {
   .flow-bar[data-mode="busy"] > span { width: 100%; transform: none; opacity: .3; animation: none; }
   .done-file { display: none; }
-  .done > *, .done-box, .done-check { animation: none; }
+  .done > :not(.done-art), .done-box, .done-check { animation: none; }
 }

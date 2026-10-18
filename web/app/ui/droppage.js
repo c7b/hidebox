@@ -103,11 +103,15 @@ export async function render(main, { dropId }) {
     // sealItem's phases, forward only (a later chunk is still encrypting while an earlier one uploads); the bar fills
     // with the first chunk's encryption, then with what reached our server, and sweeps while one chunk is on its way.
     const size = formatBytes(meta.size);
+    let sending = false;   // the proof of work's last word can come after the first chunk left
     const onPhase = (phase, f = 0) => {
       if (mine !== run) return;
       if (phase === 'encrypting' && progress.now === 'lock') progress.fraction(f > 0 && f < 1 ? f : null);
-      else if (phase === 'pow') progress.at('upload', { note: t('drop.note.pow'), fraction: f });
-      else if (phase === 'uploading' || phase === 'finishing') progress.at('upload', { note: size, fraction: f > 0 && f < 1 ? f : null });
+      else if (phase === 'pow' && !sending) progress.at('upload', { note: t('drop.note.pow'), fraction: f });
+      else if (phase === 'uploading' || phase === 'finishing') {
+        sending = true;
+        progress.at('upload', { note: size, fraction: f > 0 && f < 1 ? f : null });
+      }
     };
     try {
       const stripped = await s.stripPhoto(source, { keepOriginal, onStrip: () => progress.note(t('seal.stripping')) });

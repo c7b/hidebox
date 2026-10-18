@@ -87,7 +87,9 @@ def ux_drop(t):
     t.check(b.attr("dd-root", "data-state") == "sealing" and step(b, "lock") == "done", "picked: Locking it in your browser is done, Uploading lit")
     t.check([x.strip() for x in b.eval("[...document.querySelectorAll('[data-testid=\"dd-steps\"] .step-label')].map((e) => e.textContent)")]
             == ["Locking it in your browser", "Uploading", "Waiting for the Tari chain", "Delivered"], "four steps, in people's words")
-    t.check(bool(re.search(r"\d", note(b, "upload"))), f"the upload step says how big it is ({note(b, 'upload')!r})")
+    sized = b.wait("(() => { const n = document.querySelector('[data-testid=\"dd-steps\"] li[data-step=\"upload\"] .step-note')?.textContent || '';"
+                   " return /\\d/.test(n) ? n : ''; })()", 30)
+    t.check(bool(sized), f"once the chunk leaves, the upload step says how big it is ({sized!r})")
     time.sleep(2.4)
     clock = b.eval("document.querySelector('[data-testid=\"dd-steps\"] li[data-step=\"upload\"] .step-time')?.textContent ?? ''")
     t.check(bool(re.fullmatch(r"0:\d\d", clock)) and int(clock[2:]) >= 2, f"a step past two seconds shows its clock ({clock!r})")
