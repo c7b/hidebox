@@ -61,4 +61,6 @@
   background-image: var(--lk-glass); box-shadow: var(--lk-top), var(--shadow);
 }
 .a-page .a-figure { box-shadow: var(--lk-top); }
+/* app.css's flat ones stay flat: the second kind of choice row and the free plan */
+.a-page .a-choices--two .a-choice:first-child, .a-page .a-plan:first-child { background-image: none; box-shadow: none; }
 @media (prefers-contrast: more) { .a-page :is(.a-choice:first-child, .a-dropcard, .a-keybanner, .a-modal, .a-receipt, .a-filecard, .a-dd-safety, .a-item, .a-plan, .a-invoice) { background-image: none; } }

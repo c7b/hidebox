@@ -457,13 +457,18 @@ a.item:hover, button.item:hover { background: color-mix(in oklab, var(--accent) 
 .sidebar-inset { position: relative; display: flex; width: 100%; min-width: 0; flex: 1; flex-direction: column; background: var(--background); }
 
 /* ---------- CHANGED (drive v3, docs/review/drive-v3.md): the home's v3 look ----------
-   Dark mode: the raised surfaces are frosted glass, v2.css's recipe (tokens.css --glass*): a light from above inside
+   Dark mode: the raised surfaces are frosted glass, after v2.css's recipe (tokens.css --glass*): a light from above inside
    a white hairline with a brighter top edge, on an opaque gunmetal base, so nothing needs a backdrop blur and text
    contrast never depends on what is behind. Light mode keeps shadcn's plain surfaces (--glass is none there).
    Badges take v3's chip: a white wash over whatever they sit on, so a rule still reads on a glass card. */
 .card, .dialog, .sheet, .menu, .toast, .alert { background-image: var(--glass); border-color: var(--glass-edge); border-top-color: var(--glass-top); }
 .dialog, .sheet { background-color: var(--card); }
 .badge[data-variant="secondary"] { background: var(--chip); }
+/* Red text at 4.5:1 or more on its own wash; a red badge's label in ink on the dark theme's light red (white was 2.89:1). */
+.badge[data-variant="destructive"] { color: var(--on-destructive); }
+.menu-item[data-variant="destructive"]:is(:focus, [data-highlighted]) { background: color-mix(in oklab, var(--destructive) 10%, transparent); color: var(--destructive-text); }
+.menu-item[data-variant="destructive"]:is(:focus, [data-highlighted]) > .icon { color: var(--destructive-text); }
+.alert[data-variant="destructive"] .alert-description { color: var(--destructive-text); }
 @media (prefers-contrast: more) {
   .card, .dialog, .sheet, .menu, .toast, .alert { background-image: none; border-color: var(--border); }
 }

@@ -14,7 +14,7 @@
  * Drive v3 (docs/review/drive-v3.md): the drive in the home's v3 look. Light is the site's light (white, the
  * #FAFAFA rail, #666666 secondary text, as web/shared/tokens.css); dark is v3's black void (#0A0A0A) with gunmetal
  * panels (one cool ramp, OKLCH hue 258, from v3's stage #17191C to #2B2F35), frosted glass on the raised surfaces
- * (--glass*: a soft light from above inside a white hairline, v2.css's recipe).
+ * (--glass*: a soft light from above inside a white hairline, after v2.css's recipe).
  * Violet stays Tari's; in dark it takes the site's pay-text (#A684FF) so a Tari badge reads as on the home.
  */
 
@@ -80,6 +80,7 @@
      gunmetal card under a picture in light mode (the start screen's open box, drawn on it with lighten). */
   --glass: none; --glass-edge: var(--border); --glass-top: var(--border); --tile-edge: 0 0 #0000;
   --chip: var(--secondary); --tile-fill: var(--muted);   /* a badge's fill; an icon tile's fill (dark: frosted) */
+  --on-destructive: oklch(1 0 0); --destructive-text: oklch(0.52 0.22 27.3);   /* red text on a red wash (5.06:1); a red fill's label */
   --stage: radial-gradient(130% 95% at 50% 28%, #2B2F35 0%, #17191C 55%, #0A0A0A 100%); --stage-blend: lighten;
   --stage-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.1), 0 1px 2px rgb(10 10 10 / 0.06), 0 32px 64px -36px rgb(10 10 10 / 0.5);
 
@@ -176,6 +177,7 @@
     --tile-edge: inset 0 0 0 1px rgb(255 255 255 / 0.09), inset 0 1px 0 rgb(255 255 255 / 0.18);
     --stage: none; --stage-blend: normal; --stage-shadow: 0 0 #0000;
     --chip: rgb(255 255 255 / 0.07); --tile-fill: rgb(255 255 255 / 0.06);
+    --on-destructive: oklch(0.145 0 0); --destructive-text: var(--destructive);
   }
 }
 
@@ -224,6 +226,7 @@
   --tile-edge: inset 0 0 0 1px rgb(255 255 255 / 0.09), inset 0 1px 0 rgb(255 255 255 / 0.18);
   --stage: none; --stage-blend: normal; --stage-shadow: 0 0 #0000;
   --chip: rgb(255 255 255 / 0.07); --tile-fill: rgb(255 255 255 / 0.06);
+  --on-destructive: oklch(0.145 0 0); --destructive-text: var(--destructive);
 }
 /* increased contrast: an ink edge round the lime on light pages (the dark blocks outrank this) */
 @media (prefers-contrast: more) { :root { --brand-edge: var(--foreground); } }

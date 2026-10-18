@@ -942,7 +942,7 @@ def drive_primary(t):
 
 # Computed colours given in OKLCH serialize as oklch(); RGB() draws one on a canvas pixel and reads it back as rgb()
 # (rgba() with its alpha out of 255 when it is see-through).
-RGB = """((c) => { const x = document.createElement('canvas').getContext('2d', { willReadFrequently: true }); x.clearRect(0, 0, 1, 1);
+RGB = """((c) => { const x = (globalThis.__rgb2d ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true })); x.clearRect(0, 0, 1, 1);
   x.fillStyle = c; x.fillRect(0, 0, 1, 1); const d = x.getImageData(0, 0, 1, 1).data;
   return d[3] === 255 ? `rgb(${d[0]}, ${d[1]}, ${d[2]})` : `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${d[3]})`; })"""
 STYLE = """((sel, props) => { const rgb = %s; const e = document.querySelector(sel); if (!e) return null; const s = getComputedStyle(e);
