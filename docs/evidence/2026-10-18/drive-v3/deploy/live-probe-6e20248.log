@@ -1,0 +1,25 @@
+docs/evidence/2026-10-18/drive-v3/live_probe.py
+PASS /drive names the open box's icons (the 32 px PNG, the SVG, the touch icon)
+PASS the app's tokens are v3's (the gunmetal rail, the glass, the site's #666666)
+PASS the drive's stylesheet has the start picture and the frosted header
+PASS 1440 light: the start screen shows the open box from its AVIF (hero-480.avif)
+PASS 1440 light: one lime action, Make my drive (['drive-make'])
+PASS 1440 light: on the gunmetal card, lighten (['radial-gradient', 'lighten'])
+PASS 1440 light: Make my drive in the first screen, nothing sideways
+PASS 1440 light: no CSP or Trusted Types violation
+PASS 1440 dark: the start screen shows the open box from its AVIF (hero-480.avif)
+PASS 1440 dark: one lime action, Make my drive (['drive-make'])
+PASS 1440 dark: on the void (['none', 'normal'])
+PASS 1440 dark: Make my drive in the first screen, nothing sideways
+PASS 1440 dark: no CSP or Trusted Types violation
+PASS 390 light: the start screen shows the open box from its AVIF (hero-1024.avif)
+PASS 390 light: one lime action, Make my drive (['drive-make'])
+PASS 390 light: on the gunmetal card, lighten (['radial-gradient', 'lighten'])
+PASS 390 light: Make my drive in the first screen, nothing sideways
+PASS 390 light: no CSP or Trusted Types violation
+PASS 390 dark: the start screen shows the open box from its AVIF (hero-1024.avif)
+PASS 390 dark: one lime action, Make my drive (['drive-make'])
+PASS 390 dark: on the void (['none', 'normal'])
+PASS 390 dark: Make my drive in the first screen, nothing sideways
+PASS 390 dark: no CSP or Trusted Types violation
+live probe PASS 0 failed

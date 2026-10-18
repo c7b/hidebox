@@ -914,4 +914,8 @@ second choice row, /upgrade's free plan); the two-column start catching the one-
 screens. Its nits and three contrast risks outside the diff were taken (a red badge in dark 2.89:1 → 6.85:1, a
 highlighted Move to trash in light 4.01:1 → 5.06:1, a destructive alert's text). Suites on the branch with the
 promotion under it: lint, copy, core 9/9, server 331, deploy 83, site 42/42, UI 751/751 (`drive-v3` adds 19 checks;
-no expectation changed). A-06d 119,760 B (was 116,965). RELEASE-TBD
+no expectation changed). A-06d 119,760 B at most (117,471 B with the promotion alone). Deployed as `6e20248` (release `6e20248d…-cd00dd644`, 203
+files, notarized in tx `a1290c29…73a6`), `main` pushed `d0f08ed..6e20248`, tag `spooky-secrets-2026-10` left at `d0f08ed`;
+verify-deploy 0 differences across 203 files, D-01 PASS, the live probe 23/23; the app's E2E batch: E-01, E-08, E-18, E-20,
+E-26, E-27, E-03 PASS, E-28 PASS on its rerun (a tap racing the menu's slide-in), E-19 FAIL twice on the Android profile at the
+home's Or write one (the promotion's home; no home file changed here). Evidence: `docs/evidence/2026-10-18/drive-v3/`.

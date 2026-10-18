@@ -134,8 +134,8 @@ grey highlight 4.38:1; now a deeper red, `--destructive-text`, on the red wash i
 | Lint, check-copy | PASS, PASS |
 | App core (`run_all.py`) | ALL PASS (9 steps) |
 | Server, deploy | 331 OK (5 skipped), 83 OK |
-| Site (`web/site/tests/run.py`) | 42/42 on the tree with the promotion (on its first mark commit alone, V-02 failed two checks that its later commits rewrite) |
-| UI (`web/app/ui/tests/run.py`) | **751/751**: the 732 before, unchanged, plus the new `drive-v3` scenario's 19 checks |
+| Site (`web/site/tests/run.py`) | 42/42 on the tree with the promotion (M-01 58.4 KB, the promotion's; on its first mark commit alone, V-02 failed two checks that its later commits rewrite) |
+| UI (`web/app/ui/tests/run.py`) | **751/751**: the 732 before, unchanged, plus the new `drive-v3` scenario's 19 checks (twice: on `b203c86` and on the promotion's earlier head, with the same code of this pass) |
 
 No expectation changed. `drive-primary` (one lime a view, the picked row's `#F4FFE6`, the white New's ring) passes as it
 was. The new `drive-v3` scenario (`web/app/ui/tests/flows_share.py`) checks the start screen's open box (from its AVIF,
@@ -174,7 +174,19 @@ The best four:
 
 ## Release
 
-TBD
+`main` had the promotion live (`d0f08ed`, the tag moved there by the coordinator). This branch was rebased on it (two
+document conflicts, DESIGN.md and the fix log, both sides kept), the gate above ran on the code that ships, and this
+session deployed **`6e20248`** with `deploy/scripts/deploy.sh` (release `6e20248d…-cd00dd644`, 203 files; server 328
+OK (6 skipped), deploy tests, lint and check-copy on the server; smoke PASS; the manifest `c48f2cb9…` notarized through
+SealLog in tx `a1290c29…73a6`), then pushed `main` (`d0f08ed..6e20248`). **The tag `spooky-secrets-2026-10` was not
+moved**; it stays at `d0f08ed` for the coordinator to decide.
+
+| Check | Result |
+|---|---|
+| verify-deploy (`deploy/verify-6e20248.log`) | 0 differences across 203 files; SealLog's template on chain byte for byte |
+| D-01 (`deploy/d01-6e20248.log`) | test_headers PASS |
+| Live probe (`deploy/live-probe-6e20248.log`, `live_probe.py`) | 23/23: /drive names the open box's PNG, SVG and touch icon; the app's tokens and stylesheet are this pass's; at 1440 and 390, light and dark, the start screen shows the open box from its AVIF (480 px at 1×, 1024 px on a 3× phone), one lime (Make my drive) inside the first screen, the gunmetal card in light and the void in dark, nothing sideways, no CSP or Trusted Types violation |
+| The app's E2E batch (`e2e/batch.log`, `e2e/rerun.log`) | E-01, E-08, E-18, E-20, E-26, E-27, E-03 PASS. **E-28** failed once and passed on its rerun: its second Move landed on Rename (`e2e/E-28-failure-run1.png`), a tap at the menu item's centre measured while the menu still slides in (150 ms), the race the UI suite avoids by clicking through the DOM. **E-19 failed twice, outside this pass:** on the Android profile (412 × 915, 4× CPU throttling) the tap on the home's Or write one does not open the text box (`e2e/E-19-failure-412.png`); the 390 × 844 run of the same flow and the 360 px sweep pass. No file the home loads changed in this pass (the drop widget, the home's stylesheets and scripts, the site tokens); it is the v3 home's, reported to the coordinator. No judge pass was used |
 
 ## Not done, and open
 
@@ -183,5 +195,6 @@ TBD
   does) and `mix-blend-mode` on the light card were not seen on an iPhone.
 - **The site's own pages** (the home, /how, /made, /judges, /fine-print, 404) are the promotion's: their header carries
   the open box from its partial; this pass touched none of their files.
+- **E-19 on the Android profile** fails at the home's Or write one (above); the home is the promotion's.
 - **`--sidebar-primary`** in dark is still shadcn's blue in the token file; nothing reads it since the mark's tile is
   ink (DESIGN.md says so), so it was left as shadcn wrote it.
