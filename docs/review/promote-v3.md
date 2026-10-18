@@ -226,3 +226,10 @@ ends.") still arrive as before. `check_motion` now holds it: after load, at 1440
 **Reproduced and confirmed** with the test harness's own devices and tap (`e19/tap_probe.py`, nothing sealed): on the
 test server, before the fix 4 of 12 taps opened the text box (2 of 6 on each phone), every miss made while the widget
 was hidden or rising; after it 12 of 12. Production before the fix: 5 of 6. Record: `e19/tap-probe.txt`.
+
+**Gate and release:** on the server as build (`e19/suites/`): lint PASS, check-copy PASS, server 331 OK (5 skipped), deploy
+84 OK, core 9/9, site 42/42 (with the new widget rule), UI 751/751. Deployed as `f3bede7` with `deploy.sh` (the gate,
+203 files, smoke PASS, notarized in tx `41056aef…8c25`; `e19/deploy/`); verify-deploy 0 differences across 203 files;
+D-01 PASS (66 checks, `/v3` and `/v3/` 301 to `/`, `/favicon.ico` now served as `image/vnd.microsoft.icon`). E2E on
+production: E-01 PASS and E-19 PASS (both profiles), then E-19 PASS again (`e19/e2e/`). The tag was not moved: it stays
+at `d0f08ed`.

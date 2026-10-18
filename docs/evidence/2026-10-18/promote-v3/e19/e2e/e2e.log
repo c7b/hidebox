@@ -1,0 +1,10 @@
+python3 -I tests/e2e/run.py --only E-19,E-01 (from f3bede7, against https://srv2052606.hstgr.cloud running f3bede7), 2026-10-18 04:00 UTC
+PASS E-01      9.1s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-19     66.0s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+e2e: PASS {'PASS': 2, 'FAIL': 0, 'SKIP': 0}            (e19-e01.report.json)
+
+python3 -I tests/e2e/run.py --only E-19 (again), 2026-10-18 04:01 UTC
+PASS E-19     68.9s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0}            (e19-again.report.json)
+
+Each text item these runs sealed was opened once and is deleted (E-01's own check: "the item is deleted after a cleanup cycle").

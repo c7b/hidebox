@@ -919,3 +919,16 @@ files, notarized in tx `a1290c29…73a6`), `main` pushed `d0f08ed..6e20248`, tag
 verify-deploy 0 differences across 203 files, D-01 PASS, the live probe 23/23; the app's E2E batch: E-01, E-08, E-18, E-20,
 E-26, E-27, E-03 PASS, E-28 PASS on its rerun (a tap racing the menu's slide-in), E-19 FAIL twice on the Android profile at the
 home's Or write one (the promotion's home; no home file changed here). Evidence: `docs/evidence/2026-10-18/drive-v3/`.
+
+## E-19 on the v3 home: the drop widget out of the reveals (2026-10-18)
+
+The drive-v3 batch on production (`6e20248`) failed E-19 twice on the Android profile: tapping Or write one opened
+nothing. `motion.js` revealed the home's drop widget like a card, so on a phone (where the v3 home puts it below the
+first screen) it waited hidden and 40 px low, then rose for 0.7 s as it scrolled in; the test harness's tap, measured
+just before, landed under the button whenever it fell inside that rise (a race with the throttled CPU, as real for a
+person). Fixed in `f3bede7`: the widget leaves the reveal list (its heading and line still arrive), and `check_motion`
+holds it unhidden and unmoved at 1440 and 390 (it fails against the old `motion.js`). Reproduced with the test harness's
+devices and tap: before 4/12 taps opened the text box, after 12/12. Gate: lint, copy, server 331, deploy 84, core 9/9,
+site 42/42, UI 751/751. Deployed with `deploy.sh` (203 files, smoke PASS, notarized); verify-deploy 0 differences, D-01
+PASS; E-01 PASS, E-19 PASS twice on both profiles. Tag `spooky-secrets-2026-10` left at `d0f08ed`. `docs/review/promote-v3.md`
+("After the release"), evidence in `docs/evidence/2026-10-18/promote-v3/e19/`.
