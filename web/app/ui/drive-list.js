@@ -234,7 +234,7 @@ function emptyDrive(drive, folder) {
   const art = folder
     ? h('div', { class: 'empty-media', 'data-variant': 'icon' }, icon('folder-open'))
     : h('div', { class: 'empty-art', 'aria-hidden': 'true' }, h('span', { class: 'ea-file ea-l' }, icon('file-image')),
-      h('span', { class: 'brand-mark ea-mark' }, icon('lock')), h('span', { class: 'ea-file ea-r' }, icon('file-text')));
+      h('span', { class: 'brand-mark ea-mark' }, icon('hidebox')), h('span', { class: 'ea-file ea-r' }, icon('file-text')));
   return h('div', { class: 'empty', 'data-testid': 'drive-empty' },
     h('div', { class: 'empty-header' }, art,
       h('h2', { class: 'empty-title', id: 'files-h' }, t(folder ? 'drive.empty.folder_title' : 'drive.empty.title')),

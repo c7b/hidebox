@@ -280,7 +280,7 @@ export async function driveLook() {
     main.className = 'fv-page';
     if (!document.querySelector('.fv-top')) {
       main.before(h('header', { class: 'fv-top' },
-        h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('lock')),
+        h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')),
           h('span', { class: 'brand-text' }, h('span', {}, BRAND))),
         ownDrive({ 'data-size': 'sm' })));
     }

@@ -35,8 +35,8 @@
 
 /* ---------- brand ---------- */
 .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: var(--text-base); letter-spacing: var(--tracking-tight); text-decoration: none; color: inherit; }
-.brand-mark { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--radius-lg); background: var(--sidebar-primary); color: var(--sidebar-primary-foreground); flex-shrink: 0; }
-.brand-mark .icon { width: 1rem; height: 1rem; }
+.brand-mark { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--radius-lg); flex-shrink: 0; }
+.brand-mark .icon { width: 1.25rem; height: 1.25rem; }
 .brand-text { display: grid; line-height: 1.15; }
 .brand-text small { font-size: var(--text-xs); font-weight: 400; color: var(--muted-foreground); letter-spacing: 0; }
 
@@ -236,8 +236,9 @@
   .btn[data-size="icon-sm"], .btn[data-size="icon-sm"]:has(> .icon) { width: var(--target); height: var(--target); }
   .folder-icon { width: 2.75rem; height: 2.75rem; }
 }
-/* The brand tile is ink in both themes (shadcn's dark sidebar-primary is blue: the mark must not change colour). */
-.brand-mark { background: var(--primary); color: var(--primary-foreground); }
+/* The brand tile is ink in both themes with the lime open box (docs/review/home-v3.md), as on the site: the mark never
+   changes colour (shadcn's dark sidebar-primary is blue, its dark primary near-white). */
+.brand-mark { background: #0A0A0A; color: var(--brand-solid); }
 /* Links and link-buttons get shadcn's ring, never the browser's default outline. */
 a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); border-radius: var(--radius-sm); }
 .sheet-title:focus, .dialog-title:focus { outline: none; }
@@ -259,7 +260,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 /* Empty drive: the brand moment (the drive's mark taking in two files) and the Tari address row. */
 .empty-art { position: relative; width: 7rem; height: 4.5rem; margin-bottom: 0.5rem; }
 .empty-art .ea-mark { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 3.25rem; height: 3.25rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
-.empty-art .ea-mark .icon { width: 1.5rem; height: 1.5rem; }
+.empty-art .ea-mark .icon { width: 2rem; height: 2rem; }
 .empty-art .ea-file { position: absolute; top: 0.75rem; display: grid; place-items: center; width: 2.5rem; height: 3rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); color: var(--muted-foreground); box-shadow: var(--shadow-xs); }
 .empty-art .ea-l { left: 0; rotate: -8deg; }
 .empty-art .ea-r { right: 0; rotate: 8deg; }

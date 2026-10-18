@@ -21,12 +21,3 @@
 .v3 .stage-c { --ar: 16 / 9; --fade: 84%; }   /* the file locked in the browser, leaving still locked, the server */
 .v3 .stage-b { --ar: 1 / 1; --fade: 86%; }    /* one file, four sides: you, a glimpse, a frosted lid, the gem */
 .v3 .stage-d { --ar: 4 / 3; --fade: 82%; }    /* the file and its key in, through the gem, a locked tile out */
-
-/* ---------- the open box (the owner's mark, final-a-open): lime on ink in both themes, in the header's tile and the
-   comparison's. The ink tile stays on light pages: the lime alone on white would be 1.21:1. ---------- */
-.v3 .wm-tile {
-  background: #0A0A0A url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='2.6 1.6 26.8 29.8'%3E%3Cg fill='none' stroke='%23BCFE00' stroke-width='2.4' stroke-linejoin='round'%3E%3Cpath d='M16 3 L27 9 L16 15 L5 9 Z'/%3E%3Cpath d='M6 15 L4 16 L4 23 L16 30 L28 23 L28 16 L26 15'/%3E%3Cpath d='M4 16 L16 23 L28 16 M16 23 L16 30'/%3E%3C/g%3E%3C/svg%3E") 50% 50% / auto 20px no-repeat;
-}
-.v3 .wm-tile > svg { display: none; }
-.v3 .us-name .wm-tile { background-size: auto 15px; }
-@media (forced-colors: active) { .v3 .wm-tile { forced-color-adjust: none; } }

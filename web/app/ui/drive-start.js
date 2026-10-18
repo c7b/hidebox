@@ -116,7 +116,7 @@ export function renderStart(app, { onReady, make = false, open = false }) {
   openBtn.addEventListener('click', () => openDialog((identity) => onReady(identity, { made: false })));
   app.replaceChildren(h('main', { class: 'start', id: 'main', tabindex: '-1', 'data-testid': 'drive-start' },
     h('div', { class: 'start-card' },
-      h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('lock')), h('span', {}, BRAND)),
+      h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')), h('span', {}, BRAND)),
       h('h1', { class: 'h2' }, t('drive.start.title')),
       h('p', { class: 'lead' }, t('drive.start.lede')),
       h('div', { class: 'row wrap' }, makeBtn, openBtn),

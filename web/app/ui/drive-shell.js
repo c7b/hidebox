@@ -18,7 +18,7 @@ export const NAV = [
 
 function brandBlock() {
   return h('a', { class: 'brand', href: '/drive', 'data-nav': '' },
-    h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('lock')),
+    h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')),
     h('span', { class: 'brand-text' }, h('span', {}, BRAND), h('small', {}, t('drive.side.mine'))));
 }
 

@@ -374,9 +374,8 @@ def compose(remote: Remote, host: str, recordings: dict, shots: list[Shot], out:
         for name, text in files.items():
             add(name, text.encode())
         add("render.sh", script.encode())
-        # the symbol, light on the dark ground (its own light tile with a dark lock)
-        logo = (ROOT / "web" / "shared" / "brand" / "symbol.svg").read_text().replace(".t{fill:#171717}", ".t{fill:#FAFAFA}") \
-            .replace(".l{stroke:#FAFAFA}", ".l{stroke:#0A0A0A}")
+        # the symbol as the site shows it: the lime open box on its ink tile, the tile one with the dark ground
+        logo = (ROOT / "web" / "shared" / "brand" / "symbol.svg").read_text()
         add("logo.svg", logo.encode())
     remote.as_build(f"rm -rf {WORK} && mkdir -p {WORK} && tar -x -C {WORK} && cd {WORK} && bash render.sh",
                     data.getvalue())
