@@ -9,24 +9,24 @@
 
 You pick how each file opens: once, with a word, or for Tari™.
 
-[**Open the live drive**](https://srv2052606.hstgr.cloud) · [For judges](https://srv2052606.hstgr.cloud/judges) ·
-[How it works](https://srv2052606.hstgr.cloud/how) · [Under the hood](https://srv2052606.hstgr.cloud/made) · [Docs](docs/README.md)
+[**Open the live drive**](https://hidebox.app) · [For judges](https://hidebox.app/judges) ·
+[How it works](https://hidebox.app/how) · [Under the hood](https://hidebox.app/made) · [Docs](docs/README.md)
 
-[![Live site status](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fsrv2052606.hstgr.cloud%2Fstatus.json&query=%24.overall&label=live%20site&labelColor=0A0A0A&color=171717)](https://srv2052606.hstgr.cloud/status.json)
+[![Live site status](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhidebox.app%2Fstatus.json&query=%24.overall&label=live%20site&labelColor=0A0A0A&color=171717)](https://hidebox.app/status.json)
 ![Network: Esmeralda testnet](https://img.shields.io/badge/network-Esmeralda%20testnet-7008E7?labelColor=0A0A0A)
 ![Server: Python standard library](https://img.shields.io/badge/server-Python%20stdlib%20only-171717?labelColor=0A0A0A)
 [![License: MIT](https://img.shields.io/badge/license-MIT-BCFE00?labelColor=0A0A0A)](LICENSE)
 
 </div>
 
-<a href="https://srv2052606.hstgr.cloud"><img src="docs/media/home.webp" alt="The hidebox home page: Your private cloud storage, the open box, and the Open your drive button"></a>
+<a href="https://hidebox.app"><img src="docs/media/home.webp" alt="The hidebox home page: Your private cloud storage, the open box, and the Open your drive button"></a>
 
 ## Try it in 2 minutes
 
 You need one device and no wallet. The second track, with a phone and Tari, is on
-[/judges](https://srv2052606.hstgr.cloud/judges).
+[/judges](https://hidebox.app/judges).
 
-1. On the [home page](https://srv2052606.hstgr.cloud), tap **Open your drive**. Your drive opens, with your Tari address. No email, no password. Your key is the account.
+1. On the [home page](https://hidebox.app), tap **Open your drive**. Your drive opens, with your Tari address. No email, no password. Your key is the account.
 2. On a computer, drop a small folder on it. Each file says Locking, then Uploading.
 3. On one file: **Share**, keep **Once**, turn on **Delete it from my drive after**, **Make link**.
 4. Open the link in a private window and tap **Open it**. Reload: "This link has ended."
@@ -43,7 +43,7 @@ You need one device and no wallet. The second track, with a phone and Tari, is o
 <img src="docs/media/how-it-works.svg" alt="How hidebox works. 1, your browser locks every file before upload. 2, our server stores the noise and the rule, never the key. 3, whoever has the link opens it by its rule; the key hides in the link, after the # sign. 4, on the Tari Ootle testnet: Send by Tari, Pay to open, and a public receipt when a file leaves.">
 
 The key hides in the link, after the # sign. Browsers don't send it to any server, including ours.
-Every party, fact by fact: [/made#who](https://srv2052606.hstgr.cloud/made#who) and
+Every party, fact by fact: [/made#who](https://hidebox.app/made#who) and
 [docs/privacy.md](docs/privacy.md). Where Tari comes in, and how to check each part: [docs/tari.md](docs/tari.md).
 
 ## Exit rules

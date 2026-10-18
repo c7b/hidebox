@@ -4,16 +4,16 @@
 ## Verify this deployment
 
 Every build writes a manifest with the SHA-256 of every served file and its git commit; each release's
-manifest hash is also notarized through SealLog ([`/releases.json`](https://srv2052606.hstgr.cloud/releases.json)).
+manifest hash is also notarized through SealLog ([`/releases.json`](https://hidebox.app/releases.json)).
 
 ```sh
 git clone https://github.com/c7b/hidebox && cd hidebox
-python3 tools/verify-deploy.py https://srv2052606.hstgr.cloud <commit>   # 0 differences, or a list
+python3 tools/verify-deploy.py https://hidebox.app <commit>   # 0 differences, or a list
 ```
 
 It rebuilds the site from that commit, downloads every file in the live manifest and compares them, and
 checks that the live SealLog runs `template/dist/seal_log.wasm` byte for byte. Python 3.11 or newer. The
-commit the site runs is in [`/api/v1/health`](https://srv2052606.hstgr.cloud/api/v1/health).
+commit the site runs is in [`/api/v1/health`](https://hidebox.app/api/v1/health).
 
 ## Run the tests
 
@@ -34,7 +34,7 @@ hosted CI: each pass's suite runs are saved under [evidence/](evidence/).
 ## Evidence
 
 Our own test transactions only, never a user's: the hourly canary delivery and the daily demo payment
-in [`/evidence.json`](https://srv2052606.hstgr.cloud/evidence.json), the SealLog checkpoints, and the
+in [`/evidence.json`](https://hidebox.app/evidence.json), the SealLog checkpoints, and the
 go-live record in [evidence/](evidence/). The contest release (the tag `spooky-secrets-2026-10`: suites,
 deploys, end-to-end runs, the film's check, a stranger's clone and crawl, the purge) is in
 [evidence/2026-10-14/release](evidence/2026-10-14/release). Each later pass has its own dated folder and a

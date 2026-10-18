@@ -2,15 +2,15 @@
 # What the server sees, and the cryptography
 
 The short version is in the [README](../README.md#what-the-server-never-sees). The complete tables, party
-by party, are on [`/made#who`](https://srv2052606.hstgr.cloud/made#who); what we can't protect you from
-is on [`/made#cant`](https://srv2052606.hstgr.cloud/made#cant) and in [threat-model.md](threat-model.md).
+by party, are on [`/made#who`](https://hidebox.app/made#who); what we can't protect you from
+is on [`/made#cant`](https://hidebox.app/made#cant) and in [threat-model.md](threat-model.md).
 
 ## What the server sees
 
 Encryption hides contents, not everything. The server stores ciphertext, padded sizes, arrival hours,
 expiries (rounded up to the hour when an hour or more away), exit rules and open counts. It sees IP addresses
 while you are connected and never writes them to a log. The send mode is `send_mode` in
-[`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config), and the site's copy follows it:
+[`/api/v1/config`](https://hidebox.app/api/v1/config), and the site's copy follows it:
 
 - **Direct** (this deployment's setting): once the browser wallet holds the testnet grant our sponsor
   wallet sends when a drive opens, the browser builds and pays for the send itself and we pass it to

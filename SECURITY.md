@@ -2,14 +2,14 @@
 # Security policy
 
 **hidebox** runs on the Tari™ Ootle **Esmeralda testnet**. tTARI has no monetary value, and the live site
-at <https://srv2052606.hstgr.cloud> is a contest entry run by one person. That bounds what a report
+at <https://hidebox.app> is a contest entry run by one person. That bounds what a report
 can be worth, not how seriously it is read.
 
 ## Report a vulnerability
 
 Please tell us privately before you tell anyone else.
 
-1. **Our drop link** (the channel [`/.well-known/security.txt`](https://srv2052606.hstgr.cloud/.well-known/security.txt)
+1. **Our drop link** (the channel [`/.well-known/security.txt`](https://hidebox.app/.well-known/security.txt)
    names, RFC 9116): open the drop link it lists and leave a file or a note. Your browser encrypts it
    before upload and its key travels to our drive inside a stealth payment on the Ootle, so the
    report is readable by us alone, and nothing on our server or on the chain says who left it. A
@@ -48,8 +48,8 @@ preview links, and findings that need the server's own keys or a copy of its dat
 
 ## What a finding is measured against
 
-The privacy claims on [`/made`](https://srv2052606.hstgr.cloud/made) and
-[`/fine-print`](https://srv2052606.hstgr.cloud/fine-print) and in [docs/threat-model.md](docs/threat-model.md)
+The privacy claims on [`/made`](https://hidebox.app/made) and
+[`/fine-print`](https://hidebox.app/fine-print) and in [docs/threat-model.md](docs/threat-model.md)
 are meant to be literally true for the code and configuration that ship. Any sentence there that the
 code doesn't honour is a vulnerability, whether or not it leaks a byte. The reviews already run
 against the live site, their findings and what each one changed are in

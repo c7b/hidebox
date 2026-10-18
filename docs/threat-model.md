@@ -2,9 +2,9 @@
 # Threat model
 
 What **hidebox** defends against, what it doesn't, and where each guarantee comes from. The live pages
-[/made](https://srv2052606.hstgr.cloud/made) and [/fine-print](https://srv2052606.hstgr.cloud/fine-print)
+[/made](https://hidebox.app/made) and [/fine-print](https://hidebox.app/fine-print)
 say the same things for this deployment's settings (`send_mode`, `amount_proof` and `features` in
-[`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config)); this file covers both send modes.
+[`/api/v1/config`](https://hidebox.app/api/v1/config)); this file covers both send modes.
 
 ## What we protect
 

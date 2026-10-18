@@ -19,7 +19,7 @@ Why not an escrow template: TARI held by a template reveals its amount on the Oo
 stealth outputs keep it hidden, so **hidebox** uses those.
 
 Where each part lives in the code: [architecture.md, "The Tari parts"](architecture.md#the-tari-parts). The
-judges' walk-through of the same claims, step by step: [/judges](https://srv2052606.hstgr.cloud/judges).
+judges' walk-through of the same claims, step by step: [/judges](https://hidebox.app/judges).
 
 **hidebox** is an independent project, not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari
 Council, or the Tari project. "Tari" is a trademark of Tari Labs. All rights reserved.

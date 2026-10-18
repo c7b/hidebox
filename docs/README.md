@@ -14,7 +14,7 @@ key travels to an address inside a stealth payment on the [Tari™ Ootle](https:
 testnet, more space is paid in tTARI and checked on the chain, and every file that leaves gets a
 receipt in a public log on the Ootle. Pay to open (a buyer pays the owner's address, then the file
 opens) is on in this deployment (`features.pay_to_open` in
-[`/api/v1/config`](https://srv2052606.hstgr.cloud/api/v1/config)).
+[`/api/v1/config`](https://hidebox.app/api/v1/config)).
 
 The internal codename is **mutis**: it stays in the code, the paths, the services, the CLI and the
 repository's history.
@@ -34,9 +34,9 @@ repository's history.
 | [evidence/](evidence/) | Suites, deploys, end-to-end runs and screenshots, one folder per day |
 | [media/](media/) | The README's pictures and the repository's social preview |
 
-On the live site: [/judges](https://srv2052606.hstgr.cloud/judges) (two tracks of six steps),
-[/how](https://srv2052606.hstgr.cloud/how) (how it works, in five pictures),
-[/made](https://srv2052606.hstgr.cloud/made) (under the hood: every claim with its limits) and
-[/fine-print](https://srv2052606.hstgr.cloud/fine-print).
+On the live site: [/judges](https://hidebox.app/judges) (two tracks of six steps),
+[/how](https://hidebox.app/how) (how it works, in five pictures),
+[/made](https://hidebox.app/made) (under the hood: every claim with its limits) and
+[/fine-print](https://hidebox.app/fine-print).
 
 Security reports: [SECURITY.md](../SECURITY.md). Contributing: [CONTRIBUTING.md](../CONTRIBUTING.md).

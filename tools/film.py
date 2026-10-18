@@ -397,7 +397,7 @@ def compose(remote: Remote, host: str, recordings: dict, shots: list[Shot], out:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="record and compose the film")
-    p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
+    p.add_argument("--origin", default="https://hidebox.app")
     p.add_argument("--host", default="hidebox")
     p.add_argument("--out", type=Path, default=ROOT / "film")
     p.add_argument("--demo", action="store_true", help="only the pipeline, on whatever is served now")
