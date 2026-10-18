@@ -266,7 +266,7 @@ export async function driveLook() {
     l.disabled = false;
     if (l.sheet && l.sheet.cssRules) done();
   })));
-  if (drive.length) for (const l of sheets) if (!l.hasAttribute('data-drive')) l.disabled = true;
+  if (drive.length) for (const l of sheets) if (!l.hasAttribute('data-drive') && !l.hasAttribute('data-both')) l.disabled = true;
   document.body.dataset.look = 'drive';
   for (const el of document.querySelectorAll('body > header, body > footer, body > .site-header, body > .site-footer')) el.hidden = true;
   const skip = document.querySelector('.skip-link');
@@ -290,7 +290,7 @@ export async function driveLook() {
 // Back to the link page's own look (a folder link that couldn't open shows the page's usual states).
 export function ghostLook() {
   if (document.body.dataset.look !== 'drive') return;
-  for (const l of document.querySelectorAll('link[rel="stylesheet"]')) l.disabled = l.hasAttribute('data-drive');
+  for (const l of document.querySelectorAll('link[rel="stylesheet"]')) l.disabled = l.hasAttribute('data-drive') && !l.hasAttribute('data-both');
   delete document.body.dataset.look;
   for (const el of document.querySelectorAll('body > header, body > footer, body > .site-header, body > .site-footer')) {
     if (!el.classList.contains('fv-top')) el.hidden = false;

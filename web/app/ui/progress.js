@@ -31,13 +31,16 @@ export function steps(list, { label, testid = null, live = null } = {}) {
   });
   const fill = h('span', {});
   const bar = h('div', { class: 'flow-bar', role: 'progressbar', 'aria-label': label, 'data-mode': 'busy' }, fill);
+  // A screen reader hears each step as it starts: in the page's live region, or in the run's own.
+  const say = live ?? h('p', { class: 'sr-only', role: 'status' });
   const el = h('div', { class: 'flow', 'data-state': 'run', 'data-testid': testid },
-    h('ol', { class: 'steps', 'aria-label': label }, items.map((x) => x.li)), bar);
+    h('ol', { class: 'steps', 'aria-label': label }, items.map((x) => x.li)), bar, live ? null : say);
   let now = -1;
   let since = 0;
   let noteOf = null;
   let timer = null;
   let shown = false;   // once on the page, leaving it stops the clock
+  let away = 0;        // ticks spent off the page: a wait never shown, or gone within its first second
 
   const paint = () => {
     const x = items[now];
@@ -51,13 +54,15 @@ export function steps(list, { label, testid = null, live = null } = {}) {
     timer = setInterval(() => {
       if (el.isConnected) {
         shown = true;
+        away = 0;
         paint();
-      } else if (shown) clearInterval(timer);
+      } else if (shown || ++away > 3) clearInterval(timer);
     }, 1000);
   };
 
   function mark(i, state) {
     const x = items[i];
+    if (x.li.dataset.state === state && state !== 'now') return;   // a done step keeps its check (no replay)
     x.li.dataset.state = state;
     if (state === 'now') x.li.setAttribute('aria-current', 'step');
     else x.li.removeAttribute('aria-current');
@@ -82,7 +87,7 @@ export function steps(list, { label, testid = null, live = null } = {}) {
         now = i;
         since = Date.now();
         el.dataset.state = 'run';
-        if (live) live.textContent = items[i].text;
+        say.textContent = items[i].text;
         run();
       }
       if (moved || 'note' in opts) ctl.note(opts.note ?? null);
@@ -141,7 +146,8 @@ export function relayWait(run, notBefore) {
   run.fraction(counts ? 0 : null).note(() => {
     const n = left();
     if (counts && n > 0) run.fraction((Date.now() - queued) / (until - queued));
-    return counts && n > 0 ? t('relay.in', { count: n }) : t('relay.now');
+    if (!counts) return t('relay.soon');
+    return n > 0 ? t('relay.in', { count: n }) : t('relay.now');
   });
   let since = 0;
   return {

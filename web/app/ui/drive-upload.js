@@ -97,13 +97,15 @@ function panelRow(p, name) {
   p.list.append(row);
   return {
     set(phase, fraction = 0) {
+      // forward only: a later chunk still encrypts while an earlier one is on its way (ux-feedback-1)
+      if (phase === 'encrypting' && (row.dataset.phase === 'uploading' || row.dataset.phase === 'finishing')) return;
       const pct = Math.round((phase === 'uploading' ? 0.1 + 0.9 * fraction : phase === 'finishing' ? 1 : 0.1 * fraction) * 100);
       bar.style.setProperty('--value', String(pct));
       bar.setAttribute('aria-valuenow', String(pct));
       stage.textContent = t(phase === 'uploading' || phase === 'finishing' ? 'drive.up.send_one' : 'drive.up.lock_one');
       row.dataset.phase = phase;
       // a chunk on its way moves the bar only when it lands: until then it sweeps (ux-feedback-1)
-      row.toggleAttribute('data-busy', (phase === 'uploading' && fraction === 0) || phase === 'finishing');
+      row.toggleAttribute('data-busy', (phase === 'uploading' && fraction < 1) || phase === 'finishing');
     },
     done() {
       row.removeAttribute('data-busy');

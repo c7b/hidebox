@@ -6,6 +6,7 @@
 import { loadStrings, t, useStrings } from '../lib/i18n.js';
 
 const PARTS = '/app/css/parts.css';
+const FLOW = '/app/css/flow.css';   // the send step's steps and its done moment (ui/progress.js)
 const FULL_ONLY = 'error.internal'; // a string only the full dictionary has
 let pending = null;
 
@@ -35,6 +36,7 @@ export function more() {
   pending ??= Promise.all([
     t(FULL_ONLY) === FULL_ONLY ? loadStrings() : null,
     stylesheet(PARTS),
+    stylesheet(FLOW),
   ]);
   return pending;
 }

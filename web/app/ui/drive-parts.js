@@ -128,7 +128,6 @@ export const button = (label, { variant = null, size = null, glyph = null, testi
   h('button', { class: 'btn', type, 'data-variant': variant, 'data-size': size, 'data-testid': testid, onclick, ...rest },
     glyph ? icon(glyph) : null, label);
 
-// µT (a decimal string) -> "0.5", "0.25": tTARI with up to 3 decimals, never rounded up.
 // A button that waits on the network: past 300 ms its glyph turns into the turning one (or one is added), so a slow
 // phone never shows a pressed button doing nothing (ux-feedback-1). -> stop(), which puts the glyph back.
 export function turning(b) {
@@ -147,6 +146,7 @@ export function turning(b) {
   };
 }
 
+// µT (a decimal string) -> "0.5", "0.25": tTARI with up to 3 decimals, never rounded up.
 export function formatTari(ut) {
   const v = BigInt(ut);
   const milli = (v % 1000000n) / 1000n;

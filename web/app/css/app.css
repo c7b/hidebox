@@ -182,7 +182,7 @@
 .a-droppage > .done .md-chip { margin-top: var(--s-1); }
 .a-droppage > .done .a-dd-foot { justify-self: stretch; margin-top: var(--s-3); text-align: left; max-width: none; }
 .a-dd-foot { padding-top: var(--s-3); border-top: 1px solid var(--hair); }
-.a-droppage > .a-btn, .a-droppage > .a-tx, .a-droppage > .a-onchain, .a-droppage > .a-more { justify-self: center; }
+.a-droppage > .a-btn, .a-droppage > .a-more { justify-self: center; }
 
 /* --- /inbox, /send, /watch, /upgrade, /verify: the ghost's head over one centred column --------- */
 .a-inbox, .a-watch, .a-upgrade, .a-verify, .a-tx-view, .a-send-page { display: grid; gap: var(--s-5); width: 100%; max-width: 760px; justify-self: center; }

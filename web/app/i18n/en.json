@@ -337,6 +337,7 @@
  "drop.receipt": "Receipt",
  "relay.in": {"one": "Our relay sends it in about {count} second.", "other": "Our relay sends it in about {count} seconds."},
  "relay.now": "Our relay is sending it.",
+ "relay.soon": "Our relay sends it soon.",
  "relay.chain": "The chain usually takes a few seconds.",
  "relay.slow": "This one takes longer, up to a minute or two.",
  "share.title": "Share {name}",

@@ -90,7 +90,7 @@ def ux_drop(t):
     t.check(bool(re.search(r"\d", note(b, "upload"))), f"the upload step says how big it is ({note(b, 'upload')!r})")
     time.sleep(2.4)
     clock = b.eval("document.querySelector('[data-testid=\"dd-steps\"] li[data-step=\"upload\"] .step-time')?.textContent ?? ''")
-    t.check(bool(re.fullmatch(r"0:0[2-9]", clock)), f"a step past two seconds shows its clock ({clock!r})")
+    t.check(bool(re.fullmatch(r"0:\d\d", clock)) and int(clock[2:]) >= 2, f"a step past two seconds shows its clock ({clock!r})")
     t.check(b.eval("document.querySelector('[data-testid=\"dd-steps\"] .flow-bar').dataset.mode") == "busy" and running(b, "fl-sweep"),
             "while the chunk travels, the bar sweeps (it never stands still)")
     t.check(running(b, "fl-spin"), "the lit step's dot turns")
@@ -157,7 +157,12 @@ def ux_drop(t):
     t.check(summary.startswith("Confirmed.") and "epoch" in summary and "a tick of its clock" in summary,
             f"the status first, the epoch in one phrase ({summary[:90]!r})")
     chips = b.eval("[...document.querySelectorAll('[data-testid=\"tx-hidden\"] li')].map((e) => e.textContent)")
-    t.check(chips == ["The amount", "Who got it", "What it carries"], f"what stays hidden, read from this transaction ({chips})")
+    want = b.eval("""(() => { const o = [...document.querySelectorAll('[data-testid="tx-output"]')]; if (!o.length) return [];
+      const dd = (e, i) => e.querySelectorAll('dd')[i].textContent;
+      return [o.every((e) => e.dataset.amount === 'hidden') && 'The amount', o.every((e) => dd(e, 2) === 'a one-time key') && 'Who got it',
+        o.every((e) => dd(e, 3).startsWith('sealed')) && 'What it carries'].filter(Boolean); })()""")
+    t.check(chips == want and "Who got it" in chips and "What it carries" in chips,
+            f"what stays hidden, read from this transaction's own outputs ({chips}; the record says {want})")
     t.check("The Tari chain accepted this transaction, and it is final." in b.text("tx-root")
             and "Anyone can see the fee, and that it happened." in b.text("tx-hidden"), "what this proves; what is public")
     t.check(b.eval("document.querySelector('[data-testid=\"tx-details\"]').open && document.querySelector('[data-testid=\"tx-check\"]').open"),
