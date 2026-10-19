@@ -18,7 +18,7 @@ Python stdlib here; Chromium and ffmpeg run on the server.
    chain sees. Each shot is marked with the page clock; waiting between shots is cut, and each shot's
    real time is retimed to its slot in the film.
 3. On the server, as build, Debian's ffmpeg places the two tracks on the dark ground, burns in the
-   captions with the platform sans (Noto Sans Bold) and ends on the brand card (the symbol, the name and
+   captions with the platform sans (Noto Sans Bold) and ends on the brand card (the symbol, the wordmark and
    the drive's line): 1920×1080, 30 fps, H.264, +faststart, no audio track, at most 25 MB.
 Writes <out>/film.mp4 and <out>/poster.png. Re-rendering is this one command. Take the film's drive down
 by id afterwards (its pay link is ended here).
@@ -28,6 +28,7 @@ import bisect
 import datetime
 import io
 import json
+import re
 import shlex
 import subprocess
 import sys
@@ -53,7 +54,6 @@ DESK_BOX, PHONE_BOX = (95, 70, 1280, 800), (1455, 70, 370, 800)       # x, y, wi
 END_CARD_S = 3
 MAX_BYTES = 25 * 1024 * 1024
 LENGTH = (60, 90)                                                      # seconds, the story (not --demo)
-BRAND = "hidebox"                                                      # web/app/lib/i18n.js BRAND
 
 # The captions: the deck's words and the UI's own labels; privacy sentences only from the claim registry.
 MAKE = "It lives in this browser. No email, no password."              # C17-k
@@ -89,8 +89,20 @@ def end_lines(cfg: dict) -> tuple:
         mainnet = f"{day:%b} {day.day}, {day.year}"
     except ValueError:
         pass
-    return ((BRAND, 72, MOON), (TAGLINE, 44, MOON),
+    return ((TAGLINE, 44, MOON),
             (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet}.", 30, MOON_DIM))
+
+
+def wordmark_svg() -> str:
+    """The name as the site's header draws it (the sprite's i-wordmark, docs/review/brand-kit-1.md), standalone for
+    librsvg: the letters in the end card's text colour, the i's rhombus lime as the sprite has it."""
+    sprite = (ROOT / "web" / "shared" / "ui" / "icons.svg").read_text()
+    m = re.search(r'<symbol id="i-wordmark" viewBox="([^"]+)">(.*?)</symbol>', sprite, re.S)
+    if not m:
+        raise SystemExit("film: the sprite has no i-wordmark")
+    paths = m.group(2).replace('fill="currentColor"', f'fill="#{MOON[2:]}"')
+    width, height = m.group(1).split()[2:]   # librsvg needs the size to keep the ratio when it scales to -width
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{m.group(1)}" width="{width}" height="{height}">{paths}</svg>\n'
 
 
 @dataclass
@@ -338,7 +350,7 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
     end_texts = []
     for i, (line, size, color) in enumerate(end):
         files[f"end{i}.txt"] = line
-        end_texts.append(drawtext(f"end{i}.txt", size, color, str((480, 600, 690)[i] if i < 3 else 690 + 60 * (i - 2))))
+        end_texts.append(drawtext(f"end{i}.txt", size, color, str((600, 690)[i] if i < 2 else 690 + 60 * (i - 1))))
     dx, dy, dw, dh = DESK_BOX
     px, py, pw, ph = PHONE_BOX
     graph = ";".join([
@@ -349,19 +361,23 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
         f"[a][p]overlay={px}:{py}:shortest=1," + ",".join(texts) + f",fps={FPS},format=yuv420p[film]",
         f"color=c={NIGHT}:s=1920x1080:r={FPS}:d={END_CARD_S}[ebg]",
         "[2:v]scale=160:-1[logo]",
-        "[ebg][logo]overlay=(W-w)/2:280," + ",".join(end_texts) + f",fps={FPS},format=yuv420p[end]",
+        "[3:v]scale=279:-1[word]",   # the wordmark, 279 × 64 px, centred under the 160 px tile
+        "[ebg][logo]overlay=(W-w)/2:280[mark]",
+        "[mark][word]overlay=(W-w)/2:472," + ",".join(end_texts) + f",fps={FPS},format=yuv420p[end]",
         "[film][end]concat=n=2:v=1:a=0[out]",
     ])
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
                "-f", "concat", "-i", "desk.ffconcat", "-f", "concat", "-i", "phone.ffconcat",
-               "-i", "logo.png", "-filter_complex", graph, "-map", "[out]",
+               "-i", "logo.png", "-i", "wordmark.png", "-filter_complex", graph, "-map", "[out]",
                "-c:v", "libx264", "-preset", "slow", "-crf", "22", "-pix_fmt", "yuv420p", "-r", str(FPS),
                "-movflags", "+faststart", "-an", "film.mp4"]
     logo = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-c:v", "librsvg", "-width", "320",
             "-i", "logo.svg", "logo.png"]
+    word = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-c:v", "librsvg", "-width", "558",
+            "-i", "wordmark.svg", "wordmark.png"]
     poster = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{shots[0].seconds + 2:.2f}",
               "-i", "film.mp4", "-frames:v", "1", "poster.png"]
-    script = "set -euo pipefail\n" + "\n".join(" ".join(shlex.quote(a) for a in c) for c in (logo, command, poster))
+    script = "set -euo pipefail\n" + "\n".join(" ".join(shlex.quote(a) for a in c) for c in (logo, word, command, poster))
     return script + "\n", files
 
 
@@ -381,9 +397,11 @@ def compose(remote: Remote, host: str, recordings: dict, shots: list[Shot], out:
         for name, text in files.items():
             add(name, text.encode())
         add("render.sh", script.encode())
-        # the symbol as the site shows it: the lime open box on its ink tile, the tile one with the dark ground
+        # the symbol as the site shows it: the lime open box on its ink tile, the tile one with the dark ground; under
+        # it the wordmark
         logo = (ROOT / "web" / "shared" / "brand" / "symbol.svg").read_text()
         add("logo.svg", logo.encode())
+        add("wordmark.svg", wordmark_svg().encode())
     remote.as_build(f"rm -rf {WORK} && mkdir -p {WORK} && tar -x -C {WORK} && cd {WORK} && bash render.sh",
                     data.getvalue())
     out.mkdir(parents=True, exist_ok=True)
