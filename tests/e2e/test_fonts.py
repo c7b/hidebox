@@ -6,7 +6,7 @@ and Geist-Latin.woff2, the home's subset of it), with the hashes it pins, and th
 have those hashes too. It must load in Chromium with
 no `OTS parsing error`.
 
-  python3 -I tests/e2e/test_fonts.py [--origin URL] [--host hidebox]
+  python3 -I tests/e2e/test_fonts.py [--origin URL] [--host H]
 
 The font is loaded with the FontFace API in a page of the origin (so the site CSP applies) by headless
 Chromium on the server; a font that fails to load, any other font file, a hash that differs, or any
@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cdp  # noqa: E402
-from harness import Env, Remote  # noqa: E402
+from harness import SSH_HOST, Env, Remote  # noqa: E402
 
 def build_pins() -> dict:
     """URL path → the hash tools/build.py refuses to build without."""
@@ -38,7 +38,7 @@ LOAD = """Promise.all(%s.map((u, i) => new FontFace('probe' + i, 'url(' + u + ')
 def main() -> int:
     p = argparse.ArgumentParser(description="P-18 OTS check")
     p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
-    p.add_argument("--host", default="hidebox")
+    p.add_argument("--host", default=SSH_HOST)
     args = p.parse_args()
     origin = args.origin.rstrip("/")
     def get(path):

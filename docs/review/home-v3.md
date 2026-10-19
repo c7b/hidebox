@@ -95,8 +95,8 @@ folder (`logo/`).
 
 Encoded with **ffmpeg 7.1.5 on the server** (already installed; nothing was installed anywhere): WebP with libwebp
 (quality 84, the picture preset, from RGB so libwebp does its own conversion, no alpha) and **AVIF** with libaom-av1
-(a still picture, CRF 24, 10-bit 4:2:0, BT.709, full range). Neither `cwebp` nor `avifenc` exists on the box or on
-the server, and the box has no image tool at all. Each still is served at three widths in a `<picture>`: AVIF first, then
+(a still picture, CRF 24, 10-bit 4:2:0, BT.709, full range). Neither `cwebp` nor `avifenc` exists on the workstation or on
+the server, and the workstation has no image tool at all. Each still is served at three widths in a `<picture>`: AVIF first, then
 WebP, then the `<img>` (a WebP) for anything else.
 
 | Still | Source PNG | AVIF (480 / 720 / 1024, C: 640 / 960 / 1536) | WebP |

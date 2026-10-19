@@ -2,7 +2,7 @@
 # Acceptance: server/ (spec §16.1)
 
 Runs of 2026-10-11, after the integration pass (schema 3; `NOTES-for-integrator.md` §6), which followed
-the devil's-advocate fix pass (schema 2; §5). **workstation:** Python 3.14.4. **the server:** user `build`,
+the devil's-advocate fix pass (schema 2; §5). **Workstation:** Python 3.14.4. **Server:** user `build`,
 `/home/build/work/integrate-server`, Python 3.13.5, Node 20.19.2 (the authoritative run).
 
 ```

@@ -6,7 +6,7 @@
 > describe code that is now only in the git history. The current layout is in this directory's README.
 
 Everything here was run on 2026-10-11 on the server (Debian 13, Node 20.19.2, Chromium 154) as `build`,
-except the two walletd test sends (as `operator`). Raw outputs are in `tests/evidence/`. The fix pass after
+except the two walletd test sends (as the operator). Raw outputs are in `tests/evidence/`. The fix pass after
 the devil's-advocate review (`REVIEW-devil.md`, with the builder response at its end) changed the
 library API in the places marked **(changed)** below.
 

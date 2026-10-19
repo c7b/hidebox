@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 """D-01: HTTPS, the spec §14.2 headers and per-route CSPs, exactly. Python stdlib only; runs anywhere.
 
-  python3 -I tests/e2e/test_headers.py --origin https://srv2052606.hstgr.cloud [--holding]
+  python3 -I tests/e2e/test_headers.py --origin https://hidebox.app [--holding]
                                        [--redirect-from old.host …]
-  python3 -I tests/e2e/test_headers.py --local hidebox     the production Caddyfile on a throwaway
+  python3 -I tests/e2e/test_headers.py --local SSH_HOST   the production Caddyfile on a throwaway
                                                          stack (localstack.py) with a full build
 
 For every route in headers_spec.ROUTES: the common headers with their exact values, no Server or

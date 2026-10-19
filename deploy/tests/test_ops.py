@@ -378,3 +378,36 @@ class DemoGone(unittest.TestCase):
             demo_gone.write_config(path, demo_gone.set_key(self.EXAMPLE, "D" * 22))
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o640)
             self.assertIn('judge_demo_gone = "DDDDDDDDDDDDDDDDDDDDDD"', path.read_text())
+
+
+class SshHostTest(unittest.TestCase):
+    """The server's SSH alias is a parameter: --host, else MUTIS_SSH_HOST, else the neutral "hidebox".
+    No script or tool names a particular machine."""
+
+    def env(self, **extra):
+        return {**{k: v for k, v in os.environ.items() if k != "MUTIS_SSH_HOST"}, **extra}
+
+    def deploy_host(self, **extra) -> str:
+        res = subprocess.run(["bash", str(SCRIPTS / "deploy.sh")], env=self.env(**extra), capture_output=True, text=True)
+        self.assertEqual(res.returncode, 2, res.stderr)
+        return res.stderr.strip().rsplit("(host: ", 1)[1].rstrip(")")
+
+    def e2e_host(self, **extra) -> str:
+        code = "import sys; sys.path.insert(0, sys.argv[1]); import harness; print(harness.SSH_HOST)"
+        return subprocess.run([sys.executable, "-I", "-c", code, str(ROOT / "tests" / "e2e")], env=self.env(**extra),
+                              capture_output=True, text=True, check=True).stdout.strip()
+
+    def test_deploy_and_the_e2e_harness_read_the_alias_with_a_neutral_default(self):
+        self.assertEqual(self.deploy_host(), "hidebox")
+        self.assertEqual(self.deploy_host(MUTIS_SSH_HOST="example"), "example")
+        self.assertEqual(self.e2e_host(), "hidebox")
+        self.assertEqual(self.e2e_host(MUTIS_SSH_HOST="example"), "example")
+
+    def test_every_host_option_defaults_to_that_alias(self):
+        sources = sorted((ROOT / "tests" / "e2e").glob("*.py")) + sorted((ROOT / "tools").glob("*.py"))
+        options = [(p.name, line.strip()) for p in sources for line in p.read_text().splitlines()
+                   if 'add_argument("--host"' in line]
+        self.assertGreaterEqual(len(options), 8)
+        for name, line in options:
+            self.assertIn("default=SSH_HOST", line, name)
+        self.assertIn("host=${MUTIS_SSH_HOST:-hidebox}", (ROOT / "deploy" / "ootle" / "publish-template.sh").read_text())

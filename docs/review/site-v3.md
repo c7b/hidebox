@@ -2,7 +2,7 @@
 # Site v3: the owner's six changes (2026-10-16)
 
 Branch `design/site-v3`. Input: the owner's words, decided, with no devil's-advocate pass this time; the brand
-doc they amend (`research/17-brand.md`, now version 2, outside this repository); DESIGN.md. Screenshots of `/`, `/how` and
+doc they amend (`research/17-brand.md`, now version 2, kept outside this repository); DESIGN.md. Screenshots of `/`, `/how` and
 `/judges` at 1440 and 390, light and dark (the first screen, and the whole page after scrolling through it),
 the hero picture caught mid-decode and the pixel field are in [`site-v3/`](site-v3/), taken with headless
 Chromium on the server as `build` by [`site-v3/shots_v3.py`](site-v3/shots_v3.py).

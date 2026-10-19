@@ -7,7 +7,7 @@ Reviewer: devil's advocate for the server component, 2026-10-11. I read every mo
 
 **Verdict: a solid base with four problems a judge could hit.** The stdlib-only rule, the logging
 discipline, the atomic burn, input validation, streaming and contract coverage are all real. I reran the
-suite on both machines: workstation (Python 3.14) gave `Ran 141 tests … OK (skipped=4)`, and the server as `build`
+suite on both machines: the workstation (Python 3.14) gave `Ran 141 tests … OK (skipped=4)`, and the server as `build`
 (Python 3.13.5, server/ only) gave `Ran 134 tests in 19.6s OK (skipped=6)`; the six skips are the opt-in
 suites and the cross-vectors, because I didn't copy `web/` across. The four problems below are not covered
 by those tests. Each one breaks the judge path or a privacy promise, and I reproduced each with a short

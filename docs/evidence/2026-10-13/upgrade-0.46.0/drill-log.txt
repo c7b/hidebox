@@ -1,6 +1,6 @@
 The drill (deploy/ootle/upgrade-drill.md) as run on 2026-10-13, times UTC (the server's own clock shows
 CST, UTC-6; its journal lines below are converted). Commands ran over the multiplexed ssh connection
-as operator with sudo; walletd's RPC as drive on the loopback port. Hashes in RPC output are cut to 8 hex.
+as the operator with sudo; walletd's RPC as drive on the loopback port. Hashes in RPC output are cut to 8 hex.
 
 == §1/§2 (ootle-wasm): see README.md "ootle-wasm" and suites/. Not deployed (README).
 

@@ -4,7 +4,7 @@
 phone right, one short caption per shot in the platform sans, no voice, no music, about 60 to 90 s.
 Python stdlib here; Chromium and ffmpeg run on the server.
 
-  python3 -I tools/film.py [--origin URL] [--host hidebox] [--out film]
+  python3 -I tools/film.py [--origin URL] [--host H] [--out film]
   python3 -I tools/film.py --demo        the pipeline alone, on the pages live now (no chain, no drive)
 
 1. Two browser contexts on the server through the E2E harness (tests/e2e/): a 1440×900 desktop and a
@@ -41,7 +41,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests" / "e2e"))
 import flows  # noqa: E402
-from harness import Env, Remote, T  # noqa: E402
+from harness import SSH_HOST, Env, Remote, T  # noqa: E402
 import scenarios_drive as drv  # noqa: E402
 from scenarios_chain import PAY_LINK, open_paid_folder, pay_page, pay_wait, seller_ready, tx_view  # noqa: E402
 
@@ -398,7 +398,7 @@ def compose(remote: Remote, host: str, recordings: dict, shots: list[Shot], out:
 def main() -> int:
     p = argparse.ArgumentParser(description="record and compose the film")
     p.add_argument("--origin", default="https://hidebox.app")
-    p.add_argument("--host", default="hidebox")
+    p.add_argument("--host", default=SSH_HOST)
     p.add_argument("--out", type=Path, default=ROOT / "film")
     p.add_argument("--demo", action="store_true", help="only the pipeline, on whatever is served now")
     args = p.parse_args()

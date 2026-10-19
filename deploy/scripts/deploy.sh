@@ -5,8 +5,8 @@
 #                                                  release id <sha>-c<content id>
 #   deploy/scripts/deploy.sh --working-tree        the working tree as it is (staging; release id
 #                                                  <sha12>-dirty-<time>, not verifiable by verify-deploy)
-# Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default the server,
-# this deployment's SSH alias for its server).
+# Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default: the
+# MUTIS_SSH_HOST environment variable, else "hidebox"; the SSH alias of the server in ~/.ssh/config).
 #
 # Steps: unit tests, lint and copy check on the server as `build` with the server's Python 3.13 → build
 # (here) → upload one tarball over one multiplexed SSH connection → on the server, activate-release.sh
@@ -19,7 +19,7 @@
 # public_origin or security_drop_url is another release, never a silent no-op.
 set -euo pipefail
 
-host=the server
+host=${MUTIS_SSH_HOST:-hidebox}
 ref=
 holding=
 while [ $# -gt 0 ]; do
@@ -32,7 +32,7 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-[ -n "$ref" ] || { echo "usage: deploy.sh <git-ref> | --working-tree [--holding] [--host H]" >&2; exit 2; }
+[ -n "$ref" ] || { echo "usage: deploy.sh <git-ref> | --working-tree [--holding] [--host H] (host: $host)" >&2; exit 2; }
 
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 work=$(mktemp -d "${TMPDIR:-/tmp}/mutis-deploy.XXXXXX")

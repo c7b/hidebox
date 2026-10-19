@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """walletd JSON-RPC from the command line, as `drive` (the only user the port guard lets through
-besides root and operator). Python stdlib only; the JWT lives in memory, nothing is written to disk.
+besides root and the operator). Python stdlib only; the JWT lives in memory, nothing is written to disk.
 
   walletd-rpc.py balances [--refresh]          every account and its balances, as JSON
   walletd-rpc.py call METHOD '{json params}'    one call; prints the result ("-" reads the params from

@@ -8,7 +8,7 @@
   python3 -I tests/e2e/run.py --chain --final         submission day: any SKIP fails the run
   python3 -I tests/e2e/run.py --list
 
-It runs on the workstation (or as operator on the server with --local) and drives headless Chromium 154 on
+It runs on the workstation (or as the operator on the server with --local) and drives headless Chromium 154 on
 the server as the unprivileged `build` user through relay.py, over one multiplexed ssh connection. Admin
 steps (takedown, tamper, freeze, canary-now) run on the server as mutis or drive; build never gets
 sudo. Each scenario uses fresh browser contexts per actor. Screenshots and report.json go to --out.
@@ -30,7 +30,7 @@ import scenarios_chain  # noqa: E402,F401
 import scenarios_drive  # noqa: E402,F401
 import test_headers  # noqa: E402
 import test_privileges  # noqa: E402
-from harness import CHAIN, REGISTRY, STAGING, Env, Failed, Remote, Skipped, T, scenario  # noqa: E402
+from harness import CHAIN, REGISTRY, SSH_HOST, STAGING, Env, Failed, Remote, Skipped, T, scenario  # noqa: E402
 
 
 @scenario("E-21", "Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)")
@@ -90,8 +90,8 @@ def run_one(env: Env, sc: harness.Scenario, browser_ok: bool) -> dict:
 def main() -> int:
     p = argparse.ArgumentParser(description="mutis E2E runner")
     p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
-    p.add_argument("--host", default="hidebox", help="ssh host of the server")
-    p.add_argument("--local", action="store_true", help="run on the server itself (as operator)")
+    p.add_argument("--host", default=SSH_HOST, help="ssh host of the server (MUTIS_SSH_HOST)")
+    p.add_argument("--local", action="store_true", help="run on the server itself (as the operator)")
     p.add_argument("--only", default="")
     p.add_argument("--chain", action="store_true", help="include scenarios that make Esmeralda transactions")
     p.add_argument("--staging", action="store_true", help="include scenarios that change server limits")

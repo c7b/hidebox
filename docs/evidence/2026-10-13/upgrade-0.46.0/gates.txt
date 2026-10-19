@@ -1,7 +1,7 @@
 The live gates G1 and G2c (web/app/tests/README.md, "Live gates (Esmeralda, by hand)") on the V2 chain,
 2026-10-13, with both browser libraries: production's ootle-wasm 0.45.0 (a `git archive` of 2ede662,
 the live release's vendor files: 57de0088…d4df) and the vendored 0.46.0 (2856d86b…93f2). The pages ran
-on the server as `build` in headless Chromium under the app CSP; walletd_send.py as operator. The test identity
+on the server as `build` in headless Chromium under the app CSP; walletd_send.py as the operator. The test identity
 is the gates' fixed seed (SHA-256("mutis gate test seed v1")): WALLET otl_esm_152skud3…ndyafn, LOCKER
 otl_esm_1lj9zka6…dtxt6, the same as on 2026-10-11. Link secrets (EXPECT_S) are redacted. These are the
 chain-facing operations of the browser library; the full scenarios (UI, grants, payments) still need

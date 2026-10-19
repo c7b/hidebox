@@ -3,7 +3,7 @@
 
 Everything below was run on 2026-10-11, on the workstation (Python 3.14) and on the server as `build`
 (Python 3.13.5, Node 20.19.2) in `/home/build/work/server`. Nothing ran as `drive`; walletd was read
-once, read-only, as `operator` (§1.3). §5 lists what the devil's-advocate fix pass changed (schema 2); §6 and §7
+once, read-only, as the operator (§1.3). §5 lists what the devil's-advocate fix pass changed (schema 2); §6 and §7
 are the integration pass (schema 3), which also updated the rows of §2 and §3 it touched.
 
 ## 1. Gate G3: indexer UTXO framing — PASS (mirror via the stream with per-shard cursors)
@@ -70,7 +70,7 @@ Recorded responses (public chain data) are in `tests/fixtures/indexer-stream.ndj
 `indexer-fetch.json`; `test_mirror.py` parses them, and checks paging, idempotence and a pair spent
 between stream and fetch against the fake indexer.
 
-### 1.3 walletd shapes for the G4 fallback (read-only, as `operator`)
+### 1.3 walletd shapes for the G4 fallback (read-only, as the operator)
 
 `stealth_utxos.list` items look like `{"address": {"id": "<commitment hex>", "resource_address":
 "resource_01…"}, "value": "1500000", "status": "Unspent", "memo": {"PayRefAndBytes": "0a696e76…"},

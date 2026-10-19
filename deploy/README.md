@@ -6,6 +6,9 @@ build, the web server, the units, the wallet daemon's supervision, backups, heal
 playbooks and the end-to-end tests. Python standard library, bash and Debian packages only; nothing
 is installed from npm, pip or a CDN.
 
+The commands below reach the server as `ssh hidebox`: `hidebox` is its SSH alias in `~/.ssh/config`.
+The scripts and the E2E tools take `--host`, else the `MUTIS_SSH_HOST` environment variable, else `hidebox`.
+
 ```
 deploy/caddy/Caddyfile              TLS, the spec §14.2 headers and CSPs, routes, caching; no access log
 deploy/systemd/                     walletd, mutis-api, mutis-chain, timers (cleanup, backups, health, evidence)
@@ -103,7 +106,8 @@ deploy/scripts/deploy.sh --working-tree --holding   # the holding page (while th
 ```
 
 It refuses uncommitted changes for a ref. On the server, as `build` with the server's Python 3.13, it
-runs the server's and these unit tests, the lint and the copy check (a 3.14-only API on the workstation can't pass them by accident); then it builds here with the live `/etc/mutis/mutis.toml`. The
+runs the server's and these unit tests, the lint and the copy check (a 3.14-only API on the
+workstation can't pass them by accident); then it builds here with the live `/etc/mutis/mutis.toml`. The
 release id ends in a hash of what the build serves, so the same commit built with a new
 `public_origin`, `security_drop_url` or copy-variant setting (`gates`, `features`, `hosting`; the
 manifest records these for verify-deploy) is a new release that really goes live. Then one tarball

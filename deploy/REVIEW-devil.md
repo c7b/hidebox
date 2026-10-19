@@ -7,7 +7,7 @@
 
 Reviewed on 2026-10-11 against 12-integration, 10-spec §0, §2, §3, §8, §10, §14–§18 and 11-brand §7, §8,
 §13.3, §16. I didn't trust the report: I re-ran the tests, probed the live host, read every script and
-unit, and checked the server read-only (as operator/root `ls`, the walletd *backup* copy opened `immutable=1`).
+unit, and checked the server read-only (as the operator/root `ls`, the walletd *backup* copy opened `immutable=1`).
 I edited nothing except this file.
 
 **What I re-ran:** `python3 -I -m unittest discover -s deploy/tests` → 43 OK; `tools/lint.py` → PASS;
@@ -151,7 +151,7 @@ E-J pass.
 `build` compiles third-party Rust crates, whose `build.rs` runs arbitrary code. From loopback it can
 claim any IP and bypass every per-IP limit and the PoW escalation. `deploy/ufw/README.md` documents
 this as expected. **Fix:** add an owner-match guard on 8787 like the 5100 one, allowing `caddy`,
-`drive` (the sidecar canary), root and operator (the griefer tunnel). Add `build cannot connect to
+`drive` (the sidecar canary), root and the operator (the griefer tunnel). Add `build cannot connect to
 127.0.0.1:8787` to `privilege-check.sh`.
 
 ### M8. Manifest notarization (P-9, kept by 12-integration §2) isn't wired, and chain admin commands can't work
@@ -258,7 +258,7 @@ item is fixed except L11, rejected below. Evidence is in `deploy/evidence/2026-1
 | M4 | **Fixed.** `handle_errors` sets its own root (the release), the `/es/` 404 falls back to `/404.html`, and an explicit `http://{$MUTIS_HOST}` block redirects with no Server header. `test_headers.py` now covers the status files, a font, a 404 through every route and the port-80 answer. Running it against the new local stack also found an issue the live API had never shown: `X-Content-Type-Options: nosniff, nosniff`, from Caddy and the API both. Fixed with `header_down -X-Content-Type-Options`. |
 | M5 | **Fixed.** `griefer.py` never touches production. `tests/e2e/localstack.py` starts `mutis-api --dev` behind the production Caddyfile (paths and ports rewritten, loopback only, as build) and removes it afterwards. `--then-judge ORIGIN` runs E-J against the real site. |
 | M6 | **Fixed differently.** Caddy 2.6.2 has no `request_buffers` (tried: "unrecognized subdirective"). Instead it buffers request bodies with `buffer_requests` and `max_buffer_size 6MB`, so a slow upload holds a Caddy goroutine, not an API thread. `TasksMax=2048`. I did **not** add `max_conns_per_host`: with slow clients it turns the thread limit into a queue every judge waits in. The griefer holds 300 slow uploads open through Caddy and counts the API's threads while it times `/api/v1/health` (`griefer.txt`, `griefer-slow.txt`: with buffering the API stays at 7 threads and answers in 0.21 s; with `--unbuffered` it climbs from 7 to 264 threads and a health request gets no answer in 20 s). A per-/64 in-flight cap is request 3 to the server builder. |
-| M7 | **Fixed.** An owner-match guard on 8787 (root, operator, drive, caddy) in `before.rules` and `before6.rules`, added idempotently by provision. `privilege-check.sh` checks that build and mutis are refused and caddy and drive get through. While the API is off it raises a stand-in listener, so the guard itself is what gets tested. |
+| M7 | **Fixed.** An owner-match guard on 8787 (root, the operator, drive, caddy) in `before.rules` and `before6.rules`, added idempotently by provision. `privilege-check.sh` checks that build and mutis are refused and caddy and drive get through. While the API is off it raises a stand-in listener, so the guard itself is what gets tested. |
 | M8 | **Fixed.** The wrapper runs `notarize` and `walletd-fixture` as drive. With `features.seallog` on, `deploy.sh` calls `notarize-release.py` after a passing smoke test, which notarizes the SHA-256 of the served manifest and appends `{release, manifest_sha256, tx_id, at}` to `/releases.json` (now served). Linking it from `/security` is request 4 to the site builder. |
 | M9 | **Fixed.** Live `ootle.mirror_start_epoch = 12140`, Esmeralda's epoch on 2026-10-11 (`check-config` ok). It is documented in README "Turning the app on" and in reset playbook §5, which also covers epochs restarting after a reset. |
 | M10 | **Built.** I can't ask, so I took the conservative reading: 12-integration skips the `/film` page, not the film (§18.1 #9), and spec §18.5 gives the film to this builder. `tools/film.py` records a desktop and a phone with `Page.startScreencast` (frames saved and acked as they arrive), cuts the waiting, retimes each shot to its slot, and composes on the server with ffmpeg: 1920×1080, 30 fps, H.264, `+faststart`, no audio, ≤ 25 MB. It uses the 11-brand §12.6 beats and captions (brand wins over spec §18.5's E-J beats and Inter; captions are in Courier Prime, whose renamed subset is Mutis Script) and ends on the lockup card. `--demo` proved the pipeline on the holding page (`film-demo-poster.png`). The story itself needs the app: PENDING-INTEGRATION. |

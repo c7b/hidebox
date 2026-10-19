@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """D-03 (and D-11): privilege separation on the server, checked from inside and from outside.
 
-  python3 -I tests/e2e/test_privileges.py [--host hidebox] [--origin URL]
+  python3 -I tests/e2e/test_privileges.py [--host H] [--origin URL]
 
 Inside: deploy/scripts/privilege-check.sh as root on the server (sent on stdin): which users can
 reach walletd (5100) and the L1 wallet (18143), Caddy's admin socket, secret.key, the keyring
@@ -18,7 +18,7 @@ import urllib.parse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from harness import Remote  # noqa: E402
+from harness import SSH_HOST, Remote  # noqa: E402
 
 CHECK_SCRIPT = Path(__file__).resolve().parents[2] / "deploy" / "scripts" / "privilege-check.sh"
 CLOSED_PORTS = (5100, 8787, 18143, 2019, 9000, 9100)
@@ -48,7 +48,7 @@ def outside(origin: str) -> list[str]:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="D-03 privilege tests")
-    p.add_argument("--host", default="hidebox")
+    p.add_argument("--host", default=SSH_HOST)
     p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
     args = p.parse_args()
     lines = inside(Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-priv-")))) + outside(args.origin)

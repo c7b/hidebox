@@ -2,7 +2,7 @@
 # Site v4: the owner's four changes (2026-10-17)
 
 On `main` from `224cb1b` (production was the tag at `17f6c5b`). Input: the owner's four notes, with the
-coordinator's decisions; `research/17-brand.md` (now version 3, outside this repository) and DESIGN.md carry the rules.
+coordinator's decisions; `research/17-brand.md` (now version 3, kept outside this repository) and DESIGN.md carry the rules.
 Screenshots and the scripts that took them: [`docs/evidence/2026-10-17/site-v4/`](../evidence/2026-10-17/site-v4/),
 headless Chromium on the server as `build`.
 

@@ -184,7 +184,7 @@ components:
 # Design System: hidebox
 
 > Written in Phase 6A, second run (2026-10-13), from the built prototype in `research/design/drive/`
-> (outside this repository): `ui/tokens.css`, `ui/components.css`, `ui/behaviors.js`, `app.css`; updated the same day by the
+> (kept outside this repository): `ui/tokens.css`, `ui/components.css`, `ui/behaviors.js`, `app.css`; updated the same day by the
 > fix pass after the critique (`research/16-drive-design.md` §8, §14). It replaces the
 > "bye" ghost system. Phase 6B moves these files into `web/shared/` and `web/app/ui/`. The tokens are
 > shadcn/ui's, copied exactly; the frontmatter is normative. The sidecar with shadows, motion and

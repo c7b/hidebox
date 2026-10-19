@@ -65,7 +65,7 @@ fetched on 2026-10-11.
 ## Live gates (Esmeralda, by hand)
 
 These spend testnet tTARI, so they are not part of `run_all.py`. Run on the server; `walletd_send.py` as
-`operator` (walletd's port admits uids 0, 1000, 1002), the pages as `build`:
+the operator (walletd's port admits uids 0, 1000, 1002), the pages as `build`:
 
 ```sh
 H="python3 -I web/app/tests/headless.py --page /app/tests/gates/chain.html --indexer"

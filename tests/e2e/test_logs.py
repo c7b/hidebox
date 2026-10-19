@@ -3,8 +3,8 @@
 """D-02: nothing that identifies a visitor or a link reaches a log, tested from outside (spec §14.3),
 and the relay (our walletd) keeps no destination or memo (the /how claim "sees, never stores").
 
-  python3 -I tests/e2e/test_logs.py [--origin URL] [--host hidebox] [--relay]
-  python3 -I tests/e2e/test_logs.py --walletd-probe [--host hidebox]
+  python3 -I tests/e2e/test_logs.py [--origin URL] [--host H] [--relay]
+  python3 -I tests/e2e/test_logs.py --walletd-probe [--host H]
 
 Run on the workstation. 1) A scripted session against the public origin, once over IPv6 (an address
 this machine never uses for SSH) and once over IPv4: anonymous upload, link, peek and open with
@@ -46,6 +46,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import apiclient  # noqa: E402
+from harness import SSH_HOST  # noqa: E402
 
 OPERATOR_SOURCES = ("sshd", "sshd-session", "systemd-logind", "/var/log/wtmp", "/var/log/btmp",
                     "/var/log/lastlog", "/var/log/wtmp.db")
@@ -222,7 +223,7 @@ def walletd_probe(ssh: list[str]) -> tuple[list[tuple[str, str]], list[tuple[str
 def main() -> int:
     p = argparse.ArgumentParser(description="D-02 log hygiene, tested from outside")
     p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
-    p.add_argument("--host", default="hidebox", help="ssh host of the server")
+    p.add_argument("--host", default=SSH_HOST, help="ssh host of the server (MUTIS_SSH_HOST)")
     p.add_argument("--relay", action="store_true", help="wait for the relay send (needs mutis-chain and a sponsor)")
     p.add_argument("--walletd-probe", action="store_true",
                    help="only: one relay-shaped send straight through walletd, then search (no API needed)")

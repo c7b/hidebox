@@ -8,6 +8,7 @@ public API, screenshots, and the secrets list that E-03 searches every captured 
 import base64
 import hashlib
 import json
+import os
 import shlex
 import subprocess
 import time
@@ -20,6 +21,8 @@ import cdp
 
 E2E_DIR = Path(__file__).resolve().parent
 REMOTE_DIR = "/home/build/work/deploy/e2e"           # on the server, owned by build
+# The server's SSH alias (~/.ssh/config): MUTIS_SSH_HOST, else "hidebox". Every --host defaults to it.
+SSH_HOST = os.environ.get("MUTIS_SSH_HOST", "hidebox")
 CHAIN, STAGING = "chain", "staging"                   # tags: Esmeralda transactions; changes server limits
 
 

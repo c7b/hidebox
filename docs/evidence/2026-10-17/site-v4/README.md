@@ -4,7 +4,7 @@
 On `main` from `224cb1b`: the drive's one next step in Tari's lime (`6603383`); the home's headline "Your private
 cloud storage. Privacy isn't an option. It's the default.", the comparison beside one popular cloud drive, and one
 sentence a line everywhere (`4303362`); the docs and the screenshots (`0e05f27`). What and why:
-`docs/review/site-v4.md`; `research/17-brand.md` v3 (outside this repository) and DESIGN.md.
+`docs/review/site-v4.md`; `research/17-brand.md` v3 (kept outside this repository) and DESIGN.md.
 
 Live and tagged: `0e05f27d01da2e9b9f56bd78e5b40bfb6f8fa1b5`, release `0e05f27d…-c41ca02e6`. Its manifest
 `a8f29841…` is notarized through SealLog in tx `072495e2f4d143feb6a2442a8d092dd12c1a1028f3a5aa4af59dc2a64325c5df`.

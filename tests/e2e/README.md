@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 # End-to-end tests (spec §17)
 
-Python standard library only. The orchestrator runs on the workstation (or as `operator` on the server with
+Python standard library only. The orchestrator runs on the workstation (or as the operator on the server with
 `--local`); the browser is headless Chromium 154 on the server, run as the unprivileged `build` user by
 `relay.py`, which pumps the DevTools pipe over the ssh connection. That split keeps admin steps
 (takedown, tamper, freeze, canary-now) and the outside log checks in one place without ever giving

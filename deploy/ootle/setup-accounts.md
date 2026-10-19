@@ -3,7 +3,7 @@
 
 Spec §10.2. What exists on Esmeralda for mutis, how it was made, and how to make it again after a
 reset. Every call runs as `drive` through `walletd-rpc.py` (stdlib JSON-RPC; the port guard lets only
-root, operator and drive reach walletd):
+root, the operator and drive reach walletd):
 
 ```sh
 alias u='ssh -o ControlMaster=auto -o ControlPath=/tmp/cm-hidebox -o ControlPersist=30m -o ClearAllForwardings=yes hidebox'

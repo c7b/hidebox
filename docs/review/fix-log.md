@@ -156,7 +156,7 @@ the object store afterwards (`git cat-file --batch-all-objects`) found neither a
 hostname in any object, reachable or not; the two unreachable stash commits the audit mentioned are
 gone with the prune. The scan also looked for other non-public names of the owner's machines
 (tailnet ranges and names, private LAN ranges, the other VPS's hostname): the only matches were a
-test fixture address and a substring of `parts.netloc` in a handler. Commits from the go-live
+test fixture address and a substring of a URL's `netloc` attribute in a handler. Commits from the go-live
 evidence onward have new ids (the earlier ones are unchanged), so ids quoted in the first pass above
 (`7c9e627`, `3cd5622`, `ea20751`, `88e12e9`) are historical labels, not commits of this repository
 any more; the release ids they name stay what the live `releases.json` recorded. `tools/lint.py`
@@ -685,7 +685,7 @@ anything changed; the evidence it cites is in `research/design/drive-devil/` (th
 2. **Deferred findings:** the no-JS holes on `/judges` and `/made` (finding 14); the upload panel's
    auto-collapse and a Share button on the phone's share result (17); the row sheet's "In a shared folder" line (9).
 3. **Owner (Tier 3):** accounts and posts per the contest kit; the judge passes; a domain (hidebox.sh/.app/.io);
-   the Hostinger snapshots; the unlabeled drop link; a fresh database before posting (or not); operator's password and
+   the Hostinger snapshots; the unlabeled drop link; a fresh database before posting (or not); the operator's password and
    the sudoers rule on the server; the old private repository `c7b/mutis-pre-rewrite-private`; real-device runs (iOS
    Safari, Android Chrome, a screen reader).
 4. **The judges' demo receipt** (`judge_demo_gone`) lasts until about Nov 12 (tombstones, 30 days): re-burn it
@@ -764,7 +764,7 @@ the non-chain batch 12/13 (E-04 hit the network's daily drive brake the probes h
 
 The owner's words, decided, with no devil's-advocate pass: `docs/review/site-v3.md` has each one, the
 template's motion and what was copied, the decode, the pixel field and the numbers; `research/17-brand.md`
-v2 (outside this repository) and DESIGN.md carry the lime.
+v2 (kept outside this repository) and DESIGN.md carry the lime.
 
 | # | The owner asked | What changed |
 |---|---|---|
@@ -787,7 +787,7 @@ UTC day's drive brake had reset); 3 items and 1 drop purged by id; `/status.json
 
 The owner's notes with the coordinator's decisions, no devil's-advocate pass: `docs/review/site-v4.md` has each
 change, the drive's states and their one lime, how one sentence a line is done, the skills' findings and the
-numbers; `research/17-brand.md` v3 (outside this repository) and DESIGN.md carry the rules.
+numbers; `research/17-brand.md` v3 (kept outside this repository) and DESIGN.md carry the rules.
 
 | # | The owner asked | What changed |
 |---|---|---|

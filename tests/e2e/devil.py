@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """The sixth pass's devil (anti-griefing): try to sell out the packs and fill the free space fast.
 
-  python3 -I tests/e2e/devil.py [--host hidebox] [--json OUT]
+  python3 -I tests/e2e/devil.py [--host H] [--json OUT]
 
 It never touches production. Like griefer.py it starts the local stack on the server (localstack.py:
 `mutis-api --dev` with the fake chain, its own temporary data, as `build`) and talks to the API on
@@ -30,6 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apiclient import ApiError, Client  # noqa: E402
+from harness import SSH_HOST  # noqa: E402
 from localstack import WORK, LocalStack  # noqa: E402
 
 MiB = 1 << 20
@@ -175,7 +176,7 @@ def stack_stats(api: str) -> dict:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="the sixth pass's devil (on a throwaway stack, never production)")
-    p.add_argument("--host", default="hidebox")
+    p.add_argument("--host", default=SSH_HOST)
     p.add_argument("--json", help="also write the report here")
     args = p.parse_args()
     started = time.time()

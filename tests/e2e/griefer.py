@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """E-23, the griefer (spec §17.2, §9.8): try to break the judge path cheaply, then check it holds.
 
-  python3 -I tests/e2e/griefer.py [--host hidebox] [--then-judge https://…] [--slow-only [--unbuffered]]
+  python3 -I tests/e2e/griefer.py [--host H] [--then-judge https://…] [--slow-only [--unbuffered]]
 
 It never touches production. It starts the local stack on the server (localstack.py: `mutis-api
 --dev`, with fakes, small limits and its own temporary data, behind the production Caddyfile, all as
@@ -35,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import apiclient  # noqa: E402
 from apiclient import ApiError, Client  # noqa: E402
+from harness import SSH_HOST  # noqa: E402
 from localstack import WEB_PORT, LocalStack  # noqa: E402
 
 STOP = {"rate_limited", "lane_full", "uploads_frozen", "too_large", "budget_exhausted", "quota_exceeded",
@@ -185,7 +186,7 @@ def cheap_attacks(stack: LocalStack, origin: str, file_mib: int, checks: list) -
 
 def main() -> int:
     p = argparse.ArgumentParser(description="E-23 griefer (on a throwaway stack, never production)")
-    p.add_argument("--host", default="hidebox")
+    p.add_argument("--host", default=SSH_HOST)
     p.add_argument("--then-judge", metavar="ORIGIN", help="run E-J against this origin afterwards")
     p.add_argument("--slow-only", action="store_true", help="only the slow uploads through Caddy")
     p.add_argument("--unbuffered", action="store_true", help="the stack without Caddy's request buffering")

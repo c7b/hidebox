@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Self-test of the E2E driver (cdp.py, harness.py) before any scenario depends on it.
 
-  python3 -I tests/e2e/test_harness.py [--host hidebox]
+  python3 -I tests/e2e/test_harness.py [--host H]
 
 Serves a small page that follows the data-testid conventions on the server's loopback (as build,
 with the app CSP), then drives it with the same primitives the scenarios use: pointer and touch
@@ -20,7 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cdp  # noqa: E402
 import headers_spec  # noqa: E402
-from harness import REMOTE_DIR, Env, Remote, T  # noqa: E402
+from harness import REMOTE_DIR, SSH_HOST, Env, Remote, T  # noqa: E402
 
 PORT = 18081
 PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><title>driver self-test</title>
@@ -104,7 +104,7 @@ def run(env: Env) -> list[tuple[str, bool]]:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="E2E driver self-test")
-    p.add_argument("--host", default="hidebox")
+    p.add_argument("--host", default=SSH_HOST)
     args = p.parse_args()
     env = Env("http://127.0.0.1", Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-harness-"))), Path("."))
     env.stage()

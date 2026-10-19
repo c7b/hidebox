@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Publish the SealLog template and create its log on Esmeralda (spec §11, D-12). Runs on the workstation
-# box; walletd calls run on the server as drive.
+# Publish the SealLog template and create its log on Esmeralda (spec §11, D-12). Runs on the
+# workstation; walletd calls run on the server as drive.
 #
 # The publish carries the exact bytes of template/dist/seal_log.wasm. walletd's
 # transactions.publish_template runs wasm-opt first and stores other bytes, which no source can be
@@ -24,7 +24,7 @@
 # checkpoints should start, features.seallog = true. setup-accounts.md §4 records what was done.
 set -euo pipefail
 
-host=${MUTIS_SSH_HOST:-the server}
+host=${MUTIS_SSH_HOST:-hidebox}
 indexer=https://ootle-indexer-b.tari.com
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 wasm=$repo/template/dist/seal_log.wasm

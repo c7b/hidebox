@@ -8,7 +8,7 @@
 | `limit 22/tcp` (IPv4 and IPv6) | SSH, rate-limited: more than 6 new connections in 30 s from one address are dropped, so every tool here uses one multiplexed connection (`ControlMaster`) |
 | `allow 80/tcp`, `allow 443/tcp` | Caddy: HTTPS, and HTTP only for the redirect and Let's Encrypt |
 | `ufw logging off` | blocked packets would otherwise be logged with their source IP (spec §14.3) |
-| owner-match guard on `lo` port **5100** | walletd runs with `--authentication none`: only root, the operator (the login that ran provision.sh with sudo, or `MUTIS_OPERATOR`; `operator`, uid 1000, on the server) and `drive` (1002 on the server) may connect; `mutis`, `build`, `caddy` and everyone else get a TCP reset |
+| owner-match guard on `lo` port **5100** | walletd runs with `--authentication none`: only root, the operator (the login that ran provision.sh with sudo, or `MUTIS_OPERATOR`; uid 1000 on this server) and `drive` (1002 on the server) may connect; `mutis`, `build`, `caddy` and everyone else get a TCP reset |
 | owner-match guard on `lo` port **18143** | the L1 console wallet's gRPC has no authentication either; same three uids |
 | owner-match guard on `lo` port **8787** | mutis-api believes `X-Real-IP` from loopback (Caddy sets it): only `caddy`, `drive` (the sidecar uploads the hourly canary), root and the operator may connect. `build` runs third-party build scripts when it compiles crates, and could otherwise claim any client address and walk past every per-IP limit and the PoW escalation |
 

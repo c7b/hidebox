@@ -5,7 +5,7 @@
 drive as the one action, always on in the header; Tari's lime `#BCFE00` as the action colour; scroll motion
 (`web/site/js/motion.js`) and the hero picture's decode; the pixel field behind the home's closing
 (`web/site/js/pixel.js`); A-06h over both modules. What and why: `docs/review/site-v3.md` (with the
-screenshots in `docs/review/site-v3/`) and `research/17-brand.md` v2 (outside this repository).
+screenshots in `docs/review/site-v3/`) and `research/17-brand.md` v2 (kept outside this repository).
 
 Live and tagged: `17f6c5bf4fb53c14b3a62566b2ba7a354f43b051`, release `17f6c5bf…-c6017e701`. Its manifest
 `ead96304…` is notarized through SealLog in tx `57f30e19…8d1d`.

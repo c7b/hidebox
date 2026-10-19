@@ -13,7 +13,7 @@ ok: MUTIS_HOST=srv2052606.hstgr.cloud
 == scripts, units and logging configuration
 ok
 
-== ufw: web ports open, logging off, wallet ports limited to root, operator and drive
+== ufw: web ports open, logging off, wallet ports limited to root, the operator and drive
   22/tcp                     LIMIT       Anywhere                   # ssh
   80/tcp                     ALLOW       Anywhere                   # mutis http
   443/tcp                    ALLOW       Anywhere                   # mutis https

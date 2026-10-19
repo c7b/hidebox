@@ -511,8 +511,8 @@ def check_security_contacts():
     The repository is the configuration's `repo_url` (the fixture's, which is the default). Needs the
     network: without it the check is reported as SKIP, never as PASS."""
     repo = json.loads((SITE / "tests" / "fixtures" / "config.json").read_text())["repo_url"].rstrip("/")
-    parts = urllib.parse.urlsplit(repo)
-    if parts.scheme != "https" or parts.netloc != "github.com" or parts.path.count("/") != 2:
+    repo_url = urllib.parse.urlsplit(repo)
+    if repo_url.scheme != "https" or repo_url.netloc != "github.com" or repo_url.path.count("/") != 2:
         return [f"repo_url {repo!r} is not https://github.com/<owner>/<name>; security.txt's advisory Contact needs one"]
     url, problems = repo + ADVISORY_PATH, []
     try:
@@ -527,10 +527,10 @@ def check_security_contacts():
                     problems.append(f"{url}: 302 to {target}, which answers {final}")
         elif status != 200:
             problems.append(f"{url}: answers {status} to a visitor who isn't signed in (is the repository public?)")
-        status, _, body = _anonymous_get(f"https://api.github.com/repos{parts.path}/private-vulnerability-reporting")
+        status, _, body = _anonymous_get(f"https://api.github.com/repos{repo_url.path}/private-vulnerability-reporting")
         enabled = status == 200 and json.loads(body or b"{}").get("enabled") is True
         if not enabled:
-            problems.append(f"GitHub's API: private vulnerability reporting is not on for {parts.path[1:]} ({status})")
+            problems.append(f"GitHub's API: private vulnerability reporting is not on for {repo_url.path[1:]} ({status})")
     except (urllib.error.URLError, OSError):
         return None
     return problems

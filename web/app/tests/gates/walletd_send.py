@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Gate helper: one small stealth transfer from walletd (run as operator on the server, stdlib only).
+"""Gate helper: one small stealth transfer from walletd (run as the operator on the server, stdlib only).
 
   python3 -I walletd_send.py <account> <destination otl_esm_ address> <amount µT> [memo text]
 

@@ -1,4 +1,4 @@
-Gate test sends from walletd's `service` account (2026-10-11, ~07:10 CDMX), via tests/gates/walletd_send.py as operator on the server.
+Gate test sends from walletd's `service` account (2026-10-11, ~07:10 CDMX), via tests/gates/walletd_send.py as the operator on the server.
 Destinations are the seed-derived wallet and locker addresses of the gate test identity (seed = SHA-256("mutis gate test seed v1")).
 
 service -> WALLET otl_esm_152skud3…ndyafn, 2,000,000 µT, no memo:

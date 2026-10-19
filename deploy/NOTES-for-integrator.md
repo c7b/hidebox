@@ -5,7 +5,7 @@
 > removed on 2026-10-12 (CHANGELOG), so mentions of `/es/`, `es.json` and the language switch below
 > describe code that is now only in the git history. The current layout is in this directory's README.
 
-Everything below ran on 2026-10-11 from the workstation and on the server (as operator with sudo, `build`
+Everything below ran on 2026-10-11 from the workstation and on the server (as the operator with sudo, `build`
 for the browser, `drive` for walletd, `mutis` for the database). Nothing from the workstation was
 copied to the server except this repository's code; every key and secret on the server was made there.
 
@@ -39,7 +39,7 @@ deploy/README.md "Turning the app on".
 
 | Topic | Decision | Why |
 |---|---|---|
-| E2E orchestration | `tests/e2e/run.py` runs on the workstation (or as operator on the server with `--local`) and drives Chromium on the server **as build** through `relay.py` over ssh | spec §17.1 says "run.py on the server as build", but several scenarios need admin steps (takedown, tamper, freeze, canary-now) and `build` must never get sudo; the browser still runs as build on the server |
+| E2E orchestration | `tests/e2e/run.py` runs on the workstation (or as the operator on the server with `--local`) and drives Chromium on the server **as build** through `relay.py` over ssh | spec §17.1 says "run.py on the server as build", but several scenarios need admin steps (takedown, tamper, freeze, canary-now) and `build` must never get sudo; the browser still runs as build on the server |
 | D-02 method | the scripted session runs over IPv6 (never used for SSH) and IPv4; IPv4 hits in sshd/wtmp/lastlog are reported as operator access, not failures | the operator's SSH login is logged by sshd like on any server; visitor traffic is what the claim is about |
 | walletd keyring password | systemd `LoadCredential` from `/etc/mutis/credentials/walletd-keyring-pass` (root 0600) → a private config copy in `/run/walletd` (0700, tmpfs) with `override_keyring_password` as a byte array (walletd 0.45 reads it as bytes); only bash builtins touch it | not on any command line; tested in a no-network copy first |
 | walletd logs | `--log-config /etc/mutis/walletd-log4rs.yml`: warnings only, journal only, no files | its default debug files record every transfer; spec §14.3 |
@@ -62,7 +62,7 @@ deploy/README.md "Turning the app on".
 | Release ids | `<sha>-c<first 8 hex of sha256 of the build's file map>` for a committed ref | the same commit built with a new origin or drop URL must be a new release, not a silent no-op followed by a rollback (REVIEW-devil H2) |
 | Caching | every page, app file and status file `no-cache` (ETag revalidation); fonts `public, max-age=86400`; errors `no-store` | a page cached by heuristics could outlive a deploy with an SRI hash its new script no longer has; font names carry no version, so not `immutable` (spec §15.2 assumed versioned names) |
 | Request bodies | Caddy `buffer_requests` with `max_buffer_size 6MB` (2.6.2 has no `request_buffers`); mutis-api `TasksMax=2048`; no `max_conns_per_host` | a slow upload then holds a Caddy goroutine, not an API thread (griefer: 300 slow uploads, API threads unchanged); a connection cap would make every judge wait behind slow clients |
-| Port 8787 | owner-match guard: root, operator, drive, caddy | mutis-api believes `X-Real-IP` from loopback; `build` runs third-party build scripts |
+| Port 8787 | owner-match guard: root, the operator, drive, caddy | mutis-api believes `X-Real-IP` from loopback; `build` runs third-party build scripts |
 | E-23 | only on `tests/e2e/localstack.py` (`mutis-api --dev` behind the production Caddyfile, as build, loopback, removed afterwards) | there is no staging, and the griefer used to lower production's budgets and leave its items behind |
 | Deploy gate | unit tests, lint and check-copy run on the server as `build` (Python 3.13) before the build | 12-integration §4: the authoritative run is on the server |
 | Backups | one installed `backup.py` for both units; every copy (pre-migrate too) deleted at 7 days, 0600, no side files | the published `db_backup_days` must be literally true |

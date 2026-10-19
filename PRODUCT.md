@@ -123,7 +123,7 @@ Everything the server and library do today stays reachable; new server work is a
   `/api/v1/config`, `/status.json`, `/evidence.json` [code].
 - Test suites: server 204, site 29, UI flows, app 9 steps, deploy 77, E2E 25 scenarios [brief].
 - The SealLog component on the Ootle (address in `/config`); the public repository with its threat model.
-- The drive prototype and its screenshots (outside this repository, `research/design/drive/`, `drive-shots/`).
+- The drive prototype and its screenshots (kept outside this repository, `research/design/drive/`, `drive-shots/`).
 - Absent, and never to be invented: user counts, testimonials, press, third-party audits.
 
 ## Product Principles

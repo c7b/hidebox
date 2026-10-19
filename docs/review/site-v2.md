@@ -2,7 +2,7 @@
 # Site v2: the design pass and its review (2026-10-16)
 
 Branch `design/site-v2`. Input: `research/17-site-brief.md` (the look, layout and words), `research/17-brand.md`
-(the Sea brand colour, type, motion, tokens) and the static mock in `research/design/site-v2/` (outside this repository).
+(the Sea brand colour, type, motion, tokens) and the static mock in `research/design/site-v2/` (kept outside this repository).
 Screenshots of `/`, `/how`, `/judges` and `/made` at 1440 and 390, light and dark (first screen, and the whole
 page), plus the field mid-ripple, idle and with reduced motion, are in [`site-v2/`](site-v2/), taken with
 headless Chromium 155 on the server as `build` (`web/site/tests/shots.py --out`, features as live: pay to open

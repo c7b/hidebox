@@ -4,7 +4,7 @@
 
   sudo -iu build python3 -I relay.py [--jitless]        (started by cdp.py, usually through ssh)
 
-The E2E orchestrator runs where it can also do admin steps (the workstation, or operator on the server), while
+The E2E orchestrator runs where it can also do admin steps (the workstation, or the operator on the server), while
 the browser runs here as the unprivileged `build` user. Messages are NUL-delimited JSON in both
 directions and pass through unchanged; nothing in them is interpreted. Chromium's profile lives in a
 temporary directory that is removed when stdin closes. Python stdlib only.

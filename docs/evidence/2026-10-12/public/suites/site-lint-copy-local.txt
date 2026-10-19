@@ -1,5 +1,5 @@
 2026-10-13T05:05:24Z
-$ python3 -I web/site/tests/run.py   (the workstation: Node present, no Chromium, so the browser checks SKIP; the full run with Chromium is site-the server-6fa84fd.log)
+$ python3 -I web/site/tests/run.py   (the workstation: Node present, no Chromium, so the browser checks SKIP; the full run with Chromium is site-server-6fa84fd.log)
 PASS SPDX headers
 PASS no HTML/script sinks in JS
 PASS markup: CSP-safe, includes, placeholders, JSON-LD
