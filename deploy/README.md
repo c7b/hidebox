@@ -21,7 +21,7 @@ deploy/scripts/                     provision, deploy, activate-release, rollbac
 deploy/ootle/                       run-walletd.sh, walletd-log4rs.yml, walletd-rpc.py, publish-template.sh,
                                     setup-accounts.md, reset-playbook.md, upgrade-drill.md
 deploy/ufw/README.md                the firewall
-tools/                              build.py, lint.py, check-copy.py, verify-deploy.py, film.py
+tools/                              build.py, lint.py, check-copy.py, check-seo.py, verify-deploy.py, film.py
 tests/e2e/                          the E2E suite, the griefer and the local stack (README there)
 ```
 
@@ -42,6 +42,8 @@ of the pinned wasm hash, and the systemd hardening. Against the server (from the
 ```sh
 python3 -I tests/e2e/test_headers.py                    # D-01 (add --holding while the holding page is live)
 python3 -I tests/e2e/test_headers.py --local hidebox     # D-01 on a throwaway stack: the Caddyfile with a full build
+python3 -I tools/check-seo.py                           # search and link previews on the live site (docs/review/seo-1.md)
+python3 -I tools/check-seo.py --local hidebox           # the same on the throwaway stack, before a deploy
 python3 -I tests/e2e/test_privileges.py                 # D-03, D-11, from inside and outside
 python3 -I tests/e2e/test_logs.py                       # D-02 (needs mutis-api running; restarts it once)
 python3 -I tests/e2e/test_logs.py --walletd-probe       # what walletd keeps of a relay send (no API needed)

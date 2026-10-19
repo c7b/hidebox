@@ -25,6 +25,11 @@ the app's real widget from `web/app/`. Elsewhere, checks whose tool is missing p
 `PASS`; `--static` runs only the file checks. "/judges quotes the app's words" compares `/judges`, in
 each amount-proof mode, with `web/app/i18n/en.json`. Last run on the server: see `ACCEPTANCE.md`.
 
+What a crawler and a link preview read (titles, descriptions, canonicals, the Open Graph and Twitter cards, JSON-LD,
+the icons, the manifest, robots.txt, the sitemap and noindex on the private routes) is checked from outside by
+`python3 -I tools/check-seo.py`: against the live site by default, `--dist DIR` on a tree from `tools/build.py`, or
+`--local` on the server's throwaway stack with the production Caddyfile (docs/review/seo-1.md).
+
 ## Layout
 
 | Path | What |

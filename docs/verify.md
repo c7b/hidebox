@@ -25,6 +25,7 @@ commit the site runs is in [`/api/v1/health`](https://hidebox.app/api/v1/health)
 | Site | `python3 -I web/site/tests/run.py` |
 | Template | `template/check.sh` (Rust with the wasm32 target) |
 | Deploy, lint, copy | `python3 -I -m unittest discover -s deploy/tests`, `python3 -I tools/lint.py`, `python3 -I tools/check-copy.py` |
+| Search and link previews | `python3 -I tools/check-seo.py` (the live site), `--dist DIR` (a build, served here), `--local` (the Caddyfile on the server's throwaway stack) ([review/seo-1.md](review/seo-1.md)) |
 | End to end | `python3 -I tests/e2e/run.py --chain --final` ([tests/e2e/README.md](../tests/e2e/README.md)) |
 
 Each directory's `ACCEPTANCE*.md` lists its acceptance criteria with evidence, and each
