@@ -49,7 +49,7 @@ def outside(origin: str) -> list[str]:
 def main() -> int:
     p = argparse.ArgumentParser(description="D-03 privilege tests")
     p.add_argument("--host", default=SSH_HOST)
-    p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
+    p.add_argument("--origin", default="https://hidebox.app")
     args = p.parse_args()
     lines = inside(Remote(args.host, Path(tempfile.mkdtemp(prefix="mutis-priv-")))) + outside(args.origin)
     print("\n".join(lines))

@@ -48,7 +48,7 @@ python3 -I tests/e2e/test_logs.py --walletd-probe       # what walletd keeps of 
 python3 -I tests/e2e/test_fonts.py                      # 11-brand P-18: no OTS errors in Chromium
 python3 -I tests/e2e/griefer.py [--slow-only]           # E-23 on a throwaway stack, never production
 python3 -I tests/e2e/run.py [--chain] [--final]         # the §17 scenarios (tests/e2e/README.md)
-python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>   # D-09 (and the SealLog template on chain)
+python3 -I tools/verify-deploy.py https://hidebox.app <tag>              # D-09 (and the SealLog template on chain)
 ```
 
 ## The server
@@ -187,14 +187,14 @@ day key, which the privacy design rules out.
    locks a note nobody has a key for, burns its Once link and writes `judge_demo_gone` into the config
    (/judges, track one, step 4 opens it; its gone page shows the goodbye already on chain). Repeat
    it if judging runs past 30 days (tombstones). Tag only when `demo-gone.py check` exits 0.
-7. **The tag:** `python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud <tag>` → 0
+7. **The tag:** `python3 -I tools/verify-deploy.py https://hidebox.app <tag>` → 0
    differences, the SealLog template included.
 
 ## Day to day
 
 | Task | Command |
 |---|---|
-| Health | `https://srv2052606.hstgr.cloud/status.json` (the checks `/status` labels: https, api, chain_worker with its verifier, walletd, sponsor_balance, mirror, canary, credits, disk, budgets); full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
+| Health | `https://hidebox.app/status.json` (the checks `/status` labels: https, api, chain_worker with its verifier, walletd, sponsor_balance, mirror, canary, credits, disk, budgets); full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
 | Takedown | `sudo mutis-admin takedown share|item|drop <id>`; `sudo mutis-admin reports --new` |
 | Packs "sold out" | paid space is capped at `packs.paid_cap_fraction` (40 %) of the pool, 30 % of it kept for judge passes (`server/mutis/packs.py`); `sudo mutis-admin packs` shows both slices and today's sales (read-only); end a test drive's pack with `sudo mutis-admin release-pack -- <drive id>` (never a visitor's). See "If someone games the packs" |
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |

@@ -89,7 +89,7 @@ def run_one(env: Env, sc: harness.Scenario, browser_ok: bool) -> dict:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="mutis E2E runner")
-    p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
+    p.add_argument("--origin", default="https://hidebox.app")
     p.add_argument("--host", default=SSH_HOST, help="ssh host of the server (MUTIS_SSH_HOST)")
     p.add_argument("--local", action="store_true", help="run on the server itself (as the operator)")
     p.add_argument("--only", default="")

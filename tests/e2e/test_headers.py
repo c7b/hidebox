@@ -178,7 +178,7 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
 
 def main() -> int:
     p = argparse.ArgumentParser(description="D-01 headers test")
-    p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
+    p.add_argument("--origin", default="https://hidebox.app")
     p.add_argument("--holding", action="store_true", help="the holding build is live: pages may be 404")
     p.add_argument("--redirect-from", action="append", default=[], metavar="HOST")
     p.add_argument("--local", metavar="SSH_HOST", help="test the Caddyfile on a throwaway stack on this server")

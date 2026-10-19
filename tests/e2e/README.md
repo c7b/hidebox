@@ -15,7 +15,7 @@ python3 -I tests/e2e/run.py                            # every scenario without 
 python3 -I tests/e2e/run.py --chain                    # plus E-09…E-14, E-25, E-29, E-30 and E-J on Esmeralda
 python3 -I tests/e2e/run.py --only E-01,E-15 --out /tmp/e2e
 python3 -I tests/e2e/run.py --chain --final            # submission day: a SKIP fails the run (D-08)
-python3 -I tests/e2e/griefer.py --then-judge https://srv2052606.hstgr.cloud   # E-23
+python3 -I tests/e2e/griefer.py --then-judge https://hidebox.app            # E-23
 python3 -I tests/e2e/griefer.py --slow-only           # just the slow-upload check (a minute)
 ```
 

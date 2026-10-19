@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Check that a live deployment serves exactly what a clean build of a git tag produces (spec §14.5).
 
-  python3 -I tools/verify-deploy.py https://srv2052606.hstgr.cloud spooky-secrets-2026-10
+  python3 -I tools/verify-deploy.py https://hidebox.app spooky-secrets-2026-10
 
 1. Export the tag with `git archive` (a clean tree; this repository is not modified).
 2. Build it with that tree's own tools/build.py. Placeholders ({{ORIGIN}}, {{REPO_URL}}, …) are filled

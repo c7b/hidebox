@@ -222,7 +222,7 @@ def walletd_probe(ssh: list[str]) -> tuple[list[tuple[str, str]], list[tuple[str
 
 def main() -> int:
     p = argparse.ArgumentParser(description="D-02 log hygiene, tested from outside")
-    p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
+    p.add_argument("--origin", default="https://hidebox.app")
     p.add_argument("--host", default=SSH_HOST, help="ssh host of the server (MUTIS_SSH_HOST)")
     p.add_argument("--relay", action="store_true", help="wait for the relay send (needs mutis-chain and a sponsor)")
     p.add_argument("--walletd-probe", action="store_true",

@@ -37,7 +37,7 @@ LOAD = """Promise.all(%s.map((u, i) => new FontFace('probe' + i, 'url(' + u + ')
 
 def main() -> int:
     p = argparse.ArgumentParser(description="P-18 OTS check")
-    p.add_argument("--origin", default="https://srv2052606.hstgr.cloud")
+    p.add_argument("--origin", default="https://hidebox.app")
     p.add_argument("--host", default=SSH_HOST)
     args = p.parse_args()
     origin = args.origin.rstrip("/")

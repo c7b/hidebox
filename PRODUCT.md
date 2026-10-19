@@ -119,7 +119,7 @@ Everything the server and library do today stays reachable; new server work is a
 
 ## Evidence on Hand
 
-- The live deployment <https://srv2052606.hstgr.cloud> (still the ghost release until the drive ships),
+- The live deployment <https://hidebox.app>,
   `/api/v1/config`, `/status.json`, `/evidence.json` [code].
 - Test suites: server 204, site 29, UI flows, app 9 steps, deploy 77, E2E 25 scenarios [brief].
 - The SealLog component on the Ootle (address in `/config`); the public repository with its threat model.
