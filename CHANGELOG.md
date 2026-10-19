@@ -1,6 +1,21 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- seo pass 1 -->
+## 2026-10-19: the SEO pass
+
+- **Search results and link previews**: every page's title says what it is for and ends with the name, every
+  description is its own, and each page carries the full Open Graph and Twitter card (the share card, its size and
+  alt text), a canonical on hidebox.app, robots that allow a large image preview and every icon. The home describes
+  the app in JSON-LD (free, any browser, no rating), the other pages their place under the home, and the home's
+  pictures say what they show. Shared links, drop links and the drive preview with a card that names no file.
+- **Caddy** keeps the share cards and icons a day and lets other products show them; `robots.txt` and the sitemap
+  (now with each page's date) carry their types; the API and the drive's files are never indexed. No analytics, no
+  tracker, no outside service, and the content security policy is unchanged. The share cards keep their names; the
+  brand pass will draw them again. `tools/check-seo.py` checks all of it from outside. Review:
+  `docs/review/seo-1.md`.
+<!-- /seo pass 1 -->
+
 <!-- history rewrite -->
 ## 2026-10-19: the history rewrite
 
