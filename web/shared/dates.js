@@ -2,6 +2,8 @@
 // Dates the UI computes instead of printing (spec §3.4.2, D13): the mainnet phase switches by
 // itself on Nov 11, and "midnight" always means the visitor's own next local midnight.
 
+// The Ootle's launch day as Tari announced it (tari.com update 143, 2026-09-01: "confirmed for November 11th");
+// no hour was given, so the phase turns at the start of the day in UTC. The same date is ootle.mainnet_date.
 export const MAINNET = Date.UTC(2026, 10, 11); // 2026-11-11T00:00Z
 
 export function phase(now = Date.now()) {

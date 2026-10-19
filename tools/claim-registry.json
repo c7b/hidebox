@@ -168,13 +168,13 @@
   },
   {
    "id": "C19-k",
-   "condition": "every money screen (child form of C19)",
+   "condition": "every money screen (child form of C19); {mainnet_date} is the Ootle's launch day as Tari announced it (tari.com update 143, 2026-09-01; the tari.com banner; community.tari.com/t/323), checked 2026-10-19 (docs/review/owner-5.md)",
    "backed_by": "02 §2",
    "markers": [
     "test money"
    ],
    "sentences": [
-    "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet_date}.",
+    "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet_date}.",
     "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} stays on the testnet until our code is reviewed."
    ]
   },

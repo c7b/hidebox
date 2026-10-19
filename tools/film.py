@@ -90,7 +90,7 @@ def end_lines(cfg: dict) -> tuple:
     except ValueError:
         pass
     return ((TAGLINE, 44, MOON),
-            (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet}.", 30, MOON_DIM))
+            (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet}.", 30, MOON_DIM))
 
 
 def wordmark_svg() -> str:

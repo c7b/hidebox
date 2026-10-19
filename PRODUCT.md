@@ -63,7 +63,8 @@ a game, and Skydrop (tTARI to a Bluesky handle) [brief].
 - Phones at 390 and 360 wide, laptops at 1440; headless Chromium on the server is the test browser [brief].
 - The judge path lives at `/judges`: two tracks of at most six steps, now through the drive; a QR code on
   the computer carries links to the phone [brief].
-- Testnet only (Esmeralda); tTARI is worth nothing; Ootle mainnet is due on `{mainnet_date}` [code].
+- Testnet only (Esmeralda); tTARI is worth nothing; Ootle mainnet launches on `{mainnet_date}` [code; Tari's announcement of
+  2026-09-01, checked 2026-10-19 in docs/review/owner-5.md].
 - The chain worker can fail (it did on 2026-10-13); the drive must say so in words, and the anonymous
   path must keep working without it [inferred].
 

@@ -1179,7 +1179,7 @@
  "recent.unknown": "couldn't check",
  "recent.delete": "Delete",
  "noise.alt": "The locked bytes of your file, drawn as dots.",
- "testnet": "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet: {mainnet_date}.",
+ "testnet": "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet_date}.",
  "testnet_live": "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} stays on the testnet until our code is reviewed.",
  "dur.minute": {
   "one": "{count} minute",
