@@ -748,15 +748,15 @@ V3_PICS = """[...document.querySelectorAll('.stage .pic')].map((i) => { const r 
   return { stage: i.closest('.stage').classList[1], src: i.currentSrc.split('/').pop(), done: i.complete && i.naturalWidth > 0,
            top: r.top + scrollY, blend: getComputedStyle(i).mixBlendMode,
            card: getComputedStyle(i.closest('.stage')).backgroundImage }; })"""
-# The header's tile and the comparison's: the open box from the sprite, lime on ink, one filled outline that no rule
+# The header's tile and the comparison's: the open box from the sprite, the kit's lime #ACFF00 on ink, one filled outline that no rule
 # strokes (docs/review/brand-kit-1.md); beside each, the wordmark from the sprite in the text colour, hidden, its name in
 # words (the header link's label, the column's sr-only text).
 MARKS = """[...document.querySelectorAll('.site-header .wm-tile, .us-name .wm-tile')].map((t) => { const svg = t.querySelector('svg');
   return [t.closest('.site-header') ? 'header' : 'compare', (svg?.querySelector('use')?.getAttribute('href') || '').split('#')[1],
           getComputedStyle(t).backgroundColor, svg ? getComputedStyle(svg).color : null, !!svg && getComputedStyle(svg).display !== 'none',
           svg ? getComputedStyle(svg).stroke : null]; })"""
-OPEN_BOX_TILES = [["header", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True, "none"],
-                  ["compare", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True, "none"]]
+OPEN_BOX_TILES = [["header", "i-hidebox", "rgb(10, 10, 10)", "rgb(172, 255, 0)", True, "none"],
+                  ["compare", "i-hidebox", "rgb(10, 10, 10)", "rgb(172, 255, 0)", True, "none"]]
 WORDMARKS = """[...document.querySelectorAll('.site-header .wm-word, .us-name .wm-word')].map((w) => [
   w.closest('.site-header') ? 'header' : 'compare', (w.querySelector('use')?.getAttribute('href') || '').split('#')[1],
   getComputedStyle(w).color, getComputedStyle(w).stroke, w.getAttribute('aria-hidden'), getComputedStyle(w).height,

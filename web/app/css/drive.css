@@ -40,7 +40,7 @@
 .brand-text { display: grid; line-height: 1.15; }
 .brand-text small { font-size: var(--text-xs); font-weight: 400; color: var(--muted-foreground); letter-spacing: 0; }
 /* the name as the logo (the sprite's i-wordmark, docs/review/brand-kit-1.md): 17/30 of the tile's height, as the site's
-   header sets it; its letters in the text colour, its i's rhombus lime in both themes */
+   header sets it; its letters in the text colour, its i's rhombus the kit's lime, #ACFF00, in both themes */
 .wordmark { display: block; flex: none; width: calc(1.125rem * 148 / 34); height: 1.125rem; color: var(--foreground); }
 /* over a second line (the sidebar's My drive) the name is 1rem, so both lines sit inside the tile's 2rem with air
    between them */
@@ -234,9 +234,9 @@
   .btn[data-size="icon-sm"], .btn[data-size="icon-sm"]:has(> .icon) { width: var(--target); height: var(--target); }
   .folder-icon { width: 2.75rem; height: 2.75rem; }
 }
-/* The brand tile is ink in both themes with the lime open box (docs/review/home-v3.md), as on the site: the mark never
-   changes colour (shadcn's dark sidebar-primary is blue, its dark primary near-white). */
-.brand-mark { background: #0A0A0A; color: var(--brand-solid); }
+/* The brand tile is ink in both themes with the open box in the brand kit's lime, #ACFF00 (docs/review/brand-kit-1.md),
+   as on the site: the mark never changes colour (shadcn's dark sidebar-primary is blue, its dark primary near-white). */
+.brand-mark { background: #0A0A0A; color: #ACFF00; }
 /* Links and link-buttons get shadcn's ring, never the browser's default outline. */
 a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); border-radius: var(--radius-sm); }
 .sheet-title:focus, .dialog-title:focus { outline: none; }

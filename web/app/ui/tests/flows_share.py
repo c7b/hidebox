@@ -1015,8 +1015,8 @@ def drive_v3(t):
     muted = style(a, ".files .table th", "color").get("color")
     t.check(near(muted, (102, 102, 102), 1), f"light: secondary text is the site's #666666 ({muted})")
     tile = style(a, "aside .brand-mark", "background-color", "color")
-    t.check(near(tile.get("background-color"), (10, 10, 10), 0) and near(tile.get("color"), (188, 254, 0), 0),
-            f"light: the lime box on its ink tile (lime alone on white is 1.21:1) ({tile})")
+    t.check(near(tile.get("background-color"), (10, 10, 10), 0) and near(tile.get("color"), (172, 255, 0), 0),
+            f"light: the kit's lime box (#ACFF00) on its ink tile (lime alone on white is 1.23:1) ({tile})")
     violet = a.eval("""(() => { const rgb = %s; const tari = rgb(getComputedStyle(document.documentElement).getPropertyValue('--tari'));
       return [...document.querySelectorAll('body *')].filter((e) => e.getClientRects().length && rgb(getComputedStyle(e).color) === tari)
         .map((e) => e.closest('[data-tari], .tari-row, [data-variant="tari"], .tari-text, .price-big, .pack-price') ? null : (e.className.baseVal ?? e.className) || e.tagName)

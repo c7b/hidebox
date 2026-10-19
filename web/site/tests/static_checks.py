@@ -1224,7 +1224,7 @@ def check_home_stills():
     for mark in (SITE / "static" / "favicon.svg", SHARED / "brand" / "favicon.svg", SHARED / "brand" / "symbol.svg"):
         body = mark.read_text()
         if mark.stat().st_size > V3_MARK_LIMIT or V3_BAD_SVG.search(body) or body.count("<svg") != 1 or not box \
-                or f'<path fill="#BCFE00" transform="translate(2.24 1.81) scale(.86)" d="{box.group(1)}"/>' not in body \
+                or f'<path fill="#ACFF00" transform="translate(2.24 1.81) scale(.86)" d="{box.group(1)}"/>' not in body \
                 or '<rect width="32" height="32" rx="7" fill="#0A0A0A"/>' not in body:
             problems.append(f"{mark.relative_to(WEB)}: {mark.stat().st_size} B; not the open box in lime on its ink tile, or it carries "
                             f"a raster, script, link or data (V-02: clean, at most {V3_MARK_LIMIT:,} B)")
@@ -1233,8 +1233,8 @@ def check_home_stills():
         problems.append("shared/ui/icons.svg: no clean i-hidebox symbol drawing the open box as one filled outline")
     word = re.search(r'<symbol id="i-wordmark" viewBox="-0\.5 -0\.5 148 34">(.*?)</symbol>', sprite, re.S)
     if not word or V3_BAD_SVG.search(word.group(1)) or "stroke" in word.group(1) \
-            or re.findall(r'<path fill="([^"]+)" d="[^"]+" />', word.group(1)) != ["currentColor", "#BCFE00"]:
-        problems.append("shared/ui/icons.svg: no clean i-wordmark symbol (its letters in currentColor, the i's rhombus #BCFE00)")
+            or re.findall(r'<path fill="([^"]+)" d="[^"]+" />', word.group(1)) != ["currentColor", "#ACFF00"]:
+        problems.append("shared/ui/icons.svg: no clean i-wordmark symbol (its letters in currentColor, the i's rhombus #ACFF00)")
     header = (SHARED / "partials" / "header.html").read_text()
     if not re.search(r'<span class="wm-tile" aria-hidden="true"><svg class="icon" focusable="false"><use href="/shared/ui/icons.svg#i-hidebox"/></svg></span>', header):
         problems.append("partials/header.html: the tile doesn't draw the open box (#i-hidebox)")
@@ -1244,11 +1244,12 @@ def check_home_stills():
     for page in (home_page, SITE / "pages" / "v2.html"):
         if f"</span>{WORDMARK}<span class=\"sr-only\">{{{{BRAND}}}}</span></span></th>" not in page.read_text():
             problems.append(f"pages/{page.name}: the comparison's hidebox column isn't headed by the tile and the wordmark, named in words")
-    shipped = [f for root in (SHARED, SITE / "css", SITE / "pages", SITE / "static", SITE / "og", WEB / "app" / "css", WEB / "app" / "ui",
-                              WEB.parent / "deploy" / "holding") for f in root.rglob("*") if f.suffix in (".svg", ".css", ".html", ".js")]
-    for f in shipped:
-        if "#acff00" in f.read_text(errors="replace").lower():
-            problems.append(f"{f.relative_to(WEB.parent)}: the kit's #ACFF00; the product's one lime is #BCFE00 (--lime-400)")
+    for rel, rule in (("site/css/site.css", ".wm-tile {"), ("site/css/home.css", ".us-name .wm-tile .icon {"), ("app/css/drive.css", ".brand-mark { background"),
+                      ("app/css/flow.css", ".done-box {")):
+        css = (WEB / rel).read_text()
+        body = css[css.index(rule):css.index("}", css.index(rule))] if rule in css else ""
+        if "color: #ACFF00;" not in body:
+            problems.append(f"{rel}: {rule} doesn't draw the box in the kit's lime, #ACFF00 (the logo's lime in both themes)")
     media = sorted(p for p in (SITE / "media" / "v3").glob("*") if p.is_file())
     for f in media:
         if f.name not in named:

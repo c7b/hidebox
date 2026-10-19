@@ -228,10 +228,11 @@ something.
   public pages' one action colour, beside Ink, chosen by the owner for site v3 in place of Sea. It fills
   **Open your drive**, the site's one action (header, hero, closing), under a near-black label (16.32:1), with
   a 1px lime-700 edge on light pages; tints the You card in Who sees what and the hidebox column of the
-  comparison; draws the open box, the mark, on its ink tile (both themes). Beside the tile in the site's and the drive's
-  headers sits the wordmark (docs/review/brand-kit-1.md: the kit's outlined name, 17/30 of the tile's height): its letters
-  in the text colour, the rhombus over its dotless i the same lime in both themes, the one lime on white in light mode
-  (the owner's call: it is part of the mark, not text; no dark green ever goes in the mark). Light pages
+  comparison. The mark is the brand kit's (docs/review/brand-kit-1.md), in the kit's own lime, `#ACFF00`, a near twin
+  of this one, kept apart by the owner's call: the open box on its ink tile (both themes) and, beside the tile in the
+  site's and the drive's headers, the wordmark (the kit's outlined name, 17/30 of the tile's height), its letters in the
+  text colour and the rhombus over its dotless i `#ACFF00` in both themes, the one lime on white in light mode (part of
+  the mark, not text; no dark green ever goes in the mark). Light pages
   never write lime as text: brand text there is the olive lime-800 (7.20:1). **In the drive (site v4)** lime
   fills the one next step of each view, the shadcn default variant (`components.css`, the drive's
   `ui/tokens.css` `--brand-*`): Upload a folder (or Upload files) on the empty drive, New while My drive or a

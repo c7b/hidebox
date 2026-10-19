@@ -6,7 +6,6 @@ body { display: flex; flex-direction: column; min-height: 100svh; }
   padding: var(--s-9) var(--gutter) var(--s-7);
 }
 .h-mark { width: 208px; height: auto; color: var(--fg); }   /* the lockup (docs/review/brand-kit-1.md): the ink tile, the lime box, the name */
-.h-lime { fill: var(--lime-400); }
 .h-title { font: var(--t-display); letter-spacing: -.02em; }
 .h-direction { font: var(--t-direction); color: var(--fg-2); }
 .h-body { max-width: 60ch; }

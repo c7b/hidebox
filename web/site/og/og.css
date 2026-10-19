@@ -15,6 +15,7 @@ body { background: #FFFFFF; color: #0A0A0A; font-family: "Geist", ui-sans-serif,
 .tile { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: #171717; color: #FAFAFA; font-size: 30px; }
 /* the mark, the open box: lime on an ink tile, as the site's header draws it (docs/review/home-v3.md) */
 .tile.mark { background: #0A0A0A; color: #BCFE00; font-size: 36px; }
+.viewer .tile.mark { color: #ACFF00; }   /* the brand kit's lime (docs/review/brand-kit-1.md); og.html keeps its card as it is */
 .name { font-size: 38px; font-weight: 600; letter-spacing: -.03em; }
 /* the wordmark beside the 56 px tile, 17/30 of its height as the site's header sets it; the rhombus lime, the letters ink */
 .word { display: block; flex: none; width: calc(31.7px * 148 / 34); height: 31.7px; }
