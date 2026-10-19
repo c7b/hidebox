@@ -53,10 +53,11 @@ stderr carries fixed strings only (`mutis-sidecar: ready`, or the load failure l
 | `oneTimeKey` | `owner_sk`, `nonce` | `public_key` | R1: `publicKeyFromSecretKey(stealthDhSecret(0x26, owner_sk, nonce))`, the one-time key of a stealth output paid to that owner key. The chain worker compares it with the indexer's `auth.Key` before a pack payment counts: a view key proves the amount and the memo, never who can spend the output. `bad_point` when the nonce isn't a curve point |
 | `canary` | `n`, `canary_token`, `robot_address` | `item_id`, `share_id`, `sealed_at`, `job_id` | seals the §8.4 text (4,000 characters) as a text item, uploads it through `MUTIS_API` with `X-Mutis-Canary` (48 h), makes one link (3 views, 24 h), seals it kind 3 to the robot locker and posts `/courier` with `evidence: true` |
 | `openDelivery` | `memo` (string or `{"Message"}`), `owner_sk`, `view_sk`, optional `origins` | `share_id`, `flags`, `ref`, `access_token` | health check. `access_token` (b64u) is what `X-Mutis-Access` needs to open the link once through the real API; the link secret itself stays here |
-| `reveal` (P1) | `n` | `n`, `sealed_at`, `fk` (b64u) | the file key of a canary this process sealed, for "yesterday's key"; `not_found` for one sealed before the last restart (keys live in memory only), which the site shows as a missed reveal |
+| `reveal` (P1) | `n` | `n`, `sealed_at`, `fk` (b64u) | the file key of a canary this process sealed, for "yesterday's key"; `not_found` for one sealed before the last restart (this process keeps them in memory only), and the chain worker asks `recoverCanary` |
+| `recoverCanary` (P1) | `memo`, `owner_sk`, `view_sk`, `origins`, `share_id`, `wrapped_key` (60 bytes), `header` (32 bytes) | `fk` (b64u) | after a restart: the canary's delivery, opened with the robot locker's keys, gives the link's secret; its wrap key opens `wrapped_key` (the copy of the link's wrapped key the chain worker kept) under the header's hash. `other_share` when the delivery is another link's, `cannot_unwrap` when the copy or the header isn't this link's; the site shows a reveal as missed only when this fails too |
 
 Error codes: `bad_json`, `unknown_cmd`, `bad_request`, `bad_point`, `not_a_delivery`, `cannot_open`, `not_found`,
-`too_large`, `api_<code>` (an API error during the canary), `internal`.
+`other_share`, `cannot_unwrap`, `too_large`, `api_<code>` (an API error during the canary), `internal`.
 
 Measured on the server (2 vCPU, Node 20.19.2): `scan` 3,861-4,956 foreign rows per second.
 

@@ -2,7 +2,8 @@
 """GET /canary and /canary/raw (spec §6.3, §8.4): our own hourly sealed file, exactly as the disk holds it.
 
 P1: a canary's file key is published once it is a day old ("Yesterday's key — now you can read it").
-An hour whose key the verifier lost when it restarted is listed as `{"n", "sealed_at", "missed": true}`.
+An hour whose key the verifier lost when it restarted, and its delivery on the Ootle couldn't give back, is listed
+as `{"n", "sealed_at", "missed": true}`.
 """
 from .. import codec, db
 from ..http_util import ApiError, json_response

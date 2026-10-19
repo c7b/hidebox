@@ -3,8 +3,11 @@
 
 It opens FakeChain outputs instead of real ones and uploads a canary whose bytes are random, so it
 proves nothing about cryptography; it lets the server's side of the protocol be tested end to end.
+The canary's link wraps its key with a stand-in for AES-GCM (a SHA-256 keystream and an HMAC tag over
+the header's hash), so `recoverCanary` opens only the right link's copy, as the real one does.
 Start it with `argv()`.
 """
+import hmac
 import json
 import os
 import re
@@ -38,6 +41,24 @@ def _api(method: str, path: str, token: str, body=None, raw: bytes | None = None
     return json.loads(text) if text else {}
 
 
+def _wrap_key(s: bytes) -> bytes:
+    return codec.hkdf(s, b"mutis/v1", b"share-wrap", 32)
+
+
+def fake_wrap(s: bytes, header: bytes, fk: bytes) -> bytes:
+    key, iv = _wrap_key(s), secrets.token_bytes(12)
+    ct = bytes(a ^ b for a, b in zip(fk, codec.sha256(key, iv)))
+    return iv + ct + hmac.new(key, iv + ct + codec.sha256(header), "sha256").digest()[:16]
+
+
+def fake_unwrap(s: bytes, header: bytes, wrapped: bytes) -> bytes:
+    key, iv, ct, tag = _wrap_key(s), wrapped[:12], wrapped[12:44], wrapped[44:]
+    if len(wrapped) != 60 or not hmac.compare_digest(tag, hmac.new(key, iv + ct + codec.sha256(header),
+                                                                   "sha256").digest()[:16]):
+        raise ValueError("cannot_unwrap")
+    return bytes(a ^ b for a, b in zip(ct, codec.sha256(key, iv)))
+
+
 def canary(n: int, token: str, robot_address: str) -> dict:
     codec.unb64u(token, 32)
     now = _api("GET", "/api/v1/health", token)["time"]       # the server's clock (tests move it)
@@ -50,15 +71,15 @@ def canary(n: int, token: str, robot_address: str) -> dict:
     _api("PUT", f"/api/v1/uploads/{up['upload_id']}/chunks/0", token, raw=chunk,
          headers={"Content-Type": "application/octet-stream", "X-Mutis-Chunk-SHA256": codec.b64u(codec.sha256(chunk))})
     _api("POST", f"/api/v1/uploads/{up['upload_id']}/complete", token, {})
-    s = secrets.token_bytes(32)
+    s, fk = secrets.token_bytes(32), secrets.token_bytes(32)
     access = codec.hkdf(s, b"mutis/v1", b"share-access", 32)
     share = _api("POST", f"/api/v1/items/{up['item_id']}/shares", token, {
-        "mode": "link", "wrapped_key": codec.b64u(secrets.token_bytes(60)),
+        "mode": "link", "wrapped_key": codec.b64u(fake_wrap(s, header, fk)),
         "access_verifier": codec.b64u(codec.sha256(access)), "max_views": 3, "expires_at": now + 86400})
     inner = codec.unb64u(share["share_id"], 16) + s + b"\x00" + bytes(16)
     job = _api("POST", "/api/v1/courier", token, {"to": "address", "address": robot_address, "kind": 3,
                                                   "blob": codec.b64u(inner + bytes(60)), "evidence": True})
-    _canaries[n] = {"fk": secrets.token_bytes(32), "sealed_at": now}
+    _canaries[n] = {"fk": fk, "sealed_at": now}
     return {"item_id": up["item_id"], "share_id": share["share_id"], "sealed_at": now, "job_id": job["job_id"]}
 
 
@@ -71,6 +92,17 @@ def open_delivery(memo, origins: list[str]) -> dict:
     access = codec.hkdf(inner[16:48], b"mutis/v1", b"share-access", 32)
     return {"share_id": codec.b64u(inner[:16]), "flags": inner[48], "ref": inner[49:65].hex(),
             "access_token": codec.b64u(access)}
+
+
+def recover_canary(req: dict) -> dict:
+    """The canary's key from its delivery (the fake's memo is the plain inner payload) and the kept wrap."""
+    open_delivery(req["memo"], req["origins"])          # the same checks: a delivery, on one of our origins
+    text = req["memo"].get("Message") if isinstance(req["memo"], dict) else req["memo"]
+    inner = codec.unb64u(_MEMO.search(text).group(1), 125)[:65]
+    if codec.b64u(inner[:16]) != req["share_id"]:
+        raise ValueError("other_share")
+    fk = fake_unwrap(inner[16:48], bytes.fromhex(req["header"]), bytes.fromhex(req["wrapped_key"]))
+    return {"fk": codec.b64u(fk)}
 
 
 def open_watch_key(blob: bytes, address: str) -> dict:
@@ -118,6 +150,8 @@ def handle(req: dict) -> dict:
         return canary(int(req["n"]), req["canary_token"], req["robot_address"])
     if cmd == "openDelivery":
         return open_delivery(req["memo"], req["origins"])
+    if cmd == "recoverCanary":
+        return recover_canary(req)
     if cmd == "reveal":
         c = _canaries[int(req["n"])]
         return {"n": req["n"], "sealed_at": c["sealed_at"], "fk": codec.b64u(c["fk"])}

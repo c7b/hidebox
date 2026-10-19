@@ -158,6 +158,47 @@ async function openDelivery({ memo, owner_sk, view_sk, origins }) {
   return { share_id: inner.shareId, flags: inner.flags, ref: hex(inner.ref16), access_token: b64uEncode(accessToken) };
 }
 
+// P1, after a restart: a canary's file key from its delivery on the Ootle. The delivery, sealed to our test
+// drive, holds the link's secret; its wrap key opens the copy of the link's wrapped key the chain worker kept
+// (AES-GCM over the header's hash, so a key that opens is the one sealed with this file). Only the chain
+// worker asks, with the test drive's keys, once the canary is a day old and its key is due to be published.
+async function recoverCanary({ memo, owner_sk, view_sk, origins, share_id, wrapped_key, header }) {
+  const text = typeof memo === 'string' ? memo : memo?.Message;
+  need(typeof text === 'string' && Array.isArray(origins) && typeof share_id === 'string');
+  const parsed = courier.parseMemo({ Message: text }, origins);
+  if (!parsed || parsed.kind !== 3) throw new RequestError('not_a_delivery');
+  const wrapped = hexField(wrapped_key, 60);
+  const headerHash = await crypto.sha256(hexField(header, 32));
+  const ownerSk = hexField(owner_sk, 32);
+  const viewSk = hexField(view_sk, 32);
+  const w = ootle.bindings();
+  const keys = { ownerSk, viewSk, ownerPk: w.publicKeyFromSecretKey(ownerSk), viewPk: w.publicKeyFromSecretKey(viewSk) };
+  let inner;
+  try {
+    inner = courier.decodeInner(await ootle.unwrapBlob(keys, parsed.blob, parsed.kind));
+  } catch {
+    throw new RequestError('cannot_open');
+  } finally {
+    ownerSk.fill(0);
+    viewSk.fill(0);
+  }
+  try {
+    if (inner.shareId !== share_id) throw new RequestError('other_share');
+    const { wrapKey } = await lib.share.shareKeys(inner.s);
+    let fk;
+    try {
+      fk = await lib.share.unwrapFileKey(wrapKey, headerHash, wrapped);
+    } catch {
+      throw new RequestError('cannot_unwrap');
+    }
+    const out = b64uEncode(fk);
+    fk.fill(0);
+    return { fk: out };
+  } finally {
+    inner.s.fill(0);
+  }
+}
+
 // Pay to open (16-drive-architecture §1.5): a seller's sales view key, sealed (kind 3) to our receiver by
 // the seller's drive. Only the chain worker asks, with the receiver keys; the key goes back to its memory.
 // The blob must carry the watch flag, the reference of exactly this address, and a key whose public half
@@ -221,8 +262,9 @@ const handlers = {
   selftest,
   canary,
   openDelivery,
-  // P1: "yesterday's key". Only canaries sealed by this process are known: after a restart the
-  // answer is not_found, and the site shows that reveal as missed.
+  recoverCanary,
+  // P1: "yesterday's key". Only canaries sealed by this process are known: after a restart the answer
+  // is not_found, and the chain worker asks recoverCanary instead.
   reveal: async ({ n }) => {
     const c = canaries.get(n);
     if (!c) throw new RequestError('not_found');

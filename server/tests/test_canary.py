@@ -64,23 +64,82 @@ class Canary(unittest.TestCase):
         self.assertEqual(s.conn.execute("SELECT state FROM items WHERE id = ?", (entry["item_id"],)).fetchone()[0],
                          "deleted")
 
-    def test_a_key_the_restarted_verifier_lost_is_published_as_missed(self):
-        """App-core review L8: the sidecar keeps canary keys in memory; after a restart that hour shows as
-        missed, never skipped, and the worker doesn't ask again."""
+    def restart(self) -> None:
+        """mutis-chain restarts (a deploy): a new worker and a new sidecar process that knows no canary key."""
+        self.w.sidecar.stop()
+        self.w.conn.close()
+        self.w = self.s.start_worker()
+        self.w.setup()
+
+    def wrapped_key(self, share_id: str):
+        return self.s.conn.execute("SELECT wrapped_key FROM shares WHERE id = ?", (share_id,)).fetchone()[0]
+
+    def test_a_restart_loses_no_key(self):
+        """owner-5: the sidecar keeps canary keys in memory, so a restart used to publish every hour younger than a
+        day as missed. Now the key comes back from the Ootle: the delivery, sealed to our test drive, holds the
+        link's secret, which opens the copy of the link's wrapped key the log kept after the link expired."""
         s = self.s
         self.w.tick()
         self.tick(10, 6)
-        self.w.sidecar.stop()                 # the next request starts a fresh sidecar that knows no canary
+        entry = db.get_meta_json(s.conn, "canary_log")[0]
+        self.assertTrue(entry["verified"])
+        self.assertEqual(codec.unb64u(entry["wrap"]), self.wrapped_key(entry["share_id"]))
+        fk = self.w.sidecar.request("reveal", n=1)["fk"]          # what the sidecar sealed, before it forgets
+        self.restart()
         s.now += 25 * 3600
+        s.run_cleanup()
+        self.assertIsNone(self.wrapped_key(entry["share_id"]))   # the link expired and lost its wrapped key
         self.w.tick()
         revealed = s.request("GET", "/api/v1/canary")[2]["revealed"]
-        sealed_at = db.get_meta_json(s.conn, "canary_log")[0]["sealed_at"]
-        self.assertEqual(revealed, [{"n": 1, "sealed_at": sealed_at, "missed": True}])
+        self.assertEqual([(r["n"], r.get("fk"), r.get("missed")) for r in revealed], [(1, fk, None)])
+        self.assertIsNone(db.get_meta_json(s.conn, "canary_log")[0]["wrap"])    # the copy leaves with the reveal
+
+    def test_a_canary_sealed_before_the_log_kept_copies_gets_one_while_its_link_lives(self):
+        """The deploy that brings the copies: canaries already sealed get theirs at the new worker's first tick,
+        while their links are active, so that restart loses none of them either."""
+        s = self.s
+        self.w.tick()
+        self.tick(10, 6)
+        log = db.get_meta_json(s.conn, "canary_log")
+        del log[0]["wrap"]
+        with db.tx(s.conn):
+            db.set_meta(s.conn, "canary_log", log)
+        fk = self.w.sidecar.request("reveal", n=1)["fk"]
+        self.restart()
+        self.w.tick()
+        entry = db.get_meta_json(s.conn, "canary_log")[0]
+        self.assertEqual(codec.unb64u(entry["wrap"]), self.wrapped_key(entry["share_id"]))
+        s.now += 25 * 3600
+        s.run_cleanup()
+        self.w.tick()
+        self.assertEqual(s.request("GET", "/api/v1/canary")[2]["revealed"][0]["fk"], fk)
+
+    def test_a_key_neither_the_verifier_nor_the_chain_gives_back_is_published_as_missed(self):
+        """App-core review L8: an hour whose key can't be had shows as missed, never skipped, and the worker
+        doesn't ask again. Here one canary has no copy of its wrapped key (its link ended before the log kept
+        copies) and the other a copy that isn't its link's: the delivery's secret doesn't open it."""
+        s = self.s
+        self.w.tick()
+        self.tick(10, 6)
+        self.tick(3600)
+        self.tick(10, 6)
+        log = db.get_meta_json(s.conn, "canary_log")
+        self.assertEqual([(e["n"], e["verified"]) for e in log], [(1, True), (2, True)])
+        log[0]["wrap"] = codec.b64u(bytes(60))
+        del log[1]["wrap"]
+        with db.tx(s.conn):
+            db.set_meta(s.conn, "canary_log", log)
+        s.now += 26 * 3600
+        s.run_cleanup()
+        self.restart()
+        self.w.tick()
+        revealed = s.request("GET", "/api/v1/canary")[2]["revealed"]
+        self.assertEqual(revealed, [{"n": e["n"], "sealed_at": e["sealed_at"], "missed": True} for e in reversed(log)])
         calls = []
         self.w.sidecar.request = lambda cmd, **fields: calls.append(cmd) or {}
         self.w.last.pop("reveal")
         self.w._reveal_canaries(s.now)
-        self.assertNotIn("reveal", calls)
+        self.assertEqual(calls, [])
 
     def test_status_says_whether_the_verifier_answers(self):
         """Before the first canary is in the mirror there is nothing to scan; the status (the healthcheck's

@@ -484,6 +484,7 @@ class Worker:
         if now - last >= self.cfg["sidecar"]["canary_every_s"] or self._force("canary"):
             self.seal_canary(now, log)
             log = self._log()
+        self._keep_wraps(log)
         self._promote_canaries(log, now)
         self._verify_canary(now)
         if self._due("reveal", 3600, now):
@@ -494,9 +495,27 @@ class Worker:
         reply = self.sidecar.request("canary", n=n, canary_token=codec.b64u(self.canary_token),
                                      robot_address=self.robot["address"])
         entry = {"n": n, "item_id": reply["item_id"], "share_id": reply["share_id"], "sealed_at": int(reply["sealed_at"]),
-                 "job_id": reply["job_id"], "delivery_tx": None, "utxo_ids": [], "verified": False, "fk": None}
+                 "job_id": reply["job_id"], "delivery_tx": None, "utxo_ids": [], "verified": False, "fk": None,
+                 "wrap": self._wrap_of(reply["share_id"])}
         self._save_log(log + [entry])
         logsafe.event("chain.canary_sealed")
+
+    def _wrap_of(self, share_id: str) -> str | None:
+        row = self.conn.execute("SELECT wrapped_key FROM shares WHERE id = ?", (share_id,)).fetchone()
+        return codec.b64u(row["wrapped_key"]) if row is not None and row["wrapped_key"] is not None else None
+
+    def _keep_wraps(self, log: list[dict]) -> None:
+        """A canary's link loses its wrapped key when it expires, a day after sealing, before its key is due.
+        The log keeps a copy until the reveal: useless without the link's secret, which only the delivery
+        holds, sealed to our test drive. Entries sealed before the log kept copies get theirs here, while
+        their link is still active."""
+        changed = False
+        for entry in log:
+            if "wrap" not in entry and not (entry["fk"] or entry.get("missed")):
+                entry["wrap"] = self._wrap_of(entry.get("share_id", ""))
+                changed = True
+        if changed:
+            self._save_log(log)
 
     def _promote_canaries(self, log: list[dict], now: int) -> None:
         changed = False
@@ -552,15 +571,16 @@ class Worker:
     def _reveal_canaries(self, now: int) -> None:
         """P1: publish a canary's file key once it is a day old, while its ciphertext still exists.
 
-        The sidecar keeps canary keys in memory only, so after it restarts it answers `not_found`: that
-        hour is published as missed, never skipped.
+        The sidecar keeps the keys it sealed in memory. One it no longer knows (it restarted) comes back from
+        the Ootle: the delivery, sealed to our test drive, holds the link's secret, which opens the copy of the
+        link's wrapped key the log kept. Only when that fails too is the hour published as missed, never skipped.
         """
         log = self._log()
         changed = False
         for entry in log:
             if entry["fk"] or entry.get("missed") or now - entry["sealed_at"] < REVEAL_AFTER_S:
                 continue
-            item = self.conn.execute("SELECT state FROM items WHERE id = ?", (entry["item_id"],)).fetchone()
+            item = self.conn.execute("SELECT state, header FROM items WHERE id = ?", (entry["item_id"],)).fetchone()
             if item is None or item["state"] not in ("ready", "doomed"):
                 continue
             try:
@@ -568,10 +588,37 @@ class Worker:
             except SidecarError as e:
                 if e.code != "not_found":
                     continue      # the sidecar is down or busy: try again next hour
-                entry["missed"] = True
+                entry["fk"] = self._recover_canary(entry, item["header"])
+                if entry["fk"] is None:
+                    entry["missed"] = True
+                    logsafe.event("chain.canary_missed", "warning")
+                else:
+                    logsafe.event("chain.canary_recovered")
+            entry["wrap"] = None
             changed = True
         if changed:
             self._save_log(log)
+
+    def _recover_canary(self, entry: dict, header: bytes) -> str | None:
+        """The canary's file key from its delivery on the Ootle, opened with our test drive's keys, or None."""
+        if not entry.get("wrap") or not entry["utxo_ids"]:
+            return None
+        marks = ",".join("?" * len(entry["utxo_ids"]))
+        rows = self.conn.execute(f"SELECT id, nonce, enc FROM chain_utxos WHERE id IN ({marks})",
+                                 entry["utxo_ids"]).fetchall()
+        for found in self._scan(self.robot["view_sk"], rows) if rows else []:
+            try:
+                reply = self.sidecar.request("recoverCanary", memo=found["memo"], owner_sk=self.robot["owner_sk"],
+                                             view_sk=self.robot["view_sk"], origins=list(self.cfg["memo_origins"]),
+                                             share_id=entry["share_id"], wrapped_key=codec.unb64u(entry["wrap"]).hex(),
+                                             header=header.hex())
+            except SidecarError as e:
+                if e.code in TRANSPORT_ERRORS:
+                    raise         # the step stops; the next hour asks again
+                continue          # not this output (the change), or not this canary's delivery
+            if isinstance(reply.get("fk"), str) and len(codec.unb64u(reply["fk"])) == 32:
+                return reply["fk"]
+        return None
 
     def evidence_payment(self, now: int) -> None:
         """Daily at 12:00 UTC: a no-locker invoice paid by the sponsor through the full proof path."""

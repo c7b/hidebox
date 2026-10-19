@@ -115,6 +115,20 @@ class RealSidecar(unittest.TestCase):
                             view_sk=robot["view_sk"], origins=list(s.cfg["memo_origins"]))
             fk = car.request("reveal", n=entry["n"])["fk"]
             self.assertEqual(len(codec.unb64u(fk)), 32)
+            # owner-5: after a restart the key comes back from the delivery and the kept wrapped key, and only
+            # with our test drive's keys, this link's id and this file's header.
+            self.assertEqual(codec.unb64u(entry["wrap"]), share["wrapped_key"])
+            ask = dict(memo={"Message": payload["memo"]}, owner_sk=robot["owner_sk"], view_sk=robot["view_sk"],
+                       origins=list(s.cfg["memo_origins"]), share_id=entry["share_id"],
+                       wrapped_key=share["wrapped_key"].hex(), header=item["header"].hex())
+            self.assertEqual(car.request("recoverCanary", **ask)["fk"], fk)
+            for change, code in (({"owner_sk": stranger["owner_sk"], "view_sk": stranger["view_sk"]}, "cannot_open"),
+                                 ({"share_id": codec.b64u(bytes(16))}, "other_share"),
+                                 ({"header": bytes(32).hex()}, "cannot_unwrap"),
+                                 ({"wrapped_key": bytes(60).hex()}, "cannot_unwrap")):
+                with self.assertRaises(SidecarError) as err:
+                    car.request("recoverCanary", **{**ask, **change})
+                self.assertEqual(err.exception.code, code, change)
             self.assertRegex(payload["memo"], re.escape(s.cfg.origin) + r"/t#3[A-Za-z0-9_-]{167}$")
         finally:
             car.stop()
