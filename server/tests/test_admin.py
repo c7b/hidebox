@@ -253,13 +253,14 @@ class Admin(unittest.TestCase):
         try:
             path = s.tmp / "mutis.toml"
             path.write_text(toml(s.cfg.raw))
-            s.worker.setup()
+            s.now = codec.now()                 # the admin command stamps the row with the real clock, so the
+            s.worker.setup()                    # heartbeat, the session and the invoice are made on it too
+            db.set_meta(s.conn, "chain_heartbeat", str(s.now))
             locker = s.register()
             inv = s.request("POST", "/api/v1/invoices", {"pack": "s30"}, headers=locker["auth"])[2]
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 admin.main(["--config", str(path), "e2e-forge-payment", inv["invoice_id"]])
-            s.now = codec.now()                 # the admin command stamps the row with the real clock
             for _ in range(3):
                 s.now += 400
                 s.worker.tick()
