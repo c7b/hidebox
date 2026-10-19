@@ -65,29 +65,60 @@ UNIT_NUMBER = re.compile(r"(\d[\d,]*(?:\.\d+)?)[ \u00a0]*(KB|MB|GB|KiB|MiB|GiB|h
 TEXT_ATTRS = ("alt", "title", "aria-label", "placeholder", "content")
 
 
+def json_strings(value):
+    """Every string in a JSON value (a JSON-LD block's words: names, descriptions, feature lists)."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from json_strings(v)
+    elif isinstance(value, list):
+        for v in value:
+            yield from json_strings(v)
+
+
 class VisibleText(html.parser.HTMLParser):
-    """Visible text (and human-facing attributes) of a page; text inside data-v / data-cue kept apart."""
+    """Visible text (and human-facing attributes) of a page; text inside data-v / data-cue kept apart. What search
+    results and link previews show counts as copy too: the description, og:* and twitter:* metas, and the strings of a
+    JSON-LD block (a block that doesn't parse adds its raw text, so its words are still read)."""
 
     VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.parts, self.bound, self.stack = [], [], []
+        self.ld = None
+
+    @staticmethod
+    def shown(tag: str, a: dict) -> bool:
+        """Whether a meta's content is read by people (a search result or a link preview)."""
+        return tag != "meta" or a.get("name") == "description" or str(a.get("name", "")).startswith("twitter:") \
+            or str(a.get("property", "")).startswith("og:")
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
-        self.parts += [a[k] for k in TEXT_ATTRS if a.get(k) and not (tag == "meta" and k == "content"
-                                                                     and a.get("name") not in ("description",)
-                                                                     and not str(a.get("property", "")).startswith("og:"))]
+        self.parts += [a[k] for k in TEXT_ATTRS if a.get(k) and (k != "content" or self.shown(tag, a))]
+        if tag == "script" and a.get("type", "").lower() == "application/ld+json":
+            self.ld = []
         if tag not in self.VOID:
             self.stack.append((tag, "data-v" in a or "data-cue" in a))
 
     def handle_endtag(self, tag):
+        if tag == "script" and self.ld is not None:
+            raw = "".join(self.ld)
+            try:
+                self.parts += list(json_strings(json.loads(raw)))
+            except ValueError:
+                self.parts.append(raw)
+            self.ld = None
         while self.stack:
             if self.stack.pop()[0] == tag:
                 break
 
     def handle_data(self, data):
+        if self.ld is not None:
+            self.ld.append(data)
+            return
         tags = [t for t, _ in self.stack]
         if "script" in tags or "style" in tags:
             return

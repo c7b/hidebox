@@ -52,6 +52,18 @@ class CheckCopyTest(unittest.TestCase):
         fails, _ = check_copy.banned_words(self.root)
         self.assertEqual(sorted(f.split("'")[1].lower() for f in fails), ["ghost", "ghosts", "gone forever", "vanished"])
 
+    def test_previews_and_structured_data_are_copy(self):
+        """What a search result or a link preview shows is read like the page: the description, og:* and twitter:*
+        metas and every string of a JSON-LD block (one that doesn't parse is read as it is); other metas are not."""
+        self.page('<meta name="twitter:description" content="A seamless drive."><meta name="twitter:card" content="summary">'
+                  '<meta name="generator" content="Magic 1.0"><meta property="og:title" content="Your vault.">'
+                  '<script type="application/ld+json">{"featureList": ["Dead drop links", "Our server only gets scrambled noise."]}'
+                  '</script><script type="application/ld+json">{"name": "unlock it",</script><script>const robust = 1;</script>')
+        fails, _ = check_copy.banned_words(self.root)
+        self.assertEqual(sorted(f.split("'")[1].lower() for f in fails), ["dead drop", "seamless", "unlock", "vault"])
+        text = check_copy.page_text((self.root / "web" / "site" / "pages" / "p.html").read_text())[0]
+        self.assertEqual(len(check_copy.claim_problems("p", text, self.registry(), page=True)), 1)
+
     def registry(self):
         return check_copy.load_registry(ROOT / "tools" / "claim-registry.json")
 
