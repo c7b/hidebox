@@ -12,7 +12,8 @@ X-Powered-By or CORS header, the route's CSP (an error page always carries the s
 caching (pages revalidate, errors are never stored); private routes carry X-Robots-Tag: noindex, and no
 other route does (the indexable pages never send it). The share cards and icons are kept a day and may be
 loaded from any origin; robots.txt and the sitemap have their types and are kept an hour; every API
-answer is noindex. The same for the status files, a font, and a
+answer is noindex and carries the API's sandbox policy, and the stored bytes come back as an
+application/octet-stream attachment (never something a browser would render). The same for the status files, a font, and a
 404 through every other route of the Caddyfile. Also: a 6 MB upload chunk is refused with a 413 in
 the API's error shape (never a bare 502), plain HTTP answers a 308 to HTTPS with no Server header, a
 made-up Host name gets a 421 with the same headers on both ports (never a redirect to that name), the
@@ -79,7 +80,7 @@ def header_problems(headers: dict, csp: str, extra: dict) -> list[str]:
     problems = [f"{k}: {headers.get(k)!r}" for k, v in (headers_spec.COMMON | extra).items() if headers.get(k) != v]
     problems += [f"unexpected {k}" for k in headers_spec.ABSENT if k in headers]
     if headers.get("content-security-policy") != csp:
-        which = "app" if csp == headers_spec.APP_CSP else "site"
+        which = {headers_spec.APP_CSP: "app", headers_spec.API_CSP: "API"}.get(csp, "site")
         problems.append(f"CSP is not the {which} policy: {headers.get('content-security-policy')!r}")
     return problems
 
@@ -122,8 +123,25 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         results.append((f"GET {path} → {status} (an error page through another route)", problems))
 
     status, headers, _ = fetch(origin + "/api/v1/health")
-    results.append((f"GET /api/v1/health → {status} (security headers on API responses, noindex)",
-                    header_problems(headers, headers_spec.SITE_CSP, headers_spec.NOINDEX)))
+    results.append((f"GET /api/v1/health → {status} (security headers on API responses, noindex, the API's sandbox)",
+                    header_problems(headers, headers_spec.API_CSP, headers_spec.NOINDEX)))
+    # Stored bytes (docs/review/upload-safety-1.md): the canary is the one stored file anyone may fetch.
+    status, headers, data = fetch(origin + "/api/v1/canary/raw")
+    problems = header_problems(headers, headers_spec.API_CSP, headers_spec.NOINDEX)
+    if status == 200:
+        if headers.get("content-type") != "application/octet-stream":
+            problems.append(f"content-type {headers.get('content-type')!r}")
+        if not headers.get("content-disposition", "").startswith("attachment;"):
+            problems.append(f"content-disposition {headers.get('content-disposition')!r}")
+        if "content-encoding" in headers:
+            problems.append(f"content-encoding {headers['content-encoding']!r} on stored bytes")
+    elif status != 404:
+        problems.append(f"status {status}")
+    results.append((f"GET /api/v1/canary/raw → {status} (stored bytes: an octet-stream attachment, nosniff, the sandbox)",
+                    problems))
+    status, headers, _ = fetch(origin + "/api/v1/blobs/" + "A" * 43)
+    problems = ([] if status == 404 else [f"status {status}"]) + header_problems(headers, headers_spec.API_CSP, headers_spec.NOINDEX)
+    results.append((f"GET /api/v1/blobs/<unknown ticket> → {status} (the download route's answer carries the sandbox)", problems))
 
     if not holding:
         for path, ctype in headers_spec.MEDIA.items():
@@ -158,7 +176,7 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
     oversized = b"\0" * (6 << 20)
     status, headers, data = fetch(origin + "/api/v1/uploads/AAAAAAAAAAAAAAAAAAAAAA/chunks/0", "PUT", body=oversized)
     problems = [] if status == 413 else [f"status {status}"]
-    problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.ERROR_CACHE)
+    problems += header_problems(headers, headers_spec.API_CSP, headers_spec.ERROR_CACHE)
     try:
         err = json.loads(data)["error"]
         if (err["code"], err["details"]["max_bytes"]) != ("too_large", 5 << 20):

@@ -159,6 +159,17 @@ class CaddyfileTest(unittest.TestCase):
         self.assertRegex(self.text, r"(?s)http://\{\$MUTIS_HOST\} \{\s*header -Server\s*redir https://")
         self.assertIn("buffer_requests", self.text)
 
+    def test_every_api_answer_carries_the_sandbox_policy(self):
+        """docs/review/upload-safety-1.md: the API's JSON and the stored bytes it serves are data, never a page."""
+        self.assertIn(f'header Content-Security-Policy "{headers_spec.API_CSP}"', self.text)
+        self.assertTrue(headers_spec.API_CSP.endswith("; sandbox"))
+        api = re.search(r"(?ms)^\thandle @api \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn("import api_csp", api)
+        self.assertNotIn("import site_csp", api)
+        self.assertNotIn("import app_csp", api)
+        self.assertIn("header_down -X-Content-Type-Options", api, "Caddy's nosniff, sent once")
+        self.assertNotRegex(self.text, r"(?m)^\s*root \* /srv/mutis/data", "Caddy never serves the data directory")
+
     def test_a_declared_body_over_the_limit_is_a_413_in_the_api_shape(self):
         """Claims review item 24: never a bare 502 for a 6 MB chunk."""
         api = re.search(r"(?ms)^\thandle @api \{\n(.*?)^\t\}", self.text).group(1)

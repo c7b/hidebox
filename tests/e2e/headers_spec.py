@@ -22,6 +22,10 @@ APP_CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src
            "base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; "
            "require-trusted-types-for 'script'; trusted-types mutis-url; upgrade-insecure-requests")
 
+# The API's answers (its JSON and the stored bytes it serves as attachments) are data, never pages: a sandbox
+# with nothing allowed (docs/review/upload-safety-1.md). Stricter than the site policy the API had before.
+API_CSP = "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox"
+
 ABSENT = ("server", "x-powered-by", "access-control-allow-origin")
 
 # Path → (CSP, extra headers that must be present). App pages are noindex (spec §13.3, §15.2).
