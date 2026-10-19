@@ -1,0 +1,85 @@
+== seo-1-before (main at 9bfee2c)
+run 0: 38 requests, 257,771 B
+     28,525 /
+     27,490 /shared/ui/icons.svg
+     18,341 /shared/fonts/geist/Geist-Latin.woff2
+     18,154 /site/css/site.css
+     15,540 /site/media/v3/hero-720.avif
+     13,620 /site/css/home.css
+     11,442 /app/ui/widget.js
+     10,654 /app/css/widget.css
+      9,860 /site/css/v2.css
+      9,222 /shared/tokens.css
+      8,127 /site/js/stats.js
+      8,033 /site/js/motion.js
+      7,123 /site/media/v3/different-640.avif
+      7,035 /app/lib/pow.js
+      6,803 /app/ui/zone.js
+      6,762 /app/lib/api.js
+      5,597 /site/js/site.js
+      4,918 /shared/ghost.js
+      3,457 /app/lib/dom.js
+      3,364 /app/lib/sha256sync.js
+      3,010 /app/ui/core.js
+      3,000 /app/lib/store.js
+      2,765 /api/v1/config
+      2,765 /api/v1/config
+      2,717 /app/lib/i18n.js
+      2,624 /shared/base.css
+      2,610 /app/i18n/widget-en.json
+      2,531 /shared/theme.js
+      2,370 /app/lib/b64.js
+      2,193 /site/css/v3.css
+      1,837 /app/ui/more.js
+      1,462 /shared/dates.js
+      1,350 /app/drop-widget.js
+        732 /manifest.webmanifest
+        691 /favicon.svg
+        691 /favicon.svg
+        356 /api/v1/pow
+          0 /app/lib/pow-worker.js
+run 1: 37 requests, 257,080 B
+run 2: 37 requests, 257,080 B
+== seo-1-final (seo/pass-1)
+run 0: 39 requests, 286,642 B
+     29,764 /
+     27,490 /shared/ui/icons.svg
+     27,490 /shared/ui/icons.svg
+     18,341 /shared/fonts/geist/Geist-Latin.woff2
+     18,154 /site/css/site.css
+     15,540 /site/media/v3/hero-720.avif
+     13,620 /site/css/home.css
+     11,442 /app/ui/widget.js
+     10,654 /app/css/widget.css
+      9,860 /site/css/v2.css
+      9,222 /shared/tokens.css
+      8,127 /site/js/stats.js
+      8,033 /site/js/motion.js
+      7,123 /site/media/v3/different-640.avif
+      7,035 /app/lib/pow.js
+      6,803 /app/ui/zone.js
+      6,762 /app/lib/api.js
+      5,597 /site/js/site.js
+      4,918 /shared/ghost.js
+      3,457 /app/lib/dom.js
+      3,364 /app/lib/sha256sync.js
+      3,010 /app/ui/core.js
+      3,000 /app/lib/store.js
+      2,765 /api/v1/config
+      2,765 /api/v1/config
+      2,717 /app/lib/i18n.js
+      2,624 /shared/base.css
+      2,610 /app/i18n/widget-en.json
+      2,531 /shared/theme.js
+      2,370 /app/lib/b64.js
+      2,193 /site/css/v3.css
+      1,837 /app/ui/more.js
+      1,462 /shared/dates.js
+      1,350 /app/drop-widget.js
+        874 /manifest.webmanifest
+        691 /favicon.svg
+        691 /favicon.svg
+        356 /api/v1/pow
+          0 /app/lib/pow-worker.js
+run 1: 37 requests, 258,461 B
+run 2: 37 requests, 258,461 B

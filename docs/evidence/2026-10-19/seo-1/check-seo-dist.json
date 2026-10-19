@@ -1,0 +1,151 @@
+{
+ "origin": "http://127.0.0.1:39061",
+ "expect_origin": "https://hidebox.app",
+ "caddy": false,
+ "results": [
+  {
+   "check": "page /",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "JSON-LD: SoftwareApplication, WebSite",
+    "5 pages linked, 5 images, 12 headings"
+   ]
+  },
+  {
+   "check": "page /how",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "JSON-LD: BreadcrumbList",
+    "5 pages linked, 0 images, 12 headings"
+   ]
+  },
+  {
+   "check": "page /made",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "JSON-LD: BreadcrumbList",
+    "11 pages linked, 0 images, 42 headings"
+   ]
+  },
+  {
+   "check": "page /judges",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "JSON-LD: BreadcrumbList",
+    "5 pages linked, 0 images, 6 headings"
+   ]
+  },
+  {
+   "check": "page /fine-print",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "JSON-LD: BreadcrumbList",
+    "5 pages linked, 0 images, 26 headings"
+   ]
+  },
+  {
+   "check": "titles and descriptions are unique",
+   "result": "PASS",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "card https://hidebox.app/og.png",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "1200 x 630, 142,970 B"
+   ]
+  },
+  {
+   "check": "card https://hidebox.app/og.png: kept a day, loadable from any origin (Caddy sets it)",
+   "result": "SKIP",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "icons and manifest",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "manifest: 'hidebox', 3 icons, start_url '/'"
+   ]
+  },
+  {
+   "check": "robots.txt",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "11 Disallow lines"
+   ]
+  },
+  {
+   "check": "sitemap.xml",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "5 URLs, lastmod 2026-10-19"
+   ]
+  },
+  {
+   "check": "private routes are noindex (their robots meta, where a file answers)",
+   "result": "PASS",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "private routes: X-Robots-Tag (Caddy sets it): /drive, /drive/received, /s/AAAAAAAAAAAAAAAAAAAAAA, /p/AAAAAAAAAAAAAAAAAAAAAA, /t, /d/7kq2x9mdh4, /send, /watch, /verify/tx/0000000000000000000000000000000000000000000000000000000000000000, /api/v1/config",
+   "result": "SKIP",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "an unknown page answers 404, noindex",
+   "result": "PASS",
+   "problems": [],
+   "notes": []
+  }
+ ],
+ "pages": [
+  {
+   "path": "/",
+   "title": "Your private cloud storage \u00b7 hidebox",
+   "title_len": 36,
+   "description": "Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari. No email, no password. Your key is the account.",
+   "description_len": 143
+  },
+  {
+   "path": "/how",
+   "title": "How it works: a key, a lock and a link \u00b7 hidebox",
+   "title_len": 48,
+   "description": "Five steps, each with a picture of the drive: open your drive, drop your files, share it your way, let Tari do the private parts, see what happened.",
+   "description_len": 148
+  },
+  {
+   "path": "/made",
+   "title": "Under the hood: how it's made and how to check it \u00b7 hidebox",
+   "title_len": 59,
+   "description": "The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, and what we can't hide.",
+   "description_len": 124
+  },
+  {
+   "path": "/judges",
+   "title": "For judges: try it step by step \u00b7 hidebox",
+   "title_len": 41,
+   "description": "Two six-step tracks for the Tari Council: one device and no wallet, about two minutes; then two devices with Tari, about five minutes.",
+   "description_len": 134
+  },
+  {
+   "path": "/fine-print",
+   "title": "The fine print: privacy policy and terms \u00b7 hidebox",
+   "title_len": 50,
+   "description": "What we keep, table by table, how long each thing lasts, what you may not do with it, and the form to report a link.",
+   "description_len": 116
+  }
+ ]
+}

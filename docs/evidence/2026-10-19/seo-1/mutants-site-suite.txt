@@ -1,0 +1,11 @@
+Each line: one change to a copy of this branch's tree, then python3 -I web/site/tests/run.py --static (the copy is restored after each).
+FAILS, as it should: twitter:title no longer equals og:title (web/site/pages/how.html): site/pages/how.html: twitter:title differs from og:title
+FAILS, as it should: a canonical names another page (web/site/pages/made.html): site/pages/made.html: canonical ['{{ORIGIN}}/how'], expected {{ORIGIN}}/made
+FAILS, as it should: the name first in a title (web/site/pages/judges.html): site/pages/judges.html: title '{{BRAND}}: for judges' doesn't end with the name (' · {{BRAND}}')
+FAILS, as it should: a breadcrumb ends on another URL (web/site/pages/fine-print.html): site/pages/fine-print.html: JSON-LD BreadcrumbList should be Home then {{ORIGIN}}/fine-print
+FAILS, as it should: a made-up rating in JSON-LD (web/site/pages/index.html): site/pages/index.html: JSON-LD needs the WebSite and the SoftwareApplication ({{BRAND}}, any browser, free; no rating or review, since there are none to show)
+FAILS, as it should: a still loses its alt text (web/site/pages/index.html): site/pages/index.html: <img src='/site/media/v3/gem-720.webp'> has no alt text
+FAILS, as it should: the ICO link removed (web/site/pages/how.html): site/pages/how.html: icons [('icon', '/favicon-32.png', 'image/png'), ('icon', '/favicon.svg', 'image/svg+xml'), ('apple-touch-icon', '/apple-touch-icon.png', None), ('manifest', '/manifest.webmanifest', None)], expected [('icon', '/favicon.ico', None), ('icon', '/favicon-32.png', 'image/png'), ('icon', '/favicon.svg', 'image/svg+xml'), ('apple-touch-icon', '/apple-touch-icon.png', None), ('manifest', '/manifest.webmanifest', None)]
+FAILS, as it should: robots without the large image preview (web/site/pages/judges.html): site/pages/judges.html: robots meta 'index, follow', expected 'index, follow, max-image-preview:large'
+FAILS, as it should: an og:url on the link page (web/app/view.html): app/view.html: og:url or a canonical (a preview must not name the link)
+FAILS, as it should: the manifest loses its id (web/site/static/manifest.webmanifest): manifest.webmanifest: no id

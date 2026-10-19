@@ -1,0 +1,114 @@
+FAIL page /
+     title 'hidebox: your private drive' (27): at most 60 characters, the name last
+     robots don't allow a large image preview (max-image-preview:large)
+     missing og:image:secure_url, og:image:type
+     twitter:title None differs from og:title
+     twitter:description None differs from og:description
+     twitter:image None differs from og:image
+     twitter:image:alt None differs from og:image:alt
+     no apple-mobile-web-app-title
+     no .ico icon link
+     <img src='/site/media/v3/hero-720.webp'> has no alt text
+     <img src='/site/media/v3/different-960.webp'> has no alt text
+     <img src='/site/media/v3/who-720.webp'> has no alt text
+     <img src='/site/media/v3/gem-720.webp'> has no alt text
+     <img src='/site/media/v3/hero-720.webp'> has no alt text
+     note: JSON-LD: SoftwareApplication, WebSite
+     note: 5 pages linked, 5 images, 12 headings
+FAIL page /how
+     title 'How hidebox works' (17): at most 60 characters, the name last
+     robots don't allow a large image preview (max-image-preview:large)
+     missing og:image:secure_url, og:image:type
+     twitter:title None differs from og:title
+     twitter:description None differs from og:description
+     twitter:image None differs from og:image
+     twitter:image:alt None differs from og:image:alt
+     JSON-LD: BreadcrumbList [], expected home then https://hidebox.app/how
+     no apple-mobile-web-app-title
+     no .ico icon link
+     note: JSON-LD: none
+     note: 5 pages linked, 0 images, 12 headings
+FAIL page /made
+     title 'Under the hood: how hidebox was made' (36): at most 60 characters, the name last
+     robots don't allow a large image preview (max-image-preview:large)
+     missing og:image:secure_url, og:image:type
+     twitter:title None differs from og:title
+     twitter:description None differs from og:description
+     twitter:image None differs from og:image
+     twitter:image:alt None differs from og:image:alt
+     JSON-LD: BreadcrumbList [], expected home then https://hidebox.app/made
+     no apple-mobile-web-app-title
+     no .ico icon link
+     note: JSON-LD: none
+     note: 11 pages linked, 0 images, 42 headings
+FAIL page /judges
+     title 'hidebox for judges' (18): at most 60 characters, the name last
+     robots don't allow a large image preview (max-image-preview:large)
+     missing og:image:secure_url, og:image:type
+     twitter:title None differs from og:title
+     twitter:description None differs from og:description
+     twitter:image None differs from og:image
+     twitter:image:alt None differs from og:image:alt
+     JSON-LD: BreadcrumbList [], expected home then https://hidebox.app/judges
+     no apple-mobile-web-app-title
+     no .ico icon link
+     note: JSON-LD: none
+     note: 5 pages linked, 0 images, 6 headings
+FAIL page /fine-print
+     robots don't allow a large image preview (max-image-preview:large)
+     missing og:image:secure_url, og:image:type
+     twitter:title None differs from og:title
+     twitter:description None differs from og:description
+     twitter:image None differs from og:image
+     twitter:image:alt None differs from og:image:alt
+     JSON-LD: BreadcrumbList [], expected home then https://hidebox.app/fine-print
+     no apple-mobile-web-app-title
+     no .ico icon link
+     note: JSON-LD: none
+     note: 5 pages linked, 0 images, 26 headings
+PASS titles and descriptions are unique
+PASS card https://hidebox.app/og.png
+     note: 1200 x 630, 142,970 B
+FAIL card https://hidebox.app/og.png: kept a day, loadable from any origin
+     Cache-Control 'no-cache': at least a day
+     Cross-Origin-Resource-Policy 'same-origin': a preview drawn from the page loads it from another origin
+     note: 'no-cache', CORP 'same-origin'
+FAIL icons and manifest
+     /favicon.ico: Cache-Control 'no-cache'
+     /favicon.svg: Cache-Control 'no-cache'
+     /favicon-32.png: Cache-Control 'no-cache'
+     /apple-touch-icon.png: Cache-Control 'no-cache'
+     /icon-192.png: Cache-Control 'no-cache'
+     /icon-512.png: Cache-Control 'no-cache'
+     manifest: no id
+     note: manifest: 'hidebox', 3 icons, start_url '/'
+FAIL robots.txt
+     Cache-Control 'no-cache'
+     note: 11 Disallow lines
+FAIL sitemap.xml
+     https://hidebox.app/: lastmod ''
+     https://hidebox.app/fine-print: lastmod ''
+     https://hidebox.app/how: lastmod ''
+     https://hidebox.app/judges: lastmod ''
+     https://hidebox.app/made: lastmod ''
+     Cache-Control 'no-cache'
+     note: 5 URLs, lastmod 
+FAIL private routes are noindex
+     /app/drive.html: status 200, X-Robots-Tag ''
+     /app/view.html: status 200, X-Robots-Tag ''
+     /app/app.html: status 200, X-Robots-Tag ''
+     /api/v1/config: status 200, X-Robots-Tag ''
+PASS an unknown page answers 404, noindex
+
+Path         Title (characters)                                             Description (characters)
+/            hidebox: your private drive (27)
+             Your private cloud storage. Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari. (123)
+/how         How hidebox works (17)
+             How hidebox keeps your files private: a key made in your browser, files locked before upload, and private Tari payments. (120)
+/made        Under the hood: how hidebox was made (36)
+             The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, how to check us, and what we can't hide. (141)
+/judges      hidebox for judges (18)
+             Two six-step tracks for the Tari Council: one device and no wallet, about two minutes; then two devices with Tari, about five minutes. (134)
+/fine-print  The fine print · hidebox (24)
+             Privacy, terms and the form to report a link: what we keep, table by table, how long each thing lasts, and what you may not do with it. (135)
+check-seo: FAIL (3 passed, 10 failed, 0 skipped; fetched from https://hidebox.app, tags on https://hidebox.app)

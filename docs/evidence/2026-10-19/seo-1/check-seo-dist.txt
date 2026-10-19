@@ -1,0 +1,41 @@
+PASS page /
+     note: JSON-LD: SoftwareApplication, WebSite
+     note: 5 pages linked, 5 images, 12 headings
+PASS page /how
+     note: JSON-LD: BreadcrumbList
+     note: 5 pages linked, 0 images, 12 headings
+PASS page /made
+     note: JSON-LD: BreadcrumbList
+     note: 11 pages linked, 0 images, 42 headings
+PASS page /judges
+     note: JSON-LD: BreadcrumbList
+     note: 5 pages linked, 0 images, 6 headings
+PASS page /fine-print
+     note: JSON-LD: BreadcrumbList
+     note: 5 pages linked, 0 images, 26 headings
+PASS titles and descriptions are unique
+PASS card https://hidebox.app/og.png
+     note: 1200 x 630, 142,970 B
+SKIP card https://hidebox.app/og.png: kept a day, loadable from any origin (Caddy sets it)
+PASS icons and manifest
+     note: manifest: 'hidebox', 3 icons, start_url '/'
+PASS robots.txt
+     note: 11 Disallow lines
+PASS sitemap.xml
+     note: 5 URLs, lastmod 2026-10-19
+PASS private routes are noindex (their robots meta, where a file answers)
+SKIP private routes: X-Robots-Tag (Caddy sets it): /drive, /drive/received, /s/AAAAAAAAAAAAAAAAAAAAAA, /p/AAAAAAAAAAAAAAAAAAAAAA, /t, /d/7kq2x9mdh4, /send, /watch, /verify/tx/0000000000000000000000000000000000000000000000000000000000000000, /api/v1/config
+PASS an unknown page answers 404, noindex
+
+Path         Title (characters)                                             Description (characters)
+/            Your private cloud storage · hidebox (36)
+             Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari. No email, no password. Your key is the account. (143)
+/how         How it works: a key, a lock and a link · hidebox (48)
+             Five steps, each with a picture of the drive: open your drive, drop your files, share it your way, let Tari do the private parts, see what happened. (148)
+/made        Under the hood: how it's made and how to check it · hidebox (59)
+             The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, and what we can't hide. (124)
+/judges      For judges: try it step by step · hidebox (41)
+             Two six-step tracks for the Tari Council: one device and no wallet, about two minutes; then two devices with Tari, about five minutes. (134)
+/fine-print  The fine print: privacy policy and terms · hidebox (50)
+             What we keep, table by table, how long each thing lasts, what you may not do with it, and the form to report a link. (116)
+check-seo: PASS (12 passed, 0 failed, 2 skipped; fetched from http://127.0.0.1:39061, tags on https://hidebox.app)
