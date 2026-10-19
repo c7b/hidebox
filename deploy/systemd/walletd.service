@@ -27,6 +27,11 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=tmpfs
 BindPaths=/home/drive/wallet /home/drive/.local/share/tari
+# walletd has no business with the visitors' data or mutis's own secrets (drive is in group mutis).
+InaccessiblePaths=/srv/mutis -/etc/mutis/secret.key -/etc/mutis/mutis.toml -/etc/mutis/caddy.env
+# Programs run only from /usr (the start script) and /opt/tari (the binary).
+NoExecPaths=/
+ExecPaths=/usr /opt/tari
 PrivateTmp=yes
 PrivateDevices=yes
 ProtectProc=invisible
@@ -44,8 +49,10 @@ RestrictSUIDSGID=yes
 LockPersonality=yes
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
 SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
+RemoveIPC=yes
 UMask=0077
 MemoryMax=2G
 TasksMax=256

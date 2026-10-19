@@ -4,6 +4,7 @@
 [Unit]
 Description=mutis chain worker
 After=network-online.target walletd.service mutis-api.service
+RequiresMountsFor=/srv/mutis/data
 Wants=network-online.target walletd.service
 
 [Service]
@@ -23,6 +24,10 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 ReadWritePaths=/srv/mutis/data/db /srv/mutis/status
 ReadOnlyPaths=/home/drive/mutis
+# Programs run only from /usr (python3, the sidecar wrapper in /usr/local/lib/mutis, node): the data
+# directories, /tmp and every other writable place are noexec in this unit's view.
+NoExecPaths=/
+ExecPaths=/usr
 ProtectHome=read-only
 PrivateTmp=yes
 PrivateDevices=yes
@@ -41,8 +46,10 @@ RestrictSUIDSGID=yes
 LockPersonality=yes
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
 SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
+RemoveIPC=yes
 UMask=0007
 MemoryMax=1G
 TasksMax=256

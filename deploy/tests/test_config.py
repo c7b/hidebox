@@ -17,8 +17,13 @@ import headers_spec  # noqa: E402
 
 UNITS = ROOT / "deploy" / "systemd"
 HARDENING = ("NoNewPrivileges=yes", "ProtectSystem=strict", "PrivateTmp=yes", "PrivateDevices=yes",
-             "ProtectKernelTunables=yes", "ProtectKernelModules=yes", "ProtectControlGroups=yes", "RestrictNamespaces=yes",
-             "LockPersonality=yes", "SystemCallFilter=@system-service", "CapabilityBoundingSet=", "ProtectProc=invisible")
+             "ProtectKernelTunables=yes", "ProtectKernelModules=yes", "ProtectKernelLogs=yes", "ProtectControlGroups=yes",
+             "ProtectClock=yes", "ProtectHostname=yes", "RestrictNamespaces=yes", "RestrictRealtime=yes",
+             "RestrictSUIDSGID=yes", "LockPersonality=yes", "SystemCallFilter=@system-service",
+             "SystemCallFilter=~@privileged", "CapabilityBoundingSet=", "ProtectProc=invisible", "RemoveIPC=yes",
+             # docs/review/upload-safety-1.md: programs only from /usr (and walletd's /opt/tari)
+             "NoExecPaths=/", "ExecPaths=/usr")
+DATA = "/srv/mutis/data"
 
 
 def unit(name: str) -> configparser.ConfigParser:
@@ -231,10 +236,41 @@ class UnitsTest(unittest.TestCase):
                 if path.name == "mutis-backup.service" else []
             self.assertEqual(lines, expected, path.name)
 
+    def test_units_that_use_the_data_directory_need_its_noexec_mount(self):
+        """Every unit that reads the database or the blobs starts only once the noexec mount is up."""
+        for path in UNITS.glob("*.service"):
+            if "MUTIS_CONFIG" in path.read_text():
+                self.assertEqual(unit(path.name)["Unit"].get("RequiresMountsFor"), DATA, path.name)
+
+    def test_write_access_only_where_needed(self):
+        rw = {name: unit(name)["Service"]["ReadWritePaths"].split() for name in
+              ("mutis-api.service", "mutis-cleanup.service", "mutis-backup.service", "mutis-chain.service",
+               "mutis-evidence.service")}
+        self.assertEqual(rw["mutis-api.service"], [f"{DATA}/db", f"{DATA}/blobs"])
+        self.assertEqual(rw["mutis-cleanup.service"], [f"{DATA}/db", f"{DATA}/blobs"])
+        self.assertEqual(rw["mutis-backup.service"], [f"{DATA}/db", f"{DATA}/backup"])
+        self.assertEqual(rw["mutis-chain.service"], [f"{DATA}/db", "/srv/mutis/status"])
+        self.assertEqual(rw["mutis-evidence.service"], ["/srv/mutis/status", f"{DATA}/db"])
+        walletd = unit("walletd.service")["Service"]
+        self.assertIn("/srv/mutis", walletd["InaccessiblePaths"].split())
+        self.assertIn("-/etc/mutis/secret.key", walletd["InaccessiblePaths"].split())
+        self.assertEqual(walletd["ExecPaths"], "/usr /opt/tari")
+
+    def test_caddy_runs_in_a_sandbox(self):
+        text = (UNITS / "caddy.service.d" / "mutis.conf").read_text()
+        for line in HARDENING + ("CapabilityBoundingSet=CAP_NET_BIND_SERVICE", "AmbientCapabilities=CAP_NET_BIND_SERVICE",
+                                 "ReadWritePaths=/var/lib/caddy", "MemoryDenyWriteExecute=yes", "ProtectHome=yes"):
+            if line != "CapabilityBoundingSet=":
+                self.assertIn(line, text)
+        self.assertNotRegex(text, r"(?m)^CapabilityBoundingSet=$")
+
     def test_jit_only_where_needed(self):
         self.assertEqual(unit("mutis-api.service")["Service"].get("MemoryDenyWriteExecute"), "yes")
         self.assertIsNone(unit("mutis-chain.service")["Service"].get("MemoryDenyWriteExecute"))
         self.assertIsNone(unit("walletd.service")["Service"].get("MemoryDenyWriteExecute"))
+        for name in ("mutis-cleanup.service", "mutis-health.service", "mutis-backup.service", "mutis-backup-wallet.service",
+                     "mutis-evidence.service"):
+            self.assertEqual(unit(name)["Service"].get("MemoryDenyWriteExecute"), "yes", name)
 
     def test_walletd_password_never_on_the_command_line(self):
         svc = unit("walletd.service")["Service"]

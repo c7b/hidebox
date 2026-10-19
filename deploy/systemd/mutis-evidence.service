@@ -3,6 +3,7 @@
 # delivery and the daily evidence payment). Never user ids, invoices or addresses.
 [Unit]
 Description=mutis evidence collector
+RequiresMountsFor=/srv/mutis/data
 
 [Service]
 Type=oneshot
@@ -19,6 +20,10 @@ ProtectSystem=strict
 # Reading a WAL database needs write access to its -shm index.
 ReadWritePaths=/srv/mutis/status /srv/mutis/data/db
 ReadOnlyPaths=/home/drive/mutis
+# Programs run only from /usr: the data directories, /tmp and every other writable place are noexec
+# in this unit's view (docs/review/upload-safety-1.md).
+NoExecPaths=/
+ExecPaths=/usr
 ProtectHome=read-only
 PrivateTmp=yes
 PrivateDevices=yes
@@ -28,12 +33,19 @@ ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectKernelLogs=yes
 ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
 SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
+RemoveIPC=yes
 UMask=0007
+MemoryMax=256M

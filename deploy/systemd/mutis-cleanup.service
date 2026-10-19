@@ -2,6 +2,7 @@
 # One cleanup pass (spec §8.2): expired links, doomed blobs, abandoned uploads, tombstones.
 [Unit]
 Description=mutis cleanup pass
+RequiresMountsFor=/srv/mutis/data
 
 [Service]
 Type=oneshot
@@ -14,7 +15,11 @@ TimeoutStartSec=300
 
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/srv/mutis/data
+ReadWritePaths=/srv/mutis/data/db /srv/mutis/data/blobs
+# Programs run only from /usr: the data directories, /tmp and every other writable place are noexec
+# in this unit's view (docs/review/upload-safety-1.md).
+NoExecPaths=/
+ExecPaths=/usr
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes
@@ -35,7 +40,9 @@ LockPersonality=yes
 MemoryDenyWriteExecute=yes
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
 SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
+RemoveIPC=yes
 UMask=0007
 MemoryMax=512M

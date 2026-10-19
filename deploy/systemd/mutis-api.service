@@ -4,6 +4,7 @@
 [Unit]
 Description=mutis API
 After=network.target
+RequiresMountsFor=/srv/mutis/data
 StartLimitIntervalSec=300
 StartLimitBurst=10
 
@@ -20,7 +21,12 @@ SyslogIdentifier=mutis-api
 
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/srv/mutis/data
+# The database and the blobs; the backups and health.json beside them stay read-only to the API.
+ReadWritePaths=/srv/mutis/data/db /srv/mutis/data/blobs
+# Programs run only from /usr: the data directories, /tmp and every other writable place are noexec
+# in this unit's view (docs/review/upload-safety-1.md).
+NoExecPaths=/
+ExecPaths=/usr
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes
@@ -40,8 +46,10 @@ LockPersonality=yes
 MemoryDenyWriteExecute=yes
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
 SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
+RemoveIPC=yes
 UMask=0007
 MemoryMax=1G
 # One thread per request; idle threads cost little memory, and Caddy buffers request bodies, so
