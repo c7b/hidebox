@@ -1,0 +1,19 @@
+Shapes (SVG units; the icon's grid is 32, the wordmark's 148 x 34):
+i-hidebox: 200 points, largest distance 0.0050 units; 2,568 characters in the kit, 1,415 here
+i-wordmark, letters: 270 points, largest distance 0.0050 units; 3,614 characters in the kit, 2,382 here
+i-wordmark, rhombus: 12 points, largest distance 0.0050 units; 156 characters in the kit, 96 here
+web/site/static/favicon.svg: 200 points, largest distance 0.0050 units; 2,568 characters in the kit, 1,415 here
+web/shared/brand/symbol.svg: 200 points, largest distance 0.0050 units; 2,568 characters in the kit, 1,415 here
+docs/media/hidebox-mark.svg: 200 points, largest distance 0.0050 units; 2,568 characters in the kit, 1,415 here
+docs/media/hidebox-lockup-dark.svg, box: 200 points, largest distance 0.0000 units; 2,568 characters in the kit, 2,568 here
+docs/media/hidebox-lockup-dark.svg, letters: 270 points, largest distance 0.0000 units; 3,661 characters in the kit, 3,661 here
+docs/media/hidebox-lockup-dark.svg, rhombus: 12 points, largest distance 0.0000 units; 155 characters in the kit, 155 here
+docs/media/hidebox-lockup-light.svg, box: 200 points, largest distance 0.0000 units; 2,568 characters in the kit, 2,568 here
+docs/media/hidebox-lockup-light.svg, letters: 270 points, largest distance 0.0000 units; 3,661 characters in the kit, 3,661 here
+docs/media/hidebox-lockup-light.svg, rhombus: 12 points, largest distance 0.0000 units; 155 characters in the kit, 155 here
+Rasters (lime coverage, the kit's file against this repository's):
+icon-512.png (512 x 512): 0.00 % mean difference per pixel; area +0.00 %; centre shifted (+0.00, +0.00) px
+icon-192.png (192 x 192): 0.00 % mean difference per pixel; area +0.00 %; centre shifted (+0.00, +0.00) px
+apple-touch-icon.png (180 x 180): 0.00 % mean difference per pixel; area +0.00 %; centre shifted (+0.00, +0.00) px
+icon-maskable-512.png (512 x 512): 0.00 % mean difference per pixel; area +0.00 %; centre shifted (+0.00, +0.00) px
+favicon-32.png (32 x 32): 0.00 % mean difference per pixel; area +0.00 %; centre shifted (+0.00, +0.00) px

@@ -1,0 +1,112 @@
+[
+ {
+  "file": "favicon.ico",
+  "status": 200,
+  "type": "image/vnd.microsoft.icon",
+  "cache": "public, max-age=86400",
+  "bytes": 5142,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 5142
+ },
+ {
+  "file": "favicon.svg",
+  "status": 200,
+  "type": "image/svg+xml",
+  "cache": "public, max-age=86400",
+  "bytes": 1697,
+  "same_as_built": true,
+  "compressed": "gzip",
+  "compressed_bytes": 759
+ },
+ {
+  "file": "favicon-32.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 1597,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 1597
+ },
+ {
+  "file": "apple-touch-icon.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 5147,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 5147
+ },
+ {
+  "file": "icon-192.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 7072,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 7072
+ },
+ {
+  "file": "icon-512.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 19129,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 19129
+ },
+ {
+  "file": "icon-maskable-512.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 10572,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 10572
+ },
+ {
+  "file": "manifest.webmanifest",
+  "status": 200,
+  "type": "application/manifest+json",
+  "cache": "no-cache",
+  "bytes": 735,
+  "same_as_built": true,
+  "compressed": "gzip",
+  "compressed_bytes": 335
+ },
+ {
+  "file": "og.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 142970,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 142970
+ },
+ {
+  "file": "og-s.png",
+  "status": 200,
+  "type": "image/png",
+  "cache": "public, max-age=86400",
+  "bytes": 48468,
+  "same_as_built": true,
+  "compressed": null,
+  "compressed_bytes": 48468
+ },
+ {
+  "file": "shared/ui/icons.svg",
+  "status": 200,
+  "type": "image/svg+xml",
+  "cache": "no-cache",
+  "bytes": 31300,
+  "same_as_built": true,
+  "compressed": "gzip",
+  "compressed_bytes": 8075
+ }
+]

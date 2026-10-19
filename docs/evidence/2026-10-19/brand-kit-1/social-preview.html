@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<!-- The repository's social card (docs/media/social-preview.png, 1280 × 640), drawn by shots_brand.py beside this file:
+     the kit's lockup (the sprite's open box and wordmark, put in by the script), the home's headline and line, the
+     address, and the hero's still, on the ink with the field's 48 px grid faded out from the words. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>hidebox social card</title>
+<style>
+* { margin: 0; box-sizing: border-box; }
+html, body { width: 1280px; height: 640px; }
+body { position: relative; overflow: hidden; background: #0A0A0A; color: #FAFAFA; font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; }
+.grid { position: absolute; inset: 0;
+  background: linear-gradient(to right, rgb(146 193 36 / .11) 1px, transparent 1px), linear-gradient(to bottom, rgb(146 193 36 / .11) 1px, transparent 1px);
+  background-size: 48px 48px; background-position: 47px 47px;
+  -webkit-mask-image: radial-gradient(ellipse 62% 78% at 30% 50%, #000 0 30%, transparent 92%); }
+.copy { position: absolute; left: 88px; top: 105px; width: 560px; }
+.lockup { display: flex; align-items: center; gap: 15px; }
+.tile { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 11.4px; background: #0A0A0A; color: #ACFF00; }
+.tile svg { width: 36.9px; height: 41.1px; }   /* the favicon's box: 0.86 of its 32 units, centred */
+.word { display: block; width: 158.9px; height: 36.5px; color: #FAFAFA; }
+h1, .line { font-size: 64px; line-height: 1.0; font-weight: 650; letter-spacing: -.045em; text-wrap: balance; }
+h1 { margin-top: 56px; }
+.line { margin-top: 10px; color: #A3A3A3; }
+.where { position: absolute; left: 88px; top: 506px; display: flex; align-items: center; gap: 14px; font-size: 24px; font-weight: 500; letter-spacing: -.01em; }
+.where::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #BCFE00; }
+.still { position: absolute; left: 674px; top: 60px; width: 520px; height: 520px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent); }
+</style>
+</head>
+<body>
+<svg id="sprite" width="0" height="0" aria-hidden="true"></svg>
+<div class="grid"></div>
+<div class="copy">
+  <div class="lockup"><span class="tile"><svg viewBox="2.801 1.801 26.399 29.399"><use href="#i-hidebox"/></svg></span><svg class="word" viewBox="-0.5 -0.5 148 34"><use href="#i-wordmark"/></svg></div>
+  <h1>Your private cloud storage.</h1>
+  <p class="line">Files lock in your browser first.</p>
+</div>
+<p class="where">hidebox.app</p>
+<img class="still" src="../../../../web/site/media/v3/hero-1024.webp" alt="" width="520" height="520">
+</body>
+</html>

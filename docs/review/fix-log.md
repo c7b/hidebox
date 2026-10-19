@@ -997,3 +997,20 @@ counts, the sweep before and after, and what stays on purpose.
 Suites on the server as build (`13d07d2`): lint PASS, check-copy PASS, build OK, deploy 86 OK, core 9/9, site 42/42,
 UI 804/804, server 331 with one error that predates this pass (`test_e2e_forged_payment_is_never_credited` mixes the
 test stack's fixed clock with the real one; it fails on `d042bcd` too, and `23c399e` fixes it).
+
+## The brand kit (2026-10-19)
+
+The owner approved a brand kit; it replaces the mark and the typed name everywhere they stood as a logo.
+`docs/review/brand-kit-1.md` has where each one is now, the colour decision, the kit's files as they ship, the
+budgets and the screenshots; evidence in `docs/evidence/2026-10-19/brand-kit-1/`.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | The open box | The kit's filled outline in the sprite (`i-hidebox`), the favicon and the brand symbol: every header, the comparison, the drive's tiles, the done moments, the icons |
+| 2 | The wordmark | A new sprite symbol (`i-wordmark`) beside the tile in the site's header, the comparison's head, the drive's sidebar, start screen and folder links, the shared-link card, the holding page and the film's end card; the name stays in words for screen readers |
+| 3 | Two limes | The logo in the kit's `#ACFF00`, literal, in both themes (the owner's call); the site's `#BCFE00` and every token unchanged; the rhombus stays lime on white |
+| 4 | Icons | The kit's PNGs and ICO as shipped (`render-images.py` draws the same from SVG); each page's ICO link says 16, 32 and 48 px; a maskable icon in the manifest, kept a day by Caddy; `og.png` unchanged (a candidate with the kit's marks is in the evidence) |
+| 5 | README | The kit's lockup as its heading, the home, drive and share pictures and the social card made again |
+
+Suites on the server as build: lint PASS, check-copy PASS, build OK, core 9/9, deploy 89 OK, server 331 OK (5 skipped), site
+42/42, UI 804/804; D-01 on the throwaway stack PASS. Not deployed (the integrator's).

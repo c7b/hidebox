@@ -1,6 +1,23 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- brand kit 1 -->
+## 2026-10-19: the brand kit
+
+- **The open box is the kit's:** one filled outline with soft ends on the side walls, in place of three strokes. It is
+  the tile in every header, the comparison's hidebox column, the drive's brand tile and empty drive, Delivered and the
+  other done moments, the favicon and the app icons. On the ink tile in both themes, in the kit's own lime, `#ACFF00`
+  (the owner's call; the site's lime, `#BCFE00`, stays everywhere else).
+- **The name is a wordmark:** "hidebox" in the kit's outlined letters ("hide" light, "box" bold, a lime rhombus over
+  the i) beside the tile in the site's header, the drive's sidebar, its start screen, a folder link's top bar, the
+  comparison's head, the shared-link card, the holding page and the film's end card. Its letters take the text colour;
+  the rhombus stays lime in both themes. Screen readers still hear "hidebox". Body text still says hidebox in words.
+- **Icons:** the favicons and app icons are the kit's own files, `favicon.ico` holds 16, 32 and 48 px
+  (each page's link to it now says so), and the manifest gains a maskable icon (`icon-maskable-512.png`). `og.png` is
+  unchanged. The README opens on the kit's lockup, with new pictures of the home, the drive and the share window, and
+  a new social card. Review: `docs/review/brand-kit-1.md`.
+<!-- /brand kit 1 -->
+
 <!-- seo pass 1 -->
 ## 2026-10-19: the SEO pass
 
