@@ -537,9 +537,17 @@ def check_static():
     if contacts != ["{{SECURITY_DROP_URL}}", "{{REPO_URL}}" + ADVISORY_PATH]:
         problems.append(f"security.txt: Contact lines should be the drop, then the advisory form; found {contacts}")
     manifest = json.loads((s / "manifest.webmanifest").read_text())
+    for key in ("id", "name", "short_name", "description", "lang", "start_url", "scope", "display", "theme_color",
+                "background_color", "icons"):
+        if not manifest.get(key):
+            problems.append(f"manifest.webmanifest: no {key}")
+    if manifest.get("name") != "{{BRAND}}" or manifest.get("short_name") != "{{BRAND}}" or manifest.get("start_url") != "/":
+        problems.append("manifest.webmanifest: name and short_name are {{BRAND}}, start_url is /")
     for icon in manifest["icons"]:
         if not (s / icon["src"].lstrip("/")).is_file():
             problems.append(f"manifest icon {icon['src']} missing")
+    if not {"192x192", "512x512"} <= {i.get("sizes") for i in manifest["icons"]}:
+        problems.append("manifest.webmanifest: needs a 192 px and a 512 px icon")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
                               ("apple-touch-icon.png", (180, 180), None), ("favicon-32.png", (32, 32), None)):
