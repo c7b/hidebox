@@ -20,12 +20,13 @@ ids (C42), acceptance ids (A-06) and review findings (Review H3). Only the chron
 | What went | Lines | Example (before → after) |
 |---|---|---|
 | Pass labels | 75 | `# Sixth pass: new drives a UTC day per network` → `# New drives a UTC day per network` |
-| Build-lane and phase labels | 56 | `// lane app2: a paid link is a link with a paid summary` → `// A paid link is a link with a paid summary` |
+| Build-lane and phase labels | 69 | `// lane app2: a paid link is a link with a paid summary` → `// A paid link is a link with a paid summary` |
 | Dated notes | 11 | `R1 (2026-10-13, research 16-drive-architecture §1.1)` → `R1 (research 16-drive-architecture §1.1)` |
 | Old names and other narration | 26 | `the old Mutis Script fonts left the site with the ghost; their files stay one release` → `no page uses the Mutis Script fonts kept in web/shared/fonts` |
 | Continuation lines of the same comments | 19 | |
 
-192 comment lines in 84 files (`eeb1bb9`). Commented-out code: none found. TODO and FIXME: none (`tools/lint.py`
+205 comment lines in 87 files (`eeb1bb9`, and the lane labels left in `router.py`, `dev.py`, the Caddyfile and
+`headers_spec.py` in the last commit; `web/app/README.md`'s file table lost its lane labels too). Commented-out code: none found. TODO and FIXME: none (`tools/lint.py`
 already refuses them). Two test-only strings changed with their comments: a UI scenario title (scenarios are
 picked by id, not title) and the help line of the dev server's `--features`. The claim registry's two `condition`
 notes lost their pass number; `tools/check-copy.py` doesn't read that field.
@@ -70,6 +71,10 @@ else the neutral alias `hidebox`. `tests/e2e/harness.py` holds the default (`SSH
 `SshHostTest` reads it both ways (`deploy.sh` prints it in its usage line; the test harness from a subprocess) and
 checks that every `--host` option uses it. An operator whose alias for the server has another name sets
 `MUTIS_SSH_HOST` or adds `Host hidebox` to `~/.ssh/config`.
+
+**Files added during this pass.** The UX lane's review and evidence (`docs/review/ux-feedback-1.md`,
+`docs/evidence/2026-10-18/ux-feedback-1/`), pushed while this pass ran, brought 22 lines back; the last commit
+scrubs them the same way, and its audit script takes `harness.SSH_HOST` like the other E2E tools.
 
 **Other code touched, behavior unchanged:** the local variable `parts` became `url` in
 `server/mutis/handlers/abuse.py` (`parse_link`) and `repo_url` in `web/site/tests/static_checks.py`, because
@@ -120,4 +125,5 @@ too. It mixes the test stack's fixed clock (2026-10-11) with the real one: the a
 real time, so by 2026-10-19 the drive's session, made at the fixed start, is too old and the API answers
 `invalid_session` instead of the invoice. `23c399e` (another lane, after this run) fixes the test.
 
-After the docs commit: lint PASS, copy check PASS, deploy tests 86 OK, and the sweep finds 0 lines.
+On the final tree, on the workstation: lint PASS, copy check PASS, deploy tests 86 OK, server 331 OK (5 skipped,
+with `23c399e`), and the sweep finds 0 lines.

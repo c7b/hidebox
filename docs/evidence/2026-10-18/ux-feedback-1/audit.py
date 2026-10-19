@@ -5,7 +5,7 @@
       [--local] [--candidate DIST] [--only drop,widget,...] [--tag before]
 
 The browser is headless Chromium on the server as `build` (tests/e2e/relay.py); the orchestrator runs on the workstation,
-or as operator on the server with --local. Each page carries a recorder from its first script on: every 120 ms it notes
+or as the operator on the server with --local. Each page carries a recorder from its first script on: every 120 ms it notes
 whether what a person can read in the flow (the page's main column, an open dialog, the upload panel, a toast)
 changed, and whether an animation runs on something visible there. A flow's "longest still" is the longest stretch
 between two such signs of life, from the person's action to the result: the time someone stares at a screen that
@@ -187,7 +187,7 @@ class Run:
         self.out.mkdir(parents=True, exist_ok=True)
         control = Path(os.environ.get("TMPDIR", "/tmp")) / f"uxa-{os.getpid()}"
         control.mkdir(parents=True, exist_ok=True)
-        self.remote = harness.Remote(None if args.local else "the server", control)
+        self.remote = harness.Remote(None if args.local else harness.SSH_HOST, control)
         self.remote.as_build(f"mkdir -p {REMOTE}/fixtures {REMOTE}/downloads")
         self.remote.as_build(f"cat > {REMOTE}/relay.py", (ROOT / "tests/e2e/relay.py").read_bytes())
         self.browser = Browser(self.remote.browser_command(False))

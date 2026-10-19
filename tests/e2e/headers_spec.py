@@ -30,12 +30,12 @@ ROUTES = {
     "/": (APP_CSP, {}),
     "/s/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),
     "/t": (APP_CSP, NOINDEX),
-    "/p/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),  # lane app2: the buyer page of a paid link
+    "/p/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),  # the buyer page of a paid link
     "/d/7kq2x9mdh4": (APP_CSP, NOINDEX),
     "/send": (APP_CSP, NOINDEX),
     "/watch": (APP_CSP, NOINDEX),
-    "/drive": (APP_CSP, NOINDEX),                       # lane app1
-    "/drive/storage": (APP_CSP, NOINDEX),               # lane app1
+    "/drive": (APP_CSP, NOINDEX),                       # the drive
+    "/drive/storage": (APP_CSP, NOINDEX),               # the drive
     "/drive/received": (APP_CSP, NOINDEX),
     "/drive/activity": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),

@@ -71,7 +71,7 @@ class BuildTest(unittest.TestCase):
         return build.build(self.web, self.tmp / "dist", self.tmp / "release", cfg, VALUES, state, holding=holding)
 
     def test_the_drive_font_is_pinned(self):
-        """Lane app1: a tree with the drive serves Geist, the pinned bytes only (a font can't carry SRI)."""
+        """A tree with the drive serves Geist, the pinned bytes only (a font can't carry SRI)."""
         (self.web / "app" / "drive.html").write_text(PAGE)
         with self.assertRaisesRegex(build.BuildError, "font file missing"):
             self.build()

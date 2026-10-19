@@ -77,11 +77,10 @@ ROUTER = Router([
     ("GET", f"{V}/s/{{share_id:id}}/stored", shares.stored_bytes, "shares.stored"),
     ("DELETE", f"{V}/items/{{item_id:id}}", shares.delete_item, "items.delete"),
     ("POST", f"{V}/items/{{item_id:id}}/adopt", shares.adopt, "items.adopt"),
-    # lane S (the drive, 16-drive-design §15 step 4): folders, moves, renames, the Trash, Delete it after
+    # The drive (16-drive-design §15 step 4): folders, moves, renames, the Trash, Delete it after
     ("POST", f"{V}/folders", folders.create, "folders.create"),
     ("PATCH", f"{V}/items/{{item_id:id}}", folders.patch, "items.patch"),
-    # /lane S
-    # lane S (the drive, 16-drive-design §15 step 14): pay to open
+    # The drive (16-drive-design §15 step 14): pay to open
     ("PUT", f"{V}/me/sales", pay.put_sales, "sales.put"),
     ("GET", f"{V}/me/sales", pay.get_sales, "sales.get"),
     ("POST", f"{V}/me/sales/claims/{{claim_id:claim}}/confirm", pay.confirm_claim, "sales.confirm"),
@@ -89,7 +88,6 @@ ROUTER = Router([
     ("POST", f"{V}/p/{{share_id:id}}/claims", pay.create_claim, "pay.claim"),
     ("GET", f"{V}/p/{{share_id:id}}/claims/{{claim_id:claim}}", pay.get_claim, "pay.claim_get"),
     ("POST", f"{V}/p/{{share_id:id}}/claims/{{claim_id:claim}}/demo-pay", pay.demo_pay, "pay.demo_pay"),
-    # /lane S
 
     ("GET", f"{V}/blobs/{{ticket:ticket}}", blobs.download, "blobs.get"),
     ("POST", f"{V}/blobs/{{ticket:ticket}}/done", blobs.done, "blobs.done"),

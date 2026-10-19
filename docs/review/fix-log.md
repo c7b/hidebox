@@ -989,7 +989,7 @@ counts, the sweep before and after, and what stays on purpose.
 
 | # | What | What changed |
 |---|---|---|
-| 1 | Comments that told history | 192 comment lines in 84 files: pass labels, build-lane and phase labels, dated notes, old names; every reason a line is the way it is stays. No commented-out code or TODO was found |
+| 1 | Comments that told history | 205 comment lines in 87 files: pass labels, build-lane and phase labels, dated notes, old names; every reason a line is the way it is stays. No commented-out code or TODO was found |
 | 2 | Private names | The names of the owner's machines, login and network: 423 lines in 221 files and one file name, now 0. Docs and evidence say the server, the workstation and the operator; scratch and home paths are `$TMPDIR`, `~` and `<repo>` |
 | 3 | The SSH alias | `deploy.sh`, `publish-template.sh` and every E2E tool take `--host`, else `MUTIS_SSH_HOST`, else `hidebox`; a deploy test reads it |
 | 4 | The old host | The E2E tools' default origin and the runbook examples name `https://hidebox.app`; the old host stays in `memo_origins`, the redirect's runbook and the dated records |

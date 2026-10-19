@@ -126,10 +126,10 @@ http://{$MUTIS_HOST} {
 	header @notice Content-Type "text/plain; charset=utf-8"
 
 	@api path /api/*
-	# /p/* (lane app2): the buyer page of a paid link
+	# /p/*: the buyer page of a paid link
 	@viewer path /s/* /t /p/*
 	@approute path /d/* /send /send/* /watch /watch/* /verify /verify/*
-	# lane app1: the drive (16-drive-design §12) has its own page
+	# The drive (16-drive-design §12) has its own page
 	@drive path /drive /drive/*
 	@appfiles path /app/* /vendor/*
 	@status path /evidence.json /evidence-archive-*.json /status.json /releases.json
@@ -190,7 +190,7 @@ http://{$MUTIS_HOST} {
 		file_server
 	}
 
-	# lane app1: the drive
+	# The drive
 	handle @drive {
 		import app_csp
 		import revalidate

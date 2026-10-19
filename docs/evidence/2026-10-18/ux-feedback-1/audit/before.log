@@ -25,20 +25,20 @@ make-pay-link  desktop       total   0.35 s  longest still   0.22 s  from 0.00 s
 pay-page       desktop       total   0.48 s  longest still   0.24 s  from 0.16 s on: '…'
   pay page state wait Pay to open this file.About 5 MB. Pay 0.1 tTARI and it opens here.PriceWaiting for your payment.0.1tTARIPlus a network fee of 0.03 tTARI. The fee is public.Paying lets you open it 3 times until Oct 26
 Traceback (most recent call last):
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 600, in <module>
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 600, in <module>
     sys.exit(main())
              ~~~~^^
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 586, in main
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 586, in main
     flow_pay(r)
     ~~~~~~~~^^^
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 522, in flow_pay
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 522, in flow_pay
     r.page_load(a, "owner-sale", "desktop", "/drive/received",
     ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                 "!!document.querySelector('[data-testid=\"sales-row\"]') && !document.querySelector('[data-testid=\"inbox-scan\"] .spinner')", 180)
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 260, in page_load
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 260, in page_load
     page.wait("window.__ux.done !== null", timeout)
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<repo>/tests/e2e/cdp.py", line 251, in wait
+  File "<worktree>/tests/e2e/cdp.py", line 251, in wait
     raise CdpError(f"timed out after {timeout} s waiting for: {expression[:160]}")
 cdp.CdpError: timed out after 180 s waiting for: window.__ux.done !== null

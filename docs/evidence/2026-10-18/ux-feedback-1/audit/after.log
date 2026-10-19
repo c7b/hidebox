@@ -23,17 +23,17 @@ key-file       desktop       total   0.34 s  longest still   0.20 s  from 0.00 s
 open-drive     android-slow4g total   3.84 s  longest still   0.23 s  from 0.00 s on: '(the screen as the action left it)'
 candidate files served: 914
 Traceback (most recent call last):
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 624, in <module>
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 624, in <module>
     sys.exit(main())
              ~~~~^^
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 610, in main
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 610, in main
     flow_pay(r)
     ~~~~~~~~^^^
-  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 496, in flow_pay
+  File "<worktree>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 496, in flow_pay
     a.eval("(() => { const el = [...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === '" + r.photo + "');"
     ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
            " el.querySelector('[data-testid=\"row-kebab\"]').click(); })()")
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<repo>/tests/e2e/cdp.py", line 241, in eval
+  File "<worktree>/tests/e2e/cdp.py", line 241, in eval
     raise CdpError("page script failed: " + json.dumps(res["exceptionDetails"])[:300])
 cdp.CdpError: page script failed: {"exceptionId": 1, "text": "Uncaught", "lineNumber": 0, "columnNumber": 131, "scriptId": "154", "stackTrace": {"callFrames": [{"functionName": "", "scriptId": "154", "url": "", "lineNumber": 0, "columnNumber": 131}, {"functionName": "", "scriptId": "154", "url": "", "lineNumber": 0, "columnNumber": 
