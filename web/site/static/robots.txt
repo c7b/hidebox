@@ -18,4 +18,17 @@ Disallow: /watch
 Disallow: /upgrade
 Disallow: /verify
 
+# Link previews: the bots that draw a card when someone pastes a link (X, Facebook, Slack, LinkedIn, Discord,
+# Telegram, WhatsApp) may read every page but the API, so a shared link (/s/, /p/) gets its card too. They index
+# nothing; those pages still answer noindex, and their card names no file (docs/review/seo-1.md).
+User-agent: Twitterbot
+User-agent: facebookexternalhit
+User-agent: Slackbot-LinkExpanding
+User-agent: LinkedInBot
+User-agent: Discordbot
+User-agent: TelegramBot
+User-agent: WhatsApp
+Allow: /
+Disallow: /api/
+
 Sitemap: {{ORIGIN}}/sitemap.xml

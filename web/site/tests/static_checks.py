@@ -548,6 +548,15 @@ def check_static():
         if not robots_allows(robots, path):
             problems.append(f"robots.txt: {path} is disallowed")
     problems += [f"robots.txt: blocks the indexable page {path}" for path in indexable_paths() if not robots_allows(robots, path)]
+    for bot in PREVIEW_BOTS:
+        for path in ("/", "/how", "/s/abc", "/p/abc", "/d/abc", "/t", "/drive"):
+            if not robots_allows(robots, path, bot):
+                problems.append(f"robots.txt: {bot} may not read {path} (it draws a link's preview card)")
+        if robots_allows(robots, "/api/v1/stats/wall", bot):
+            problems.append(f"robots.txt: {bot} may read the API")
+    for path in ("/s/abc", "/p/abc", "/drive", "/api/v1/canary"):
+        if robots_allows(robots, path, "Googlebot"):
+            problems.append(f"robots.txt: a search crawler (Googlebot) may read {path}")
     if "Sitemap: {{ORIGIN}}/sitemap.xml" not in robots:
         problems.append("robots.txt: no Sitemap line")
     sec = (s / ".well-known" / "security.txt").read_text()
@@ -650,17 +659,46 @@ def check_security_contacts():
     return problems
 
 
-def robots_allows(robots: str, path: str) -> bool:
-    """Google's rule matching: the longest matching rule wins, Allow on a tie; * is any run, $ the end."""
+def robots_groups(robots: str) -> list[tuple[list[str], list[tuple[str, str]]]]:
+    """(user agents, rules) per group (RFC 9309): consecutive User-agent lines open a group, its rules follow."""
+    groups, agents, rules = [], [], []
+    for raw in robots.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        key, _, value = line.partition(":")
+        key, value = key.strip().lower(), value.strip()
+        if key == "user-agent":
+            if rules:
+                groups.append((agents, rules))
+                agents, rules = [], []
+            agents.append(value.lower())
+        elif key in ("allow", "disallow") and agents:
+            rules.append((key, value))
+    if agents:
+        groups.append((agents, rules))
+    return groups
+
+
+def robots_allows(robots: str, path: str, agent: str = "*") -> bool:
+    """Google's rule matching in the group that names `agent` (else the * group): the longest matching rule wins,
+    Allow on a tie; * is any run, $ the end."""
+    groups = robots_groups(robots)
+    rules = [r for agents, rs in groups if agent.lower() in agents for r in rs] or \
+        [r for agents, rs in groups if "*" in agents for r in rs]
     best = (-1, True)
-    for kind, pattern in re.findall(r"^(Allow|Disallow):\s*(\S*)", robots, re.M):
+    for kind, pattern in rules:
         if not pattern:
             continue
         rx = re.escape(pattern).replace(r"\*", ".*")
         rx = rx[:-2] + "$" if rx.endswith(r"\$") else rx
-        if re.match(rx, path) and (len(pattern), kind == "Allow") > best:
-            best = (len(pattern), kind == "Allow")
+        if re.match(rx, path) and (len(pattern), kind == "allow") > best:
+            best = (len(pattern), kind == "allow")
     return best[1]
+
+
+# The bots that draw a link's preview card (robots.txt's second group): they may read a shared link's page, never the
+# API; a search crawler that isn't named there (Googlebot) follows the * group.
+PREVIEW_BOTS = ("Twitterbot", "facebookexternalhit", "Slackbot-LinkExpanding", "LinkedInBot", "Discordbot", "TelegramBot",
+                "WhatsApp")
 
 
 def public_pages():
