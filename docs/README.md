@@ -23,6 +23,7 @@ repository's history.
 
 | Doc | What's in it |
 |---|---|
+| [overview.md](overview.md) | The long tour: the six steps, two screens of the drive, the exit rules in full, what the server never sees, the architecture in five lines, status and roadmap |
 | [tari.md](tari.md) | Where Tari comes in: each capability, what it does here, how to check it |
 | [privacy.md](privacy.md) | What the server sees, the two send modes, the cryptography in short |
 | [architecture.md](architecture.md) | The parts, the repository, trust boundaries, who sees what, the life of a file |
