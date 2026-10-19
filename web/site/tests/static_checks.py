@@ -309,6 +309,8 @@ def check_seo():
         if links != ICONS:
             problems.append(f"{name}: icons {links}, expected {ICONS}")
         for t, a in d.tags:
+            if t == "img" and not a.get("alt"):
+                problems.append(f"{name}: <img src={a.get('src')!r}> has no alt text")
             if t == "img" and not (a.get("width") and a.get("height")):
                 problems.append(f"{name}: <img src={a.get('src')!r}> has no width and height")
         if not indexable:
@@ -1044,10 +1046,11 @@ def check_home_stills():
     """V-02, the files' half, on the home (the v3 design since docs/review/promote-v3.md): / is indexable (no noindex)
     and dark first (<html data-theme="dark">, the light switch still works: browser_checks); no video, no loop and no
     WebGL field. Each of its five stages (the hero, What's different, Who sees what, Tari, the closing) is one
-    <picture>: an AVIF then a WebP srcset of three widths with one sizes, an <img> with its width and height, empty alt,
-    the hero's with fetchpriority="high", every other one lazy; each candidate is a file whose pixels match its w
-    descriptor and the img's ratio, within V-02's sizes; the closing names the hero's srcset and sizes (the browser
-    reuses its bytes). The favicons are /favicon.ico (the 192 px open box, the
+    <picture>: an AVIF then a WebP srcset of three widths with one sizes, an <img> with its width and height and alt
+    text that says what it shows (the stage stays aria-hidden: the words beside it carry the meaning; the alt is for
+    search and for a picture that doesn't load), the hero's with fetchpriority="high", every other one lazy; each
+    candidate is a file whose pixels match its w descriptor and the img's ratio, within V-02's sizes; the closing names
+    the hero's srcset and sizes (the browser reuses its bytes). The favicons are /favicon.ico (the 192 px open box, the
     one search engines and unfurlers ask for by name), /favicon-32.png (32 px) then /favicon.svg; the favicon and the brand files are
     the open box in clean SVG (no raster, script, link or data), and the header's tile draws it from the sprite. Every
     file in media/v3 is named by the home; the folder and v3.css stay in V-02; no page links /v3, which is a 301."""
@@ -1075,14 +1078,14 @@ def check_home_stills():
     for i, (stage, inner) in enumerate(stages):
         where = f"pages/index.html {stage}"
         sources = re.findall(r'<source type="(image/[a-z]+)" srcset="([^"]+)" sizes="([^"]+)">', inner)
-        img = re.search(r'<img class="pic" src="([^"]+)" alt="" width="(\d+)" height="(\d+)" ([a-z]+)="([a-z]+)" decoding="async">', inner)
+        img = re.search(r'<img class="pic" src="([^"]+)" alt="([^"]+)" width="(\d+)" height="(\d+)" ([a-z]+)="([a-z]+)" decoding="async">', inner)
         if [s[0] for s in sources] != ["image/avif", "image/webp"] or len({s[2] for s in sources}) != 1 or not img:
-            problems.append(f"{where}: needs an AVIF then a WebP <source> with one sizes, and <img class=\"pic\"> with width, height and alt=\"\"")
+            problems.append(f"{where}: needs an AVIF then a WebP <source> with one sizes, and <img class=\"pic\"> with alt text, width and height")
             continue
-        load = (img.group(4), img.group(5))
+        load = (img.group(5), img.group(6))
         if load != (("fetchpriority", "high") if i == 0 else ("loading", "lazy")):
             problems.append(f"{where}: {'=' .join(load)} (the hero's picture is fetched first, with fetchpriority=\"high\"; every other one is lazy)")
-        w, h = int(img.group(2)), int(img.group(3))
+        w, h = int(img.group(3)), int(img.group(4))
         sets[stage] = sources
         widths = []
         for kind, srcset, _ in sources:
