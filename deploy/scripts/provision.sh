@@ -21,6 +21,28 @@ PACKAGES=(caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg)
 step() { printf '\n== %s\n' "$*"; }
 die() { printf 'provision: %s\n' "$*" >&2; exit 1; }
 stamp() { date -u +%Y%m%dT%H%M%SZ; }
+RUN_STAMP=$(stamp)
+CHANGED_UNITS=()
+
+# install_kept <mode> <source> <target>: install a file, first copying the one it replaces (if different) to
+# /var/backups/mutis/<name>.<UTC time>, so every change this script makes on a server can be undone by hand.
+install_kept() {
+  local mode=$1 src=$2 dst=$3
+  if [ -e "$dst" ] && cmp -s "$src" "$dst"; then return 0; fi
+  if [ -e "$dst" ]; then
+    local name
+    name=$(basename "$dst")
+    case $dst in */*.d/*) name="$(basename "$(dirname "$dst")")-$name" ;; esac
+    install -d -m 0700 -o root -g root "$BACKUPS"
+    cp -p "$dst" "$BACKUPS/$name.$RUN_STAMP"
+    echo "  kept the previous $dst as $BACKUPS/$name.$RUN_STAMP"
+  fi
+  install -m "$mode" -o root -g root "$src" "$dst"
+  case $dst in
+    /etc/systemd/system/*.service.d/*) CHANGED_UNITS+=("$(basename "$(dirname "$dst")" .d)") ;;
+    /etc/systemd/system/*) CHANGED_UNITS+=("$(basename "$dst")") ;;
+  esac
+}
 
 [ "$(id -u)" = 0 ] || die "run as root"
 [ -n "$OPERATOR" ] && [ "$OPERATOR" != root ] && getent passwd "$OPERATOR" >/dev/null ||
@@ -50,8 +72,14 @@ users_and_dirs() {
   chmod 0700 /home/drive /home/build
   id -nG drive | tr ' ' '\n' | grep -qx mutis || usermod -aG mutis drive
   install -d -m 0755 -o root -g root /srv/mutis /srv/mutis/app /srv/mutis/app/releases
-  install -d -m 2770 -o mutis -g mutis /srv/mutis/data /srv/mutis/data/db
+  # Group mutis (drive: the chain worker and the evidence collector) may write the database's directory, never
+  # the data directory itself, where health.json and the mount's root live.
+  install -d -m 2750 -o mutis -g mutis /srv/mutis/data
+  install -d -m 2770 -o mutis -g mutis /srv/mutis/data/db
   install -d -m 0700 -o mutis -g mutis /srv/mutis/data/blobs /srv/mutis/data/backup
+  # Only mutis may list, add or rename anything under blobs/: every level 0700 (setgid kept), every file 0600.
+  find /srv/mutis/data/blobs -mindepth 1 -type d -perm /0077 -exec chmod go-rwx {} +
+  find /srv/mutis/data/blobs -type f ! -perm 0600 -exec chmod 0600 {} +
   install -d -m 2775 -o mutis -g mutis /srv/mutis/status
   install -d -m 0700 -o drive -g drive /home/drive/mutis "$WALLET" "$WALLET/backup"
   install -d -m 0750 -o root -g mutis /etc/mutis
@@ -93,15 +121,52 @@ install_files() {
   install -m 0755 -o root -g root "$DEPLOY/scripts/run-sidecar.sh" /usr/local/lib/mutis/run-sidecar.sh
   install -m 0755 -o root -g root "$DEPLOY/scripts/mutis-admin" /usr/local/sbin/mutis-admin
   install -m 0640 -o root -g mutis "$DEPLOY/ootle/walletd-log4rs.yml" /etc/mutis/walletd-log4rs.yml
-  install -m 0644 -o root -g root "$DEPLOY"/systemd/*.service "$DEPLOY"/systemd/*.timer /etc/systemd/system/
+  local unit
+  for unit in "$DEPLOY"/systemd/*.service "$DEPLOY"/systemd/*.timer "$DEPLOY"/systemd/*.mount; do
+    install_kept 0644 "$unit" "/etc/systemd/system/$(basename "$unit")"
+  done
   install -d -m 0755 /etc/systemd/system/caddy.service.d /etc/systemd/journald.conf.d
-  install -m 0644 "$DEPLOY/systemd/caddy.service.d/mutis.conf" /etc/systemd/system/caddy.service.d/mutis.conf
+  install_kept 0644 "$DEPLOY/systemd/caddy.service.d/mutis.conf" /etc/systemd/system/caddy.service.d/mutis.conf
   if ! cmp -s "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf; then
-    install -m 0644 "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf
+    install_kept 0644 "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf
     systemctl restart systemd-journald
   fi
   systemctl daemon-reload
   echo "ok"
+}
+
+data_mount() {
+  step "the data directory: noexec, nosuid, nodev (srv-mutis-data.mount)"
+  systemctl enable --now srv-mutis-data.mount >/dev/null 2>&1 || die "srv-mutis-data.mount did not start (journalctl -u srv-mutis-data.mount)"
+  local opts
+  opts=$(findmnt -n -o OPTIONS --target /srv/mutis/data)
+  for flag in noexec nosuid nodev; do
+    [[ ,$opts, == *,$flag,* ]] || die "/srv/mutis/data is mounted without $flag ($opts)"
+  done
+  echo "ok: $(findmnt -n -o TARGET,OPTIONS --target /srv/mutis/data)"
+}
+
+kernel_settings() {
+  step "kernel settings (/etc/sysctl.d/90-mutis.conf)"
+  local target=/etc/sysctl.d/90-mutis.conf
+  if ! cmp -s "$DEPLOY/sysctl/90-mutis.conf" "$target"; then
+    local keys
+    keys=$(grep -E '^[a-z]' "$DEPLOY/sysctl/90-mutis.conf" | cut -d= -f1 | tr -d ' ' | grep -v '\*' | sort -u)
+    (umask 077 && install -d -m 0700 "$BACKUPS" && sysctl $keys > "$BACKUPS/sysctl-before.$RUN_STAMP.txt" 2>&1 || true)
+    echo "  the values before: $BACKUPS/sysctl-before.$RUN_STAMP.txt"
+    install_kept 0644 "$DEPLOY/sysctl/90-mutis.conf" "$target"
+  fi
+  /usr/lib/systemd/systemd-sysctl "$target" || die "systemd-sysctl $target failed"
+  echo "ok: $(grep -cE '^[a-z]' "$target") settings applied"
+}
+
+restart_notice() {
+  local unit active=()
+  for unit in "${CHANGED_UNITS[@]}"; do
+    case $unit in caddy.service) ;; *.service) systemctl is-active --quiet "$unit" && active+=("${unit%.service}") ;; esac
+  done
+  [ ${#active[@]} -eq 0 ] ||
+    echo "notice: these running units have a new definition; restart them to apply it: ${active[*]}"
 }
 
 firewall() {
@@ -147,15 +212,19 @@ PY
 caddy_site() {
   step "Caddy"
   [ -e /etc/caddy/Caddyfile.debian ] || cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.debian
-  install -m 0644 -o root -g root "$DEPLOY/caddy/Caddyfile" /etc/caddy/Caddyfile
-  (set -a && . /etc/mutis/caddy.env && caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1) ||
+  (set -a && . /etc/mutis/caddy.env && caddy validate --config "$DEPLOY/caddy/Caddyfile" --adapter caddyfile >/dev/null 2>&1) ||
     die "caddy validate failed: run it by hand to see why"
+  install_kept 0644 "$DEPLOY/caddy/Caddyfile" /etc/caddy/Caddyfile
   systemctl enable caddy >/dev/null 2>&1
-  if [ -S /run/caddy/admin.sock ]; then
+  if [ -S /run/caddy/admin.sock ] && [[ " ${CHANGED_UNITS[*]} " != *" caddy.service "* ]]; then
     systemctl reload caddy
   else
-    systemctl restart caddy   # first switch from the TCP admin port to the socket
+    # The first switch from the TCP admin port to the socket, or a new sandbox in the drop-in.
+    systemctl restart caddy
   fi
+  sleep 1
+  systemctl is-active --quiet caddy ||
+    die "caddy is not running (journalctl -u caddy); the files it replaced are in $BACKUPS (*.$RUN_STAMP)"
   echo "ok: $(systemctl is-active caddy)"
 }
 
@@ -248,10 +317,13 @@ check_packages
 users_and_dirs
 config_and_secrets
 install_files
+data_mount
+kernel_settings
 firewall
 caddy_site
 walletd_service
 timers
 keys
+restart_notice
 step "privilege self-test (spec §15.1 step 9)"
 bash "$DEPLOY/scripts/privilege-check.sh"

@@ -242,6 +242,17 @@ class UnitsTest(unittest.TestCase):
             if "MUTIS_CONFIG" in path.read_text():
                 self.assertEqual(unit(path.name)["Unit"].get("RequiresMountsFor"), DATA, path.name)
 
+    def test_the_data_mount_is_noexec_nosuid_nodev(self):
+        mount = unit("srv-mutis-data.mount")
+        self.assertEqual((mount["Mount"]["What"], mount["Mount"]["Where"]), (DATA, DATA))
+        self.assertEqual(set(mount["Mount"]["Options"].split(",")), {"bind", "noexec", "nosuid", "nodev"})
+        self.assertEqual(mount["Install"]["WantedBy"], "local-fs.target")
+        provision = (ROOT / "deploy" / "scripts" / "provision.sh").read_text()
+        self.assertIn("systemctl enable --now srv-mutis-data.mount", provision)
+        self.assertIn('"$DEPLOY"/systemd/*.mount', provision)
+        check = (ROOT / "deploy" / "scripts" / "privilege-check.sh").read_text()
+        self.assertIn("mounted noexec,nosuid,nodev", check)
+
     def test_write_access_only_where_needed(self):
         rw = {name: unit(name)["Service"]["ReadWritePaths"].split() for name in
               ("mutis-api.service", "mutis-cleanup.service", "mutis-backup.service", "mutis-chain.service",
@@ -263,6 +274,19 @@ class UnitsTest(unittest.TestCase):
             if line != "CapabilityBoundingSet=":
                 self.assertIn(line, text)
         self.assertNotRegex(text, r"(?m)^CapabilityBoundingSet=$")
+
+    def test_kernel_settings(self):
+        path = ROOT / "deploy" / "sysctl" / "90-mutis.conf"
+        text = path.read_text()
+        self.assertIn("SPDX-License-Identifier: MIT", text.splitlines()[0])
+        settings = dict(line.replace(" ", "").split("=", 1) for line in text.splitlines() if re.match(r"^[a-z]", line))
+        for key, value in {"kernel.kptr_restrict": "2", "kernel.yama.ptrace_scope": "1", "kernel.kexec_load_disabled": "1",
+                           "kernel.unprivileged_bpf_disabled": "1", "dev.tty.ldisc_autoload": "0",
+                           "kernel.io_uring_disabled": "2", "fs.protected_regular": "2", "net.ipv4.tcp_syncookies": "1",
+                           "net.ipv4.conf.*.rp_filter": "1"}.items():
+            self.assertEqual(settings.get(key), value, key)
+        self.assertFalse(any("log_martians" in key for key in settings), "it would log source addresses")
+        self.assertIn("/usr/lib/systemd/systemd-sysctl", (ROOT / "deploy" / "scripts" / "provision.sh").read_text())
 
     def test_jit_only_where_needed(self):
         self.assertEqual(unit("mutis-api.service")["Service"].get("MemoryDenyWriteExecute"), "yes")

@@ -93,6 +93,8 @@ done
 
 if ! cmp -s "$dir/deploy/caddy/Caddyfile" /etc/caddy/Caddyfile; then
   (set -a && . /etc/mutis/caddy.env && caddy validate --config "$dir/deploy/caddy/Caddyfile" --adapter caddyfile >/dev/null 2>&1)
+  install -d -m 0700 /var/backups/mutis
+  cp -p /etc/caddy/Caddyfile "/var/backups/mutis/Caddyfile.$(date -u +%Y%m%dT%H%M%SZ)"
   install -m 0644 "$dir/deploy/caddy/Caddyfile" /etc/caddy/Caddyfile
   systemctl reload caddy
   echo "Caddyfile changed: validated and reloaded"
@@ -102,10 +104,12 @@ fi
 cmp -s "$dir/deploy/scripts/backup.py" /usr/local/lib/mutis/backup.py ||
   install -m 0755 -o root -g root "$dir/deploy/scripts/backup.py" /usr/local/lib/mutis/backup.py
 
-for unit in "$dir"/deploy/systemd/*.service "$dir"/deploy/systemd/*.timer; do
+for unit in "$dir"/deploy/systemd/*.service "$dir"/deploy/systemd/*.timer "$dir"/deploy/systemd/*.mount; do
   cmp -s "$unit" "/etc/systemd/system/$(basename "$unit")" ||
     echo "notice: $(basename "$unit") differs from the installed unit; run deploy/scripts/provision.sh"
 done
+cmp -s "$dir/deploy/systemd/caddy.service.d/mutis.conf" /etc/systemd/system/caddy.service.d/mutis.conf ||
+  echo "notice: caddy.service.d/mutis.conf differs from the installed drop-in; run deploy/scripts/provision.sh"
 
 if [ -f "$dir/sidecar/sidecar.mjs" ]; then
   runuser -u drive -- bash -s -- "$dir/sidecar" < "$dir/deploy/scripts/init-keys.sh"

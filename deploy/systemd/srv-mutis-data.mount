@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT
+# /srv/mutis/data (the database, the uploaded blobs and the database backups) mounted onto itself with
+# noexec, nosuid and nodev: whatever bytes a visitor uploads, the kernel refuses to execute them, to map
+# them as code, to honour a set-id bit or to open them as a device. Installed and started by
+# deploy/scripts/provision.sh; the units that use the directory have RequiresMountsFor=/srv/mutis/data,
+# so they don't start without it.
+[Unit]
+Description=mutis data directory (noexec, nosuid, nodev)
+ConditionPathIsDirectory=/srv/mutis/data
+
+[Mount]
+What=/srv/mutis/data
+Where=/srv/mutis/data
+Type=none
+Options=bind,noexec,nosuid,nodev
+
+[Install]
+WantedBy=local-fs.target
