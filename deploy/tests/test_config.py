@@ -16,14 +16,28 @@ sys.path.insert(0, str(ROOT / "server"))
 import headers_spec  # noqa: E402
 
 UNITS = ROOT / "deploy" / "systemd"
+# Whole lines: a unit must say exactly this (a substring would accept NoExecPaths=/tmp-only or a capability added).
 HARDENING = ("NoNewPrivileges=yes", "ProtectSystem=strict", "PrivateTmp=yes", "PrivateDevices=yes",
              "ProtectKernelTunables=yes", "ProtectKernelModules=yes", "ProtectKernelLogs=yes", "ProtectControlGroups=yes",
              "ProtectClock=yes", "ProtectHostname=yes", "RestrictNamespaces=yes", "RestrictRealtime=yes",
              "RestrictSUIDSGID=yes", "LockPersonality=yes", "SystemCallFilter=@system-service",
-             "SystemCallFilter=~@privileged", "CapabilityBoundingSet=", "ProtectProc=invisible", "RemoveIPC=yes",
-             # docs/review/upload-safety-1.md: programs only from /usr (and walletd's /opt/tari)
-             "NoExecPaths=/", "ExecPaths=/usr")
+             "SystemCallFilter=~@privileged @resources", "SystemCallArchitectures=native", "CapabilityBoundingSet=",
+             "ProtectProc=invisible", "RemoveIPC=yes")
+# walletd is Tari's binary: its own allocator and runtime, so only the privileged syscalls are filtered.
+HARDENING_WALLETD = tuple("SystemCallFilter=~@privileged" if line.startswith("SystemCallFilter=~") else line
+                          for line in HARDENING)
+# docs/review/upload-safety-1.md: what a unit can write is never executable in its view.
+PRIVATE_WRITABLE = ("/tmp", "/var/tmp", "/dev/shm")
 DATA = "/srv/mutis/data"
+
+
+def lines_of(path: Path) -> set[str]:
+    return {line.strip() for line in path.read_text().splitlines()}
+
+
+def values(path: Path, key: str) -> list[str]:
+    """Every value of `key` in a unit (configparser keeps only the last of repeated keys)."""
+    return [line.split("=", 1)[1] for line in path.read_text().splitlines() if line.startswith(key + "=")]
 
 
 def unit(name: str) -> configparser.ConfigParser:
@@ -223,9 +237,25 @@ class UnitsTest(unittest.TestCase):
             with self.subTest(path.name):
                 svc = unit(path.name)["Service"]
                 self.assertIn(svc.get("User"), ("mutis", "drive"))
-                text = path.read_text()
-                for line in HARDENING:
-                    self.assertIn(line, text)
+                have = lines_of(path)
+                for line in (HARDENING_WALLETD if path.name == "walletd.service" else HARDENING):
+                    self.assertIn(line, have)
+                self.assertEqual(values(path, "CapabilityBoundingSet"), [""])
+
+    def test_nothing_a_unit_can_write_is_executable(self):
+        """NoExecPaths names the private /tmp, /var/tmp and /dev/shm and every path the unit may write; no ExecPaths
+        (it would lift ProtectSystem's read-only flag from what it names); and no unit grants a capability back."""
+        for path in [*UNITS.glob("*.service"), UNITS / "caddy.service.d" / "mutis.conf"]:
+            with self.subTest(path.name):
+                noexec = " ".join(values(path, "NoExecPaths")).split()
+                writable = " ".join(values(path, "ReadWritePaths") + values(path, "BindPaths")).split()
+                self.assertTrue(noexec, "no NoExecPaths")
+                for place in (*PRIVATE_WRITABLE, *writable):
+                    self.assertIn(place, noexec)
+                self.assertNotIn("/", noexec)
+                self.assertEqual(values(path, "ExecPaths"), [])
+                self.assertEqual(values(path, "AmbientCapabilities"),
+                                 ["CAP_NET_BIND_SERVICE"] if path.name == "mutis.conf" else [])
 
     def test_root_runs_only_the_backup_prune(self):
         """Claims review item 22: the one "+" (full privileges) step deletes root's database copies
@@ -265,15 +295,14 @@ class UnitsTest(unittest.TestCase):
         walletd = unit("walletd.service")["Service"]
         self.assertIn("/srv/mutis", walletd["InaccessiblePaths"].split())
         self.assertIn("-/etc/mutis/secret.key", walletd["InaccessiblePaths"].split())
-        self.assertEqual(walletd["ExecPaths"], "/usr /opt/tari")
 
     def test_caddy_runs_in_a_sandbox(self):
-        text = (UNITS / "caddy.service.d" / "mutis.conf").read_text()
-        for line in HARDENING + ("CapabilityBoundingSet=CAP_NET_BIND_SERVICE", "AmbientCapabilities=CAP_NET_BIND_SERVICE",
-                                 "ReadWritePaths=/var/lib/caddy", "MemoryDenyWriteExecute=yes", "ProtectHome=yes"):
+        path = UNITS / "caddy.service.d" / "mutis.conf"
+        have = lines_of(path)
+        for line in HARDENING + ("ReadWritePaths=/var/lib/caddy", "MemoryDenyWriteExecute=yes", "ProtectHome=yes"):
             if line != "CapabilityBoundingSet=":
-                self.assertIn(line, text)
-        self.assertNotRegex(text, r"(?m)^CapabilityBoundingSet=$")
+                self.assertIn(line, have)
+        self.assertEqual(values(path, "CapabilityBoundingSet"), ["CAP_NET_BIND_SERVICE"])
 
     def test_kernel_settings(self):
         path = ROOT / "deploy" / "sysctl" / "90-mutis.conf"

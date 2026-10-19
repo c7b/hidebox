@@ -20,10 +20,10 @@ ProtectSystem=strict
 # Reading a WAL database needs write access to its -shm index.
 ReadWritePaths=/srv/mutis/status /srv/mutis/data/db
 ReadOnlyPaths=/home/drive/mutis
-# Programs run only from /usr: the data directories, /tmp and every other writable place are noexec
-# in this unit's view (docs/review/upload-safety-1.md).
-NoExecPaths=/
-ExecPaths=/usr
+# Nothing this unit can write is executable in its view: its private /tmp, /var/tmp and /dev/shm and every
+# path it may write are noexec (NoExecPaths=/ would not reach the private mounts, and ExecPaths= would
+# lift ProtectSystem's read-only flag from the paths it names; docs/review/upload-safety-1.md).
+NoExecPaths=/tmp /var/tmp /dev/shm /srv/mutis/status /srv/mutis/data/db
 ProtectHome=read-only
 PrivateTmp=yes
 PrivateDevices=yes

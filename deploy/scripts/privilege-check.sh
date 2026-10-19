@@ -72,16 +72,22 @@ check "drive (group mutis) can write the database" ok as drive test -w /srv/muti
 
 # Uploads are inert (docs/review/upload-safety-1.md): the data directory is mounted noexec, nosuid and nodev,
 # so nothing stored there runs, even a file marked executable or one handed to the dynamic loader; only mutis
-# can reach into blobs/; and every running service sees / as noexec outside the paths it runs programs from.
+# can reach into blobs/; and nothing a running service can write is executable in its view.
 data_flags() { local o; o=$(findmnt -n -o OPTIONS --target /srv/mutis/data); [[ ,$o, == *,noexec,* && ,$o, == *,nosuid,* && ,$o, == *,nodev,* ]]; }
 check "/srv/mutis/data is mounted noexec,nosuid,nodev" ok data_flags
 check "srv-mutis-data.mount is enabled (it comes back at boot)" ok systemctl is-enabled --quiet srv-mutis-data.mount
 probe=/srv/mutis/data/.privilege-check-probe-$$
+trap 'rm -f "$probe.sh" "$probe.elf"' EXIT
 loader=$(ls /lib64/ld-linux-*.so.* /lib/ld-linux-*.so.* 2>/dev/null | head -n 1)
 printf '#!/bin/sh\nexit 0\n' > "$probe.sh"
 cp /usr/bin/true "$probe.elf"
 chown mutis:mutis "$probe.sh" "$probe.elf" && chmod 0700 "$probe.sh" "$probe.elf"
 check "control: the same program runs as mutis from /usr/bin" ok as mutis /usr/bin/true
+if [ -n "$loader" ]; then
+  check "control: the dynamic loader runs a program as mutis from /usr/bin" ok as mutis "$loader" /usr/bin/true
+else
+  echo "FAIL no dynamic loader found for the loader check"; failures=$((failures + 1))
+fi
 # (test -x can't confirm them: access(X_OK) itself says no on a noexec mount.)
 [ "$(stat -c %a "$probe.sh" "$probe.elf" 2>/dev/null)" = $'700\n700' ] ||
   { echo "FAIL could not make the probe files in /srv/mutis/data"; failures=$((failures + 1)); }
@@ -98,9 +104,30 @@ if [ -n "$level" ]; then
   check "drive (group mutis) cannot add a file inside blobs/" denied as drive touch "$level/.privilege-check-probe"
   rm -f "$level/.privilege-check-probe"
 fi
-sandbox_noexec() { local pid; pid=$(systemctl show -p MainPID --value "$1"); [ "${pid:-0}" -gt 0 ] && awk '$5 == "/" {print $6}' "/proc/$pid/mountinfo" | grep -q noexec; }
+# Each running service: the /tmp, /var/tmp and /dev/shm it sees (the top-most mount at each) are noexec, and its /
+# is read-only. A unit started before its file last changed is reported, not judged: it gets the sandbox when it
+# restarts (mutis-chain at the next deploy, walletd at its next restart or a reboot).
+unit_file() { local f; f=$(systemctl show -p FragmentPath --value "$1"); [ "$1" = caddy ] && f=/etc/systemd/system/caddy.service.d/mutis.conf; echo "$f"; }
+started_before_change() {
+  local since file
+  since=$(date -d "$(systemctl show -p ActiveEnterTimestamp --value "$1")" +%s 2>/dev/null || echo 0)
+  file=$(unit_file "$1")
+  [ -n "$file" ] && [ "$(stat -c %Y "$file")" -gt "$since" ]
+}
+sandbox_noexec() {
+  local pid; pid=$(systemctl show -p MainPID --value "$1")
+  [ "${pid:-0}" -gt 0 ] || return 1
+  awk '{top[$5] = $6} END {
+         exit !(top["/"] ~ /(^|,)ro(,|$)/ && top["/tmp"] ~ /noexec/ && top["/var/tmp"] ~ /noexec/ && top["/dev/shm"] ~ /noexec/)
+       }' "/proc/$pid/mountinfo"
+}
 for unit in mutis-api mutis-chain walletd caddy; do
-  if systemctl is-active --quiet "$unit"; then check "$unit runs with / noexec in its view (NoExecPaths=/)" ok sandbox_noexec "$unit"; fi
+  systemctl is-active --quiet "$unit" || continue
+  if started_before_change "$unit"; then
+    echo "SKIP $unit runs the definition it started with; restart it to apply its sandbox"
+  else
+    check "$unit sees / read-only and its /tmp, /var/tmp and /dev/shm noexec" ok sandbox_noexec "$unit"
+  fi
 done
 
 # Kernel settings: what /etc/sysctl.d/90-mutis.conf asks for is what the kernel has (provision.sh applies it).

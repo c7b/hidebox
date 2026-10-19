@@ -17,10 +17,10 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 # health.json is written beside the database (data/), status.json for the site.
 ReadWritePaths=/srv/mutis/data /srv/mutis/status
-# Programs run only from /usr: the data directories, /tmp and every other writable place are noexec
-# in this unit's view (docs/review/upload-safety-1.md).
-NoExecPaths=/
-ExecPaths=/usr
+# Nothing this unit can write is executable in its view: its private /tmp, /var/tmp and /dev/shm and every
+# path it may write are noexec (NoExecPaths=/ would not reach the private mounts, and ExecPaths= would
+# lift ProtectSystem's read-only flag from the paths it names; docs/review/upload-safety-1.md).
+NoExecPaths=/tmp /var/tmp /dev/shm /srv/mutis/data /srv/mutis/status
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes
