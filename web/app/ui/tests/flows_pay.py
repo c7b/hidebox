@@ -901,7 +901,7 @@ STEADY = r"""(() => {
       shift_after_draw: Math.round(after.reduce((a, s) => a + s[1], 0) * 10000) / 10000,
       shift_no_input: Math.round(shifts.filter((s) => !s[2]).reduce((a, s) => a + s[1], 0) * 10000) / 10000,
       shifted: shifts.map((s) => s[3]).slice(0, 6), redraws: S.redraws.filter((t) => t >= from).length,
-      moves: S.moves.filter((m) => m[0] >= from).length, others_moved: S.moves.filter((m) => m[0] >= from && !m[3]).length, first_moves: S.moves.filter((m) => m[0] >= from).slice(0, 3).map((m) => [Math.round(m[0]), m[1], m[2]]),
+      moves: S.moves.filter((m) => m[0] >= from).length, others_moved: S.moves.filter((m) => m[0] >= from && !m[3]).length, first_moves: S.moves.filter((m) => m[0] >= from).slice(0, 12).map((m) => [Math.round(m[0]), m[1], m[2]]),
       qr_built: S.qrs.filter(([t]) => t >= from).length, empty_qr_frames: S.empty.filter((t) => t >= from).length };
   };
 })()"""
@@ -979,3 +979,5 @@ def pay_steady(t):
     report["drive_line"] = fits
     t.check(all(hb == mn for hb, mn in fits.values()), f"Pay from my drive and its note fit the held line at 390, 360 and 1440 ({fits})")
     print("  pay-steady:", json.dumps(report), flush=True)
+    if os.environ.get("PAY_STEADY_OUT"):          # the measurement as evidence (docs/evidence/2026-10-19/owner-5/)
+        Path(os.environ["PAY_STEADY_OUT"]).write_text(json.dumps(report, indent=1) + "\n")
