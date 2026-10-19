@@ -4,7 +4,7 @@
 // drive takes the saved key, pasted or as its file (/drive?open opens that dialog). No email, no
 // password: the key is the account (C17).
 import { t, BRAND } from '../lib/i18n.js';
-import { h, icon, init, lines, openModal, closeModal } from './behaviors.js';
+import { h, icon, init, lines, openModal, closeModal, wordmark } from './behaviors.js';
 import { alert, button, dialogBox, errorAlert } from './drive-parts.js';
 import { mmss } from './errors.js';
 
@@ -134,7 +134,7 @@ export function renderStart(app, { onReady, make = false, open = false }) {
   openBtn.addEventListener('click', () => openDialog((identity) => onReady(identity, { made: false })));
   app.replaceChildren(h('main', { class: 'start', id: 'main', tabindex: '-1', 'data-testid': 'drive-start' },
     h('div', { class: 'start-card' },
-      h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')), h('span', {}, BRAND)),
+      h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')), wordmark(), h('span', { class: 'sr-only' }, BRAND)),
       h('h1', { class: 'h2' }, t('drive.start.title')),
       h('p', { class: 'lead' }, t('drive.start.lede')),
       h('div', { class: 'row wrap' }, makeBtn, openBtn),

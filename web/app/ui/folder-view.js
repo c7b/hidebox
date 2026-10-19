@@ -9,7 +9,7 @@ import { BRAND, formatBytes, formatDate, t } from '../lib/i18n.js';
 import { checkRisky, sanitizeFileName } from '../lib/filetype.js';
 import { saveFile } from '../lib/download.js';
 import { filesBelow, pathTo, readNode } from '../lib/folder-open.js';
-import { h, icon, init, openModal } from './behaviors.js';
+import { h, icon, init, openModal, wordmark } from './behaviors.js';
 
 const MiB = 1024 * 1024;
 const TICK_MS = 15000;
@@ -281,7 +281,7 @@ export async function driveLook() {
     if (!document.querySelector('.fv-top')) {
       main.before(h('header', { class: 'fv-top' },
         h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')),
-          h('span', { class: 'brand-text' }, h('span', {}, BRAND))),
+          h('span', { class: 'brand-text' }, wordmark(), h('span', { class: 'sr-only' }, BRAND))),
         ownDrive({ 'data-size': 'sm' })));
     }
   }

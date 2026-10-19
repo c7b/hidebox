@@ -20,6 +20,12 @@ export function icon(name, size) {
   return svg('svg', { class: 'icon', 'aria-hidden': 'true', focusable: 'false', 'data-size': size ?? null },
     svg('use', { href: `${ICONS}#i-${name}` }));
 }
+// The name as the logo (the sprite's i-wordmark, docs/review/brand-kit-1.md): hidden from assistive technology, so
+// the link or heading that holds it carries the name in words (an sr-only BRAND beside it).
+export function wordmark() {
+  return svg('svg', { class: 'wordmark', viewBox: '-0.5 -0.5 148 34', 'aria-hidden': 'true', focusable: 'false' },
+    svg('use', { href: `${ICONS}#i-wordmark` }));
+}
 const ICONS = '/shared/ui/icons.svg';
 
 // Close with the exit animation, then hide. Works with reduced motion (1 ms animations).

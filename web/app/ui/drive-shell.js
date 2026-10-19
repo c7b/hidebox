@@ -5,7 +5,7 @@
 // and help; the phone's sheet and floating New button; the account menu. Views render into `page`.
 import { formatBytes, t, BRAND } from '../lib/i18n.js';
 import { setVar } from '../lib/dom.js';
-import { h, icon, init, setTheme, themeChoice } from './behaviors.js';
+import { h, icon, init, setTheme, themeChoice, wordmark } from './behaviors.js';
 import { shortAddress } from './drive-parts.js';
 
 export const NAV = [
@@ -19,7 +19,7 @@ export const NAV = [
 function brandBlock() {
   return h('a', { class: 'brand', href: '/drive', 'data-nav': '' },
     h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')),
-    h('span', { class: 'brand-text' }, h('span', {}, BRAND), h('small', {}, t('drive.side.mine'))));
+    h('span', { class: 'brand-text' }, wordmark(), h('span', { class: 'sr-only' }, BRAND), h('small', {}, t('drive.side.mine'))));
 }
 
 function navList(p) {

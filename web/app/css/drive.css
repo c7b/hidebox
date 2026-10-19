@@ -39,6 +39,12 @@
 .brand-mark .icon { width: 1.25rem; height: 1.25rem; }
 .brand-text { display: grid; line-height: 1.15; }
 .brand-text small { font-size: var(--text-xs); font-weight: 400; color: var(--muted-foreground); letter-spacing: 0; }
+/* the name as the logo (the sprite's i-wordmark, docs/review/brand-kit-1.md): 17/30 of the tile's height, as the site's
+   header sets it; its letters in the text colour, its i's rhombus lime in both themes */
+.wordmark { display: block; flex: none; width: calc(1.125rem * 148 / 34); height: 1.125rem; color: var(--foreground); }
+/* over a second line (the sidebar's My drive) the name is 1rem, so both lines sit inside the tile's 2rem with air
+   between them */
+.sidebar-header .wordmark { width: calc(1rem * 148 / 34); height: 1rem; margin-bottom: 0.125rem; }
 
 /* ---------- theme toggle icon swap ---------- */
 .theme-icon-dark { display: none; }
