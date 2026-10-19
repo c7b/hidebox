@@ -72,7 +72,13 @@ echo "switched current → releases/$id"
 
 trap 'echo "activate: failed after the switch; rolling back" >&2; bash "$dir/deploy/scripts/rollback.sh" --from-failed "$id"' ERR
 
+# MUTIS_KEEP_CHAIN=1 leaves the chain worker running on the release it started with (its in-memory
+# canary keys survive); the next deploy without it, or a migration above, brings it onto the new code.
 for unit in mutis-api mutis-chain; do
+  if [ "$unit" = mutis-chain ] && [ "${MUTIS_KEEP_CHAIN:-0}" = 1 ] && systemctl is-active --quiet mutis-chain; then
+    echo "kept mutis-chain running on its current release (MUTIS_KEEP_CHAIN=1)"
+    continue
+  fi
   if systemctl is-enabled --quiet "$unit" 2>/dev/null; then
     systemctl restart "$unit"
     echo "restarted $unit"

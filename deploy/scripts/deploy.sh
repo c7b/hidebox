@@ -7,6 +7,7 @@
 #                                                  <sha12>-dirty-<time>, not verifiable by verify-deploy)
 # Options: --holding (serve deploy/holding/ instead of the site), --host <ssh host> (default: the
 # MUTIS_SSH_HOST environment variable, else "hidebox"; the SSH alias of the server in ~/.ssh/config).
+# MUTIS_KEEP_CHAIN=1 deploys without restarting the chain worker (web-only releases; see activate-release.sh).
 #
 # Steps: unit tests, lint and copy check on the server as `build` with the server's Python 3.13 → build
 # (here) → upload one tarball over one multiplexed SSH connection → on the server, activate-release.sh
@@ -92,7 +93,7 @@ printf '%s\n' "$release" > "$stage/RELEASE"
 printf '%s\n' "$sha" > "$stage/server/GIT_SHA"
 tar -C "$stage" --owner=0 --group=0 --mode='u+rwX,go+rX,go-w' -cf "$work/release.tar" .
 before=$(remote "readlink /srv/mutis/app/current || true")
-remote "sudo bash -c 'set -e; d=/srv/mutis/app/releases/$release.new; rm -rf \"\$d\"; mkdir -p \"\$d\"; tar -x -C \"\$d\" --no-same-owner; bash \"\$d/deploy/scripts/activate-release.sh\" $release'" < "$work/release.tar"
+remote "sudo bash -c 'set -e; d=/srv/mutis/app/releases/$release.new; rm -rf \"\$d\"; mkdir -p \"\$d\"; tar -x -C \"\$d\" --no-same-owner; MUTIS_KEEP_CHAIN=${MUTIS_KEEP_CHAIN:-0} bash \"\$d/deploy/scripts/activate-release.sh\" $release'" < "$work/release.tar"
 
 echo "== smoke test"
 origin=$(python3 -I -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["public_origin"])' "$work/mutis.toml")
