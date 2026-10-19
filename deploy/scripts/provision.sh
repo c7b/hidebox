@@ -28,7 +28,7 @@ CHANGED_UNITS=()
 # /var/backups/mutis/<name>.<UTC time>, so every change this script makes on a server can be undone by hand.
 install_kept() {
   local mode=$1 src=$2 dst=$3
-  if [ -e "$dst" ] && cmp -s "$src" "$dst"; then return 0; fi
+  if [ -e "$dst" ] && cmp -s "$src" "$dst"; then chown root:root "$dst"; chmod "$mode" "$dst"; return 0; fi
   if [ -e "$dst" ]; then
     local name
     name=$(basename "$dst")

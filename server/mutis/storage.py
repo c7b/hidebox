@@ -3,8 +3,8 @@
 
 Paths come only from ids that already passed the 22-character id check, never from other input. The bytes are
 opaque: nothing here (or anywhere in the server) decodes, unpacks, sniffs or runs them. Each directory level is
-0700 and each file 0600 whatever the umask, so only mutis can list, add or swap anything under blobs/, and no
-file is executable; the files are opened without following symlinks.
+made 0700 and each file 0600 (a umask can only narrow them), so only mutis can list, add or swap anything under
+blobs/, and no file is executable; the files are opened without following symlinks.
 """
 import hashlib
 import os
@@ -82,7 +82,12 @@ class Blobs:
             os.close(dir_fd)
 
     def _open_bin(self, item_id: str):
-        return open(os.open(self.bin(item_id), os.O_RDONLY | os.O_NOFOLLOW), "rb")
+        fd = os.open(self.bin(item_id), os.O_RDONLY | os.O_NOFOLLOW)
+        try:
+            return open(fd, "rb")
+        except BaseException:
+            os.close(fd)
+            raise
 
     def read_all(self, item_id: str) -> bytes:
         with self._open_bin(item_id) as f:
