@@ -47,8 +47,10 @@ may reach walletd and the API port.
 3. **Provision:** `sudo bash mutis/deploy/scripts/provision.sh` creates the accounts (`mutis` runs the
    API; `drive` runs walletd and the chain worker; `build` runs the tests and compiles, and can read no
    secret), the directories, `/etc/mutis/secret.key`, the units, the Caddyfile and the logging
-   settings; it opens ports 80 and 443 and adds loopback guards (only root, you and `drive` reach
-   walletd's port 5100; only those and Caddy reach the API's 8787), then runs the privilege self-test.
+   settings; it mounts the data directory noexec, nosuid and nodev, applies the kernel settings in
+   `deploy/sysctl/90-mutis.conf`, opens ports 80 and 443 and adds loopback guards (only root, you and
+   `drive` reach walletd's port 5100; only those and Caddy reach the API's 8787), then runs the privilege
+   self-test, which also fails while SSH accepts passwords or root (log in with a key before you turn them off).
    Without walletd it says so and skips it: set `features.drops`, `relay_send`, `demo_pay`, `decoys`
    and `seallog` to false and leave `mutis-chain` disabled.
 4. **walletd (for the Tari features):** put the official `tari_ootle_walletd` 0.46.0, the version this

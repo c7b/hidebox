@@ -1,6 +1,24 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- upload safety 1 -->
+## 2026-10-19: uploads are inert
+
+- **Nothing anyone uploads can run on the server.** The server never decodes, unpacks, sniffs or runs a stored
+  file, and a test now keeps decoders and process launchers out of the API. The data directory is mounted
+  `noexec,nosuid,nodev` (`srv-mutis-data.mount`), so the kernel refuses to execute anything stored there, even for
+  root; nothing a service can write is executable in its own view either, and each directory level under `blobs/`
+  is `0700` whatever the umask (one level was `2770`, though no other user could reach it).
+- **Stored bytes reach a browser only as a download.** Every API answer carries a sandboxed content security policy
+  on top of `application/octet-stream`, `attachment` and `nosniff`; `tests/e2e/test_stored_bytes.py` checks it in
+  Chromium.
+- **The server:** Caddy now runs in the same systemd sandbox as the API, with only the right to bind ports 80 and
+  443 (exposure 8.8 to 1.5); every mutis unit gained the API's hardening; walletd can't see the visitors' data;
+  kernel settings in `/etc/sysctl.d/90-mutis.conf`; SSH takes keys only even if a file goes away; `provision.sh`
+  keeps a copy of every file it replaces and the privilege check grew from 34 checks to 85. Review:
+  `docs/review/upload-safety-1.md`; the threat model has a new section, "Uploads are inert".
+<!-- /upload safety 1 -->
+
 <!-- brand kit 1 -->
 ## 2026-10-19: the brand kit
 

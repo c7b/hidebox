@@ -48,6 +48,7 @@ python3 -I tests/e2e/test_privileges.py                 # D-03, D-11, from insid
 python3 -I tests/e2e/test_logs.py                       # D-02 (needs mutis-api running; restarts it once)
 python3 -I tests/e2e/test_logs.py --walletd-probe       # what walletd keeps of a relay send (no API needed)
 python3 -I tests/e2e/test_fonts.py                      # 11-brand P-18: no OTS errors in Chromium
+python3 -I tests/e2e/test_stored_bytes.py               # stored bytes reach a browser only as a download
 python3 -I tests/e2e/griefer.py [--slow-only]           # E-23 on a throwaway stack, never production
 python3 -I tests/e2e/run.py [--chain] [--final]         # the §17 scenarios (tests/e2e/README.md)
 python3 -I tools/verify-deploy.py https://hidebox.app <tag>              # D-09 (and the SealLog template on chain)
@@ -60,12 +61,13 @@ python3 -I tools/verify-deploy.py https://hidebox.app <tag>              # D-09 
 | `/srv/mutis/app/releases/<id>/` | root 0755 / 0644 | `dist/` (served), `server/`, `sidecar/`, `deploy/`, `RELEASE` |
 | `/srv/mutis/app/current` | root | symlink to the live release, switched by one rename |
 | `/srv/mutis/app/history` | root | one line per activation (rollback reads it) |
-| `/srv/mutis/data/` | mutis:mutis 2770 | `db/` (the database, 0660, shared with drive), `blobs/` (0700), `backup/` (0700), `health.json` |
+| `/srv/mutis/data/` | mutis:mutis 2750, mounted noexec,nosuid,nodev (`srv-mutis-data.mount`) | `db/` (2770; the database, 0660, shared with drive), `blobs/` (0700 at every level, each file 0600), `backup/` (0700), `health.json` |
 | `/srv/mutis/status/` | mutis:mutis 2775 | `status.json`, `evidence.json`, `evidence-archive-*.json`, `releases.json` (served) |
 | `/etc/mutis/` | root:mutis 0750 | `mutis.toml`, `secret.key` (32 random bytes, made here), `caddy.env`, `walletd-log4rs.yml` |
 | `/etc/mutis/credentials/` | root 0700 | `walletd-keyring-pass` (systemd `LoadCredential`) |
 | `/home/drive/wallet/` | drive 0700 | walletd's data (never moved, deleted or re-initialised); `backup/` daily copies |
 | `/home/drive/mutis/` | drive 0700 | `receiver.json`, `robot.json` (sidecar-made keys) |
+| `/etc/sysctl.d/90-mutis.conf` | root 0644 | the kernel settings (`deploy/sysctl/`) |
 | `/var/backups/mutis/` | root 0700 | wallet tars and balance snapshots taken before any change to walletd; config copies; the go-live and pre-migrate database copies, which `backup.py prune-root` (the first step of `mutis-backup.service`, run as root) deletes at the published `db_backup_days` like every other database copy |
 | `/usr/local/lib/mutis/` | root | `run-walletd.sh`; `run-sidecar.sh`, the config's `sidecar.command` (Node's permission model needs the release's real path, not the `current` symlink); `backup.py`, the one copy both backup units run (provision installs it, every activation refreshes it, a rollback leaves it) |
 | `/usr/local/sbin/mutis-admin` | root | `sudo mutis-admin …` = the release's admin CLI as mutis (as drive for `notarize` and `walletd-fixture`, which talk to walletd), umask 007 |
@@ -74,7 +76,8 @@ Users: `mutis` (no login; API, cleanup, health, DB backups; cannot reach walletd
 the chain worker and its Node sidecar, wallet backups, evidence; in group `mutis`), `build`
 (compiles and runs the headless browser; no sudo, no wallet, no data), `caddy`.
 
-Units: `walletd.service` (enabled), `caddy.service` (Debian's, plus `caddy.service.d/mutis.conf`),
+Units: `srv-mutis-data.mount` (enabled; every unit that uses the database needs it), `walletd.service` (enabled),
+`caddy.service` (Debian's, plus `caddy.service.d/mutis.conf`, which gives Caddy mutis-api's sandbox),
 `mutis-backup.timer` and `mutis-backup-wallet.timer` (enabled), and, installed but left off until
 go-live ("Turning the app on"): `mutis-api`, `mutis-chain`, `mutis-cleanup.timer`, `mutis-health.timer`,
 `mutis-evidence.timer`.
@@ -92,11 +95,14 @@ calls it, and `privilege-check.sh` fails if a shim appears), creates the `mutis`
 users where missing (the login that runs it with sudo is the operator, or `MUTIS_OPERATOR`) and the
 tree above, installs the config only if missing, generates `secret.key` if missing, copies the
 keyring password into the credential store once (and skips walletd while it isn't set up), writes
-`caddy.env` from `public_origin`, installs units and logging config, opens 80/443, keeps logging off,
+`caddy.env` from `public_origin`, installs units and logging config (a copy of each file it replaces goes to
+`/var/backups/mutis/<name>.<UTC time>`), mounts the data directory noexec,nosuid,nodev, applies the kernel
+settings, opens 80/443, keeps logging off,
 adds whichever of the 5100, 18143 and 8787 guards is missing (ufw must be active), installs the
 Caddyfile (validated first; the admin API moves to a socket), moves walletd from tmux into its unit
 once (backup, graceful stop, cold backup, start, same balances or stop), enables the backup timers,
-makes the receiver/robot keys if a release exists, and ends with `privilege-check.sh`. A new server
+makes the receiver/robot keys if a release exists, names the running units whose definition changed
+(restart them to apply it; a new Caddy sandbox restarts Caddy itself), and ends with `privilege-check.sh`. A new server
 follows [`docs/self-host.md`](../docs/self-host.md), which also covers walletd's first start.
 
 ## Deploying

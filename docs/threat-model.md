@@ -32,6 +32,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small files and files without a locker, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts, a cap on requests in flight per network | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working |
 | Griefer, the space (sixth pass) | buy packs from many drives fast so paid space sells out; make many drives and fill free space so uploads freeze for everyone | a judges' slice of the paid cap; one pack per drive; open invoices count against the cap; daily sales brakes per network (in memory) and per deployment (from the invoices); daily brakes on new drives and free uploads per network (in memory); the hard freezes at the disk's margins; `/status.json` amber and a kill switch ("Griefing the space" below) | many networks (a botnet, or one IPv6 /32) still get through at the deployment's daily pace; a restart forgets the per-network counts |
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
+| Someone uploading a program to attack the server | send any bytes in place of ciphertext: an executable, a script, a web page, an archive | the server never decodes, parses or runs what it stores, and names each file itself; the files are 0600 on a mount where nothing executes; nothing a service can write is executable in its view; stored bytes leave only as downloads ("Uploads are inert" below) | a flaw in the kernel, Python, Caddy or SQLite reached through the HTTP request itself rather than through the stored bytes |
 | Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash and re-hashed before it runs; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet (a firewall rule per user on the wallet port); jobs are validated; daily budget slices | at most the daily budgets |
 
@@ -151,6 +152,34 @@ make room. `deploy/README.md` ("If someone games the packs") is the operator's s
 - `template/check.sh --onchain <template>` (or `tools/verify-deploy.py`) checks that the template on
   the chain is `template/dist/seal_log.wasm` byte for byte. Older logs are listed as retired in
   `/evidence.json`; the live one is the one `/api/v1/config` names.
+
+## Uploads are inert
+
+The server can't tell ciphertext from anything else, so every uploaded byte is opaque to it. A client may send an
+executable, a script or a web page in place of ciphertext; on the server nothing happens to it.
+
+- **Nothing reads the bytes.** The API writes each chunk where it belongs and checks only its length and SHA-256.
+  It never decodes, unpacks, sniffs, previews or runs a stored file, and hands it to no other program; a test keeps
+  decoders and process launchers out of the API's code (`server/tests/test_uploads_inert.py`).
+- **Nothing from the client names a file.** A stored file's path comes from the server's own random id; no file
+  name, type or path from a request reaches the disk.
+- **Nothing there can run.** Each file is `0600` under `0700` directories, on a mount with `noexec`, `nosuid` and
+  `nodev`: the kernel refuses to execute it or map it as code, even for root, through the dynamic loader too. Every
+  service sees what it can write as `noexec` and the rest of the system read-only, runs without new privileges or
+  capabilities (Caddy keeps only the one to bind ports 80 and 443), behind a system-call filter, and without
+  writable code where its runtime allows that.
+- **Nothing renders them on this site.** Stored bytes leave only through the API, as `application/octet-stream`
+  attachments with `nosniff` and a sandboxed content security policy, so a browser saves them rather than showing
+  them; the web server itself can't read the directory.
+- **They are bounded.** Size limits per kind of link, lanes, quotas, daily brakes per network and a body limit at
+  the web server; uploads stop while the disk still has its reserve, and a full disk refuses an upload with 503
+  while the API keeps answering.
+- **Not scanned.** The server holds ciphertext, so a malware scanner would only see random bytes, and parsing
+  untrusted files is the risk this design avoids. A file is as safe as its sender for the person who opens it; the
+  app warns before programs.
+
+`deploy/scripts/privilege-check.sh` checks the mount, the modes and every service's view on the live server;
+`docs/review/upload-safety-1.md` has the evidence.
 
 ## What never touches a disk
 
