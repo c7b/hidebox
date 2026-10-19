@@ -9,7 +9,10 @@
 
 For every route in headers_spec.ROUTES: the common headers with their exact values, no Server or
 X-Powered-By or CORS header, the route's CSP (an error page always carries the site policy) and its
-caching (pages revalidate, errors are never stored). The same for the status files, a font, and a
+caching (pages revalidate, errors are never stored); private routes carry X-Robots-Tag: noindex, and no
+other route does (the indexable pages never send it). The share cards and icons are kept a day and may be
+loaded from any origin; robots.txt and the sitemap have their types and are kept an hour; every API
+answer is noindex. The same for the status files, a font, and a
 404 through every other route of the Caddyfile. Also: a 6 MB upload chunk is refused with a 413 in
 the API's error shape (never a bare 502), plain HTTP answers a 308 to HTTPS with no Server header, a
 made-up Host name gets a 421 with the same headers on both ports (never a redirect to that name), the
@@ -96,6 +99,8 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         else:
             problems = [] if status == 200 else [f"status {status}"]
             problems += header_problems(headers, csp, extra | headers_spec.REVALIDATE)
+            if "x-robots-tag" not in extra and "x-robots-tag" in headers:
+                problems.append(f"x-robots-tag {headers['x-robots-tag']!r} on a route that may be indexed")
         results.append((f"GET {path} → {status}", problems))
 
     for old, new in headers_spec.REDIRECTS.items():
@@ -117,8 +122,8 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         results.append((f"GET {path} → {status} (an error page through another route)", problems))
 
     status, headers, _ = fetch(origin + "/api/v1/health")
-    results.append((f"GET /api/v1/health → {status} (security headers on API responses)",
-                    header_problems(headers, headers_spec.SITE_CSP, {})))
+    results.append((f"GET /api/v1/health → {status} (security headers on API responses, noindex)",
+                    header_problems(headers, headers_spec.SITE_CSP, headers_spec.NOINDEX)))
 
     if not holding:
         for path, ctype in headers_spec.MEDIA.items():
@@ -127,6 +132,24 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
                         else [f"status {status}, content-type {headers.get('content-type')!r}, accept-ranges {headers.get('accept-ranges')!r}"])
             problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.MEDIA_CACHE)
             results.append((f"HEAD {path} is {ctype}, in byte ranges, kept a day", problems))
+        for path, ctype in headers_spec.CARDS.items():
+            status, headers, _ = fetch(origin + path, "HEAD")
+            problems = [] if status == 200 and headers.get("content-type") == ctype else \
+                [f"status {status}, content-type {headers.get('content-type')!r}"]
+            problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.CARD_HEADERS)
+            results.append((f"HEAD {path} is {ctype}, kept a day, loadable from any origin (a link preview's card or icon)", problems))
+        for path, ctype in headers_spec.CRAWL.items():
+            status, headers, body = fetch(origin + path)
+            problems = [] if status == 200 and headers.get("content-type") == ctype else \
+                [f"status {status}, content-type {headers.get('content-type')!r}"]
+            problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.CRAWL_CACHE)
+            if "x-robots-tag" in headers:
+                problems.append("x-robots-tag on a file crawlers must read")
+            if path == "/robots.txt" and f"Sitemap: {origin}/sitemap.xml".encode() not in body:
+                problems.append("no Sitemap line naming this origin")
+            if path == "/sitemap.xml" and f"<loc>{origin}/</loc>".encode() not in body:
+                problems.append("the home is not in the sitemap")
+            results.append((f"GET {path} is {ctype}, kept an hour", problems))
         status, headers, _ = fetch(origin + WASM, "HEAD")
         problems = [] if status == 200 and headers.get("content-type") == "application/wasm" else \
             [f"status {status}, content-type {headers.get('content-type')!r}"]

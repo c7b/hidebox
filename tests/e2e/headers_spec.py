@@ -39,13 +39,14 @@ ROUTES = {
     "/drive/received": (APP_CSP, NOINDEX),
     "/drive/activity": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
+    "/app/drive.html": (APP_CSP, NOINDEX),              # the drive's own pages under their file names
+    "/app/view.html": (APP_CSP, NOINDEX),
     "/v2": (APP_CSP, {"x-robots-tag": "noindex"}),      # the home with the product loops (docs/review/home-v2.md)
     "/v2/": (APP_CSP, {"x-robots-tag": "noindex"}),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
     "/judges": (SITE_CSP, {}),
     "/fine-print": (SITE_CSP, {}),
-    "/robots.txt": (SITE_CSP, {}),
     "/.well-known/security.txt": (SITE_CSP, {}),
     "/.well-known/mutis-manifest.json": (SITE_CSP, {}),
     "/this-page-does-not-exist": (SITE_CSP, {}),
@@ -80,6 +81,17 @@ MEDIA = {"/site/media/motion/hidebox-A-hero.webm": "video/webm", "/site/media/mo
          "/site/media/v3/hero-1024.avif": "image/avif", "/site/media/v3/hero-1024.webp": "image/webp"}
 MEDIA_CACHE = {"cache-control": "public, max-age=86400"}
 ERROR_CACHE = {"cache-control": "no-store"}
+# The pages search engines may index: no route above without NOINDEX may send X-Robots-Tag (test_headers.py).
+INDEXABLE = ("/", "/how", "/made", "/judges", "/fine-print")
+# What other products show beside a link (docs/review/seo-1.md): the share cards and the icons, kept a day (their
+# names carry no version) and loadable from any origin (a preview drawn from the page loads og:image cross-origin).
+CARDS = {"/og.png": "image/png", "/og-s.png": "image/png", "/favicon.ico": "image/vnd.microsoft.icon",
+         "/favicon.svg": "image/svg+xml", "/favicon-32.png": "image/png", "/apple-touch-icon.png": "image/png",
+         "/icon-192.png": "image/png", "/icon-512.png": "image/png"}
+CARD_HEADERS = {"cache-control": "public, max-age=86400", "cross-origin-resource-policy": "cross-origin"}
+# robots.txt and the sitemap: their types, kept an hour.
+CRAWL = {"/robots.txt": "text/plain; charset=utf-8", "/sitemap.xml": "application/xml; charset=utf-8"}
+CRAWL_CACHE = {"cache-control": "public, max-age=3600"}
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
 STATUS_FILES = ("/status.json", "/evidence.json", "/releases.json")
 # Always 404, each through a different route of the Caddyfile (a nested error once leaked Server: Caddy),

@@ -98,6 +98,34 @@ class CaddyfileTest(unittest.TestCase):
         self.assertNotIn("/v3", headers_spec.ROUTES)
         self.assertTrue(any(path.startswith("/site/media/v3/") for path in headers_spec.MEDIA))
 
+    def test_previews_and_crawlers(self):
+        """docs/review/seo-1.md: the share cards and icons (headers_spec.CARDS) are kept a day and loadable from any
+        origin; robots.txt and the sitemap (CRAWL) have their types and are kept an hour; the API and the drive's
+        files under /app/ are noindex like the app's routes. Each route sits before the catch-all."""
+        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
+        catch_all = re.search(r"(?m)^\thandle \{$", site).start()
+        cards = re.search(r"(?m)^\t@cards path (.+)$", self.text).group(1).split()
+        self.assertEqual(sorted(cards), sorted(headers_spec.CARDS))
+        body = re.search(r"(?ms)^\thandle @cards \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn("import site_csp", body)
+        for name, value in headers_spec.CARD_HEADERS.items():
+            self.assertTrue(re.search(rf'(?im)^\s*header {re.escape(name)} "{re.escape(value)}"$', body), name)
+        crawl = re.search(r"(?m)^\t@crawl path (.+)$", self.text).group(1).split()
+        self.assertEqual(sorted(crawl), sorted(headers_spec.CRAWL))
+        body = re.search(r"(?ms)^\thandle @crawl \{\n(.*?)^\t\}", self.text).group(1)
+        self.assertIn(f'header Cache-Control "{headers_spec.CRAWL_CACHE["cache-control"]}"', body)
+        for path, ctype in headers_spec.CRAWL.items():
+            matcher = re.search(rf"(?m)^\t@(\w+) path {re.escape(path)}$", self.text).group(1)
+            self.assertIn(f'header @{matcher} Content-Type "{ctype}"', self.text)
+        for route in ("@cards", "@crawl"):
+            self.assertLess(site.index(f"handle {route}"), catch_all, route)
+        noindex = f'header X-Robots-Tag "{headers_spec.NOINDEX["x-robots-tag"]}"'
+        for route in ("@api", "@appfiles", "@viewer", "@approute", "@drive"):
+            body = re.search(rf"(?ms)^\thandle {route} \{{\n(.*?)^\t\}}", self.text).group(1)
+            self.assertIn(noindex, body, route)
+        for path in headers_spec.INDEXABLE:
+            self.assertNotIn("x-robots-tag", headers_spec.ROUTES[path][1], path)
+
     def test_no_access_log_and_filtered_errors(self):
         site = self.text.split("{$MUTIS_HOST} {", 1)[1]
         self.assertNotRegex(site, r"(?m)^\s*log\b")

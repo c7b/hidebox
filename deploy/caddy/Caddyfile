@@ -122,6 +122,10 @@ http://{$MUTIS_HOST} {
 	# Types Go's MIME table lacks on Debian (it reads shared-mime-info, not /etc/mime.types).
 	@webmanifest path *.webmanifest
 	header @webmanifest Content-Type "application/manifest+json"
+	@robotstxt path /robots.txt
+	header @robotstxt Content-Type "text/plain; charset=utf-8"
+	@sitemap path /sitemap.xml
+	header @sitemap Content-Type "application/xml; charset=utf-8"
 	@notice path */NOTICE
 	header @notice Content-Type "text/plain; charset=utf-8"
 
@@ -134,9 +138,16 @@ http://{$MUTIS_HOST} {
 	@appfiles path /app/* /vendor/*
 	@status path /evidence.json /evidence-archive-*.json /status.json /releases.json
 	@fonts path /shared/fonts/*
+	# What other products show beside a link to us: the share cards (og:image) and the icons. Their names stay put
+	# when their pictures change, so a day, not immutable.
+	@cards path /og.png /og-s.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png
+	@crawl path /robots.txt /sitemap.xml
 
 	handle @api {
 		import site_csp
+		# No answer of the API belongs in a search index; /config and /stats stay fetchable for crawlers that render
+		# the pages (robots.txt allows them).
+		header X-Robots-Tag "noindex, nofollow"
 		request_body {
 			max_size 5MB
 		}
@@ -202,6 +213,8 @@ http://{$MUTIS_HOST} {
 	handle @appfiles {
 		import app_csp
 		import revalidate
+		# /app/drive.html and its siblings are the drive's own pages under another address: never indexed.
+		header X-Robots-Tag "noindex, nofollow"
 		file_server
 	}
 
@@ -217,6 +230,23 @@ http://{$MUTIS_HOST} {
 	handle @fonts {
 		import site_csp
 		header Cache-Control "public, max-age=86400"
+		file_server
+	}
+
+	# The cards and icons are kept a day, and any site may show them: a chat or forum that draws a link's preview from
+	# the page itself loads og:image from its own origin, which a same-origin resource policy would refuse. They are
+	# public pictures with nothing to protect.
+	handle @cards {
+		import site_csp
+		header Cache-Control "public, max-age=86400"
+		header Cross-Origin-Resource-Policy "cross-origin"
+		file_server
+	}
+
+	# robots.txt and the sitemap change only with a release: an hour is enough.
+	handle @crawl {
+		import site_csp
+		header Cache-Control "public, max-age=3600"
 		file_server
 	}
 
