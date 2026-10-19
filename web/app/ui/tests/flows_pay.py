@@ -944,7 +944,7 @@ def pay_steady(t):
     b.wait_for("pay-address", 60)
     b.wait("!!document.querySelector('[data-testid=\"pay-qr\"]')", 10)
     shown = b.eval("performance.now()")
-    hold(b, 7)
+    hold(b, 10)
     m = report["other_opens"] = b.eval(f"window.__steady.report({start})")
     t.check(m["qr_built"] == 1 and m["empty_qr_frames"] == 0, f"Another Ootle wallet: its code is built once, and the address never shows without it ({m})")
     m = report["other_polls"] = b.eval(f"window.__steady.report({shown} + 50)")
@@ -974,10 +974,10 @@ def pay_steady(t):
     for name, width, height, mobile in (("iphone", 390, 844, True), ("narrow", 360, 740, True), ("desktop", 1440, 900, False)):
         d.cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 2, "mobile": mobile})
         hold(d, 0.3)
-        fits[name] = d.eval("(() => { const e = document.querySelector('.pay-drive'); const min = parseFloat(getComputedStyle(e).minHeight);"
+        fits[name] = d.eval("(() => { const e = document.querySelector('.pay-drive'); if (!e) return null; const min = parseFloat(getComputedStyle(e).minHeight);"
                             " return [Math.round(e.getBoundingClientRect().height), Math.round(min)]; })()")
     report["drive_line"] = fits
-    t.check(all(hb == mn for hb, mn in fits.values()), f"Pay from my drive and its note fit the held line at 390, 360 and 1440 ({fits})")
+    t.check(all(v and v[0] == v[1] for v in fits.values()), f"Pay from my drive and its note fit the held line at 390, 360 and 1440 ({fits})")
     print("  pay-steady:", json.dumps(report), flush=True)
     if os.environ.get("PAY_STEADY_OUT"):          # the measurement as evidence (docs/evidence/2026-10-19/owner-5/)
         Path(os.environ["PAY_STEADY_OUT"]).write_text(json.dumps(report, indent=1) + "\n")
