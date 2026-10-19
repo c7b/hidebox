@@ -259,7 +259,8 @@ def check_seo():
     with its alt; twitter:* the same as og:*), both theme colours, the app title and the icons (ICO, 32 px PNG, SVG,
     apple-touch-icon, manifest). Indexable pages also: the name last in the title, a robots meta that allows a large
     image preview, a canonical on {{ORIGIN}} that og:url repeats, and JSON-LD: the home its WebSite and
-    SoftwareApplication, every other page a BreadcrumbList that ends on its canonical. The 404 page is noindex."""
+    SoftwareApplication, every other page a BreadcrumbList that ends on its canonical. The 404 page is noindex. The
+    app's pages (web/app/view.html, app.html, drive.html) are noindex and carry a card with no og:url or canonical."""
     problems, titles, descs = [], {}, {}
     for f in PAGES:
         d, name, text = parse(f), f.relative_to(WEB), f.read_text()
@@ -343,6 +344,23 @@ def check_seo():
         for value, files in seen.items():
             if len(files) > 1:
                 problems.append(f"{kind} {value!r} used by {files}")
+    # The app's pages (a shared link, a drop, the drive): noindex, and a preview card with no address in it (no
+    # og:url, no canonical: one page serves every link, and a link's id is no business of a preview).
+    cards = {"view": "{{ORIGIN}}/og-s.png", "app": "{{ORIGIN}}/og.png", "drive": "{{ORIGIN}}/og.png"}
+    for page, card in cards.items():
+        f = WEB / "app" / f"{page}.html"
+        d, name = parse(f), f.relative_to(WEB)
+        if "noindex" not in (meta(d, name="robots") or ""):
+            problems.append(f"{name}: not noindex")
+        if attr(d, "meta", property="og:url") or attr(d, "link", rel="canonical"):
+            problems.append(f"{name}: og:url or a canonical (a preview must not name the link)")
+        for prop, value in CARD.items():
+            if meta(d, property=prop) != value.replace("/og.png", card.removeprefix("{{ORIGIN}}")):
+                problems.append(f"{name}: {prop} is {meta(d, property=prop)!r}")
+        for tw, og in (("twitter:title", "og:title"), ("twitter:description", "og:description"),
+                       ("twitter:image", "og:image"), ("twitter:image:alt", "og:image:alt")):
+            if not meta(d, property=og) or meta(d, name=tw) != meta(d, property=og):
+                problems.append(f"{name}: {tw} differs from {og}")
     return problems
 
 
