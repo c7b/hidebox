@@ -1,6 +1,16 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- history rewrite -->
+## 2026-10-19: the history rewrite
+
+- **The repository's history no longer names the operator's machines, login or home paths.** The launch-hygiene
+  pass had taken them out of the tree; this pass runs the same substitutions over every commit (`git filter-repo`),
+  so the past reads "the server", "the workstation", "operator", `<repo>` and `$TMPDIR` where it named them.
+  Every commit id changed; the tree of the release did not. Ids quoted in earlier entries, reviews and evidence logs
+  are from the previous history. Review: `docs/review/launch-hygiene.md`.
+<!-- /history rewrite -->
+
 <!-- copy pass 1 -->
 ## 2026-10-18: the copy pass
 

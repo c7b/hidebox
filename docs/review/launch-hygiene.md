@@ -102,8 +102,12 @@ are throwaway known-answer vectors, not the service's keys, which are made on th
 
 80 of the 327 commits before this pass touch those names in their diffs (3 in their messages). All 80 are
 ancestors of the tag `spooky-secrets-2026-10` (`5677e45`), so a rewrite would change the commit ids that the tag
-and the notarized releases pin. History is left as it is; whether to publish a fresh repository is the owner's
-call.
+and the notarized releases pin. The owner chose to keep the commits and rewrite them (2026-10-19, `git filter-repo`):
+the same substitutions ran over every blob and commit message of the 337 commits, and one evidence log was renamed
+across history. The final tree is byte-identical (same tree id); every commit id changed, one commit that became
+empty was dropped, and the tag was moved to the rewritten release. Commit ids quoted in records written before that
+date (`CHANGELOG.md`, the reviews, the evidence logs, `/releases.json`) are ids of the previous history; the
+notarized manifests stay valid because they pin the served manifest's hash, not a git id.
 
 ## Checks
 
