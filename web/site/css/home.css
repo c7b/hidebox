@@ -147,6 +147,7 @@
 .us-name { display: inline-flex; align-items: center; gap: 8px; }
 .us-name .wm-tile { width: 22px; height: 22px; border-radius: 6px; }
 .us-name .wm-tile .icon { width: 15px; height: 15px; margin: 0; color: var(--brand-solid); }
+.us-name .wm-word { width: 54.4px; height: 12.5px; }   /* the header's lockup at the 22 px tile: the name 17/30 of it */
 .compare-note { max-width: 880px; margin: var(--s-4) auto 0; font: var(--t-small); color: var(--fg-2); text-align: center; }
 @media (max-width: 719.98px) {   /* phones: each row a card, our answer first on the tint, the popular drive's below */
   .compare, .compare tbody, .compare tr, .compare th, .compare td { display: block; width: auto; }

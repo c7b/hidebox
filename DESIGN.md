@@ -207,7 +207,7 @@ The mood is calm, bright and exact: neutral greys, near-black ink, one violet th
 Tari. **Drive v3** (docs/review/drive-v3.md, the owner's "match the same vibe of v3"): in dark the drive is the home's
 v3 world, the black void (`#0A0A0A`) with gunmetal panels (one cool ramp at OKLCH hue 258, from v3's stage `#17191C` to
 `#2B2F35`) and frosted glass on every raised surface; in light it is the site's light (white, the `#FAFAFA` rail,
-`#666666` secondary text). The mark is the open box, lime on its ink tile in both themes. Anti-references: the retired ghost (mascot, indigo night, phosphor), crypto dashboards (neon on
+`#666666` secondary text). The mark is the open box, lime on its ink tile in both themes, with the wordmark beside it. Anti-references: the retired ghost (mascot, indigo night, phosphor), crypto dashboards (neon on
 black, glowing edges), and generic landing pages (gradient hero, three equal feature cards, eyebrows).
 
 ## Colors
@@ -228,7 +228,10 @@ something.
   public pages' one action colour, beside Ink, chosen by the owner for site v3 in place of Sea. It fills
   **Open your drive**, the site's one action (header, hero, closing), under a near-black label (16.32:1), with
   a 1px lime-700 edge on light pages; tints the You card in Who sees what and the hidebox column of the
-  comparison; draws the open box, the mark, on its ink tile (both themes). Light pages
+  comparison; draws the open box, the mark, on its ink tile (both themes). Beside the tile in the site's and the drive's
+  headers sits the wordmark (docs/review/brand-kit-1.md: the kit's outlined name, 17/30 of the tile's height): its letters
+  in the text colour, the rhombus over its dotless i the same lime in both themes, the one lime on white in light mode
+  (the owner's call: it is part of the mark, not text; no dark green ever goes in the mark). Light pages
   never write lime as text: brand text there is the olive lime-800 (7.20:1). **In the drive (site v4)** lime
   fills the one next step of each view, the shadcn default variant (`components.css`, the drive's
   `ui/tokens.css` `--brand-*`): Upload a folder (or Upload files) on the empty drive, New while My drive or a

@@ -88,11 +88,12 @@ a:hover > .go { rotate: -45deg; }
 .site-header { position: sticky; top: 0; z-index: var(--z-header); border-bottom: 1px solid var(--hair); background: var(--bg); }
 .top { display: flex; align-items: center; gap: var(--s-3); min-height: 60px; }
 .wm { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; padding: 4px; margin: 0 var(--s-2) 0 -4px; border-radius: var(--r-input); color: var(--fg); }
-/* the mark, the open box (docs/review/home-v3.md): lime on an ink tile in both themes. The tile stays ink on light pages,
-   since the lime alone on white is 1.21:1; lime on ink is 16.32:1. */
+/* the mark, the open box (docs/review/brand-kit-1.md): lime on an ink tile in both themes. The tile stays ink on light pages,
+   since the lime alone on white is 1.21:1; lime on ink is 16.32:1. The wordmark beside it is the kit's outlined name
+   (the sprite's i-wordmark), 17 px tall: its letters in the text colour, its i's rhombus the same lime in both themes. */
 .wm-tile { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-input); background: #0A0A0A; color: var(--brand-solid); }
 .wm-tile .icon { width: 20px; height: 20px; }
-.wm-name { font: 650 17px/1 var(--font); letter-spacing: -.02em; }
+.wm-word { display: block; width: 74px; height: 17px; flex: none; color: var(--fg); }
 .top-nav { display: none; gap: 2px; }
 .top-nav a { color: var(--fg-2); text-decoration: none; font: var(--t-small); padding: 8px 10px; border-radius: var(--r-input); }
 .top-nav a:hover { color: var(--fg); background: var(--bg-sunken); }

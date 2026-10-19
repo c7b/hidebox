@@ -13,6 +13,7 @@ import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
+from xml.etree import ElementTree
 
 import llms_full
 import variants
@@ -1100,8 +1101,11 @@ V3_MARK_LIMIT = 2048
 V3_CODE_LIMITS = {"css/v3.css": 2048}
 V3_STAGES = ["stage-a", "stage-c", "stage-b", "stage-d", "stage-end"]   # the hero, the four sections in page order
 V3_BAD_SVG = re.compile(r"<(image|script|foreignObject|use|a|style|animate\w*|set|iframe)\b|href=|\son[a-z]+=|data:|url\(", re.I)
-# the open box (docs/review/home-v3.md, "The mark"): its three paths, as the sprite, the favicon and the brand files draw it
-OPEN_BOX = ('d="M16 3 L27 9 L16 15 L5 9 Z"', 'd="M6 15 L4 16 L4 23 L16 30 L28 23 L28 16 L26 15"', 'd="M4 16 L16 23 L28 16 M16 23 L16 30"')
+# the open box (docs/review/brand-kit-1.md): one filled outline, the sprite's i-hidebox; the favicon and the brand files
+# draw the same path data, lime on the ink tile, so the mark can't drift between them
+OPEN_BOX = re.compile(r'<symbol id="i-hidebox" viewBox="2\.801 1\.801 26\.399 29\.399"><path fill="currentColor" d="([^"]+)" /></symbol>')
+# the wordmark (the same review): the header's name, from the sprite, hidden (the link carries the name)
+WORDMARK = '<svg class="wm-word" viewBox="-0.5 -0.5 148 34" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wordmark"/></svg>'
 
 
 def image_size(f):
@@ -1201,19 +1205,36 @@ def check_home_stills():
     png = SITE / "static" / "favicon-32.png"
     if not png.is_file() or image_size(png) != (32, 32):
         problems.append(f"static/favicon-32.png: {image_size(png) if png.is_file() else 'missing'}, expected 32 x 32")
+    for f in (SHARED / "ui" / "icons.svg", SHARED / "icons.svg", SITE / "static" / "favicon.svg", SHARED / "brand" / "favicon.svg",
+              SHARED / "brand" / "symbol.svg"):
+        try:
+            ElementTree.fromstring(f.read_bytes())
+        except ElementTree.ParseError as e:   # a "--" in a comment is enough, and then the browser draws none of its icons
+            problems.append(f"{f.relative_to(WEB)}: not well-formed XML ({e})")
+    sprite = (SHARED / "ui" / "icons.svg").read_text()
+    box = OPEN_BOX.search(sprite)
     for mark in (SITE / "static" / "favicon.svg", SHARED / "brand" / "favicon.svg", SHARED / "brand" / "symbol.svg"):
         body = mark.read_text()
-        if mark.stat().st_size > V3_MARK_LIMIT or V3_BAD_SVG.search(body) or body.count("<svg") != 1 \
-                or not all(path in body for path in OPEN_BOX) or "#BCFE00" not in body:
-            problems.append(f"{mark.relative_to(WEB)}: {mark.stat().st_size} B; not the open box in lime, or it carries a raster, "
-                            f"script, link or data (V-02: clean, at most {V3_MARK_LIMIT:,} B)")
-    sprite = (SHARED / "ui" / "icons.svg").read_text()
+        if mark.stat().st_size > V3_MARK_LIMIT or V3_BAD_SVG.search(body) or body.count("<svg") != 1 or not box \
+                or f'<path fill="#BCFE00" transform="translate(2.24 1.81) scale(.86)" d="{box.group(1)}"/>' not in body \
+                or '<rect width="32" height="32" rx="7" fill="#0A0A0A"/>' not in body:
+            problems.append(f"{mark.relative_to(WEB)}: {mark.stat().st_size} B; not the open box in lime on its ink tile, or it carries "
+                            f"a raster, script, link or data (V-02: clean, at most {V3_MARK_LIMIT:,} B)")
     symbol = re.search(r'<symbol id="i-hidebox"[^>]*>(.*?)</symbol>', sprite, re.S)
-    if not symbol or V3_BAD_SVG.search(symbol.group(1)) or not all(path in symbol.group(0) for path in OPEN_BOX):
-        problems.append("shared/ui/icons.svg: no clean i-hidebox symbol drawing the open box")
+    if not box or not symbol or V3_BAD_SVG.search(symbol.group(1)) or re.search(r'stroke|fill="none"', symbol.group(0)):
+        problems.append("shared/ui/icons.svg: no clean i-hidebox symbol drawing the open box as one filled outline")
+    word = re.search(r'<symbol id="i-wordmark" viewBox="-0\.5 -0\.5 148 34">(.*?)</symbol>', sprite, re.S)
+    if not word or V3_BAD_SVG.search(word.group(1)) or "stroke" in word.group(1) \
+            or re.findall(r'<path fill="([^"]+)" d="[^"]+" />', word.group(1)) != ["currentColor", "#BCFE00"]:
+        problems.append("shared/ui/icons.svg: no clean i-wordmark symbol (its letters in currentColor, the i's rhombus #BCFE00)")
     header = (SHARED / "partials" / "header.html").read_text()
     if not re.search(r'<span class="wm-tile" aria-hidden="true"><svg class="icon" focusable="false"><use href="/shared/ui/icons.svg#i-hidebox"/></svg></span>', header):
         problems.append("partials/header.html: the tile doesn't draw the open box (#i-hidebox)")
+    if f'<a class="wm" href="/" aria-label="{{{{BRAND}}}}, home">' not in header or f"</span>{WORDMARK}</a>" not in header:
+        problems.append("partials/header.html: the name beside the tile isn't the wordmark (#i-wordmark, hidden; the link named "
+                        "{{BRAND}}, home)")
+    if f"</span>{WORDMARK}<span class=\"sr-only\">{{{{BRAND}}}}</span></span></th>" not in text:
+        problems.append("pages/index.html: the comparison's hidebox column isn't headed by the tile and the wordmark, named in words")
     media = sorted(p for p in (SITE / "media" / "v3").glob("*") if p.is_file())
     for f in media:
         if f.name not in named:

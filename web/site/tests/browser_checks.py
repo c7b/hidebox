@@ -748,12 +748,24 @@ V3_PICS = """[...document.querySelectorAll('.stage .pic')].map((i) => { const r 
   return { stage: i.closest('.stage').classList[1], src: i.currentSrc.split('/').pop(), done: i.complete && i.naturalWidth > 0,
            top: r.top + scrollY, blend: getComputedStyle(i).mixBlendMode,
            card: getComputedStyle(i.closest('.stage')).backgroundImage }; })"""
-# The header's tile and the comparison's: the open box from the sprite, lime on ink (docs/review/home-v3.md, "The mark").
+# The header's tile and the comparison's: the open box from the sprite, lime on ink, one filled outline that no rule
+# strokes (docs/review/brand-kit-1.md); beside each, the wordmark from the sprite in the text colour, hidden, its name in
+# words (the header link's label, the column's sr-only text).
 MARKS = """[...document.querySelectorAll('.site-header .wm-tile, .us-name .wm-tile')].map((t) => { const svg = t.querySelector('svg');
   return [t.closest('.site-header') ? 'header' : 'compare', (svg?.querySelector('use')?.getAttribute('href') || '').split('#')[1],
-          getComputedStyle(t).backgroundColor, svg ? getComputedStyle(svg).color : null, !!svg && getComputedStyle(svg).display !== 'none']; })"""
-OPEN_BOX_TILES = [["header", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True],
-                  ["compare", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True]]
+          getComputedStyle(t).backgroundColor, svg ? getComputedStyle(svg).color : null, !!svg && getComputedStyle(svg).display !== 'none',
+          svg ? getComputedStyle(svg).stroke : null]; })"""
+OPEN_BOX_TILES = [["header", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True, "none"],
+                  ["compare", "i-hidebox", "rgb(10, 10, 10)", "rgb(188, 254, 0)", True, "none"]]
+WORDMARKS = """[...document.querySelectorAll('.site-header .wm-word, .us-name .wm-word')].map((w) => [
+  w.closest('.site-header') ? 'header' : 'compare', (w.querySelector('use')?.getAttribute('href') || '').split('#')[1],
+  getComputedStyle(w).color, getComputedStyle(w).stroke, w.getAttribute('aria-hidden'), getComputedStyle(w).height,
+  w.closest('.site-header') ? w.closest('a').getAttribute('aria-label') : w.closest('th').textContent.trim()])"""
+
+
+def wordmarks(fg):
+    return [["header", "i-wordmark", fg, "none", "true", "17px", "hidebox, home"],
+            ["compare", "i-wordmark", fg, "none", "true", "12.5px", "hidebox"]]
 SWITCH = "document.querySelector('[data-theme-toggle]')"
 
 
@@ -768,7 +780,7 @@ def check_home_stills(browser):
     file; the bytes stay in V-02, at 1440 and at 390. Light mode (a stored choice): every still on v2's gunmetal card
     through `lighten`, and the Lights switch takes the page back to dark. Dark mode: no card, no blend. Reduced motion:
     the hero's still shows (nothing on the home depends on motion). The open box, lime on ink, in the header's tile and
-    the comparison's, in both themes. No console error and no CSP violation. The lazy rule here only bites when a
+    the comparison's, the wordmark beside each in the text colour, in both themes. No console error and no CSP violation. The lazy rule here only bites when a
     section still sits more than 2,500 px down; static_checks pins loading="lazy"."""
     problems = []
     with server("--mode", "direct", "--seallog", "--pay") as origin:
@@ -797,6 +809,8 @@ def check_home_stills(browser):
                 problems.append(f"{at}: {loaded:,} B at load (V-02: at most {V3_AT_LOAD:,})")
             if page.eval(MARKS) != OPEN_BOX_TILES:
                 problems.append(f"{at}: the tiles aren't the open box, lime on ink ({page.eval(MARKS)})")
+            if page.eval(WORDMARKS) != wordmarks("rgb(250, 250, 250)"):
+                problems.append(f"{at}: the name beside the tiles isn't the wordmark in the text colour ({page.eval(WORDMARKS)})")
             step = height * 0.5
             for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):
                 page.scroll_to(y, 0.3)
@@ -827,6 +841,8 @@ def check_home_stills(browser):
             problems.append(f"light mode: a still without v2's gunmetal card and lighten: {[(p['stage'], p['blend'], p['card'][:20]) for p in pics]}")
         if light.eval(MARKS) != OPEN_BOX_TILES:
             problems.append(f"light mode: the tiles aren't the open box, lime on ink ({light.eval(MARKS)})")
+        if light.eval(WORDMARKS) != wordmarks("rgb(10, 10, 10)"):
+            problems.append(f"light mode: the name beside the tiles isn't the wordmark in the text colour ({light.eval(WORDMARKS)})")
         if light.eval(f"{SWITCH}.getAttribute('aria-pressed')") != "true":
             problems.append("light mode: the Lights switch isn't pressed")
         light.eval(f"{SWITCH}.click()")
