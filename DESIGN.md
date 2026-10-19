@@ -299,7 +299,8 @@ cell, dialog or empty state with two or more sentences, each sentence starts on 
 `<br>` after each sentence's end (the space stays, so the text reads the same to search, screen readers and
 check-copy); the app's `ui/lines.js` does it for `<p>`, `<dd>` and the alert and choice text it builds; the home's
 drop widget breaks its two card sentences with a newline under `white-space: pre-line` (A-06 unchanged).
-Headings and the status pill stay one line.
+Headings and the status pill stay one line. One exception, the owner's (owner-5): `/verify/tx`'s two facts (what it
+proves, with its link to Tari's own indexer, and what stays hidden) each read as one line.
 **The Say It Once Rule (copy-1, the owner's).** hidebox has eight key statements. Each is said once per page, in its
 best place and in its registered words (`tools/claim-registry.json`); anywhere else on that page it is a short answer
 (a comparison cell: "In your browser.") or a link to where it is said, never the sentence again:

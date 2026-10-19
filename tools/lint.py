@@ -9,7 +9,7 @@ Checks, with the file sets they apply to:
   - JavaScript under web/ (not the vendored official files): no HTML sinks or string-to-code.
   - What the browser loads (web/shared, web/site/{js,css,pages,static}, web/app minus tests and
     sidecar): no http:// URLs; absolute https:// only in <a href> and for the two public Tari
-    indexers; no remote src, stylesheet, CSS url(), import or fetch; no {{PLACEHOLDER}} in JS or CSS
+    indexers and the indexer's own page; no remote src, stylesheet, CSS url(), import or fetch; no {{PLACEHOLDER}} in JS or CSS
     (the build fills placeholders only in HTML and text files).
   - Served HTML and partials: no style="…", no on…= handlers, no inline <script> except JSON-LD,
     and integrity="{{SRI}}" on every local script and stylesheet tag.
@@ -35,7 +35,8 @@ SKIP_DIRS = {".git", "dist", "release", "__pycache__", "node_modules", "target"}
 DATA_PARTS = ("/tests/evidence/", "/fixtures/", "/template/dist/")
 VENDORED = re.compile(r"(^|/)web/app/vendor/ootle-wasm-[^/]+/")
 CODE_EXT = {".py", ".js", ".mjs", ".css", ".html", ".sh", ".rs"}
-INDEXERS = ("https://ootle-indexer-a.tari.com", "https://ootle-indexer-b.tari.com")
+INDEXERS = ("https://ootle-indexer-a.tari.com", "https://ootle-indexer-b.tari.com",
+            "https://indexer.esme.tari.com")    # the indexer's own page, a link target only (/verify/tx)
 XML_NAMESPACES = ("http://www.w3.org/2000/svg", "http://www.w3.org/1999/xlink",
                   "http://www.w3.org/XML/1998/namespace")
 SERVED_ROOTS = ("web/shared/", "web/site/js/", "web/site/css/", "web/site/pages/", "web/site/static/", "web/app/",

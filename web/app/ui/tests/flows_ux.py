@@ -164,8 +164,15 @@ def ux_drop(t):
     t.check(b.attr("tx-hidden", "data-hidden") == str(hid).lower()
             and ("The chain shows a payment with a hidden amount and a hidden owner. The fee is public." in words) == hid,
             f"what stays hidden: C36's registered sentence only when this transaction's own outputs show it ({hid}, {words[:80]!r})")
-    t.check("The Tari chain accepted this transaction, and it is final." in b.text("tx-root") and "Anyone can check it" in b.text("tx-root"),
-            "what this proves, in two lines")
+    proves = b.eval("""(() => { const p = document.querySelector('[data-testid="tx-proves"]'), a = p?.querySelector('a');
+      return p && [p.textContent, p.querySelectorAll('br').length, a?.textContent, a?.getAttribute('href'), a?.target, a?.rel,
+        document.querySelectorAll('[data-testid="tx-hidden"] p br').length]; })()""")
+    t.check(proves is not None and proves[0] == "The Tari chain accepted this transaction, and it is final. Anyone can check it on Tari's own indexer."
+            and proves[1] == 0 and proves[6] == 0,
+            f"what this proves, and what stays hidden: one line each, no break between the sentences (owner-5: {proves})")
+    t.check(proves is not None and proves[2] == "Tari's own indexer" and proves[3] == f"https://indexer.esme.tari.com/transactions/{tx}"
+            and proves[4] == "_blank" and "noopener" in (proves[5] or ""),
+            f"Tari's own indexer links to this transaction on the indexer's page, in a new tab with noopener ({proves and proves[2:6]})")
     t.check(b.eval("document.querySelector('[data-testid=\"tx-details\"]').open && document.querySelector('[data-testid=\"tx-check\"]').open"),
             "a computer opens Details and the check")
     t.check(b.exists("tx-fee") and len(b.eval("[...document.querySelectorAll('[data-testid=\"tx-output\"]')]")) >= 1

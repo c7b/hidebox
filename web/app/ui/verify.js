@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 // /verify/tx/<id>, "What the chain sees" (spec §12.3.3): one transaction as the indexer holds it, every
-// output's amount and owner as the chain reveals them, the public fee; and an explicit button to ask
-// Tari's indexer directly (the only cross-origin request the app makes). /verify (P1): SealLog
-// receipts for this device's links, each proof checked here against the root on the Ootle.
+// output's amount and owner as the chain reveals them, the public fee; a link to the same transaction on
+// Tari's own indexer page, and an explicit button to ask Tari's indexer directly (the only cross-origin
+// request the app makes). /verify (P1): SealLog receipts for this device's links, each proof checked here
+// against the root on the Ootle.
+import { h as plain } from '../lib/dom.js';
 import { h } from './lines.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, hex, unhex } from '../lib/b64.js';
@@ -16,6 +18,9 @@ import { scene } from './scene.js';
 import { setTitle } from './shell.js';
 
 const short = (id) => (id.length > 24 ? `${id.slice(0, 14)}…${id.slice(-8)}` : id);
+// Tari's indexer as a page a person can read, for the Esmeralda testnet: its transaction page shows the decision
+// (Commit), the epoch and the fee, and falls back to the committed receipt once validators drop the full result.
+const INDEXER_PAGE = 'https://indexer.esme.tari.com';
 const TX_TRIES = 7;           // about 30 seconds of asking before "the indexers don't know it"
 const TX_RETRY_MS = 5000;
 
@@ -77,12 +82,17 @@ export async function renderTx(main, { txId }) {
     say: !ok ? t('chain.when_other', { status: String(view.status) }) : view.epoch == null ? t('chain.when_plain') : t('chain.when', { epoch: String(view.epoch) }),
   });
   moment.dataset.status = String(view.status);
+  // Each fact reads as one line (owner-5), so these two paragraphs skip lines.js's break after each sentence.
+  const mark = '\u0000';
+  const [before, after] = t('chain.proves', { indexer: mark }).split(mark);
+  const indexer = plain('a', { href: `${INDEXER_PAGE}/transactions/${txId}`, target: '_blank', rel: 'noopener', referrerpolicy: 'no-referrer',
+    'data-testid': 'tx-indexer' }, t('chain.proves_link'));
   const facts = h('div', { class: 'a-tx-facts' },
     ok ? h('section', { class: 'a-tx-fact' }, h('h2', { class: 'a-tx-fact-h' }, glyph('circle-check'), h('span', {}, t('chain.proves_h'))),
-      h('p', {}, t('chain.proves'))) : null,
+      plain('p', { 'data-testid': 'tx-proves' }, before, indexer, after)) : null,
     h('section', { class: 'a-tx-fact', 'data-testid': 'tx-hidden', 'data-hidden': String(hidden) },
       h('h2', { class: 'a-tx-fact-h' }, glyph(hidden ? 'lock' : 'eye'), h('span', {}, t(hidden ? 'chain.hidden_h' : 'chain.public_h'))),
-      h('p', {}, hidden ? t('buy.shows') : t('chain.fee_note'))));
+      plain('p', {}, hidden ? t('buy.shows') : t('chain.fee_note'))));
   const record = [
     h('dl', { class: 'a-kv' },
       h('dt', {}, t('chain.tx')), h('dd', { class: 'mono a-wrap' }, txId),
