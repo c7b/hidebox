@@ -1,0 +1,1164 @@
+[
+ {
+  "flow": "make-drive",
+  "device": "desktop",
+  "note": "",
+  "total_s": 1.44,
+  "longest_still_s": 0.15,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.27,
+    "hidebox Your private drive. Files lock in this browser before upload. You pick how each one opens. Make my drive Open my drive Making your key in this browser\u2026 No email, no password. Your key is the account."
+   ],
+   [
+    1.11,
+    "Opening your drive\u2026"
+   ],
+   [
+    1.25,
+    "Opening\u2026"
+   ]
+  ],
+  "done_shot": "after-make-drive-desktop-done.png"
+ },
+ {
+  "flow": "drop-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.93,
+  "longest_still_s": 0.12,
+  "still_from_s": 0.19,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.31,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Making it\u2026 Looking on the Tari chain for what only your drive opens\u2026 Nothing here yet. Share your Tari address. Files"
+   ],
+   [
+    0.55,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Making it\u2026 Checked 2 new payments on the Tari chain for ones only your drive opens. Nothing here yet. Share your Tari"
+   ],
+   [
+    0.67,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Making it\u2026 Checked 2 new payments on the Tari chain for ones only your drive opens. Nothing here yet. Share your Tari"
+   ]
+  ],
+  "done_shot": "after-drop-link-desktop-done.png"
+ },
+ {
+  "flow": "drop-page",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 1.52,
+  "longest_still_s": 0.23,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.23,
+    ""
+   ],
+   [
+    0.34,
+    "\u2026"
+   ],
+   [
+    0.94,
+    "Checking the drop\u2026"
+   ]
+  ],
+  "done_shot": "after-drop-page-desktop-done.png"
+ },
+ {
+  "flow": "drop",
+  "device": "desktop",
+  "note": "a 1,099,417 B photo with GPS",
+  "total_s": 25.34,
+  "longest_still_s": 0.24,
+  "still_from_s": 25.1,
+  "still_on": "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while y",
+  "timeline": [
+   [
+    0.15,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    0.33,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    0.53,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    1.23,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    1.94,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    3.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    4.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    5.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    6.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    7.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    8.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    9.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    10.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    11.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    12.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    13.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    14.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    15.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    16.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    17.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    18.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    19.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    20.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    21.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    22.22,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    22.82,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    23.18,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    24.14,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    24.87,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ]
+  ],
+  "done_shot": "after-drop-desktop-done.png",
+  "end_state": "delivered"
+ },
+ {
+  "flow": "verify-tx",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 1.41,
+  "longest_still_s": 0.21,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.21,
+    ""
+   ],
+   [
+    0.33,
+    "\u2026"
+   ],
+   [
+    0.93,
+    "What the chain sees. Reading it from the indexer\u2026"
+   ]
+  ],
+  "done_shot": "after-verify-tx-desktop-done.png"
+ },
+ {
+  "flow": "drop-page",
+  "device": "android-slow4g",
+  "note": "from navigation",
+  "total_s": 11.77,
+  "longest_still_s": 0.89,
+  "still_from_s": 0.87,
+  "still_on": "",
+  "timeline": [
+   [
+    0.87,
+    ""
+   ],
+   [
+    1.76,
+    "\u2026"
+   ],
+   [
+    6.87,
+    "Checking the drop\u2026"
+   ],
+   [
+    8.91,
+    "0:02 Checking the drop\u2026"
+   ],
+   [
+    9.87,
+    "0:03 Checking the drop\u2026"
+   ],
+   [
+    10.83,
+    "0:04 Checking the drop\u2026"
+   ]
+  ],
+  "done_shot": "after-drop-page-android-slow4g-done.png"
+ },
+ {
+  "flow": "drop",
+  "device": "android-slow4g",
+  "note": "a 1,099,417 B photo with GPS",
+  "total_s": 59.63,
+  "longest_still_s": 0.77,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.77,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    0.86,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    1.82,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    2.54,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    4.58,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    5.54,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    6.5,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    7.58,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    8.54,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    9.5,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    10.58,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    11.54,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    12.5,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    13.58,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    14.54,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    15.5,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    16.58,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    17.54,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    18.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    20.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    21.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    21.38,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    21.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    23.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    24.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    24.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    26.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    27.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    27.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    29.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    30.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    30.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    32.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    33.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    33.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    35.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    36.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    36.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    38.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    39.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    39.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    41.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    42.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    42.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    44.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    45.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    45.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    47.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    48.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    48.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    50.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    51.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    51.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    53.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    54.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    54.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    56.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    57.02,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    57.98,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ],
+   [
+    59.06,
+    "Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it. You don't need an account. Our server sees your IP while you're connected; we don't write it to disk. Check who this i"
+   ]
+  ],
+  "done_shot": "after-drop-android-slow4g-done.png",
+  "end_state": "delivered"
+ },
+ {
+  "flow": "verify-tx",
+  "device": "android-slow4g",
+  "note": "from navigation",
+  "total_s": 7.4,
+  "longest_still_s": 0.84,
+  "still_from_s": 0.79,
+  "still_on": "",
+  "timeline": [
+   [
+    0.79,
+    ""
+   ],
+   [
+    1.63,
+    "\u2026"
+   ],
+   [
+    6.01,
+    "What the chain sees. Reading it from the indexer\u2026"
+   ],
+   [
+    7.4,
+    "Confirmed. The Tari chain committed it in epoch 12480, a tick of its clock. What this proves The Tari chain accepted this transaction, and it is final. Anyone can check it on Tari's own indexer. What stays hidden The chain shows a payment with a hidden amount "
+   ]
+  ],
+  "done_shot": "after-verify-tx-android-slow4g-done.png"
+ },
+ {
+  "flow": "widget",
+  "device": "desktop",
+  "note": "a 1,099,417 B photo with GPS",
+  "total_s": 1.34,
+  "longest_still_s": 0.56,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.56,
+    "Taking out where the photo was made\u2026 We took out where it was made, and the camera Keep the photo as it was Stop"
+   ],
+   [
+    0.67,
+    "Locking it up. We took out where it was made, and the camera Keep the photo as it was Stop"
+   ],
+   [
+    1.27,
+    "Locking it up. We took out where it was made, and the camera Keep the photo as it was"
+   ]
+  ],
+  "done_shot": "after-widget-desktop-done.png"
+ },
+ {
+  "flow": "widget",
+  "device": "android-slow4g",
+  "note": "a 1,099,417 B photo with GPS",
+  "total_s": 20.8,
+  "longest_still_s": 2.77,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    2.77,
+    "Locking it up. Stop"
+   ],
+   [
+    2.88,
+    "Taking out where the photo was made\u2026 Stop"
+   ],
+   [
+    3.54,
+    "Taking out where the photo was made\u2026 We took out where it was made, and the camera Keep the photo as it was Stop"
+   ],
+   [
+    4.44,
+    "Locking it up. We took out where it was made, and the camera Keep the photo as it was Stop"
+   ],
+   [
+    18.84,
+    "Locking it up. 100 percent done. We took out where it was made, and the camera Keep the photo as it was Stop"
+   ],
+   [
+    20.16,
+    "Locking it up. 100 percent done. We took out where it was made, and the camera Keep the photo as it was"
+   ],
+   [
+    20.8,
+    "Once A few times Add a secret word It opens one time in the next 24 hours. Then it's gone. Copied We took out where it was made, and the camera Send it to a Tari address instead Drop another More rules"
+   ]
+  ],
+  "done_shot": "after-widget-android-slow4g-done.png"
+ },
+ {
+  "flow": "upload-file",
+  "device": "desktop",
+  "note": "a 1,099,417 B photo",
+  "total_s": 1.19,
+  "longest_still_s": 0.32,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.32,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    0.44,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    0.68,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    1.04,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    1.16,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | 1 upload done IMG_after.jpg Locked and saved"
+   ]
+  ],
+  "done_shot": "after-upload-file-desktop-done.png"
+ },
+ {
+  "flow": "upload-folder",
+  "device": "desktop",
+  "note": "3 files, 1 subfolder",
+  "total_s": 1.04,
+  "longest_still_s": 0.23,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.23,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | Locking 3 files"
+   ],
+   [
+    0.35,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Locking notes.txt Locking day2.txt Locking Locking 3 files"
+   ],
+   [
+    0.47,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Uploading notes.txt Uploading day2.txt Locking Locking 3 files"
+   ],
+   [
+    0.71,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Locked and saved notes.txt Locked and saved day2.txt Uploading Locking "
+   ],
+   [
+    0.95,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | 3 uploads done plan.txt Locked and saved notes.txt Locked and saved day2.txt Loc"
+   ]
+  ],
+  "done_shot": "after-upload-folder-desktop-done.png"
+ },
+ {
+  "flow": "make-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.31,
+  "longest_still_s": 0.17,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.28,
+    "3 uploads done plan.txt Locked and saved notes.txt Locked and saved day2.txt Locked and saved | Share IMG_after.jpg How many times can it open? Once One open. Then the link ends. A few times Up to 3 opens. No limit On your first day, up to 50 opens. It ends In"
+   ]
+  ],
+  "done_shot": "after-make-link-desktop-done.png"
+ },
+ {
+  "flow": "copy-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.24,
+  "longest_still_s": 0.13,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [],
+  "done_shot": "after-copy-link-desktop-done.png"
+ },
+ {
+  "flow": "link-open",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.5,
+  "longest_still_s": 0.2,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.32,
+    "Opening it. Opening it here. 0 percent done. Report this link Make your own"
+   ],
+   [
+    0.44,
+    "Opening it. Opening it here. 100 percent done. Report this link Make your own"
+   ]
+  ],
+  "done_shot": "after-link-open-desktop-done.png"
+ },
+ {
+  "flow": "folder-open",
+  "device": "android-slow4g",
+  "note": "from navigation",
+  "total_s": 10.5,
+  "longest_still_s": 0.92,
+  "still_from_s": 0.81,
+  "still_on": "",
+  "timeline": [
+   [
+    0.81,
+    ""
+   ],
+   [
+    1.72,
+    "\u2026"
+   ],
+   [
+    6.2,
+    "Checking the link\u2026"
+   ],
+   [
+    8.24,
+    "0:02 Checking the link\u2026"
+   ],
+   [
+    9.2,
+    "0:03 Checking the link\u2026"
+   ],
+   [
+    10.16,
+    "0:04 Checking the link\u2026"
+   ]
+  ],
+  "done_shot": "after-folder-open-android-slow4g-done.png"
+ },
+ {
+  "flow": "folder-list",
+  "device": "android-slow4g",
+  "note": "",
+  "total_s": 0.95,
+  "longest_still_s": 0.3,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.3,
+    "Opening it."
+   ],
+   [
+    0.94,
+    "trip-after 3 tiny files. Download all This visit ends in 30 minutes. That was its last open. Save what you need before this visit ends. days 1 item notes.txt 15 B Save plan.txt 20 B Save We can't see inside, so we can't scan it either. Only open files you expe"
+   ]
+  ],
+  "done_shot": "after-folder-list-android-slow4g-done.png"
+ },
+ {
+  "flow": "received",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 2.0,
+  "longest_still_s": 0.48,
+  "still_from_s": 0.23,
+  "still_on": "",
+  "timeline": [
+   [
+    0.23,
+    ""
+   ],
+   [
+    0.7,
+    "Opening your drive\u2026"
+   ],
+   [
+    0.94,
+    "Opening\u2026"
+   ],
+   [
+    1.19,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Looking on the Tari chain for what only your drive opens\u2026 Nothing here yet. Share your"
+   ],
+   [
+    1.91,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Looking on the Tari chain for what only your drive opens\u2026 What How it came Came Status"
+   ]
+  ],
+  "done_shot": "after-received-desktop-done.png"
+ },
+ {
+  "flow": "received-open",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.64,
+  "longest_still_s": 0.12,
+  "still_from_s": 0.44,
+  "still_on": "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Checked 6 new payments on ",
+  "timeline": [
+   [
+    0.08,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Checked 6 new payments on the Tari chain for ones only your drive opens. What How it c"
+   ],
+   [
+    0.56,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Checked 6 new payments on the Tari chain for ones only your drive opens. What How it c"
+   ]
+  ],
+  "done_shot": "after-received-open-desktop-done.png"
+ },
+ {
+  "flow": "activity",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 1.1,
+  "longest_still_s": 0.48,
+  "still_from_s": 0.21,
+  "still_on": "",
+  "timeline": [
+   [
+    0.21,
+    ""
+   ],
+   [
+    0.69,
+    "Opening your drive\u2026"
+   ],
+   [
+    0.93,
+    "Opening\u2026"
+   ]
+  ],
+  "done_shot": "after-activity-desktop-done.png"
+ },
+ {
+  "flow": "key-file",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.34,
+  "longest_still_s": 0.2,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.33,
+    "Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Lock the key file with a passphrase Passphrase Four or more random words. Without one, anyone with the file can open your drive. Locking the key file\u2026 Show my key t"
+   ]
+  ],
+  "done_shot": "after-key-file-desktop-done.png"
+ },
+ {
+  "flow": "open-drive",
+  "device": "android-slow4g",
+  "note": "a key file locked with a passphrase",
+  "total_s": 3.84,
+  "longest_still_s": 0.23,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.23,
+    "hidebox Your private drive. Files lock in this browser before upload. You pick how each one opens. Make my drive Open my drive No email, no password. Your key is the account. Open your drive Use the key you saved. Paste key Key file Your key Passphrase, if you"
+   ],
+   [
+    0.45,
+    "Opening your drive\u2026 Open your drive Use the key you saved. Paste key Key file Your key Passphrase, if you set one Cancel Open"
+   ],
+   [
+    0.69,
+    "Opening your drive\u2026"
+   ],
+   [
+    2.45,
+    "Opening\u2026 New"
+   ],
+   [
+    3.84,
+    "My drive Folders trip-after Link ended 3 items Files IMG_after.jpg Link ended New"
+   ]
+  ],
+  "done_shot": "after-open-drive-android-slow4g-done.png"
+ },
+ {
+  "flow": "open-drive",
+  "device": "desktop",
+  "note": "the earlier run's drive, its key file locked with a passphrase",
+  "total_s": 0.84,
+  "longest_still_s": 0.18,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.3,
+    "hidebox Your private drive. Files lock in this browser before upload. You pick how each one opens. Make my drive Open my drive No email, no password. Your key is the account. Open your drive Use the key you saved. Paste key Key file Your key Passphrase, if you"
+   ],
+   [
+    0.42,
+    "Opening your drive\u2026 Open your drive Use the key you saved. Paste key Key file Your key Passphrase, if you set one Cancel Open"
+   ],
+   [
+    0.68,
+    "hidebox My drive New My drive Received Shared Activity Trash Storage 1.1 MB of 64 MB used Get more space My Tari address Getting it ready\u2026 Upgrade Opening\u2026 Open your drive Use the key you saved. Paste key Key file Your key Passphrase, if you set one Cancel Ope"
+   ]
+  ],
+  "done_shot": "after2-open-drive-desktop-done.png"
+ },
+ {
+  "flow": "drop-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 1.4,
+  "longest_still_s": 0.12,
+  "still_from_s": 0.52,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.64,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Making it\u2026 Looking on the Tari chain for what only your drive opens\u2026 Nothing here yet. Share your Tari address. Files"
+   ],
+   [
+    1.37,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Looking on the Tari chain for what only your drive opens\u2026 Nothing here yet. Share your"
+   ]
+  ],
+  "done_shot": "after2-drop-link-desktop-done.png"
+ },
+ {
+  "flow": "make-pay-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.59,
+  "longest_still_s": 0.15,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.28,
+    "Share IMG_after.jpg Set a price The money goes straight to your Tari address. We never hold it. 0.1 tTARI 0.25 tTARI 0.5 tTARI Show the name before they pay They see its name, how many files, and about how big. Not what is inside. The first time you sell To se"
+   ]
+  ],
+  "done_shot": "after2-make-pay-link-desktop-done.png"
+ },
+ {
+  "flow": "pay-page",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 1.38,
+  "longest_still_s": 0.23,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.23,
+    ""
+   ],
+   [
+    0.35,
+    "\u2026"
+   ]
+  ],
+  "done_shot": "after2-pay-page-desktop-done.png"
+ },
+ {
+  "flow": "pay-test",
+  "device": "desktop",
+  "note": "",
+  "total_s": 25.89,
+  "longest_still_s": 0.25,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.25,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price Waiting for your payment. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Paying lets you open it 3 times until Oct 26. Anyone who opens a file can pass it on. The owner c"
+   ],
+   [
+    1.21,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price Waiting for your payment. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment Payment seen, amount checked On the chain Ready to open You pay the owne"
+   ]
+  ],
+  "done_shot": "after2-pay-test-desktop-done.png",
+  "end_state": "open"
+ },
+ {
+  "flow": "pay-open",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.49,
+  "longest_still_s": 0.23,
+  "still_from_s": 0.26,
+  "still_on": "Paid. It's open. 3 opens left until Oct 26. Price Paid. It's open. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment Payment seen, amount checked On the chain Rea",
+  "timeline": [
+   [
+    0.26,
+    "Paid. It's open. 3 opens left until Oct 26. Price Paid. It's open. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment Payment seen, amount checked On the chain Ready to open 3 opens left until Oct 26. Opening it\u2026 What the c"
+   ]
+  ],
+  "done_shot": "after2-pay-open-desktop-done.png"
+ },
+ {
+  "flow": "owner-sale",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 3.64,
+  "longest_still_s": 0.79,
+  "still_from_s": 2.85,
+  "still_on": "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Checked 853 new payments o",
+  "timeline": [
+   [
+    0.21,
+    ""
+   ],
+   [
+    0.69,
+    "Opening your drive\u2026"
+   ],
+   [
+    0.93,
+    "Opening\u2026"
+   ],
+   [
+    1.17,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Looking on the Tari chain for what only your drive opens\u2026 Nothing here yet. Share your"
+   ],
+   [
+    2.66,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Looking on the Tari chain for what only your drive opens\u2026 What How it came Came Status"
+   ],
+   [
+    2.85,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make a new drop link Copy link Checked 853 new payments on the Tari chain for ones only your drive opens. What How it"
+   ]
+  ],
+  "done_shot": "after2-owner-sale-desktop-done.png"
+ },
+ {
+  "flow": "delete-drive",
+  "device": "desktop",
+  "note": "",
+  "total_s": 3.89,
+  "longest_still_s": 0.72,
+  "still_from_s": 3.17,
+  "still_on": "Deleting your drive\u2026 6 of 6 deleted Checking that nothing is left\u2026",
+  "timeline": [
+   [
+    0.29,
+    "Deleting your drive\u2026 0 of 6 deleted day2.txt"
+   ],
+   [
+    0.41,
+    "Deleting your drive\u2026 1 of 6 deleted day2.txt"
+   ],
+   [
+    0.77,
+    "Deleting your drive\u2026 1 of 6 deleted IMG_after.jpg"
+   ],
+   [
+    0.89,
+    "Deleting your drive\u2026 2 of 6 deleted IMG_after.jpg"
+   ],
+   [
+    1.25,
+    "Deleting your drive\u2026 2 of 6 deleted notes.txt"
+   ],
+   [
+    1.37,
+    "Deleting your drive\u2026 3 of 6 deleted notes.txt"
+   ],
+   [
+    1.73,
+    "Deleting your drive\u2026 3 of 6 deleted plan.txt"
+   ],
+   [
+    1.85,
+    "Deleting your drive\u2026 4 of 6 deleted plan.txt"
+   ],
+   [
+    2.21,
+    "Deleting your drive\u2026 4 of 6 deleted days"
+   ],
+   [
+    2.33,
+    "Deleting your drive\u2026 5 of 6 deleted days"
+   ],
+   [
+    2.69,
+    "Deleting your drive\u2026 5 of 6 deleted trip-after"
+   ],
+   [
+    2.81,
+    "Deleting your drive\u2026 6 of 6 deleted trip-after"
+   ],
+   [
+    3.17,
+    "Deleting your drive\u2026 6 of 6 deleted Checking that nothing is left\u2026"
+   ]
+  ],
+  "done_shot": "after2-delete-drive-desktop-done.png"
+ },
+ {
+  "flow": "verify-known",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 1.18,
+  "longest_still_s": 0.23,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.23,
+    ""
+   ],
+   [
+    0.35,
+    "\u2026"
+   ],
+   [
+    0.95,
+    "What the chain sees. Reading it from the indexer\u2026"
+   ]
+  ],
+  "done_shot": "after2-verify-known-desktop-done.png"
+ },
+ {
+  "flow": "verify-known",
+  "device": "android-slow4g",
+  "note": "from navigation",
+  "total_s": 7.64,
+  "longest_still_s": 0.88,
+  "still_from_s": 0.85,
+  "still_on": "",
+  "timeline": [
+   [
+    0.85,
+    ""
+   ],
+   [
+    1.73,
+    "\u2026"
+   ],
+   [
+    6.24,
+    "What the chain sees. Reading it from the indexer\u2026"
+   ]
+  ],
+  "done_shot": "after2-verify-known-android-slow4g-done.png"
+ }
+]

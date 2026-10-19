@@ -1,0 +1,44 @@
+make-drive     desktop       total   1.08 s  longest still   0.28 s  from 0.00 s on: '(the screen as the action left it)'
+drop-link      desktop       total   0.39 s  longest still   0.20 s  from 0.00 s on: '(the screen as the action left it)'
+  drop link https://hidebox.app/d/<drop>
+drop-page      desktop       total   0.45 s  longest still   0.25 s  from 0.16 s on: '…'
+drop           desktop       total  20.94 s  longest still  20.48 s  from 0.46 s on: 'Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tar'
+verify-tx      desktop       total   0.73 s  longest still   0.59 s  from 0.13 s on: 'What the chain sees. Reading it from the indexer…'
+drop-page      android-slow4g total  10.64 s  longest still   4.63 s  from 1.68 s on: '…'
+drop           android-slow4g total  48.55 s  longest still  31.51 s  from 17.04 s on: 'Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tar'
+verify-tx      android-slow4g total   6.08 s  longest still   3.60 s  from 1.33 s on: '…'
+widget         desktop       total   0.52 s  longest still   0.27 s  from 0.00 s on: '(the screen as the action left it)'
+widget         android-slow4g total  19.62 s  longest still  13.80 s  from 3.94 s on: 'Locking it up. We took out where it was made, and the camera Keep the photo as it was Stop'
+upload-file    desktop       total   0.39 s  longest still   0.13 s  from 0.00 s on: '(the screen as the action left it)'
+upload-folder  desktop       total   0.64 s  longest still   0.22 s  from 0.00 s on: '(the screen as the action left it)'
+make-link      desktop       total   0.24 s  longest still   0.22 s  from 0.00 s on: '(the screen as the action left it)'
+copy-link      desktop       total   0.24 s  longest still   0.15 s  from 0.00 s on: '(the screen as the action left it)'
+link-open      desktop       total   0.31 s  longest still   0.17 s  from 0.00 s on: '(the screen as the action left it)'
+folder-open    android-slow4g total   9.30 s  longest still   3.92 s  from 1.63 s on: '…'
+folder-list    android-slow4g total   0.93 s  longest still   0.64 s  from 0.29 s on: 'Opening it.'
+received       desktop       total   0.46 s  longest still   0.15 s  from 0.00 s on: '(the screen as the action left it)'
+received-open  desktop       total   0.24 s  longest still   0.14 s  from 0.00 s on: '(the screen as the action left it)'
+activity       desktop       total   0.37 s  longest still   0.14 s  from 0.00 s on: '(the screen as the action left it)'
+key-file       desktop       total   0.34 s  longest still   0.24 s  from 0.00 s on: '(the screen as the action left it)'
+open-drive     android-slow4g total   3.70 s  longest still   0.25 s  from 2.16 s on: 'Opening your drive…'
+make-pay-link  desktop       total   0.35 s  longest still   0.22 s  from 0.00 s on: '(the screen as the action left it)'
+pay-page       desktop       total   0.48 s  longest still   0.24 s  from 0.16 s on: '…'
+  pay page state wait Pay to open this file.About 5 MB. Pay 0.1 tTARI and it opens here.PriceWaiting for your payment.0.1tTARIPlus a network fee of 0.03 tTARI. The fee is public.Paying lets you open it 3 times until Oct 26
+Traceback (most recent call last):
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 600, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 586, in main
+    flow_pay(r)
+    ~~~~~~~~^^^
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 522, in flow_pay
+    r.page_load(a, "owner-sale", "desktop", "/drive/received",
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                "!!document.querySelector('[data-testid=\"sales-row\"]') && !document.querySelector('[data-testid=\"inbox-scan\"] .spinner')", 180)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 260, in page_load
+    page.wait("window.__ux.done !== null", timeout)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/e2e/cdp.py", line 251, in wait
+    raise CdpError(f"timed out after {timeout} s waiting for: {expression[:160]}")
+cdp.CdpError: timed out after 180 s waiting for: window.__ux.done !== null

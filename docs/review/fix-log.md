@@ -954,3 +954,29 @@ Suites on the server as build: lint PASS, check-copy PASS, deploy 84 OK, core 9/
 words at 390 38 above the fold and 586 in all (46 and 650 before), A-06 unchanged. `/v2` keeps its old words on
 purpose; V-01 no longer compares them with the home's. The site-v4 live probe (`docs/evidence/2026-10-17/site-v4/
 checks/live_probe.py`) still expects the old headline and fails against this release by design.
+
+## Fourteenth pass (ux feedback 1): every wait says what is happening, every result says it worked (2026-10-19)
+
+The owner left a photo at his drop link from another browser: seven seconds with nothing moving between Send and the
+result, a result of loose lines around a bare transaction id, and a /verify/tx page of raw fields; he asked whether
+other corners had gone unchecked. `docs/review/ux-feedback-1.md` has the audit of every flow on production (before
+and, with this branch's front end served to the test browser, after), each fixed state, the copy and claims, the
+budgets and the screenshots; evidence in `docs/evidence/2026-10-18/ux-feedback-1/`.
+
+| # | Where | Before (production, longest still) | Now |
+|---|---|---|---|
+| 1 | The drop page sending | 20.5 s (computer), 31.5 s (phone, Slow 4G): one mono line | Four lit steps with a clock, the relay's countdown filling a bar, the chain's line; 0.24 s / 0.77 s |
+| 2 | Delivered | Loose lines, a bare tx | One card: the open box takes the photo in, a check lands; "Your photo is in their drive." / "Only that drive can open it."; the chain's line; a Receipt pill; Leave another |
+| 3 | A failed delivery | Try again, no place | The failed step marked, "Your file is stored.", Try again |
+| 4 | /verify/tx | Raw fields; "Reading it from the indexer…" still up to 30 s | Confirmed with the epoch in one phrase; what it proves; C36's registered sentence when the outputs show it; the record under Details (open on a computer, closed on a phone); the check under Check it yourself |
+| 5 | The home's quick share (phone) | 13.8 s on "Locking it up." | A bar moves under it; 2.8 s left before the busy line (open) |
+| 6 | Pay to open, a first sale | "Try again in a few minutes", never asked again | Asks again every 10 s under a live wait |
+| 7 | Page boots, the drive's waits, /send, Send by Tari | "…" or blank for 4 to 4.6 s on the phone; greyed buttons; an upload row stuck at 10 % | A CSS ring before the scripts; turning buttons (Save key file, Open, Make my drop link, the drive's dialogs); a sweeping upload row; the same steps and done moment |
+
+One component for a wait and one for a result (`web/app/ui/progress.js`, `web/app/css/flow.css`); no library, no
+server change, no claim added (the hidden-amount line is C36's registered sentence, shown only when the transaction's
+outputs say so). Budgets: A-06 computer 43,477 B (43,503 before), phone 25,013 / 40,510 B; A-06d 123,329 B; M-01 58.3 KB.
+Suites on the final tree: lint, check-copy, core 9/9, deploy 84, site 42/42, UI 804/804 (53 new checks in `ux-drop`,
+`ux-drop-phone`, `ux-drive-waits`, `ux-widget`); server 331 with one error `main` has too since 2026-10-19
+(`test_admin`'s forged payment test). The code-critic agent failed the first version on five points, all fixed. Pushed
+to `main`; not deployed, tag not moved (the coordinator's).

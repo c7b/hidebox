@@ -1,0 +1,39 @@
+make-drive     desktop       total   1.44 s  longest still   0.15 s  from 0.00 s on: '(the screen as the action left it)'
+drop-link      desktop       total   0.93 s  longest still   0.12 s  from 0.19 s on: '(the screen as the action left it)'
+  drop link https://hidebox.app/d/<drop>
+drop-page      desktop       total   1.52 s  longest still   0.23 s  from 0.00 s on: '(the screen as the action left it)'
+drop           desktop       total  25.34 s  longest still   0.24 s  from 25.10 s on: 'Leave a file here. It gets locked right here, before it goes anywhere. Then it goes by Tar'
+verify-tx      desktop       total   1.41 s  longest still   0.21 s  from 0.00 s on: '(the screen as the action left it)'
+drop-page      android-slow4g total  11.77 s  longest still   0.89 s  from 0.87 s on: ''
+drop           android-slow4g total  59.63 s  longest still   0.77 s  from 0.00 s on: '(the screen as the action left it)'
+verify-tx      android-slow4g total   7.40 s  longest still   0.84 s  from 0.79 s on: ''
+widget         desktop       total   1.34 s  longest still   0.56 s  from 0.00 s on: '(the screen as the action left it)'
+widget         android-slow4g total  20.80 s  longest still   2.77 s  from 0.00 s on: '(the screen as the action left it)'
+upload-file    desktop       total   1.19 s  longest still   0.32 s  from 0.00 s on: '(the screen as the action left it)'
+upload-folder  desktop       total   1.04 s  longest still   0.23 s  from 0.00 s on: '(the screen as the action left it)'
+make-link      desktop       total   0.31 s  longest still   0.17 s  from 0.00 s on: '(the screen as the action left it)'
+copy-link      desktop       total   0.24 s  longest still   0.13 s  from 0.00 s on: '(the screen as the action left it)'
+link-open      desktop       total   0.50 s  longest still   0.20 s  from 0.00 s on: '(the screen as the action left it)'
+folder-open    android-slow4g total  10.50 s  longest still   0.92 s  from 0.81 s on: ''
+folder-list    android-slow4g total   0.95 s  longest still   0.30 s  from 0.00 s on: '(the screen as the action left it)'
+received       desktop       total   2.00 s  longest still   0.48 s  from 0.23 s on: ''
+received-open  desktop       total   0.64 s  longest still   0.12 s  from 0.44 s on: 'Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone'
+activity       desktop       total   1.10 s  longest still   0.48 s  from 0.21 s on: ''
+key-file       desktop       total   0.34 s  longest still   0.20 s  from 0.00 s on: '(the screen as the action left it)'
+open-drive     android-slow4g total   3.84 s  longest still   0.23 s  from 0.00 s on: '(the screen as the action left it)'
+candidate files served: 914
+Traceback (most recent call last):
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 624, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 610, in main
+    flow_pay(r)
+    ~~~~~~~~^^^
+  File "<repo>/docs/evidence/2026-10-18/ux-feedback-1/audit.py", line 496, in flow_pay
+    a.eval("(() => { const el = [...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === '" + r.photo + "');"
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           " el.querySelector('[data-testid=\"row-kebab\"]').click(); })()")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/e2e/cdp.py", line 241, in eval
+    raise CdpError("page script failed: " + json.dumps(res["exceptionDetails"])[:300])
+cdp.CdpError: page script failed: {"exceptionId": 1, "text": "Uncaught", "lineNumber": 0, "columnNumber": 131, "scriptId": "154", "stackTrace": {"callFrames": [{"functionName": "", "scriptId": "154", "url": "", "lineNumber": 0, "columnNumber": 131}, {"functionName": "", "scriptId": "154", "url": "", "lineNumber": 0, "columnNumber": 
