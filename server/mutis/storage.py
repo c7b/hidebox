@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT
 """Ciphertext blobs on disk (spec §8.1): blobs/<id[0:2]>/<id[2:4]>/<id>.bin, written with pwrite.
 
-Paths come only from ids that already passed the 22-character id check, never from other input.
+Paths come only from ids that already passed the 22-character id check, never from other input. The bytes are
+opaque: nothing here (or anywhere in the server) decodes, unpacks, sniffs or runs them. Each directory level is
+0700 and each file 0600 whatever the umask, so only mutis can list, add or swap anything under blobs/, and no
+file is executable; the files are opened without following symlinks.
 """
 import hashlib
 import os
@@ -30,8 +33,15 @@ class Blobs:
 
     def create_part(self, item_id: str, size: int) -> None:
         directory = self._dir(item_id)
-        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-        fd = os.open(self.part(item_id), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # Level by level: mkdir(parents=True) would make the middle level 0777 minus the umask (group mutis
+        # could then add or rename entries there).
+        for level in (directory.parent, directory):
+            try:
+                level.mkdir(mode=0o700)
+            except FileExistsError:
+                pass
+        fd = os.open(self.part(item_id), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         try:
             os.posix_fallocate(fd, 0, size)
         except OSError:
@@ -43,7 +53,7 @@ class Blobs:
     def write_at(self, item_id: str, offset: int, slices: Iterator[bytes]) -> bytes:
         """Write the slices at `offset` and return the SHA-256 of what was written."""
         digest = hashlib.sha256()
-        fd = os.open(self.part(item_id), os.O_WRONLY)
+        fd = os.open(self.part(item_id), os.O_WRONLY | os.O_NOFOLLOW)
         try:
             pos = offset
             for data in slices:
@@ -59,7 +69,7 @@ class Blobs:
 
     def finalize(self, item_id: str) -> None:
         part = self.part(item_id)
-        fd = os.open(part, os.O_RDONLY)
+        fd = os.open(part, os.O_RDONLY | os.O_NOFOLLOW)
         try:
             os.fsync(fd)
         finally:
@@ -71,11 +81,15 @@ class Blobs:
         finally:
             os.close(dir_fd)
 
+    def _open_bin(self, item_id: str):
+        return open(os.open(self.bin(item_id), os.O_RDONLY | os.O_NOFOLLOW), "rb")
+
     def read_all(self, item_id: str) -> bytes:
-        return self.bin(item_id).read_bytes()
+        with self._open_bin(item_id) as f:
+            return f.read()
 
     def read_range(self, item_id: str, start: int, length: int) -> Iterator[bytes]:
-        with open(self.bin(item_id), "rb") as f:
+        with self._open_bin(item_id) as f:
             f.seek(start)
             left = length
             while left:
