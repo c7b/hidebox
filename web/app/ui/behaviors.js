@@ -23,7 +23,7 @@ export function icon(name, size) {
 // The name as the logo (the sprite's i-wordmark, docs/review/brand-kit-1.md): hidden from assistive technology, so
 // the link or heading that holds it carries the name in words (an sr-only BRAND beside it).
 export function wordmark() {
-  return svg('svg', { class: 'wordmark', viewBox: '-0.5 -0.5 148 34', 'aria-hidden': 'true', focusable: 'false' },
+  return svg('svg', { class: 'wordmark', 'aria-hidden': 'true', focusable: 'false' },
     svg('use', { href: `${ICONS}#i-wordmark` }));
 }
 const ICONS = '/shared/ui/icons.svg';

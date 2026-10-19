@@ -582,16 +582,20 @@ def check_static():
             problems.append(f"manifest icon {icon['src']} missing")
     if not {"192x192", "512x512"} <= {i.get("sizes") for i in manifest["icons"]}:
         problems.append("manifest.webmanifest: needs a 192 px and a 512 px icon")
+    if not any(i == {"src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"} for i in manifest["icons"]):
+        problems.append("manifest: no maskable icon (/icon-maskable-512.png, 512x512, purpose maskable)")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
+                              ("icon-maskable-512.png", (512, 512), None),
                               ("apple-touch-icon.png", (180, 180), None), ("favicon-32.png", (32, 32), None)):
         f = s / name
         if not f.is_file() or png_size(f) != size:
             problems.append(f"{name}: missing or not {size}")
         elif limit and f.stat().st_size > limit:
             problems.append(f"{name}: over {limit} bytes")
-    if not (s / "favicon.ico").is_file() or (s / "favicon.ico").read_bytes()[:4] != b"\0\0\1\0":
-        problems.append("favicon.ico: missing or not an ICO (Bing and unfurlers ask for it by name)")
+    ico = (s / "favicon.ico").read_bytes() if (s / "favicon.ico").is_file() else b""
+    if ico[:4] != b"\0\0\1\0" or [ico[6 + 16 * i] for i in range(int.from_bytes(ico[4:6], "little"))] != [16, 32, 48]:
+        problems.append("favicon.ico: missing, not an ICO, or not the 16, 32 and 48 px tile (Bing and unfurlers ask for it by name)")
     llms = (s / "llms.txt").read_text()
     if not llms.startswith("# {{BRAND}}\n") or "private drive" not in llms or "dead-drop" not in llms:
         problems.append("llms.txt: not the spec §13.4 shape (the drive's, 16-drive-design §11)")
@@ -1105,7 +1109,7 @@ V3_BAD_SVG = re.compile(r"<(image|script|foreignObject|use|a|style|animate\w*|se
 # draw the same path data, lime on the ink tile, so the mark can't drift between them
 OPEN_BOX = re.compile(r'<symbol id="i-hidebox" viewBox="2\.801 1\.801 26\.399 29\.399"><path fill="currentColor" d="([^"]+)" /></symbol>')
 # the wordmark (the same review): the header's name, from the sprite, hidden (the link carries the name)
-WORDMARK = '<svg class="wm-word" viewBox="-0.5 -0.5 148 34" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wordmark"/></svg>'
+WORDMARK = '<svg class="wm-word" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wordmark"/></svg>'
 
 
 def image_size(f):
@@ -1233,8 +1237,14 @@ def check_home_stills():
     if f'<a class="wm" href="/" aria-label="{{{{BRAND}}}}, home">' not in header or f"</span>{WORDMARK}</a>" not in header:
         problems.append("partials/header.html: the name beside the tile isn't the wordmark (#i-wordmark, hidden; the link named "
                         "{{BRAND}}, home)")
-    if f"</span>{WORDMARK}<span class=\"sr-only\">{{{{BRAND}}}}</span></span></th>" not in text:
-        problems.append("pages/index.html: the comparison's hidebox column isn't headed by the tile and the wordmark, named in words")
+    for page in (home_page, SITE / "pages" / "v2.html"):
+        if f"</span>{WORDMARK}<span class=\"sr-only\">{{{{BRAND}}}}</span></span></th>" not in page.read_text():
+            problems.append(f"pages/{page.name}: the comparison's hidebox column isn't headed by the tile and the wordmark, named in words")
+    shipped = [f for root in (SHARED, SITE / "css", SITE / "pages", SITE / "static", SITE / "og", WEB / "app" / "css", WEB / "app" / "ui",
+                              WEB.parent / "deploy" / "holding") for f in root.rglob("*") if f.suffix in (".svg", ".css", ".html", ".js")]
+    for f in shipped:
+        if "#acff00" in f.read_text(errors="replace").lower():
+            problems.append(f"{f.relative_to(WEB.parent)}: the kit's #ACFF00; the product's one lime is #BCFE00 (--lime-400)")
     media = sorted(p for p in (SITE / "media" / "v3").glob("*") if p.is_file())
     for f in media:
         if f.name not in named:
