@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Pay to open (16-drive-design §4, 16-drive-architecture §1.3 to §1.9), lane app2.
+// Pay to open (16-drive-design §4, 16-drive-architecture §1.3 to §1.9).
 //
 // A paid link splits its key: `sA` rides after the `#` (fragment kind 5), `sB` (the server half) goes to
 // our server, and the link's secret is s = HKDF(sA ‖ sB). Our server hands `sB` to one buyer's browser
@@ -343,7 +343,7 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
     onOutput?.(o);
   }
   await saveSales(identity, state);
-  // Fifth pass: our server's list of this drive's payments (which link, test money, checked, the tx), for
+  // Our server's list of this drive's payments (which link, test money, checked, the tx), for
   // Received → Payments on any device; not kept in this browser.
   state.paid = sales?.paid ?? null;
   return state;

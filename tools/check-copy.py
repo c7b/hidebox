@@ -49,10 +49,10 @@ BANNED = [
     r"zero third-party runtime dependencies", r"protects you from a malicious", r"instead of through us",
     r"gone forever", r"deleted forever", r"provably deleted", r"vanished", r"sealed files?",
     r"not promises",
-    # retired with the drive (16-drive-design §9.2): false once we hold a sales view key, or for kept files
+    # false claims (16-drive-design §9.2): we hold a sales view key, and kept files get no chain line
     r"buyers pay sellers directly", r"when a link ends, we write",
 ]
-# Fifth pass (the drive): the old nouns stay out of what people read on the pages and in the app's strings,
+# Retired nouns stay out of what people read on the pages and in the app's strings,
 # meta and og:* included. The codename lives in code, paths and services (and the llms.txt note), not copy.
 RETIRED = [r"lockers?", r"dead drops?", r"ghosts?", r"goodbyes?", r"said bye", r"mutis"]
 RETIRED_RX = re.compile(r"(?<![\w-])(" + "|".join(RETIRED) + r")(?![\w-])", re.I)

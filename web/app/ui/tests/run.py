@@ -63,7 +63,7 @@ DYNAMIC = {
     "nav": ["locker", "inbox", "send"],
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
     "gone": ["burned", "expired", "revoked", "removed"],
-    # lane app1: the drive's families (ui/drive*.js)
+    # the drive's families (ui/drive*.js)
     "drive.side": ["mine", "received", "shared", "activity", "trash", "storage"],
     "drive.theme": ["light", "dark", "system"],
     "drive.sto.kind": ["media", "docs", "other", "trash"],
@@ -246,9 +246,9 @@ def main():
     ap.add_argument("--keep", action="store_true", help="keep the work directory")
     args = ap.parse_args()
     import flows  # noqa: E402 (after sys.path)
-    import flows_drive  # noqa: E402,F401 (lane app1: the drive's flows register themselves)
-    import flows_share  # noqa: E402,F401 (lane app2: the share dialog, the folder viewer and Received)
-    import flows_pay  # noqa: E402,F401 (lane app2: pay to open, the seller, the buyer page and the owner check)
+    import flows_drive  # noqa: E402,F401 (the drive's flows register themselves)
+    import flows_share  # noqa: E402,F401 (the share dialog, the folder viewer and Received)
+    import flows_pay  # noqa: E402,F401 (pay to open, the seller, the buyer page and the owner check)
     import flows_ux  # noqa: E402,F401 (ux-feedback-1: the waits and the done moment)
 
     r = Results()
@@ -261,7 +261,7 @@ def main():
     servers = {None: (serve(dist, os.path.join(work, "data"), port), f"http://127.0.0.1:{port}")}
 
     def origin_for(amount_proof, features=()):
-        # lane app2: a flow may ask for features that config.py keeps off (opts "features"); its server's
+        # A flow may ask for features that config.py keeps off (opts "features"); its server's
         # data sits in data-<amount_proof or sidecar>[-<features>] (flows_share.py reads its database).
         key = amount_proof if not features else (amount_proof, tuple(features))
         if key not in servers:

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""The share dialog, the folder viewer and Received (lane app2; 16-drive-design §3, §5, §6, §12, §15 steps 8
+"""The share dialog, the folder viewer and Received (16-drive-design §3, §5, §6, §12, §15 steps 8
 and 10), against the real API in headless Chromium. These flows run on a dev server of their own with
 features.folders on (config.py keeps it off until the drive's routes switch over; run.py starts it from
 the scenario's `features`), so the server lane's folder links, tree tickets and then_delete are the real
@@ -63,7 +63,7 @@ def dialog_step(page):
     return page.eval("document.getElementById('share-dialog')?.dataset.step || ''")
 
 
-# Element.append() writes a null child as the text "null" (live, under "It ends", seventh pass): every
+# Element.append() writes a null child as the text "null" (seen live, under "It ends"): every
 # state the helpers below reach is searched for a text node that reads null or undefined.
 NULL_TEXT = """(() => { const box = document.getElementById('share-dialog'); if (!box) return [];
   const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT); const out = [];

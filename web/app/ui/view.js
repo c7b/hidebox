@@ -181,7 +181,7 @@ export function viewer(root, opts) {
       }
     }
     if (opts.autoOpen) return open();
-    // lane app2: a folder link shows the drive's look and its visit (ui/folder-view.js).
+    // A folder link shows the drive's look and its visit (ui/folder-view.js).
     if (info.item?.kind === 'folder') {
       const fv = await import('./folder-view.js');
       await fv.driveLook();
@@ -226,7 +226,7 @@ export function viewer(root, opts) {
       }
       parts = await fetchContent(opened, { onProgress });
     } catch (e) {
-      // lane app2: a folder that didn't open goes back to the link page's own look and states.
+      // A folder that didn't open goes back to the link page's own look and states.
       if (root.dataset.kind === 'folder') {
         (await import('./folder-view.js')).ghostLook();
         delete root.dataset.kind;
@@ -444,7 +444,7 @@ export async function main() {
   } else if (route.name === 'delivery') {
     delivery(root, cfg, location.hash);
   } else if (route.name === 'pay') {
-    // lane app2: a paid link's buyer page (pay to open), loaded only for /p/<id>.
+    // A paid link's buyer page (pay to open), loaded only for /p/<id>.
     setTitle('buy.page_title');
     const { payPage } = await import('./paypage.js');
     await payPage(root, cfg, route.params.shareId);

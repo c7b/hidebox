@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""The film (16-drive-design §10, the judge script; fifth pass): the drive on two devices, desktop left and
+"""The film (16-drive-design §10, the judge script): the drive on two devices, desktop left and
 phone right, one short caption per shot in the platform sans, no voice, no music, about 60 to 90 s.
 Python stdlib here; Chromium and ffmpeg run on the server.
 
@@ -260,7 +260,7 @@ def story(t: T, take: Take) -> None:
 
 
 def demo(t: T, take: Take) -> None:
-    """The same pipeline on whatever is served now: no chain, no locker, nothing stored."""
+    """The same pipeline on whatever is served now: no chain, no drive, nothing stored."""
     for page in (take.desk, take.phone):
         page.goto(t.origin + "/")
     with take.shot(TAGLINE, 4):

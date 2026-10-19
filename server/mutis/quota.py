@@ -45,7 +45,7 @@ CANARY_MAX_EXPIRY_S = 2 * 86400
 SEND_VIEWS = 3
 SEND_EXPIRY_S = 30 * 86400
 
-# Sixth pass (anti-griefing): the big pack is 5 GiB, so a few purchases can't take the paid share at once.
+# Against griefing: the big pack is 5 GiB, so a few purchases can't take the paid share at once.
 PACKS = {"s30": {"bytes": 2 * GiB, "days": 30, "price_ut": 500_000},
          "m30": {"bytes": 5 * GiB, "days": 30, "price_ut": 1_000_000}}
 

@@ -15,7 +15,7 @@ PINNED_WASM_SHA256 = "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7
 
 DEFAULTS: dict = {
     "public_origin": "https://srv2052606.hstgr.cloud",
-    "memo_origins": ["https://srv2052606.hstgr.cloud"],   # fifth pass: mutis.sh is unregistered; removed
+    "memo_origins": ["https://srv2052606.hstgr.cloud"],   # not mutis.sh: that domain is unregistered
     "listen": "127.0.0.1:8787",
     "data_dir": "/srv/mutis/data",
     "secret_key": "/etc/mutis/secret.key",
@@ -36,7 +36,7 @@ DEFAULTS: dict = {
                  "packs": True},
     "limits": {"reserve_min_bytes": 10 << 30, "small_lane_bytes": 1 << 30, "drop_lane_bytes": 2 << 30,
                "anon_lane_max_bytes": 6 << 30},
-    # Space packs (spec §9.6; sixth pass, anti-griefing; server/mutis/packs.py). Paid space is capped at
+    # Space packs (spec §9.6, against griefing; server/mutis/packs.py). Paid space is capped at
     # paid_cap_fraction of the pool; judge_fraction of that cap is a slice only purchases made with a judge
     # pass draw from (they spill into the public slice when it is used up). A drive holds one pack at a
     # time and may buy the same pack again in its last renew_days days (days stack, bytes don't). Sales a

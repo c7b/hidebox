@@ -8,10 +8,10 @@
 # tied to; so this builds the transaction itself (one PublishTemplate instruction, the binary as the
 # transaction's blob, the fee paid from the account) and hands it to transactions.submit_dry_run,
 # then transactions.submit, sealed by the `service` account's key, which becomes the template's
-# author (dry run 2026-10-11: accepted, 755,531 µT, the chain's copy byte-identical). walletd 0.45
+# author (its dry run is accepted, 755,531 µT, and the chain's copy is byte-identical). walletd 0.45
 # keeps that dry run as a "New" transaction and from then on logs "Error resubmitting new
 # transactions: ... Dry run transaction mismatch" every 5 s; harmless (nothing is sent), and the
-# wallet's store is left alone (docs/review/fix-log.md, third pass).
+# wallet's store is left alone (docs/review/fix-log.md).
 #
 # Gate G5 failed on walletd 0.45: transactions.submit_manifest signs with that same default key
 # whatever account the manifest pays from, so the log is created, owned and fed by `service`, as the

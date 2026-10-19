@@ -247,10 +247,10 @@ class ThenDelete(unittest.TestCase):
                                                  (leaf,)).fetchone())
         gone = self.s.request("GET", f"{V}/me/items?view=gone", headers=self.d["auth"])[2]["items"]
         self.assertEqual([(g["item_id"], g["reason"]) for g in gone], [(self.doc["item_id"], "link_ended")])
-        self.assertEqual(gone[0]["opens"], [[codec.floor_hour(self.s.now), 1]])   # fifth pass: Opened, then It left
+        self.assertEqual(gone[0]["opens"], [[codec.floor_hour(self.s.now), 1]])   # Opened, then It left
 
     def test_exit_receipt_only_when_the_file_leaves(self):
-        """Fifth pass (C42): a Once link on a kept file ends with no receipt (the viewer says the file stays);
+        """C42: a Once link on a kept file ends with no receipt (the viewer says the file stays);
         with then_delete the file leaves and its link's receipt carries the exit leaf."""
         self.s.close()
         self.s = Stack({"features": {"seallog": True}, "ootle": {"seallog_component": "component_" + "ab" * 32}})

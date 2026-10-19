@@ -46,7 +46,7 @@ class ReleaseGate(PaidCase):
                                             "received_ut": "100000", "utxo_ids": [utxo]}])
 
     def test_payments_list_for_received(self):
-        """Fifth pass (§10 track two step 5): GET /me/sales lists this drive's payments with their link, the
+        """§10 track two step 5: GET /me/sales lists this drive's payments with their link, the
         test money mark, the chain check and the owner's answer; only the owner sees it."""
         utxo = self.pay(self.c)
         self.ticks()

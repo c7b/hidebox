@@ -87,7 +87,7 @@ def exit_receipt(ctx, share_id: str):
     item = ctx.db.execute("SELECT state, exit_hour, ct_hash FROM items WHERE id = ?", (share["item_id"],)).fetchone()
     out = {"reason": items.ENDED_REASON[share["state"]], "item_id": share["item_id"], "exit_hour": None,
            "leaf_hash": None}
-    # C42 (fifth pass): a link that ends on a file its owner keeps gets no receipt, so the viewer says the
+    # C42: a link that ends on a file its owner keeps gets no receipt, so the viewer says the
     # file stays instead of promising a chain line. A file on its way out (doomed) gets its leaf soon.
     leaving = item is not None and item["ct_hash"] is not None and (item["exit_hour"] is not None or item["state"] == "doomed")
     if not leaving:

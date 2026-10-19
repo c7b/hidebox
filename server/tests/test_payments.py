@@ -233,8 +233,8 @@ class Payments(unittest.TestCase):
         self.assertEqual(self.s.meta("credit_freeze"), "1")
 
     def test_a_one_off_mismatch_holds_credits_until_the_recheck(self):
-        """2026-10-12 15:37 on production: one hourly round found a mismatch no other round found and
-        froze every pack until a human acted. A mismatch now holds credits, the worker checks again five
+        """One hourly round can find a mismatch no other round finds (it happened once in production), and
+        a freeze stops every pack until a human acts. So a mismatch holds credits, the worker checks again five
         minutes later, and a round that finds every credit proven releases the hold (t/402)."""
         self.credited_invoice()
         self.answer(NOT_FOUND, NOT_FOUND)

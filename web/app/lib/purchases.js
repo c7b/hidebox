@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // What this drive bought with pay to open (16-drive-architecture §3.3: "purchases, claims kept on this
-// device"), lane app2. The buyer page (§15 step 15) records each claim here and Received lists it. It is
+// device"). The buyer page (§15 step 15) records each claim here and Received lists it. It is
 // kept in this browser only, next to the drive's key: our server never learns which drive bought what.
 import { idbGet, idbPut } from './idb.js';
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 """Rows of the UTXO mirror (spec §10.6). The chain worker pulls the indexers' streams; the outputs of a
 transaction known to have committed are added at once, because the streams list an output only once
-the network's consensus epoch reaches it (about 20 minutes on Esmeralda, 2026-10-11), and a delivery
+the network's consensus epoch reaches it (about 20 minutes on Esmeralda), and a delivery
 shouldn't wait that long for an inbox to find it."""
 import sqlite3
 

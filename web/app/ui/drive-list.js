@@ -45,8 +45,8 @@ function rowMenu(drive) {
   return menu;
 }
 
-// Every row and folder action, by name. Share and Copy a once link are the share dialog's (lane A2,
-// ui/share-dialog.js); the rest live in drive-menu.js and activity.js.
+// Every row and folder action, by name. Share and Copy a once link are the share dialog's
+// (ui/share-dialog.js); the rest live in drive-menu.js and activity.js.
 export async function act(drive, value, items, trigger = null) {
   try {
     if (value === 'share' || value === 'once') {
@@ -77,7 +77,7 @@ function wireKebabs(root, menu, drive) {
   init(root);
 }
 
-// Fifth pass: a file or folder with no live link of its own, inside a folder that has one, is not private:
+// A file or folder with no live link of its own, inside a folder that has one, is not private:
 // whoever opens that folder's link sees it. Its badge says so (the closest such folder).
 function sharedAncestor(drive, it) {
   for (let p = drive.index.get(it.parentId), guard = 0; p && guard < 32; p = drive.index.get(p.parentId), guard++) {

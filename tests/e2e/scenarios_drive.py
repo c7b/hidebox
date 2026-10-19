@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""E2E scenarios of the drive (16-drive-design §12, §15 step 12; 16-drive-architecture §6.3): E-08 moved to
+"""E2E scenarios of the drive (16-drive-design §12, §15 step 12; 16-drive-architecture §6.3): E-08 on
 the drive, and E-26, E-27, E-28, E-31. No chain transactions. Selectors come only from the data-testid
 contract; the drive's ids are listed in §12 and in web/app/ui/tests/flows_drive.py and flows_share.py.
 

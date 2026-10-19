@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// The share dialog (16-drive-design §3, DESIGN.md "The share dialog"), lane app2: one question per step,
+// The share dialog (16-drive-design §3, DESIGN.md "The share dialog"): one question per step,
 // three named choices at most. Who can open it? Anyone with the link, or one Tari address (Someone who
 // pays you (pay to open, behind features.pay_to_open: a price chip, the name switch, C35 the first time,
-// then a /p/ link; lane app2 step 15). For a link: how many times (Once, A few times, No limit),
+// then a /p/ link; §15 step 15). For a link: how many times (Once, A few times, No limit),
 // a defaulted line "It ends" (Tomorrow, In a week, When I stop it), a secret word, and on files "Delete it
 // from my drive after". For a Tari address: the address, its safety code, the kind-4 switch, the line that
 // says who sends it (C8) and what the chain shows (C9-d). The result: the rule in one sentence, the link
@@ -166,7 +166,7 @@ function whoStep(body, footer) {
   footer.append(cancel(), button(t('share.next'), { testid: 'share-next', 'data-autofocus': '', onclick: () => go({ tari: 'tari', pay: 'pay' }[S.who] ?? 'opens') }));
 }
 
-// ---------- Pay to open (lane app2, step 15) ----------
+// ---------- Pay to open (step 15) ----------
 
 const sells = (drive) => [...drive.index.items.values()].some((x) => (x.row.shares ?? []).some((sh) => sh.mode === 'pay' || sh.paid));
 
@@ -587,7 +587,7 @@ function linksPanel(panel) {
       if (await copy(mine.url)) toast(t('drive.toast.copied'), { type: 'success' });
     });
     const stop = stopButton(t('share.stop'), () => stopSharing(drive, item, [s.id]), panel, { testid: 'link-stop' });
-    // lane app2: a paid link can stop selling (no new claims; buyers who paid keep their opens) and sell again.
+    // A paid link can stop selling (no new claims; buyers who paid keep their opens) and sell again.
     const pause = rule.kind === 'pay' && rule.ready !== false
       ? stopButton(t(rule.paused ? 'sell.resume' : 'sell.stop'), () => setSelling(drive, item, s.id, !rule.paused), panel,
         { variant: 'outline', glyph: rule.paused ? 'rotate-ccw' : 'x', testid: rule.paused ? 'link-resume' : 'link-pause' })
@@ -683,7 +683,7 @@ export async function openShare(drive, item, { trigger = null, step = 'who', tab
     thenDelete: false, tari: '', kind4: false, tab: tab ?? 'new', known: await knownLinks(drive.identity),
     link: null, error: null, send: null, sendJob: null, price: null, showName: true, firstSale: false,
   };
-  // C35 shows the first time this drive sells (lane app2): no sales address registered from here yet.
+  // C35 shows the first time this drive sells: no sales address registered from here yet.
   if (next.ctx.cfg.features?.pay_to_open) {
     next.firstSale = !sells(drive) && !(await (await import('../lib/pay.js')).salesState(drive.identity)).registered;
   }

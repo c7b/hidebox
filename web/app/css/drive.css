@@ -2,7 +2,7 @@
  * The drive's compositions on top of the shadcn port (web/shared/ui/tokens.css, components.css), ported
  * from the design prototype's app.css (research/design/drive, 16-drive-design §8): containers, brand,
  * the app shell, folders, the file table, uploads, the share dialog parts, activity, received and storage,
- * then the fix pass. The home, reading pages, viewer and buyer page keep their own stylesheets.
+ * then refinements (touch targets, focus, phones, contrast). The home, reading pages, viewer and buyer page keep their own stylesheets.
  * Nothing here restyles a component; it lays components out. */
 /* Phones on slow networks: the drive's words come from the home's 18 KB Latin subset of the same pinned Geist
    (400 to 700, every weight the drive uses); the 70 KB full face (tokens.css) loads only for a character outside it. */
@@ -127,7 +127,7 @@
 @media (min-width: 768px) { .drop-overlay { left: var(--sidebar-width); } }
 .drop-overlay .dropzone-media { width: 3.5rem; height: 3.5rem; }
 .drop-overlay[data-state="open"] .drop-overlay-inner { --enter-opacity: 0; --enter-scale: 0.98; animation: sh-enter 150ms var(--ease-out) both; }
-.uploads { position: fixed; right: 1rem; bottom: 1rem; z-index: var(--z-sticky);   /* under dialogs and their overlay (fifth pass) */ width: min(22rem, calc(100vw - 2rem)); padding: 0; gap: 0; overflow: hidden; }
+.uploads { position: fixed; right: 1rem; bottom: 1rem; z-index: var(--z-sticky);   /* under dialogs and their overlay */ width: min(22rem, calc(100vw - 2rem)); padding: 0; gap: 0; overflow: hidden; }
 .uploads-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.5rem 0.625rem 1rem; border-bottom: 1px solid var(--border); font-weight: 500; }
 .uploads-list { max-height: 15rem; overflow: auto; }
 .upload-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.25rem 0.75rem; padding: 0.625rem 1rem; }
@@ -222,7 +222,7 @@
 .two-col { display: grid; gap: 1.5rem; align-items: start; }
 @media (min-width: 1100px) { .two-col { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
 
-/* ======================= fix pass (2026-10-13), from the critique ======================= */
+/* ======================= refinements: touch targets, focus, phones, contrast ======================= */
 /* Touch: every row control and folder icon is a 44 px target on coarse pointers. */
 @media (pointer: coarse) {
   .btn[data-size="icon-sm"], .btn[data-size="icon-sm"]:has(> .icon) { width: var(--target); height: var(--target); }
@@ -307,7 +307,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .side-new .btn[data-variant]:hover { background: var(--accent); }
 .fab[data-variant="secondary"]:focus-visible, .side-new .btn[data-variant]:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); }
 
-/* ======================= the drive in the app (Phase 6B, lane app1) ======================= */
+/* ======================= the drive in the app ======================= */
 /* Booting and the screen of a browser with no drive yet. */
 .drive-boot { min-height: 100dvh; }
 .start { min-height: 100dvh; display: grid; justify-items: center; align-content: start; padding: max(2.5rem, 14vh) 1rem 2rem; }
@@ -336,7 +336,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .md-qr figcaption { font-size: var(--text-xs); color: var(--muted-foreground); max-width: 28ch; }
 .setting-row .stack { --gap: 0.5rem; margin-top: 0.5rem; }
 .trash-cell { white-space: nowrap; }
-/* fifth pass: on a phone the Trash's first cell is the name (the file table's first cell is its checkbox) */
+/* on a phone the Trash's first cell is the name (the file table's first cell is its checkbox) */
 @media (max-width: 767px) {
   .files .table.trash-table td:first-child { display: table-cell; padding-left: 1rem; width: 100%; max-width: 0; }
   .trash-table .file-name { max-width: none; min-width: 0; }
@@ -344,7 +344,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
   .trash-table .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .trash-table td:last-child { padding-right: 1rem; }
 }
-/* Fixes from the first screenshot round (lane app1). */
+/* Upload rows, rules, prices and empty dialog slots. */
 .upload-row .stage { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
 .uploads { z-index: var(--z-sticky); }
 .rules-read .item-description { display: block; -webkit-line-clamp: unset; overflow: visible; text-wrap: pretty; }
@@ -353,7 +353,7 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .price-big small { font-size: var(--text-base); font-weight: 500; color: var(--tari); letter-spacing: 0; }
 .dialog > div:empty:not([class]), .sheet-body > div:empty:not([class]) { display: none; }
 
-/* ======================= lane app2: share dialog, folder viewer, Received (Phase 6B) ======================= */
+/* ======================= share dialog, folder viewer, Received ======================= */
 .field-error { color: var(--destructive); }
 .links-list { gap: 0.5rem; }
 .links-list .item-actions { display: flex; gap: 0.25rem; margin-left: auto; }
@@ -393,10 +393,9 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 #rec-open .fv .files { max-height: min(50vh, 28rem); overflow: auto; }
 /* Received: the sender column says who can't be named; the scan line breathes under the drop card. */
 .drop-card + .scanline { margin-top: -0.5rem; }
-/* lane app2, pay to open (step 15): the buyer page (/p/<id>) from the prototype's pay.html after the fix
-   pass: the price card first on phones, beside the teaser from 960 px, where it stays in view. */
+/* Pay to open (step 15): the buyer page (/p/<id>) from the prototype's pay.html: the price card first on phones, beside the teaser from 960 px, where it stays in view. */
 .fv-page.pay-main { width: min(100%, 72rem); }
-.buyer { display: grid; gap: 1.5rem; align-items: start; grid-template-areas: "head" "list" "pay"; min-width: 0; }   /* phones: what you buy, then the price (fifth pass) */
+.buyer { display: grid; gap: 1.5rem; align-items: start; grid-template-areas: "head" "list" "pay"; min-width: 0; }   /* phones: what you buy, then the price */
 .buyer-head { grid-area: head; display: grid; gap: 0.75rem; }
 .buyer-head .h1 { text-wrap: balance; }
 .buyer-head .h1:focus { outline: none; }   /* focused for screen readers on arrival, not a control */

@@ -37,7 +37,7 @@ def get_me(ctx):
                   "paid_bytes": identity["paid_bytes"] if paid_active else 0,
                   "paid_until": identity["paid_until"] if paid_active else None,
                   "trash_bytes": counts["trash_bytes"]},
-        # Sixth pass: the pack this drive holds (one at a time) and when it can be renewed.
+        # The pack this drive holds (one at a time) and when it can be renewed.
         "pack": packs.held(identity, ctx.now, ctx.cfg["packs"]["renew_days"]),
         "files": counts["files"], "folders": counts["folders"],
         "limits": limits_block()[cls],
@@ -109,7 +109,7 @@ def _share_entry(conn, share, now: int, since: int) -> dict:
 
 def gone_entry(row, conn=None) -> dict:
     """An item that left this drive (`view=gone`, for Activity): enough to decrypt its name in the browser
-    and recompute its exit leaf (`exit_receipt`: files only; a folder has no ciphertext). Fifth pass: with
+    and recompute its exit leaf (`exit_receipt`: files only; a folder has no ciphertext). With
     `conn`, `opens` too: its links' opens per UTC hour, summed (share_opens stays until the tombstone purge,
     16-drive-design §6), so Activity shows Opened before It left your drive."""
     out = {"item_id": row["id"], "kind": row["kind"], "created_hour": row["created_hour"],

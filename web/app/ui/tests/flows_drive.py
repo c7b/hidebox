@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
-"""The drive's flows (lane app1; 16-drive-design §2, §12; 16-drive-architecture §6.2, §6.4), against the
-real API (`--dev`) in headless Chromium, with the server lane's folder API faked in front of it until it is
-merged (drivefake.py; the fake turns itself off when the dev server reports features.folders).
+"""The drive's flows (16-drive-design §2, §12; 16-drive-architecture §6.2, §6.4), against the
+real API (`--dev`) in headless Chromium, with the folder API faked in front of it when the dev server lacks it
+(drivefake.py; the fake turns itself off when the dev server reports features.folders).
 
 drive-shell, drive-make, drive-open-keyfile, drive-folders, storage-meter and drive-budget (A-06d) are
 §15 steps 3 and 5."""
@@ -14,8 +14,8 @@ import time
 from drivefake import DriveFake
 from flows import downloaded, no_hscroll, same_origin, scenario
 
-# The drive's features (off in config.py until the routes switch over). run.py starts a dev server with
-# them on for a flow that asks (lane app2's run.py); until then the flows run on drivefake.py.
+# The drive's features (off in config.py's defaults). run.py starts a dev server with them on for a flow
+# that asks; otherwise the flows run on drivefake.py.
 FEATURES = ("folders",)
 
 
@@ -276,7 +276,7 @@ def storage_meter(t):
     a.wait("!document.querySelector('[data-testid=\"invoice-dialog\"]') || document.querySelector('[data-testid=\"invoice-dialog\"]').hidden", 10)
     legend = a.wait("document.querySelector('.legend')?.textContent ?? ''", 30)
     t.check("Space you paid for" in legend, "the legend names the paid space (violet only for space paid with tTARI)")
-    # Sixth pass: one pack at a time. The pack held says until when and can't be bought again before its last
+    # One pack at a time. The pack held says until when and can't be bought again before its last
     # days; the other pack waits; the rule and the renewal date are said in words.
     a.wait("document.querySelector('[data-testid=\"pack-s30\"]')?.disabled === true", 30)
     t.check("Yours until" in a.text("pack-s30") and a.eval("document.querySelector('[data-testid=\"pack-m30\"]').disabled"),
@@ -288,7 +288,7 @@ def storage_meter(t):
 # A-06d (16-drive-architecture §6.4): from navigation to /drive until the file table renders for a drive
 # of 20 items, phone profile: gzip -9 of every /app/, /shared/ and /vendor/ file requested, without the
 # Geist file (at most 2 font files, asserted apart) and without ootle-wasm (it must not load before then).
-# First measured on the merged drive (integration pass 1, 2026-10-13): 109,318 B in 36 files. The ceiling
+# Measured on the drive: 109,318 B in 36 files. The ceiling
 # (§15 step 12) keeps about a fifth of headroom for what the drive's first screen still gains.
 A06D_CEILING = 128 * 1024
 
@@ -443,7 +443,7 @@ def drive_move_rename(t):
         a.click("folder-create")
         a.wait(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === {json.dumps(name)})", 30)
     shared = a.eval("[...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === 'Shared box').dataset.id")
-    if fake.native:       # lane S's folder links: one made with the product's own lib (lane A2's dialog does the same)
+    if fake.native:       # the server's folder links: one made with the product's own lib (the share dialog does the same)
         a.eval("""(async () => {
           const { loadIdentity } = await import('/app/lib/identity.js');
           const session = await import('/app/lib/session.js');

@@ -16,7 +16,7 @@ let timer = null;
 const sells = (drive) => [...drive.index.items.values()].some((x) => (x.row.shares ?? []).some((s) => s.mode === 'pay' || s.paid));
 const visible = () => document.visibilityState === 'visible';
 
-// One pass at a time: a no-op for a drive that never sold from here and has no paid link. Fifth pass: it
+// One pass at a time: a no-op for a drive that never sold from here and has no paid link. It
 // runs again every minute while the drive is open and visible, and when the tab comes back (Received asks
 // every 20 seconds), so a payment shows up and a buyer's claim is answered without a reload.
 export function startOwnerCheck(drive) {

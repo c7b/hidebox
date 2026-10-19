@@ -2,7 +2,7 @@
 // Runs on every site page: the mainnet phase, live numbers and copy variants, the judge-pass chip,
 // copy buttons, the header (the page it is on; Open your drive, always on, makes or opens the drive) and,
 // after the load event: on the home, /how and /judges the scroll motion (motion.js), and on /how the stills'
-// loops (stills.js). The home draws no WebGL field since the v3 design (docs/review/promote-v3.md). Other
+// loops (stills.js). The home draws no WebGL field (the v3 design, docs/review/promote-v3.md). Other
 // page modules import `config`, `getJson`, `locale` and the tx helpers from here.
 import { applyPhase } from '/shared/dates.js';
 import { applyConditions, fillVariables } from './stats.js';

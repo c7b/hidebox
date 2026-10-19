@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// The folder viewer (16-drive-design §5, 16-drive-architecture §2.5), lane app2: what someone sees after
+// The folder viewer (16-drive-design §5, 16-drive-architecture §2.5): what someone sees after
 // opening a folder link, in the drive's look. Every name below the folder is opened in this browser from
 // the folder's key. One open is one visit of retention.ticket_s, shown as a countdown; inside it, Open a
 // file (a preview for pictures, video, sound and plain text), Save one, or Download all as one ZIP built

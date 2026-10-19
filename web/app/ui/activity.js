@@ -117,7 +117,7 @@ export async function renderFeed(drive, page) {
       const { listAll } = await import('../lib/api-drive.js');
       const rows = await listAll({ view: 'gone' }, drive.headers());
       const opened = await drive.index.openList(rows);
-      // Fifth pass: a file that left shows its opens first (Opened, then It left your drive; §10 track one step 5).
+      // A file that left shows its opens first (Opened, then It left your drive; §10 track one step 5).
       gone = opened.flatMap((it) => [
         ...(it.row.opens ?? []).map(([hour, n]) => ({ k: 'opened', at: hour, item: it, share: null, n, gone: true, name: itemName(it) })),
         { k: 'left', at: it.row.exit_hour ?? null, item: it, row: it.row, name: itemName(it), gone: true }]);

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Pay to open, the client (lane app2; 16-drive-design §4, §12, §15 steps 15 and 16), in headless Chromium.
+"""Pay to open, the client (16-drive-design §4, §12, §15 steps 15 and 16), in headless Chromium.
 
 The server lane's pay routes (§15 step 14) aren't merged yet, so PayFake answers them in the annex's shapes
 (16-drive-architecture §1.5, §5.1) from CDP Fetch, in front of the real dev server: PUT /me/sales, POST
@@ -836,7 +836,7 @@ def owner_check(t):
     while time.time() < deadline and len(fake.confirms) == before:
         a.eval("new Promise((r) => setTimeout(r, 500))")
     t.check(fake.confirms[before:] == [(early, {"utxo_id": ids[2], "spendable": True})], "once that claim is paid, the next opening answers it")
-    # Fifth pass (the devil's run, track two step 5): a payment made while Received is open shows up
+    # Track two step 5: a payment made while Received is open shows up
     # without a reload; the drive asks again every 20 seconds there.
     a.goto(t.origin + "/drive/received")
     a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 3", 60)

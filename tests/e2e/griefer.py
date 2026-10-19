@@ -8,8 +8,8 @@ It never touches production. It starts the local stack on the server (localstack
 --dev`, with fakes, small limits and its own temporary data, behind the production Caddyfile, all as
 `build`) and talks to the API directly on loopback through an ssh tunnel, so the API believes the
 forged X-Real-IP values (documentation addresses, 2001:db8::/32). From ten /48s and 200 /64s it fills
-the anonymous lanes, registers 200 lockers, drains the public `courier` slice, tries to buy packs
-(the daily ceiling stops them before the `demo_pay` slice: sixth pass), pushes
+the anonymous lanes, registers 200 drives, drains the public `courier` slice, tries to buy packs
+(the daily ceiling stops them before the `demo_pay` slice), pushes
 PoW difficulty up from one /64 by spending proofs, and makes 60 path-only attempts on a link +
 password share. Then it holds 300 slow uploads open through Caddy (a byte every few seconds) while it
 counts the API's threads and times a health request through Caddy. It checks what must still hold:
@@ -177,7 +177,7 @@ def cheap_attacks(stack: LocalStack, origin: str, file_mib: int, checks: list) -
                    f"{sorted(codes)}, {status['state']}"))
     refused = report["courier"][1]
     checks.append(("the public courier slice ran dry and said so", "budget_exhausted" in refused, str(sorted(refused))))
-    # Sixth pass: packs stop at the deployment's daily ceiling (3 public) long before the demo_pay slice.
+    # Packs stop at the deployment's daily ceiling (3 public) long before the demo_pay slice.
     accepted, refused = report["demo_pay"]
     checks.append(("pack purchases stopped at the daily ceiling", accepted <= 3 and "packs_limited" in refused,
                    f"{accepted} paid, {sorted(refused)}"))

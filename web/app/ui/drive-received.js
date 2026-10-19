@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Received (16-drive-design §6, 16-drive-architecture §3.3; Google's "Shared with me"), lane app2: what
+// Received (16-drive-design §6, 16-drive-architecture §3.3; Google's "Shared with me"): what
 // others sent to this drive's Tari address and what was left at its drop link, found by this browser
 // alone. Every browser downloads the same mirror of all TARI outputs and tries each one with its own
 // view key, so our server never learns which outputs are this drive's. A Tari arrival names no sender
@@ -102,7 +102,7 @@ export async function render(drive, page) {
     drive.cfg.features?.drops === false ? null : dropCard(drive),
     scanLine, problems,
     h('section', { 'aria-label': t('rec.files'), 'data-testid': 'received-root' }, table, empty),
-    // lane app2: the payments to this drive's pay links, with the owner check (ui/sales.js).
+    // The payments to this drive's pay links, with the owner check (ui/sales.js).
     drive.cfg.features?.pay_to_open ? await import('./sales.js').then((m) => m.salesSection(drive)).catch(() => null) : null,
     tariRow(drive)].filter(Boolean));
   init(page);

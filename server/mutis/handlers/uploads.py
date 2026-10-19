@@ -42,7 +42,7 @@ def _anon_rules(ctx, lane: str, size: int) -> list:
 
 
 def _free_bytes_rules(ctx, size: int) -> tuple:
-    """Sixth pass: bytes a free drive may upload a UTC day, per network (in memory), so a few patient
+    """Bytes a free drive may upload a UTC day, per network (in memory), so a few patient
     drives can't freeze free uploads for everyone. A live judge pass has its own, larger allowance; the
     server's own address (its tests) none. Drives with an active pack are bounded by their pack."""
     brakes = ctx.cfg["brakes"]

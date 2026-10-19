@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Space packs against griefing (spec §9.6; sixth pass).
+"""Space packs against griefing (spec §9.6).
 
 Paid space is capped at `packs.paid_cap_fraction` of the pool (quota.compute). The cap has two slices:
 purchases made with a judge pass (X-Mutis-Judge) draw from a reserved slice, `judge_fraction` of the cap,

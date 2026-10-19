@@ -326,7 +326,7 @@ def check_partials():
 
 
 def check_ghost():
-    """Fifth pass (16-drive-design §0, the owner: no ghost): no served page or partial shows the ghost. No
+    """16-drive-design §0 (no ghost): no served page or partial shows the ghost. No
     page links /shared/ghost.css, includes the ghost templates or the ghost partial, or holds a data-ghost
     element; the link and task pages (app/view.html, app/app.html) draw a Lucide tile instead."""
     problems = []
@@ -595,8 +595,8 @@ def _strings(value):
 
 # A button /judges names before the app has it would be listed here; once it is in
 # web/app/i18n/en.json it must leave this list (the check says so), so the script can't drift from the
-# app. Pay to open's two labels arrive with lane app2's seller dialog (16-drive-design §15 step 15).
-PENDING_LABELS: set[str] = set()  # lane app2: "Someone who pays you" and "Make pay link" are in en.json (step 15)
+# app. It is empty: every button /judges names is in en.json.
+PENDING_LABELS: set[str] = set()
 
 
 def check_ui_strings():
@@ -651,11 +651,11 @@ def check_redirects():
 
 # A-06h (17-site-brief §1.2, docs/review/site-v3.md): the effects stay small and load late. motion.js (the reveals and
 # the decode, site v3) at most 4 KB, stills.js (/how's stills replaying what they show) at most 2 KB, all gzip -9.
-# field.js (the hero's WebGL grid) and pixel.js (the closing's pixel field) left with the v3 design
+# field.js (the hero's WebGL grid) and pixel.js (the closing's pixel field) are not part of the v3 design
 # (docs/review/promote-v3.md): no page asks for a WebGL field, and site.js names neither. The home's own stylesheet
 # grows by at most 3 KB over home.css at the tag spooky-secrets-2026-10 as it was before site v2 (f89963c, 1,770 B):
 # site v2 and v3 together; site/share raised that 3 KB by 256 B, for the share window drawn in depth so it reads as a
-# picture (the owner's ask; 4,733 B before it). Since the v3 design the home also loads v2.css and v3.css after
+# picture (the owner's ask; 4,733 B before it). The home also loads v2.css and v3.css after
 # home.css (its layout and its stills, each in its own V-01 / V-02 limit): the home's own stylesheets together (every
 # /site/css/ file index.html links but site.css, each gzip -9 as served) stay at most 8,704 B (promote-v3.md: 8,303 B
 # measured, home.css 4,128 + v2.css 3,185 + v3.css 990).
@@ -929,8 +929,8 @@ def check_v2():
 
 
 # V-02 (docs/review/home-v3.md): the stills first shown at /v3, /v2 with a still in place of every loop (the hero and
-# the closing show the open box with the files rising out of it) and the open box as the mark. Since the twelfth pass
-# (docs/review/promote-v3.md) that page is the home and V-02 is the home's own image budget: each still's AVIF and
+# the closing show the open box with the files rising out of it) and the open box as the mark. That page is
+# the home (docs/review/promote-v3.md) and V-02 is the home's own image budget: each still's AVIF and
 # WebP, the folder, the mark (the favicon), and v3.css (gzip -9), beside M-01 and A-06, which stay the home's.
 # The browser half is browser_checks.check_home_stills.
 V3_STILL_LIMITS = {".avif": 64_000, ".webp": 96_000}

@@ -13,7 +13,7 @@ data_dir = "/srv/mutis/data"
 secret_key = "/etc/mutis/secret.key"
 network = "esmeralda"
 single_uid = false
-# The owner's own dead drop for security reports. Empty: security.txt points at /fine-print#report instead.
+# The owner's own drop link for security reports. Empty: security.txt points at /fine-print#report instead.
 security_drop_url = ""
 repo_url = "https://github.com/c7b/hidebox"
 # The share id deploy/scripts/demo-gone.py burned for /judges (track one, step 4); it writes this line.

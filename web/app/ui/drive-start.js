@@ -114,7 +114,7 @@ export function renderStart(app, { onReady, make = false, open = false }) {
       status.replaceChildren(errorAlert(e, { action: { label: t('drive.retry'), onClick: start } }));
     }
   };
-  // Fifth pass: too many new drives from this network: a live countdown, then it tries again by itself.
+  // Too many new drives from this network: a live countdown, then it tries again by itself.
   const wait = (seconds) => {
     const until = Date.now() + seconds * 1000;
     const text = h('span', { 'data-testid': 'make-wait' });

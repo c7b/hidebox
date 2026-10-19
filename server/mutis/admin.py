@@ -80,7 +80,7 @@ def cmd_release_pack(cfg, conn, args) -> None:
 
 
 def cmd_packs(cfg, conn, args) -> None:
-    """Paid space by slice and today's sales (sixth pass): read-only, no drive and no network."""
+    """Paid space by slice and today's sales: read-only, no drive and no network."""
     now = codec.now()
     pool = quota.measure(conn, os.statvfs, cfg.data_dir, cfg["limits"], now)
     s = packs.slices(conn, pool, cfg["packs"], now)

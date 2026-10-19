@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Pay to open's client library (lib/pay.js; 16-drive-architecture §1.3, §1.9), lane app2.
+// Pay to open's client library (lib/pay.js; 16-drive-architecture §1.3, §1.9).
 import { b64uDecode, b64uEncode, hex, unhex } from '../lib/b64.js';
 import { randomBytes } from '../lib/crypto.js';
 import { shareKeys } from '../lib/share.js';

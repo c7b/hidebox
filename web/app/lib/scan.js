@@ -17,7 +17,7 @@ const YIELD_EVERY = 256;
 // cursor: everyone whose last scan ended in the same 64 rows asks for the same pages.
 const START_GRID = 64;
 // /watch looks back about 7 days unless asked for everything: an Esmeralda epoch is 80 L1 blocks of
-// ~25.7 s (≈ 34 min, measured 2026-10-11), so 7 days ≈ 294 epochs.
+// ~25.7 s (≈ 34 min, measured on Esmeralda), so 7 days ≈ 294 epochs.
 export const WATCH_EPOCHS = 300;
 
 const yieldToPage = () => new Promise((r) => setTimeout(r, 0));
@@ -56,7 +56,7 @@ async function walk(after, visit, { onPage, onProgress, signal }) {
   }
 }
 
-// lane app2: the owner check (lib/pay.js) walks the same pages with the drive's sales view key.
+// The owner check (lib/pay.js) walks the same pages with the drive's sales view key.
 export const walkMirror = walk;
 
 // Inbox and wallet scan for this browser's locker. Callbacks get the stored records.

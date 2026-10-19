@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Download all's ZIP (lane app2, 16-drive-architecture §2.5, §6.2): CRC-32 against the standard check
+// Download all's ZIP (16-drive-architecture §2.5, §6.2): CRC-32 against the standard check
 // values, safe paths, and a fixed tree that must give the frozen archive in vectors/zip-v1.json, which
 // crosscheck.py opens with Python's zipfile (every CRC, name, date and byte checked there, not here).
 import { ZipWriter, ZIP_MAX_ENTRIES, crc32, zipPath } from '../lib/zip.js';

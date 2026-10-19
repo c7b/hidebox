@@ -5,7 +5,7 @@
 // focus, typeahead, outside click, collision-aware placement), tabs, tooltip, toast queue (Sonner-like),
 // switch, checkbox and radio group. The ARIA mirrors what Radix emits. Every node comes from lib/dom.js's
 // h() (createElement and text nodes only); positions reach CSS through CSSOM, never a style attribute.
-// The command palette was cut in the fix pass (search filters the list in place).
+// There is no command palette: search filters the list in place.
 import { svg } from '../lib/dom.js';
 import { h, lines } from './lines.js';   // site v4: lib/dom.js's h, one sentence a line in paragraphs
 
@@ -62,7 +62,7 @@ export function openModal(target, { returnFocus, onClose } = {}) {
   const prev = returnFocus || document.activeElement;
   const onKey = (e) => {
     if (stack[stack.length - 1]?.box !== box) return;
-    // lane app2: Escape closes the innermost layer first (an open select or menu), as Radix does.
+    // Escape closes the innermost layer first (an open select or menu), as Radix does.
     if (e.key === 'Escape' && (openSelect || openMenu)) { e.preventDefault(); if (openSelect) closeSelect(); else closeMenu(); }
     else if (e.key === 'Escape') { e.preventDefault(); if (!box.dataset.busy) closeModal(box); }   // busy: a run that can't stop halfway
     else trap(e, box);

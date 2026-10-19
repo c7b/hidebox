@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT — bye base (spec §3.4.1, DESIGN.md): reset, page colours, the browser's
+/* SPDX-License-Identifier: MIT — the base (spec §3.4.1, DESIGN.md): reset, page colours, the browser's
    own surfaces (selection, caret, focus, scrollbars), and the few utilities every page shares.
    site.css and app.css build on it. */
 

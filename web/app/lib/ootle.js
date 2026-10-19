@@ -223,7 +223,7 @@ async function seedScalar(seed, info) {
   throw new Error('unreachable: two zero scalars');
 }
 
-// lane app2: `sales` is the drive's sales address, which receives pay-to-open money only
+// `sales` is the drive's sales address, which receives pay-to-open money only
 // (16-drive-architecture §1.3).
 const KEY_INFO = { ootle: ['ootle-owner', 'ootle-view'], wallet: ['wallet-owner', 'wallet-view'], sales: ['sales-owner', 'sales-view'] };
 
@@ -251,7 +251,7 @@ export async function viewPublicKey(viewSk) {
   return glue.publicKeyFromSecretKey(viewSk);
 }
 
-// lane app2, R1 (16-drive-architecture §1.9): the one-time public key (c + k)·G of a stealth output paid to
+// R1 (16-drive-architecture §1.9): the one-time public key (c + k)·G of a stealth output paid to
 // this owner key, from the output's public nonce (hex). It equals the output's `auth.Key` only when this
 // owner key can spend it; a view key proves the amount and the memo, never that. Same as the sidecar's
 // `oneTimeKey`. -> hex, or null when the nonce isn't a point.

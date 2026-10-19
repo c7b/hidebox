@@ -174,7 +174,7 @@ def main():
             check(f"{kind} memo {origin}", memo == f"{origin}/t#{kind[-1]}{b64u(blob)}" and len(memo.encode()) <= 253)
     check("memo bytes mutis.sh", w["memo_bytes"]["https://mutis.sh"] == 187)
 
-    # lane app2: Download all's ZIP (lib/zip.js), opened by Python's zipfile, CRC-32 by binascii.
+    # Download all's ZIP (lib/zip.js), opened by Python's zipfile, CRC-32 by binascii.
     z = json.load(open(os.path.join(HERE, "zip-v1.json"), encoding="utf-8"))
     for text, want in z["crc32"]:
         check(f"crc32 {text[:12]!r}", f"{binascii.crc32(text.encode()):08x}" == want)
@@ -191,7 +191,7 @@ def main():
         check("zip bytes file", arc.read(z["seq_file"]) == bytes((i * 7) & 255 for i in range(300)))
         check("zip paths stay inside", all(not i.filename.startswith("/") and ".." not in i.filename.split("/") for i in infos))
 
-    # lane app2: pay to open's split key and teaser key (lib/pay.js), from the halves in pay-v1.json.
+    # Pay to open's split key and teaser key (lib/pay.js), from the halves in pay-v1.json.
     p = json.load(open(os.path.join(HERE, "pay-v1.json"), encoding="utf-8"))
     s = hkdf(bytes.fromhex(p["sA"]) + bytes.fromhex(p["sB"]), b"mutis/v2", b"pay-split", 32)
     check("pay split s", s.hex() == p["s"])

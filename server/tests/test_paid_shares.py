@@ -274,7 +274,7 @@ class TestMoneyGuards(PaidCase):
                                                       "ref": self.c["claim_id"]})
         self.assertEqual(row["slice"], "public")
         self.demo(self.c, 409)                                  # one on its way per claim
-        # integration, pass 2: once our demo wallet has sent it, the buyer's poll carries its tx (§10, track two)
+        # Once our demo wallet has sent it, the buyer's poll carries its tx (§10, track two)
         poll = lambda: self.s.request("GET", f"{V}/p/{self.c['share_id']}/claims/{self.c['claim_id']}", headers=self.c["hdr"])[2]
         self.assertNotIn("tx_id", poll())
         with db.tx(self.s.conn):
@@ -283,7 +283,7 @@ class TestMoneyGuards(PaidCase):
         self.assertEqual(poll()["tx_id"], "ab" * 32)
 
     def test_demo_pay_caps_each_selling_drive(self):
-        """Fifth pass: two test-money payments a day per selling drive, whatever network asks."""
+        """Two test-money payments a day per selling drive, whatever network asks."""
         for n, expect in ((1, 202), (2, 202), (3, 429)):
             ip = f"203.0.{n}.7"
             c = self.claim(self.link, ip=ip)

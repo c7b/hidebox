@@ -17,14 +17,14 @@ def _identity_id(body: dict) -> str:
 
 def register(ctx):
     body = ctx.req.json()
-    # Fifth pass: a judge pass lifts the per-network limits (judges sharing an office network), as it does
+    # A judge pass lifts the per-network limits (judges sharing an office network), as it does
     # for sends and test money; the deployment-wide daily cap still applies.
     judge = ctx.judge() is not None
     network = () if judge else (("reg64", ctx.ip64, 5, 3600, 1), ("reg48", ctx.ip48, 20, 3600, 1))
     ctx.limit(*network, ("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, 1))
     identity_id = _identity_id(body)
     verifier = get_b64(body, "auth_verifier", 32)
-    # Sixth pass: new drives a UTC day per network (in memory), so a patient griefer can't make the
+    # New drives a UTC day per network (in memory), so a patient griefer can't make the
     # dozens of drives it takes to hold the free space; a judge pass and the server's own address skip it.
     brakes = ctx.cfg["brakes"]
     daily = () if judge or ctx.exempt() else (("drives64", ctx.ip64, brakes["drives_per_network_day"], 1),

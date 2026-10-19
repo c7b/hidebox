@@ -13,10 +13,10 @@ from pathlib import Path
 import serve
 from cdp import Browser
 
-# The six pages of the ghost (14-ghost-design §4.1); the old ones are 301s (deploy/caddy/Caddyfile).
+# The site's six pages (14-ghost-design §4.1); other old addresses are 301s (deploy/caddy/Caddyfile).
 # /v2 (docs/review/home-v2.md) is the home with the product loops at its own, unlisted address. /v3
-# (docs/review/home-v3.md), /v2 with stills in place of the loops and the open box as the mark, is the home since
-# the twelfth pass (docs/review/promote-v3.md), and /v3 answers 301 to /.
+# (docs/review/home-v3.md), /v2 with stills in place of the loops and the open box as the mark, is the home
+# (docs/review/promote-v3.md), and /v3 answers 301 to /.
 ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page", "/v2"]
 GONE = {"/v3": "/", "/v3/": "/"}
 NOTES: list[str] = []
@@ -134,8 +134,8 @@ HIDDEN_NEEDS = "[...document.querySelectorAll('[data-needs]')].filter(e => e.hid
 
 def check_live_numbers(browser):
     """M-07: numbers come from /config, /stats, /canary, /evidence.json and /status.json, and disappear when
-    those fail. They live on /made since the ghost (the limits table, the status line, the test file); since /made
-    became docs (2026-10-17) the evidence waits one click deep, in Live evidence, so its disclosures are opened first."""
+    those fail. They live on /made (the limits table, the status line, the test file), where the evidence waits one
+    click deep, in Live evidence, so its disclosures are opened first."""
     problems = []
     blocks = ("[data-canary]", "[data-evidence]", "[data-status-line]")
     with server() as origin:
@@ -327,7 +327,7 @@ LANDED = "(id) => [Math.round(document.getElementById(id).getBoundingClientRect(
 
 
 def check_contents(browser):
-    """/made as docs (2026-10-17): from 1024 px the contents stick on the left and, with the breadcrumb, name the part
+    """/made as docs: from 1024 px the contents stick on the left and, with the breadcrumb, name the part
     being read; each contents link brings its part under the breadcrumb and marks it (1440 and 1920 wide, SealLog off,
     the HTML's default, where Receipts is short); a fresh /made#<part> lands there too, on a phone and a computer,
     after /config has filled the page; a link to something inside a closed disclosure (security.txt's
@@ -448,7 +448,7 @@ GONE_FX = "performance.getEntriesByType('resource').map((e) => e.name.split('/')
 
 
 def check_no_field(browser):
-    """A-06h, the loading half, since the v3 design (docs/review/promote-v3.md): the home draws no WebGL field. With
+    """A-06h, the loading half (the v3 design, docs/review/promote-v3.md): the home draws no WebGL field. With
     motion allowed, at 1440 and 390, after the load event and after scrolling through, / asks for neither field.js nor
     pixel.js, holds no canvas and no [data-field] or [data-pixel]; its stills are what stands beside the words. /how and
     /judges ask for neither."""
@@ -538,8 +538,8 @@ def check_motion(browser):
     """Site v3 (docs/review/site-v3.md): motion.js loads after the load event, only where asked for; things below the
     fold wait unseen and arrive as they scroll in, and once a page has been scrolled through nothing is left hidden;
     the drive slice decodes behind an aria-hidden layer when it comes into view and ends with the same DOM it started
-    with. Since the v3 design (docs/review/promote-v3.md) the slice sits under the hero's still, below the first screen,
-    so the check scrolls to it before it waits for the decode (before, it was on screen at load). With reduced motion
+    with. In the v3 design (docs/review/promote-v3.md) the slice sits under the hero's still, below the first screen,
+    so the check scrolls to it before it waits for the decode. With reduced motion
     motion.js doesn't load and every word shows at once; without JavaScript every word shows."""
     problems = []
     with server() as origin:
@@ -737,7 +737,7 @@ def check_v2(browser):
     return problems
 
 
-# V-02 (docs/review/home-v3.md), the loading half, on the home since the twelfth pass (docs/review/promote-v3.md): the
+# V-02 (docs/review/home-v3.md), the loading half, on the home (docs/review/promote-v3.md): the
 # home has no video. At load it asks for the page, the drop widget's first load and the hero's still (one AVIF in
 # Chromium); the section stills come with native lazy loading as they near the screen, and the closing shows the hero's
 # file again. The test server caches nothing (DevTools' cache is off).

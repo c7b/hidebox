@@ -31,7 +31,7 @@ probation_limit chain_unavailable feature_disabled budget_exhausted bad_address 
 unknown_pack internal client network crypto memory clipboard empty folder many text_long program needs_wasm needs_wasm_drop
 integrity read wrong_password keyfile checksum locked_key wrong_passphrase address_mismatch view_key drop_limit
 insufficient timeout rejected judge_spent pack_active packs_limited packs_paused drives_limited uploads_limited
-payment_required bad_claim claim_used not_for_sale seller_not_ready seller_not_registered busy`.split(/\s+/)); // last line: lane app2 (pay to open)
+payment_required bad_claim claim_used not_for_sale seller_not_ready seller_not_registered busy`.split(/\s+/)); // last line: pay to open
 
 // An error the UI raises itself, with a code from the list above.
 export function uiError(code) {

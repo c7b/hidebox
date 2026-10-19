@@ -10,7 +10,7 @@ amount proof and then ignored the result. Here a credit needs two separate facts
 walletd never decides a credit. In the G4 fallback (`amount_proof = "wallet"`) step 1 comes from
 walletd's own list and the API reports `checks.amount_proven: false` ("Seen by our wallet").
 
-R1 (2026-10-13, research 16-drive-architecture §1.1): a view key proves an output's amount and memo,
+R1 (research 16-drive-architecture §1.1): a view key proves an output's amount and memo,
 not who can spend it. A payer can build an output that opens with our receiver's view key while its
 one-time key is the payer's own, get a pack and keep the money (and spending it back would make the
 hourly reconcile freeze every credit). So, in sidecar mode, a third fact is needed:
@@ -186,7 +186,7 @@ def credit(conn: sqlite3.Connection, utxo_id: str, now: int) -> None:
 
 
 def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int, judge: bool = False) -> None:
-    """A drive holds one pack at a time (sixth pass, packs.py): a new pack sets its bytes and days from now;
+    """A drive holds one pack at a time (packs.py): a new pack sets its bytes and days from now;
     a payment while one is active (a renewal in its last days, or a second invoice paid anyway) adds the
     days from the old end and never stacks bytes. The slice (judges' or public) is the first purchase's."""
     pack = quota.PACKS[pack_id]
@@ -239,7 +239,7 @@ def reconcile_wallet(conn: sqlite3.Connection, wallet_balance_ut: int, now: int)
 def _finish_reconcile(conn: sqlite3.Connection, verdict: str, now: int) -> None:
     """A mismatch holds credits (`meta.reconcile_mismatch`) and the worker checks again five minutes
     later: a second mismatch in a row freezes credits until `mutis-admin unfreeze-credits`, an ok
-    releases the hold. Both indexers can answer wrongly at the same moment (2026-10-12 15:37: one round
+    releases the hold. Both indexers can answer wrongly at the same moment (seen once in production: one round
     found a mismatch that no round before or after it found, and every credited output was proven on
     both indexers), and a freeze stops every pack until a human acts; nothing is credited while a
     mismatch waits for its second check."""

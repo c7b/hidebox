@@ -182,7 +182,7 @@ def locker_identity(page) -> tuple[list[str], str]:
     return safety_emoji(page, "locker-safety"), address
 
 
-# E-08 moved to the drive: tests/e2e/scenarios_drive.py.
+# E-08 is a drive scenario: tests/e2e/scenarios_drive.py.
 
 
 @scenario("E-15", "Burn race: five browsers press Open it together; exactly one opens")

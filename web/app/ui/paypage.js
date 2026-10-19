@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // The buyer page (/p/<id>#5…, served by view.html; 16-drive-design §4 "Buyer page order", 16-drive-
-// architecture §1.7), lane app2. No drive needed. In order: what it is (the teaser the link alone
+// architecture §1.7). No drive needed. In order: what it is (the teaser the link alone
 // opens: folder or file, its name if the owner allowed it, the count and a size bucket; names inside
 // stay locked), the price and the public network fee, what you get (C39), no take-backs (C37), then one
 // primary: Pay with test money (C33). Pay from my drive shows only when a drive with enough test money
@@ -389,13 +389,13 @@ export async function payPage(root, cfg, shareId) {
           t('buy.left', { count: P.status?.views_left ?? 0, date: day(until()) })),
         phase === 'open' ? button(P.busy === 'open' ? t('buy.opening') : t('viewer.open'), { size: 'lg', glyph: folder ? 'folder-open' : 'download', testid: 'pay-open', 'data-autofocus': '', disabled: P.busy ? true : null, onclick: openIt }) : null,
         P.identity ? h('a', { class: 'btn', 'data-variant': 'outline', href: '/drive/received', 'data-testid': 'pay-keep' }, icon('hard-drive'), t('buy.keep')) : null,
-        // integration, pass 2: the payment's tx (test money's from our demo wallet, or this drive's own), §10 track two step 6
+        // The payment's tx (test money's from our demo wallet, or this drive's own), §10 track two step 6
         txOf(P) ? h('a', { class: 'a-more', href: `/verify/tx/${txOf(P)}`, 'data-testid': 'pay-tx', 'data-tx': txOf(P) }, t('chain.sees'), icon('arrow')) : null));
     } else if (phase === 'expired' || phase === 'void') {
       content.append(button(t('buy.again'), { variant: 'outline', glyph: 'rotate-ccw', testid: 'pay-again', onclick: restart }));
     }
     if (P.error) content.append(errorAlert(P.error));
-    // Fifth pass (the devil's phone run): once it's open, the card is a short summary; the claims were read before paying.
+    // Once it's open, the card is a short summary; the claims were read before paying.
     if (phase === 'opened') {
       return h('div', { class: 'buyer-pay stack' }, h('section', { class: 'card', 'aria-labelledby': 'pay-h' },
         h('div', { class: 'card-header' }, h('h2', { class: 'card-title', id: 'pay-h' }, t('buy.amount')),

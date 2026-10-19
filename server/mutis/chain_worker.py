@@ -217,7 +217,7 @@ class Worker:
         """Pull new TARI UTXOs from every indexer into one mirror (rows are idempotent).
 
         Asking each indexer, not just the first that answers, keeps deliveries arriving when one
-        indexer's stream stops advancing while it still answers (indexer-b, 2026-10-11: a canary
+        indexer's stream stops advancing while it still answers (seen on indexer-b: a canary
         delivery that indexer-a streamed within minutes never reached indexer-b's stream).
         """
         added, answered, error = 0, 0, None
@@ -434,7 +434,7 @@ class Worker:
                 payload = json.loads(job["payload"])
                 if str(payload.get("ref", "")).startswith("clm_"):
                     sales.mark_demo(self.conn, payload["ref"], int(payload["amount_ut"]))
-                    # integration, pass 2: test money's tx stays findable by its claim (the payload is scrubbed),
+                    # Test money's tx stays findable by its claim (the payload is scrubbed),
                     # so the buyer's poll can link What the chain sees (16-drive-design §10, track two)
                     result["ref"] = payload["ref"]
             if job["evidence"]:

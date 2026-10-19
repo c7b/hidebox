@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
-"""Test-only: the server lane's folder API (16-drive-architecture §2.4, §5.1) in front of the dev server,
-until the server lane's `features.folders` is merged (lane app1, NOTES in PROGRESS).
+"""Test-only: the folder API (16-drive-architecture §2.4, §5.1) faked in front of a dev server that
+doesn't report `features.folders`.
 
-`server --dev` today stores kept files, links and uploads, but has no folders, no trash, no
+Such a `server --dev` stores kept files, links and uploads, but has no folders, no trash, no
 `expires_at` on kept files and no `view=gone`. This proxies one drive's API traffic from the page (CDP
 Fetch, Request stage), forwards what the dev server knows, and keeps the rest in memory, exactly in the
 annex's shapes: POST /folders, PATCH /items/{id} {parent_id, parent_wrap, meta_ct, trashed, expires_at},

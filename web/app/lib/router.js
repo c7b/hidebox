@@ -13,7 +13,7 @@ const ROUTES = [
   [/^\/upgrade$/, 'upgrade'],
   [/^\/verify$/, 'verify'],
   [/^\/verify\/tx\/([0-9a-f]{64})$/, 'verify-tx', 'txId'],
-  // lane app2: the buyer page of a paid link (view.html, ui/paypage.js)
+  // The buyer page of a paid link (view.html, ui/paypage.js)
   [/^\/p\/([A-Za-z0-9_-]{22})$/, 'pay', 'shareId'],
 ];
 

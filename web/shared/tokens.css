@@ -4,7 +4,7 @@
    Violet means Tari, nothing else. Lime (17-brand.md v2, Tari's green) is the action colour: your side of
    hidebox, spent once per view (the Open your drive fill and the home's fields). System faces here; Geist comes with home.css, pages.css
    and the drive.
-   The --ghost-* names stay for the pages that still draw the old figure until they are restyled.
+   The --ghost-* names belong to the ghost figure, which no page draws (16-drive-design §0).
    Consumers use only these names; the block marked "compat" keeps the names older stylesheets read. */
 :root {
   color-scheme: light dark;

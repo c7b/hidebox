@@ -44,7 +44,7 @@
 .toc a { display: inline-flex; align-items: center; min-height: 32px; font: var(--t-ui); font-size: .9375rem; color: var(--fg); }
 @media (min-width: 720px) { .toc { display: block; } }
 
-/* ---------- Under the hood as docs (the owner, 2026-10-17): the page on the second surface, each part a card
+/* ---------- Under the hood as docs: the page on the second surface, each part a card
    on it; from 1024px a sticky contents on the left (four groups that fold), the part being read on the lime tint
    like a picked row; on phones the same contents in a closed "On this page". A breadcrumb sticks under the header
    and names the part being read (made.js); long detail waits in the accordions. ---------- */

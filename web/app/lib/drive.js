@@ -130,7 +130,7 @@ export function ruleOf(item) {
   const s = live[live.length - 1];
   if (!s) return shares.length ? { kind: 'ended', ended: shares[shares.length - 1] } : { kind: 'private' };
   const base = { share: s, max: s.max_views, used: s.views_used, left: s.views_left, ends: s.expires_at };
-  // lane app2: a paid link is a link with a `paid` summary ({price_ut, paused, seller_state, counts, earned_ut}).
+  // A paid link is a link with a `paid` summary ({price_ut, paused, seller_state, counts, earned_ut}).
   if (s.mode === 'pay' || s.paid) {
     const n = s.paid?.counts ?? {};
     return { ...base, kind: 'pay', price: s.paid?.price_ut ?? s.price_ut ?? null, paid: (n.paid ?? 0) + (n.released ?? 0), paused: Boolean(s.paid?.paused), ready: (s.paid?.seller_state ?? 'ok') === 'ok' };

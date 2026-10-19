@@ -16,9 +16,9 @@ from .shares import _header_b64, effective_state, folder_tree, gone
 
 CLAIMS_PER_HOUR_64, CLAIMS_PER_HOUR_48 = 10, 30
 DEMO_PER_DAY_64, DEMO_PER_DAY_48 = 3, 6
-DEMO_PER_SELLER = 2          # test money paid to one drive's links a day, from any network (fifth pass)
+DEMO_PER_SELLER = 2          # test money paid to one drive's links a day, from any network
 CHECKS_LISTED = 100
-PAID_LISTED = 50       # fifth pass: Received → Payments, newest first
+PAID_LISTED = 50       # Received → Payments, newest first
 
 
 # --- the seller (a drive session) -----------------------------------------------------------------------
@@ -56,7 +56,7 @@ def get_sales(ctx):
                  "utxo_ids": [r[0] for r in conn.execute("SELECT utxo_id FROM sale_payments WHERE claim_id = ? "
                                                          "AND status = 'counted' AND owner_ok IS NULL",
                                                          (c["id"],))]} for c in rows]
-    # Fifth pass (16-drive-design §6, §10 track two step 5): the payments to this drive's paid links, newest
+    # 16-drive-design §6, §10 track two step 5: the payments to this drive's paid links, newest
     # first, so Received → Payments can say which link, Test money, Checked and the tx on any device that
     # opens the drive. What our server already holds; never who paid.
     paid = []
@@ -219,7 +219,7 @@ def get_claim(ctx, share_id: str, claim_id: str):
            "expires_at": claim["expires_at"], "demo": bool(claim["demo"]), "owner_check": claim["owner_check"],
            "payments": [{"value_ut": str(p["value_ut"]), "seen_at": p["seen_at"], "counted": p["status"] == "counted",
                          "checks": {"amount_proven": True, "committed_on_chain": bool(p["committed"])}} for p in pays]}
-    # integration, pass 2: test money's transaction, once our demo wallet has sent it, so the buyer can see
+    # Test money's transaction, once our demo wallet has sent it, so the buyer can see
     # what the chain shows (16-drive-design §10, track two, step 6). Only this claim's holder asks for it.
     job = conn.execute("SELECT result FROM jobs WHERE kind = 'demo_pay' AND state = 'done' AND json_extract(result, '$.ref') = ? "
                        "ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
@@ -251,7 +251,7 @@ def demo_pay(ctx, share_id: str, claim_id: str):
     seller = sales.seller_of_share(conn, share_id)
     if seller is None or seller["state"] != "ok":
         raise ApiError(409, "seller_not_ready", "The owner's drive isn't ready to take payments yet. Try again soon.")
-    # Fifth pass (the devil's griefer): also a cap per selling drive, so paying yourself from many networks
+    # A cap per selling drive too, so paying yourself from many networks
     # can't drain the public slice into one sales address. In memory only, like every other limit.
     network = (("demo_clm64", ctx.ip64, DEMO_PER_DAY_64, 86400, 1), ("demo_clm48", ctx.ip48, DEMO_PER_DAY_48, 86400, 1),
                ("demo_seller", seller["address"], DEMO_PER_SELLER, 86400, 1))

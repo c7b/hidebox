@@ -32,7 +32,7 @@ export const itemName = (item) => item.name || t('drive.note');
 
 export function ruleBadge(rule) {
   const r = rule ?? { kind: 'private' };
-  // lane app2: a link this browser sent by Tari wears the Tari badge (lib/links.js SENT).
+  // A link this browser sent by Tari wears the Tari badge (lib/links.js SENT).
   if (r.share && r.kind !== 'ended' && r.kind !== 'pay' && SENT.has(r.share.id)) {
     return h('span', { class: 'badge', 'data-variant': 'tari', 'data-rule': 'sent' }, icon('send'), t('share.sent_badge'));
   }
@@ -43,7 +43,7 @@ export function ruleBadge(rule) {
     until: ['secondary', 'timer', t('drive.rule.until', { date: r.ends ? day(r.ends) : '' })],
     word: ['secondary', 'key-round', t('drive.rule.word')],
     pay: r.ready === false ? ['outline', 'hourglass', t('sell.ready')] : r.paused ? ['outline', 'lock', t('sell.paused')]
-      : ['tari', 'coins', t('drive.rule.pay', { price: r.price ? formatTari(r.price) : '' })], // lane app2
+      : ['tari', 'coins', t('drive.rule.pay', { price: r.price ? formatTari(r.price) : '' })],
     public: ['secondary', 'globe', t('drive.rule.public')],
     ended: ['outline', 'check', t('drive.rule.ended')],
   }[r.kind] ?? ['outline', 'lock', t('drive.rule.private')];
@@ -56,7 +56,7 @@ export function leavesBadge(at) {
 
 // Opens and ends of a rule, in words, for the table and the phone's second line.
 export function opensText(r) {
-  if (r.kind === 'pay') return t('sell.paid', { count: r.paid ?? 0 }); // lane app2
+  if (r.kind === 'pay') return t('sell.paid', { count: r.paid ?? 0 });
   if (['once', 'few', 'word'].includes(r.kind) && r.max) return t('drive.state.opens', { used: r.used, max: r.max });
   if (['public', 'until', 'word'].includes(r.kind)) return t('drive.state.no_limit', { used: r.used });
   return '';
@@ -80,7 +80,7 @@ export function alert({ glyph = 'info', title, description = null, variant = nul
     description ? h('div', { class: 'alert-description' }, description) : null);
 }
 
-// Codes whose app sentence names the old locker get the drive's own (the rest read the same in both).
+// Codes with a drive-specific sentence get the drive's own (the rest read the same in both).
 const DRIVE_ERRORS = new Set(['quota_exceeded', 'probation_limit', 'too_large_locker', 'auth_required', 'bad_auth']);
 
 export function driveErrorText(e) {

@@ -68,7 +68,7 @@ const transfer = (res) => ({
 // Consumes one view. -> {meta, burned, viewsLeft, ...what fetchContent needs}
 export async function openItem(shareId, access, opts = {}) {
   const res = await withPasswordPow((body) => openShare(shareId, access.headers, body), opts);
-  // lane app2: a folder link opens a tree and one visit (lib/folder-open.js, loaded only for folders).
+  // A folder link opens a tree and one visit (lib/folder-open.js, loaded only for folders).
   if (res.kind === 'folder') {
     const { unlockFolder } = await import('./folder-open.js');
     const folder = await unlockFolder(res, access.wrapKey);

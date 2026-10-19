@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // The head of an app screen (DESIGN.md "one centered column for every task screen"): an icon tile that
-// says the screen's state, the screen's one line, and its sentence under it. Fifth pass: the ghost is
-// gone (16-drive-design §0, the owner); the tile is the drive's empty-state tile with a Lucide icon from
+// says the screen's state, the screen's one line, and its sentence under it. No mascot
+// (16-drive-design §0): the tile is the drive's empty-state tile with a Lucide icon from
 // /shared/ui/icons.svg. "Tari™" words are set in Tari purple, the one thing purple may mean.
 import { svg } from '../lib/dom.js';
 import { h } from './lines.js';

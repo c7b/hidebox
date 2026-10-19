@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Sixth pass (anti-griefing): space packs and the free-space brakes (server/mutis/packs.py).
+"""Against griefing: space packs and the free-space brakes (server/mutis/packs.py).
 
 The owner's concern: someone buys space from many drives very fast, so the disk saturates, the packs
 sell out at once, or free uploads freeze for everyone. Each rule here is one of the decisions taken:

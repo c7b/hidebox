@@ -215,7 +215,7 @@ def release_pack(t: T, page) -> None:
 def e13(t: T) -> None:
     cfg = t.env.config()
     direct = cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")
-    # Direct mode: the browser pays from its sponsor grant, two a day per network; every locker of a run
+    # Direct mode: the browser pays from its sponsor grant, two a day per network; every drive of a run
     # shares the server's /64, so the buyer holds a one-use judge pass, as E-J does, and waits for the grant.
     judge = t.env.remote.admin("judge-pass", "new", "--uses", "1").strip() if direct else None
     a = t.actor(judge_pass=judge)
@@ -275,7 +275,7 @@ def e25(t: T) -> None:
     t.check(entry["delivery_tx"] in [d["tx_id"] for d in evidence["deliveries"]], "/evidence.json lists the delivery")
 
 
-# --- integration, pass 2: pay to open on Esmeralda (16-drive-design §4, §10, §15 step 17) -----------------
+# --- pay to open on Esmeralda (16-drive-design §4, §10, §15 step 17) -------------------------------------
 
 PAY_LINK = re.compile(r"/p/([A-Za-z0-9_-]{22})#5[A-Za-z0-9_-]{43}$")
 PAY_STATES = "['wait','paying','seen','check','unlocking','open','opened','expired','void','used','gone','incomplete','not-found','integrity-error','error']"
@@ -479,7 +479,7 @@ def ej(t: T) -> None:
     desk.click("share-next")
     desk.wait("document.getElementById('share-dialog')?.dataset.step === 'opens'", 10)
     desk.click("share-then-delete")
-    # A switch that didn't take must fail here, not two steps later as "the file stayed" (seventh pass),
+    # A switch that didn't take must fail here, not two steps later as "the file stayed",
     # with what was under the press.
     switch = desk.attr("share-then-delete", "aria-checked")
     if switch != "true":
@@ -521,7 +521,7 @@ def ej(t: T) -> None:
         desk.goto(t.origin + "/drive")
         desk.wait_for("drive-root", 120)
         drv.wait_names(desk, [folder])
-        # fifth pass: a folder's menu lists only what a folder has (it read "null" where a file's entries go)
+        # a folder's menu lists only what a folder has (no "null" where a file's entries go)
         desk.eval(f"[...document.querySelectorAll('[data-testid=\"folder-card\"]')].find((e) => e.dataset.name === {json.dumps(folder)}).querySelector('[data-testid=\"row-kebab\"]').click()")
         desk.wait("!document.getElementById('row-menu').hidden", 10)
         menu = desk.eval("document.getElementById('row-menu').textContent")
@@ -531,7 +531,7 @@ def ej(t: T) -> None:
         url, sid = sell(t, desk, folder)
         seller_ready(t, sid)
         t.shot(desk, "2-1-pay-link")
-        desk.goto(t.origin + "/drive/received")            # fifth pass: Received is open before the phone pays
+        desk.goto(t.origin + "/drive/received")            # Received is open before the phone pays
         desk.wait_for("drive-root", 120)
         done("T1")
         t.check(pay_page(phone, url) == "wait" and phone.text("pay-name") == folder and "2" in phone.text("pay-what"),

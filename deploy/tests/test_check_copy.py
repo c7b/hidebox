@@ -47,7 +47,7 @@ class CheckCopyTest(unittest.TestCase):
         self.assertEqual(len(fails), 2)
 
     def test_the_ghost_is_retired_and_gone_forever_stays_banned(self):
-        """Fifth pass: the ghost, the locker and goodbye are retired words in copy (not in the docs)."""
+        """The ghost, the locker and goodbye are retired words in copy (not in the docs)."""
         self.page("<p>Give the ghost a secret. A ghostly wave. Two ghosts.</p><p>It vanished. Gone forever.</p>")
         fails, _ = check_copy.banned_words(self.root)
         self.assertEqual(sorted(f.split("'")[1].lower() for f in fails), ["ghost", "ghosts", "gone forever", "vanished"])

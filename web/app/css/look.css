@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: MIT — fifth pass (fix log, "the drive"): the link page (view.html) and the task
+/* SPDX-License-Identifier: MIT — the link page (view.html) and the task
    pages (app.html: /send, /watch, /verify, /d/…) in the drive's look (16-drive-design §2, DESIGN.md): Geist,
-   shadcn buttons (a medium radius, 1px borders), and a Lucide tile where the ghost stood. Loaded after
+   shadcn buttons (a medium radius, 1px borders), and a Lucide tile as each screen's icon. Loaded after
    app.css. The folder viewer and the pay page switch to the drive's own sheets and turn this one off. */
 @font-face {
   font-family: "Geist";

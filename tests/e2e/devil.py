@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""The sixth pass's devil (anti-griefing): try to sell out the packs and fill the free space fast.
+"""The anti-griefing devil: try to sell out the packs and fill the free space fast.
 
   python3 -I tests/e2e/devil.py [--host H] [--json OUT]
 
@@ -175,7 +175,7 @@ def stack_stats(api: str) -> dict:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="the sixth pass's devil (on a throwaway stack, never production)")
+    p = argparse.ArgumentParser(description="the anti-griefing devil (on a throwaway stack, never production)")
     p.add_argument("--host", default=SSH_HOST)
     p.add_argument("--json", help="also write the report here")
     args = p.parse_args()

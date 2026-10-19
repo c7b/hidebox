@@ -1170,8 +1170,8 @@ def states(t):
     t.check("Its time ran out." in e.text("view-root"), "This link has ended. Its time ran out.")
 
 
-# Fifth pass (16-drive-design §0, the owner: no ghost): the link and task pages carry no ghost and set
-# their words in Geist, with a Lucide tile where the ghost stood.
+# 16-drive-design §0 (no ghost): the link and task pages carry no ghost and set their words in Geist,
+# with a Lucide tile as each screen's icon.
 @scenario("no-ghost", "No ghost: /send and the link page carry no ghost template or figure; Geist; a Lucide tile")
 def no_ghost(t):
     for dark in (False, True):
@@ -1189,7 +1189,7 @@ def no_ghost(t):
         t.shot(a, f"no-ghost-{'dark' if dark else 'light'}")
 
 
-# --- the window drop and the wow (14-ghost-design §5, §6; ported from the 6A critique's verify.py) ----
+# --- the window drop and the wow (14-ghost-design §5, §6) ----------------------------------------------
 
 WOW_WATCH = r"""(() => {
   window.__anims = []; window.__clip = []; window.__marks = [];
@@ -1278,10 +1278,6 @@ def press_paste(p):
     p.cmd("Input.dispatchKeyEvent", {"type": "keyUp", "key": "v", "code": "KeyV", "windowsVirtualKeyCode": 86, "modifiers": 2})
 
 
-# window-drop retired with the ghost's home (16-drive-design §11): the drive's home seats the widget in a
-# card with its own Choose a file; the whole window no longer takes a drop there.
-
-
 # --- the rule on the figure (14-ghost-design §5, §17 step 6) --------------------------------------------
 
 SAY = "document.querySelector('.md-say')?.textContent ?? ''"
@@ -1291,10 +1287,6 @@ POSE = "document.querySelector('.md-result svg.ghost')?.dataset.state ?? ''"
 def rule_state(p):
     return p.eval(f"[{LINK}, document.querySelector('.md-card').dataset.maxViews, {POSE},"
                   " document.querySelector('.md-counts input:checked')?.value ?? '', document.querySelector('.md-live').textContent]")
-
-
-# rule-ghost retired with the ghost's home (16-drive-design §11, "no mascot"): the result card's rule chips
-# stay (the rules flow); the figure that switched them on a tap is gone from the home.
 
 
 # --- 14-ghost-design §17 step 8: every app screen on the ghost, at 390 and 1440 ---------------------------
@@ -1322,7 +1314,7 @@ def seallog_on(t, p, share_id, receipt):
      .add(f"*/api/v1/s/{share_id}/exit", "Request", lambda _p: (200, body)))
 
 
-@scenario("ghost-screens", "Step 8 at 390 and 1440 (no ghost since the fifth pass): the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify")
+@scenario("ghost-screens", "Step 8 at 390 and 1440 (no ghost): the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify")
 def ghost_screens(t):
     for device, w in (("iphone", 390), ("desktop", 1440)):
         maker = t.actor()

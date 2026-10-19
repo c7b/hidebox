@@ -432,7 +432,7 @@
   },
   {
    "id": "C48",
-   "condition": "packs (sixth pass, anti-griefing)",
+   "condition": "packs (anti-griefing)",
    "backed_by": "server/mutis/packs.py, handlers/invoices.py: one pack per drive, renewable with the same pack in its last packs.renew_days days (grant_pack adds days, not bytes); daily sales brakes per network and for the deployment; features.packs",
    "markers": [
     "one pack at a time",
@@ -449,7 +449,7 @@
   },
   {
    "id": "C49",
-   "condition": "free-space brakes (sixth pass)",
+   "condition": "free-space brakes (anti-griefing)",
    "backed_by": "handlers/auth.py register (brakes.drives_per_network_day), handlers/uploads.py _free_bytes_rules (brakes.upload_bytes_per_network_day), both per UTC day in memory",
    "markers": [
     "new drives it can today",

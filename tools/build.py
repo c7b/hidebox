@@ -139,8 +139,8 @@ def page_url(rel: str) -> str:
     return "/" + rel.removesuffix(".html").removesuffix("index")
 
 
-# Never copied from web/shared: the partials are inlined, and the old Mutis Script fonts left the
-# site with the ghost; their files stay in the repository one release.
+# Never copied from web/shared: the partials are inlined, and no page uses the Mutis Script fonts kept in
+# web/shared/fonts (NOTICE lists them).
 SHARED_SKIP = ("partials", "fonts")
 # The drive's one family (DESIGN.md "Typography"): Geist, vendored from Vercel's repository with its
 # licence and pinned like ootle-wasm (a font can't carry SRI, so the build refuses any other bytes). The

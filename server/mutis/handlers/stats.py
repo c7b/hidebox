@@ -41,7 +41,7 @@ def build_stats(ctx) -> dict:
         "disk_total_bytes": pool.d_total - pool.d_total % DISK_STEP,
         "disk_free_bytes": pool.d_avail - pool.d_avail % DISK_STEP,
         "uploads_frozen": lanes.freeze_state(conn, pool),
-        # Sixth pass: the public slice of paid space, in whole GiB (no drive, no judge slice).
+        # The public slice of paid space, in whole GiB (no drive, no judge slice).
         "packs_sold_public": paid.public_sold - paid.public_sold % quota.GiB,
         "packs_cap_public": paid.public_cap - paid.public_cap % quota.GiB,
         "chain_ok": now - beat <= HEARTBEAT_MAX_AGE_S and bool(status.get("walletd_ok")),

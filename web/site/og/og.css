@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT — OG cards and app icons, rendered to PNG by tools/render-images.py: the shared-link
    card in the drive's light look (DESIGN.md: neutral ink on white, violet only for Tari), the site's card (og.html) dark
-   like the home since the v3 design (docs/review/promote-v3.md), with the home's hero still; set in Geist, which the
+   like the home (the v3 design, docs/review/promote-v3.md), with the home's hero still; set in Geist, which the
    tool loads from web/shared/fonts/geist/ (the pinned file) before it takes the picture. Lucide symbols inline, and the
    open box, hidebox's own mark. */
 * { margin: 0; box-sizing: border-box; }

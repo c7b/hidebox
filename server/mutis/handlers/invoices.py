@@ -32,7 +32,7 @@ def _invoice_json(row) -> dict:
 
 
 def create(ctx):
-    """A pack invoice (sixth pass: packs.py). One pack per drive at a time, renewable with the same pack in
+    """A pack invoice (packs.py). One pack per drive at a time, renewable with the same pack in
     its last `renew_days` days; an open invoice for the same pack is handed back rather than made again.
     Then the brakes: per network a UTC day (in memory), the deployment's daily ceiling (from the invoices),
     and the slice of the paid cap the purchase draws from (judges' or public)."""

@@ -118,7 +118,7 @@ def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
 
 
 def pack_reasons(conn: sqlite3.Connection, now: int) -> list[str]:
-    """Sixth pass: the public slice of paid space 80 % taken, or today's public ceiling reached
+    """The public slice of paid space 80 % taken, or today's public ceiling reached
     (meta.packs, written every minute by cleanup; server/mutis/packs.py). A stale note says nothing."""
     packs = meta(conn, "packs", {}) or {}
     if now - int(packs.get("updated_at") or 0) > PACKS_MAX_S:

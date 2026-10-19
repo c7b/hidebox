@@ -139,9 +139,9 @@ class BuildTest(unittest.TestCase):
         self.assertGreater(summary["files"], 3)
 
     def test_the_homes_stills_are_served_and_the_home_is_in_the_sitemap(self):
-        """The home (since docs/review/promote-v3.md the v3 design): its AVIF and WebP stills under web/site/media/v3 reach
+        """The home (the v3 design, docs/review/promote-v3.md): its AVIF and WebP stills under web/site/media/v3 reach
         dist/site/media/v3 byte for byte (and the manifest), and the sitemap lists / (indexable, canonical) and no
-        /v3, which is a redirect now, not a page."""
+        /v3, which is a redirect, not a page."""
         stills = self.web / "site" / "media" / "v3"
         stills.mkdir(parents=True)
         files = {"hero-480.avif": b"\0\0\0\x1cftypavif", "hero-480.webp": b"RIFF\0\0\0\0WEBPVP8 "}

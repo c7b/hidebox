@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-// The ghost's few moves (14-ghost-design §3, §6). Fifth pass: no page carries the ghost any more (its
-// partials and ghost.css are gone; web/site/tests checks it), so cloneGhost() finds no template and returns
-// null and every other move is a no-op. Kept so the widget and card modules keep their imports.
+// The ghost's few moves (14-ghost-design §3, §6). No page carries the ghost (16-drive-design §0: no
+// partials, no ghost.css; web/site/tests checks it), so cloneGhost() finds no template and returns null and
+// every other move is a no-op. The module stays so the widget and card modules keep their imports.
 
 export const STATES = ['ready', 'catch', 'busy', 'once', 'few', 'word', 'peek', 'courier', 'bag', 'keep', 'gone', 'oops'];
 

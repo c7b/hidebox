@@ -44,7 +44,7 @@ function meterCard(drive) {
       h('b', {}, t('drive.sto.paid_until', { bytes: formatBytes(quota.paid_bytes), date: formatDate(quota.paid_until * 1000, { dateStyle: 'medium' }) }))) : null);
   return h('section', { class: 'card', 'aria-labelledby': 'meter-h' },
     h('div', { class: 'card-header' }, h('h2', { class: 'card-title', id: 'meter-h' }, t('drive.sto.space')),
-      // Fifth pass: on the first day the limit is the first-day one; say both, so the two numbers don't clash.
+      // On the first day the limit is the first-day one; say both, so the two numbers don't clash.
       h('p', { class: 'card-description', 'data-testid': 'storage-free' }, drive.me.identity?.probation
         ? t('drive.sto.first_day', { probation_quota: formatBytes(quota.limit_bytes), free_each: formatBytes(quota.free_bytes) })
         : t('drive.sto.free', { free_each: formatBytes(quota.free_bytes) }))),
@@ -77,7 +77,7 @@ function rulesCard(drive) {
         h('div', { class: 'item-content' }, h('p', { class: 'item-description' }, text))))));
 }
 
-// The four steps of a pack payment and when each is reached, per proof mode (the old /upgrade's rule:
+// The four steps of a pack payment and when each is reached, per proof mode (the rule:
 // name exactly the checks that run, never more).
 function steps(proof) {
   const pays = (inv) => inv.payments ?? [];
@@ -199,7 +199,7 @@ async function buy(drive, pack, label) {
   poll(drive, invoice.invoice_id, draw, run);
 }
 
-// Sixth pass: one pack at a time. The pack a drive holds says until when, and turns into Renew it in its
+// One pack at a time. The pack a drive holds says until when, and turns into Renew it in its
 // last days (the same pack again adds days, not space); the other waits. Paused packs say so instead.
 function moreSection(drive) {
   const cfg = drive.cfg;

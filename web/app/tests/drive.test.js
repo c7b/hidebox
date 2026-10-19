@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// The drive's library (lane app1): folder headers and childWrapKey (vectors computed independently with
+// The drive's library: folder headers and childWrapKey (vectors computed independently with
 // Python's hmac, 16-drive-architecture §1.3, §2.1), a folder made, opened, renamed and moved; the folder
 // walkers on fake trees; the index (children, hidden subtrees, sharing above, rules); the lazy Tari keys.
 import { b64uDecode, b64uEncode, hex } from '../lib/b64.js';
