@@ -4,21 +4,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Under the hood: how {{BRAND}} was made</title>
-<meta name="description" content="The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, how to check us, and what we can't hide.">
+<title>Under the hood: how it's made and how to check it · {{BRAND}}</title>
+<meta name="description" content="The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, and what we can't hide.">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="{{ORIGIN}}/made">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{BRAND}}">
-<meta property="og:title" content="Under the hood: how {{BRAND}} was made">
-<meta property="og:description" content="The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, how to check us, and what we can't hide.">
+<meta property="og:title" content="Under the hood: how it's made and how to check it">
+<meta property="og:description" content="The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, and what we can't hide.">
 <meta property="og:url" content="{{ORIGIN}}/made">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:secure_url" content="{{ORIGIN}}/og.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="{{BRAND}}: an open box, files rising out of it in its light. Your private cloud storage. Files lock in your browser first.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Under the hood: how it's made and how to check it">
+<meta name="twitter:description" content="The grown-up page: your key, folders, pay to open, who sees what, space, receipts on the Tari chain, and what we can't hide.">
+<meta name="twitter:image" content="{{ORIGIN}}/og.png">
+<meta name="twitter:image:alt" content="{{BRAND}}: an open box, files rising out of it in its light. Your private cloud storage. Files lock in your browser first.">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="{{BRAND}}">
+<link rel="icon" href="/favicon.ico" sizes="192x192">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -28,6 +38,11 @@
 <link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/made.js" integrity="{{SRI}}"></script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+ {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ORIGIN}}/"},
+ {"@type": "ListItem", "position": 2, "name": "Under the hood", "item": "{{ORIGIN}}/made"}]}
+</script>
 </head>
 <body class="reading docs-page">
 <a class="skip-link" href="#main">Skip to the content</a>

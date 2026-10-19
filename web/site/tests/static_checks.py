@@ -228,18 +228,52 @@ def check_variables():
     return problems
 
 
+# M-04 and the SEO pass (docs/review/seo-1.md): what every page's head carries for search and for link previews. The
+# share card stays og.png at 1200 x 630 on every site page; a later brand pass may swap its bytes, never its name.
+ROBOTS_INDEX = "index, follow, max-image-preview:large"
+# Lengths are measured as served: {{BRAND}} filled with the build's name (tools/build.py BRAND).
+BRAND = re.search(r'^BRAND = "([^"]+)"', (WEB.parent / "tools" / "build.py").read_text(), re.M)[1]
+CARD = {"og:image": "{{ORIGIN}}/og.png", "og:image:secure_url": "{{ORIGIN}}/og.png", "og:image:type": "image/png",
+        "og:image:width": "1200", "og:image:height": "630"}
+ICONS = [("icon", "/favicon.ico", None), ("icon", "/favicon-32.png", "image/png"), ("icon", "/favicon.svg", "image/svg+xml"),
+         ("apple-touch-icon", "/apple-touch-icon.png", None), ("manifest", "/manifest.webmanifest", None)]
+
+
+def meta(doc, **match):
+    found = attr(doc, "meta", **match)
+    return found[0].get("content") if found else None
+
+
+def json_ld(text):
+    return [json.loads(m[1]) for m in re.finditer(r'<script type="application/ld\+json">(.*?)</script>', text, re.S)]
+
+
+def ld_types(blocks):
+    nodes = [n for b in blocks for n in (b.get("@graph") or [b])]
+    return {n.get("@type"): n for n in nodes}
+
+
 def check_seo():
-    problems, titles = [], {}
+    """Every page: one <h1>, <html lang="en"> (one language, so no hreflang), a title of at most 60 characters and a
+    description of at most 155, both unique, the full Open Graph and Twitter card (og.png at 1200 x 630, absolute,
+    with its alt; twitter:* the same as og:*), both theme colours, the app title and the icons (ICO, 32 px PNG, SVG,
+    apple-touch-icon, manifest). Indexable pages also: the name last in the title, a robots meta that allows a large
+    image preview, a canonical on {{ORIGIN}} that og:url repeats, and JSON-LD: the home its WebSite and
+    SoftwareApplication, every other page a BreadcrumbList that ends on its canonical. The 404 page is noindex."""
+    problems, titles, descs = [], {}, {}
     for f in PAGES:
-        d, name = parse(f), f.relative_to(WEB)
+        d, name, text = parse(f), f.relative_to(WEB), f.read_text()
         title = "".join(d.titles).strip()
-        desc = attr(d, "meta", name="description")
+        desc = meta(d, name="description") or ""
         html = attr(d, "html")
-        if not title or len(title) > 60:
-            problems.append(f"{name}: title missing or over 60 characters ({len(title)})")
+        robots = meta(d, name="robots") or ""
+        indexable = f.stem != "404" and "noindex" not in robots
+        if not title or len(title.replace("{{BRAND}}", BRAND)) > 60:
+            problems.append(f"{name}: title missing or over 60 characters ({len(title.replace('{{BRAND}}', BRAND))})")
         titles.setdefault(title, []).append(str(name))
-        if not desc or len(desc[0].get("content", "")) > 155:
-            problems.append(f"{name}: description missing or over 155 characters")
+        if not desc or len(desc.replace("{{BRAND}}", BRAND)) > 155:
+            problems.append(f"{name}: description missing or over 155 characters ({len(desc.replace('{{BRAND}}', BRAND))})")
+        descs.setdefault(desc, []).append(str(name))
         if not html or html[0].get("lang") != "en":
             problems.append(f"{name}: <html lang> is not en")
         if sum(1 for t, _ in d.tags if t == "h1") != 1:
@@ -250,17 +284,63 @@ def check_seo():
         if not attr(d, "meta", name="twitter:card") or not attr(d, "meta", name="theme-color"):
             problems.append(f"{name}: missing twitter:card or theme-color")
         if f.stem == "404":
-            if not attr(d, "meta", name="robots"):
+            if "noindex" not in robots:
                 problems.append(f"{name}: 404 should be noindex")
+        if f.stem == "v2":   # the preview keeps the head it was made with (check_v2 holds it: noindex, unlinked)
             continue
-        if not attr(d, "link", rel="canonical"):
-            problems.append(f"{name}: missing canonical")
-    for title, files in titles.items():
-        if len(files) > 1:
-            problems.append(f"title {title!r} used by {files}")
-    for page in ("index",):
-        if 'type="application/ld+json"' not in (SITE / "pages" / f"{page}.html").read_text():
-            problems.append(f"pages/{page}.html: no JSON-LD")
+        for prop, value in CARD.items():
+            if meta(d, property=prop) != value:
+                problems.append(f"{name}: {prop} is {meta(d, property=prop)!r}, not {value!r}")
+        if not meta(d, property="og:image:alt") or meta(d, property="og:site_name") != "{{BRAND}}":
+            problems.append(f"{name}: og:image:alt missing or og:site_name not {{{{BRAND}}}}")
+        for tw, og in (("twitter:title", "og:title"), ("twitter:description", "og:description"),
+                       ("twitter:image", "og:image"), ("twitter:image:alt", "og:image:alt")):
+            if meta(d, name=tw) != meta(d, property=og):
+                problems.append(f"{name}: {tw} differs from {og}")
+        if meta(d, name="twitter:card") != "summary_large_image":
+            problems.append(f"{name}: twitter:card is not summary_large_image")
+        if sorted(a.get("media", "") for a in attr(d, "meta", name="theme-color")) != \
+                ["(prefers-color-scheme: dark)", "(prefers-color-scheme: light)"]:
+            problems.append(f"{name}: needs a theme-color for light and one for dark")
+        if meta(d, name="apple-mobile-web-app-title") != "{{BRAND}}":
+            problems.append(f"{name}: no apple-mobile-web-app-title")
+        links = [(a.get("rel"), a.get("href"), a.get("type")) for t, a in d.tags
+                 if t == "link" and a.get("rel") in ("icon", "apple-touch-icon", "manifest")]
+        if links != ICONS:
+            problems.append(f"{name}: icons {links}, expected {ICONS}")
+        for t, a in d.tags:
+            if t == "img" and not (a.get("width") and a.get("height")):
+                problems.append(f"{name}: <img src={a.get('src')!r}> has no width and height")
+        if not indexable:
+            continue
+        path = "/" if f.stem == "index" else f"/{f.stem}"
+        canonical = [a.get("href") for a in attr(d, "link", rel="canonical")]
+        if canonical != ["{{ORIGIN}}" + path]:
+            problems.append(f"{name}: canonical {canonical}, expected {{{{ORIGIN}}}}{path}")
+        if meta(d, property="og:url") != "{{ORIGIN}}" + path:
+            problems.append(f"{name}: og:url is not the canonical")
+        if not title.endswith(" · {{BRAND}}"):
+            problems.append(f"{name}: title {title!r} doesn't end with the name (' · {{{{BRAND}}}}')")
+        if robots != ROBOTS_INDEX:
+            problems.append(f"{name}: robots meta {robots!r}, expected {ROBOTS_INDEX!r}")
+        try:
+            types = ld_types(json_ld(text))
+        except ValueError:
+            continue   # check_markup reports it
+        if f.stem == "index":
+            app = types.get("SoftwareApplication", {})
+            if "WebSite" not in types or app.get("name") != "{{BRAND}}" or app.get("operatingSystem") != "Any (web browser)" \
+                    or app.get("offers", {}).get("price") != "0" or "aggregateRating" in app or "review" in app:
+                problems.append(f"{name}: JSON-LD needs the WebSite and the SoftwareApplication ({{{{BRAND}}}}, any browser, "
+                                "free; no rating or review, since there are none to show)")
+        else:
+            items = types.get("BreadcrumbList", {}).get("itemListElement", [])
+            if [i.get("item") for i in items] != ["{{ORIGIN}}/", "{{ORIGIN}}" + path]:
+                problems.append(f"{name}: JSON-LD BreadcrumbList should be Home then {{{{ORIGIN}}}}{path}")
+    for kind, seen in (("title", titles), ("description", descs)):
+        for value, files in seen.items():
+            if len(files) > 1:
+                problems.append(f"{kind} {value!r} used by {files}")
     return problems
 
 
@@ -553,7 +633,7 @@ def indexable_paths():
     """The URL of every page the sitemap may list (not a 404, not noindex)."""
     out = []
     for f in PAGES:
-        if f.stem == "404" or attr(parse(f), "meta", name="robots"):
+        if f.stem == "404" or "noindex" in (meta(parse(f), name="robots") or ""):
             continue
         out.append("/" if f.stem == "index" else f"/{f.stem}")
     return out
@@ -967,7 +1047,8 @@ def check_home_stills():
     <picture>: an AVIF then a WebP srcset of three widths with one sizes, an <img> with its width and height, empty alt,
     the hero's with fetchpriority="high", every other one lazy; each candidate is a file whose pixels match its w
     descriptor and the img's ratio, within V-02's sizes; the closing names the hero's srcset and sizes (the browser
-    reuses its bytes). The favicons are /favicon-32.png (32 px) then /favicon.svg; the favicon and the brand files are
+    reuses its bytes). The favicons are /favicon.ico (the 192 px open box, the
+    one search engines and unfurlers ask for by name), /favicon-32.png (32 px) then /favicon.svg; the favicon and the brand files are
     the open box in clean SVG (no raster, script, link or data), and the header's tile draws it from the sprite. Every
     file in media/v3 is named by the home; the folder and v3.css stay in V-02; no page links /v3, which is a 301."""
     import gzip
@@ -975,8 +1056,8 @@ def check_home_stills():
     home_page = SITE / "pages" / "index.html"
     text = home_page.read_text()
     d = parse(home_page)
-    if attr(d, "meta", name="robots"):
-        problems.append("pages/index.html: a robots meta (the home is indexable)")
+    if "noindex" in (meta(d, name="robots") or ""):
+        problems.append("pages/index.html: noindex (the home is indexable)")
     if (attr(d, "html") or [{}])[0].get("data-theme") != "dark":
         problems.append("pages/index.html: not dark first (<html data-theme=\"dark\">, as the v3 design)")
     for f in [p for p in PAGES if p != home_page] + PARTIALS + sorted((SITE / "static").rglob("*.txt")) + [home_page]:
@@ -1031,8 +1112,10 @@ def check_home_stills():
     if sets.get("stage-a") != sets.get("stage-end"):
         problems.append("pages/index.html: the closing doesn't name the hero's srcset and sizes (it would fetch another file)")
     icons = attr(d, "link", rel="icon")
-    if [(a.get("href"), a.get("type")) for a in icons] != [("/favicon-32.png", "image/png"), ("/favicon.svg", "image/svg+xml")]:
-        problems.append(f"pages/index.html: favicons {[(a.get('href'), a.get('type')) for a in icons]}, expected /favicon-32.png then /favicon.svg")
+    expected = [("/favicon.ico", None), ("/favicon-32.png", "image/png"), ("/favicon.svg", "image/svg+xml")]
+    if [(a.get("href"), a.get("type")) for a in icons] != expected:
+        problems.append(f"pages/index.html: favicons {[(a.get('href'), a.get('type')) for a in icons]}, expected /favicon.ico, "
+                        "/favicon-32.png then /favicon.svg")
     png = SITE / "static" / "favicon-32.png"
     if not png.is_file() or image_size(png) != (32, 32):
         problems.append(f"static/favicon-32.png: {image_size(png) if png.is_file() else 'missing'}, expected 32 x 32")

@@ -4,8 +4,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{{BRAND}}: your private drive</title>
-<meta name="description" content="Your private cloud storage. Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari.">
+<title>Your private cloud storage · {{BRAND}}</title>
+<meta name="description" content="Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari. No email, no password. Your key is the account.">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="{{ORIGIN}}/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{BRAND}}">
@@ -13,12 +14,20 @@
 <meta property="og:description" content="Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari.">
 <meta property="og:url" content="{{ORIGIN}}/">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:secure_url" content="{{ORIGIN}}/og.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="{{BRAND}}: an open box, files rising out of it in its light. Your private cloud storage. Files lock in your browser first.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Your private cloud storage.">
+<meta name="twitter:description" content="Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari.">
+<meta name="twitter:image" content="{{ORIGIN}}/og.png">
+<meta name="twitter:image:alt" content="{{BRAND}}: an open box, files rising out of it in its light. Your private cloud storage. Files lock in your browser first.">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="{{BRAND}}">
+<link rel="icon" href="/favicon.ico" sizes="192x192">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -37,12 +46,16 @@
 {"@context": "https://schema.org", "@graph": [
  {"@type": "WebSite", "@id": "{{ORIGIN}}/#website", "url": "{{ORIGIN}}/", "name": "{{BRAND}}", "inLanguage": "en"},
  {"@type": "SoftwareApplication", "@id": "{{ORIGIN}}/#app", "name": "{{BRAND}}", "url": "{{ORIGIN}}/",
-  "description": "Your private cloud storage: files lock in this browser before upload, and each one opens by its own rule. The browser encrypts each file before upload and the server stores only ciphertext. A file's key can travel to a Tari address sealed inside a stealth tTARI payment, and every exit is written to a public log on the Tari Ootle testnet.",
-  "applicationCategory": "SecurityApplication", "operatingSystem": "Web", "isAccessibleForFree": true,
-  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
-  "featureList": ["A drive with folders, opened with a key made in the browser (no email)", "Encryption in the browser (AES-256-GCM, WebCrypto)", "Exit rules: once, a few times, a set time, or until deleted", "Send a file's key to a Tari address inside a stealth payment", "Dead-drop links delivered over Tari Ootle", "SealLog: a public record of stored files and exits on the Ootle"],
+  "description": "Your private cloud storage. Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari.",
+  "applicationCategory": "SecurityApplication", "operatingSystem": "Any (web browser)", "browserRequirements": "Requires JavaScript.",
+  "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "featureList": ["No email, no password. Your key is the account.", "Encryption in the browser (AES-256-GCM, WebCrypto)",
+   "Our server gets scrambled noise. Never the key.", "Search runs in this browser. Our server can't read your file names.",
+   "Each file or folder gets its own rule. You can stop a link any time.",
+   "Send by Tari: the key rides inside a payment to their address. Only they can open it.",
+   "When a file leaves your drive, we write that on the Tari chain, for anyone to check."],
   "image": "{{ORIGIN}}/og.png", "softwareHelp": {"@type": "CreativeWork", "url": "{{ORIGIN}}/how"},
-  "license": "https://spdx.org/licenses/MIT.html", "isPartOf": {"@id": "{{ORIGIN}}/#website"}}]}
+  "license": "https://spdx.org/licenses/MIT.html", "sameAs": ["{{REPO_URL}}"], "isPartOf": {"@id": "{{ORIGIN}}/#website"}}]}
 </script>
 </head>
 <body class="home v2 v3" data-motion>

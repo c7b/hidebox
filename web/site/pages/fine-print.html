@@ -4,21 +4,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The fine print · {{BRAND}}</title>
-<meta name="description" content="Privacy, terms and the form to report a link: what we keep, table by table, how long each thing lasts, and what you may not do with it.">
+<title>The fine print: privacy policy and terms · {{BRAND}}</title>
+<meta name="description" content="What we keep, table by table, how long each thing lasts, what you may not do with it, and the form to report a link.">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="{{ORIGIN}}/fine-print">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{BRAND}}">
-<meta property="og:title" content="The fine print · {{BRAND}}">
-<meta property="og:description" content="Privacy, terms and the form to report a link: what we keep, table by table, how long each thing lasts, and what you may not do with it.">
+<meta property="og:title" content="The fine print: privacy policy and terms">
+<meta property="og:description" content="What we keep, table by table, how long each thing lasts, what you may not do with it, and the form to report a link.">
 <meta property="og:url" content="{{ORIGIN}}/fine-print">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:secure_url" content="{{ORIGIN}}/og.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="{{BRAND}}: an open box, files rising out of it in its light. Your private cloud storage. Files lock in your browser first.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The fine print: privacy policy and terms">
+<meta name="twitter:description" content="What we keep, table by table, how long each thing lasts, what you may not do with it, and the form to report a link.">
+<meta name="twitter:image" content="{{ORIGIN}}/og.png">
+<meta name="twitter:image:alt" content="{{BRAND}}: an open box, files rising out of it in its light. Your private cloud storage. Files lock in your browser first.">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="{{BRAND}}">
+<link rel="icon" href="/favicon.ico" sizes="192x192">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -28,6 +38,11 @@
 <link rel="stylesheet" href="/site/css/pages.css" integrity="{{SRI}}">
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/abuse.js" integrity="{{SRI}}"></script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+ {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ORIGIN}}/"},
+ {"@type": "ListItem", "position": 2, "name": "The fine print", "item": "{{ORIGIN}}/fine-print"}]}
+</script>
 </head>
 <body class="reading">
 <a class="skip-link" href="#main">Skip to the content</a>
