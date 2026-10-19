@@ -67,6 +67,26 @@ FAIL page /fine-print
      note: JSON-LD: none
      note: 5 pages linked, 0 images, 26 headings
 PASS titles and descriptions are unique
+FAIL private routes are noindex
+     /s/AAAAAAAAAAAAAAAAAAAAAA: twitter:image differs from og:image
+     /p/AAAAAAAAAAAAAAAAAAAAAA: twitter:image differs from og:image
+     /t: twitter:image differs from og:image
+     /d/7kq2x9mdh4: twitter:image differs from og:image
+     /send: twitter:image differs from og:image
+     /watch: twitter:image differs from og:image
+     /verify/tx/0000000000000000000000000000000000000000000000000000000000000000: twitter:image differs from og:image
+     /app/drive.html: status 200, X-Robots-Tag ''
+     /app/view.html: twitter:image differs from og:image
+     /app/view.html: status 200, X-Robots-Tag ''
+     /app/app.html: twitter:image differs from og:image
+     /app/app.html: status 200, X-Robots-Tag ''
+     /api/v1/config: status 200, X-Robots-Tag ''
+PASS card https://hidebox.app/og-s.png
+     note: 1200 x 630, 50,018 B
+FAIL card https://hidebox.app/og-s.png: kept a day, loadable from any origin
+     Cache-Control 'no-cache': at least a day
+     Cross-Origin-Resource-Policy 'same-origin': a preview drawn from the page loads it from another origin
+     note: 'no-cache', CORP 'same-origin'
 PASS card https://hidebox.app/og.png
      note: 1200 x 630, 142,970 B
 FAIL card https://hidebox.app/og.png: kept a day, loadable from any origin
@@ -83,6 +103,20 @@ FAIL icons and manifest
      manifest: no id
      note: manifest: 'hidebox', 3 icons, start_url '/'
 FAIL robots.txt
+     Twitterbot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     Twitterbot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     facebookexternalhit may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     facebookexternalhit may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     Slackbot-LinkExpanding may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     Slackbot-LinkExpanding may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     LinkedInBot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     LinkedInBot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     Discordbot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     Discordbot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     TelegramBot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     TelegramBot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     WhatsApp may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
+     WhatsApp may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)
      Cache-Control 'no-cache'
      note: 11 Disallow lines
 FAIL sitemap.xml
@@ -93,11 +127,6 @@ FAIL sitemap.xml
      https://hidebox.app/made: lastmod ''
      Cache-Control 'no-cache'
      note: 5 URLs, lastmod 
-FAIL private routes are noindex
-     /app/drive.html: status 200, X-Robots-Tag ''
-     /app/view.html: status 200, X-Robots-Tag ''
-     /app/app.html: status 200, X-Robots-Tag ''
-     /api/v1/config: status 200, X-Robots-Tag ''
 PASS an unknown page answers 404, noindex
 
 Path         Title (characters)                                             Description (characters)
@@ -111,4 +140,4 @@ Path         Title (characters)                                             Desc
              Two six-step tracks for the Tari Council: one device and no wallet, about two minutes; then two devices with Tari, about five minutes. (134)
 /fine-print  The fine print · hidebox (24)
              Privacy, terms and the form to report a link: what we keep, table by table, how long each thing lasts, and what you may not do with it. (135)
-check-seo: FAIL (3 passed, 10 failed, 0 skipped; fetched from https://hidebox.app, tags on https://hidebox.app)
+check-seo: FAIL (4 passed, 11 failed, 0 skipped; fetched from https://hidebox.app, tags on https://hidebox.app)

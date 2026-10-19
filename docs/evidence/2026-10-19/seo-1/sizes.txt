@@ -1,8 +1,8 @@
-Built with tools/build.py --origin https://hidebox.app: before = main at 9bfee2c, after = seo/pass-1 at f045088 (later commits change no served file).
+Built with tools/build.py --origin https://hidebox.app: before = main at 9bfee2c, after = seo/pass-1 at 4dd7c02 (later commits change no served file).
 file                         before raw  after raw before gz9  after gz9 delta gz9
 index.html                       27,737     28,970      6,444      6,605      +161
 how/index.html                   19,643     20,947      4,753      5,026      +273
-made/index.html                  71,655     72,843     19,091     19,331      +240
+made/index.html                  71,655     72,843     19,091     19,333      +242
 judges/index.html                15,846     17,058      4,505      4,769      +264
 fine-print/index.html            27,046     28,223      8,978      9,219      +241
 404.html                          5,130      5,803      2,028      2,107       +79
@@ -10,5 +10,5 @@ app/drive.html                    5,154      6,504      2,466      2,770      +3
 app/view.html                     6,486      7,069      2,676      2,740       +64
 app/app.html                      5,842      6,516      2,346      2,405       +59
 sitemap.xml                         358        503        174        194       +20
-robots.txt                          564        564        319        319        +0
+robots.txt                          564      1,093        319        557      +238
 manifest.webmanifest                490        632        261        311       +50

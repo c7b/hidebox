@@ -55,6 +55,28 @@
    "notes": []
   },
   {
+   "check": "private routes are noindex",
+   "result": "PASS",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "card http://127.0.0.1:18444/og-s.png",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "1200 x 630, 50,018 B"
+   ]
+  },
+  {
+   "check": "card http://127.0.0.1:18444/og-s.png: kept a day, loadable from any origin",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "'public, max-age=86400', CORP 'cross-origin'"
+   ]
+  },
+  {
    "check": "card http://127.0.0.1:18444/og.png",
    "result": "PASS",
    "problems": [],
@@ -83,7 +105,7 @@
    "result": "PASS",
    "problems": [],
    "notes": [
-    "11 Disallow lines"
+    "12 Disallow lines"
    ]
   },
   {
@@ -93,12 +115,6 @@
    "notes": [
     "5 URLs, lastmod 2026-10-19"
    ]
-  },
-  {
-   "check": "private routes are noindex",
-   "result": "PASS",
-   "problems": [],
-   "notes": []
   },
   {
    "check": "an unknown page answers 404, noindex",

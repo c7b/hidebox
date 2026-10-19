@@ -113,6 +113,45 @@
    "notes": []
   },
   {
+   "check": "private routes are noindex",
+   "result": "FAIL",
+   "problems": [
+    "/s/AAAAAAAAAAAAAAAAAAAAAA: twitter:image differs from og:image",
+    "/p/AAAAAAAAAAAAAAAAAAAAAA: twitter:image differs from og:image",
+    "/t: twitter:image differs from og:image",
+    "/d/7kq2x9mdh4: twitter:image differs from og:image",
+    "/send: twitter:image differs from og:image",
+    "/watch: twitter:image differs from og:image",
+    "/verify/tx/0000000000000000000000000000000000000000000000000000000000000000: twitter:image differs from og:image",
+    "/app/drive.html: status 200, X-Robots-Tag ''",
+    "/app/view.html: twitter:image differs from og:image",
+    "/app/view.html: status 200, X-Robots-Tag ''",
+    "/app/app.html: twitter:image differs from og:image",
+    "/app/app.html: status 200, X-Robots-Tag ''",
+    "/api/v1/config: status 200, X-Robots-Tag ''"
+   ],
+   "notes": []
+  },
+  {
+   "check": "card https://hidebox.app/og-s.png",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "1200 x 630, 50,018 B"
+   ]
+  },
+  {
+   "check": "card https://hidebox.app/og-s.png: kept a day, loadable from any origin",
+   "result": "FAIL",
+   "problems": [
+    "Cache-Control 'no-cache': at least a day",
+    "Cross-Origin-Resource-Policy 'same-origin': a preview drawn from the page loads it from another origin"
+   ],
+   "notes": [
+    "'no-cache', CORP 'same-origin'"
+   ]
+  },
+  {
    "check": "card https://hidebox.app/og.png",
    "result": "PASS",
    "problems": [],
@@ -151,6 +190,20 @@
    "check": "robots.txt",
    "result": "FAIL",
    "problems": [
+    "Twitterbot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "Twitterbot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "facebookexternalhit may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "facebookexternalhit may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "Slackbot-LinkExpanding may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "Slackbot-LinkExpanding may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "LinkedInBot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "LinkedInBot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "Discordbot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "Discordbot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "TelegramBot may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "TelegramBot may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "WhatsApp may not read /s/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
+    "WhatsApp may not read /p/AAAAAAAAAAAAAAAAAAAAAA (it draws the card of a pasted link)",
     "Cache-Control 'no-cache'"
    ],
    "notes": [
@@ -171,17 +224,6 @@
    "notes": [
     "5 URLs, lastmod "
    ]
-  },
-  {
-   "check": "private routes are noindex",
-   "result": "FAIL",
-   "problems": [
-    "/app/drive.html: status 200, X-Robots-Tag ''",
-    "/app/view.html: status 200, X-Robots-Tag ''",
-    "/app/app.html: status 200, X-Robots-Tag ''",
-    "/api/v1/config: status 200, X-Robots-Tag ''"
-   ],
-   "notes": []
   },
   {
    "check": "an unknown page answers 404, noindex",

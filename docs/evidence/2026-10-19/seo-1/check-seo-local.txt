@@ -14,6 +14,11 @@ PASS page /fine-print
      note: JSON-LD: BreadcrumbList
      note: 5 pages linked, 0 images, 26 headings
 PASS titles and descriptions are unique
+PASS private routes are noindex
+PASS card http://127.0.0.1:18444/og-s.png
+     note: 1200 x 630, 50,018 B
+PASS card http://127.0.0.1:18444/og-s.png: kept a day, loadable from any origin
+     note: 'public, max-age=86400', CORP 'cross-origin'
 PASS card http://127.0.0.1:18444/og.png
      note: 1200 x 630, 142,970 B
 PASS card http://127.0.0.1:18444/og.png: kept a day, loadable from any origin
@@ -21,10 +26,9 @@ PASS card http://127.0.0.1:18444/og.png: kept a day, loadable from any origin
 PASS icons and manifest
      note: manifest: 'hidebox', 3 icons, start_url '/'
 PASS robots.txt
-     note: 11 Disallow lines
+     note: 12 Disallow lines
 PASS sitemap.xml
      note: 5 URLs, lastmod 2026-10-19
-PASS private routes are noindex
 PASS an unknown page answers 404, noindex
 
 Path         Title (characters)                                             Description (characters)
@@ -38,4 +42,4 @@ Path         Title (characters)                                             Desc
              Two six-step tracks for the Tari Council: one device and no wallet, about two minutes; then two devices with Tari, about five minutes. (134)
 /fine-print  The fine print: privacy policy and terms · hidebox (50)
              What we keep, table by table, how long each thing lasts, what you may not do with it, and the form to report a link. (116)
-check-seo: PASS (13 passed, 0 failed, 0 skipped; fetched from http://127.0.0.1:18444, tags on http://127.0.0.1:18444)
+check-seo: PASS (15 passed, 0 failed, 0 skipped; fetched from http://127.0.0.1:18444, tags on http://127.0.0.1:18444)

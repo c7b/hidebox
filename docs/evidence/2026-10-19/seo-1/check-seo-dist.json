@@ -1,5 +1,5 @@
 {
- "origin": "http://127.0.0.1:39061",
+ "origin": "http://127.0.0.1:40227",
  "expect_origin": "https://hidebox.app",
  "caddy": false,
  "results": [
@@ -55,6 +55,32 @@
    "notes": []
   },
   {
+   "check": "private routes are noindex (their robots meta, where a file answers)",
+   "result": "PASS",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "private routes: X-Robots-Tag (Caddy sets it): /drive, /drive/received, /s/AAAAAAAAAAAAAAAAAAAAAA, /p/AAAAAAAAAAAAAAAAAAAAAA, /t, /d/7kq2x9mdh4, /send, /watch, /verify/tx/0000000000000000000000000000000000000000000000000000000000000000, /api/v1/config",
+   "result": "SKIP",
+   "problems": [],
+   "notes": []
+  },
+  {
+   "check": "card https://hidebox.app/og-s.png",
+   "result": "PASS",
+   "problems": [],
+   "notes": [
+    "1200 x 630, 50,018 B"
+   ]
+  },
+  {
+   "check": "card https://hidebox.app/og-s.png: kept a day, loadable from any origin (Caddy sets it)",
+   "result": "SKIP",
+   "problems": [],
+   "notes": []
+  },
+  {
    "check": "card https://hidebox.app/og.png",
    "result": "PASS",
    "problems": [],
@@ -81,7 +107,7 @@
    "result": "PASS",
    "problems": [],
    "notes": [
-    "11 Disallow lines"
+    "12 Disallow lines"
    ]
   },
   {
@@ -91,18 +117,6 @@
    "notes": [
     "5 URLs, lastmod 2026-10-19"
    ]
-  },
-  {
-   "check": "private routes are noindex (their robots meta, where a file answers)",
-   "result": "PASS",
-   "problems": [],
-   "notes": []
-  },
-  {
-   "check": "private routes: X-Robots-Tag (Caddy sets it): /drive, /drive/received, /s/AAAAAAAAAAAAAAAAAAAAAA, /p/AAAAAAAAAAAAAAAAAAAAAA, /t, /d/7kq2x9mdh4, /send, /watch, /verify/tx/0000000000000000000000000000000000000000000000000000000000000000, /api/v1/config",
-   "result": "SKIP",
-   "problems": [],
-   "notes": []
   },
   {
    "check": "an unknown page answers 404, noindex",
