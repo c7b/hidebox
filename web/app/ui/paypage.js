@@ -11,6 +11,10 @@
 // Pay from my drive answers at once: the click shows its own steps (building the payment in this tab,
 // seen on the chain, the owner's check, ready to open); a failure that spent nothing says why, with Try
 // again; a drive here without enough test money says so instead of offering the button.
+// Nothing on the page moves by itself (owner-5): the first screen comes with the drive's look in one step,
+// a redraw that would show the same thing is skipped (the claim is asked about every 3 s), the claim's QR
+// code is drawn with its address and kept, and the line for a drive in this browser is held while it is
+// checked.
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError } from '../lib/api.js';
 import { fetchContent, openItem } from '../lib/open.js';
@@ -25,6 +29,8 @@ import { testnetLine } from './marks.js';
 import { waiting } from './progress.js';
 
 const POLL_MS = 3000;
+let qrCode = null;            // ./qr.js, loaded before a claim's address is first drawn, so its code comes with it
+const loadQr = () => (qrCode ? Promise.resolve() : import('./qr.js').then((m) => { qrCode = m; }, () => null));
 const READY_POLL_MS = 10000;   // a link not ready to sell yet: how often the page asks again
 const nowS = () => Math.floor(Date.now() / 1000);
 const day = (sec) => formatDate(sec * 1000, { month: 'short', day: 'numeric' });
@@ -33,6 +39,15 @@ const spinner = () => {
   s.classList.add('spinner');
   return s;
 };
+
+// What a tree shows: each element with its attributes, and its text (a draw that would show the same is skipped).
+function shape(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.data;
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  let out = `<${node.tagName}`;
+  for (const a of node.attributes) out += ` ${a.name}="${a.value}"`;
+  return `${out}>${[...node.childNodes].map(shape).join('')}</>`;
+}
 
 // Where a claim is, as the page shows it.
 function phaseOf(P) {
@@ -68,18 +83,26 @@ function stepper(P, phase) {
 }
 
 export async function payPage(root, cfg, shareId) {
-  await driveLook();
-  root.classList.add('pay-main');
   root.setAttribute('data-testid', 'pay-page');
   const P = {
     cfg, shareId, sA: pay.parsePayFragment(location.hash), info: null, teaser: null, claim: pay.savedClaim(shareId),
     status: null, error: null, busy: null, other: false, identity: null, funded: false, have: null, need: null, access: null, opened: null,
-    used: false, timer: null, panel: null, driveError: null, late: false,
+    used: false, timer: null, panel: null, driveError: null, late: false, checking: false, qr: null, drawn: null,
   };
   // A payment from this drive that never reached the chain (the tab closed while it was built) spent nothing.
   if (P.claim?.how === 'drive' && !P.claim.tx) P.claim = pay.keepClaim(shareId, { how: null });
+  // The page keeps the link page's look ("…") until it has what its first screen shows; then the drive's look and
+  // that screen arrive together.
+  const look = async () => {
+    await driveLook();
+    root.classList.add('pay-main');
+    // The drive's words come in its own Geist subset (drive.css); the first screen waits for it, at most 1.5 s, so
+    // nothing reflows when it swaps in (on a phone that moved the whole card).
+    await Promise.race([document.fonts.load('400 1rem Geist', 'Pay'), new Promise((r) => setTimeout(r, 1500))]).catch(() => null);
+  };
 
-  const fatal = (state, title, body) => {
+  const fatal = async (state, title, body) => {
+    await look();
     root.dataset.state = state;
     root.replaceChildren(h('div', { class: 'card fv-card' }, h('div', { class: 'card-header' },
       h('h1', { class: 'card-title h3', tabindex: '-1' }, title), body ? h('p', { class: 'card-description' }, body) : null),
@@ -88,6 +111,10 @@ export async function payPage(root, cfg, shareId) {
 
   if (!P.sA) return fatal('incomplete', t('gone.nokey'), t('gone.nokey_body'));
   root.dataset.state = 'loading';
+  // Asked at the same time as the link: whether a drive is in this browser (its line is held from the first
+  // screen), and the QR code's module when a kept claim already has an address.
+  const drive = localDrive();
+  const qrLoaded = P.claim?.address ? loadQr() : null;
   try {
     P.info = await pay.linkInfo(shareId);
     if (P.info.state === 'gone') throw new ApiError({ status: 410, code: 'gone', message: 'gone' });
@@ -99,9 +126,14 @@ export async function payPage(root, cfg, shareId) {
     if (e instanceof ApiError && e.code === 'gone') return fatal('gone', t('rec.gone_h'), t('buy.gone'));
     if (e instanceof ApiError && e.code === 'not_found') return fatal('not-found', t('gone.notfound'), null);
     if (!(e instanceof ApiError)) return fatal('integrity-error', t('gone.integrity'), t('gone.integrity_body'));
+    await look();
     root.dataset.state = 'error';
     return root.replaceChildren(errorAlert(e, { action: { label: t('viewer.retry'), onClick: () => location.reload() } }));
   }
+  const stored = await drive;
+  P.checking = Boolean(stored);
+  await qrLoaded;
+  await look();
   const price = P.info.price_ut;
   const folder = P.teaser.kind === 'folder';
   const size = formatBytes(P.teaser.size_bucket ?? 0);
@@ -175,7 +207,7 @@ export async function payPage(root, cfg, shareId) {
         P.driveError = e;
         if (describe(e).code === 'insufficient') {
           P.funded = false;
-          findDrive().catch(() => null); // what it has now, said under the price
+          findDrive(P.identity).then(draw, () => null); // what it has now, said under the price
         }
       }
       P.claim = pay.savedClaim(shareId) ?? P.claim;
@@ -196,7 +228,7 @@ export async function payPage(root, cfg, shareId) {
   }
 
   const showOther = () => act('other', async () => {
-    await claim();
+    await Promise.all([claim(), loadQr()]);
     poll();
   });
 
@@ -261,12 +293,18 @@ export async function payPage(root, cfg, shareId) {
     await rememberPurchase(P.identity, shareId, { url: location.href, name: P.teaser.name ?? null, price_ut: price, state, demo: Boolean(P.status?.demo), tx: P.claim?.tx ?? null });
   }
 
-  // A drive in this browser that can pay: direct mode, and its wallet covers the price and the fee.
-  async function findDrive() {
-    if (!(cfg.send_mode === 'direct' && cfg.features?.direct_send)) return;
-    const { loadIdentity, withOotle } = await import('../lib/identity.js');
-    const stored = await loadIdentity({ lazy: true }).catch(() => null);
+  // A drive in this browser, where a drive can pay from here (direct mode): found before the first screen, so the
+  // line it gets is held while its money is checked.
+  async function localDrive() {
+    if (!(cfg.send_mode === 'direct' && cfg.features?.direct_send)) return null;
+    const { loadIdentity } = await import('../lib/identity.js');
+    return loadIdentity({ lazy: true }).catch(() => null);
+  }
+
+  // Whether that drive can pay: its wallet covers the price and the fee.
+  async function findDrive(stored) {
     if (!stored) return;
+    const { withOotle } = await import('../lib/identity.js');
     P.identity = stored;
     const [session, w] = await Promise.all([import('../lib/session.js'), import('../lib/wallet.js')]);
     await session.ensureSession(stored);
@@ -277,7 +315,6 @@ export async function payPage(root, cfg, shareId) {
     P.need = BigInt(price) + w.FEE_UT;
     P.funded = P.have >= P.need;
     if (P.claim) remember(phaseOf(P) === 'open' || phaseOf(P) === 'opened' ? 'paid' : 'waiting');
-    draw();
   }
 
   // ---------- the page ----------
@@ -288,7 +325,7 @@ export async function payPage(root, cfg, shareId) {
     if (P.opened?.folder) {
       // One panel per open: its visit clock keeps running across the page's redraws.
       P.panel ??= folderPanel(P.opened.folder, { cfg, heading: 'h3' });
-      content = P.panel.el;
+      content = keep(P.panel.el);
     } else if (P.opened?.file) {
       const f = P.opened.file;
       content = h('ul', { class: 'preview-list', role: 'list', 'data-testid': 'pay-file' },
@@ -324,9 +361,9 @@ export async function payPage(root, cfg, shareId) {
           toast(t('error.clipboard'), { type: 'error' });
         }
       });
-      const qrSlot = h('div', { class: 'pay-qr-code' });
-      import('./qr.js').then(({ qrFigure }) => qrSlot.replaceChildren(qrFigure(c.address, { label: t('buy.qr_label'), caption: t('buy.qr_cap'), testid: 'pay-qr' }))).catch(() => qrSlot.remove());
-      inner.append(h('div', { class: 'pay-qr' }, qrSlot, h('div', { class: 'stack' },
+      // Drawn with its address (the module is loaded first) and kept: a redraw puts the same code back, never an empty slot.
+      if (P.qr?.address !== c.address) P.qr = qrCode ? { address: c.address, el: qrCode.qrFigure(c.address, { label: t('buy.qr_label'), caption: t('buy.qr_cap'), testid: 'pay-qr' }) } : null;
+      inner.append(h('div', { class: 'pay-qr' }, P.qr ? h('div', { class: 'pay-qr-code' }, keep(P.qr.el)) : null, h('div', { class: 'stack' },
         h('span', { class: 'label' }, t('buy.to')),
         h('input', { class: 'input mono', readonly: true, value: c.address, 'aria-label': t('buy.to'), 'data-testid': 'pay-address' }),
         copy)),
@@ -375,7 +412,7 @@ export async function payPage(root, cfg, shareId) {
         // A seller who just started selling is ready within minutes: the page asks again by itself (ux-feedback-1)
         if (notReady && !paused) {
           P.readyWait ??= waiting(t('buy.not_ready_wait'), { testid: 'pay-ready-wait' });
-          content.append(P.readyWait.el);
+          content.append(keep(P.readyWait.el));
           if (!P.readyTimer) P.readyTimer = setTimeout(checkReady, READY_POLL_MS);
         }
       } else {
@@ -386,14 +423,20 @@ export async function payPage(root, cfg, shareId) {
           if (P.busy === 'test') b.prepend(spinner());
           choices.append(b, h('p', { class: 'small muted' }, t('buy.test_d')));
         }
-        if (P.funded) {
+        // A drive in this browser: its line is held from the first screen (the height of Pay from my drive and
+        // its note), says it is being checked, then shows the button or why there is none. Nothing below moves.
+        if (P.checking) {
+          choices.append(h('div', { class: 'pay-drive stack', 'data-testid': 'pay-drive-check' },
+            h('p', { class: 'small muted row', role: 'status' }, spinner(), h('span', {}, t('buy.drive_checking')))));
+        } else if (P.funded) {
           // Its click turns the card into the payment's steps at once (phase 'paying'), never a quiet spinner.
-          choices.append(button(t('buy.drive'), { variant: testMoney ? 'outline' : null, glyph: 'wallet', testid: 'pay-browser', disabled: P.busy ? true : null, onclick: payDrive }),
-            h('p', { class: 'small muted' }, t('buy.own_wait')));
+          choices.append(h('div', { class: 'pay-drive stack' },
+            button(t('buy.drive'), { variant: testMoney ? 'outline' : null, glyph: 'wallet', testid: 'pay-browser', disabled: P.busy ? true : null, onclick: payDrive }),
+            h('p', { class: 'small muted' }, t('buy.own_wait'))));
         } else if (P.have !== null) {
           // A drive here, short of the price and the fee: say why there is no Pay from my drive.
-          choices.append(h('p', { class: 'small muted row', 'data-testid': 'pay-drive-short' }, icon('wallet'),
-            h('span', {}, t('buy.drive_short', { have: formatTari(P.have.toString()), need: formatTari(P.need.toString()) }))));
+          choices.append(h('div', { class: 'pay-drive stack' }, h('p', { class: 'small muted row', 'data-testid': 'pay-drive-short' }, icon('wallet'),
+            h('span', {}, t('buy.drive_short', { have: formatTari(P.have.toString()), need: formatTari(P.need.toString()) })))));
         }
         choices.append(otherBox(phase));
         content.append(choices);
@@ -440,17 +483,35 @@ export async function payPage(root, cfg, shareId) {
       content));
   }
 
+  // Parts that live across draws (the claim's QR code, the wait's clock, an open folder's panel): a draw holds
+  // their place with an empty slot and puts them back once it is on screen, so building the next screen never
+  // takes them off this one.
+  const kept = [];
+  function keep(el) {
+    kept.push(el);
+    return h('i', { 'data-keep': String(kept.length - 1), hidden: true });
+  }
+
+  // The page as a tree, then on screen only when it shows something else: the claim is asked about every 3 s,
+  // and an answer that changes nothing must not touch the screen (the address keeps its selection, the status
+  // isn't read out again, nothing is rebuilt).
   function draw() {
+    kept.length = 0;
     const phase = phaseOf(P);
     const unlocked = phase === 'open' || phase === 'opened';
-    const focused = document.activeElement && root.contains(document.activeElement) ? document.activeElement.dataset.testid : null;
-    root.dataset.state = phase;
-    root.replaceChildren(h('div', { class: 'buyer' },
+    const page = h('div', { class: 'buyer' },
       h('div', { class: 'buyer-head' },
         h('h1', { class: 'h1', id: 'buy-h', tabindex: '-1' }, unlocked ? t('buy.open') : t(folder ? 'buy.title_folder' : 'buy.title_file')),
         h('p', { class: 'lead' }, unlocked ? t('buy.left', { count: P.status?.views_left ?? 0, date: day(until()) })
           : folder ? t('buy.desc_folder', { count: P.teaser.count ?? 0, size, price: formatTari(price) }) : t('buy.desc_file', { size, price: formatTari(price) }))),
-      payCard(phase), teaserCard(phase)));
+      payCard(phase), teaserCard(phase));
+    const same = `${phase}|${P.claim?.address ?? ''}|${shape(page)}`;
+    if (same === P.drawn && root.firstElementChild?.classList.contains('buyer')) return;
+    P.drawn = same;
+    const focused = document.activeElement && root.contains(document.activeElement) ? document.activeElement.dataset.testid : null;
+    root.dataset.state = phase;
+    root.replaceChildren(page);
+    for (const slot of page.querySelectorAll('[data-keep]')) slot.replaceWith(kept[Number(slot.dataset.keep)]);
     init(root);
     if (focused) root.querySelector(`[data-testid="${focused}"]`)?.focus({ preventScroll: true });
   }
@@ -458,5 +519,8 @@ export async function payPage(root, cfg, shareId) {
   draw();
   root.querySelector('#buy-h')?.focus({ preventScroll: true });
   if (P.claim) poll();
-  findDrive().catch(() => null);
+  findDrive(stored).catch(() => null).finally(() => {
+    P.checking = false;
+    draw();
+  });
 }

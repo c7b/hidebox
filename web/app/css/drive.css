@@ -426,6 +426,9 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .pay-qr .md-qr figcaption { max-width: 7.5rem; }
 .pay-qr .input { font-size: var(--text-xs); }
 @media (max-width: 380px) { .pay-qr { grid-template-columns: minmax(0, 1fr); justify-items: start; } }
+/* A drive in this browser (owner-5): its line keeps the height of Pay from my drive and its two-line note while
+   the drive is checked and after, so the answer moves nothing below it. */
+.pay-drive { min-height: calc(var(--target) + 3rem); align-content: start; }
 /* Received's Payments (the owner check, step 16) */
 [data-testid="sales-root"] .badge[data-check] { white-space: nowrap; }
 

@@ -845,3 +845,137 @@ def owner_check(t):
     fake.add_outputs(more)
     t.check(a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 4", 50),
             "a payment made while Received is open shows up there without a reload")
+
+
+# --- owner-5: the buyer page draws its final state at once, and stays put --------------------------------
+
+# From the document's first script: layout shifts (PerformanceObserver), redraws of the whole page (the pay page
+# root's children replaced), how many QR codes were built, frames in which the address showed without its
+# code, and every frame in which a part of the pay card moved or resized (its top and height, read before each
+# paint). `__steady.report(from)` sums what happened from `from` (performance.now()) on; `shift` is every layout
+# shift (the link page's own header and footer give way to the drive's before the card is drawn), `shift_after_draw`
+# those after the card is on screen.
+STEADY = r"""(() => {
+  if (window.__steady) return;
+  const S = window.__steady = { shifts: [], redraws: [], moves: [], qrs: [], empty: [] };
+  try {
+    new PerformanceObserver((list) => { for (const e of list.getEntries()) S.shifts.push([e.startTime, e.value, e.hadRecentInput,
+      (e.sources || []).map((s) => (s.node && (s.node.dataset?.testid || s.node.className || s.node.nodeName)) || '?').slice(0, 3).join(' ')]); })
+      .observe({ type: 'layout-shift', buffered: true });
+  } catch (e) { /* no layout-shift entries in this browser */ }
+  const PARTS = ['pay-price', 'pay-fee', 'pay-get', 'pay-final', 'pay-test', 'pay-browser', 'pay-drive-short', 'pay-drive-check', 'pay-other', 'pay-address'];
+  const OWN = new Set(['pay-browser', 'pay-drive-short', 'pay-drive-check']);   // the held drive line's own answer
+  const box = (e) => { if (!e) return '-'; const r = e.getBoundingClientRect(); return Math.round(r.top) + ':' + Math.round(r.height); };
+  let last = null, mo = null;
+  const frame = () => {
+    const now = performance.now();
+    const root = document.querySelector('[data-testid="pay-page"]');
+    if (root && !mo) {
+      mo = new MutationObserver((ms) => { if (root.querySelector('.buyer') && ms.some((m) => m.target === root && m.removedNodes.length && [...m.removedNodes].some((n) => n.classList?.contains('buyer')))) S.redraws.push(performance.now()); });
+      mo.observe(root, { childList: true });
+    }
+    const qr = document.querySelector('[data-testid="pay-qr"]');
+    if (qr && !S.qrs.some(([, e]) => e === qr)) S.qrs.push([now, qr]);
+    const slot = document.querySelector('.pay-qr-code');
+    if (document.querySelector('[data-testid="pay-address"]') && slot && !slot.firstElementChild) S.empty.push(now);
+    // The card's nodes are new in the frame it first shows (a shift then is the page around it giving way):
+    // from the next frame on, a shift moved the card.
+    if (root?.querySelector('.buyer') && S.drawnAt === undefined) {
+      if (S.seenAt === undefined) S.seenAt = now;
+      else S.drawnAt = now;
+    }
+    const parts = root?.querySelector('.buyer') ? [...PARTS.map((id) => box(document.querySelector(`[data-testid="${id}"]`))), box(slot)] : null;
+    const sig = parts && parts.join(' ');
+    if (sig && last !== null && sig !== last.join(' ')) {
+      const own = parts.every((b, i) => b === last[i] || OWN.has(PARTS[i]));
+      S.moves.push([now, last.join(' '), sig, own]);
+    }
+    if (parts) last = parts;
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  S.report = (from = 0) => {
+    const shifts = S.shifts.filter((s) => s[0] >= from);
+    const after = shifts.filter((s) => S.drawnAt !== undefined && s[0] >= S.drawnAt);
+    return { shift: Math.round(shifts.reduce((a, s) => a + s[1], 0) * 10000) / 10000,
+      shift_after_draw: Math.round(after.reduce((a, s) => a + s[1], 0) * 10000) / 10000,
+      shift_no_input: Math.round(shifts.filter((s) => !s[2]).reduce((a, s) => a + s[1], 0) * 10000) / 10000,
+      shifted: shifts.map((s) => s[3]).slice(0, 6), redraws: S.redraws.filter((t) => t >= from).length,
+      moves: S.moves.filter((m) => m[0] >= from).length, others_moved: S.moves.filter((m) => m[0] >= from && !m[3]).length, first_moves: S.moves.filter((m) => m[0] >= from).slice(0, 3).map((m) => [Math.round(m[0]), m[1], m[2]]),
+      qr_built: S.qrs.filter(([t]) => t >= from).length, empty_qr_frames: S.empty.filter((t) => t >= from).length };
+  };
+})()"""
+
+
+def hold(page, seconds):
+    """Let the page run (its polls, its fetches through the fake) for `seconds`."""
+    page.eval(f"new Promise((r) => setTimeout(r, {int(seconds * 1000)}))", timeout=seconds + 30)
+
+
+@scenario("pay-steady", "owner-5: the buyer page draws its final state at once and stays put: no layout shift and no redraw "
+          "on arrival, while it asks about a claim every 3 s, when Another Ootle wallet opens (the address and its code arrive "
+          "once), on a reload with that claim, and in a browser with a drive (its line is held while the drive is checked)",
+          features=FEATURES)
+def pay_steady(t):
+    fake = PayFake(t)
+    a = seller(t, fake)
+    url = sell(a, "notes.txt", price="100000")
+    sid = re.search(PAY_LINK, url)[1]
+    fake.links[sid]["seller_state"] = "ok"
+    close_dialog(a)
+    report = {}
+
+    def buyer_page(device="desktop"):
+        p = t.actor(device)
+        attach(t, fake, p)
+        p.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": STEADY})
+        return p
+
+    # A stranger's first screen: drawn once.
+    b = buyer_page()
+    b.goto(url)
+    wait_pay(b, ("wait",), 60)
+    hold(b, 4)
+    m = report["arrival"] = b.eval("window.__steady.report()")
+    t.check(m["shift_after_draw"] == 0 and m["redraws"] == 0 and m["moves"] == 0, f"arrival: drawn once, nothing moves ({m})")
+    # Another Ootle wallet: the address and its code arrive once, then stay put through two of the page's polls.
+    start = b.eval("performance.now()")
+    b.eval("document.querySelector('[data-testid=\"pay-other\"] summary').click()")
+    b.wait_for("pay-address", 60)
+    b.wait("!!document.querySelector('[data-testid=\"pay-qr\"]')", 10)
+    shown = b.eval("performance.now()")
+    hold(b, 7)
+    m = report["other_opens"] = b.eval(f"window.__steady.report({start})")
+    t.check(m["qr_built"] == 1 and m["empty_qr_frames"] == 0, f"Another Ootle wallet: its code is built once, and the address never shows without it ({m})")
+    m = report["other_polls"] = b.eval(f"window.__steady.report({shown} + 50)")
+    t.check(m["shift"] == 0 and m["moves"] == 0 and m["redraws"] == 0, f"while the page asks about the claim every 3 s, nothing moves or redraws ({m})")
+    t.shot(b, "pay-steady-other-1440")
+    # A reload with that claim kept in this browser: the first screen is the final one.
+    b.reload()
+    wait_pay(b, ("wait",), 60)
+    hold(b, 7)
+    m = report["reload_with_claim"] = b.eval("window.__steady.report()")
+    t.check(m["shift_after_draw"] == 0 and m["moves"] == 0 and m["redraws"] == 0 and m["qr_built"] == 1 and m["empty_qr_frames"] == 0,
+            f"a reload with the claim kept: drawn once with its code, nothing moves ({m})")
+    # A browser with a drive (direct mode): the page checks the drive after it draws; its line is held meanwhile.
+    fake.direct = True
+    d = buyer_page("iphone")
+    d.goto(t.origin + "/drive?make")
+    d.wait_for("drive-root", 90)
+    fake.add_outputs(d.eval(OUTPUTS_JS + "([{ to: 'wallet', amount: '1000000' }])", timeout=120))
+    d.goto(url)
+    d.wait_for("pay-browser", 120)
+    hold(d, 4)
+    m = report["drive_arrival"] = d.eval("window.__steady.report()")
+    t.check(m["shift_after_draw"] == 0 and m["others_moved"] == 0 and m["redraws"] <= 1,
+            f"a browser with a drive: Pay from my drive takes the line held for it while it was checked, nothing else moves ({m})")
+    t.shot(d, "pay-steady-drive-390")
+    fits = {}
+    for name, width, height, mobile in (("iphone", 390, 844, True), ("narrow", 360, 740, True), ("desktop", 1440, 900, False)):
+        d.cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 2, "mobile": mobile})
+        hold(d, 0.3)
+        fits[name] = d.eval("(() => { const e = document.querySelector('.pay-drive'); const min = parseFloat(getComputedStyle(e).minHeight);"
+                            " return [Math.round(e.getBoundingClientRect().height), Math.round(min)]; })()")
+    report["drive_line"] = fits
+    t.check(all(hb == mn for hb, mn in fits.values()), f"Pay from my drive and its note fit the held line at 390, 360 and 1440 ({fits})")
+    print("  pay-steady:", json.dumps(report), flush=True)
