@@ -87,7 +87,7 @@ INDEXABLE = ("/", "/how", "/made", "/judges", "/fine-print")
 # names carry no version) and loadable from any origin (a preview drawn from the page loads og:image cross-origin).
 CARDS = {"/og.png": "image/png", "/og-s.png": "image/png", "/favicon.ico": "image/vnd.microsoft.icon",
          "/favicon.svg": "image/svg+xml", "/favicon-32.png": "image/png", "/apple-touch-icon.png": "image/png",
-         "/icon-192.png": "image/png", "/icon-512.png": "image/png"}
+         "/icon-192.png": "image/png", "/icon-512.png": "image/png", "/icon-maskable-512.png": "image/png"}
 CARD_HEADERS = {"cache-control": "public, max-age=86400", "cross-origin-resource-policy": "cross-origin"}
 # robots.txt and the sitemap: their types, kept an hour.
 CRAWL = {"/robots.txt": "text/plain; charset=utf-8", "/sitemap.xml": "application/xml; charset=utf-8"}

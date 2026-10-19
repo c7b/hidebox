@@ -141,7 +141,7 @@ http://{$MUTIS_HOST} {
 	@fonts path /shared/fonts/*
 	# What other products show beside a link to us: the share cards (og:image) and the icons. Their names stay put
 	# when their pictures change, so a day, not immutable.
-	@cards path /og.png /og-s.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png
+	@cards path /og.png /og-s.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png /icon-maskable-512.png
 	@crawl path /robots.txt /sitemap.xml
 
 	handle @api {

@@ -3,6 +3,7 @@
 the Caddyfile against spec §14.2 (verbatim, from tests/e2e/headers_spec.py), and the systemd units."""
 import configparser
 import fnmatch
+import json
 import re
 import sys
 import tomllib
@@ -107,6 +108,8 @@ class CaddyfileTest(unittest.TestCase):
         catch_all = re.search(r"(?m)^\thandle \{$", site).start()
         cards = re.search(r"(?m)^\t@cards path (.+)$", self.text).group(1).split()
         self.assertEqual(sorted(cards), sorted(headers_spec.CARDS))
+        manifest = json.loads((ROOT / "web" / "site" / "static" / "manifest.webmanifest").read_text())
+        self.assertLessEqual({icon["src"] for icon in manifest["icons"]}, set(headers_spec.CARDS))   # every app icon too
         body = re.search(r"(?ms)^\thandle @cards \{\n(.*?)^\t\}", self.text).group(1)
         self.assertIn("import site_csp", body)
         for name, value in headers_spec.CARD_HEADERS.items():
