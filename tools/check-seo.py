@@ -53,12 +53,19 @@ ROBOTS_BLOCKED = ("/drive", "/drive/received", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/
 PRIVATE = ("/drive", "/drive/received", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t", "/d/7kq2x9mdh4",
            "/send", "/watch", "/verify/tx/" + "0" * 64, "/v2", "/app/drive.html", "/app/view.html", "/app/app.html",
            "/api/v1/config")
+# The bots that draw a pasted link's card (robots.txt's second group): they may read a shared link's page.
+PREVIEW_BOTS = ("Twitterbot", "facebookexternalhit", "Slackbot-LinkExpanding", "LinkedInBot", "Discordbot", "TelegramBot",
+                "WhatsApp")
 GENERIC_LINK_TEXT = {"here", "click here", "read more", "more", "link", "this", "this page"}
 
 
 def fetch(url: str, method: str = "GET") -> tuple[int, dict, bytes]:
-    """One request, no redirect followed, no compression; headers lower-cased (a repeated one joined)."""
+    """One request, no redirect followed, no compression; headers lower-cased (a repeated one joined). A request that
+    fails (no answer, TLS, a URL that isn't http or https) is status 0 with the reason in an "error" header, so the
+    check that made it fails and says why."""
     u = urllib.parse.urlsplit(url)
+    if u.scheme not in ("http", "https") or not u.hostname:
+        return 0, {"error": f"not an http(s) URL: {url!r}"}, b""
     if u.scheme == "https":
         conn = http.client.HTTPSConnection(u.hostname, u.port or 443, timeout=30, context=ssl.create_default_context())
     else:
@@ -72,6 +79,8 @@ def fetch(url: str, method: str = "GET") -> tuple[int, dict, bytes]:
         for k, v in res.getheaders():
             headers[k.lower()] = f"{headers[k.lower()]}, {v}" if k.lower() in headers else v
         return res.status, headers, body
+    except (OSError, http.client.HTTPException) as e:
+        return 0, {"error": f"{type(e).__name__}: {e}"}, b""
     finally:
         conn.close()
 
@@ -162,20 +171,48 @@ def max_age(headers: dict) -> int:
     return int(m[1]) if m and "no-store" not in headers.get("cache-control", "") else 0
 
 
-def robots_allows(robots: str, path: str) -> bool:
-    """Google's rule matching for the * group: the longest matching rule wins, Allow on a tie; * is any run, $ the end."""
+def robots_groups(robots: str) -> list[tuple[list[str], list[tuple[str, str]]]]:
+    """(user agents, rules) per group (RFC 9309): consecutive User-agent lines open a group, its rules follow."""
+    groups, agents, rules = [], [], []
+    for raw in robots.splitlines():
+        key, _, value = raw.split("#", 1)[0].strip().partition(":")
+        key, value = key.strip().lower(), value.strip()
+        if key == "user-agent":
+            if rules:
+                groups.append((agents, rules))
+                agents, rules = [], []
+            agents.append(value.lower())
+        elif key in ("allow", "disallow") and agents:
+            rules.append((key, value))
+    if agents:
+        groups.append((agents, rules))
+    return groups
+
+
+def robots_allows(robots: str, path: str, agent: str = "*") -> bool:
+    """Google's rule matching in the group that names `agent` (else the * group): the longest matching rule wins,
+    Allow on a tie; * is any run, $ the end; an empty Disallow allows everything."""
+    groups = robots_groups(robots)
+    rules = [r for agents, rs in groups if agent.lower() in agents for r in rs] or \
+        [r for agents, rs in groups if "*" in agents for r in rs]
     best = (-1, True)
-    for kind, pattern in re.findall(r"^(Allow|Disallow):\s*(\S*)", robots, re.M):
+    for kind, pattern in rules:
         if not pattern:
             continue
         rx = re.escape(pattern).replace(r"\*", ".*")
         rx = rx[:-2] + "$" if rx.endswith(r"\$") else rx
-        if re.match(rx, path) and (len(pattern), kind == "Allow") > best:
-            best = (len(pattern), kind == "Allow")
+        if re.match(rx, path) and (len(pattern), kind == "allow") > best:
+            best = (len(pattern), kind == "allow")
     return best[1]
 
 
+def robots_tokens(*values: str) -> set[str]:
+    """The directives of robots metas and X-Robots-Tag values, lower-cased (an agent prefix such as "googlebot:" kept)."""
+    return {token for value in values for token in re.split(r"[,\s]+", value.lower()) if token}
+
+
 def ld_nodes(blocks: list[str]) -> tuple[list[dict], list[str]]:
+    """Every node of every JSON-LD block (a block may be one node, a @graph or a list of either)."""
     nodes, problems = [], []
     for raw in blocks:
         try:
@@ -183,10 +220,26 @@ def ld_nodes(blocks: list[str]) -> tuple[list[dict], list[str]]:
         except ValueError as e:
             problems.append(f"JSON-LD doesn't parse: {e}")
             continue
-        if doc.get("@context") != "https://schema.org":
-            problems.append(f"JSON-LD @context is {doc.get('@context')!r}")
-        nodes += doc.get("@graph") or [doc]
+        for item in doc if isinstance(doc, list) else [doc]:
+            if not isinstance(item, dict):
+                problems.append(f"JSON-LD holds a {type(item).__name__}, not an object")
+                continue
+            if item.get("@context") != "https://schema.org":
+                problems.append(f"JSON-LD @context is {item.get('@context')!r}")
+            graph = item.get("@graph")
+            nodes += [n for n in graph if isinstance(n, dict)] if isinstance(graph, list) else [item]
     return nodes, problems
+
+
+def ld_types(nodes: list[dict]) -> dict[str, dict]:
+    """Each node by its @type (a node with several types under each)."""
+    types = {}
+    for node in nodes:
+        kinds = node.get("@type")
+        for kind in kinds if isinstance(kinds, list) else [kinds]:
+            if isinstance(kind, str):
+                types.setdefault(kind, node)
+    return types
 
 
 class Checker:
@@ -224,9 +277,9 @@ class Checker:
             problems.append(f"title {title!r} ({len(title)}): at most {TITLE_MAX} characters, the name last")
         if not desc or len(desc) > DESC_MAX:
             problems.append(f"description of {len(desc)} characters (1 to {DESC_MAX})")
-        robots = (p.meta(name="robots") or "") + " " + headers.get("x-robots-tag", "")
-        if "noindex" in robots or "none" in robots.split(", "):
-            problems.append(f"noindex: {robots.strip()!r}")
+        robots = robots_tokens(p.meta(name="robots") or "", headers.get("x-robots-tag", ""))
+        if robots & {"noindex", "nofollow", "none"}:
+            problems.append(f"robots: {', '.join(sorted(robots & {'noindex', 'nofollow', 'none'}))}")
         if "max-image-preview:large" not in robots:
             problems.append("robots don't allow a large image preview (max-image-preview:large)")
         canonical = [link.get("href") for link in p.rel("canonical")]
@@ -240,7 +293,7 @@ class Checker:
         problems += self.card(p, url)
         nodes, ld_problems = ld_nodes(p.ld)
         problems += ld_problems
-        types = {n.get("@type"): n for n in nodes}
+        types = ld_types(nodes)
         if any("aggregateRating" in n or "review" in n for n in nodes):
             problems.append("JSON-LD carries a rating or a review")
         if path == "/":
@@ -319,10 +372,13 @@ class Checker:
     def cards(self) -> None:
         for image, sizes in sorted(self.images.items()):
             problems, notes = [], []
+            if not image.startswith(self.expect + "/"):
+                continue   # the page that names it already failed: never fetched from another site
             status, headers, body = fetch(self.local(image))
             real = png_size(body)
             if status != 200 or headers.get("content-type") != "image/png" or not real:
-                self.add(f"card {image}", [f"status {status}, content-type {headers.get('content-type')!r}, PNG {bool(real)}"])
+                self.add(f"card {image}", [f"status {status}, content-type {headers.get('content-type')!r}, PNG {bool(real)}"
+                                           + (f", {headers['error']}" if "error" in headers else "")])
                 continue
             for w, h in sizes:
                 if (str(real[0]), str(real[1])) != (w, h):
@@ -384,6 +440,10 @@ class Checker:
             problems.append(f"no 'Sitemap: {self.expect}/sitemap.xml'")
         problems += [f"blocks the public page {p}" for p in public if not robots_allows(text, p)]
         problems += [f"doesn't block {p}" for p in ROBOTS_BLOCKED if robots_allows(text, p)]
+        for bot in PREVIEW_BOTS:
+            problems += [f"{bot} may not read {p} (it draws the card of a pasted link)"
+                         for p in ("/", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/d/7kq2x9mdh4")
+                         if not robots_allows(text, p, bot)]
         if self.caddy and max_age(headers) < 3600:
             problems.append(f"Cache-Control {headers.get('cache-control')!r}")
         self.add("robots.txt", problems, [f"{len(re.findall(r'(?m)^Disallow:', text))} Disallow lines"])
@@ -416,12 +476,25 @@ class Checker:
         self.add("sitemap.xml", problems, [f"{len(locs)} URLs, lastmod {', '.join(sorted(dates))}"])
 
     def private(self) -> None:
+        """noindex on every private route; a private page's card (a shared link's og-s.png) is checked with the others,
+        and names no address (no og:url, no canonical: one page answers for every link)."""
         problems, notes, skipped = [], [], []
         for path in PRIVATE:
             status, headers, body = fetch(self.origin + path)
             header = headers.get("x-robots-tag", "")
             html = headers.get("content-type", "").startswith("text/html")
-            page_robots = parse(body).meta(name="robots") or "" if html and status == 200 else ""
+            page = parse(body) if html and status == 200 else None
+            page_robots = page.meta(name="robots") or "" if page else ""
+            if page and path != "/v2":   # the unlinked preview keeps the head it was made with
+                if page.meta(property="og:url") or page.rel("canonical"):
+                    problems.append(f"{path}: og:url or a canonical (a preview must not name the link)")
+                image = page.meta(property="og:image")
+                if image:
+                    size = (page.meta(property="og:image:width"), page.meta(property="og:image:height"))
+                    if size not in self.images.setdefault(image, []):
+                        self.images[image].append(size)
+                if page.meta(name="twitter:image") != image:
+                    problems.append(f"{path}: twitter:image differs from og:image")
             if self.caddy:
                 if status != 200 or "noindex" not in header:
                     problems.append(f"{path}: status {status}, X-Robots-Tag {header!r}")
@@ -449,11 +522,11 @@ class Checker:
         descs = [r["description"] for r in self.table]
         dupes = sorted({t for t in titles if titles.count(t) > 1} | {d for d in descs if descs.count(d) > 1})
         self.add("titles and descriptions are unique", [f"used twice: {d!r}" for d in dupes])
+        self.private()
         self.cards()
         self.icons_and_manifest()
         self.robots(public)
         self.sitemap(public)
-        self.private()
         self.not_found()
 
 
