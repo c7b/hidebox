@@ -225,6 +225,14 @@ class BuildTest(unittest.TestCase):
         self.assertNotIn("404", sitemap)
         self.assertNotIn("/status", sitemap)
 
+    def test_sitemap_lastmod_is_the_commits_date(self):
+        """Each URL carries the built commit's date (SOURCE's time, 1760000000), the same for every build of it."""
+        self.build()
+        sitemap = (self.tmp / "dist" / "sitemap.xml").read_text()
+        self.assertIn("<url><loc>https://example.test/how</loc><lastmod>2025-10-09</lastmod></url>", sitemap)
+        self.assertEqual(sitemap.count("<lastmod>2025-10-09</lastmod>"), sitemap.count("<url>"))
+        self.assertTrue(sitemap.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'))
+
     def test_manifest_lists_every_file_and_is_deterministic(self):
         first = json.loads((self.tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text()) if self.build() else None
         files = {p.relative_to(self.tmp / "dist").as_posix() for p in (self.tmp / "dist").rglob("*") if p.is_file()}

@@ -299,14 +299,16 @@ def verify_vendored(web: Path) -> list[str]:
     return checked
 
 
-def sitemap(dist: Path, pages: list[str], origin: str) -> None:
+def sitemap(dist: Path, pages: list[str], origin: str, lastmod: str) -> None:
+    """Every indexable page (not the 404, not noindex). `lastmod` is the built commit's date (the same for a git
+    checkout and an exported tree, so the file stays deterministic for verify-deploy)."""
     urls = []
     for rel in pages:
         target = page_target(rel)
         if target.endswith("404.html") or NOINDEX.search((dist / target).read_text(encoding="utf-8")):
             continue
         urls.append(origin + page_url(rel))
-    body = "".join(f"  <url><loc>{u}</loc></url>\n" for u in sorted(urls))
+    body = "".join(f"  <url><loc>{u}</loc><lastmod>{lastmod}</lastmod></url>\n" for u in sorted(urls))
     (dist / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n'
                                       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                                       f"{body}</urlset>\n", encoding="utf-8", newline="\n")
@@ -350,7 +352,7 @@ def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: 
     copy_sidecar(web, release)
     process_files(dist, web / "shared" / "partials", values | {
         "GIT_SHA": state["sha"], "VERSION": state["version"], "BUILD_DATE": state["date"]})
-    sitemap(dist, pages, values["ORIGIN"])
+    sitemap(dist, pages, values["ORIGIN"], state["date"])
     doc = manifest(dist, state, variant_config)
     return {"pages": len(pages), "files": len(doc["files"]), "content_id": content_id(doc["files"]),
             "vendored_checked": len(vendored), "holding": holding,
