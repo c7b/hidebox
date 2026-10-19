@@ -2,6 +2,7 @@
 """Static checks of the deploy configuration: the TOML example against the server's config schema,
 the Caddyfile against spec §14.2 (verbatim, from tests/e2e/headers_spec.py), and the systemd units."""
 import configparser
+import fnmatch
 import re
 import sys
 import tomllib
@@ -119,6 +120,10 @@ class CaddyfileTest(unittest.TestCase):
             self.assertIn(f'header @{matcher} Content-Type "{ctype}"', self.text)
         for route in ("@cards", "@crawl"):
             self.assertLess(site.index(f"handle {route}"), catch_all, route)
+        encode = re.search(r"(?ms)^\tencode \{\n(.*?)^\t\}", self.text).group(1)
+        patterns = re.findall(r"header Content-Type (\S+)", encode)
+        for path, ctype in headers_spec.CRAWL.items():
+            self.assertTrue(any(fnmatch.fnmatchcase(ctype, p) for p in patterns), f"{path} ({ctype}) is compressed")
         noindex = f'header X-Robots-Tag "{headers_spec.NOINDEX["x-robots-tag"]}"'
         for route in ("@api", "@appfiles", "@viewer", "@approute", "@drive"):
             body = re.search(rf"(?ms)^\thandle {route} \{{\n(.*?)^\t\}}", self.text).group(1)
