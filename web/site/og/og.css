@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: MIT — OG cards and app icons, rendered to PNG by tools/render-images.py: the shared-link
+/* SPDX-License-Identifier: MIT — the OG cards, rendered to PNG by tools/render-images.py: the shared-link
    card in the drive's light look (DESIGN.md: neutral ink on white, violet only for Tari), the site's card (og.html) dark
    like the home (the v3 design, docs/review/promote-v3.md), with the home's hero still; set in Geist, which the
-   tool loads from web/shared/fonts/geist/ (the pinned file) before it takes the picture. Lucide symbols inline, and the
-   open box, hidebox's own mark. */
+   tool loads from web/shared/fonts/geist/ (the pinned file) before it takes the picture. Lucide symbols inline, and
+   hidebox's own marks: the open box and, on the shared-link card, the wordmark (docs/review/brand-kit-1.md). The app
+   icons are SVGs of their own (icon.svg, icon-maskable.svg, ../static/favicon.svg). */
 * { margin: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; }
 body { background: #FFFFFF; color: #0A0A0A; font-family: "Geist", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -15,6 +16,8 @@ body { background: #FFFFFF; color: #0A0A0A; font-family: "Geist", ui-sans-serif,
 /* the mark, the open box: lime on an ink tile, as the site's header draws it (docs/review/home-v3.md) */
 .tile.mark { background: #0A0A0A; color: #BCFE00; font-size: 36px; }
 .name { font-size: 38px; font-weight: 600; letter-spacing: -.03em; }
+/* the wordmark beside the 56 px tile, 17/30 of its height as the site's header sets it; the rhombus lime, the letters ink */
+.word { display: block; flex: none; width: calc(31.7px * 148 / 34); height: 31.7px; }
 h1 { text-wrap: balance; font-size: 64px; line-height: 1.0; font-weight: 600; letter-spacing: -.045em; }
 .tagline { font-size: 34px; line-height: 1.25; font-weight: 500; color: #525252; letter-spacing: -.015em; }
 .stage { position: relative; display: grid; align-content: center; padding: 0 0 0 40px; background: #F5F5F5; border-left: 1px solid #E5E5E5; }
@@ -41,8 +44,6 @@ h1 { text-wrap: balance; font-size: 64px; line-height: 1.0; font-weight: 600; le
 .locked .file .tile { width: 64px; height: 64px; border-radius: 14px; background: #F5F5F5; color: #0A0A0A; font-size: 32px; }
 .locked p { font-size: 23px; line-height: 1.45; color: #525252; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 64px; border-radius: 10px; background: #171717; color: #FAFAFA; font-size: 25px; font-weight: 500; }
-.icon { display: grid; place-items: center; background: #0A0A0A; color: #BCFE00; }
-.icon .i { width: 62%; height: 62%; }
 /* the site's card (og.html): the home's first screen, dark first. The words on the ink, the hero's still (opaque on the
    same #0A0A0A, so its frame disappears) in the right column, its floor faded into the ink as the home fades it. 420 px
    keeps the PNG under 150 KB (render-images.py OG_MAX_BYTES): the still is the card's heaviest part. */

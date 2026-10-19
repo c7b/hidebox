@@ -39,7 +39,7 @@ the icons, the manifest, robots.txt, the sitemap and noindex on the private rout
 | `../shared/dates.js` | `MAINNET`, `phase()`, `isOctober31()`, `msToNextLocalMidnight()`, `applyPhase(root, now)` |
 | `../shared/theme.js` | classic script in `<head>`, before the first paint: "Lights off / Lights on", and `html.motion` when scripts run and motion is allowed |
 | `../shared/icons.svg` | the icon sprite of 11-brand §13.8, plus drop slot, watch and the wall's `keyhole` |
-| `../shared/brand/` | `symbol.svg`, `favicon.svg`: the mark, the open box in lime on its ink tile (docs/review/home-v3.md), the same in both themes; `../shared/ui/icons.svg#i-hidebox` draws it in the header's tile |
+| `../shared/brand/` | `symbol.svg`, `favicon.svg`: the mark, the open box in lime on its ink tile (docs/review/brand-kit-1.md), the same in both themes; `../shared/ui/icons.svg#i-hidebox` draws it in the header's tile and `#i-wordmark`, the name as the logo, beside it |
 | `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how made judges fine-print 404`, `v2` (the home with the product loops at `/v2`: noindex, linked from nowhere; [docs/review/home-v2.md](../../docs/review/home-v2.md)). `/v3` (`/v2` with stills, [docs/review/home-v3.md](../../docs/review/home-v3.md)) became `index` and answers 301 to `/` ([docs/review/promote-v3.md](../../docs/review/promote-v3.md)) |
@@ -47,8 +47,8 @@ the icons, the manifest, robots.txt, the sitemap and noindex on the private rout
 | `css/` | `site.css` (every page), `home.css` (`/` only, which also links the app's `widget.css`), `pages.css` (every other page), `v2.css` (`/v2` and the home, over `home.css`), `v3.css` (the home only, over `v2.css`), on `../shared/tokens.css` and `base.css` |
 | `media/motion/` | `/v2`'s four loops, each a VP9 WebM with alpha, an H.264 MP4 on black (WebKit's) and its RGBA first frame as the poster. Committed like every other served file, so the build's manifest lists them and `tools/verify-deploy.py` checks their bytes; the pipeline has no other way to serve static files (`/srv/mutis/status` holds only the timers' JSON). Budget V-01 in `tests/static_checks.py` and `browser_checks.py` |
 | `media/v3/` | The home's four stills, first shown at `/v3` (the hero's, which the closing shows again, What's different's, Who sees what's and Tari's), each an AVIF and a WebP at three widths for `srcset`, made with ffmpeg on the server from the owner's PNGs (not committed). Budget V-02 in `tests/static_checks.py` and `browser_checks.py` (`check_home_stills`) |
-| `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg` (the open box) and `favicon-32.png`, icons, `og.png` (the home's first screen with its still), `og-s.png` |
-| `og/` | HTML sources of the OG cards and app icons (not served) |
+| `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg` (the open box) and `favicon-32.png`, `favicon.ico` (16, 32 and 48 px), the app icons (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`), `og.png` (the home's first screen with its still), `og-s.png` |
+| `og/` | HTML sources of the OG cards; `icon.svg` and `icon-maskable.svg`, the full-bleed app icons (not served) |
 | `tools/` | `subset-fonts.sh`, `subset-geist.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
 | `tests/` | `run.py`, `static_checks.py`, `browser_checks.py`, `dates.test.mjs`, `serve.py`, `shots.py`, `make-canary.mjs`, `fixtures/` |
 | `shots/` | curated WebP screenshots of the six pages at 1440 and 390, light and dark, made by `tests/shots.py` |
@@ -87,7 +87,7 @@ as served.
 | Command | Does |
 |---|---|
 | `sh web/site/tools/subset-fonts.sh` | subsets Debian's Courier Prime and Courier Prime Code, renames them Mutis Script / Mutis Script Code (OFL condition 3), writes WOFF2, `OFL.txt` and `NOTICE`; deterministic |
-| `python3 -I web/site/tools/render-images.py` | renders `og/*.html` to `og.png`, `og-s.png` and the app icons; fails on a card over 150 KB or an OTS error |
+| `python3 -I web/site/tools/render-images.py [FILE ...]` | renders `og/*.html` to `og.png` and `og-s.png`, and the app icons and favicons from `static/favicon.svg` and `og/icon*.svg`; only the files named, if any; fails on a card over 150 KB or an OTS error |
 | `python3 -I web/site/tools/llms_full.py` | writes `static/llms-full.txt` from `/how`, `/made` and `/fine-print` as a reader without JavaScript sees them (`--check` is part of the tests) |
 | `python3 -I web/site/tools/variants.py --config mutis.toml dist` | sets a deployment's copy variants into its built pages and writes its `llms-full.txt` (for `tools/build.py`, before includes and placeholders) |
 | `python3 -I web/site/tests/serve.py` | the pages with includes and placeholders expanded, production CSP headers and the API from fixtures (`--api URL` forwards to a real server, `--dist DIR` serves a built tree) |
