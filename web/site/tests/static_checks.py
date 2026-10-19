@@ -596,6 +596,10 @@ def check_static():
     ico = (s / "favicon.ico").read_bytes() if (s / "favicon.ico").is_file() else b""
     if ico[:4] != b"\0\0\1\0" or [ico[6 + 16 * i] for i in range(int.from_bytes(ico[4:6], "little"))] != [16, 32, 48]:
         problems.append("favicon.ico: missing, not an ICO, or not the 16, 32 and 48 px tile (Bing and unfurlers ask for it by name)")
+    for page in PAGES + sorted((WEB / "app").glob("*.html")):
+        for tag in re.findall(r'<link rel="icon" href="/favicon\.ico"[^>]*>', page.read_text()):
+            if 'sizes="16x16 32x32 48x48"' not in tag:
+                problems.append(f"{page.relative_to(WEB)}: {tag} (the ICO holds 16, 32 and 48 px)")
     llms = (s / "llms.txt").read_text()
     if not llms.startswith("# {{BRAND}}\n") or "private drive" not in llms or "dead-drop" not in llms:
         problems.append("llms.txt: not the spec §13.4 shape (the drive's, 16-drive-design §11)")
@@ -1137,9 +1141,9 @@ def check_home_stills():
     text that says what it shows (the stage stays aria-hidden: the words beside it carry the meaning; the alt is for
     search and for a picture that doesn't load), the hero's with fetchpriority="high", every other one lazy; each
     candidate is a file whose pixels match its w descriptor and the img's ratio, within V-02's sizes; the closing names
-    the hero's srcset and sizes (the browser reuses its bytes). The favicons are /favicon.ico (the 192 px open box, the
-    one search engines and unfurlers ask for by name), /favicon-32.png (32 px) then /favicon.svg; the favicon and the brand files are
-    the open box in clean SVG (no raster, script, link or data), and the header's tile draws it from the sprite. Every
+    the hero's srcset and sizes (the browser reuses its bytes). The favicons are /favicon.ico (the open box's tile at 16, 32 and
+    48 px, the one search engines and unfurlers ask for by name), /favicon-32.png (32 px) then /favicon.svg; the favicon
+    and the brand files are the open box in clean SVG (no raster, script, link or data), and the header's tile draws it from the sprite. Every
     file in media/v3 is named by the home; the folder and v3.css stay in V-02; no page links /v3, which is a 301."""
     import gzip
     problems = []
