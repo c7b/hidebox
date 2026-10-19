@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
 // The status line on /made#check: the public subset our health check writes to /status.json every
-// five minutes, in one line. Nothing shows when the file can't be read.
+// five minutes, in one line, and the test files whose key went missing in the last 24 hours (from
+// /api/v1/canary: the health check doesn't count those). Nothing shows when /status.json can't be read.
 import { getJson, locale } from './site.js';
+import { recentMisses } from './canary.js';
 
 const T = {
   green: 'Every check is working.',
+  // Never "every check is working" while a test file missed its key in the last 24 hours (owner-5).
+  missed: (n) => (n === 1 ? 'One test file missed its key in the last 24 hours.' : `${n} test files missed their key in the last 24 hours.`),
+  others: 'Every other check is working.',
   amber: 'Working, with something near a limit:',
   red: 'Something is broken:',
   reasons: {
@@ -24,12 +29,16 @@ function reasonText(code) {
   return T.reasons[code] ?? code;
 }
 
-export async function showStatus(line) {
+// canary: /api/v1/canary (or null), whose `revealed` lists the misses.
+export async function showStatus(line, canary = null) {
   const status = await getJson('/status.json').catch(() => null);
   if (!status || !(status.overall in { green: 1, amber: 1, red: 1 })) return;
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(status.updated_at * 1000));
-  const reasons = status.overall === 'green' ? [] : (status.reasons ?? []).map(reasonText);
-  line.querySelector('[data-status-text]').textContent = [T[status.overall], ...reasons, T.checked(when)].join(' ');
-  line.dataset.overall = status.overall;
+  const missed = recentMisses(canary?.revealed);
+  const words = status.overall === 'green'
+    ? (missed ? [T.missed(missed), T.others] : [T.green])
+    : [T[status.overall], ...(status.reasons ?? []).map(reasonText), ...(missed ? [T.missed(missed)] : [])];
+  line.querySelector('[data-status-text]').textContent = [...words, T.checked(when)].join(' ');
+  line.dataset.overall = status.overall === 'green' && missed ? 'amber' : status.overall;
   line.hidden = false;
 }

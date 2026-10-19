@@ -6,8 +6,7 @@ import { getJson, isTxId, locale, shortTx } from './site.js';
 import { drawNoise } from './noise.js';
 
 const NOISE_BYTES = 96 * 96;
-// An hour whose key the verifier lost when it restarted is listed, never skipped.
-const MISSED = (n) => `Test file #${n}: missed (the verifier restarted).`;
+const DAY_S = 86400;
 
 export async function getBytes(path, range) {
   const res = await fetch(path, { headers: range ? { Range: range } : {}, signal: AbortSignal.timeout(10000), credentials: 'omit' });
@@ -15,14 +14,37 @@ export async function getBytes(path, range) {
   return new Uint8Array(await res.arrayBuffer());
 }
 
+// One /api/v1/canary for the page: Try to read it shows it, and the status line counts its misses.
+let meta = null;
+export const canaryMeta = () => (meta ??= getJson('/api/v1/canary').catch(() => null));
+
 export async function loadCanary() {
   try {
-    const meta = await getJson('/api/v1/canary');
-    const bytes = await getBytes(meta.raw, `bytes=0-${NOISE_BYTES - 1}`);
-    return { meta, bytes };
+    const m = await canaryMeta();
+    if (!m) return null;
+    return { meta: m, bytes: await getBytes(m.raw, `bytes=0-${NOISE_BYTES - 1}`) };
   } catch {
     return null;
   }
+}
+
+// An hour whose key was lost (the verifier restarted and its delivery couldn't give the key back) is listed, never
+// skipped; test files missed one after another are one line: "23 test files missed (#150 to #172): …".
+export function missedLines(revealed) {
+  const ns = (revealed ?? []).filter((entry) => entry.missed).map((entry) => entry.n).sort((a, b) => b - a);
+  const runs = [];
+  for (const n of ns) {
+    const run = runs.at(-1);
+    if (run && run.low === n + 1) run.low = n;
+    else runs.push({ low: n, high: n });
+  }
+  return runs.map(({ low, high }) => (low === high ? `Test file #${low} missed: the verifier restarted.`
+    : `${high - low + 1} test files missed (#${low} to #${high}): the verifier restarted.`));
+}
+
+// Misses whose key was due in the last 24 hours (a test file's key is due a day after it was locked).
+export function recentMisses(revealed, now = Date.now() / 1000) {
+  return (revealed ?? []).filter((entry) => entry.missed && entry.sealed_at + DAY_S > now - DAY_S).length;
 }
 
 function age(sealedAt) {
@@ -52,10 +74,10 @@ export function showCanary(root, canary) {
   const revealed = meta.revealed ?? [];
   const opens = revealed.find((entry) => entry.fk);
   if (opens) offerReveal(root.querySelector('[data-reveal]'), opens);
-  const missed = revealed.filter((entry) => entry.missed);
+  const missed = missedLines(revealed);
   if (missed.length) {
     const line = root.querySelector('[data-reveal-missed]');
-    line.textContent = missed.map((entry) => MISSED(entry.n)).join(' ');
+    line.replaceChildren(...missed.flatMap((text, i) => (i ? [' ', document.createElement('br'), text] : [text])));
     line.hidden = false;
   }
 }

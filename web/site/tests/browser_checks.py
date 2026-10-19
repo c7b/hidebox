@@ -377,7 +377,8 @@ def check_contents(browser):
 
 
 def check_reveal(browser):
-    """P1 canary reveal: yesterday's test file opens in the browser with its published key (app format code)."""
+    """P1 canary reveal: yesterday's test file opens in the browser with its published key (app format code); the
+    test files that missed theirs are listed a run to a line, and the status line counts those of the last 24 hours."""
     with server() as origin:
         page = browser.page()
         page.goto(origin + "/made", settle=1.5)
@@ -388,9 +389,31 @@ def check_reveal(browser):
         missed = page.eval("(e => e.hidden ? '' : e.textContent)(document.querySelector('[data-reveal-missed]'))")
         NOTES.append(f"canary reveal: {out[:90]}; {missed}")
         problems = [] if ok else [f"reveal shows {out!r}"]
-        if missed != "Test file #789: missed (the verifier restarted).":
-            problems.append(f"a missed reveal reads {missed!r}")
-        return problems
+        # owner-5: misses in a row are one line, one line a run; listed, never skipped
+        if missed != "3 test files missed (#789 to #791): the verifier restarted. Test file #787 missed: the verifier restarted.":
+            problems.append(f"the missed reveals read {missed!r}")
+        if page.eval("document.querySelectorAll('[data-reveal-missed] br').length") != 1:
+            problems.append("each run of misses doesn't start on its own line")
+        status = page.eval("document.querySelector('[data-status-text]').textContent")
+        if "budget for sponsor grants is used. 4 test files missed their key in the last 24 hours. Checked" not in status:
+            problems.append(f"amber with misses: the status line doesn't count them ({status!r})")
+    # owner-5: never "Every check is working." while a test file missed its key in the last 24 hours
+    with server("--status", "green") as origin:
+        page = browser.page()
+        page.goto(origin + "/made", settle=1.5)
+        _scroll_through(page, "check", "try")
+        status, dot = page.eval("(e => [e.textContent, e.closest('[data-status-line]').dataset.overall])(document.querySelector('[data-status-text]'))")
+        NOTES.append(f"status line, all green with misses: {status}")
+        if not status.startswith("4 test files missed their key in the last 24 hours. Every other check is working. Checked ") or dot != "amber":
+            problems.append(f"all green with misses: the status line reads {status!r} ({dot})")
+    with server("--status", "green", "--no-canary") as origin:
+        page = browser.page()
+        page.goto(origin + "/made", settle=1.5)
+        _scroll_through(page, "check", "try")
+        status = page.eval("document.querySelector('[data-status-text]').textContent")
+        if not status.startswith("Every check is working. Checked "):
+            problems.append(f"all green, no misses: the status line reads {status!r}")
+    return problems
 
 
 def check_interactions(browser):

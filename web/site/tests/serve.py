@@ -140,6 +140,10 @@ class Api:
             return 200, c
         if re.fullmatch(r"/api/v1/chain/tx/[0-9a-f]{64}/view", path):
             return 200, self.fixture("txview.json")
+        if path == "/status.json" and self.opts.status == "green":
+            status = self.fixture("status.json")
+            status.update(overall="green", attention=False, reasons=[], checks={k: "green" for k in status["checks"]})
+            return 200, status
         if path in ("/evidence.json", "/status.json"):
             return 200, self.fixture(path[1:])
         return 404, {"error": {"code": "not_found", "message": "Not found."}}
@@ -264,6 +268,7 @@ def options(argv=None):
     p.add_argument("--seallog", action="store_true")
     p.add_argument("--pay", action="store_true", help="pay to open and the sponsor grant on")
     p.add_argument("--no-canary", dest="canary", action="store_false")
+    p.add_argument("--status", choices=("amber", "green"), default="amber", help="/status.json: the fixture (amber), or all green")
     p.add_argument("--dist")
     p.add_argument("--api")
     return p.parse_args(argv)

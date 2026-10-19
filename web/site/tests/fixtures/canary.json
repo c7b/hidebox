@@ -9,6 +9,16 @@
  "delivery_tx": "45f03981238907134d321e8f6ada288c18d3a5e8745d8f4f8fd28bee856c3d1a",
  "revealed": [
   {
+   "n": 791,
+   "sealed_at": 1759924800,
+   "missed": true
+  },
+  {
+   "n": 790,
+   "sealed_at": 1759921200,
+   "missed": true
+  },
+  {
    "n": 789,
    "sealed_at": 1759917600,
    "missed": true
@@ -21,6 +31,11 @@
    "header": "TVRTMQEWAAAAAAABAAAAAMbH1oFxXvLMd0sHg7qj-j8",
    "meta_ct": "yFveRvWiyl6Lhnc-DY9a1WCYqm-xcRa-YO0OEpKBy0psPPNwLGQ1WjnI11i8FzNcRHXp3828DEj5sj5SIKyzFzTTJL9vfMGVjSeHN4Q1Y1xIyypADW9uVetx_dp8bmAQLSntbzvgUoXz96_VJQqE8tCot4KTJ-uGlgiHoDdvdyGIYHkuk3C17ACOB__4KNQAX2Rhttmy-4c6QTl76c3hdfJ8uWlRYtmOAxOAVk4zs5xEXMB--GQuH4t4DTc_cXvEFLHQ-k1oa8It5OKhX5hIMGOmey6e15wsNB16EzlOoot3BgkB7SDXSzbPEdMz6tZOjhDuLxb6Kj5fLC__-RzOqpBgjc0da6yJamVZOUdcnEAQu2JhUXtEO6N_y94",
    "size_stored": 4112
+  },
+  {
+   "n": 787,
+   "sealed_at": 1759910400,
+   "missed": true
   }
  ]
 }

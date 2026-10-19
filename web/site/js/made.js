@@ -19,7 +19,8 @@ function whenNear(element, fn) {
 
 const check = document.getElementById('check');
 whenNear(check, () => {
-  import('./status.js').then((m) => m.showStatus(check.querySelector('[data-status-line]')));
+  // The status line counts the test files that missed their key, from the same /api/v1/canary as Try to read it.
+  import('./canary.js').then(async (c) => (await import('./status.js')).showStatus(check.querySelector('[data-status-line]'), await c.canaryMeta()));
   import('./evidence.js').then((m) => m.showEvidence(check.querySelector('[data-evidence]')));
 });
 const tryIt = document.getElementById('try');
