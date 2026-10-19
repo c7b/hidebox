@@ -3,6 +3,7 @@
 must come from /config, SEO metadata, trademark rules, contrast, partials, the privacy inventory;
 and one that needs the network: security.txt's GitHub contact answers a visitor who isn't signed in.
 Each check returns a list of problems (empty = pass), or None for SKIP. Python standard library only."""
+import importlib.util
 import itertools
 import json
 import re
@@ -344,6 +345,11 @@ def check_seo():
         for value, files in seen.items():
             if len(files) > 1:
                 problems.append(f"{kind} {value!r} used by {files}")
+    # The public pages are a fixed set (tests/e2e/headers_spec.py INDEXABLE, which D-01 and tools/check-seo.py read): a
+    # public page turned noindex, or a new page that isn't, fails here before it skips the rules above.
+    public = sorted(indexable_paths())
+    if public != sorted(public_pages()):
+        problems.append(f"the indexable pages are {public}, tests/e2e/headers_spec.py INDEXABLE says {sorted(public_pages())}")
     # The app's pages (a shared link, a drop, the drive): noindex, and a preview card with no address in it (no
     # og:url, no canonical: one page serves every link, and a link's id is no business of a preview).
     cards = {"view": "{{ORIGIN}}/og-s.png", "app": "{{ORIGIN}}/og.png", "drive": "{{ORIGIN}}/og.png"}
@@ -655,6 +661,15 @@ def robots_allows(robots: str, path: str) -> bool:
         if re.match(rx, path) and (len(pattern), kind == "Allow") > best:
             best = (len(pattern), kind == "Allow")
     return best[1]
+
+
+def public_pages():
+    """headers_spec.INDEXABLE: the pages search engines may index (read from the file, as serve.py reads REDIRECTS)."""
+    spec_file = WEB.parent / "tests" / "e2e" / "headers_spec.py"
+    spec = importlib.util.spec_from_file_location("headers_spec", spec_file)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return list(module.INDEXABLE)
 
 
 def indexable_paths():
