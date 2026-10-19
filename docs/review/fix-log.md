@@ -980,3 +980,20 @@ Suites on the final tree: lint, check-copy, core 9/9, deploy 84, site 42/42, UI 
 `ux-drop-phone`, `ux-drive-waits`, `ux-widget`); server 331 with one error `main` has too since 2026-10-19
 (`test_admin`'s forged payment test). The code-critic agent failed the first version on five points, all fixed. Pushed
 to `main`; not deployed, tag not moved (the coordinator's).
+
+## Launch hygiene: comments and private names (2026-10-19)
+
+The owner's two orders before judges read the repository. Branch `chore/launch-hygiene`, pushed to `main` commit by
+commit; nothing deployed, the tag left where it is, history not rewritten. `docs/review/launch-hygiene.md` has the
+counts, the sweep before and after, and what stays on purpose.
+
+| # | What | What changed |
+|---|---|---|
+| 1 | Comments that told history | 192 comment lines in 84 files: pass labels, build-lane and phase labels, dated notes, old names; every reason a line is the way it is stays. No commented-out code or TODO was found |
+| 2 | Private names | The names of the owner's machines, login and network: 423 lines in 221 files and one file name, now 0. Docs and evidence say the server, the workstation and the operator; scratch and home paths are `$TMPDIR`, `~` and `<repo>` |
+| 3 | The SSH alias | `deploy.sh`, `publish-template.sh` and every E2E tool take `--host`, else `MUTIS_SSH_HOST`, else `hidebox`; a deploy test reads it |
+| 4 | The old host | The E2E tools' default origin and the runbook examples name `https://hidebox.app`; the old host stays in `memo_origins`, the redirect's runbook and the dated records |
+
+Suites on the server as build (`13d07d2`): lint PASS, check-copy PASS, build OK, deploy 86 OK, core 9/9, site 42/42,
+UI 804/804, server 331 with one error that predates this pass (`test_e2e_forged_payment_is_never_credited` mixes the
+test stack's fixed clock with the real one; it fails on `d042bcd` too, and `23c399e` fixes it).
