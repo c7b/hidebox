@@ -22,8 +22,10 @@ import { alert, button, driveErrorText, errorAlert, formatTari } from './drive-p
 import { describe } from './errors.js';
 import { driveLook, folderPanel, ownDrive } from './folder-view.js';
 import { testnetLine } from './marks.js';
+import { waiting } from './progress.js';
 
 const POLL_MS = 3000;
+const READY_POLL_MS = 10000;   // a link not ready to sell yet: how often the page asks again
 const nowS = () => Math.floor(Date.now() / 1000);
 const day = (sec) => formatDate(sec * 1000, { month: 'short', day: 'numeric' });
 const spinner = () => {
@@ -105,6 +107,22 @@ export async function payPage(root, cfg, shareId) {
   const size = formatBytes(P.teaser.size_bucket ?? 0);
   const until = () => P.status?.open_until ?? nowS() + (P.info.buyer_window_s ?? cfg.pay_to_open?.buyer_window_s ?? 0);
   const testMoney = cfg.features?.demo_pay !== false && BigInt(price) <= BigInt(cfg.pay_to_open?.demo_max_ut ?? price);
+
+  // The seller's sales key opens on our side a few minutes after a first sale is made: until then, ask again.
+  async function checkReady() {
+    P.readyTimer = null;
+    if (!root.isConnected) return;
+    try {
+      const info = await pay.linkInfo(shareId);
+      if (info.seller?.ready !== false) {
+        P.info = { ...P.info, ...info };
+        P.readyWait?.stop();
+        P.readyWait = null;
+        return draw();
+      }
+    } catch { /* the next try says it */ }
+    P.readyTimer = setTimeout(checkReady, READY_POLL_MS);
+  }
 
   // ---------- actions ----------
 
@@ -354,6 +372,12 @@ export async function payPage(root, cfg, shareId) {
         alert({ glyph: 'info', description: t('buy.final'), testid: 'pay-final' }));
       if (paused || notReady) {
         content.append(alert({ glyph: 'circle-question-mark', title: t(paused ? 'buy.paused_h' : 'buy.not_ready_h'), description: t(paused ? 'buy.paused' : 'buy.not_ready'), testid: 'pay-closed', role: 'status' }));
+        // A seller who just started selling is ready within minutes: the page asks again by itself (ux-feedback-1)
+        if (notReady && !paused) {
+          P.readyWait ??= waiting(t('buy.not_ready_wait'), { testid: 'pay-ready-wait' });
+          content.append(P.readyWait.el);
+          if (!P.readyTimer) P.readyTimer = setTimeout(checkReady, READY_POLL_MS);
+        }
       } else {
         const choices = h('div', { class: 'stack' });
         if (P.driveError) choices.append(driveFailed());
