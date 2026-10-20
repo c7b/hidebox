@@ -5,27 +5,20 @@ PASS static: every string the UI asks for exists ([])
 PASS static: no string in the dictionaries goes unused ([])
 PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
 PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
---- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
-PASS drive-budget: a drive of 20 items
-PASS drive-budget: no ootle-wasm before the file table renders
-PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.woff2'])
-PASS drive-budget: A-06d: 126636 B compressed until the table renders, 38 files (≤ 131072 B)
-  A-06d measured: 126636 B gzip -9, files: app/css/drive.css, app/css/flow.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
-PASS drive-budget: no CSP or Trusted Types violation ([])
 --- share-rules A few times, Until a time and a Public link on a phone (step 8): the first day's limits, then the second day; Share is the primary
 PASS share-rules: this flow's server has features.folders on (the real folder API, no fake)
 PASS share-rules: A few times says how many
 PASS share-rules: no horizontal scroll in the dialog at 390
-PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 21, 2:00 AM. Then the link ends.)
+PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 21, 7:00 AM. Then the link ends.)
 PASS share-rules: a phone: Share is the primary, no code to scan
 PASS share-rules: one filled button: Share; Copy link is outline
 PASS share-rules: Share hands the link to the phone's share sheet
 PASS share-rules: the row says 3 opens
 PASS share-rules: No limit on a first day says its cap
-PASS share-rules: and the result says it (It opens up to 50 times, until Oct 27, 2:00 AM. Then the link ends.)
+PASS share-rules: and the result says it (It opens up to 50 times, until Oct 27, 7:00 AM. Then the link ends.)
 PASS share-rules: from the second day: When I stop it
 PASS share-rules: No limit means no count
-PASS share-rules: Until a time (Anyone with the link can open it until Oct 27, 2:00 AM.)
+PASS share-rules: Until a time (Anyone with the link can open it until Oct 27, 7:00 AM.)
 PASS share-rules: the row says Until {date}
 PASS share-rules: a link that never ends can't take the file with it: the switch goes
 PASS share-rules: When I stop it says where: this file's menu
@@ -34,4 +27,4 @@ PASS share-rules: the row says Public link
 PASS share-rules: no text in the share dialog reads null, in the 14 states this flow saw ([])
 PASS share-rules: no CSP or Trusted Types violation ([])
 
-UI PASS 32/32
+UI PASS 27/27

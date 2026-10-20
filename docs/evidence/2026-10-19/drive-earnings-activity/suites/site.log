@@ -47,20 +47,20 @@ note V-01 files: 5 loops on /v2, web/site/media 11,750,561 B in 42 files (at mos
 note V-02 files: 5 stills on the home, web/site/media/v3 480,262 B in 24 files (at most 524,288); css/v3.css 970 B gzip -9
 note 404 files: web/site/media/404 89,238 B in 6 files (at most 131,072); js/egg.js 483 B gzip -9
 note fonts: the pinned Geist subset on /, the pinned Geist on /how (0 problems)
-note budget on /: 38 requests, HTML+CSS+JS 58.9 KB gzip, other 86.6 KB, total 145.4 KB, 1 font files, third-party 0 (with the drop widget's first load)
+note budget on /: 39 requests, HTML+CSS+JS 58.9 KB gzip, other 117.1 KB, total 176.0 KB, 1 font files, third-party 0 (with the drop widget's first load)
 note API blocked: /made hides 28 [data-needs] blocks, shows 0
 note home words at 390: 38 above the fold, 587 in all
 note home words at 1440: 56 above the fold, 603 in all
 note A-06h @1440: no field.js or pixel.js asked for, 0 canvases on /
 note A-06h @390: no field.js or pixel.js asked for, 0 canvases on /
-note motion @1440: motion.js at 517 ms (load event 330 ms), decode seen: True
-note motion @390: motion.js at 789 ms (load event 518 ms), decode seen: True
+note motion @1440: motion.js at 441 ms (load event 271 ms), decode seen: True
+note motion @390: motion.js at 313 ms (load event 230 ms), decode seen: True
 note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; 3 test files missed (#789 to #791): the verifier restarted. Test file #787 missed: the verifier restarted.
 note status line, all green with misses: 4 test files missed their key in the last 24 hours. Every other check is working. Checked Oct 9, 2025, 2:53 AM.
-note V-01 /v2 @1440: 2,889,944 B at load (the hero's loop and poster), 12,831,643 B after scrolling through, uncached
-note V-01 /v2 @390: 2,888,016 B at load (the hero's loop and poster), 12,829,715 B after scrolling through, uncached
+note V-01 /v2 @1440: 2,858,412 B at load (the hero's loop and poster), 12,800,111 B after scrolling through, uncached
+note V-01 /v2 @390: 2,919,548 B at load (the hero's loop and poster), 12,861,247 B after scrolling through, uncached
 note V-02 / @1440: 272,231 B at load (the hero's still hero-720.avif), 286,558 B after scrolling through, uncached; stills asked for: hero-720.avif, different-640.avif, who-480.avif, gem-480.avif
-note V-02 / @390: 253,621 B at load (the hero's still hero-480.avif), 275,071 B after scrolling through, uncached; stills asked for: hero-480.avif, different-640.avif, who-480.avif, gem-480.avif
-note /how loops: stills.js at 184 ms (load event 127 ms) at 390; the upload loop went through 9 states
+note V-02 / @390: 285,153 B at load (the hero's still hero-480.avif), 306,603 B after scrolling through, uncached; stills asked for: hero-480.avif, different-640.avif, who-480.avif, gem-480.avif
+note /how loops: stills.js at 208 ms (load event 149 ms) at 390; the upload loop went through 10 states
 note 404 @1440 dark: 207,128 B at load, the art from box-zero-480.avif
-44 of 44 checks without failures, 426 s
+44 of 44 checks without failures, 433 s
