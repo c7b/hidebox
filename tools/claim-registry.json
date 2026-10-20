@@ -551,6 +551,18 @@
    "sentences": [
     "When your drive opens, our sponsor wallet sends it some tTARI to try things."
    ]
+  },
+  {
+   "id": "C57",
+   "condition": "always: the app's previews (web/app/lib/sniff.js picks the kind from the decrypted bytes; web/app/ui/lightbox.js shows pictures in an <img>, SVG drawn into a canvas, text as text nodes, the rest download only)",
+   "backed_by": "docs/review/preview-1.md; docs/threat-model.md, Previews; web/app/tests/preview.test.js and web/app/ui/tests/flows_preview.py with hostile files",
+   "markers": [
+    "picks how to show a file",
+    "nothing in a file runs"
+   ],
+   "sentences": [
+    "Your browser picks how to show a file from its bytes, never its name. Pictures show as pictures, an SVG as pixels, text as plain text. Anything else only downloads, so nothing in a file runs on this site."
+   ]
   }
  ],
  "labels": [

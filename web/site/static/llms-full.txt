@@ -78,6 +78,7 @@ Make my drive makes the key in this browser at once. Save it as a key file, lock
 - The key: in the link after #, or sealed to a Tari address inside a stealth payment's encrypted memo.
 -
 - Photos: location and camera data removed before locking, unless you keep the original.
+- Previews: your browser picks how to show a file from its bytes, never its name. Pictures show as pictures, an SVG as pixels, text as plain text. Anything else only downloads, so nothing in a file runs on this site.
 The cryptography, in full
 Everything that touches a file or a key runs in your browser, with your browser's own WebCrypto. The server never receives a file key, a link's secret, a password or your seed. At sign-in it sees your login key and keeps only its SHA-256.
 - Files: a fresh random 32-byte key per file. The content is padded with Padmé (at least 1 KB, at most 12% over above that), cut into 4 MB chunks and encrypted with AES-256-GCM. Each chunk's nonce holds its index and a “last chunk” flag, and every chunk authenticates the file's header, so reordering, truncation and extension all fail.
