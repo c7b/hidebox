@@ -17,3 +17,11 @@ How the suites ran: a copy of the working tree in the build user's work director
 `web/app/tests/run_all.py`, `web/app/ui/tests/run.py`; the mutants copy the tree, change one line of
 `web/app/ui/lightbox.js` each and run `web/app/tests/headless.py`. E-29 ran from the workstation:
 `tests/e2e/run.py --origin https://hidebox.app --only E-29 --candidate <a local build of the branch>`.
+
+## Follow-up (2026-10-20): `/s/`, `/t` and Received's single files
+
+| What | Where |
+|---|---|
+| Screenshots | `followup/shots/`: `link-1440-image`, `link-1440-none`, `link-390-svg`, `link-390-text` (a stranger opening a dropped file on `/s/`) and `received-1440-svg` (a file sent by Tari, over Received's dialog), light and dark |
+| Suites | `followup/suites/`: lint, check-copy, build, the app core (9 steps), the whole UI suite (1059/1060), the site suite (44/44) on `78cb4b4`; `share-rules-rerun-*.log` and `share-rules-main-*.log`, the one failing scenario rerun on the branch and on `main` (the same flake on both) |
+| End to end on production | `followup/e2e/`: E-01 and E-02 with `--candidate` on `f3ccc5e`, and E-01's picture of the opened note (taken before the CSS fix of `78cb4b4`, so Close is still a dot there) |

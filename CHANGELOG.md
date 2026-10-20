@@ -51,6 +51,9 @@
   navigates, in the core suite and in the drive, a folder link and a paid link in the UI suite. The end-to-end runner
   can serve a local build's front end against the live site (`--candidate`); pay to open a folder (E-29) passed that
   way on production. Review: `docs/review/preview-1.md`; the threat model has a new section, "Previews".
+- **Then the last two places:** a single-file link (`/s/`, `/t`) and a single file in Received open in the same preview,
+  chosen from the bytes alone; the old preview by stored type is gone, so sound and video are download only there too.
+  `/made` says it under The locks.
 <!-- /preview 1 -->
 
 <!-- owner-5 -->

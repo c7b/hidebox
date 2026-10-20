@@ -204,11 +204,57 @@ could replace the next file's view; a failed load of the module had no message; 
 `candidate.py` served pages without the inside-the-build check its files had. Noted and left: the SVG drawing time
 (above), and that decrypts of files skipped with the arrows run to the end before they are dropped.
 
+## Follow-up: the last two places (2026-10-20)
+
+The owner's follow-up closed the gap listed here before: a single-file link (`/s/`, and `/t` deliveries, which use the
+same viewer) and a single file in Received now open in the same lightbox, chosen from the bytes alone, with the same
+allowlist and the same download-only fallback.
+
+- **`/s/` and `/t` (`ui/view.js`):** Open it decrypts the file and it shows at once in the preview, over the page;
+  the page under it is the viewer's opened state as before (the name and size, Save, Copy for a note, Keep a copy,
+  "This was its only look", the integrity line), with a card that opens the preview again. A program still gets the
+  two-step save and no preview. The inline preview by stored type is gone.
+- **Received (`ui/drive-received.js`):** a single file shows in the preview over Received's dialog; Esc goes back to
+  the dialog, which keeps the file's name (it opens it again), Save to my drive and Save.
+- **`lib/preview.js` is gone**, and with it the last choice by stored type. Sound and video are download only
+  everywhere; `view-video` and `view-audio` left the test-id contract, while `view-text` and `view-image` are now the
+  preview's text and picture, so the tests and E2E scenarios that read them still do.
+- **The lightbox on the link pages' look:** those pages don't load the drive's stylesheets, so `lightbox.css` now
+  brings its own buttons, icons, turning dot and page colours for both themes; on the drive they match its own.
+- **A focus race fixed in the shared dialogs (`ui/behaviors.js`):** a dialog that closed within the frame it opened in
+  had its deferred autofocus pull focus back into it after closing. It now checks the dialog is still open.
+- **`/made`** says it under The locks, in one registered sentence set (C57 in `tools/claim-registry.json`, so
+  check-copy holds the wording): "Your browser picks how to show a file from its bytes, never its name. Pictures
+  show as pictures, an SVG as pixels, text as plain text. Anything else only downloads, so nothing in a file runs on
+  this site." `/fine-print` lists what the browser stores, not what it does with files, so it is unchanged.
+- **Tests:** `preview-link` drops every stored hostile fixture from the home page and opens each on `/s/` in a
+  stranger's browser (the SVG named `.png` and the Markdown on a phone): kind by bytes, canary untouched, no request,
+  no navigation, no console error, Esc back to the card, Download the same bytes. `preview-received` sends three
+  (the SVG named `.png`, HTML named `.txt`, Markdown with scripts) by Tari to another drive and opens each in Received
+  (a new drive sends three a day). The keyboard flow checks that the preview takes the focus and gives it back to the
+  card; the flows and E2E scenarios that use the page's own controls after opening (Save, Keep, Received's Save)
+  close the preview first.
+
+**Results** (`docs/evidence/2026-10-19/preview-1/followup/`), on the server as `build` from a copy of `78cb4b4`
+(its id before the rebase onto `main`'s Ootle 0.47.0 work, which touched no file of this change):
+
+| Check | Result |
+|---|---|
+| `tools/lint.py`, `tools/check-copy.py` (C57 included) | PASS, PASS |
+| `tools/build.py --origin https://hidebox.app` | OK, 215 files (one fewer: `lib/preview.js`) |
+| App core, `run_all.py` | ALL PASS (9 steps): Node 149/149, Chromium with the app CSP 149/149, jitless 86/86 (the old preview's test left with it) |
+| App UI, the whole suite | 1059/1060, with `preview-link` and `preview-received` new. The one failure, `share-rules` waiting 20 s for the share dialog on a phone, is a flake that `main` has too: on `main` it failed 1 run of 3, on this branch 1 of 2 reruns, each time at the same step and never in this change's code |
+| Site suite (`/made` changed) | 44 of 44 checks |
+| A-06d | 124,220 B, 37 files (125,645 B on `main` before, 38 files: `entries.js` sometimes lands after the table renders). The files this follow-up touches: `drive.css` 9,870 to 9,771 B (the inline preview's styles), `en.json` 20,814 to 20,801 B, `behaviors.js` 6,919 to 6,941 B: 90 B less |
+| On first open | `lightbox.js` 4,449 B, `lightbox.css` 3,697 B (its own buttons and page colours), `sniff.js` 3,210 B |
+| E2E on production with this front end (`--candidate`) | E-01 (a text secret on `/s/`, read in the preview) and E-02 (a 10 MB file opened by three browsers, each saving the same SHA-256 after closing the preview): PASS, 514 files from the candidate. No drive made. The picture of E-01 shows the Close button as a dot: the bug the full run's screenshots no longer have (fixed in the next commit, CSS only) |
+| Design detector | five advisories, the stage's shadow blacks, as before |
+
+Screenshots: `followup/shots/link-1440-image` (a PNG named `.svg` on `/s/`), `link-1440-none` (HTML named `.txt`),
+`link-390-svg` (the SVG named `.png`, drawn), `link-390-text` (Markdown with scripts, as text), `received-1440-svg`
+(over Received's dialog), light and dark.
+
 ## Left, and open
 
-- `/s/` single-file links and Received's single files still preview through `lib/preview.js`: the earlier allowlist by
-  stored type (pictures, video, sound, text; never SVG, HTML or PDF). It has no active-content path, but it trusts the
-  stored type. Moving them to the lightbox is the next step; they were outside this change.
-- The live pages `/made` and `/fine-print` don't mention previews yet; the threat model's "Previews" section is the
-  record.
-- Video and sound are download only by the owner's rule, even where `lib/preview.js` plays them on `/s/`.
+- An SVG that is very large or deeply nested keeps the opener's own tab busy while it draws; decrypts of files skipped
+  with the arrows run to the end before they are dropped.

@@ -202,8 +202,12 @@ stored type (`web/app/lib/sniff.js`, `web/app/ui/lightbox.js`):
   with `download`; nothing opens a window or navigates to a file.
 - **The content security policy did not change:** no inline script, and images only from this site, `blob:` and
   `data:`.
+- **Every place a file opens uses it:** a drive's file, a folder visit (`/s/` and paid folders), a paid file, a
+  single-file link (`/s/`, `/t`) and a single file in Received. Nothing in the app chooses what to show by a file's
+  stored type any more (`lib/preview.js` is gone), and sound and video are download only there too.
 
-The core suite (`web/app/tests/preview.test.js`) and the UI suite (`preview-drive`, `preview-folder`, `preview-pay`)
+The core suite (`web/app/tests/preview.test.js`) and the UI suite (`preview-drive`, `preview-folder`, `preview-pay`,
+`preview-link`, `preview-received`)
 open hostile files (an SVG with scripts named `.png`, a web page named `.txt`, a GIF with a web page after it,
 Markdown with scripts and `javascript:` links) and check that nothing runs, nothing is fetched and nothing navigates;
 `docs/review/preview-1.md` has the table. What remains: a flaw in the browser's own decoders, and a very large or

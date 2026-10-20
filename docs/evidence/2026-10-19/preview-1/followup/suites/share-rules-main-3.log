@@ -1,0 +1,37 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- share-rules A few times, Until a time and a Public link on a phone (step 8): the first day's limits, then the second day; Share is the primary
+PASS share-rules: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-rules: A few times says how many
+PASS share-rules: no horizontal scroll in the dialog at 390
+PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 21, 7:00 AM. Then the link ends.)
+PASS share-rules: a phone: Share is the primary, no code to scan
+PASS share-rules: one filled button: Share; Copy link is outline
+PASS share-rules: Share hands the link to the phone's share sheet
+PASS share-rules: the row says 3 opens
+PASS share-rules: No limit on a first day says its cap
+PASS share-rules: and the result says it (It opens up to 50 times, until Oct 27, 7:00 AM. Then the link ends.)
+FAIL share-rules: TimeoutError: waited 20s for document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden
+Traceback (most recent call last):
+  File "~/work/preview-1/main3/web/app/ui/tests/run.py", line 285, in main
+    fn(t)
+    ~~^^^
+  File "~/work/preview-1/main3/web/app/ui/tests/flows_share.py", line 284, in share_rules
+    open_share(a, "until.txt")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "~/work/preview-1/main3/web/app/ui/tests/flows_share.py", line 92, in open_share
+    page.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/work/preview-1/main3/web/app/ui/tests/cdp.py", line 210, in wait
+    raise TimeoutError(f"waited {timeout}s for {expr[:120]}")
+TimeoutError: waited 20s for document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden
+  page 0: http://127.0.0.1:49125/drive :: Skip to content Search runs in this browser. Our server can't read your file names. My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files few.txt 3 opens 0 of 3 · tomorrow first-day.txt 50 opens 0 of 50 · in 7 days public.txt Private until.txt Once 0 of 1 · in 7 days New
+    errors: []
+
+UI FAIL 17/18
+  failed: share-rules: TimeoutError: waited 20s for document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden
