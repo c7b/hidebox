@@ -60,7 +60,11 @@ def main():
                     page.eval("document.fonts.ready.then(() => true)", True)
                     page.screenshot(str(out / f"{name}-{w}-{theme}.{ext}"))
                     if path != "/no-such-page" and (not dark or args.full_dark):   # the whole page in the light theme
-                        page.screenshot(str(out / f"{name}-{w}-{theme}-full.{ext}"), full=True)
+                        full = out / f"{name}-{w}-{theme}-full.{ext}"
+                        page.screenshot(str(full), full=True)
+                        if not full.stat().st_size:   # taller than a WebP can be (16,383 px): Chromium gives no bytes
+                            full.unlink()
+                            print(f"{full.name}: the page is too tall for one {ext.upper()}; none written")
     srv.shutdown()
     files = list(out.iterdir())
     print(f"{len(files)} screenshots, {sum(f.stat().st_size for f in files) / 1e6:.2f} MB in {out}")
