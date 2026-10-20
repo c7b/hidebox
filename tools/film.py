@@ -257,7 +257,7 @@ def story(t: T, take: Take) -> None:
         t.check(pay_wait(phone, ("open", "expired", "void", "error"), 420) == "open", "test money: Ready to open")
         take.hold(1.5)
     with take.shot(OPENS, 7):
-        open_paid_folder(t, phone, ["moon.jpg", "lighthouse.jpg"], "moon.jpg")
+        open_paid_folder(t, phone, ["moon.jpg", "lighthouse.jpg"], "moon.jpg", "image")
         take.hold(2.0)
     desk.wait("(() => { const r = document.querySelector('[data-testid=\"sales-row\"]');"
               " return !!r && !!r.querySelector('[data-testid=\"sales-test\"]') && !!r.querySelector('[data-testid=\"sales-tx\"]'); })()", 420)

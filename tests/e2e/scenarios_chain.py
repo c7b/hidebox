@@ -341,7 +341,7 @@ def paid_402(t: T, sid: str) -> None:
         t.check(e.status == 402, f"a stranger with the same link and no payment: 402 payment_required ({e.status})")
 
 
-def open_paid_folder(t: T, page, wanted: list[str], one: str) -> None:
+def open_paid_folder(t: T, page, wanted: list[str], one: str, kind_expected: str = "text") -> None:
     page.click("pay-open")
     page.wait_for("folder-view", 90)
     names = sorted(page.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].map((e) => e.dataset.name)"))
@@ -349,8 +349,8 @@ def open_paid_folder(t: T, page, wanted: list[str], one: str) -> None:
     page.eval(f"[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === {json.dumps(one)}).querySelector('[data-testid=\"fv-open\"]').click()")
     page.wait("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]')?.dataset.view === 'open'", 90)
     kind = page.eval("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]').dataset.kind")
-    t.check(kind == "text" and page.exists("lightbox-download"),
-            f"{one} opens on the phone in the preview, as text, with Download ({kind})")
+    t.check(kind == kind_expected and page.exists("lightbox-download"),
+            f"{one} opens on the phone in the preview, as {kind_expected}, with Download ({kind})")
     page.key("Escape")
     page.wait("!document.getElementById('lightbox')", 10)
 
