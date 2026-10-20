@@ -359,6 +359,11 @@ def row_menu(page, name, value):
     page.eval(f"""(() => {{ const el = [...document.querySelectorAll('[data-testid="file-row"], [data-testid="folder-card"]')]
       .find((e) => e.dataset.name === {json.dumps(name)}); el.querySelector('[data-testid="row-kebab"]').click(); }})()""")
     page.wait("!document.getElementById('row-menu').hidden", 10)
+    # The menu slides in as it opens. With the drive's modules kept by the browser (fingerprinted names) it opens at
+    # once, and a press while it still moves lands on the item below (share-rules made a once link instead of opening
+    # Share). Press when nothing on it or around it is moving.
+    page.wait("(() => { const m = document.getElementById('row-menu'); return !document.getAnimations().some((a) => a.playState === 'running'"
+              " && a.effect?.target && (a.effect.target.contains(m) || m.contains(a.effect.target))); })()", 10)
     page.click("menu-" + value)
 
 
