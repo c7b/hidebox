@@ -70,7 +70,7 @@ what is stored), which these sandboxes and the kernel settings make much harder 
    `0007` because the database is shared with `drive`). **Finding F1:** `mkdir(parents=True)` made the middle level
    `0777` minus the umask: 770 directories under `blobs/` were `2770`. Not reachable (`blobs/` itself is `0700`, so
    no other user could get to them: `drive` tried and got "Permission denied", `03-mounts-before.txt`), but wrong.
-   Fixed in `storage.py` (live with the next deploy), on the server (those 770 set to `2700`, and all 4,096 possible
+   Fixed in `storage.py` (live since this pass's deploy), on the server (those 770 set to `2700`, and all 4,096 possible
    first-level directories made `0700` beforehand, so the running release never makes one), and in `provision.sh`,
    which now normalises the tree; the privilege check fails on any group- or world-accessible entry.
 6. **Serving.** Before: `application/octet-stream`, `attachment`, `nosniff` and the site's policy (`script-src 'self'`).
@@ -119,18 +119,17 @@ capability and `/` `noexec`. Every oneshot unit was started by hand under each n
 version of the units, and Caddy at 22:46 UTC (by `provision.sh`). The owner's instruction not to restart mutis-chain
 (it holds the last day's canary keys in memory) and to restart walletd only if unavoidable reached this pass after
 those restarts. The restart lost the key of one canary (n = 197, sealed 22:21 UTC, after the 22:15 deploy had already
-restarted the worker), which will show as missed when it is a day old. After F4, the API and Caddy were restarted
-again (23:24 UTC) with the final units; **mutis-chain and walletd keep the first version until their next start**
-(the next deploy for the chain worker, the next restart or the reboot for walletd): seccomp, no capabilities, no new
-privileges and a read-only, `noexec` root, but an executable private `/tmp`, `/var/tmp` and `/dev/shm` (no visitor
-byte reaches either process's temporary space). Their final sandboxes were proven in throwaway units instead
-(`02-sandbox-probes.txt`), and the privilege check names them as pending until they restart.
+restarted the worker), which will show as missed when it is a day old. After F4, Caddy and the API were restarted
+again (23:24 UTC) with the final units; the brand kit's deploy at 23:31 UTC (not this pass) restarted mutis-chain,
+which has run its final sandbox since. This pass's own deploy (02:09 UTC, `MUTIS_KEEP_CHAIN=1`) left it running.
+**walletd keeps the first version until its next start** (a restart or the pending reboot): seccomp, no
+capabilities, no new privileges, `/srv/mutis` invisible and a read-only, `noexec` root, but an executable private
+`/tmp`, `/var/tmp` and `/dev/shm` (no visitor byte reaches walletd). Its final sandbox was proven in a throwaway unit
+instead (`02-sandbox-probes.txt`), and the privilege check names it as pending.
 walletd's one restart was checked the way provision checks a move: balances before and after identical. For the next
 four minutes walletd refused the chain worker's cached token (16 warnings, one every 15 s, until the worker renewed it
 at its 240 s lifetime); no job failed. **Observation for the chain worker's owner:** `server/mutis/walletd.py` could
-drop its token and ask again when walletd refuses it, so a walletd restart costs nothing. Nothing
-was restarted after that instruction, and nothing in this pass will restart them again: no deploy was made (an
-activation restarts mutis-chain).
+drop its token and ask again when walletd refuses it, so a walletd restart costs nothing.
 
 **Not applied, and why:**
 
@@ -253,11 +252,13 @@ each previous file as `<unit>.20261019T232357Z`) and restarted Caddy for its dro
 step: `systemctl is-active` for Caddy, the API, the chain worker and walletd, no failed timer unit, and
 `tests/e2e/smoke.py --api --chain` PASS. Nothing needed a rollback.
 
-**Pending the next deploy** (an activation restarts mutis-chain, so none was made): `storage.py`'s directory modes,
-`O_NOFOLLOW` and descriptor handling; `activate-release.sh` keeping a copy of the Caddyfile it replaces and noticing a
-changed mount unit or Caddy drop-in; mutis-chain's final sandbox. **Pending walletd's next start:** its final sandbox.
-Live now: the mount, the blob tree's modes, the kernel settings, the Caddyfile, the SSH fix, and the final units of
-Caddy, the API and every timer unit.
+**The deploy.** The brand kit's deploy at 23:31 UTC put back its own Caddyfile (without the API's policy), as every
+activation does. Once this pass was on `main` (`242eaaf`), it was deployed with `MUTIS_KEEP_CHAIN=1` (the chain worker
+kept running, its canary keys with it): the sidecar check, no migration, the API restarted, the Caddyfile replaced
+(the previous one kept by the activation, now that it keeps one) and reloaded, smoke PASS, the manifest notarized
+(`11-deploy.txt`). D-01, D-03 (97/97, walletd named as pending) and `test_stored_bytes.py` passed after it.
+
+**Live now:** everything in this pass, `storage.py` included, except walletd's final sandbox (its next start).
 
 ## What changed in the repository
 
@@ -282,6 +283,9 @@ Caddy, the API and every timer unit.
 - The operator's passwordless sudo, root's and the operator's account passwords (for the provider's console; SSH
   refuses them) and the one key in root's `authorized_keys` (unusable while root logins are off): the owner's.
 - AppArmor, host-wide `noexec` on `/tmp` and `/dev/shm`, `kernel.modules_disabled`, fail2ban, needrestart: §3–§5.
+- **For the owner:** the reboot into the installed kernel, once the canary keys survive a restart (it also gives walletd
+  its final sandbox and moves `dbus-daemon` off the old `libexpat`); the configuration copy E-31 trips on (move it out
+  of `/var/backups/mutis`, or let E-31 skip the server's own addresses); passwordless sudo for the operator.
 
 ## Residual risks, ranked
 
@@ -297,11 +301,19 @@ Caddy, the API and every timer unit.
 
 ## Suites
 
-On the workstation: the server's suite (340 tests, 5 skipped) and the deploy suite (96), lint and the copy check;
-on the server as `build` (Python 3.13) the same from a `git archive` of this branch; against the live site:
-`test_headers.py` (D-01) PASS, `test_privileges.py` (D-03) 97/97, `test_stored_bytes.py` PASS, `smoke.py --api
---chain` PASS after every step, and the end-to-end suite once at the end. The results are in
-`docs/evidence/2026-10-19/upload-safety-1/10-suites.txt`.
+| Suite | Result |
+|---|---|
+| Server (workstation, Python 3.14; the server as `build`, 3.13) | 340 tests OK, 5 skipped, both places; 338 OK in the deploy's own run on the merged `main` |
+| Deploy (`deploy/tests`) | 96 OK |
+| Lint, copy check (with the live config) | PASS, PASS |
+| D-01 `test_headers.py`, live | PASS, before and after the deploy |
+| D-03 `test_privileges.py`, live | 97/97 (was 46/46): 85 inside, 12 from outside; walletd named as pending |
+| `test_stored_bytes.py`, live, in Chromium | PASS |
+| `smoke.py --api --chain` | PASS after every step on the server and in the deploy |
+| End-to-end, the full suite once (`10-e2e-full.txt`) | 16 PASS, 1 SKIP (E-05: no short expiry preset), 4 FAIL: E-24, E-26, E-27 and E-31 stopped at "Too many new drives from this network" (the hourly limit per /64; the run's earlier scenarios had used it; screenshot `10-e2e-E-26-new-drive-limit.png`). E-21 (D-01 and D-03), E-22 (an `.exe` without a drive refused; in a drive it opens behind the program warning) and E-03 (secret hygiene) PASS |
+| End-to-end, those four an hour later (`10-e2e-rerun.txt`) | E-24, E-26, E-27, E-03 PASS. E-31 FAIL on its last check, not about this pass: it finds the run's own address in `/var/backups/mutis/mutis.toml.20261018T212521Z`, a configuration copy from 2026-10-18. The browsers run on the server, so that address is the server's, which `[brakes] exempt_addresses` lists by design; no visitor's address is involved |
+
+Commands and output: `10-suites.txt`, `09-*.txt`, `10-e2e-*.txt`, `11-deploy.txt`.
 
 ## Evidence
 
@@ -323,3 +335,4 @@ machines, login and addresses redacted):
 | `09-test_privileges.txt`, `09-test_headers.txt` | D-03, D-01 |
 | `10-e2e-full.txt`, `10-e2e-E-26-new-drive-limit.png`, `10-e2e-rerun.txt` | the end-to-end suite, the limit that stopped four scenarios, their rerun |
 | `10-suites.txt` | every other suite, and the smoke test |
+| `11-deploy.txt` | the deploy of `main` with the chain worker kept running |

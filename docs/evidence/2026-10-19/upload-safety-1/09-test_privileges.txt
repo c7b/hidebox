@@ -1,4 +1,4 @@
-$ python3 -I tests/e2e/test_privileges.py --host hidebox --origin https://hidebox.app
+$ python3 -I tests/e2e/test_privileges.py --host hidebox   (after the deploy)
 PASS mutis cannot connect to 127.0.0.1:5100
 PASS build cannot connect to 127.0.0.1:5100
 PASS caddy cannot connect to 127.0.0.1:5100
@@ -38,7 +38,7 @@ PASS drive (group mutis) cannot add a file to /srv/mutis/data itself (only to db
 PASS every directory under blobs/ is 0700 and every stored file 0600
 PASS drive (group mutis) cannot add a file inside blobs/
 PASS mutis-api sees / read-only and its /tmp, /var/tmp and /dev/shm noexec
-SKIP mutis-chain runs the definition it started with; restart it to apply its sandbox
+PASS mutis-chain sees / read-only and its /tmp, /var/tmp and /dev/shm noexec
 SKIP walletd runs the definition it started with; restart it to apply its sandbox
 PASS caddy sees / read-only and its /tmp, /var/tmp and /dev/shm noexec
 PASS sysctl kernel.kptr_restrict = 2

@@ -1,0 +1,37 @@
+$ MUTIS_KEEP_CHAIN=1 deploy/scripts/deploy.sh --host hidebox 242eaaf   (main after this pass was pushed; the chain worker kept running)
+== checks on the server as build (the server's Python)
+Ran 338 tests in 79.269s
+
+OK (skipped=6)
+
+OK
+SealLog: this deployment names no log
+lint: PASS (0 problems)
+check-copy: PASS (0 problems, 5 to read, (3) skipped: no --config)
+== build
+build: OK {"content_id": "327b17a2", "files": 206, "git_sha": "242eaaf4265a2c1b7bc66fd1f22b0d952ad18718", "holding": false, "origin": "https://hidebox.app", "pages": 7, "vendored_checked": 6, "version": "spooky-secrets-2026-10-9-g242eaaf"}
+== upload and activate 242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2
+sidecar: hello ok, pinned ootle-wasm
+schema version 6, nothing to migrate
+schema version 6
+switched current → releases/242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2
+restarted mutis-api
+kept mutis-chain running on its current release (MUTIS_KEEP_CHAIN=1)
+Caddyfile changed: validated and reloaded
+init-keys: receiver.json and robot.json exist; nothing to do
+releases kept: 5
+== smoke test
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain
+notarize: 242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2 manifest ecbf0205933c… in tx 9479b98d6a27223f3ad5bce5cf575dc606d659df2950e37278d1118747f48cc5
+== deployed 242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2 to https://hidebox.app
+exit 0
+
+$ ssh hidebox: what the deploy left
+chain started: Mon 2026-10-19 17:31:39 CST (unchanged: not restarted by this deploy)
+api started: Mon 2026-10-19 20:09:48 CST
+current: releases/242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2
+Caddyfile = the release's (the one it replaced kept as /var/backups/mutis/Caddyfile.20261020T020948Z)
+every unit installed = the release's
