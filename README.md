@@ -1,10 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 <div align="center">
 
-<h1><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/media/hidebox-lockup-dark.svg">
-  <img src="docs/media/hidebox-lockup-light.svg" width="243" height="56" alt="hidebox">
-</picture></h1>
+<h1><img src="docs/media/hidebox-lockup-card.svg" width="268" height="108" alt="hidebox"></h1>
 
 **Your private cloud storage. Files lock in your browser first.**
 
