@@ -145,7 +145,14 @@ class Indexers:
             status, data, _ = self.call("POST", "/utxos/fetch", body, only=only)
             if status != 200:
                 raise IndexerError(502, "bad_upstream")
-            for entry in json.loads(data).get("utxos", []):
+            try:
+                obj = json.loads(data)
+            except ValueError:
+                raise IndexerError(502, "bad_upstream") from None
+            utxos = obj.get("utxos", []) if isinstance(obj, dict) else None
+            if not isinstance(utxos, list):
+                raise IndexerError(502, "bad_upstream")
+            for entry in utxos:
                 parsed = parse_fetched(entry)
                 if parsed:
                     found[(parsed["tag"], parsed["nonce"])] = parsed
@@ -158,24 +165,50 @@ class Indexers:
         return obj["current_epoch"]
 
 
+def _uint(value, limit: int = 2 ** 63) -> int:
+    if type(value) is not int or not 0 <= value < limit:
+        raise IndexerError(502, "bad_upstream")
+    return value
+
+
+def _nonce32(value) -> str:
+    if not (type(value) is list and len(value) == 32 and all(type(b) is int and 0 <= b <= 255 for b in value)):
+        raise IndexerError(502, "bad_upstream")
+    return bytes(value).hex()
+
+
 def parse_stream(data: bytes) -> list[dict]:
-    """NDJSON lines; a `sos` line opens a shard section and every following update belongs to it."""
+    """NDJSON lines; a `sos` line opens a shard section and every following update belongs to it.
+
+    Every field is checked before use: a line that isn't a JSON object of the expected shape is an
+    IndexerError, so the worker counts it against that indexer alone and keeps mirroring the others, and no
+    value from the indexer sizes an allocation (security-audit-1)."""
     shards, current = [], None
     for line in data.splitlines():
         if not line.strip():
             continue
-        msg = json.loads(line)
-        if msg.get("sos"):
-            sos = msg["sos"]
-            current = {"shard": int(sos["shard"]), "version": int(sos["max_state_version"]),
-                       "has_more": bool(sos["has_more"]), "unspent": []}
+        try:
+            msg = json.loads(line)
+        except ValueError:
+            raise IndexerError(502, "bad_upstream") from None
+        if not isinstance(msg, dict):
+            raise IndexerError(502, "bad_upstream")
+        sos, update, eos = msg.get("sos"), msg.get("update"), msg.get("eos")
+        if sos:
+            if not isinstance(sos, dict) or type(sos.get("has_more")) is not bool:
+                raise IndexerError(502, "bad_upstream")
+            current = {"shard": _uint(sos.get("shard"), 2 ** 16), "version": _uint(sos.get("max_state_version")),
+                       "has_more": sos["has_more"], "unspent": []}
             shards.append(current)
-        update = msg.get("update") or {}
-        if current is not None and "Unspent" in update:
+        if current is not None and isinstance(update, dict) and "Unspent" in update:
             u = update["Unspent"]
-            current["unspent"].append((int(u["tag"]), bytes(u["public_nonce"]).hex()))
-        if msg.get("eos") and current is not None:
-            current["version"] = int(msg["eos"]["max_state_version"])
+            if not isinstance(u, dict):
+                raise IndexerError(502, "bad_upstream")
+            current["unspent"].append((_uint(u.get("tag"), 2 ** 32), _nonce32(u.get("public_nonce"))))
+        if eos and current is not None:
+            if not isinstance(eos, dict):
+                raise IndexerError(502, "bad_upstream")
+            current["version"] = _uint(eos.get("max_state_version"))
     return shards
 
 

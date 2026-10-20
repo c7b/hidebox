@@ -2,8 +2,10 @@
 """Gate G3: the UTXO mirror. Parsing is checked against responses recorded from ootle-indexer-b on
 2026-10-11 and, for GET /substates in tari_indexer 0.47.0's shape, from both indexers on 2026-10-20
 (public chain data, tests/fixtures/), and the worker's cursor logic against the fake indexer."""
+import http.server
 import json
 import os
+import threading
 import unittest
 from pathlib import Path
 
@@ -24,6 +26,30 @@ class Framing(unittest.TestCase):
         self.assertEqual(len(shards[0]["unspent"]), 3)          # the 4th update of shard 1 is a Spent
         tag, nonce = shards[0]["unspent"][0]
         self.assertEqual((tag, nonce), (2503219696, "cc033ba8281d281753c9efb355ac4f3f4f5b6c3a5f44330075224db8dce47d14"))
+
+    def test_a_malformed_stream_line_is_an_upstream_error(self):
+        """security-audit-1: one bad line from one indexer is that indexer's error (the worker keeps the
+        others), and no value from it sizes an allocation."""
+        sos = '{"sos":{"shard":1,"max_state_version":0,"has_more":false}}'
+        nonce = list(range(32))
+        poisons = [
+            '{"update":{"Unspent":{"tag":1,"public_nonce":"deadbeef"}}}',
+            '{"update":{"Unspent":{"tag":1,"public_nonce":50000000}}}',
+            '{"update":{"Unspent":{"tag":1,"public_nonce":%s}}}' % json.dumps(nonce[:31]),
+            '{"update":{"Unspent":{"tag":true,"public_nonce":%s}}}' % json.dumps(nonce),
+            '{"update":{"Unspent":{"tag":-1,"public_nonce":%s}}}' % json.dumps(nonce),
+            '{"update":{"Unspent":[]}}',
+            '{"eos":{"max_state_version":"1"}}',
+            "[]",
+            "not json",
+        ]
+        for poison in poisons:
+            with self.subTest(poison=poison[:40]), self.assertRaises(indexer.IndexerError):
+                indexer.parse_stream(f"{sos}\n{poison}\n".encode())
+        for bad_sos in ('{"sos":{"shard":"1","max_state_version":0,"has_more":false}}',
+                        '{"sos":{"shard":1,"max_state_version":0,"has_more":"no"}}', '{"sos":[1]}'):
+            with self.subTest(sos=bad_sos), self.assertRaises(indexer.IndexerError):
+                indexer.parse_stream(bad_sos.encode())
 
     def test_recorded_fetch(self):
         entries = json.loads((FIXTURES / "indexer-fetch.json").read_text())["utxos"]
@@ -154,6 +180,46 @@ class Mirror(unittest.TestCase):
         with self.assertRaises(indexer.IndexerError):            # none answers: the mirror is not current
             self.w.mirror(self.s.now + 10)
         self.assertEqual(self.w.status["mirror_ok_at"], self.s.now)
+
+    def test_a_hostile_indexer_cant_stop_the_others(self):
+        """security-audit-1: an indexer that streams a malformed record, or answers /utxos/fetch with
+        garbage, is skipped like one that is down; the other indexers are still mirrored."""
+        nonce = json.dumps(list(range(32)))
+        answers = {
+            "stream": ('{"sos":{"shard":1,"max_state_version":0,"has_more":false}}\n'
+                       '{"update":{"Unspent":{"tag":1,"public_nonce":"deadbeef"}}}\n'),
+            "fetch": ('{"sos":{"shard":1,"max_state_version":0,"has_more":false}}\n'
+                      '{"update":{"Unspent":{"tag":1,"public_nonce":%s}}}\n' % nonce),
+        }
+        for case, stream in answers.items():
+            class Hostile(http.server.BaseHTTPRequestHandler):
+                def log_message(self, *args):
+                    pass
+
+                def do_POST(self):
+                    self.rfile.read(int(self.headers.get("Content-Length") or 0))
+                    body = (stream if self.path == "/utxos/stream" else "[]").encode()
+                    self.send_response(200)
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+
+                do_GET = do_POST
+
+            server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Hostile)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            self.addCleanup(server.server_close)
+            self.addCleanup(server.shutdown)
+            with self.subTest(case=case):
+                before = self.rows()
+                self.w.indexers = Indexers([f"http://127.0.0.1:{server.server_address[1]}", self.s.indexer.url],
+                                           rate=1000)
+                for _ in range(3):
+                    self.s.chain.add_output(fake_keys()["address"], 1000, None)
+                self.s.now += 10
+                self.assertEqual(self.w.mirror(self.s.now), 3)
+                self.assertEqual(self.rows(), before + 3)
+                self.assertEqual(self.w.status["mirror_ok_at"], self.s.now)
 
     def test_our_own_outputs_are_mirrored_when_they_commit(self):
         """The indexers stream an output only once the network's consensus epoch reaches it; the outputs of
