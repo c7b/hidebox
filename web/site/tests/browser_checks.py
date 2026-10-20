@@ -958,7 +958,7 @@ def check_fingerprinted_pages(browser):
                     if url.startswith("/api/") or url in ("/evidence.json", "/status.json") or not Path(rel).suffix:
                         continue
                     asked.add(rel)
-                    if r["status"] != 200:
+                    if r["status"] not in (200, None) or not (dist / rel).is_file():   # a worker's script reports no status here
                         problems.append(f"{at}: {url} answered {r['status']}")
                     if rel not in hashed and rel.rpartition("/")[2] not in assets.ENTRY_POINTS:
                         problems.append(f"{at}: asked for {url}, neither fingerprinted nor an entry point")
