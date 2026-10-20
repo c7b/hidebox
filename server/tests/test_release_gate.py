@@ -59,6 +59,47 @@ class ReleaseGate(PaidCase):
         self.assertTrue(self.s.request("GET", f"{V}/me/sales", headers=self.d["auth"])[2]["paid"][0]["owner_ok"])
         self.assertEqual(self.s.request("GET", f"{V}/me/sales")[0], 401)
 
+    def test_earnings_totals_by_link(self):
+        """Earnings: GET /me/sales adds what each paid link took in, and the drive's total, over every payment. Test
+        money is told apart; a payment the payer kept (the owner's drive said so) is not the owner's money and counts
+        nowhere; a payment still waiting for the check counts (its amount is proven and on the chain)."""
+        def sales():
+            return self.s.request("GET", f"{V}/me/sales", headers=self.d["auth"])[2]
+
+        empty = sales()
+        self.assertEqual((empty["total"], empty["links"]), ({"received_ut": "0", "test_ut": "0", "payments": 0, "links": 0}, []))
+        self.utxo = self.pay(self.c)                             # 0.1 tTARI from a wallet, checked by the drive
+        self.ticks()
+        self.confirm("ok")
+        self.poll(self.c)
+        self.open(self.link, self.c)
+        test = self.claim(self.link)                             # test money, from our demo wallet
+        status, _, _ = self.s.request("POST", f"{V}/p/{self.link['share_id']}/claims/{test['claim_id']}/demo-pay",
+                                      {"pow": self.s.solve("demo_pay")}, headers=test["hdr"])
+        self.assertEqual(status, 202)
+        self.ticks()
+        forged = self.claim(self.link)                           # the payer keeps the key: the drive says bad
+        kept = self.pay(forged, spender=fake_keys()["address"])
+        self.ticks()
+        status, _, _ = self.s.request("POST", f"{V}/me/sales/claims/{forged['claim_id']}/confirm",
+                                      {"utxo_id": kept, "spendable": False}, headers=self.d["auth"])
+        self.assertEqual(status, 200)
+        other = self.sell(self.kept()["item_id"], price="250000")
+        waiting = self.claim(other)
+        self.pay(waiting)                                        # paid, not checked yet
+        self.ticks()
+        got = sales()
+        self.assertEqual(got["total"], {"received_ut": "450000", "test_ut": "100000", "payments": 3, "links": 2})
+        self.assertEqual([{k: x[k] for k in ("share_id", "received_ut", "test_ut", "payments", "views_used")}
+                          for x in got["links"]],
+                         [{"share_id": other["share_id"], "received_ut": "250000", "test_ut": "0", "payments": 1,
+                           "views_used": 0},
+                          {"share_id": self.link["share_id"], "received_ut": "200000", "test_ut": "100000", "payments": 2,
+                           "views_used": 1}])
+        self.assertTrue(all(isinstance(x["last_at"], int) for x in got["links"]))
+        self.assertEqual(len(got["paid"]), 4)                    # the list still shows the kept one, marked
+        self.assertIs(next(p for p in got["paid"] if p["utxo_id"] == kept)["owner_ok"], False)
+
     def test_the_owners_ok_releases_on_the_next_poll(self):
         self.utxo = self.pay(self.c)
         self.ticks()

@@ -18,7 +18,13 @@ CLAIMS_PER_HOUR_64, CLAIMS_PER_HOUR_48 = 10, 30
 DEMO_PER_DAY_64, DEMO_PER_DAY_48 = 3, 6
 DEMO_PER_SELLER = 2          # test money paid to one drive's links a day, from any network
 CHECKS_LISTED = 100
-PAID_LISTED = 50       # Received → Payments, newest first
+PAID_LISTED = 50       # Earnings → Payments, newest first
+LINKS_LISTED = 200     # Earnings → By link, the link paid last first
+# What counts as received: a committed payment to one of the drive's claims (counted, or extra after the claim
+# closed), unless the owner's drive found the payer kept its key (owner_ok = 0: that money isn't the owner's).
+_EARNED = ("FROM sale_payments sp JOIN claims c ON c.id = sp.claim_id JOIN shares s ON s.id = c.share_id "
+           "JOIN items i ON i.id = s.item_id WHERE i.owner_id = ? AND sp.status IN ('counted','extra') "
+           "AND sp.owner_ok IS NOT 0")
 
 
 # --- the seller (a drive session) -----------------------------------------------------------------------
@@ -73,7 +79,19 @@ def get_sales(ctx):
         paid.append({"utxo_id": r["utxo_id"], "share_id": r["share_id"], "value_ut": str(r["value_ut"]),
                      "seen_at": r["seen_at"], "demo": bool(r["demo"]), "checked": bool(r["committed"]),
                      "owner_ok": None if r["owner_ok"] is None else bool(r["owner_ok"]), "tx_id": tx})
-    return json_response(200, {"seller": dict(seller) if seller else None, "to_check": to_check, "paid": paid})
+    # Earnings (the owner's "where's my money?"): what each paid link took in and in all, over every payment,
+    # not only the newest 50; `test_ut` is the part our demo wallet paid (test money), `views_used` the link's opens.
+    total = conn.execute(f"SELECT COALESCE(SUM(sp.value_ut), 0), COALESCE(SUM(CASE WHEN c.demo = 1 THEN sp.value_ut END), 0), "
+                         f"COUNT(*), COUNT(DISTINCT c.share_id) {_EARNED}", (identity["id"],)).fetchone()
+    links = [{"share_id": r[0], "received_ut": str(r[1]), "test_ut": str(r[2]), "payments": r[3], "last_at": r[4],
+              "views_used": r[5]}
+             for r in conn.execute(f"SELECT c.share_id, SUM(sp.value_ut), COALESCE(SUM(CASE WHEN c.demo = 1 THEN sp.value_ut END), 0), "
+                                   f"COUNT(*), MAX(sp.seen_at), MAX(s.views_used) {_EARNED} GROUP BY c.share_id "
+                                   "ORDER BY MAX(sp.seen_at) DESC LIMIT ?", (identity["id"], LINKS_LISTED))]
+    return json_response(200, {"seller": dict(seller) if seller else None, "to_check": to_check, "paid": paid,
+                               "total": {"received_ut": str(total[0]), "test_ut": str(total[1]), "payments": total[2],
+                                         "links": total[3]},
+                               "links": links})
 
 
 def confirm_claim(ctx, claim_id: str):
