@@ -79,7 +79,7 @@ export function openModal(target, { returnFocus, onClose } = {}) {
   stack.push({ box, overlay, prev, onKey, onClose });
   if (stack.length === 1) lockScroll(true);
   const auto = box.querySelector('[data-autofocus]') || (alert ? box.querySelector('[data-cancel]') : null) || box.querySelector(FOCUSABLE) || box;
-  requestAnimationFrame(() => auto.focus({ preventScroll: true }));
+  requestAnimationFrame(() => { if (stack.some((m) => m.box === box)) auto.focus({ preventScroll: true }); });   // not if it closed within the frame
   for (const c of box.querySelectorAll('[data-close]')) c.onclick = () => closeModal(box);
   box.dispatchEvent(new CustomEvent('sh:open'));
 }
