@@ -1,0 +1,6 @@
+check_v2 (V-01) alone, two runs each, the server under load (load average 7 to 9, the UI suite running):
+final tree: 0 ['/v2 @390 y=3376: stage-c plays off screen']
+final tree: 1 ['/v2 @1440 y=900: stage-a plays off screen', '/v2 @1440 y=1350: stage-a plays off screen']
+main:       0 ['/v2 @1440 y=4500: stage-b plays off screen', '/v2 @1440 y=5400: stage-d plays off screen']
+main:       1 ['/v2 @1440 y=2700: stage-c plays off screen', '/v2 @1440 y=4500: stage-b plays off screen', '/v2 @390 y=844: stage-a plays off screen', '/v2 @390 y=5486: stage-b plays off screen']
+check_reveal alone on the final tree: []

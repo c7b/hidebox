@@ -1,0 +1,12 @@
+make-drive     desktop       total   1.64 s  longest still   0.22 s  from 0.00 s on: '(the screen as the action left it)'
+upload-file    desktop       total   1.72 s  longest still   0.36 s  from 0.48 s on: 'My drive Save my key Save your key. If this browser forgets it, nobody can let you back in'
+upload-folder  desktop       total   1.21 s  longest still   0.26 s  from 0.00 s on: '(the screen as the action left it)'
+make-link      desktop       total   0.44 s  longest still   0.21 s  from 0.00 s on: '(the screen as the action left it)'
+copy-link      desktop       total   0.27 s  longest still   0.27 s  from 0.00 s on: '(the screen as the action left it)'
+make-pay-link  desktop       total   0.69 s  longest still   0.18 s  from 0.00 s on: '(the screen as the action left it)'
+pay-page       desktop       total   2.07 s  longest still   0.27 s  from 1.80 s on: '…'
+pay-test       desktop       total   8.64 s  longest still   0.24 s  from 0.00 s on: '(the screen as the action left it)'
+pay-open       desktop       total   0.60 s  longest still   0.15 s  from 0.00 s on: '(the screen as the action left it)'
+owner-sale     desktop       total   2.70 s  longest still   0.72 s  from 0.24 s on: ''
+delete-drive   desktop       total   3.98 s  longest still   0.68 s  from 3.31 s on: 'Deleting your drive… 6 of 6 deleted Checking that nothing is left…'
+candidate files served: 422

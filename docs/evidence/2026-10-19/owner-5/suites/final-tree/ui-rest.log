@@ -1,0 +1,164 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- share-rules A few times, Until a time and a Public link on a phone (step 8): the first day's limits, then the second day; Share is the primary
+PASS share-rules: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-rules: A few times says how many
+PASS share-rules: no horizontal scroll in the dialog at 390
+PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 20, 9:00 PM. Then the link ends.)
+PASS share-rules: a phone: Share is the primary, no code to scan
+PASS share-rules: one filled button: Share; Copy link is outline
+PASS share-rules: Share hands the link to the phone's share sheet
+PASS share-rules: the row says 3 opens
+PASS share-rules: No limit on a first day says its cap
+PASS share-rules: and the result says it (It opens up to 50 times, until Oct 26, 9:00 PM. Then the link ends.)
+FAIL share-rules: TimeoutError: waited 20s for document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden
+Traceback (most recent call last):
+  File "<repo>/web/app/ui/tests/run.py", line 284, in main
+    fn(t)
+    ~~^^^
+  File "<repo>/web/app/ui/tests/flows_share.py", line 284, in share_rules
+    open_share(a, "until.txt")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "<repo>/web/app/ui/tests/flows_share.py", line 92, in open_share
+    page.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/web/app/ui/tests/cdp.py", line 210, in wait
+    raise TimeoutError(f"waited {timeout}s for {expr[:120]}")
+TimeoutError: waited 20s for document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden
+  page 0: http://127.0.0.1:46693/drive :: Skip to content Search runs in this browser. Our server can't read your file names. My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files few.txt 3 opens 0 of 3 · in 24 hours first-day.txt 50 opens 0 of 50 · in 7 days public.txt Private until.txt Once 0 of 1 · in 7 days New
+    errors: []
+--- pay-page-states The buyer page (steps 15 and 16): teaser, price and fee, C39, C37, one primary; the address only after a claim; test money to Unlocked and the open; resume; the owner's check; Pay from my drive; paused, gone, no key
+PASS pay-page-states: a stranger's first screen: waiting, nothing claimed (wait)
+PASS pay-page-states: the title, and the name the owner allowed (read from the teaser with the link's half)
+PASS pay-page-states: the price and the public fee ('0.1tTARI', 'Plus a network fee of 0.03 tTARI. The fee is public.')
+PASS pay-page-states: what you get (C39: Paying lets you open it 3 times until Oct 26. Anyone who opens a file can pass it on. The owner can still delete it.)
+PASS pay-page-states: no take-backs, before Pay (C37)
+PASS pay-page-states: one primary: Pay with test money
+PASS pay-page-states: no Pay from my drive without a drive here
+PASS pay-page-states: Another Ootle wallet shows no address before a claim exists
+PASS pay-page-states: the content stays locked
+PASS pay-page-states: names on every control; no CSP violation
+PASS pay-page-states: a browser without a drive: the top bar says Make your own drive
+PASS pay-page-states: Another Ootle wallet: the address just for this claim (the owner's sales address with the claim's reference), after the claim
+PASS pay-page-states: the claim asked for its proof of work (claim)
+PASS pay-page-states: C38 under the other wallet
+PASS pay-page-states: Pay with test money starts the steps
+PASS pay-page-states: test money pays the claim that exists
+PASS pay-page-states: released: the page has both halves
+PASS pay-page-states: test money skips the owner's check (['wait:done', 'seen:done', 'chain:done', 'open:done'])
+PASS pay-page-states: 3 opens left until Oct 26.
+PASS pay-page-states: what the chain shows, with test money's grouping (C36)
+PASS pay-page-states: Open it: the real open, with the claim's token, decrypts here
+PASS pay-page-states: one open used (2 opens left until Oct 26.)
+PASS pay-page-states: a reload resumes the claim kept in this browser
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: Payment seen: the steps take over
+PASS pay-page-states: paid from another wallet: the owner's drive checks it
+PASS pay-page-states: the owner step, and C38 (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-page-states: no sideways scroll at 390
+PASS pay-page-states: after the owner's drive confirms, it opens
+PASS pay-page-states: a closed payment window: Start again
+PASS pay-page-states: Start again: a fresh page, no old address
+PASS pay-page-states: Not selling: no Pay, and why
+PASS pay-page-states: a link without its half of the key says so
+PASS pay-page-states: an ended paid link says it ended
+PASS pay-page-states: a funded drive here: Pay from my drive, with C38 under it
+PASS pay-page-states: Pay from my drive: this browser built and sent the payment; it waits for the owner's check
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: no CSP or Trusted Types violation ([])
+--- pay-steady owner-5: the buyer page draws its final state at once and stays put: no layout shift and no redraw on arrival, while it asks about a claim every 3 s, when Another Ootle wallet opens (the address and its code arrive once), on a reload with that claim, and in a browser with a drive (its line is held while the drive is checked)
+PASS pay-steady: arrival: drawn once, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Another Ootle wallet: its code is built once, and the address never shows without it ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 2, 'moves': 2, 'others_moved': 2, 'first_moves': [[5045, '211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -'], [5321, '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162']], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: while the page asks about the claim every 3 s, nothing moves or redraws ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: a reload with the claim kept: drawn once with its code, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: a browser with a drive: Pay from my drive takes the line held for it while it was checked, nothing else moves ({'shift': 0.0119, 'shift_after_draw': 0, 'shift_no_input': 0.0094, 'shifted': ['top-end #text A', 'top-end', '#text #text top-end', 'pay-page'], 'redraws': 1, 'moves': 1, 'others_moved': 0, 'first_moves': [[2386, '566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -', '566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -']], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Pay from my drive and its note fit the held line at 390, 360 and 1440 ({'iphone': [92, 92], 'narrow': [92, 92], 'desktop': [92, 92]})
+  pay-steady: {"arrival": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "other_opens": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 2, "moves": 2, "others_moved": 2, "first_moves": [[5045, "211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -"], [5321, "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162"]], "qr_built": 1, "empty_qr_frames": 0}, "other_polls": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "reload_with_claim": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 1, "empty_qr_frames": 0}, "drive_arrival": {"shift": 0.0119, "shift_after_draw": 0, "shift_no_input": 0.0094, "shifted": ["top-end #text A", "top-end", "#text #text top-end", "pay-page"], "redraws": 1, "moves": 1, "others_moved": 0, "first_moves": [[2386, "566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -", "566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -"]], "qr_built": 0, "empty_qr_frames": 0}, "drive_line": {"iphone": [92, 92], "narrow": [92, 92], "desktop": [92, 92]}}
+PASS pay-steady: no CSP or Trusted Types violation ([])
+--- pay-progress owner-5: after Pay with test money the steps move: shown at the click, the step in progress turning with its time and what it waits on (getting ready, our demo wallet sending it, then the chain), ticked as each state arrives; a live region says each step; with reduced motion, words and the time instead of motion
+PASS pay-progress: motion: test money reaches Ready to open
+PASS pay-progress: motion: the steps show at the click (91 ms)
+PASS pay-progress: motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: motion: the transaction's line comes within a poll of it (3410 ms after the steps)
+PASS pay-progress: motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: motion: never more than about 2 s without something new to read (1600 ms)
+PASS pay-progress: motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: the step in progress turns and the bar sweeps (2 animations running)
+PASS pay-progress: reduced_motion: test money reaches Ready to open
+PASS pay-progress: reduced_motion: the steps show at the click (95 ms)
+PASS pay-progress: reduced_motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: reduced_motion: the transaction's line comes within a poll of it (3406 ms after the steps)
+PASS pay-progress: reduced_motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: reduced_motion: never more than about 2 s without something new to read (1601 ms)
+PASS pay-progress: reduced_motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: reduced_motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: reduced motion: nothing moves in the steps, the words and the time say it (0 running)
+  pay-progress: {"motion": {"steps_shown_ms": 91, "open_ms": 8170, "longest_still_ms": 1600, "running_animations": 2, "live_region": ["polite", "Waiting for your payment"]}, "reduced_motion": {"steps_shown_ms": 95, "open_ms": 8039, "longest_still_ms": 1601, "running_animations": 0, "live_region": ["polite", "Waiting for your payment"]}}
+PASS pay-progress: no CSP or Trusted Types violation ([])
+--- ux-drop The drop page's run (ux-feedback-1): each step lit in order with its clock; a sweep while a chunk travels; the relay's countdown fills the bar; the chain's line; a failed delivery says what to retry; Delivered with the receipt, one lime; /verify/tx's summary over Details
+PASS ux-drop: a drop link asks nothing before it exists
+PASS ux-drop: the drop page is ready
+PASS ux-drop: picked: Locking it in your browser is done, Uploading lit
+PASS ux-drop: four steps, in people's words
+PASS ux-drop: once the chunk leaves, the upload step says how big it is ('1.3 KB')
+PASS ux-drop: a step past two seconds shows its clock ('0:02')
+PASS ux-drop: while the chunk travels, the bar sweeps (it never stands still)
+PASS ux-drop: the lit step's dot turns
+PASS ux-drop: the photo's chip and Stop stay with the steps
+PASS ux-drop: uploaded: Waiting for the Tari chain lit
+PASS ux-drop: the relay's own time to send, counted down ('Our relay sends it in about 26 seconds.')
+PASS ux-drop: the bar fills toward the relay's moment (0 → 5)
+PASS ux-drop: on its way: the chain's line, the bar sweeps
+PASS ux-drop: a failed delivery
+PASS ux-drop: the step that failed is marked; the ones before stay done
+PASS ux-drop: it says what failed, that the file is safe, and offers Try again ("The delivery didn't go through. Your file is stored. Try again.Try again")
+PASS ux-drop: Try again: Delivered
+PASS ux-drop: the steps lit in their order (['lock', 'upload', 'chain', 'chain'])
+PASS ux-drop: the done moment: Delivered., focused for a screen reader
+PASS ux-drop: what happened, in people's words ('Your photo is in their drive. Only that drive can open it.')
+PASS ux-drop: the transaction is a Receipt link, its id shortened
+PASS ux-drop: the chain's line, in plain words
+PASS ux-drop: the photo's chip and Leave another
+PASS ux-drop: one lime on the page: the header's Open your drive (['Open your drive'])
+PASS ux-drop: the moment sits on one axis, not floating ([0, 0, 0.0, 0, 0])
+PASS ux-drop: after its 1.2 s the moment rests: the words in full, the file inside the box
+PASS ux-drop: a slow read says what it waits for
+PASS ux-drop: the status first, the epoch in one phrase ('Confirmed.The Tari chain committed it in epoch 12000, a tick of its clock.')
+PASS ux-drop: what stays hidden: C36's registered sentence only when this transaction's own outputs show it (True, 'What stays hiddenThe chain shows a payment with a hidden amount and a hidden own')
+PASS ux-drop: what this proves, and what stays hidden: one line each, no break between the sentences (owner-5: ["The Tari chain accepted this transaction, and it is final. Anyone can check it on Tari's own indexer.", 0, "Tari's own indexer", 'https://indexer.esme.tari.com/transactions/ef0991f013aae4df6d9a55ba847c7b9af71f9b5315073797c103fe87c02b1d22', '_blank', 'noopener', 0])
+PASS ux-drop: Tari's own indexer links to this transaction on the indexer's page, in a new tab with noopener (["Tari's own indexer", 'https://indexer.esme.tari.com/transactions/ef0991f013aae4df6d9a55ba847c7b9af71f9b5315073797c103fe87c02b1d22', '_blank', 'noopener'])
+PASS ux-drop: a computer opens Details and the check
+PASS ux-drop: every field of the record is still there
+PASS ux-drop: no CSP or Trusted Types violation ([])
+--- ux-drop-phone The drop page on a phone with reduced motion: Delivered at once and still; /verify/tx folds its record; nothing sideways
+PASS ux-drop-phone: a drop link asks nothing before it exists
+PASS ux-drop-phone: the drop page is ready
+PASS ux-drop-phone: the steps fit a phone
+PASS ux-drop-phone: Delivered
+PASS ux-drop-phone: reduced motion: the moment is there at once, nothing flies
+PASS ux-drop-phone: the moment starts in view
+PASS ux-drop-phone: the done moment fits a phone
+PASS ux-drop-phone: a phone keeps Details and the check folded
+PASS ux-drop-phone: the summary first, nothing sideways
+PASS ux-drop-phone: Details opens to the full record
+PASS ux-drop-phone: no CSP or Trusted Types violation ([])
+--- ux-drive-waits The drive's waits (ux-feedback-1): an upload row sweeps while its chunk travels; Save key file turns and says so
+PASS ux-drive-waits: this flow's server has features.folders on (the real folder API, no fake)
+PASS ux-drive-waits: a chunk on its way: the row's bar sweeps
+PASS ux-drive-waits: the row says Uploading
+PASS ux-drive-waits: done: the sweep stops
+PASS ux-drive-waits: while the key file locks, the button turns and says so; then it is back (['Locking the key file…', 'Save key file'])
+PASS ux-drive-waits: no CSP or Trusted Types violation ([])
+--- ux-widget The home's quick share while a chunk travels: a bar moves under Locking it up
+PASS ux-widget: the busy line has a bar that moves
+PASS ux-widget: released: the link
+PASS ux-widget: no CSP or Trusted Types violation ([])
+
+UI FAIL 135/136
+  failed: share-rules: TimeoutError: waited 20s for document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden

@@ -1,0 +1,343 @@
+[
+ {
+  "flow": "make-drive",
+  "device": "desktop",
+  "note": "",
+  "total_s": 1.64,
+  "longest_still_s": 0.22,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.22,
+    "Your private drive. Files lock in this browser before upload. You pick how each one opens. Make my drive Open my drive Making your key in this browser\u2026 No email, no password. Your key is the account."
+   ],
+   [
+    1.29,
+    "Opening your drive\u2026"
+   ],
+   [
+    1.47,
+    "Opening\u2026"
+   ]
+  ],
+  "done_shot": "after-make-drive-desktop-done.png"
+ },
+ {
+  "flow": "upload-file",
+  "device": "desktop",
+  "note": "a 1,099,417 B photo",
+  "total_s": 1.72,
+  "longest_still_s": 0.36,
+  "still_from_s": 0.48,
+  "still_on": "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in t",
+  "timeline": [
+   [
+    0.12,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    0.48,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    0.85,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    1.56,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Your drive is empty. Drop files or a folder anywhere on this page. They lock in this browser before they upload. Upload a folder Upload files"
+   ],
+   [
+    1.69,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | 1 upload done IMG_after.jpg Locked and saved"
+   ]
+  ],
+  "done_shot": "after-upload-file-desktop-done.png"
+ },
+ {
+  "flow": "upload-folder",
+  "device": "desktop",
+  "note": "3 files, 1 subfolder",
+  "total_s": 1.21,
+  "longest_still_s": 0.26,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.26,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | Locking 3 files"
+   ],
+   [
+    0.39,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Locking notes.txt Locking day2.txt Locking Locking 3 files"
+   ],
+   [
+    0.62,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Uploading notes.txt Uploading day2.txt Locking Locking 3 files"
+   ],
+   [
+    0.74,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Locked and saved notes.txt Locked and saved day2.txt Locking Locking 3 "
+   ],
+   [
+    0.86,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | plan.txt Locked and saved notes.txt Locked and saved day2.txt Uploading Locking "
+   ],
+   [
+    0.99,
+    "My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size IMG_after.jpg Private 1 MB | 3 uploads done plan.txt Locked and saved notes.txt Locked and saved day2.txt Loc"
+   ]
+  ],
+  "done_shot": "after-upload-folder-desktop-done.png"
+ },
+ {
+  "flow": "make-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.44,
+  "longest_still_s": 0.21,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.28,
+    "3 uploads done plan.txt Locked and saved notes.txt Locked and saved day2.txt Locked and saved | Share IMG_after.jpg How many times can it open? Once One open. Then the link ends. A few times Up to 3 opens. No limit On your first day, up to 50 opens. It ends In"
+   ]
+  ],
+  "done_shot": "after-make-link-desktop-done.png"
+ },
+ {
+  "flow": "copy-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.27,
+  "longest_still_s": 0.27,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.27,
+    "3 uploads done plan.txt Locked and saved notes.txt Locked and saved day2.txt Locked and saved | Share IMG_after.jpg Your link is ready. It opens one time, until Oct 26, 9:00 PM. Then the link ends. Your link Copied Everything after # is the key. Browsers don't"
+   ]
+  ],
+  "done_shot": "after-copy-link-desktop-done.png"
+ },
+ {
+  "flow": "make-pay-link",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.69,
+  "longest_still_s": 0.18,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.3,
+    "Share IMG_after.jpg Set a price The money goes straight to your Tari address. We never hold it. 0.1 tTARI 0.25 tTARI 0.5 tTARI Show the name before they pay They see its name, how many files, and about how big. Not what is inside. The first time you sell To se"
+   ],
+   [
+    0.67,
+    "Share IMG_after.jpg Your link is ready. It opens after they pay you 0.1 tTARI. Your link Copy link We keep half of the key and give it to each buyer once the chain shows their payment. The other half is in the link. Neither half opens it alone. If the link lea"
+   ]
+  ],
+  "done_shot": "after-make-pay-link-desktop-done.png"
+ },
+ {
+  "flow": "pay-page",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 2.07,
+  "longest_still_s": 0.27,
+  "still_from_s": 1.8,
+  "still_on": "\u2026",
+  "timeline": [
+   [
+    0.24,
+    ""
+   ],
+   [
+    0.37,
+    "\u2026"
+   ],
+   [
+    2.07,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price Waiting for your payment. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Paying lets you open it 3 times until Oct 26. Anyone who opens a file can pass it on. The owner c"
+   ]
+  ],
+  "done_shot": "after-pay-page-desktop-done.png"
+ },
+ {
+  "flow": "pay-test",
+  "device": "desktop",
+  "note": "",
+  "total_s": 8.64,
+  "longest_still_s": 0.24,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.24,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment Getting ready\u2026 Payment seen, amount checked On the chain Ready to open Waiting for your payment "
+   ],
+   [
+    2.13,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment Our demo wallet is sending it\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    2.25,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:02 Our demo wallet is sending it\u2026 Payment seen, amount checked On the chain Ready to open Wait"
+   ],
+   [
+    3.33,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:03 Our demo wallet is sending it\u2026 Payment seen, amount checked On the chain Ready to open Wait"
+   ],
+   [
+    3.81,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:03 Sent. Checking the chain\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    4.29,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:04 Sent. Checking the chain\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    5.25,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:05 Sent. Checking the chain\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    6.33,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:06 Sent. Checking the chain\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    7.29,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:07 Sent. Checking the chain\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    8.25,
+    "Pay to open this file. About 5 MB. Pay 0.1 tTARI and it opens here. Price . 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Waiting for your payment 0:08 Sent. Checking the chain\u2026 Payment seen, amount checked On the chain Ready to open Waiting f"
+   ],
+   [
+    8.62,
+    "Paid. It's open. 3 opens left until Oct 26. Price Paid. It's open. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Payment seen, amount checked On the chain Ready to open Waiting for your payment 3 opens left until Oct 26. Open it What the chain"
+   ]
+  ],
+  "done_shot": "after-pay-test-desktop-done.png",
+  "end_state": "open"
+ },
+ {
+  "flow": "pay-open",
+  "device": "desktop",
+  "note": "",
+  "total_s": 0.6,
+  "longest_still_s": 0.15,
+  "still_from_s": 0.0,
+  "still_on": "(the screen as the action left it)",
+  "timeline": [
+   [
+    0.27,
+    "Paid. It's open. 3 opens left until Oct 26. Price Paid. It's open. 0.1 tTARI Plus a network fee of 0.03 tTARI. The fee is public. Payment seen, amount checked On the chain Ready to open Waiting for your payment 3 opens left until Oct 26. Opening it\u2026 What the c"
+   ]
+  ],
+  "done_shot": "after-pay-open-desktop-done.png"
+ },
+ {
+  "flow": "owner-sale",
+  "device": "desktop",
+  "note": "from navigation",
+  "total_s": 2.7,
+  "longest_still_s": 0.72,
+  "still_from_s": 0.24,
+  "still_on": "",
+  "timeline": [
+   [
+    0.24,
+    ""
+   ],
+   [
+    0.96,
+    "Opening your drive\u2026"
+   ],
+   [
+    1.23,
+    "Opening\u2026"
+   ],
+   [
+    1.55,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make my drop link Looking on the Tari chain for what only your drive opens\u2026 Nothing here yet. Share your Tari address"
+   ],
+   [
+    2.51,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make my drop link Checked 18 new payments on the Tari chain for ones only your drive opens. Nothing here yet. Share y"
+   ],
+   [
+    2.63,
+    "Received Files sent to your Tari address, or left at your drop link. Your drop link Anyone can leave you a file here. They don't need a drive. Make my drop link Checked 18 new payments on the Tari chain for ones only your drive opens. Nothing here yet. Share y"
+   ]
+  ],
+  "done_shot": "after-owner-sale-desktop-done.png"
+ },
+ {
+  "flow": "delete-drive",
+  "device": "desktop",
+  "note": "",
+  "total_s": 3.98,
+  "longest_still_s": 0.68,
+  "still_from_s": 3.31,
+  "still_on": "Deleting your drive\u2026 6 of 6 deleted Checking that nothing is left\u2026",
+  "timeline": [
+   [
+    0.3,
+    "Deleting your drive\u2026 0 of 6 deleted plan.txt"
+   ],
+   [
+    0.42,
+    "Deleting your drive\u2026 1 of 6 deleted plan.txt"
+   ],
+   [
+    0.79,
+    "Deleting your drive\u2026 1 of 6 deleted day2.txt"
+   ],
+   [
+    0.91,
+    "Deleting your drive\u2026 2 of 6 deleted day2.txt"
+   ],
+   [
+    1.27,
+    "Deleting your drive\u2026 2 of 6 deleted IMG_after.jpg"
+   ],
+   [
+    1.39,
+    "Deleting your drive\u2026 3 of 6 deleted IMG_after.jpg"
+   ],
+   [
+    1.87,
+    "Deleting your drive\u2026 3 of 6 deleted notes.txt"
+   ],
+   [
+    1.99,
+    "Deleting your drive\u2026 4 of 6 deleted notes.txt"
+   ],
+   [
+    2.35,
+    "Deleting your drive\u2026 4 of 6 deleted days"
+   ],
+   [
+    2.47,
+    "Deleting your drive\u2026 5 of 6 deleted days"
+   ],
+   [
+    2.83,
+    "Deleting your drive\u2026 5 of 6 deleted trip-after"
+   ],
+   [
+    2.94,
+    "Deleting your drive\u2026 6 of 6 deleted trip-after"
+   ],
+   [
+    3.31,
+    "Deleting your drive\u2026 6 of 6 deleted Checking that nothing is left\u2026"
+   ]
+  ],
+  "done_shot": "after-delete-drive-desktop-done.png"
+ }
+]

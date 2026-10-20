@@ -1,0 +1,44 @@
+{
+ "motion": {
+  "steps_shown_ms": 411,
+  "open_ms": 9500,
+  "longest_still_ms": 9089,
+  "running_animations": 1,
+  "live_region": null,
+  "timeline": [
+   [
+    101,
+    "wait | - |  | "
+   ],
+   [
+    411,
+    "paying | wait:now seen:todo chain:todo open:todo |  | "
+   ],
+   [
+    9500,
+    "open | wait:done seen:done chain:done open:done |  | "
+   ]
+  ]
+ },
+ "reduced_motion": {
+  "steps_shown_ms": 405,
+  "open_ms": 9500,
+  "longest_still_ms": 9095,
+  "running_animations": 0,
+  "live_region": null,
+  "timeline": [
+   [
+    100,
+    "wait | - |  | "
+   ],
+   [
+    405,
+    "paying | wait:now seen:todo chain:todo open:todo |  | "
+   ],
+   [
+    9500,
+    "open | wait:done seen:done chain:done open:done |  | "
+   ]
+  ]
+ }
+}

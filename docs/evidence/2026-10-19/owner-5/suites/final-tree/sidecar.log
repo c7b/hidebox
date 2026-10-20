@@ -1,0 +1,24 @@
+test_canary_sealed_through_this_api_and_opened_with_robot_keys (test_real_sidecar.RealSidecar.test_canary_sealed_through_this_api_and_opened_with_robot_keys) ... (node:1403466) ExperimentalWarning: Permission is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+mutis-sidecar: ready
+ok
+test_pinned_wasm_selftest_and_scan (test_real_sidecar.RealSidecar.test_pinned_wasm_selftest_and_scan) ... (node:1403657) ExperimentalWarning: Permission is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+mutis-sidecar: ready
+ok
+test_receiver_ownership_with_the_real_library (test_real_sidecar.RealSidecar.test_receiver_ownership_with_the_real_library)
+R1 (16-drive-architecture §1.1): the worker's ownership check with the official library, on the ... (node:1403746) ExperimentalWarning: Permission is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+mutis-sidecar: ready
+ok
+test_wrong_pin_refused (test_real_sidecar.RealSidecar.test_wrong_pin_refused) ... (node:1403756) ExperimentalWarning: Permission is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+mutis-sidecar: ready
+event=chain.sidecar_hash_mismatch
+ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 3.324s
+
+OK
+{"sidecar": {"version": "mutis-sidecar/1", "wasm_sha256": "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2", "node": "v20.19.2"}, "selftest_cases": 17}

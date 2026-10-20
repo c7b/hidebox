@@ -1,0 +1,106 @@
+{
+ "motion": {
+  "steps_shown_ms": 42,
+  "open_ms": 8101,
+  "longest_still_ms": 1598,
+  "running_animations": 2,
+  "live_region": [
+   "polite",
+   "Waiting for your payment"
+  ],
+  "timeline": [
+   [
+    102,
+    "paying | wait:now seen:todo chain:todo open:todo |  | Getting ready\u2026"
+   ],
+   [
+    502,
+    "paying | wait:now seen:todo chain:todo open:todo |  | Our demo wallet is sending it\u2026"
+   ],
+   [
+    2100,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:02 | Our demo wallet is sending it\u2026"
+   ],
+   [
+    3100,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:03 | Our demo wallet is sending it\u2026"
+   ],
+   [
+    3604,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:03 | Sent. Checking the chain\u2026"
+   ],
+   [
+    4100,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:04 | Sent. Checking the chain\u2026"
+   ],
+   [
+    5100,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:05 | Sent. Checking the chain\u2026"
+   ],
+   [
+    6101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:06 | Sent. Checking the chain\u2026"
+   ],
+   [
+    7100,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:07 | Sent. Checking the chain\u2026"
+   ],
+   [
+    8101,
+    "open | wait:done seen:done chain:done open:done |  | "
+   ]
+  ]
+ },
+ "reduced_motion": {
+  "steps_shown_ms": 37,
+  "open_ms": 8126,
+  "longest_still_ms": 1600,
+  "running_animations": 0,
+  "live_region": [
+   "polite",
+   "Waiting for your payment"
+  ],
+  "timeline": [
+   [
+    101,
+    "paying | wait:now seen:todo chain:todo open:todo |  | Getting ready\u2026"
+   ],
+   [
+    501,
+    "paying | wait:now seen:todo chain:todo open:todo |  | Our demo wallet is sending it\u2026"
+   ],
+   [
+    2101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:02 | Our demo wallet is sending it\u2026"
+   ],
+   [
+    3101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:03 | Our demo wallet is sending it\u2026"
+   ],
+   [
+    3522,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:03 | Sent. Checking the chain\u2026"
+   ],
+   [
+    4101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:04 | Sent. Checking the chain\u2026"
+   ],
+   [
+    5101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:05 | Sent. Checking the chain\u2026"
+   ],
+   [
+    6101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:06 | Sent. Checking the chain\u2026"
+   ],
+   [
+    7101,
+    "paying | wait:now seen:todo chain:todo open:todo | 0:07 | Sent. Checking the chain\u2026"
+   ],
+   [
+    8126,
+    "open | wait:done seen:done chain:done open:done |  | "
+   ]
+  ]
+ }
+}

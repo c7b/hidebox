@@ -1,0 +1,30 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- pay-progress owner-5: after Pay with test money the steps move: shown at the click, the step in progress turning with its time and what it waits on (getting ready, our demo wallet sending it, then the chain), ticked as each state arrives; a live region says each step; with reduced motion, words and the time instead of motion
+PASS pay-progress: motion: test money reaches Ready to open
+PASS pay-progress: motion: the steps show at the click (42 ms)
+PASS pay-progress: motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: motion: the transaction's line comes within a poll of it (3562 ms after the steps)
+PASS pay-progress: motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: motion: never more than about 2 s without something new to read (1598 ms)
+PASS pay-progress: motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: the step in progress turns and the bar sweeps (2 animations running)
+PASS pay-progress: reduced_motion: test money reaches Ready to open
+PASS pay-progress: reduced_motion: the steps show at the click (37 ms)
+PASS pay-progress: reduced_motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: reduced_motion: the transaction's line comes within a poll of it (3485 ms after the steps)
+PASS pay-progress: reduced_motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: reduced_motion: never more than about 2 s without something new to read (1600 ms)
+PASS pay-progress: reduced_motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: reduced_motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: reduced motion: nothing moves in the steps, the words and the time say it (0 running)
+  pay-progress: {"motion": {"steps_shown_ms": 42, "open_ms": 8101, "longest_still_ms": 1598, "running_animations": 2, "live_region": ["polite", "Waiting for your payment"]}, "reduced_motion": {"steps_shown_ms": 37, "open_ms": 8126, "longest_still_ms": 1600, "running_animations": 0, "live_region": ["polite", "Waiting for your payment"]}}
+PASS pay-progress: no CSP or Trusted Types violation ([])
+
+UI PASS 26/26

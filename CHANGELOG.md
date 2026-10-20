@@ -1,6 +1,26 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- owner-5 -->
+## 2026-10-19: owner 5
+
+- **Canary keys survive a restart.** The verifier kept each hourly test file's key in memory, so a deploy published
+  a day of test files as missed. The chain worker now keeps a copy of each canary link's wrapped key until its key
+  is due, and gets a key the verifier lost back from the delivery that is already on the Ootle, sealed to our test
+  drive. /made#check lists test files missed in a row as one line ("23 test files missed (#150 to #172): the
+  verifier restarted."), and its status line no longer says every check is working while one missed in the last
+  24 hours.
+- **/verify/tx**: what it proves and what stays hidden each read as one line, and "Tari's own indexer" opens the
+  transaction on Tari's indexer page in a new tab.
+- **The pay page** no longer flickers: it redraws only when something changes (it used to redraw itself and rebuild
+  the payment address's QR code every 3 seconds), and a drive in this browser gets its line held while it is
+  checked. After Pay with test money the steps show from the click and move while the payment is on its way (the
+  step in progress turning, its time, what it waits on: our demo wallet sending it, then the chain), where the page
+  used to sit on "Waiting for your payment" until everything appeared at once.
+- **The mainnet line** reads "Ootle mainnet launches Nov 11, 2026": a launch date, checked against Tari's own
+  announcements. Review: `docs/review/owner-5.md`.
+<!-- /owner-5 -->
+
 <!-- site 404 -->
 ## 2026-10-19: the 404 page
 

@@ -1,0 +1,193 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- share-pay Sell a file (step 15): Someone who pays you, the price chips, the name switch, C35 the first time; the pay link with C34; Getting ready, then Pay with its count; Stop selling and Sell again
+PASS share-pay: Who can open it? adds Someone who pays you when pay to open is on (['link', 'tari', 'pay'])
+PASS share-pay: three price chips from /config, with the number (['100000', '250000', '500000'])
+PASS share-pay: the seller's C33 line
+PASS share-pay: Show the name before they pay: on by default
+PASS share-pay: C35, the first time this drive sells
+PASS share-pay: every control has a name ([])
+PASS share-pay: Make pay link makes it ()
+PASS share-pay: a /p/ link with half of the key after the # (kind 5: QJjTqhoxnK37lrg#5m7k9F-qOSCfsaHMP8kpzP-54dERW2ueYSg1n-EqUtxQ)
+PASS share-pay: the sales address and its sealed view key went to our server once (PUT /me/sales, 125 bytes)
+PASS share-pay: the server half (32 bytes) is not the link's half, and the link doesn't carry it
+PASS share-pay: the teaser is sealed and padded to 256 bytes
+PASS share-pay: the rule in one sentence (It opens after they pay you 0.25 tTARI.)
+PASS share-pay: C34, the seller's form, with its boundary
+PASS share-pay: the row says Getting ready until our payment checker has the sales key
+PASS share-pay: then Pay 0.25 tTARI, 0 paid (['pay', 'Pay 0.25 tTARI', 'notes.txtPay 0.25 tTARI0 paid · When you stop itPay 0.25 tTARI0 paidWhen you stop it50 B'])
+PASS share-pay: a second pay link: the sales address isn't sent again
+PASS share-pay: one paid link per item: Someone who pays you is gone from its dialog
+PASS share-pay: Stop selling: PATCH /s/{id} {paused: true}
+PASS share-pay: the row says Not selling
+PASS share-pay: Sell again
+PASS share-pay: no CSP or Trusted Types violation ([])
+--- pay-page-states The buyer page (steps 15 and 16): teaser, price and fee, C39, C37, one primary; the address only after a claim; test money to Unlocked and the open; resume; the owner's check; Pay from my drive; paused, gone, no key
+PASS pay-page-states: a stranger's first screen: waiting, nothing claimed (wait)
+PASS pay-page-states: the title, and the name the owner allowed (read from the teaser with the link's half)
+PASS pay-page-states: the price and the public fee ('0.1tTARI', 'Plus a network fee of 0.03 tTARI. The fee is public.')
+PASS pay-page-states: what you get (C39: Paying lets you open it 3 times until Oct 26. Anyone who opens a file can pass it on. The owner can still delete it.)
+PASS pay-page-states: no take-backs, before Pay (C37)
+PASS pay-page-states: one primary: Pay with test money
+PASS pay-page-states: no Pay from my drive without a drive here
+PASS pay-page-states: Another Ootle wallet shows no address before a claim exists
+PASS pay-page-states: the content stays locked
+PASS pay-page-states: names on every control; no CSP violation
+PASS pay-page-states: a browser without a drive: the top bar says Make your own drive
+PASS pay-page-states: Another Ootle wallet: the address just for this claim (the owner's sales address with the claim's reference), after the claim
+PASS pay-page-states: the claim asked for its proof of work (claim)
+PASS pay-page-states: C38 under the other wallet
+PASS pay-page-states: Pay with test money starts the steps
+FAIL pay-page-states: test money pays the claim that exists
+PASS pay-page-states: released: the page has both halves
+PASS pay-page-states: test money skips the owner's check (['wait:done', 'seen:done', 'chain:done', 'open:done'])
+PASS pay-page-states: 3 opens left until Oct 26.
+PASS pay-page-states: what the chain shows, with test money's grouping (C36)
+PASS pay-page-states: Open it: the real open, with the claim's token, decrypts here
+PASS pay-page-states: one open used (2 opens left until Oct 26.)
+PASS pay-page-states: a reload resumes the claim kept in this browser
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: Payment seen: the steps take over
+PASS pay-page-states: paid from another wallet: the owner's drive checks it
+PASS pay-page-states: the owner step, and C38 (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-page-states: no sideways scroll at 390
+PASS pay-page-states: after the owner's drive confirms, it opens
+PASS pay-page-states: a closed payment window: Start again
+PASS pay-page-states: Start again: a fresh page, no old address
+PASS pay-page-states: Not selling: no Pay, and why
+PASS pay-page-states: a link without its half of the key says so
+PASS pay-page-states: an ended paid link says it ended
+PASS pay-page-states: a funded drive here: Pay from my drive, with C38 under it
+PASS pay-page-states: Pay from my drive: this browser built and sent the payment; it waits for the owner's check
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: no CSP or Trusted Types violation ([])
+--- pay-drive Pay from my drive (A): the click shows the steps at once (Building the payment from your drive…), then Sent and Seen on the chain, then Waiting for the owner's check, then Ready to open; a refused payment spent nothing and says so where the button was, with Try again; a drive short of the price and the fee says why there is no button
+PASS pay-drive: a drive short of the price and the fee: no Pay from my drive, and why ('Your drive here has 0.05 tTARI. Paying from it takes 0.13 tTARI with the fee.')
+PASS pay-drive: no sideways scroll at 390
+PASS pay-drive: a browser with a drive: the pay page's top bar says Open my drive, not Make your own drive
+PASS pay-drive: the click shows the payment's steps at once (24 ms, at most 300)
+PASS pay-drive: step one turns: Building the payment from your drive…; the steps take the focus ({'steps': ['build:now:Building the payment from your drive…', 'chain:todo:Seen on the chain', "owner:todo:Waiting for the owner's check", 'open:todo:Ready to open'], 'status': 'Your drive is paying. Keep this page open.', 'focus': 'pay-claim-step'})
+PASS pay-drive: refused: an alert in a plain sentence, with Try again ("Your drive didn't pay.The Ootle refused that transaction. Nothing was spent.Try again")
+PASS pay-drive: the alert is on screen
+PASS pay-drive: after a payment that spent nothing, Another Ootle wallet shows the claim's address with its code
+PASS pay-drive: the claim forgets the drive: nothing was paid, so a reload offers the payment again
+PASS pay-drive: Try again shows the steps at once too
+PASS pay-drive: sent: Sent from your drive, then Seen on the chain turns (['build:done', 'chain:now', 'owner:todo', 'open:todo'], 'Sent from your drive. Now we look for it on the chain.')
+PASS pay-drive: seen on the chain and paid: it waits for the owner's check
+PASS pay-drive: Waiting for the owner's check, with C38 (['build:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-drive: Try again paid the same claim (claims 1, transactions 2)
+PASS pay-drive: Ready to open (['build:done', 'chain:done', 'owner:done', 'open:done'])
+PASS pay-drive: no CSP violation; every control named
+PASS pay-drive: no CSP or Trusted Types violation ([])
+--- sell-stop Stop selling where people look (B): the pay link's result has Stop selling, then Sell again; the row menu's Stop selling (PATCH paused) with Undo in its toast, and Sell again; the buyer page says it stopped
+PASS sell-stop: the pay link's result: Stop selling, and where else it lives ("It sells until you stop it, here or from this file's menu.Stop selling")
+PASS sell-stop: Stop selling in the result: one click, the button flips to Sell again
+PASS sell-stop: Sell again in the result
+PASS sell-stop: the row sells
+PASS sell-stop: the row menu of a paid file: Stop selling (['share', 'once', 'stop-sell', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS sell-stop: the row says Not selling
+PASS sell-stop: Stop selling from the menu: one click, a toast with Undo
+PASS sell-stop: the buyer page: not selling, no Pay
+PASS sell-stop: Undo: it sells again
+PASS sell-stop: stopped again
+PASS sell-stop: a paused link's menu: Sell again (['share', 'once', 'sell-again', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS sell-stop: Sell again from the menu
+PASS sell-stop: no CSP or Trusted Types violation ([])
+--- owner-check The owner check (step 16, R1): the seller's drive finds its sales outputs, compares each one-time key with its own, confirms the genuine one and voids the one the payer kept; Received lists both
+PASS owner-check: the drive kept what it confirmed
+PASS owner-check: the genuine payment: its one-time key is ours, confirmed ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_ecc15850c96979ea4ab09fbaac8bf82f057be5da6122febe94338dbfd57c8579', 'spendable': True})
+PASS owner-check: the payer kept control: the claim is voided ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_c0286d1f6be8aae9e1663a3030e409f6b7c7e0e0bb335f1e3ba7880b9515007e', 'spendable': False})
+PASS owner-check: the release gate moved: one to release, one void
+PASS owner-check: each output's one-time key was read from the indexer
+PASS owner-check: a claim our server doesn't wait on yet (not paid) gets no answer
+PASS owner-check: Received lists the payments with their check (['bad', 'ok', 'ok'])
+PASS owner-check: in words
+PASS owner-check: the next opening has nothing left to answer
+PASS owner-check: once that claim is paid, the next opening answers it
+PASS owner-check: a payment made while Received is open shows up there without a reload
+PASS owner-check: no CSP or Trusted Types violation ([])
+--- pay-steady owner-5: the buyer page draws its final state at once and stays put: no layout shift and no redraw on arrival, while it asks about a claim every 3 s, when Another Ootle wallet opens (the address and its code arrive once), on a reload with that claim, and in a browser with a drive (its line is held while the drive is checked)
+PASS pay-steady: arrival: drawn once, nothing moves ({'shift': 0.0444, 'shift_after_draw': 0, 'shift_no_input': 0.0444, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', '#text #text #text', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Another Ootle wallet: its code is built once, and the address never shows without it ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 2, 'moves': 2, 'others_moved': 2, 'first_moves': [[5210, '211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -'], [5502, '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162']], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: while the page asks about the claim every 3 s, nothing moves or redraws ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: a reload with the claim kept: drawn once with its code, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: a browser with a drive: Pay from my drive takes the line held for it while it was checked, nothing else moves ({'shift': 0.0122, 'shift_after_draw': 0, 'shift_no_input': 0.0096, 'shifted': ['top-end #text A', 'top-end', '#text #text top-end', '#text', 'pay-page'], 'redraws': 1, 'moves': 1, 'others_moved': 0, 'first_moves': [[1471, '566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -', '566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -']], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Pay from my drive and its note fit the held line at 390, 360 and 1440 ({'iphone': [92, 92], 'narrow': [92, 92], 'desktop': [92, 92]})
+  pay-steady: {"arrival": {"shift": 0.0444, "shift_after_draw": 0, "shift_no_input": 0.0444, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "#text #text #text", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "other_opens": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 2, "moves": 2, "others_moved": 2, "first_moves": [[5210, "211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -"], [5502, "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162"]], "qr_built": 1, "empty_qr_frames": 0}, "other_polls": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "reload_with_claim": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 1, "empty_qr_frames": 0}, "drive_arrival": {"shift": 0.0122, "shift_after_draw": 0, "shift_no_input": 0.0096, "shifted": ["top-end #text A", "top-end", "#text #text top-end", "#text", "pay-page"], "redraws": 1, "moves": 1, "others_moved": 0, "first_moves": [[1471, "566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -", "566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -"]], "qr_built": 0, "empty_qr_frames": 0}, "drive_line": {"iphone": [92, 92], "narrow": [92, 92], "desktop": [92, 92]}}
+PASS pay-steady: no CSP or Trusted Types violation ([])
+--- pay-progress owner-5: after Pay with test money the steps move: shown at the click, the step in progress turning with its time and what it waits on (getting ready, our demo wallet sending it, then the chain), ticked as each state arrives; a live region says each step; with reduced motion, words and the time instead of motion
+PASS pay-progress: motion: test money reaches Ready to open
+PASS pay-progress: motion: the steps show at the click (83 ms)
+PASS pay-progress: motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: motion: the transaction's line comes within a poll of it (3518 ms after the steps)
+PASS pay-progress: motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: motion: never more than about 2 s without something new to read (1500 ms)
+PASS pay-progress: motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: the step in progress turns and the bar sweeps (2 animations running)
+PASS pay-progress: reduced_motion: test money reaches Ready to open
+PASS pay-progress: reduced_motion: the steps show at the click (43 ms)
+PASS pay-progress: reduced_motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: reduced_motion: the transaction's line comes within a poll of it (3557 ms after the steps)
+PASS pay-progress: reduced_motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: reduced_motion: never more than about 2 s without something new to read (1595 ms)
+PASS pay-progress: reduced_motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: reduced_motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: reduced motion: nothing moves in the steps, the words and the time say it (0 running)
+  pay-progress: {"motion": {"steps_shown_ms": 83, "open_ms": 8106, "longest_still_ms": 1500, "running_animations": 2, "live_region": ["polite", "Waiting for your payment"]}, "reduced_motion": {"steps_shown_ms": 43, "open_ms": 8100, "longest_still_ms": 1595, "running_animations": 0, "live_region": ["polite", "Waiting for your payment"]}}
+PASS pay-progress: no CSP or Trusted Types violation ([])
+--- ux-drop The drop page's run (ux-feedback-1): each step lit in order with its clock; a sweep while a chunk travels; the relay's countdown fills the bar; the chain's line; a failed delivery says what to retry; Delivered with the receipt, one lime; /verify/tx's summary over Details
+PASS ux-drop: a drop link asks nothing before it exists
+PASS ux-drop: the drop page is ready
+PASS ux-drop: picked: Locking it in your browser is done, Uploading lit
+PASS ux-drop: four steps, in people's words
+PASS ux-drop: once the chunk leaves, the upload step says how big it is ('1.3 KB')
+PASS ux-drop: a step past two seconds shows its clock ('0:02')
+PASS ux-drop: while the chunk travels, the bar sweeps (it never stands still)
+PASS ux-drop: the lit step's dot turns
+PASS ux-drop: the photo's chip and Stop stay with the steps
+PASS ux-drop: uploaded: Waiting for the Tari chain lit
+PASS ux-drop: the relay's own time to send, counted down ('Our relay sends it in about 16 seconds.')
+PASS ux-drop: the bar fills toward the relay's moment (0 → 10)
+PASS ux-drop: on its way: the chain's line, the bar sweeps
+PASS ux-drop: a failed delivery
+PASS ux-drop: the step that failed is marked; the ones before stay done
+PASS ux-drop: it says what failed, that the file is safe, and offers Try again ("The delivery didn't go through. Your file is stored. Try again.Try again")
+PASS ux-drop: Try again: Delivered
+PASS ux-drop: the steps lit in their order (['lock', 'upload', 'chain', 'chain'])
+PASS ux-drop: the done moment: Delivered., focused for a screen reader
+PASS ux-drop: what happened, in people's words ('Your photo is in their drive. Only that drive can open it.')
+PASS ux-drop: the transaction is a Receipt link, its id shortened
+PASS ux-drop: the chain's line, in plain words
+PASS ux-drop: the photo's chip and Leave another
+PASS ux-drop: one lime on the page: the header's Open your drive (['Open your drive'])
+PASS ux-drop: the moment sits on one axis, not floating ([0, 0, 0.0, 0, 0])
+PASS ux-drop: after its 1.2 s the moment rests: the words in full, the file inside the box
+PASS ux-drop: a slow read says what it waits for
+PASS ux-drop: the status first, the epoch in one phrase ('Confirmed.The Tari chain committed it in epoch 12000, a tick of its clock.')
+PASS ux-drop: what stays hidden: C36's registered sentence only when this transaction's own outputs show it (True, 'What stays hiddenThe chain shows a payment with a hidden amount and a hidden own')
+PASS ux-drop: what this proves, and what stays hidden: one line each, no break between the sentences (owner-5: ["The Tari chain accepted this transaction, and it is final. Anyone can check it on Tari's own indexer.", 0, "Tari's own indexer", 'https://indexer.esme.tari.com/transactions/1cc6727869864e3fba31d0a387e386192f7f7a5bb42b804a1ddcaf1dcc6b0f9a', '_blank', 'noopener', 0])
+PASS ux-drop: Tari's own indexer links to this transaction on the indexer's page, in a new tab with noopener (["Tari's own indexer", 'https://indexer.esme.tari.com/transactions/1cc6727869864e3fba31d0a387e386192f7f7a5bb42b804a1ddcaf1dcc6b0f9a', '_blank', 'noopener'])
+PASS ux-drop: a computer opens Details and the check
+PASS ux-drop: every field of the record is still there
+PASS ux-drop: no CSP or Trusted Types violation ([])
+--- ux-drop-phone The drop page on a phone with reduced motion: Delivered at once and still; /verify/tx folds its record; nothing sideways
+PASS ux-drop-phone: a drop link asks nothing before it exists
+PASS ux-drop-phone: the drop page is ready
+PASS ux-drop-phone: the steps fit a phone
+PASS ux-drop-phone: Delivered
+PASS ux-drop-phone: reduced motion: the moment is there at once, nothing flies
+PASS ux-drop-phone: the moment starts in view
+PASS ux-drop-phone: the done moment fits a phone
+PASS ux-drop-phone: a phone keeps Details and the check folded
+PASS ux-drop-phone: the summary first, nothing sideways
+PASS ux-drop-phone: Details opens to the full record
+PASS ux-drop-phone: no CSP or Trusted Types violation ([])
+
+UI FAIL 178/179
+  failed: pay-page-states: test money pays the claim that exists

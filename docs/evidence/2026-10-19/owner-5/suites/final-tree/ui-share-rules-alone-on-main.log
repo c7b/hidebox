@@ -1,0 +1,30 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- share-rules A few times, Until a time and a Public link on a phone (step 8): the first day's limits, then the second day; Share is the primary
+PASS share-rules: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-rules: A few times says how many
+PASS share-rules: no horizontal scroll in the dialog at 390
+PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 21, 2:00 AM. Then the link ends.)
+PASS share-rules: a phone: Share is the primary, no code to scan
+PASS share-rules: one filled button: Share; Copy link is outline
+PASS share-rules: Share hands the link to the phone's share sheet
+PASS share-rules: the row says 3 opens
+PASS share-rules: No limit on a first day says its cap
+PASS share-rules: and the result says it (It opens up to 50 times, until Oct 27, 2:00 AM. Then the link ends.)
+PASS share-rules: from the second day: When I stop it
+PASS share-rules: No limit means no count
+PASS share-rules: Until a time (Anyone with the link can open it until Oct 27, 2:00 AM.)
+PASS share-rules: the row says Until {date}
+PASS share-rules: a link that never ends can't take the file with it: the switch goes
+PASS share-rules: When I stop it says where: this file's menu
+PASS share-rules: the Public link, and where to stop it
+PASS share-rules: the row says Public link
+PASS share-rules: no text in the share dialog reads null, in the 14 states this flow saw ([])
+PASS share-rules: no CSP or Trusted Types violation ([])
+
+UI PASS 27/27

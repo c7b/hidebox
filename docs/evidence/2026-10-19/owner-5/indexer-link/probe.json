@@ -1,0 +1,75 @@
+{
+ "checked_at": "2026-10-19T23:21:30Z",
+ "transactions": [
+  {
+   "tx": "8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+   "api": [
+    {
+     "url": "https://ootle-indexer-a.tari.com/transaction-receipts/8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+     "status": 200,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": "Commit"
+    },
+    {
+     "url": "https://ootle-indexer-a.tari.com/transactions/8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+     "status": 404,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": null
+    },
+    {
+     "url": "https://ootle-indexer-b.tari.com/transaction-receipts/8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+     "status": 200,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": "Commit"
+    },
+    {
+     "url": "https://ootle-indexer-b.tari.com/transactions/8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+     "status": 404,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": null
+    }
+   ],
+   "page": "https://indexer.esme.tari.com/transactions/8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b",
+   "page_text": "Home Recent Transactions Transaction Receipts Events Substates Templates Watched Validators Connections Economics Dark Mode Home \u203a Transactions \u203a 8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b Transaction Details Validators no longer hold this transaction's execution result. Showing its committed receipt instead; logs and per-instruction results are not part of a receipt. Transaction Hash 8c6227fd6d067e4acd81ae361ae25a1023eb058cd61c48785848a7fe17cd3d6b Decision Commit Finalized Time N/A Receipt Committed in epoch 12149 Total Fees 0.001605 tXTM Download Download JSON Details E"
+  },
+  {
+   "tx": "aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e",
+   "api": [
+    {
+     "url": "https://ootle-indexer-a.tari.com/transaction-receipts/aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e",
+     "status": 200,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": "Commit"
+    },
+    {
+     "url": "https://ootle-indexer-a.tari.com/transactions/aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e",
+     "status": 200,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": null
+    },
+    {
+     "url": "https://ootle-indexer-b.tari.com/transaction-receipts/aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e",
+     "status": 200,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": "Commit"
+    },
+    {
+     "url": "https://ootle-indexer-b.tari.com/transactions/aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e",
+     "status": 200,
+     "type": "application/json",
+     "cors": "*",
+     "outcome": null
+    }
+   ],
+   "page": "https://indexer.esme.tari.com/transactions/aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e",
+   "page_text": "Home Recent Transactions Transaction Receipts Events Substates Templates Watched Validators Connections Economics Dark Mode Home \u203a Transactions \u203a aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e Transaction Details Validators no longer hold this transaction's execution result. Showing its committed receipt instead; logs and per-instruction results are not part of a receipt. Transaction Hash aae9b98a6fe3029c2a2a401eaf9b2a9169cd2d89fcdd15fb02bbffb3be2bdf5e Decision Commit Finalized Time 2026-10-19 22:22:38.0 Receipt Committed in epoch 12491 Total Fees 0.030000 tXTM Seen Via Netwo"
+  }
+ ]
+}
