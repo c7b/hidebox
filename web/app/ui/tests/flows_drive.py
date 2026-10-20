@@ -11,8 +11,9 @@ import os
 import re
 import time
 
+from cdp import DEVICES
 from drivefake import DriveFake
-from flows import downloaded, no_hscroll, same_origin, scenario
+from flows import Intercept, downloaded, no_hscroll, same_origin, scenario
 
 # The drive's features (off in config.py's defaults). run.py starts a dev server with them on for a flow
 # that asks; otherwise the flows run on drivefake.py.
@@ -28,6 +29,27 @@ def make_drive(t, device="desktop", fake=None, **kw):
     page.wait_for("drive-root", 90)
     page.wait("document.querySelector('[data-testid=\"locker-root\"] .working') === null", 60)
     return page, fake
+
+
+def set_device(page, device):
+    """The same page at another device's size and touch (a computer or a phone), without a reload."""
+    d = page.device = DEVICES[device]
+    page.cmd("Emulation.setDeviceMetricsOverride", {"width": d["width"], "height": d["height"], "deviceScaleFactor": d["dpr"], "mobile": d["mobile"]})
+    page.cmd("Emulation.setTouchEmulationEnabled", {"enabled": d["mobile"], "maxTouchPoints": 5 if d["mobile"] else 1})
+    page.b.drain(0.4)
+
+
+def theme_shots(t, page, name, back="desktop"):
+    """The page as it is now, light and dark, on a computer (1440) and a phone (390), whole pages; then back. The phone's
+    floating New is fixed to the screen's corner, so a whole-page picture would draw it mid-page: it is left out there."""
+    for device, width in (("desktop", 1440), ("iphone", 390)):
+        set_device(page, device)
+        page.eval(f"document.querySelectorAll('.fab').forEach((b) => {{ b.style.visibility = {json.dumps('hidden' if width == 390 else '')}; }})")
+        for theme in ("light", "dark"):
+            page.eval(f"document.documentElement.dataset.theme = {json.dumps(theme)}")
+            t.shot(page, f"{name}-{width}-{theme}", full_page=True)
+    page.eval("delete document.documentElement.dataset.theme; document.querySelectorAll('.fab').forEach((b) => { b.style.visibility = ''; })")
+    set_device(page, back)
 
 
 def eventually(page, expr, timeout=5):
@@ -678,3 +700,108 @@ def activity_gone(t):
     a.wait_for("known-sheet", 10)
     t.check("What it never stores" in a.text("known-sheet"), "What our server knows opens from the view")
     t.shot(a, "drive-1440-activity", full_page=True)
+
+
+# --- Activity at scale (docs/review/drive-earnings-activity.md): what happens together is one row --------------------
+
+ACT_ROWS = "[...document.querySelectorAll('[data-testid=\"activity-feed\"] .feed > li')]"
+
+
+@scenario("activity-groups", "Activity at scale: a folder of 30 files is one row per folder (Locked and uploaded 20 files to hidebox-brand), folded "
+          "open to its files; folders read Folder created; days with counts; Show more; the chips; search; the list as CSV, no formula", features=FEATURES)
+def activity_groups(t):
+    a, fake = make_drive(t)
+    a.wait_for("drive-empty", 30)
+    root = os.path.join(t.work, "fixtures", "hidebox-brand")
+    files = [f"brand-{i:02}.svg" for i in range(1, 20)] + ["=SUM(1,2).svg"]
+    for rel in files + [os.path.join("snippets", "a.txt"), os.path.join("snippets", "b.txt")] + [os.path.join("drafts", f"draft-{i}.txt") for i in range(1, 9)]:
+        os.makedirs(os.path.dirname(os.path.join(root, rel)), exist_ok=True)
+        with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
+            f.write(f"<svg>{rel}</svg>\n" * 40)
+    a.wait("!!document.querySelector('[data-testid=\"upload-dir-input\"]')", 30)
+    a.set_files("upload-dir-input", [root])
+    a.wait("[...document.querySelectorAll('[data-testid=\"folder-card\"]')].some((e) => e.dataset.name === 'hidebox-brand')", 120)
+    a.wait("document.querySelectorAll('[data-testid=\"upload-row\"][data-done]').length === 30", 240)
+    a.eval("new Promise((r) => setTimeout(r, 1500))")   # the list reloads once the last one is in
+    a.eval("document.querySelector('[data-testid=\"upload-panel\"] .uploads-head .btn')?.click()")
+    a.click("nav-activity")
+    a.wait_for("activity-feed", 60)
+    a.wait(f"{ACT_ROWS}.length > 0", 30)
+    groups = a.eval("[...document.querySelectorAll('[data-testid=\"activity-group\"]')].map((g) => [g.dataset.group, g.dataset.count, g.querySelector('.t-title').textContent])")
+    titles = sorted(g[2] for g in groups)
+    t.check("Locked and uploaded 20 files to hidebox-brand" in titles and "Locked and uploaded 8 files to drafts" in titles
+            and "Locked and uploaded 2 files to snippets" in titles, f"one row per folder for the files that came together ({titles})")
+    t.check("Created 2 folders in hidebox-brand" in titles, f"the two folders made inside hidebox-brand, one row ({titles})")
+    rows = a.eval(f"{ACT_ROWS}.length")
+    t.check(rows == 5, f"33 events, 5 rows: 3 uploads, the folders made inside, hidebox-brand made at the top ({rows})")
+    folder = a.eval("[...document.querySelectorAll('[data-event=\"folder\"]')].map((e) => [e.dataset.name, e.textContent])")
+    t.check(sorted(f[0] for f in folder) == ["drafts", "hidebox-brand", "snippets"] and all("Folder created" in f[1] or not f[1].startswith("Locked") for f in folder),
+            f"folders read Folder created, never Locked and uploaded ({folder})")
+    wrong = a.eval("[...document.querySelectorAll('[data-event=\"uploaded\"]')].map((e) => e.dataset.name).filter((n) => ['hidebox-brand', 'snippets', 'drafts'].includes(n))")
+    t.check(wrong == [], f"no folder is an upload ({wrong})")
+    day = a.eval("[...document.querySelectorAll('[data-testid=\"activity-day\"]')].map((d) => d.querySelector('h2').textContent)")
+    t.check(day == ["Today33 events"], f"one day, Today, with its count ({day})")
+    big = "[...document.querySelectorAll('[data-testid=\"activity-group\"]')].find((g) => g.dataset.count === '20')"
+    meta = a.eval(f"{big}.querySelector('.t-meta').textContent")
+    t.check(re.search(r"\d+(\.\d+)? (B|KB|MB) · \d{1,2}:00", meta) is not None, f"its size and its hour ({meta})")
+    t.check(a.eval(f"{big}.querySelector('.feed-members').hidden") is True and a.eval(f"{big}.querySelector('[data-testid=\"activity-expand\"]').getAttribute('aria-expanded')") == "false",
+            "folded at first")
+    t.shot(a, "activity-1440-grouped")
+    a.eval(f"{big}.querySelector('[data-testid=\"activity-expand\"]').click()")
+    shown = a.eval(f"[...{big}.querySelectorAll('.feed-members [data-testid=\"activity-event\"]')].filter((e) => e.getClientRects().length).map((e) => e.dataset.name)")
+    t.check(len(shown) == 20 and "=SUM(1,2).svg" in shown and a.eval(f"{big}.querySelector('[data-testid=\"activity-expand\"]').getAttribute('aria-expanded')") == "true",
+            f"Show all 20 opens the file list ({len(shown)})")
+    theme_shots(t, a, "activity-open")
+    t.check(a.ax_unnamed() == [], f"every control has a name ({a.ax_unnamed()[:4]})")
+    # The chips: Links has nothing yet, Uploads has the uploads and the folders, All again.
+    a.click("activity-filter-links")
+    t.check(a.wait("!!document.querySelector('[data-testid=\"activity-none\"]')", 10) and a.attr("activity-filter-links", "aria-pressed") == "true", "Links: nothing like that yet")
+    a.click("activity-filter-uploads")
+    t.check(a.wait(f"{ACT_ROWS}.length === 5", 10), "Uploads: the uploads and the folders made")
+    a.click("activity-filter-all")
+    # Search filters the list by name, in place.
+    a.eval("document.dispatchEvent(new CustomEvent('drive:search', { detail: 'draft-3' }))")
+    t.check(a.wait(f"{ACT_ROWS}.length === 1 && {ACT_ROWS}[0].dataset.name === 'draft-3.txt'", 10), "search: draft-3.txt alone")
+    a.eval("document.dispatchEvent(new CustomEvent('drive:search', { detail: '' }))")
+    a.wait(f"{ACT_ROWS}.length === 5", 10)
+    # The whole log as CSV, made in this browser and saved through a download link (no navigation).
+    before = os.listdir(a.downloads) if os.path.isdir(a.downloads) else []
+    href = a.eval("location.href")
+    a.click("activity-save")
+    got = downloaded(a, before, 20)
+    t.check(got is not None and a.eval("location.href") == href, "Download the list saves a file and the page stays")
+    text = open(got, encoding="utf-8-sig").read() if got else ""
+    import csv
+    import io
+    table = list(csv.reader(io.StringIO(text)))
+    t.check(table and table[0][:4] == ["time_utc", "event", "name", "folder"] and len(table) == 34, f"a header and the 33 events ({len(table)})")
+    cell = next((r[2] for r in table if "SUM" in (r[2] if len(r) > 2 else "")), "")
+    t.check(cell == "'=SUM(1,2).svg", f"a name that looks like a formula is written as text ({cell!r})")
+    t.check(any(r[1] == "Folder created" and r[2] == "snippets" and r[3] == "hidebox-brand" for r in table[1:]), "folders read Folder created, in their folder")
+    # Spread over the last 33 hours (as a drive used for days): rows by day with counts, the newest 25, then Show more.
+    hour = int(time.time()) // 3600 * 3600
+
+    def spread(body):
+        for i, row in enumerate(sorted(body.get("items", []), key=lambda r: r["item_id"])):
+            row["created_hour"] = hour - i * 3600
+        return body
+    Intercept(a).add(f"{t.origin}/api/v1/me/items*", "Response", spread)
+    a.reload()
+    a.wait_for("activity-feed", 90)
+    a.wait(f"{ACT_ROWS}.length > 0", 30)
+    t.check(a.eval(f"{ACT_ROWS}.length") == 25 and a.exists("activity-more"), f"the newest 25 rows, then Show more ({a.eval(f'{ACT_ROWS}.length')})")
+    days_js = "[...document.querySelectorAll('[data-testid=\"activity-day\"]')].map((d) => [d.querySelector('h2').textContent, +d.dataset.count, d.querySelectorAll('.feed > li').length])"
+    days = a.eval(days_js)
+    t.check(len(days) >= 2 and all(c >= n for _, c, n in days) and all(c == n for _, c, n in days[:-1]) and days[0][0].startswith("Today"),
+            f"one section per day, each with the whole day's count ({days})")
+    a.click("activity-more")
+    a.wait(f"{ACT_ROWS}.length === 33", 10)
+    days = a.eval(days_js)
+    t.check(sum(c for _, c, _ in days) == 33 and all(c == n for _, c, n in days), f"all 33, each day complete ({days})")
+    t.check(not a.exists("activity-more") and a.eval("document.activeElement?.closest('li')?.parentElement?.classList.contains('feed')") is True,
+            "Show more adds the rest, and focus moves to the first new row")
+    t.check(no_hscroll(a), "no sideways scroll")
+    theme_shots(t, a, "activity-days")
+    set_device(a, "narrow")
+    t.check(no_hscroll(a), "no sideways scroll at 360 px")
+    set_device(a, "desktop")
