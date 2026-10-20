@@ -170,13 +170,40 @@ class CaddyfileTest(unittest.TestCase):
                 proxied = re.sub(r"(?ms)^\t\thandle @too_large \{.*?^\t\t\}", "", body)   # the 413 mirrors the API's no-store
                 self.assertNotIn("Cache-Control", proxied, "the API sets its own Cache-Control (spec §6)")
             else:
-                self.assertRegex(body, r"import revalidate|Cache-Control", matcher or "default handle")
-        self.assertNotRegex(self.text, r'Cache-Control "[^"]*immutable', "font names carry no version")
+                self.assertRegex(body, r"import (revalidate|immutable)|Cache-Control", matcher or "default handle")
+        # A year, immutable, only for the fingerprinted names (test below): the plain ones (fonts, stills, icons) carry
+        # no version.
+        self.assertEqual(len(re.findall(r'Cache-Control "[^"]*immutable', self.text)), 1)
+        self.assertEqual(sorted(m for m, body in handles if "import immutable" in body), [" @hashed", " @hashed_app"])
         errors = site.split("handle_errors {", 1)[1]
         self.assertRegex(errors, r"^\s*root \* /srv/mutis/app/current/dist", "error pages come from the release")
         self.assertIn('header Cache-Control "no-store"', errors)
         self.assertRegex(self.text, r"(?s)http://\{\$MUTIS_HOST\} \{\s*header -Server\s*redir https://")
         self.assertIn("buffer_requests", self.text)
+
+    def test_fingerprinted_files_are_kept_a_year(self):
+        """docs/review/perf-1.md: names with a hash of their bytes (tools/assets.py, whose pattern the matcher repeats) are
+        kept a year, immutable, by two routes ahead of every other file route: /app/ and /vendor/ with the app policy and
+        noindex, everything else with the site policy. Every route that serves text serves the precompressed copies."""
+        sys.path.insert(0, str(ROOT / "tools"))
+        import assets
+        site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
+        self.assertRegex(self.text, r'(?s)\(immutable\) \{\s*header Cache-Control "%s"\s*\}' % re.escape(headers_spec.IMMUTABLE["cache-control"]))
+        app = re.search(r"(?ms)^\t@hashed_app \{\n\t\tpath (.+?)\n\t\tpath_regexp (\S+)\n\t\}", site)
+        self.assertEqual(app.group(1).split(), ["/app/*", "/vendor/*"])
+        self.assertEqual(app.group(2), assets.HASHED_NAME.pattern)
+        self.assertEqual(re.search(r"(?m)^\t@hashed path_regexp (\S+)$", site).group(1), assets.HASHED_NAME.pattern)
+        bodies = {m: b for m, b in re.findall(r"(?ms)^\thandle (@\w+) \{\n(.*?)^\t\}", site)}
+        self.assertEqual(bodies["@hashed_app"].split(), ["import", "app_csp", "import", "immutable", "header", "X-Robots-Tag",
+                                                         '"noindex,', 'nofollow"', "import", "files"])
+        self.assertEqual(bodies["@hashed"].split(), ["import", "site_csp", "import", "immutable", "import", "files"])
+        order = [m for m in re.findall(r"(?m)^\thandle (@\w+) \{", site)]
+        self.assertEqual(order[:4], ["@api", "@notread", "@hashed_app", "@hashed"], "ahead of every file route")
+        self.assertRegex(self.text, r"(?s)\(files\) \{\s*file_server \{\s*precompressed br gzip\s*\}\s*\}")
+        for matcher in ("@viewer", "@approute", "@drive", "@appfiles", "@cards", "@crawl", "@home"):
+            self.assertIn("import files", bodies[matcher], matcher)
+        self.assertIn("import files", re.search(r"(?ms)^\thandle \{\n(.*?)^\t\}", site).group(1), "the catch-all")
+        self.assertRegex(site.split("handle_errors {", 1)[1], r"(?s)rewrite \* /404\.html\s*file_server \{\s*status 404\s*precompressed br gzip")
 
     def test_every_api_answer_carries_the_sandbox_policy(self):
         """docs/review/upload-safety-1.md: the API's JSON and the stored bytes it serves are data, never a page."""

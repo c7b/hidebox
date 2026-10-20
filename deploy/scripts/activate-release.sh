@@ -23,6 +23,11 @@ die() { echo "activate: $*" >&2; exit 1; }
 # umask 007: the database and its -wal/-shm files are shared with group mutis (the chain worker runs as drive).
 as_mutis() { (umask 007 && runuser -u mutis -- env MUTIS_CONFIG=/etc/mutis/mutis.toml "$@"); }
 
+# The text files' .br copies, with the server's Node (provision.sh), where the build had none to make them; the
+# .gz copies come with the build. Never in the hash manifest; without them Caddy compresses on the fly as before.
+if [ -f "$new/deploy/scripts/precompress.py" ]; then
+  python3 -I "$new/deploy/scripts/precompress.py" "$new/dist" || echo "notice: precompress failed; Caddy compresses on the fly"
+fi
 chown -R root:root "$new"
 chmod -R u+rwX,go+rX,go-w "$new"
 

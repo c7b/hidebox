@@ -66,6 +66,19 @@ http://{$MUTIS_HOST} {
 	header Cache-Control "no-cache"
 }
 
+# A fingerprinted name (tools/assets.py: name.<10 hex of its content>.ext) only ever holds the same bytes.
+(immutable) {
+	header Cache-Control "public, max-age=31536000, immutable"
+}
+
+# The text files' .br and .gz copies made by tools/build.py and activate-release.sh (deploy/scripts/precompress.py):
+# Caddy picks the one the browser accepts and sets Content-Encoding and Vary; without one, `encode` compresses as before.
+(files) {
+	file_server {
+		precompressed br gzip
+	}
+}
+
 (site_csp) {
 	header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests"
 }
@@ -194,12 +207,33 @@ http://{$MUTIS_HOST} {
 		respond 405
 	}
 
+	# Fingerprinted files: every stylesheet, script, picture, font, sprite and JSON file a page asks for, under a name
+	# that carries a hash of its bytes (tools/assets.py; the pages, which revalidate, name the new files after a
+	# release). Kept a year, immutable, ahead of every other file route. Under /app/ and /vendor/ they keep the app
+	# policy (a worker's own script sets the worker's) and noindex; a hashed name that isn't there is the 404 page.
+	@hashed_app {
+		path /app/* /vendor/*
+		path_regexp \.[0-9a-f]{10}\.[a-z0-9]+$
+	}
+	@hashed path_regexp \.[0-9a-f]{10}\.[a-z0-9]+$
+	handle @hashed_app {
+		import app_csp
+		import immutable
+		header X-Robots-Tag "noindex, nofollow"
+		import files
+	}
+	handle @hashed {
+		import site_csp
+		import immutable
+		import files
+	}
+
 	handle @viewer {
 		import app_csp
 		import revalidate
 		header X-Robots-Tag "noindex, nofollow"
 		rewrite * /app/view.html
-		file_server
+		import files
 	}
 
 	handle @approute {
@@ -207,7 +241,7 @@ http://{$MUTIS_HOST} {
 		import revalidate
 		header X-Robots-Tag "noindex, nofollow"
 		rewrite * /app/app.html
-		file_server
+		import files
 	}
 
 	# The drive
@@ -216,7 +250,7 @@ http://{$MUTIS_HOST} {
 		import revalidate
 		header X-Robots-Tag "noindex, nofollow"
 		rewrite * /app/drive.html
-		file_server
+		import files
 	}
 
 	handle @appfiles {
@@ -224,7 +258,7 @@ http://{$MUTIS_HOST} {
 		import revalidate
 		# /app/drive.html and its siblings are the drive's own pages under another address: never indexed.
 		header X-Robots-Tag "noindex, nofollow"
-		file_server
+		import files
 	}
 
 	handle @status {
@@ -249,14 +283,14 @@ http://{$MUTIS_HOST} {
 		import site_csp
 		header Cache-Control "public, max-age=86400"
 		header Cross-Origin-Resource-Policy "cross-origin"
-		file_server
+		import files
 	}
 
 	# robots.txt and the sitemap change only with a release: an hour is enough.
 	handle @crawl {
 		import site_csp
 		header Cache-Control "public, max-age=3600"
-		file_server
+		import files
 	}
 
 	# The home page is the product (the drop widget), so it gets the app policy.
@@ -264,7 +298,7 @@ http://{$MUTIS_HOST} {
 	handle @home {
 		import app_csp
 		import revalidate
-		file_server
+		import files
 	}
 
 	# /v2 (docs/review/home-v2.md): the home with the product loops, at an address no page links. It carries the
@@ -292,7 +326,7 @@ http://{$MUTIS_HOST} {
 		import site_csp
 		import revalidate
 		try_files {path} {path}/index.html
-		file_server
+		import files
 	}
 
 	# Error pages always come from the release, whatever root the failed route had (/status.json,
@@ -307,6 +341,7 @@ http://{$MUTIS_HOST} {
 			rewrite * /404.html
 			file_server {
 				status 404
+				precompressed br gzip
 			}
 		}
 		handle {

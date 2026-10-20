@@ -74,10 +74,14 @@ def stub_build(out: Path) -> Path:
 
 
 class LocalStack:
-    def __init__(self, host: str, dist: Path | None = None, buffered: bool = True):
+    """`caddyfile`: the Caddyfile to run (default: this tree's); a tree that has deploy/scripts/precompress.py also gets
+    its .br copies made on the server, as activate-release.sh makes them."""
+
+    def __init__(self, host: str, dist: Path | None = None, buffered: bool = True, caddyfile: Path | None = None):
         self.control = Path(tempfile.mkdtemp(prefix="mutis-stack-"))
         self.remote = Remote(host, self.control)
         self.host, self.dist, self.buffered = host, dist, buffered
+        self.caddyfile = caddyfile or ROOT / "deploy" / "caddy" / "Caddyfile"
         self.api = f"http://127.0.0.1:{API_PORT}"
         self.web = f"http://127.0.0.1:{WEB_PORT}"
         self.tunnel = None
@@ -86,17 +90,20 @@ class LocalStack:
         data = io.BytesIO()
         with tarfile.open(fileobj=data, mode="w") as tar:
             tar.add(ROOT / "server", "server", filter=lambda t: None if "__pycache__" in t.name or "/tests" in t.name else t)
-            caddyfile = local_caddyfile((ROOT / "deploy" / "caddy" / "Caddyfile").read_text(), self.buffered).encode()
+            caddyfile = local_caddyfile(self.caddyfile.read_text(), self.buffered).encode()
             info = tarfile.TarInfo("Caddyfile")
             info.size = len(caddyfile)
             tar.addfile(info, io.BytesIO(caddyfile))
             if self.dist:
                 tar.add(self.dist, "dist")
+                if (ROOT / "deploy" / "scripts" / "precompress.py").is_file():
+                    tar.add(ROOT / "deploy" / "scripts" / "precompress.py", "precompress.py")
         return data.getvalue()
 
     def __enter__(self) -> "LocalStack":
         w = shlex.quote(WORK)
-        self.remote.as_build(f"rm -rf {w} && mkdir -p {w}/status {w}/dist && tar -x -C {w}", self._upload())
+        self.remote.as_build(f"rm -rf {w} && mkdir -p {w}/status {w}/dist && tar -x -C {w}"
+                             f" && if [ -f {w}/precompress.py ]; then python3 -I {w}/precompress.py {w}/dist; fi", self._upload())
         self.remote.as_build(
             f"cd {w} && (setsid python3 -I server/bin/mutis-api --dev --data {w}/data --port {API_PORT}"
             f" > api.log 2>&1 < /dev/null & echo $! > api.pid)"
