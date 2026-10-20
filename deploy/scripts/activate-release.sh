@@ -56,7 +56,13 @@ mv "$new" "$dir"
 if [ -x "$dir/server/bin/mutis-admin" ]; then
   as_mutis python3 -I "$dir/server/bin/mutis-admin" check-config >/dev/null || die "mutis-admin check-config failed"
   # The chain worker writes all the time; it waits out the migration (the restarts below start it again).
+  # With MUTIS_KEEP_CHAIN=1 it keeps running: refused when a migration is pending.
   chain_was=$(systemctl is-active mutis-chain 2>/dev/null || true)
+  if [ "${MUTIS_KEEP_CHAIN:-0}" = 1 ] && [ "$chain_was" = active ]; then
+    as_mutis python3 -I "$dir/server/bin/mutis-admin" migrate --check ||
+      die "a migration is pending; deploy without MUTIS_KEEP_CHAIN so the chain worker stops for it"
+    chain_was=kept
+  fi
   [ "$chain_was" = active ] && systemctl stop mutis-chain
   if ! as_mutis python3 -I "$dir/server/bin/mutis-admin" migrate; then   # backs the database up first
     [ "$chain_was" = active ] && systemctl start mutis-chain
@@ -75,7 +81,7 @@ trap 'echo "activate: failed after the switch; rolling back" >&2; bash "$dir/dep
 # MUTIS_KEEP_CHAIN=1 leaves the chain worker running on the release it started with (its in-memory
 # canary keys survive); the next deploy without it, or a migration above, brings it onto the new code.
 for unit in mutis-api mutis-chain; do
-  if [ "$unit" = mutis-chain ] && [ "${MUTIS_KEEP_CHAIN:-0}" = 1 ] && systemctl is-active --quiet mutis-chain; then
+  if [ "$unit" = mutis-chain ] && [ "${chain_was:-}" = kept ]; then
     echo "kept mutis-chain running on its current release (MUTIS_KEEP_CHAIN=1)"
     continue
   fi

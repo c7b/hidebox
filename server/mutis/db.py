@@ -82,6 +82,14 @@ def _migration_files(directory: Path) -> list[tuple[int, Path]]:
     return sorted(found)
 
 
+def pending(path: Path | str, migrations: Path = MIGRATIONS) -> bool:
+    """Whether migrate() would change the database: no schema yet, or a numbered migration above its version."""
+    current = version(path) if Path(path).exists() else 0
+    if current == 0:
+        return True
+    return any(number > current for number, _ in _migration_files(migrations))
+
+
 def migrate(path: Path | str, migrations: Path = MIGRATIONS) -> int:
     """Create the schema on an empty database, then apply numbered migrations above schema_version.
 

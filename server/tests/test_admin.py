@@ -72,6 +72,18 @@ class Admin(unittest.TestCase):
         self.assertEqual(db.migrate(db_path, older), db.SCHEMA_VERSION - 1)
         return path, Path(raw["data_dir"]) / "backup"
 
+    def test_migrate_check_reports_pending_without_changing(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.run_admin("migrate", "--check")                 # the test stack's database is current
+        self.assertEqual(caught.exception.code, 0)
+        self.path, backups = self.one_migration_behind()
+        with self.assertRaises(SystemExit) as caught:
+            self.run_admin("migrate", "--check")
+        self.assertEqual(caught.exception.code, 3)
+        self.assertFalse(backups.exists())                       # a check changes nothing and backs nothing up
+        self.assertEqual(db.version(config.from_dict(dict(self.s.cfg.raw, data_dir=str(self.s.tmp / "behind"))).db_path),
+                         db.SCHEMA_VERSION - 1)
+
     def test_check_config_and_migrate(self):
         self.assertEqual(self.run_admin("check-config").strip(), "ok")
         backups = self.s.cfg.data_dir / "backup"

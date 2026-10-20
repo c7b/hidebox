@@ -36,6 +36,10 @@ def _backup(cfg: config.Config) -> Path | None:
 
 
 def cmd_migrate(cfg, conn, args) -> None:
+    if args.check:   # the deploy asks before deciding whether the chain worker must stop for a migration
+        pending = db.pending(cfg.db_path)
+        print("migration pending" if pending else f"schema version {db.version(cfg.db_path)}, nothing to migrate")
+        raise SystemExit(3 if pending else 0)
     backup = _backup(cfg)
     version = db.migrate(cfg.db_path)
     print(f"schema version {version}" + (f" (backup: {backup})" if backup else ""))
@@ -244,7 +248,9 @@ def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="mutis-admin")
     p.add_argument("--config", default=None)
     sub = p.add_subparsers(dest="command", required=True)
-    sub.add_parser("migrate").set_defaults(fn=cmd_migrate, needs_db=False)
+    m = sub.add_parser("migrate")
+    m.add_argument("--check", action="store_true", help="exit 3 if a migration is pending, 0 if none; change nothing")
+    m.set_defaults(fn=cmd_migrate, needs_db=False)
     sub.add_parser("check-config").set_defaults(fn=lambda cfg, conn, args: print("ok"), needs_db=False)
     t = sub.add_parser("takedown", usage="mutis-admin takedown {share,item,drop} [--note NOTE] -- id")
     t.add_argument("kind", choices=("share", "item", "drop"))
