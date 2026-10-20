@@ -21,9 +21,12 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("verify_deploy", ROOT / "tools" / "verify-deploy.py")
 verify = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verify)
-spec = importlib.util.spec_from_file_location("wasm_check", ROOT / "template" / "wasm_check.py")
-wasm_check = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(wasm_check)
+WASM_CHECK = ROOT / "template" / "wasm_check.py"
+wasm_check = None
+if WASM_CHECK.is_file():          # deploy.sh's gate copies only server, tools, web, deploy and tests
+    spec = importlib.util.spec_from_file_location("wasm_check", WASM_CHECK)
+    wasm_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(wasm_check)
 # GET /substates answers of tari_indexer 0.47.0, recorded from both Esmeralda indexers (the live SealLog among them).
 RECORDED = json.loads((ROOT / "server" / "tests" / "fixtures" / "indexer-substates-0.47.0.json").read_text())
 SEALLOG = RECORDED["seallog_component"]
@@ -130,6 +133,11 @@ class SealLogTemplateTest(unittest.TestCase):
             diffs, runs = self.check(body)
             self.assertEqual((len(diffs), runs), (1, []), body if isinstance(body, list) else list(body))
             self.assertIn("could not read its template", diffs[0])
+
+
+@unittest.skipUnless(wasm_check, "template/ is not in this tree")
+class WasmCheckTest(unittest.TestCase):
+    """template/wasm_check.py, which verify-deploy runs from the tag, reads the template in either shape."""
 
     def onchain(self, body) -> int:
         reply = io.BytesIO(json.dumps(body).encode())
