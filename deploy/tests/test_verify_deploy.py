@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: MIT
-"""tools/verify-deploy.py compare(): equal sites pass; changed bytes, missing files and a lying
-manifest are each reported. A local HTTP server plays the live site. The rebuild's config: the
-variant tables the live manifest records, and nothing else a manifest could smuggle in."""
+"""tools/verify-deploy.py compare(): equal sites pass; changed bytes, missing files, a lying manifest and a
+precompressed copy that decodes to other bytes are each reported. A local HTTP server plays the live site (serving
+NAME.gz with Content-Encoding: gzip to a client that takes it, as Caddy does). The rebuild's config: the variant tables
+the live manifest records, and nothing else a manifest could smuggle in."""
+import gzip
 import hashlib
 import http.server
 import importlib.util
@@ -38,6 +40,18 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
+    def do_GET(self):
+        sidecar = Path(self.translate_path(self.path) + ".gz")
+        if "gzip" in self.headers.get("Accept-Encoding", "") and sidecar.is_file():
+            body = sidecar.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
+
 
 class VerifyDeployTest(unittest.TestCase):
     def setUp(self):
@@ -68,6 +82,31 @@ class VerifyDeployTest(unittest.TestCase):
     def test_lying_manifest_is_caught(self):
         live = dict(self.files) | {"app/a.js": "0" * 64}
         self.assertEqual(self.compare(dict(self.files), live), ["app/a.js: the live manifest's hash is wrong"])
+
+    def test_precompressed_copies_are_checked(self):
+        """A browser that takes gzip gets app/a.js.gz: it must decode to the built file."""
+        (self.site / "app" / "a.js.gz").write_bytes(gzip.compress(b"export {};", mtime=0))
+        notes = []
+        self.assertEqual(verify.compare(self.origin, {"files": self.files}, {"git_sha": "abc", "files": self.files}, "abc",
+                                        {"app/a.js"}, notes), [])
+        self.assertTrue(notes and notes[0].startswith("compressed answers checked: 2 gzip"), notes)
+        (self.site / "app" / "a.js.gz").write_bytes(gzip.compress(b"export const evil = 1;", mtime=0))
+        diffs = verify.compare(self.origin, {"files": self.files}, {"git_sha": "abc", "files": self.files}, "abc", {"app/a.js"})
+        self.assertEqual(diffs, ["app/a.js: the gzip answer to Accept-Encoding: gzip decodes to other bytes",
+                                 "app/a.js: the gzip answer to Accept-Encoding: br, gzip decodes to other bytes"])
+        (self.site / "app" / "a.js.gz").write_bytes(b"not gzip at all")
+        self.assertEqual(len(verify.compare(self.origin, {"files": self.files}, {"git_sha": "abc", "files": self.files}, "abc",
+                                            {"app/a.js"})), 2)
+
+    def test_compressed_paths_come_from_the_builds_gz_copies(self):
+        dist = Path(tempfile.mkdtemp(prefix="mutis-verify-dist-"))
+        try:
+            (dist / "site").mkdir()
+            for name in ("site/a.css", "site/a.css.gz", "site/b.js"):
+                (dist / name).write_bytes(b"x")
+            self.assertEqual(verify.compressed_paths(dist), {"site/a.css"})
+        finally:
+            shutil.rmtree(dist)
 
     def test_missing_and_extra_files_and_commit(self):
         local = dict(self.files) | {"new.html": "1" * 64}

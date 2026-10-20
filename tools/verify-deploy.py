@@ -10,7 +10,10 @@
    (relay or direct sends, how payments are checked, …) from the config tables the live manifest
    says the build read.
 3. Download the live /.well-known/mutis-manifest.json and then every file it lists, hash each one
-   ourselves (the manifest alone could lie), and compare with the local build.
+   ourselves (the manifest alone could lie), and compare with the local build. Each text file the build
+   precompressed (deploy/scripts/precompress.py) is asked for again with Accept-Encoding gzip and then br: what
+   each answer decodes to must be the same file (gzip with Python's zlib; br with Node's built-in zlib when
+   `node` is on the PATH, else counted as not decoded). A browser gets those copies, so they are checked too.
 4. When the deployment names a SealLog (/api/v1/config seal_log.component), read the log's template
    address from a Tari indexer and check, with the tag's own template/wasm_check.py, that the chain
    runs the tag's template/dist/seal_log.wasm byte for byte (template/check.sh --onchain).
@@ -24,9 +27,11 @@ published template. What it can't: that the files will still match on your next 
 can't pin a site), or what runs on the server.
 """
 import argparse
+import gzip
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -46,6 +51,32 @@ def fetch(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "mutis-verify-deploy"})   # the indexers refuse urllib's
     with urllib.request.urlopen(req, timeout=30) as res:
         return res.read()
+
+
+def fetch_encoded(url: str, encoding: str) -> tuple[str, bytes]:
+    """(Content-Encoding, body as sent) for one Accept-Encoding."""
+    req = urllib.request.Request(url, headers={"User-Agent": "mutis-verify-deploy", "Accept-Encoding": encoding})
+    with urllib.request.urlopen(req, timeout=30) as res:
+        return res.headers.get("Content-Encoding", ""), res.read()
+
+
+UNBROTLI = "process.stdout.write(require('zlib').brotliDecompressSync(require('fs').readFileSync(0)))"
+
+
+def decoded(encoding: str, body: bytes) -> bytes | None:
+    """The bytes an answer stands for; None when this machine can't decode it (br without Node)."""
+    if encoding in ("", "identity"):
+        return body
+    if encoding == "gzip":
+        try:
+            return gzip.decompress(body)
+        except (OSError, EOFError):
+            return b"<not gzip>"
+    node = shutil.which("node")
+    if encoding == "br" and node:
+        run = subprocess.run([node, "-e", UNBROTLI], input=body, capture_output=True, timeout=60)
+        return run.stdout if run.returncode == 0 else b"<not br>"
+    return None
 
 
 def live_config(origin: str) -> dict:
@@ -97,6 +128,11 @@ def build_config(origin: str, cfg: dict, variant_config: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def compressed_paths(dist: Path) -> set[str]:
+    """The files the local build made a .gz copy of: the ones a browser may get compressed from a sidecar."""
+    return {p.relative_to(dist).as_posix()[:-3] for p in dist.rglob("*.gz") if p.is_file()}
+
+
 def build_tag(tag: str, config: str, holding: bool, work: Path) -> tuple[str, dict, Path]:
     sha = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--verify", f"{tag}^{{commit}}"],
                          capture_output=True, text=True, check=True).stdout.strip()
@@ -142,8 +178,11 @@ def seallog_check(cfg: dict, src: Path) -> list[str]:
     return [] if check.returncode == 0 else [f"SealLog {component}: template_{template} is not the tag's seal_log.wasm"]
 
 
-def compare(origin: str, local: dict, live: dict, sha: str) -> list[str]:
-    diffs = []
+def compare(origin: str, local: dict, live: dict, sha: str, compressed: frozenset | set = frozenset(),
+            notes: list | None = None) -> list[str]:
+    """Differences between the live site and the local build; `compressed` names the files also checked through
+    their gzip and br answers (`notes` gets how many were checked and how many br answers this machine can't decode)."""
+    diffs, counts = [], {"gzip": 0, "br": 0, "undecoded": 0}
     if live.get("git_sha") != sha:
         diffs.append(f"the live manifest is for commit {live.get('git_sha')}, the tag is {sha}")
     for path in sorted(set(local["files"]) - set(live["files"])):
@@ -161,6 +200,24 @@ def compare(origin: str, local: dict, live: dict, sha: str) -> list[str]:
             diffs.append(f"{path}: served bytes differ from the build")
         elif live["files"][path] != served:
             diffs.append(f"{path}: the live manifest's hash is wrong")
+        if path not in compressed:
+            continue
+        for accept in ("gzip", "br, gzip"):
+            try:
+                encoding, body = fetch_encoded(url, accept)
+            except (urllib.error.URLError, OSError) as e:
+                diffs.append(f"{path} (Accept-Encoding: {accept}): could not download ({e})")
+                continue
+            plain = decoded(encoding, body)
+            if plain is None:
+                counts["undecoded"] += 1
+            elif hashlib.sha256(plain).hexdigest() != local["files"][path]:
+                diffs.append(f"{path}: the {encoding or 'plain'} answer to Accept-Encoding: {accept} decodes to other bytes")
+            elif encoding in counts:
+                counts[encoding] += 1
+    if notes is not None and compressed:
+        notes.append(f"compressed answers checked: {counts['gzip']} gzip, {counts['br']} br"
+                     + (f"; {counts['undecoded']} br answers not decoded (no node on this machine)" if counts["undecoded"] else ""))
     return diffs
 
 
@@ -183,9 +240,12 @@ def main() -> int:
         return 1
     print(f"verify-deploy: building with repo_url={cfg.get('repo_url')!r}, security_drop={cfg.get('security_drop')!r}")
     config = build_config(origin, cfg, live.get("variant_config") or {})
+    notes: list[str] = []
     with tempfile.TemporaryDirectory(prefix="mutis-verify-") as tmp:
         sha, local, src = build_tag(args.tag, config, "holding.css" in live["files"], Path(tmp))
-        diffs = compare(origin, local, live, sha) + seallog_check(cfg, src)
+        diffs = compare(origin, local, live, sha, compressed_paths(Path(tmp) / "dist"), notes) + seallog_check(cfg, src)
+    for line in notes:
+        print(line)
     for line in diffs:
         print("DIFF", line)
     print(f"verify-deploy: {len(diffs)} differences across {len(local['files'])} files "
