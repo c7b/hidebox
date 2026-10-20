@@ -12,8 +12,10 @@ const GLYPH = {
   courier: 'send', bag: 'wallet', keep: 'file-lock', gone: 'circle-check', oops: 'triangle-alert',
 };
 
+// The sprite's address as one string, so the build can give it its fingerprinted name (tools/assets.py).
+const SPRITE = '/shared/ui/icons.svg';
 const tile = (state) => svg('svg', { class: 'a-tile-icon', 'aria-hidden': 'true', focusable: 'false' },
-  svg('use', { href: `/shared/ui/icons.svg#i-${GLYPH[state] ?? 'lock'}` }));
+  svg('use', { href: `${SPRITE}#i-${GLYPH[state] ?? 'lock'}` }));
 
 // The tile for `state`; decorative (the words say it).
 export function figure(state, cls = null) {

@@ -84,14 +84,19 @@ export function openDialog(onOpened) {
 
 // Drive v3: the home's open box with the files rising out of it (its hero still, the same files under
 // /site/media/v3/), so /drive opens on the picture the home ends with. Decorative: the words say it all.
-const STILL = '/site/media/v3/hero-';
+// Each file is named whole, so the build gives it its fingerprinted name (tools/assets.py) and the browser
+// reuses what the home cached.
+const STILLS = {
+  avif: [['/site/media/v3/hero-480.avif', 480], ['/site/media/v3/hero-720.avif', 720], ['/site/media/v3/hero-1024.avif', 1024]],
+  webp: [['/site/media/v3/hero-480.webp', 480], ['/site/media/v3/hero-720.webp', 720], ['/site/media/v3/hero-1024.webp', 1024]],
+};
 function still() {
-  const set = (ext) => [480, 720, 1024].map((w) => `${STILL}${w}.${ext} ${w}w`).join(', ');
+  const set = (ext) => STILLS[ext].map(([url, w]) => `${url} ${w}w`).join(', ');
   const sizes = '(min-width: 900px) 26rem, min(calc(100vw - 2rem), 24rem)';
   return h('div', { class: 'start-pic', 'aria-hidden': 'true', 'data-testid': 'start-pic' }, h('picture', {},
     h('source', { type: 'image/avif', srcset: set('avif'), sizes }),
     h('source', { type: 'image/webp', srcset: set('webp'), sizes }),
-    h('img', { src: `${STILL}720.webp`, alt: '', width: '1024', height: '1024', decoding: 'async' })));
+    h('img', { src: STILLS.webp[1][0], alt: '', width: '1024', height: '1024', decoding: 'async' })));
 }
 
 // The screen itself. onReady(identity, {made}) boots the drive.

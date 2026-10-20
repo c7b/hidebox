@@ -10,9 +10,12 @@ export function fill(el, ...children) {
   return el;
 }
 
+// The sprite's address as one string, so the build can give it its fingerprinted name (tools/assets.py).
+const SPRITE = '/shared/icons.svg';
+
 export function icon(name, cls = 'a-icon') {
   return svg('svg', { class: cls, 'aria-hidden': 'true', focusable: 'false' },
-    svg('use', { href: `/shared/icons.svg#${name}` }));
+    svg('use', { href: `${SPRITE}#${name}` }));
 }
 
 // "10 minutes", "24 hours", "7 days" (11-brand §8.3): days from two days up, hours from one hour up.
