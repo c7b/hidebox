@@ -113,6 +113,22 @@ def visit(browser: cdp.Browser, page: cdp.Page, url: str, quiet: float = 1.5, li
     return sorted(out, key=lambda r: r["path"])
 
 
+# Every picture once it has loaded (scrolled through): the width it is shown at, the device pixels that needs, and the
+# width of the candidate the browser took (from its srcset's w descriptor, its file's own width otherwise).
+PICTURES = """(async () => {
+  for (let y = 0; y < document.documentElement.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)); }
+  await Promise.all([...document.images].map((i) => i.decode().catch(() => null)));
+  return [...document.images].filter((i) => i.currentSrc).map((i) => {
+    const src = i.currentSrc.replace(location.origin, '');
+    const set = (i.closest('picture')?.querySelector(`source[srcset*="${src.split('/').pop()}"]`)?.srcset || i.srcset || '');
+    const w = (set.split(',').map((c) => c.trim().split(/\\s+/)).find(([u]) => u === src) || [])[1];
+    return { src, shown: Math.round(i.getBoundingClientRect().width), dpr: devicePixelRatio,
+             needed: Math.round(i.getBoundingClientRect().width * devicePixelRatio),
+             took: w && w.endsWith('w') ? parseInt(w) : i.naturalWidth, natural: i.naturalWidth };
+  });
+})()"""
+
+
 def summary(reqs: list[dict]) -> dict:
     net = [r for r in reqs if r["network"]]
     return {"requests": len(reqs), "network": len(net), "not_modified": sum(r["status"] == 304 for r in net),
@@ -170,9 +186,11 @@ def main() -> int:
                         page.cmd("Page.navigate", {"url": "about:blank"})
                         time.sleep(0.5)
                         visits["after_release"] = visit(browser, page, stack.web + path)
+                        pictures = page.eval(PICTURES, await_promise=True)
                         ctx.close()
                         key = f"{path} @{width}"
                         report["pages"][key] = {name: {"summary": summary(reqs), "requests": reqs} for name, reqs in visits.items()}
+                        report["pages"][key]["pictures"] = pictures
                         line = "  ".join(f"{name} {s['bytes']:>9,} B {s['network']:>2} net ({s['not_modified']} 304) {s['from_cache']:>2} cached"
                                          for name, s in ((n, report["pages"][key][n]["summary"]) for n in visits))
                         print(f"{key:<36} {line}", flush=True)
