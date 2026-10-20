@@ -362,8 +362,13 @@ def drive_upload_files(t):
     a.eval("delete document.documentElement.dataset.theme")
     before = os.listdir(a.downloads) if os.path.isdir(a.downloads) else []
     a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'notes.txt').querySelector('.name').click()")
+    a.wait("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]')?.dataset.kind === 'text'", 30)
+    t.check("office key" in a.text("lightbox-text"), "the file's name opens it in the preview (its text, here)")
+    a.click("lightbox-download")
     got = downloaded(a, before, 30)
     t.check(got and text_of(got) == text_of(t.fixture("notes.txt")), "the owner's download is the same bytes, decrypted here")
+    a.key("Escape")
+    a.wait("!document.getElementById('lightbox')", 5)
     before = os.listdir(a.downloads)
     row_menu(a, "photo-gps.jpg", "download")
     photo = downloaded(a, before, 30)

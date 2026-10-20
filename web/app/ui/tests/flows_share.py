@@ -644,8 +644,8 @@ def folder_viewer(t):
     t.check(no_hscroll(p), "no horizontal scroll at 390 (open)")
     t.shot(p, "folder-390-open", full_page=True)
     p.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === 'photo-gps.jpg').querySelector('[data-testid=\"fv-open\"]').click()")
-    p.wait("document.querySelector('[data-testid=\"fv-preview\"] .fv-preview-body')?.dataset.state === 'open'", 60)
-    t.check(p.exists("view-image") and p.exists("fv-preview-save"), "a picture opens here, with Save")
+    p.wait("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]')?.dataset.view === 'open'", 60)
+    t.check(p.attr("lightbox-image", "data-type") == "image/jpeg" and p.exists("lightbox-download"), "a picture opens here, with Download")
     t.shot(p, "folder-390-preview")
     p.key("Escape")
     # The visit's clock: a short visit, to see it end.

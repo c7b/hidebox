@@ -250,6 +250,7 @@ def main():
     import flows_share  # noqa: E402,F401 (the share dialog, the folder viewer and Received)
     import flows_pay  # noqa: E402,F401 (pay to open, the seller, the buyer page and the owner check)
     import flows_ux  # noqa: E402,F401 (ux-feedback-1: the waits and the done moment)
+    import flows_preview  # noqa: E402,F401 (the file preview: the lightbox and its hostile fixtures)
 
     r = Results()
     static_checks(r)
