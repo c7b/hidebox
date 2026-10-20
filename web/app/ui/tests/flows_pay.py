@@ -172,8 +172,8 @@ class PayFake:
         return 200, {**out, **self.earnings()} if self.server_list else out
 
     def earnings(self):
-        """GET /me/sales's payments and totals in the server's shapes (handlers/pay.py): every claim with money in,
-        test money told apart, a payment the owner's drive found the payer kept listed but counted nowhere."""
+        """GET /me/sales's payments and totals in the server's shapes (handlers/pay.py): every claim with money in is
+        listed; the totals count test money and what the owner's drive checked is its own, nothing else."""
         paid, links = [], {}
         for cid, c in self.claims.items():
             if not c["received"] or c["status"] in ("pending", "expired"):
@@ -183,7 +183,7 @@ class PayFake:
             paid.append({"utxo_id": (c["utxos"] or [UTXO_PREFIX + hashlib.sha256(cid.encode()).hexdigest()])[0], "share_id": c["share"],
                          "value_ut": str(c["received"]), "seen_at": seen, "demo": c["demo"], "checked": True, "owner_ok": owner_ok,
                          "tx_id": c.get("tx")})
-            if owner_ok is False:
+            if not (c["demo"] or owner_ok is True):
                 continue
             link = links.setdefault(c["share"], {"share_id": c["share"], "received_ut": 0, "test_ut": 0, "payments": 0, "last_at": 0,
                                                  "views_used": sum(x["opened"] for x in self.claims.values() if x["share"] == c["share"])})
@@ -1174,7 +1174,7 @@ def drive_earnings(t):
     checks = a.eval("[...document.querySelectorAll('[data-testid=\"sales-row\"]')].map((r) => r.dataset.check).sort()")
     t.check(checks == ["bad", "ok", "ok", "ok"], f"the payments, each with the owner check ({checks})")
     where = a.text("earn-where")
-    t.check("The money goes straight to your Tari address. We never hold it." in where and "Only your drive's key can spend it." in where
+    t.check("The money goes straight to your Tari address. We never hold it." in where and "Only your drive's key controls it." in where
             and "Not yet." in where and "Tari's wallets can't use this key today" in where, "where the money is, and what moving it out means today")
     t.check(a.eval(LIMES) == [], f"no lime: nothing on Earnings is a next step ({a.eval(LIMES)})")
     t.check(not a.eval(LINES), f"every sentence of a paragraph starts on its own line ({a.eval(LINES)[:3]})")

@@ -316,6 +316,7 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
   });
   // What our server waits on (GET /me/sales to_check: paid claims and their outputs not answered yet).
   // Without that list (an older server), every found output with a claim reference is answered once.
+  let salesAt = Date.now();   // when the list below was asked for: the newer answer wins on the page (ui/sales.js)
   const sales = await getSales(headers).catch(() => null);
   const waits = sales ? sales.to_check ?? [] : null;
   const asked = new Map();
@@ -351,8 +352,10 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
   // Our server's list of this drive's payments (which link, test money, checked, the tx) and its totals, for
   // Earnings on any device; not kept in this browser.
   // Asked again after an answer, so a payment the payer kept leaves the totals at once.
+  if (answered) salesAt = Date.now();
   const now = answered ? await getSales(headers).catch(() => sales) : sales;
   state.paid = now?.paid ?? null;
   state.sales = now;
+  state.salesAt = salesAt;
   return state;
 }

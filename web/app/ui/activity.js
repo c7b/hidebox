@@ -223,6 +223,12 @@ export async function renderFeed(drive, page) {
     for (const e of itemEvents(it, drive)) all.push({ ...e, name: itemName(it), folder: it.parentId ?? null });
   }
   all.push(...gone.map((e) => ({ ...e, folder: GONE })));
+  // A payment to a link whose file is no longer in the drive (it left, or sits in the trash) still shows, unnamed.
+  const listed = new Set(all.filter((e) => e.pay).map((e) => e.pay.utxo_id));
+  for (const p of drive.sales?.paid ?? []) {
+    if (p.owner_ok === false || listed.has(p.utxo_id)) continue;
+    all.push({ k: 'paid', at: p.seen_at, item: null, share: null, pay: p, name: t('sales.what'), folder: GONE, gone: true });
+  }
   all.sort((a, b) => ((b.at ?? 0) - (a.at ?? 0)) || ((RANK[b.k] ?? 0) - (RANK[a.k] ?? 0)));
 
   const folderName = (id) => (id && drive.index.get(id) ? itemName(drive.index.get(id)) : t('drive.side.mine'));

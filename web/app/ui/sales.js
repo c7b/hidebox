@@ -13,6 +13,7 @@ const listeners = new Set();
 let running = null;
 let last = null;     // this browser's walk: {outputs: [{utxoId, value, claimId, check, …}], paid, sales}
 let server = null;   // our server's latest answer: {seller, to_check, paid, total, links}
+let serverAt = 0;    // when that answer was asked for: an answer asked for earlier never replaces it
 let timer = null;
 
 const sells = (drive) => [...drive.index.items.values()].some((x) => (x.row.shares ?? []).some((s) => s.mode === 'pay' || s.paid));
@@ -36,7 +37,7 @@ export function startOwnerCheck(drive) {
       emit();
     }
     last = await pay.checkSales(drive.identity, drive.cfg, drive.headers(), { onOutput: () => emit() });
-    if (last.sales) drive.sales = server = last.sales;
+    keep(drive, last.sales, last.salesAt ?? 0);
     emit();
     return last;
   })().catch(() => last).finally(() => { running = null; });
@@ -46,9 +47,16 @@ export function startOwnerCheck(drive) {
 // Our server's list of the drive's payments, asked now: the newest 50, what each paid link took in, the total.
 export async function fetchSales(drive) {
   const { salesList } = await import('../lib/pay.js');
-  drive.sales = server = await salesList(drive.headers());
+  const at = Date.now();
+  keep(drive, await salesList(drive.headers()), at);
   emit();
   return server;
+}
+
+function keep(drive, answer, at) {
+  if (!answer || at < serverAt) return;
+  drive.sales = server = answer;
+  serverAt = at;
 }
 
 function emit() {
@@ -97,8 +105,8 @@ export function salesSection(drive) {
   const draw = () => {
     const state = last;
     const local = new Map((state?.outputs ?? []).map((o) => [o.utxoId, o]));
-    // Our server's list when we have it (any device); else what this browser's walk found.
-    const paid = state?.paid ?? server?.paid ?? null;
+    // Our server's list when we have it (any device), its newest answer; else what this browser's walk found.
+    const paid = server?.paid ?? state?.paid ?? null;
     const rows = paid
       ? paid.map((p) => ({ utxoId: p.utxo_id, shareId: p.share_id, value: p.value_ut, at: p.seen_at, demo: p.demo,
         chain: p.checked, tx: p.tx_id, check: p.owner_ok === false ? 'bad' : (p.owner_ok || p.demo) ? 'ok' : local.get(p.utxo_id)?.check ?? null }))

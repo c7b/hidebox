@@ -587,7 +587,7 @@
  "earn.where": "Where the money is",
  "earn.where_d": "The money goes straight to your Tari address. We never hold it.",
  "earn.address": "Your sales address",
- "earn.key": "Only your drive's key can spend it. Keep your key file safe.",
+ "earn.key": "Only your drive's key controls it. Keep your key file safe.",
  "earn.move_h": "Can I move it out?",
  "earn.move": "Not yet. Tari's wallets can't use this key today, and your drive can't send it on. It stays at this address.",
  "rec.drop": "Your drop link",
