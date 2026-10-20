@@ -61,6 +61,32 @@ class Courier(unittest.TestCase):
         self.assertEqual(status, 202)
         self.assertEqual(json.loads(self.job(body["job_id"])["payload"])["address"], drop["keys"]["address"])
 
+    def test_a_drop_that_closes_gets_no_queued_delivery(self):
+        """security-audit-1: a delivery queued for a drop (5-45 s of jitter) is never sent once the drop is
+        closed by its owner; one the queue still holds when the drop is taken down is refused by the worker."""
+        s = self.s
+        sent = len(s.chain.transfers)
+        drop = s.drop()
+        queued = s.request("POST", f"{V}/courier", {"to": "drop", "drop_id": drop["drop_id"], "kind": 3,
+                                                    "blob": blob(), "pow": s.solve("courier")})[2]["job_id"]
+        self.assertEqual(json.loads(self.job(queued)["payload"])["drop_id"], drop["drop_id"])
+        self.assertEqual(s.request("PATCH", f"{V}/drops/{drop['drop_id']}", {"state": "closed"},
+                                   headers=drop["manage"])[0], 200)
+        s.now += 46
+        s.worker.run_jobs(s.now)
+        row = self.job(queued)
+        self.assertEqual((row["state"], row["payload"], row["error"]), ("failed", None, "drop_closed"))
+        self.assertEqual(len(s.chain.transfers), sent)
+        other = s.drop()
+        late = s.request("POST", f"{V}/courier", {"to": "drop", "drop_id": other["drop_id"], "kind": 3,
+                                                  "blob": blob(), "pow": s.solve("courier")})[2]["job_id"]
+        with db.tx(s.conn):                     # taken down by a path that leaves the queue alone
+            s.conn.execute("UPDATE drops SET state = 'removed' WHERE id = ?", (other["drop_id"],))
+        s.now += 46
+        s.worker.run_jobs(s.now)
+        self.assertEqual(self.job(late)["state"], "failed")
+        self.assertEqual(len(s.chain.transfers), sent)
+
     def test_jitter_bounds(self):
         s = self.s
         locker = s.register()

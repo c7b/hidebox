@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest import mock
 
 from harness import ORIGIN, Stack
-from mutis import admin, auth, budgets, codec, config, db
+from mutis import admin, auth, budgets, codec, config, db, jobs
 from mutis.fake_chain import fake_keys
 
 FIXTURE = Path(__file__).with_name("fixtures") / "schema-v1.sql"
@@ -109,7 +109,12 @@ class Admin(unittest.TestCase):
         self.assertEqual(tuple(report), ("actioned", "malware"))
         self.assertIn(item["item_id"], self.run_admin("reports"))
         drop = s.drop()
+        with db.tx(s.conn):                     # a delivery to it still waiting in the queue
+            queued = jobs.enqueue(s.conn, "courier", "public", {"address": drop["keys"]["address"], "memo": "m",
+                                                                "drop_id": drop["drop_id"]}, s.now + 30, s.now)
         self.run_admin("takedown", "drop", drop["drop_id"])
+        job = s.conn.execute("SELECT state, payload, error FROM jobs WHERE id = ?", (queued,)).fetchone()
+        self.assertEqual(tuple(job), ("failed", None, "drop_removed"))   # security-audit-1
         status, _, body = s.request("GET", f"/api/v1/drops/{drop['drop_id']}")
         self.assertEqual((status, body["error"]["details"]["reason"]), (410, "removed"))
         with self.assertRaises(SystemExit):

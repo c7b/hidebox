@@ -51,6 +51,17 @@ def cost(kind: str, payload: dict, sponsor_grant_ut: int) -> int:
     return sponsor_grant_ut
 
 
+_DROP_ID = re.compile(r"^[0-9a-hjkmnp-tv-z]{10}$")
+
+
+def end_drop_deliveries(conn: sqlite3.Connection, drop_id: str, error: str, now: int) -> None:
+    """A drop that closed or was taken down gets nothing more: its deliveries still waiting in the queue fail
+    unsent, in the caller's transaction (security-audit-1)."""
+    conn.execute("UPDATE jobs SET state = 'failed', payload = NULL, result = NULL, error = ?, updated_at = ? "
+                 "WHERE kind = 'courier' AND state = 'queued' AND json_extract(payload, '$.drop_id') = ?",
+                 (error, now, drop_id))
+
+
 def validate(kind: str, payload: dict, memo_origins: list[str]) -> dict:
     """The worker's re-check of every payload field (spec §10.4). Raises PayloadError."""
     if not isinstance(payload, dict):
@@ -66,11 +77,15 @@ def validate(kind: str, payload: dict, memo_origins: list[str]) -> dict:
         return value
 
     if kind == "courier":
-        memo = payload.get("memo")
-        if set(payload) != {"address", "memo"} or not isinstance(memo, str) \
-                or len(memo.encode()) > MEMO_MAX_BYTES or not memo_regex(memo_origins).match(memo):
+        memo, drop_id = payload.get("memo"), payload.get("drop_id")
+        if not {"address", "memo"} <= set(payload) <= {"address", "memo", "drop_id"} or not isinstance(memo, str) \
+                or len(memo.encode()) > MEMO_MAX_BYTES or not memo_regex(memo_origins).match(memo) \
+                or ("drop_id" in payload and not (isinstance(drop_id, str) and _DROP_ID.match(drop_id))):
             raise PayloadError()
-        return {"address": address(payload["address"]), "memo": memo}
+        out = {"address": address(payload["address"]), "memo": memo}
+        if drop_id is not None:
+            out["drop_id"] = drop_id
+        return out
     if kind == "decoy":
         if payload:
             raise PayloadError()

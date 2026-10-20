@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import auth, budgets, codec, config, db, indexer, items, logsafe, packs, quota
+from . import auth, budgets, codec, config, db, indexer, items, jobs, logsafe, packs, quota
 from .chain_worker import notarize_manifest
 from .storage import Blobs
 from .walletd import Walletd
@@ -51,6 +51,7 @@ def cmd_takedown(cfg, conn, args) -> None:
         if args.kind == "drop":
             cur = conn.execute("UPDATE drops SET state = 'removed', ended_day = ? WHERE id = ?", (codec.day(now), args.id))
             found = cur.rowcount == 1
+            jobs.end_drop_deliveries(conn, args.id, "drop_removed", now)
             where = ("drop_id = ?", args.id)
         else:
             if args.kind == "share":

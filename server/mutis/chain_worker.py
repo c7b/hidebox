@@ -385,6 +385,10 @@ class Worker:
                 raise jobs.PayloadError()
         elif job["kind"] == "demo_pay" and ootle_addr.base_address(payload["address"]) != self.receiver_base:
             raise jobs.PayloadError()
+        elif job["kind"] == "courier" and "drop_id" in payload:
+            drop = self.conn.execute("SELECT state, address FROM drops WHERE id = ?", (payload["drop_id"],)).fetchone()
+            if drop is None or drop["state"] != "active" or drop["address"] != payload["address"]:
+                raise jobs.PayloadError()       # the drop closed or was taken down after this was queued
         return payload
 
     def _failed(self, job: sqlite3.Row, code: str, now: int, retry: bool = True) -> None:

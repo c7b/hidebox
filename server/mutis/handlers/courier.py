@@ -91,14 +91,16 @@ def send(ctx):
     low, high = ctx.cfg["ootle"]["jitter_s"]
     not_before = ctx.now + low + secrets.randbelow(high - low + 1)
     memo = jobs.courier_memo(ctx.cfg.origin, kind, blob)
+    payload = {"address": address, "memo": memo}
+    if to == "drop":
+        payload["drop_id"] = drop["id"]       # the worker sends it only while that drop is still open
     with ctx.charged(*([shared] if shared else []), message=full):
         with db.tx(ctx.db):
             if judge is not None:
                 ctx.spend_judge(judge)
             if identity is not None:
                 _count_send(ctx, identity)
-            job_id = jobs.enqueue(ctx.db, "courier", slice_, {"address": address, "memo": memo}, not_before, ctx.now,
-                                  evidence=evidence)
+            job_id = jobs.enqueue(ctx.db, "courier", slice_, payload, not_before, ctx.now, evidence=evidence)
     return json_response(202, {"job_id": job_id, "not_before": not_before})
 
 

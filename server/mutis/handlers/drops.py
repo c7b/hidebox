@@ -4,7 +4,7 @@
 A drop needs no session (an 18-bit PoW instead), so the server can't tie it to a locker id. It
 does store the drop's Tari address, label and tag: a dead drop is public by design.
 """
-from .. import codec, db, ootle_addr, quota
+from .. import codec, db, jobs, ootle_addr, quota
 from ..http_util import ApiError, Response, get_b64, get_str, json_response
 
 LABEL_MAX = 80
@@ -86,6 +86,7 @@ def _close(ctx, drop_id: str) -> None:
     with db.tx(ctx.db):
         ctx.db.execute("UPDATE drops SET state = 'closed', ended_day = ? WHERE id = ? AND state = 'active'",
                        (codec.day(ctx.now), drop_id))
+        jobs.end_drop_deliveries(ctx.db, drop_id, "drop_closed", ctx.now)
 
 
 def patch(ctx, drop_id: str):
