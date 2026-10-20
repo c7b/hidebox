@@ -432,7 +432,8 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
   line under it that can change while it waits (our relay's countdown, "The chain usually takes a few seconds."), and a
   4px bar that fills when the step knows how far it got (encryption, uploaded chunks, the relay's moment) and sweeps when
   it can't. Nothing that waits stands still; with reduced motion the clock and the words still move. Used by the drop
-  page, /send, Send by Tari in the share dialog; the pay page's steps share its look. A single wait (reading a
+  page, /send, Send by Tari in the share dialog and the pay page's steps (owner-5: from the click, with what each step
+  waits on; the turning dot stays ink, since lime never marks a payment's status). A single wait (reading a
   transaction) is the same dot and clock on one line.
 - **One done moment**: the open box (the mark, on its ink tile) rises, the thing that went drops into it, a green check
   lands on its corner; then the line in people's words, the Tari chain's line in plain words and the transaction as a

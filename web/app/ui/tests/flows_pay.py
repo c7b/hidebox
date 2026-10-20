@@ -108,6 +108,9 @@ class PayFake:
         self.on_tx = None
         self.direct = False    # /config says direct mode (a funded drive pays from this browser)
         self.final = "Commit"  # the chain's decision on a submitted transaction; None: not final yet
+        # Test money as production orders it (owner-5): [(seconds after demo-pay, "tx" | "paid")]. The demo wallet's
+        # transaction shows first; seen and paid land in one step of the payment checker; the next poll releases.
+        self.demo_timeline = None
 
     # ---- wiring ----
 
@@ -239,12 +242,26 @@ class PayFake:
         out = {"status": c["status"], "amount_ut": str(price), "received_ut": str(c["received"]), "expires_at": c["expires_at"],
                "payments": [{"value_ut": str(c["received"]), "seen_at": int(time.time()), "checks": {"amount_proven": True, "committed_on_chain": c["status"] != "seen"}}] if c["received"] else [],
                "demo": c["demo"], "owner_check": c["owner_check"]}
+        if c.get("tx"):
+            out["tx_id"] = c["tx"]
         if c["status"] == "released":
             out.update(server_half=self.links[c["share"]]["server_half"], views_left=c["views_left"], open_until=c["open_until"])
         return out
 
     def advance(self, c):
         price = int(self.links[c["share"]]["price_ut"])
+        if c.get("timeline") is not None:
+            gone = time.time() - c["t0"]
+            while c["timeline"] and c["timeline"][0][0] <= gone:
+                event = c["timeline"].pop(0)[1]
+                if event == "tx":
+                    c["tx"] = secrets.token_hex(32)
+                elif event == "paid":
+                    c.update(status="paid", received=price)
+            if c["status"] == "paid":       # the server releases a paid test-money claim on the poll that finds it
+                c["status"] = "released"
+                c["open_until"] = int(time.time()) + 7 * 86400
+            return
         if c["queue"]:
             c["status"] = c["queue"].pop(0)
             if c["status"] in ("seen", "paid"):
@@ -290,7 +307,10 @@ class PayFake:
             if c["status"] not in ("pending", "seen", "underpaid") or c["demo"]:
                 return err("conflict", 409)
             c["demo"] = True
-            c["queue"] = ["seen", "paid"]
+            if self.demo_timeline is None:
+                c["queue"] = ["seen", "paid"]
+            else:
+                c.update(timeline=list(self.demo_timeline), t0=time.time())
             return 202, {"job_id": "job_" + secrets.token_hex(8)}
         return err("bad_request", 400)
 
@@ -563,6 +583,9 @@ def pay_page_states(t):
     # Test money: the same claim, our demo wallet pays it; the steps run to Unlocked, no owner step.
     b.click("pay-test")
     t.check(wait_pay(b, ("paying", "seen", "unlocking", "open"), 30) in ("paying", "seen", "unlocking", "open"), "Pay with test money starts the steps")
+    deadline = time.time() + 30            # the steps show from the click (owner-5); the demo payment follows its proof of work
+    while time.time() < deadline and not fake.claims[cid]["demo"]:
+        hold(b, 0.25)
     t.check(len(fake.claims) == 1 and fake.claims[cid]["demo"], "test money pays the claim that exists")
     t.check(wait_pay(b, ("open",), 60) == "open", "released: the page has both halves")
     t.check(not any("owner" in s for s in steps(b)) and all(s.endswith(":done") for s in steps(b)), f"test money skips the owner's check ({steps(b)})")
@@ -987,3 +1010,83 @@ def pay_steady(t):
     print("  pay-steady:", json.dumps(report), flush=True)
     if os.environ.get("PAY_STEADY_OUT"):          # the measurement as evidence (docs/evidence/2026-10-19/owner-5/)
         Path(os.environ["PAY_STEADY_OUT"]).write_text(json.dumps(report, indent=1) + "\n")
+
+
+# --- owner-5: the payment's steps move while it is on its way --------------------------------------------------
+
+# Every 100 ms, what the buyer can read of the payment: the page's state, each step's state, the step in progress's
+# clock and note. `__steps.ev` holds each change: [ms after it started, "state | steps | clock | note"].
+STEPS_REC = r"""(() => { const R = window.__steps = { t0: performance.now(), ev: [] }; let last = '';
+  setInterval(() => {
+    const run = document.querySelector('[data-testid="pay-claim-step"]');
+    const state = document.querySelector('[data-testid="pay-page"]')?.dataset.state ?? '';
+    const lis = run ? [...run.querySelectorAll('li')].map((l) => l.dataset.step + ':' + l.dataset.state).join(' ') : '-';
+    const now = run?.querySelector('li[data-state="now"]');
+    const sig = [state, lis, now?.querySelector('.step-time')?.textContent ?? '', now?.querySelector('.step-note')?.textContent ?? ''].join(' | ');
+    if (sig !== last) { R.ev.push([Math.round(performance.now() - R.t0), sig]); last = sig; }
+  }, 100); })()"""
+
+
+def still(ev, until):
+    """The longest stretch with nothing new to read, from the click to `until` ms."""
+    times = [0] + [e[0] for e in ev if e[0] <= until] + [until]
+    return max(b - a for a, b in zip(times, times[1:]))
+
+
+@scenario("pay-progress", "owner-5: after Pay with test money the steps move: shown at the click, the step in progress turning with "
+          "its time and what it waits on (getting ready, our demo wallet sending it, then the chain), ticked as each state "
+          "arrives; a live region says each step; with reduced motion, words and the time instead of motion",
+          features=FEATURES)
+def pay_progress(t):
+    fake = PayFake(t)
+    a = seller(t, fake)
+    url = sell(a, "notes.txt", price="100000")
+    sid = re.search(PAY_LINK, url)[1]
+    fake.links[sid]["seller_state"] = "ok"
+    close_dialog(a)
+    fake.demo_timeline = [(2.5, "tx"), (7.0, "paid")]          # what production showed on 2026-10-19 (docs/review/owner-5.md)
+    report = {}
+    for name, kw in (("motion", {}), ("reduced_motion", {"reduced_motion": True})):
+        b = t.actor("desktop", **kw)
+        attach(t, fake, b)
+        b.goto(url)
+        wait_pay(b, ("wait",), 60)
+        b.eval(STEPS_REC)
+        b.click("pay-test")
+        b.wait("!!document.querySelector('[data-testid=\"pay-claim-step\"]')", 5)
+        shown = b.eval("Math.round(performance.now() - window.__steps.t0)")
+        hold(b, 4)
+        motion = b.eval("""(() => { const run = document.querySelector('[data-testid="pay-claim-step"]');
+          return document.getAnimations().filter((a) => a.playState === 'running' && run.contains(a.effect?.target)).length; })()""")
+        live = b.eval("""(() => { const s = document.querySelector('[data-testid="pay-claim-step"] [role="status"]');
+          return s && [s.getAttribute('aria-live'), s.textContent]; })()""")
+        t.check(wait_pay(b, ("open",), 60) == "open", f"{name}: test money reaches Ready to open")
+        hold(b, 0.5)
+        ev = b.eval("window.__steps.ev")
+        opened = next((e[0] for e in ev if e[1].startswith("open |")), ev[-1][0] if ev else 0)
+        notes = [e[1].split(" | ")[3] for e in ev]
+        clocks = {e[1].split(" | ")[2] for e in ev} - {""}
+        report[name] = {"steps_shown_ms": shown, "open_ms": opened, "longest_still_ms": still(ev, opened), "running_animations": motion,
+                        "live_region": live, "timeline": ev}
+        t.check(shown <= 400, f"{name}: the steps show at the click ({shown} ms)")
+        where = {n: notes.index(n) if n in notes else -1 for n in ("Our demo wallet is sending it…", "Sent. Checking the chain…")}
+        t.check(0 <= where["Our demo wallet is sending it…"] < where["Sent. Checking the chain…"],
+                f"{name}: what the step waits on follows the payment: our demo wallet sending it, then the chain ({[n for n in dict.fromkeys(notes) if n]})")
+        sent_at = next((e[0] for e in ev if e[1].endswith("Sent. Checking the chain…")), None)
+        t.check(sent_at is not None and sent_at - shown <= 2500 + POLL_FAST_MS + 300,
+                f"{name}: the transaction's line comes within a poll of it ({sent_at and sent_at - shown} ms after the steps)")
+        t.check(len(clocks) >= 3, f"{name}: the step in progress shows the time it has taken ({sorted(clocks)})")
+        t.check(report[name]["longest_still_ms"] <= 2200, f"{name}: never more than about 2 s without something new to read ({report[name]['longest_still_ms']} ms)")
+        t.check(ev[-1][1].startswith("open | wait:done seen:done chain:done open:done"), f"{name}: every step ticked ({ev[-1][1]})")
+        t.check(live is not None and live[0] == "polite" and live[1] in ("Waiting for your payment",),
+                f"{name}: a polite live region says the step in progress ({live})")
+        if name == "motion":
+            t.check(motion >= 1, f"the step in progress turns and the bar sweeps ({motion} animations running)")
+        else:
+            t.check(motion == 0, f"reduced motion: nothing moves in the steps, the words and the time say it ({motion} running)")
+    print("  pay-progress:", json.dumps({k: {x: y for x, y in v.items() if x != "timeline"} for k, v in report.items()}), flush=True)
+    if os.environ.get("PAY_PROGRESS_OUT"):        # the recording as evidence (docs/evidence/2026-10-19/owner-5/)
+        Path(os.environ["PAY_PROGRESS_OUT"]).write_text(json.dumps(report, indent=1) + "\n")
+
+
+POLL_FAST_MS = 1500

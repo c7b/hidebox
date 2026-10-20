@@ -32,7 +32,7 @@ export function steps(list, { label, testid = null, live = null } = {}) {
   const fill = h('span', {});
   const bar = h('div', { class: 'flow-bar', role: 'progressbar', 'aria-label': label, 'data-mode': 'busy' }, fill);
   // A screen reader hears each step as it starts: in the page's live region, or in the run's own.
-  const say = live ?? h('p', { class: 'sr-only', role: 'status' });
+  const say = live ?? h('p', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
   const el = h('div', { class: 'flow', 'data-state': 'run', 'data-testid': testid },
     h('ol', { class: 'steps', 'aria-label': label }, items.map((x) => x.li)), bar, live ? null : say);
   let now = -1;

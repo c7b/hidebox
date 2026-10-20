@@ -26,9 +26,10 @@ import { alert, button, driveErrorText, errorAlert, formatTari } from './drive-p
 import { describe } from './errors.js';
 import { driveLook, folderPanel, ownDrive } from './folder-view.js';
 import { testnetLine } from './marks.js';
-import { waiting } from './progress.js';
+import { steps as runOf, waiting } from './progress.js';
 
 const POLL_MS = 3000;
+const POLL_FAST_MS = 1500;    // while a payment is on its way, so each step turns soon after it happens
 let qrCode = null;            // ./qr.js, loaded before a claim's address is first drawn, so its code comes with it
 const loadQr = () => (qrCode ? Promise.resolve() : import('./qr.js').then((m) => { qrCode = m; }, () => null));
 const READY_POLL_MS = 10000;   // a link not ready to sell yet: how often the page asks again
@@ -57,30 +58,61 @@ function phaseOf(P) {
   if (st === 'released' && P.access) return P.opened ? 'opened' : 'open';
   if (st === 'expired') return 'expired';
   if (st === 'void') return 'void';
-  if (P.busy === 'drive') return 'paying'; // this tab builds the payment: its steps show from the click
+  if (P.busy === 'drive' || P.busy === 'test') return 'paying'; // its steps show from the click
   if (st === 'paid' || st === 'released') return needsOwner(P) ? 'check' : 'unlocking';
   if (st === 'seen' || st === 'underpaid') return 'seen';
   if (st === 'pending' && P.claim?.how) return 'paying';
   return 'wait';
 }
 
-const needsOwner = (P) => !(P.status?.demo || P.claim?.how === 'test');
+const needsOwner = (P) => !(P.status?.demo || P.claim?.how === 'test' || P.busy === 'test');
 const viaDrive = (P) => P.busy === 'drive' || P.claim?.how === 'drive';
 const txOf = (P) => [P.status?.tx_id, P.claim?.tx].find((x) => typeof x === 'string' && /^[0-9a-f]{64}$/.test(x)) ?? null;
 
 // [data-step, words]. A payment from this drive: built here (then sent), seen on the chain, the owner's check
 // (C38: our server can't tell whose it is to spend), ready to open.
-function stepper(P, phase) {
+function stepList(P) {
   const drive = viaDrive(P);
-  const sent = Boolean(P.claim?.tx);
-  const steps = drive
-    ? [['build', sent ? 'buy.step.sent' : 'buy.step.build'], ['chain', 'buy.step.on_chain'], ['owner', 'buy.step.owner_wait'], ['open', 'buy.step.open']]
+  return drive
+    ? [['build', P.claim?.tx ? 'buy.step.sent' : 'buy.step.build'], ['chain', 'buy.step.on_chain'], ['owner', 'buy.step.owner_wait'], ['open', 'buy.step.open']]
     : [['wait', 'buy.step.wait'], ['seen', 'buy.step.seen'], ['chain', 'buy.step.chain'], ...(needsOwner(P) ? [['owner', 'buy.step.owner']] : []), ['open', 'buy.step.open']];
-  const end = steps.length;
-  const at = (drive ? { paying: sent ? 1 : 0, seen: 1, check: 2 } : { paying: 0, seen: 2, check: 3 })[phase] ?? (['unlocking', 'open', 'opened'].includes(phase) ? end : 0);
-  return h('ol', { class: 'steps', tabindex: '-1', 'aria-live': 'polite', 'aria-label': t('buy.steps'), 'data-testid': 'pay-claim-step', 'data-at': String(at), 'data-how': drive ? 'drive' : null },
-    steps.map(([step, k], i) => h('li', { 'data-state': i < at ? 'done' : i === at ? 'now' : 'todo', 'data-step': step },
-      h('span', { class: 'dot' }, i < at ? icon('check') : i === at ? spinner() : null), h('span', {}, t(k)))));
+}
+
+// What the step in progress is waiting on, as it changes (owner-5): test money is getting ready, then our demo
+// wallet sends it, then its transaction is on the chain and our checker looks for it.
+function noteOf(P, phase) {
+  if (viaDrive(P)) return null;
+  if (phase === 'seen') return t('buy.note.checking');
+  if (phase !== 'paying') return null;
+  if (P.busy === 'test') return t('buy.claiming');
+  if (txOf(P)) return t('buy.note.sent');
+  return P.claim?.how === 'test' ? t('buy.note.demo') : null;
+}
+
+// The payment's steps as the drop page draws its own (ui/progress.js, app/css/flow.css): the step in progress
+// turning, the time it has taken, what it waits on, a bar that sweeps, each step ticked as its state arrives, and a
+// live region that says each step as it starts. One run while the steps show, kept across draws, so its clock carries
+// on; a draw without them ends it, so a payment tried again starts its own.
+function stepper(P, phase) {
+  const list = stepList(P);
+  const end = list.length;
+  const drive = viaDrive(P);
+  const at = (drive ? { paying: P.claim?.tx ? 1 : 0, seen: 1, check: 2 } : { paying: 0, seen: 2, check: 3 })[phase] ?? (['unlocking', 'open', 'opened'].includes(phase) ? end : 0);
+  const key = list.map(([id, k]) => `${id}:${k}`).join();
+  P.runUsed = true;
+  if (P.run?.key !== key) {
+    P.run?.ctl.stop();
+    const ctl = runOf(list.map(([id, k]) => [id, t(k)]), { label: t('buy.steps'), testid: 'pay-claim-step' });
+    ctl.el.tabIndex = -1;
+    P.run = { key, ctl };
+  }
+  const { ctl } = P.run;
+  ctl.el.dataset.at = String(at);
+  if (drive) ctl.el.dataset.how = 'drive';
+  else delete ctl.el.dataset.how;
+  if (at >= end) ctl.finish();
+  else ctl.at(list[at][0], { note: noteOf(P, phase) });
+  return ctl.el;
 }
 
 export async function payPage(root, cfg, shareId) {
@@ -252,7 +284,9 @@ export async function payPage(root, cfg, shareId) {
     }
     draw();
     const phase = phaseOf(P);
-    if (P.claim && !['open', 'opened', 'expired', 'void', 'used'].includes(phase)) P.timer = setTimeout(poll, POLL_MS);
+    if (P.claim && !['open', 'opened', 'expired', 'void', 'used'].includes(phase)) {
+      P.timer = setTimeout(poll, ['paying', 'seen', 'unlocking'].includes(phase) ? POLL_FAST_MS : POLL_MS);
+    }
   }
 
   const restart = () => {
@@ -448,7 +482,7 @@ export async function payPage(root, cfg, shareId) {
         content.append(choices);
       }
     } else if (['paying', 'seen', 'check', 'unlocking'].includes(phase)) {
-      content.append(stepper(P, phase));
+      content.append(keep(stepper(P, phase)));
       const got = BigInt(P.status?.received_ut ?? '0');
       if (P.status?.status === 'underpaid' || (got > 0n && got < BigInt(price))) {
         content.append(alert({ glyph: 'info', title: t('buy.partial', { paid: formatTari(got.toString()), price: formatTari(price) }), testid: 'pay-partial', role: 'status' }));
@@ -457,7 +491,7 @@ export async function payPage(root, cfg, shareId) {
       if (drive && P.late && phase === 'paying') content.append(h('p', { class: 'small muted', 'data-testid': 'pay-late' }, t('buy.drive_late')));
       if (!drive && P.claim?.how !== 'test' && P.claim?.address && phase === 'paying') content.append(otherBox(phase));
     } else if (phase === 'open' || phase === 'opened') {
-      content.append(stepper(P, phase), h('div', { class: 'stack', 'data-testid': 'pay-unlocked' },
+      content.append(keep(stepper(P, phase)), h('div', { class: 'stack', 'data-testid': 'pay-unlocked' },
         h('p', { class: 'small', 'data-testid': 'pay-left', 'data-left': String(P.status?.views_left ?? '') },
           t('buy.left', { count: P.status?.views_left ?? 0, date: day(until()) })),
         phase === 'open' ? button(P.busy === 'open' ? t('buy.opening') : t('viewer.open'), { size: 'lg', glyph: folder ? 'folder-open' : 'download', testid: 'pay-open', 'data-autofocus': '', disabled: P.busy ? true : null, onclick: openIt }) : null,
@@ -503,6 +537,7 @@ export async function payPage(root, cfg, shareId) {
   // isn't read out again, nothing is rebuilt).
   function draw() {
     kept.length = 0;
+    P.runUsed = false;
     const phase = phaseOf(P);
     const unlocked = phase === 'open' || phase === 'opened';
     const page = h('div', { class: 'buyer' },
@@ -511,6 +546,10 @@ export async function payPage(root, cfg, shareId) {
         h('p', { class: 'lead' }, unlocked ? t('buy.left', { count: P.status?.views_left ?? 0, date: day(until()) })
           : folder ? t('buy.desc_folder', { count: P.teaser.count ?? 0, size, price: formatTari(price) }) : t('buy.desc_file', { size, price: formatTari(price) }))),
       payCard(phase), teaserCard(phase));
+    if (!P.runUsed && P.run) {
+      P.run.ctl.stop();
+      P.run = null;
+    }
     const same = `${phase}|${P.claim?.address ?? ''}|${shape(page)}`;
     if (same === P.drawn && root.firstElementChild?.classList.contains('buyer')) return;
     P.drawn = same;
