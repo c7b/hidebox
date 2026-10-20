@@ -313,22 +313,31 @@ main td { text-wrap: balance; }
    lid hovers and a lime "?" rises out of the box) is decorative, the h1 says it. Its black is #010101, so it is drawn
    through `lighten` on an ink card, the header tile's rule (the dark stays dark): in dark mode the card is the page's
    own ink and the art sits on the void with no edge; in light mode it is a rounded ink card. It doesn't float: the
-   site's one repeating motion is /how's stills, under their Pause switch (DESIGN.md, WCAG 2.2.2). The second line
-   of the h1 is grey, as on the home. */
+   site's one repeating motion is /how's stills, under their Pause switch (DESIGN.md, WCAG 2.2.2). Its foot fades into
+   the card, as the home's stills do. Selecting the page (the first egg's way in) leaves the art and the button out,
+   so Ctrl+A paints the words alone. The second line of the h1 is grey, as on the home. */
 .not-found { min-height: 56svh; align-content: center; justify-items: center; text-align: center; gap: var(--s-4); }
 .not-found .nf-art {
   display: block; width: min(100%, 480px); margin-bottom: var(--s-4); border-radius: var(--r-panel); overflow: hidden;
-  background: #0A0A0A; isolation: isolate;
+  background: #0A0A0A; isolation: isolate; -webkit-user-select: none; user-select: none;
 }
-.not-found .nf-art img { display: block; width: 100%; height: auto; mix-blend-mode: lighten; }
+.not-found .nf-art img {
+  display: block; width: 100%; height: auto; mix-blend-mode: lighten;
+  -webkit-mask: linear-gradient(to bottom, #000 82%, transparent); mask: linear-gradient(to bottom, #000 82%, transparent);
+}
 .not-found h1 { font: var(--t-hero); letter-spacing: -.025em; }
 .not-found .h1-2 { display: block; color: var(--fg-2); }
-.not-found .lede { max-width: 44ch; }
-.not-found .ways { display: flex; flex-wrap: wrap; gap: var(--s-3); justify-content: center; margin-top: var(--s-2); }
+.not-found .lede { max-width: 44ch; text-wrap: balance; }
+.not-found .ways {
+  display: flex; flex-wrap: wrap; gap: var(--s-3); justify-content: center; margin-top: var(--s-2);
+  -webkit-user-select: none; user-select: none;
+}
 /* The first easter egg: a line in the page's own colour, so it shows only when someone selects the text (Ctrl+A, a
    drag), in the page's text colour on the reading pages' selection tint (13:1 and over in both themes). It is
    invisible on purpose, not a contrast bug, and aria-hidden, so no screen reader takes it for the page's message.
    In forced colours it takes the system's page colour, so it stays hidden there too. */
 .not-found .nf-egg { margin-top: var(--s-2); font: var(--t-small); color: var(--bg); }
 .not-found .nf-egg::selection { color: var(--fg); background: color-mix(in srgb, var(--fg) 14%, transparent); }
+/* the words around it, selected, keep the text colour too (site.css's selection colour is ink, lost on the tint in dark) */
+.not-found ::selection { color: var(--fg); }
 @media (forced-colors: active) { .not-found .nf-egg { forced-color-adjust: none; color: Canvas; } }
