@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: MIT
-"""JSON-RPC client for tari_ootle_walletd 0.46.0 (written against 0.45.0, the same calls and shapes;
-spec §10.1, §10.3; 03-ootle-integration §4.3–§4.4).
+"""JSON-RPC client for tari_ootle_walletd 0.47.0 (written against 0.45.0; the calls and shapes it uses are
+the same in 0.46.0 and 0.47.0, whose client types only add `validator_set.get_status`; spec §10.1, §10.3;
+03-ootle-integration §4.3–§4.4).
 
 walletd runs with `--authentication none` behind a uid firewall; a JWT from `auth.request` is
 valid five minutes, so it is cached for 240 s. Only the chain worker (user drive) can reach it.
+walletd signs its tokens with a key it makes at start, so after a restart it refuses a cached token
+(JSON-RPC error 401, "JWT error: InvalidSignature"); `call` then gets a new one and asks once more.
 """
 import json
 import threading
@@ -13,6 +16,7 @@ import urllib.request
 
 TARI = "resource_" + "01" * 32
 TOKEN_TTL_S = 240
+UNAUTHORIZED = 401               # walletd's ApplicationErrorCode::Unauthorized
 
 
 class WalletdError(Exception):
@@ -44,7 +48,9 @@ class Walletd:
         except (urllib.error.URLError, OSError, ValueError):
             raise WalletdError("walletd_unreachable") from None
         if not isinstance(reply, dict) or "error" in reply or "result" not in reply:
-            raise WalletdError("walletd_error")
+            error = reply.get("error") if isinstance(reply, dict) else None
+            code = error.get("code") if isinstance(error, dict) else None
+            raise WalletdError("walletd_unauthorized" if code == UNAUTHORIZED else "walletd_error")
         return reply["result"]
 
     def _jwt(self) -> str:
@@ -54,7 +60,17 @@ class Walletd:
         return self._token
 
     def call(self, method: str, params: dict | None = None):
-        return self._post(method, params or {}, self._jwt())
+        """One call with the cached token. A token walletd refuses (401: it restarted since) is dropped and
+        the call made once more with a new one; walletd refuses an unauthorized call before running it, so
+        nothing runs twice. A second refusal is a `walletd_error` like any other error answer."""
+        for _ in range(2):
+            try:
+                return self._post(method, params or {}, self._jwt())
+            except WalletdError as e:
+                if e.code != "walletd_unauthorized":
+                    raise
+                self._token = None
+        raise WalletdError("walletd_error")
 
     # --- the calls the worker uses -----------------------------------------------------------------
 

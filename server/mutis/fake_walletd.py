@@ -2,7 +2,8 @@
 """A fake tari_ootle_walletd JSON-RPC endpoint over FakeChain, for tests and --dev mode.
 
 It answers the calls mutis makes with the shapes walletd 0.45.0 returns (03-ootle-integration §4.4).
-`fail_next` makes the next N calls fail, to exercise retries.
+`fail_next` makes the next N calls fail, to exercise retries. `restart()` refuses every token issued
+before it, as walletd does after a restart (JSON-RPC error 401).
 """
 import json
 import secrets
@@ -22,15 +23,21 @@ class _Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         server: FakeWalletd = self.server
         req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
+        token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         with server.lock:
             server.calls.append(req["method"])
             failing = server.fail_next > 0
             server.fail_next -= failing
+            refused = token in server.revoked
         try:
-            if failing:
+            if refused:
+                reply = {"jsonrpc": "2.0", "id": req["id"],
+                         "error": {"code": 401, "message": "JWT error: InvalidSignature", "data": None}}
+            elif failing:
                 raise ValueError("injected failure")
-            result = server.dispatch(req["method"], req.get("params") or {})
-            reply = {"jsonrpc": "2.0", "id": req["id"], "result": result}
+            else:
+                result = server.dispatch(req["method"], req.get("params") or {})
+                reply = {"jsonrpc": "2.0", "id": req["id"], "result": result}
         except (KeyError, ValueError) as e:
             reply = {"jsonrpc": "2.0", "id": req["id"], "error": {"code": -1, "message": type(e).__name__}}
         body = json.dumps(reply).encode()
@@ -49,10 +56,16 @@ class FakeWalletd(ThreadingHTTPServer):
         self.lock = threading.Lock()
         self.calls: list[str] = []
         self.fail_next = 0
+        self.issued: set[str] = set()
+        self.revoked: set[str] = set()
         self.wait_outcome = "commit"          # or "timeout" / "reject"
         self.components = {name: "component_" + secrets.token_hex(32) for name in chain.balances}
         super().__init__(("127.0.0.1", 0), _Handler)
         threading.Thread(target=self.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True).start()
+
+    def restart(self) -> None:
+        with self.lock:
+            self.revoked |= self.issued
 
     @property
     def url(self) -> str:
@@ -67,7 +80,10 @@ class FakeWalletd(ThreadingHTTPServer):
     def dispatch(self, method: str, p: dict):
         chain = self.chain
         if method == "auth.request":
-            return {"token": "eyJ" + secrets.token_hex(16)}
+            token = "eyJ" + secrets.token_hex(16)
+            with self.lock:
+                self.issued.add(token)
+            return {"token": token}
         if method == "wallet.get_info":
             return {"network": "esmeralda", "network_byte": 38, "version": "0.45.0"}
         if method == "accounts.get":
