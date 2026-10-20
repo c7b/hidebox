@@ -32,6 +32,7 @@ const POLL_MS = 3000;
 let qrCode = null;            // ./qr.js, loaded before a claim's address is first drawn, so its code comes with it
 const loadQr = () => (qrCode ? Promise.resolve() : import('./qr.js').then((m) => { qrCode = m; }, () => null));
 const READY_POLL_MS = 10000;   // a link not ready to sell yet: how often the page asks again
+const DRIVE_CHECK_MS = 30000;  // the longest a drive in this browser holds its line before the page gives up on it
 const nowS = () => Math.floor(Date.now() / 1000);
 const day = (sec) => formatDate(sec * 1000, { month: 'short', day: 'numeric' });
 const spinner = () => {
@@ -180,6 +181,7 @@ export async function payPage(root, cfg, shareId) {
     if (c && (c.expiresAt ?? 0) > nowS() + 60 && (!P.status || pay.OPEN_CLAIM.has(P.status.status))) return c;
     P.claim = await pay.startClaim(shareId);
     P.status = { status: 'pending' };
+    await loadQr();      // the claim has an address now: its code must be ready before the address can show
     return P.claim;
   }
 
@@ -228,7 +230,7 @@ export async function payPage(root, cfg, shareId) {
   }
 
   const showOther = () => act('other', async () => {
-    await Promise.all([claim(), loadQr()]);
+    await claim();
     poll();
   });
 
@@ -297,8 +299,12 @@ export async function payPage(root, cfg, shareId) {
   // line it gets is held while its money is checked.
   async function localDrive() {
     if (!(cfg.send_mode === 'direct' && cfg.features?.direct_send)) return null;
-    const { loadIdentity } = await import('../lib/identity.js');
-    return loadIdentity({ lazy: true }).catch(() => null);
+    try {
+      const { loadIdentity } = await import('../lib/identity.js');
+      return await loadIdentity({ lazy: true });
+    } catch {
+      return null;      // no drive to offer: the page works without it
+    }
   }
 
   // Whether that drive can pay: its wallet covers the price and the fee.
@@ -519,7 +525,8 @@ export async function payPage(root, cfg, shareId) {
   draw();
   root.querySelector('#buy-h')?.focus({ preventScroll: true });
   if (P.claim) poll();
-  findDrive(stored).catch(() => null).finally(() => {
+  // The held line waits at most DRIVE_CHECK_MS for the drive's answer (a session or a scan that hangs).
+  Promise.race([findDrive(stored), new Promise((r) => setTimeout(r, DRIVE_CHECK_MS))]).catch(() => null).finally(() => {
     P.checking = false;
     draw();
   });

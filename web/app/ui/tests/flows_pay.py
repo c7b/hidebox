@@ -711,6 +711,12 @@ def pay_drive(t):
             and d.text("pay-failed").startswith("Your drive didn't pay.The Ootle refused that transaction. Nothing was spent.") and d.exists("pay-retry"),
             f"refused: an alert in a plain sentence, with Try again ({d.text('pay-failed')!r})")
     t.check(in_view(d, "pay-failed"), "the alert is on screen")
+    # owner-5: the claim the refused payment made has an address; Another Ootle wallet shows it with its code at once
+    d.eval("document.querySelector('[data-testid=\"pay-other\"] summary').click()")
+    d.wait_for("pay-address", 30)
+    t.check(d.eval("!!document.querySelector('[data-testid=\"pay-qr\"]') && !!document.querySelector('.pay-qr-code')?.firstElementChild"),
+            "after a payment that spent nothing, Another Ootle wallet shows the claim's address with its code")
+    d.eval("document.querySelector('[data-testid=\"pay-other\"] summary').click()")
     t.check(d.eval(f"import('/app/lib/pay.js').then((m) => m.savedClaim({json.dumps(sid)})?.how ?? null)") is None,
             "the claim forgets the drive: nothing was paid, so a reload offers the payment again")
     t.shot(d, "pay-drive-failed-390")
