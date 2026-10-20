@@ -1,6 +1,23 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- drive earnings activity -->
+## 2026-10-19: Earnings, and Activity at scale
+
+- **Earnings** (in the drive's sidebar wherever pay to open is on) answers "where's my money?": what people paid to
+  open your pay links in all (test money from our demo wallet told apart, the testnet line under it), each paid
+  link's take with its last payment, its opens and the transaction we know, and the payments with your drive's
+  check, which move here from Received. **Where the money is:** your sales address, with Copy. The money is in
+  payments to that address on the Esmeralda testnet, and only your drive's key can spend it; Tari's wallets can't use
+  that key yet and the drive can't send it on, so the page says "Not yet" rather than offer a way out that doesn't
+  work. `GET /me/sales` adds the total and each link's take over every payment.
+- **Activity scales:** what happens together (the same kind, in the same folder, in the same hour) is one row,
+  "Locked and uploaded 20 files to hidebox-brand", that opens to its files; rows sit under their day with its count;
+  the newest 25 first, then Show more; chips for uploads, links, opens and payments; search filters it; payments show
+  up; Download the list saves the whole log as a CSV file made in your browser. Folders read "Folder created" (they
+  read "Locked and uploaded"). Review: `docs/review/drive-earnings-activity.md`.
+<!-- /drive earnings activity -->
+
 <!-- ootle-0.47 -->
 ## 2026-10-20: Ootle v0.47.0 (docs/evidence/2026-10-20/upgrade-0.47.0/)
 

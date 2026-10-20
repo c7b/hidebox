@@ -194,8 +194,8 @@ components:
 ## Overview
 
 **Creative north star: a drive you already know how to use, where every file wears its rule.** The
-layout is Google Drive's (sidebar with New, My drive, Received, Shared, Activity, Trash and a storage
-meter; a header with search and Upgrade; folder cards; a file table with a menu on each row). The atoms are
+layout is Google Drive's (sidebar with New, My drive, Received, Shared, Earnings where pay to open is on, Activity,
+Trash and a storage meter; a header with search and Upgrade; folder cards; a file table with a menu on each row). The atoms are
 shadcn/ui's "new-york" components, ported to plain CSS and about four hundred lines of our own
 JavaScript, so the product reads as a careful modern app and not as a vibe-coded page. The one signature
 is the **rule badge**: a small named pill with a Lucide icon (Once, 3 opens, Until Oct 14, Secret word,
@@ -421,7 +421,15 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
   Move, Delete it after…, Move to trash (destructive, last, after a separator).
 - See activity opens a right sheet with a timeline (opened, paid, made, uploaded, link ended) and a button
   to **What our server knows**, a second sheet (the glass box). The drive-wide **Activity** view lists the
-  same events newest first, including files that left, with their chain receipt and tx.
+  same events newest first, including files that left, with their chain receipt and tx. It scales (drive-earnings-activity):
+  events of one kind, in one folder, in one hour (the finest time our server keeps) are one row ("Locked and uploaded
+  20 files to hidebox-brand", its size and hour) that folds open to its files; rows sit under their day with the
+  day's count; the newest 25 rows first, then Show more; outline toggles filter the kinds; Download the list saves
+  the whole log as CSV, made in the browser. A folder reads Folder created.
+- **Earnings** (where pay to open is on) answers "where's my money?": the total in violet (an amount of tTARI) with
+  the part our demo wallet paid as Test money and the testnet line under it, each paid link's take, last payment,
+  opens and tx, the payments with the drive's owner check, and Where the money is: the sales address with Copy and
+  what moving it out means today. No lime: nothing there is a next step.
 - Move into a folder that has a link shows a `warning` alert inside the dialog ("This shares it too.").
 - Toasts follow Sonner: bottom right (full width on phones), 4 seconds, an Undo action where it applies.
 
