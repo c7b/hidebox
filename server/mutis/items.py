@@ -16,13 +16,16 @@ MAX_DELETE_AFTER_DAYS = 30    # Delete it after… on a kept file: at most this 
 
 
 def egress_ok(conn: sqlite3.Connection, item, now: int, size: int) -> bool:
-    """Count `size` more bytes against an item's daily egress (EGRESS_PER_ITEM_DAY); False when over."""
+    """Count `size` more bytes against an item's daily egress (EGRESS_PER_ITEM_DAY); False when over.
+
+    One conditional UPDATE reads and adds in place, so the count never comes from `item`, which a caller may
+    have read before its transaction began: concurrent downloads each add their bytes, none overwrites
+    another's (security-audit-1, the stored-bytes race)."""
     today = codec.day(now)
-    used = item["egress_bytes"] if item["egress_day"] == today else 0
-    if used + size > EGRESS_PER_ITEM_DAY:
-        return False
-    conn.execute("UPDATE items SET egress_day = ?, egress_bytes = ? WHERE id = ?", (today, used + size, item["id"]))
-    return True
+    used = "(CASE WHEN egress_day = ? THEN egress_bytes ELSE 0 END)"
+    cur = conn.execute(f"UPDATE items SET egress_day = ?, egress_bytes = {used} + ? WHERE id = ? AND {used} + ? <= ?",
+                       (today, today, size, item["id"], today, size, EGRESS_PER_ITEM_DAY))
+    return cur.rowcount == 1
 
 
 def end_share(conn: sqlite3.Connection, share_id: str, state: str, now: int) -> None:
