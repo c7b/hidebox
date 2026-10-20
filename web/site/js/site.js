@@ -2,8 +2,8 @@
 // Runs on every site page: the mainnet phase, live numbers and copy variants, the judge-pass chip,
 // copy buttons, the header (the page it is on; Open your drive, always on, makes or opens the drive) and,
 // after the load event: on the home, /how and /judges the scroll motion (motion.js), and on /how the stills'
-// loops (stills.js). The home draws no WebGL field (the v3 design, docs/review/promote-v3.md). Other
-// page modules import `config`, `getJson`, `locale` and the tx helpers from here.
+// loops (stills.js); on the 404 page a note in the console (egg.js). The home draws no WebGL field (the v3 design,
+// docs/review/promote-v3.md). Other page modules import `config`, `getJson`, `locale` and the tx helpers from here.
 import { applyPhase } from '/shared/dates.js';
 import { applyConditions, fillVariables } from './stats.js';
 
@@ -110,3 +110,5 @@ if (motion && document.body.hasAttribute('data-motion')) {
 if (motion && document.querySelector('.still-frame[data-loop]')) {
   afterLoad(() => import('./stills.js').then((m) => m.start(), () => null), 2000);
 }
+// The 404 page's last easter egg (docs/review/site-404.md): a note in the console, from a module so the CSP holds.
+if (document.querySelector('main.not-found')) afterLoad(() => import('./egg.js').then((m) => m.start(), () => null), 2000);
