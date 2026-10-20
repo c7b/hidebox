@@ -10,7 +10,7 @@ export function fill(el, ...children) {
   return el;
 }
 
-// The sprite's address as one string, so the build can give it its fingerprinted name (tools/assets.py).
+// One string, so the build can fingerprint it (tools/assets.py).
 const SPRITE = '/shared/icons.svg';
 
 export function icon(name, cls = 'a-icon') {

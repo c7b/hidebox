@@ -5,7 +5,6 @@ real API (`--dev`) in headless Chromium, with the folder API faked in front of i
 
 drive-shell, drive-make, drive-open-keyfile, drive-folders, storage-meter and drive-budget (A-06d) are
 §15 steps 3 and 5."""
-import gzip
 import json
 import os
 import re
@@ -13,7 +12,7 @@ import time
 
 from cdp import DEVICES
 from drivefake import DriveFake
-from flows import Intercept, downloaded, no_hscroll, plain, same_origin, scenario
+from flows import Intercept, downloaded, no_hscroll, plain, same_origin, scenario, sent_bytes
 
 # The drive's features (off in config.py's defaults). run.py starts a dev server with them on for a flow
 # that asks; otherwise the flows run on drivefake.py.
@@ -308,7 +307,8 @@ def storage_meter(t):
 
 
 # A-06d (16-drive-architecture §6.4): from navigation to /drive until the file table renders for a drive
-# of 20 items, phone profile: gzip -9 of every /app/, /shared/ and /vendor/ file requested, without the
+# of 20 items, phone profile: every /app/, /shared/ and /vendor/ file requested as the server sends it (flows.sent_bytes:
+# its Brotli copy; gzip -9 printed beside it), without the
 # Geist file (at most 2 font files, asserted apart) and without ootle-wasm (it must not load before then).
 # Measured on the drive: 109,318 B in 36 files. The ceiling
 # (§15 step 12) keeps about a fifth of headroom for what the drive's first screen still gains.
@@ -332,7 +332,7 @@ def drive_budget(t):
     a.wait("document.querySelectorAll('[data-testid=\"file-row\"]').length === 20", 60)
     seen = [r["url"] for r in a.requests]
     dist = os.path.join(t.work, "dist")
-    total, files, fonts = 0, [], set()
+    total, gz, files, fonts = 0, 0, [], set()
     for u in sorted({u.split("?")[0] for u in seen if u.startswith((t.origin + "/app/", t.origin + "/shared/", t.origin + "/vendor/"))}):
         rel = u[len(t.origin) + 1:]
         if rel.endswith(".woff2"):
@@ -342,13 +342,14 @@ def drive_budget(t):
             continue
         path = os.path.join(dist, rel)
         if os.path.isfile(path):
-            total += len(gzip.compress(open(path, "rb").read(), 9))
-            files.append(rel)
+            sent, g = sent_bytes(path)
+            total, gz = total + sent, gz + g
+            files.append(plain(rel))
     t.check(made == 20, "a drive of 20 items")
     t.check(not any("ootle_wasm" in u for u in seen), "no ootle-wasm before the file table renders")
     t.check(len(fonts) <= 2, f"at most 2 font files ({sorted(fonts)})")
     t.check(total <= A06D_CEILING, f"A-06d: {total} B compressed until the table renders, {len(files)} files (≤ {A06D_CEILING} B)")
-    print(f"  A-06d measured: {total} B gzip -9, files: {', '.join(files)}")
+    print(f"  A-06d measured: {total} B as sent (gzip -9 of the same files: {gz} B), files: {', '.join(files)}")
 
 
 # --- §15 step 7: uploads, move, rename, trash, Delete it after ----------------------------------------

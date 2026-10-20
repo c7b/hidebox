@@ -39,6 +39,17 @@ def plain(url):
     return FINGERPRINT.sub(r"\1", url)
 
 
+def sent_bytes(path):
+    """(what the server sends for this built file, its gzip -9): the budgets count the first. The build writes a Brotli
+    copy beside each text file (deploy/scripts/precompress.py) and Caddy sends it to every browser that takes br, as
+    Chromium, Firefox and Safari do; without one, gzip -9 of the file (the budgets' measure before precompression)."""
+    import gzip
+    with open(path, "rb") as f:
+        gz = len(gzip.compress(f.read(), 9))
+    br = path + ".br"
+    return (min(os.path.getsize(br), gz) if os.path.isfile(br) else gz), gz
+
+
 def home(t, page, path="/"):
     page.goto(t.origin + path)
     page.wait_for("drop-input", 60)
@@ -1054,7 +1065,8 @@ def dark(t):
     t.shot(b, "locker-390-dark-empty", full_page=True)
 
 
-# A-06's 40 KB holds for a first drop of text on a phone. A file also loads lib/filetype.js,
+# A-06's 40 KB holds for a first drop of text on a phone, counted as the server sends it (sent_bytes: the Brotli copy;
+# docs/review/perf-1.md; gzip -9 of each file is printed beside it). A file also loads lib/filetype.js,
 # lib/download.js and, for a photo, lib/exif.js (recipient safety and metadata removal); this ceiling
 # keeps that honest. On a fine pointer the result also shows the link as a code to scan, and the
 # encoder (ui/qr.js) loads then: QR_CEILING is that waiver (14-ghost-design §17 step 0, A06.md), so a
@@ -1065,16 +1077,19 @@ QR_CEILING = 42.5 * 1024
 
 @scenario("budget", "A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)")
 def budget(t):
-    import gzip
     dist = os.path.join(t.work, "dist")
 
+    gz9 = {}
+
     def size(page):
-        total, files = 0, []
+        total, gz, files = 0, 0, []
         for u in sorted({r["url"] for r in page.requests if r["url"].startswith((t.origin + "/app/", t.origin + "/vendor/"))}):
             path = os.path.join(dist, u[len(t.origin) + 1:].split("?")[0])
             if os.path.isfile(path):
-                total += len(gzip.compress(open(path, "rb").read(), 9))
+                sent, g = sent_bytes(path)
+                total, gz = total + sent, gz + g
                 files.append(plain(u[len(t.origin):]))
+        gz9[id(page)] = gz
         return total, files
     a = t.actor("iphone")
     home(t, a)
@@ -1085,7 +1100,7 @@ def budget(t):
     a.b.drain(1)
     after, files = size(a)
     t.check(after <= 40 * 1024 and "/app/ui/qr.js" not in files,
-            f"phone: widget payload compressed: {at_load} B at load, {after} B after a drop (≤ 40 KB), no code encoder")
+            f"phone: widget payload compressed: {at_load} B at load, {after} B after a drop (≤ 40 KB; gzip -9: {gz9[id(a)]} B), no code encoder")
     t.check(not any("ootle_wasm" in f for f in files), "still no ootle-wasm after an anonymous drop")
     d = t.actor("desktop")
     home(t, d)
@@ -1094,7 +1109,7 @@ def budget(t):
     desk, files = size(d)
     t.check(desk <= QR_CEILING and "/app/ui/qr.js" in files,
             f"computer: {desk} B after a drop with the code to scan (≤ {int(QR_CEILING)} B, the QR waiver)")
-    print(f"  A-06 measured: computer {desk} B gzip -9, files: {', '.join(files)}")
+    print(f"  A-06 measured: computer {desk} B as sent (gzip -9 of the same files: {gz9[id(d)]} B), files: {', '.join(files)}")
     p = t.actor("iphone")
     home(t, p)
     p.set_files("drop-input", [t.fixture("photo-gps.jpg")])
