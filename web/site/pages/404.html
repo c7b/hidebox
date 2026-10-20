@@ -42,9 +42,16 @@
 <a class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
 <main id="main" class="wrap page not-found">
-  <h1>This page isn't here.</h1>
-  <p class="lede">Maybe the address has a typo. <br>If someone sent you a link, ask them for it again.</p>
-  <p class="ways"><a class="btn" href="/">Go home</a><a class="quiet" href="/drive?open">Open my drive</a></p>
+  <picture class="nf-art">
+    <source type="image/avif" srcset="/site/media/404/box-zero-480.avif 480w, /site/media/404/box-zero-720.avif 720w, /site/media/404/box-zero-960.avif 960w" sizes="(min-width: 512px) 480px, calc(100vw - 32px)">
+    <source type="image/webp" srcset="/site/media/404/box-zero-480.webp 480w, /site/media/404/box-zero-720.webp 720w, /site/media/404/box-zero-960.webp 960w" sizes="(min-width: 512px) 480px, calc(100vw - 32px)">
+    <img src="/site/media/404/box-zero-720.webp" alt="" width="960" height="640" fetchpriority="high" decoding="async">
+  </picture>
+  <h1>We can't see inside your files. <span class="h1-2">Or, apparently, this page.</span></h1>
+  <p class="lede">Maybe the address has a typo, or the link expired. <br>Ask whoever sent it for a fresh one.</p>
+  <p class="ways"><a class="btn" href="/">Go home</a></p>
+  <p class="nf-egg" aria-hidden="true">for real, this is a 404, we couldn't find the page, stop looking</p>
+  <!-- keep looking? man, give up, there is nothing to find -->
 </main>
 <!--#include footer-->
 </body>

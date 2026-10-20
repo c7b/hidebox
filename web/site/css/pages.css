@@ -309,8 +309,26 @@ main td { text-wrap: balance; }
 .reading .field [aria-invalid="true"] { border-color: var(--exit-text); }
 .reading .box-note { border: 1px solid var(--hair); background: var(--bg-sunken); }
 
-/* 404: the words and a way home */
+/* 404 (docs/review/site-404.md): the art, the words and one way home. The art ("4", the open box as the "0", "4"; the
+   lid hovers and a lime "?" rises out of the box) is decorative, the h1 says it. Its black is #010101, so it is drawn
+   through `lighten` on an ink card, the header tile's rule (the dark stays dark): in dark mode the card is the page's
+   own ink and the art sits on the void with no edge; in light mode it is a rounded ink card. It doesn't float: the
+   site's one repeating motion is /how's stills, under their Pause switch (DESIGN.md, WCAG 2.2.2). The second line
+   of the h1 is grey, as on the home. */
 .not-found { min-height: 56svh; align-content: center; justify-items: center; text-align: center; gap: var(--s-4); }
-.not-found h1 { font: var(--t-hero); letter-spacing: -.025em; max-width: 16ch; }
-.not-found .lede { max-width: 34ch; }
-.not-found .ways { display: flex; flex-wrap: wrap; gap: var(--s-3); justify-content: center; }
+.not-found .nf-art {
+  display: block; width: min(100%, 480px); margin-bottom: var(--s-4); border-radius: var(--r-panel); overflow: hidden;
+  background: #0A0A0A; isolation: isolate;
+}
+.not-found .nf-art img { display: block; width: 100%; height: auto; mix-blend-mode: lighten; }
+.not-found h1 { font: var(--t-hero); letter-spacing: -.025em; }
+.not-found .h1-2 { display: block; color: var(--fg-2); }
+.not-found .lede { max-width: 44ch; }
+.not-found .ways { display: flex; flex-wrap: wrap; gap: var(--s-3); justify-content: center; margin-top: var(--s-2); }
+/* The first easter egg: a line in the page's own colour, so it shows only when someone selects the text (Ctrl+A, a
+   drag), in the page's text colour on the reading pages' selection tint (13:1 and over in both themes). It is
+   invisible on purpose, not a contrast bug, and aria-hidden, so no screen reader takes it for the page's message.
+   In forced colours it takes the system's page colour, so it stays hidden there too. */
+.not-found .nf-egg { margin-top: var(--s-2); font: var(--t-small); color: var(--bg); }
+.not-found .nf-egg::selection { color: var(--fg); background: color-mix(in srgb, var(--fg) 14%, transparent); }
+@media (forced-colors: active) { .not-found .nf-egg { forced-color-adjust: none; color: Canvas; } }
