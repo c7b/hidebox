@@ -20,11 +20,13 @@ DEMO_PER_SELLER = 2          # test money paid to one drive's links a day, from 
 CHECKS_LISTED = 100
 PAID_LISTED = 50       # Earnings → Payments, newest first
 LINKS_LISTED = 200     # Earnings → By link, the link paid last first
-# What counts as received: a committed payment to one of the drive's claims (counted, or extra after the claim
-# closed), unless the owner's drive found the payer kept its key (owner_ok = 0: that money isn't the owner's).
+# What counts as the owner's money: a committed payment we can vouch for. Test money our demo wallet paid for a
+# claim's whole price (it built the output to the owner's address), or a payment the owner's drive checked is its
+# own to spend (owner_ok = 1). A payment still waiting for that check, a partial one the check never reaches and one
+# the payer kept (owner_ok = 0) count nowhere: a view key proves the amount, never who can spend it (R2).
 _EARNED = ("FROM sale_payments sp JOIN claims c ON c.id = sp.claim_id JOIN shares s ON s.id = c.share_id "
            "JOIN items i ON i.id = s.item_id WHERE i.owner_id = ? AND sp.status IN ('counted','extra') "
-           "AND sp.owner_ok IS NOT 0")
+           "AND (sp.owner_ok = 1 OR (c.demo = 1 AND sp.status = 'counted'))")
 
 
 # --- the seller (a drive session) -----------------------------------------------------------------------
