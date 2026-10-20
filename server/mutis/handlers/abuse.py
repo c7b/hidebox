@@ -32,6 +32,8 @@ def report(ctx):
     category = get_enum(body, "category", CATEGORIES)
     details = get_str(body, "details", 2000)
     contact = get_str(body, "contact", 200, optional=True) or None
+    if contact and any(not c.isprintable() for c in contact):     # one line of plain text
+        raise invalid("contact")
     ctx.proof_of_work("report", body)
     if fragment:
         details += f"\n\n[Reporter included the link key: #{fragment[:200]}]"

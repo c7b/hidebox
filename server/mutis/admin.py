@@ -102,15 +102,23 @@ def _features(cfg, conn) -> dict:
     return {**cfg["features"], **{k: v for k, v in db.get_meta_json(conn, "features", {}).items() if k in cfg["features"]}}
 
 
+def inert(text: str) -> str:
+    """A visitor's text for the operator's terminal: every character that isn't printable (controls, C1 and
+    DEL, format and bidi marks, line breaks) is shown as its escape, so stored text can't move the cursor,
+    reorder a line or start a line of its own (security-audit-1)."""
+    return "".join(c if c.isprintable() else c.encode("unicode_escape").decode("ascii") for c in text)
+
+
 def cmd_reports(cfg, conn, args) -> None:
     sql = "SELECT * FROM abuse_reports" + (" WHERE state = 'new'" if args.new else "") + " ORDER BY created_at"
     for r in conn.execute(sql):
         target = r["share_id"] and f"share {r['share_id']}" or r["drop_id"] and f"drop {r['drop_id']}" or "-"
         print(f"{r['id']}  {time.strftime('%Y-%m-%d %H:%M', time.gmtime(r['created_at']))}  {r['state']:8}  "
               f"{r['category']:10}  {target}  item={r['item_id'] or '-'}  key={'yes' if r['included_key'] else 'no'}")
-        print("    " + r["details"].replace("\n", "\n    "))
+        for line in r["details"].split("\n"):        # the reporter's words, each line marked as theirs
+            print("    | " + inert(line))
         if r["contact"]:
-            print("    contact: " + r["contact"])
+            print("    contact: " + inert(r["contact"]))
 
 
 def cmd_freeze(cfg, conn, args) -> None:

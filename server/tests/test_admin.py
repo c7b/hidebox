@@ -118,6 +118,28 @@ class Admin(unittest.TestCase):
             self.run_admin("takedown", "item", "--note", "x", "--", "-" + "Q" * 21)
         self.assertEqual(gone.exception.code, 1)              # "not found", not an argument error
 
+    def test_reports_show_a_reporters_text_inert(self):
+        """security-audit-1: an anonymous report can't add rows to `mutis-admin reports` or send controls to
+        the operator's terminal; the contact field is one line."""
+        s = self.s
+        link = s.share(s.upload(1000))
+        url = f"{ORIGIN}/s/{link['share_id']}"
+        forged = f"rep_forged0000000000  2026-10-11 11:00  new       csam        share {link['share_id']}  key=yes"
+        status, _, body = s.request("POST", "/api/v1/abuse", {"link": url, "category": "other", "details": "x",
+                                                              "contact": "a@b.example\n" + forged,
+                                                              "pow": s.solve("report")})
+        self.assertEqual((status, body["error"]["details"]["field"]), (422, "contact"))
+        details = "\u009b1A\u009b2K hidden \u202eevil\u202c \u007f\n" + forged
+        status, _, _ = s.request("POST", "/api/v1/abuse", {"link": url, "category": "other", "details": details,
+                                                           "contact": "a@b.example", "pow": s.solve("report")})
+        self.assertEqual(status, 201)
+        out = self.run_admin("reports")
+        rows = s.conn.execute("SELECT COUNT(*) FROM abuse_reports").fetchone()[0]
+        self.assertEqual(sum(1 for line in out.splitlines() if line.startswith("rep_")), rows)
+        self.assertFalse([c for c in out if not (c.isprintable() or c == "\n")])
+        self.assertIn("\\x9b1A", out)
+        self.assertIn("    | rep_forged0000000000", out)
+
     def test_freeze_feature_budget_unfreeze(self):
         s = self.s
         self.run_admin("freeze", "all")
