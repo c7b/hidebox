@@ -246,8 +246,11 @@ class Payments(unittest.TestCase):
                  ((200, json.dumps({k: v for k, v in live.items() if k != "verified"}).encode()), "missing"),
                  ((200, json.dumps({**live, "state": {"up": {"substate": {"Component": {}}}}}).encode()), "missing"),
                  ((200, json.dumps({**live, "state": {**live["state"], "down": {}}}).encode()), "missing"),
-                 ((200, json.dumps({**live, "state": {}}).encode()), "missing"),
-                 ((200, json.dumps({**live, "state": "up"}).encode()), "missing")]
+                 ((200, json.dumps({**live, "state": {}}).encode()), "unknown"),
+                 ((200, json.dumps({**live, "state": "up"}).encode()), "unknown"),
+                 ((200, json.dumps({**live, "state": {"up": {"substate": []}}}).encode()), "unknown"),
+                 ((200, json.dumps({"verified": True, "value": live["state"]}).encode()), "unknown"),
+                 ((200, json.dumps([live]).encode()), "unknown"), ((200, b'"ok"'), "unknown")]
         for reply, outcome in cases:
             self.answer(reply)
             self.assertEqual(payments.committed_on_indexer(self.w.indexers, "utxo_x", 0), outcome, reply[1][:80])
@@ -291,6 +294,37 @@ class Payments(unittest.TestCase):
                          (404, {"error": f"Input substate {utxo} (v0) is down"}))
         status, body, _ = indexers.get_json(f"/substates/{utxo}?version=0&include_proof=true")
         self.assertEqual((status, body["state"]), (200, {"down": {}}))
+
+    def test_an_answer_in_a_shape_we_cant_read_never_freezes_credits(self):
+        """A 200 whose shape has neither a `state` nor a `substate` we can read (an indexer release that moved
+        the value again) says nothing about the output: the round is skipped and counted, never a freeze; an
+        output the indexers say is gone still freezes on the second round (t/402)."""
+        self.credited_invoice()
+        moved = (200, json.dumps({"version": 0, "result": RECORDED["live_utxo"]["body"]["state"], "verified": True}).encode())
+        self.answer(moved, moved)
+        for later in (0, RECONCILE_RECHECK_S, 2 * RECONCILE_RECHECK_S):
+            self.w.reconcile(self.s.now + later)
+            self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_mismatch")), (None, None))
+        self.assertEqual(self.s.meta("reconcile_unknown"), "3")
+        self.answer(moved, NOT_FOUND)
+        self.w.reconcile(self.s.now)
+        self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_unknown")), (None, "4"))
+        self.answer(DOWN, NOT_FOUND)
+        self.w.reconcile(self.s.now)
+        self.assertEqual((self.s.meta("reconcile_mismatch"), self.s.meta("reconcile_unknown")), (str(self.s.now), "0"))
+        self.w.reconcile(self.s.now + RECONCILE_RECHECK_S)
+        self.assertEqual(self.s.meta("credit_freeze"), "1")
+
+    def test_a_forged_payment_still_freezes_when_the_indexers_answer_in_the_0_47_shape(self):
+        """E-14 with 0.47.0 answers: a credited row for an output both indexers say doesn't exist holds
+        credits, and the recheck freezes them (t/402)."""
+        with db.tx(self.s.conn):
+            self.s.conn.execute("INSERT INTO payments(utxo_id, value_ut, seen_at, proven, committed, status) "
+                                "VALUES (?, 500000, 0, 1, 1, 'credited')", (f"utxo_{'01' * 32}_{'ab' * 32}",))
+        self.w.reconcile(self.s.now)
+        self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_mismatch")), (None, str(self.s.now)))
+        self.w.reconcile(self.s.now + RECONCILE_RECHECK_S)
+        self.assertEqual(self.s.meta("credit_freeze"), "1")
 
     def test_a_proven_spent_credited_output_freezes(self):
         """A credited output both indexers prove spent (`state.down`) is gone, like a 404 "… is down": the

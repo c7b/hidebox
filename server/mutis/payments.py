@@ -91,9 +91,10 @@ def utxo_on_indexer(indexers, utxo_id: str, position: int) -> tuple[str, dict]:
 
     ok: HTTP 200, verified == true and a live Utxo substate at exactly that id (`state.up.substate`, or
     `substate` from an indexer before 0.47.0). missing: the indexer says so (its JSON 404 "… not found",
-    or "… is down" for a spent output, a 200 whose `state` is `down`, or a 200 that isn't a verified live
-    Utxo). unknown: anything about the indexer rather than the output (5xx, 429, a 404 or 200 that isn't
-    the indexer's JSON, such as a gateway's page while it deploys, a timeout). With `ok` come the
+    or "… is down" for a spent output, a 200 whose `state` is `down`, a 200 with verified != true, or a
+    live substate that isn't a Utxo). unknown: anything about the indexer rather than the output (5xx,
+    429, a 404 or 200 that isn't the indexer's JSON, such as a gateway's page while it deploys, a 200
+    whose shape has neither a `state` nor a `substate` we can read, a timeout). With `ok` come the
     output's one-time key and public nonce as the indexer shows them (None when absent), for R1.
     """
     none = {"auth_key": None, "nonce": None}
@@ -110,8 +111,9 @@ def utxo_on_indexer(indexers, utxo_id: str, position: int) -> tuple[str, dict]:
     if status == 404:
         return ("missing" if isinstance(obj, dict) and isinstance(obj.get("error"), str) else "unknown"), none
     value = substate_value(obj)
-    if isinstance(obj, dict) and obj.get("verified") is True and not substate_down(obj) \
-            and value is not None and "Utxo" in value:
+    if not (substate_down(obj) or value is not None):
+        return "unknown", none          # a shape we can't read says nothing about the output
+    if obj.get("verified") is True and not substate_down(obj) and value is not None and "Utxo" in value:
         auth_key, nonce = substate_output(obj)
         return "ok", {"auth_key": auth_key, "nonce": nonce}
     return "missing", none

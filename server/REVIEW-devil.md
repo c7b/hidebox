@@ -90,7 +90,7 @@ as `build`, and every result below matched on both machines.
   |---|---|---|
   | `ok` | 200 + `verified:true` + `Utxo` | pass |
   | `mismatch` | 404, `verified:false`, a non-Utxo substate or "… is down", confirmed by **both** indexers | freeze |
-  | `unknown` | 5xx, 429, timeout, bucket exhaustion | skip this round; raise an alert after 3 unknown hours |
+  | `unknown` | 5xx, 429, timeout, bucket exhaustion; a 200 in a shape with no `state` or `substate` we can read | skip this round; raise an alert after 3 unknown hours |
 
   Freeze only on `mismatch`, and add a test for each outcome.
 
