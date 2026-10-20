@@ -132,12 +132,13 @@ def committed_anywhere(indexers, utxo_id: str) -> str:
     return "missing" if all(a == "missing" for a in answers) else "unknown"
 
 
-def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int, owns=None) -> int:
+def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int, owns=None, room=None) -> int:
     """Step 3: confirm each pending payment on indexer-b (indexer-a after 3 failures); credit it.
 
     `owns(nonce_hex, auth_key_hex)` → True | False | None is the R1 ownership check (sidecar mode): True
     credits, False rejects the payment for good, None (the check couldn't run) waits for the next tick
     like an indexer failure. Without it (the walletd fallback) ownership is walletd's own listing.
+    `room(nbytes, judge)` re-checks paid space for an invoice that no longer holds its bytes (`credit`).
     """
     if db.get_meta(conn, "credit_freeze") == "1" or db.get_meta(conn, "reconcile_mismatch") is not None:
         return 0                                 # frozen, or held until a mismatch is checked again
@@ -152,8 +153,8 @@ def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int, 
             continue
         failures.pop(row["utxo_id"], None)
         if ours:
-            credit(conn, row["utxo_id"], now)
-            credited += 1
+            if credit(conn, row["utxo_id"], now, room):
+                credited += 1
         else:
             reject(conn, row["utxo_id"])
     return credited
@@ -168,25 +169,50 @@ def reject(conn: sqlite3.Connection, utxo_id: str) -> None:
     logsafe.event("chain.payment_not_ours", "warning")
 
 
-def credit(conn: sqlite3.Connection, utxo_id: str, now: int) -> None:
+def holds_its_space(conn: sqlite3.Connection, inv, now: int) -> bool:
+    """Whether crediting this invoice keeps paid space within its slice without asking again: the invoice
+    still holds its bytes (open, as packs.slices counts it), or it renews the pack its drive holds (days,
+    no bytes)."""
+    if inv["status"] in ("pending", "seen") and now < inv["expires_at"]:
+        return True
+    d = conn.execute("SELECT paid_bytes, paid_until, paid_pack FROM identities WHERE id = ?",
+                     (inv["identity_id"],)).fetchone()
+    return d is not None and (d["paid_until"] or 0) > now and d["paid_bytes"] > 0 and d["paid_pack"] == inv["pack"]
+
+
+def credit(conn: sqlite3.Connection, utxo_id: str, now: int, room=None) -> bool:
+    """Credit one confirmed payment; True unless it is held.
+
+    An invoice gives its bytes back to its slice when it is replaced or expires, and others may take them; a
+    late payment that would complete such an invoice credits only if `room(nbytes, judge)` says the slice
+    has room again. Otherwise the payment waits (`pending_check`) and is tried again on later rounds within
+    the grace, so paid space never goes over its cap (security-audit-1)."""
     with db.tx(conn):
         pay = conn.execute("SELECT * FROM payments WHERE utxo_id = ? AND status = 'pending_check'",
                            (utxo_id,)).fetchone()
         if pay is None:
-            return
-        conn.execute("UPDATE payments SET committed = 1, status = 'credited' WHERE utxo_id = ?", (utxo_id,))
+            return False
         inv = conn.execute("SELECT * FROM invoices WHERE id = ?", (pay["invoice_id"],)).fetchone()
+        if inv is not None and inv["status"] != "credited" and inv["identity_id"] \
+                and now <= inv["expires_at"] + UNDERPAID_GRACE_DAYS * 86400 \
+                and inv["received_ut"] + min(pay["value_ut"], inv["price_ut"]) >= inv["price_ut"] \
+                and not holds_its_space(conn, inv, now) \
+                and not (room and room(quota.PACKS[inv["pack"]]["bytes"], bool(inv["judge"]))):
+            logsafe.event("chain.invoice_held", "warning")
+            return False
+        conn.execute("UPDATE payments SET committed = 1, status = 'credited' WHERE utxo_id = ?", (utxo_id,))
         if inv is None or inv["status"] == "credited" or now > inv["expires_at"] + UNDERPAID_GRACE_DAYS * 86400:
-            return
+            return True
         received = inv["received_ut"] + min(pay["value_ut"], inv["price_ut"])   # one payment credits ≤ the price
         if received < inv["price_ut"]:
             status = "seen" if now <= inv["expires_at"] else "underpaid"
             conn.execute("UPDATE invoices SET received_ut = ?, status = ? WHERE id = ?", (received, status, inv["id"]))
-            return
+            return True
         conn.execute("UPDATE invoices SET received_ut = ?, status = 'credited', credited_at = ? WHERE id = ?",
                      (received, now, inv["id"]))
         if inv["identity_id"]:
             grant_pack(conn, inv["identity_id"], inv["pack"], now, bool(inv["judge"]))
+    return True
 
 
 def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int, judge: bool = False) -> None:

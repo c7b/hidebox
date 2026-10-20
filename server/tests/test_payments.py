@@ -9,8 +9,8 @@ import json
 import unittest
 from pathlib import Path
 
-from harness import Stack
-from mutis import codec, db, ootle_addr, payments
+from harness import GiB, Disk, Stack
+from mutis import codec, db, ootle_addr, packs, payments, quota
 from mutis.chain_worker import RECONCILE_RECHECK_S
 from mutis.fake_chain import FakeIndexer, fake_keys
 from mutis.indexer import IndexerError, Indexers
@@ -73,6 +73,38 @@ class Payments(unittest.TestCase):
         self.assertEqual((me["plan"], me["quota"]["paid_bytes"]), ("paid", 2 << 30))
         transfer = next(t for t in self.s.chain.transfers if t["destination"] == inv["address"])
         self.assertEqual((transfer["account"], transfer["value"]), ("sponsor", 500000))
+
+    def test_a_late_payment_for_a_lapsed_invoice_credits_only_with_room(self):
+        """security-audit-1: an invoice gives its bytes back when it is swapped (or expires); a payment that
+        arrives for it later credits only once the slice has room again, so paid space never goes over its
+        cap. Public slice here: 7.28 GiB."""
+        disk = Disk(total=100 * GiB, avail=36 * GiB)
+        self.s.app.statvfs = disk
+        a, b = self.s.register(ip="198.18.0.1"), self.s.register(ip="198.18.1.1")
+
+        def buy(drive, pack, ip):
+            status, _, inv = self.s.request("POST", "/api/v1/invoices", {"pack": pack}, headers=drive["auth"], ip=ip)
+            self.assertIn(status, (200, 201), inv)
+            return inv
+
+        late = buy(a, "m30", "198.18.0.1")
+        buy(a, "s30", "198.18.0.1")                               # the swap: `late` gives its 5 GiB back
+        taken = buy(b, "m30", "198.18.1.1")                       # someone else takes them
+        for inv in (late, taken):
+            self.pay(inv["address"], int(inv["amount_ut"]))
+        self.ticks()
+        status = lambda inv: self.s.conn.execute("SELECT status FROM invoices WHERE id = ?",  # noqa: E731
+                                                 (inv["invoice_id"],)).fetchone()[0]
+        self.assertEqual((status(taken), status(late)), ("credited", "expired"))
+        held = self.s.conn.execute("SELECT p.status FROM payments p WHERE p.invoice_id = ?",
+                                   (late["invoice_id"],)).fetchone()[0]
+        self.assertEqual(held, "pending_check")
+        pool = quota.measure(self.s.conn, disk, self.s.cfg.data_dir, self.s.cfg["limits"], self.s.now)
+        s = packs.slices(self.s.conn, pool, self.s.cfg["packs"], self.s.now)
+        self.assertLessEqual(s.public_active, s.public_cap)
+        disk.avail = 80 * GiB                                    # room again: the held payment credits
+        self.ticks()
+        self.assertEqual(status(late), "credited")
 
     def test_duplicate_utxo_is_credited_once(self):
         """Seeing the same UTXO twice must not credit twice (t/402: deposits were inflated)."""

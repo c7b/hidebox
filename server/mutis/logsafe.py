@@ -23,7 +23,7 @@ EVENTS = frozenset({
     "chain.canary_failed", "chain.canary_verified", "chain.canary_recovered", "chain.canary_missed",
     "chain.seal_checkpoint", "chain.seal_failed",
     "chain.config_missing", "chain.job_interrupted", "chain.reconcile_unknown", "chain.reconcile_mismatch",
-    "chain.payment_not_ours", "chain.seller_bad_key",
+    "chain.payment_not_ours", "chain.seller_bad_key", "chain.invoice_held",
     # cleanup
     "cleanup.run", "cleanup.error",
 })

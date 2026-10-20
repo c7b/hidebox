@@ -8,6 +8,7 @@ waits long and a restart never pays twice. A failing step logs a fixed code and 
 A separate thread writes the heartbeat the API checks, for as long as the loop keeps moving.
 """
 import json
+import os
 import random
 import secrets
 import sqlite3
@@ -16,7 +17,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, payments, quota, sales, seallog
+from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, packs, payments, quota, sales, seallog
 from .indexer import IndexerError, Indexers
 from .sidecar import TRANSPORT_ERRORS, Sidecar, SidecarError
 from .walletd import Walletd, WalletdError
@@ -73,6 +74,7 @@ class Worker:
         self.mode = cfg["gates"]["amount_proof"]
         self.api_url = "http://" + cfg["listen"]
         self.failures: dict = {}
+        self.statvfs = os.statvfs
         self.last: dict = {}
         self.epoch_cache = (0.0, None)
         self.status: dict = {"walletd_ok": False, "sidecar_ok": False}
@@ -293,7 +295,14 @@ class Worker:
                 with db.tx(self.conn):
                     db.set_meta(self.conn, "receiver_scan_seq", str(rows[-1]["seq"]))
         payments.check_pending(self.conn, self.indexers, self.failures, now,
-                               owns=self._ours if self.receiver is not None else None)
+                               owns=self._ours if self.receiver is not None else None, room=self._paid_room(now))
+
+    def _paid_room(self, now: int):
+        """Whether a pack of nbytes still fits its paid-space slice (for a late payment, payments.credit)."""
+        def room(nbytes: int, judge: bool) -> bool:
+            pool = quota.measure(self.conn, self.statvfs, self.cfg.data_dir, self.cfg["limits"], now)
+            return packs.slices(self.conn, pool, self.cfg["packs"], now).room(nbytes, judge)
+        return room
 
     def _ours(self, nonce: str | None, auth_key: str | None) -> bool | None:
         """R1 (16-drive-architecture §1.1): an output is our receiver's only if the one-time key the indexer

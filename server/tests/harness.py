@@ -213,6 +213,7 @@ class Stack(Client):
                              Indexers([self.indexer.url], rate=1000),
                              Sidecar(fake_sidecar_argv(), f"http://127.0.0.1:{self.port}", FAKE_WASM_SHA256),
                              clock=lambda: self.now)
+        self.worker.statvfs = lambda path: self.app.statvfs(path)    # the worker sees the API's disk
         return self.worker
 
     def close(self) -> None:
