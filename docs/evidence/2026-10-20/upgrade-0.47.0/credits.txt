@@ -1,0 +1,40 @@
+Credits and payments around the outage, 2026-10-20 (UTC). Read-only queries of the database
+(sqlite3 mode=ro, as root) and of the public indexers; one write, `mutis-admin unfreeze-credits`.
+
+== What the freeze was
+05:33:15 chain.reconcile_mismatch, 05:38:15 chain.credit_freeze (critical); meta credit_freeze = 1 from
+then on (and again at 06:38:15 and 07:05:39). The hourly reconcile asks the indexers about every credited
+output (payments.committed_anywhere); with the 0.47.0 answer the code found no top-level `substate` and
+read each one as `missing` on both indexers, which is a mismatch, and the five-minute recheck froze
+credits. Every output was in fact there:
+
+  scripts/check-credited.py, about 07:31, each credited pack payment (27) and counted sale payment (34) on
+  indexer-b and indexer-a:
+    the code of origin/main before the fix (first 5):   ('payment', ('missing', 'missing'), 'missing') 5
+    the fixed code (all):                               ('payment', ('ok', 'ok'), 'ok') 27
+                                                        ('sale', ('ok', 'ok'), 'ok') 34
+
+== What was paid while it lasted (05:12 to 07:56)
+  payments by status:       credited 27 (none pending_check, none rejected; the last seen before 05:00)
+  sale_payments by status:  counted 34 (the last 02:35)
+  invoices created since 05:00: none        claims created since 05:00: none
+  So nothing was paid while verification was broken: nothing to credit late, and no claim's pay
+  window (an hour, plus a day's grace for top-ups) or invoice ran out because of the outage. The one
+  claim of the night (clm_tfww…, 02:34) was paid with test money at 02:34 and released before it.
+  Browser sends (send_mode = "direct") couldn't start between 05:13 and 07:56: wallet.js read its own
+  inputs' substates in the old shape and stopped with input_gone before building anything, so no
+  money moved and nothing is stuck. Sponsor sends (decoys, canary deliveries) kept committing.
+
+== Unfreezing
+07:56:29 mutis-chain started with release e6d5f7c (the fix); 07:56:38 chain.reconcile_ok (the first
+         round: every credited output proven by the sidecar at the same value and `ok` on an indexer)
+07:56:46 sudo mutis-admin unfreeze-credits → "credits unfrozen" (meta credit_freeze and
+         reconcile_mismatch removed)
+
+== After
+08:00:05 E-13's pack payment (500,000 µT, built and sent by the browser's own wallet in direct mode)
+         seen and credited in the same pass: Waiting → Seen → Amount proven → Added, quota +2 GiB
+08:01:06 E-29's test money (100,000 µT) counted for its claim, Unlocked 12 s after Pay
+12:00:08 the daily evidence payment (500,000 µT) credited
+12:01    payments: credited 29; sale_payments: counted 35; meta credit_freeze and reconcile_mismatch
+         absent, reconcile_unknown 0; five hourly reconciles `ok` since the fix

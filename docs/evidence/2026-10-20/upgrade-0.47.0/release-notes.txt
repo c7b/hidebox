@@ -1,0 +1,64 @@
+Tari Ootle v0.46.1 (2026-10-14) and v0.47.0 (2026-10-20, published 05:43:55Z), read as data from
+the GitHub releases, the v0.47.0 CHANGELOG.md and the pull requests named below (gh api, 07:13 to
+07:30 UTC). Only what touches hidebox is listed; the rest is validator, consensus and template work.
+
+== What broke at about 05:20 UTC (the indexers moved to 0.47.0 before the release was published)
+
+#2968 "feat(indexer)!: serve down proofs over REST" (merged 2026-10-16), the contract change:
+  GET /substates/{id} answers `{"version", "state": {"up": {"substate": …}}, "verified", "proof"?}`
+  in place of `{"version", "substate": …, "verified", "proof"?}`. "Every Rust, TS and raw-JSON client of
+  GET /substates/{id} has to read state.up.substate."
+  A spent version answers 200 `{"version": V, "state": {"down": {}}, "verified": true, "proof": {…,
+  "down_proof": "<base64>"}}`, but only for `?version=V&include_proof=true` and only when the indexer
+  verified a down proof. "Still 404: a request without include_proof, an unversioned read …, and a down
+  the indexer could not prove." POST /substates/fetch is unchanged.
+  Live, 07:13: an unversioned read of a spent UTXO (with include_proof=true) still answers 404 "Input
+  substate … (v0) is down" (indexer-b); with `version=0&include_proof=true` it answers 200 with
+  `state.down` and a `down_proof` (18,024 B, both indexers the same bytes). Fixtures:
+  server/tests/fixtures/indexer-substates-0.47.0.json and web/app/tests/vectors/ (the same file).
+  → walletd 0.46.0: "Failed to deserialize response for path substates/component_…" on every account
+    refresh and on every manifest it builds (SealLog checkpoints and notarizations need the component).
+    Its stealth sends kept committing (they read no substate it can't parse): every decoy and canary
+    delivery between 05:21 and 07:19 is `done`.
+  → our code: payments.utxo_on_indexer (pack credits), sales.check_pending (pay to open), the hourly
+    reconcile (every credited output read as `missing`: a mismatch at 05:33:15, the freeze at 05:38:15),
+    mirror.add_committed, the tx view's indexer facts, tools/verify-deploy.py's SealLog check,
+    publish-template.sh's checks, and in the browser wallet.js (an input's substate before a send),
+    pay.js and seallog.js (the /verify proof against the component's state).
+
+== The rest of v0.47.0 that touches us
+
+- "Upgrade wallets to v0.47.0; older wallets can't read from or transact on the upgraded network."
+- Wallets verify their indexer by default (`indexer_trust = "verify"`): a transaction's changes are
+  committed only once a proof of them verifies against the validator sets the wallet trusts
+  (#2961, #2976, #2977). walletd anchors on first use, taking its indexer's word for that first set,
+  then walks the end-of-epoch handovers (`validator_set.get_status`, new in 0.47.0). Live: anchored at
+  epoch 12506, `FirstUse`, 07:19.
+- walletd config: no key removed for the wallet daemon. The indexer list is still the key
+  `indexer_api_url` (`#[serde(rename = "indexer_api_url")]` in applications/tari_walletd/src/config.rs
+  at v0.47.0; there is no `indexer_urls`); ours already names both indexers. The removed GraphQL
+  settings (#2926) are the indexer's own (`graphql_address`, `web_ui_public_graphql_url`); our
+  config.toml never set them. `deny_unknown_fields` holds, and our walletd section has only
+  `indexer_api_url` (plus the keyring password run-walletd.sh adds to its private copy).
+- walletd store: two migrations, both additive: 2026-10-14-000000_lock_owner (`ALTER TABLE locks ADD
+  COLUMN owner`) and 2026-10-16-000000_trusted_validator_sets (a new table).
+- "walletd: result waits time out after five minutes with TransactionPending (1003)" (#2987): our waits
+  are 1 to 5 s (mutis-chain) and 120 s at most (mutis-admin), so they still end with `timed_out`.
+- "transactions are signed only with account, transaction, nonce and imported keys" (#2960): the
+  SealLog calls and publish-template.sh sign with the `service` account's key.
+- "Confidential outputs must promise a minimum value of at least 1" (#2978): "Stealth outputs use a
+  separate path and are unchanged" (the PR). Every output hidebox builds or pays with is a stealth
+  output; the decoys committed at 06:37 still promise 0.
+- GET /epoch-checkpoints returns typed entries, GET /substates (batch) shares commit proofs per anchor
+  (#2954, #3002): not used by hidebox. /utxos/stream and /utxos/fetch: the stream's
+  `max_state_version` is documented as a resume point (#2989, #2995); the mirror kept filling
+  through the outage (mirror_ok_at fresh, the last rows came from the 06:37 decoy).
+- walletd's JSON-RPC answers an expired or foreign JWT with error code 401 (ApplicationErrorCode::
+  Unauthorized). After the restart the chain worker's cached token was refused until it aged out
+  (up to 4 minutes): see walletd.txt.
+- ootle-wasm 0.47.0: "stealth amounts outside the u64 range are rejected" (#2983). Not needed for the
+  sidecar: it only opens outputs and derives keys from what the worker hands it, and never reads an
+  indexer answer (see README, "ootle-wasm").
+
+v0.46.1 (skipped by us): validators abort expired cross-shard transactions; the indexer's
+GET /non-fungibles is removed (#2904; not used by hidebox).

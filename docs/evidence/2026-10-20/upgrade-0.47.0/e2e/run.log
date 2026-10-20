@@ -1,0 +1,4 @@
+PASS E-13     39.3s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
+PASS E-25     21.8s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+PASS E-29     53.2s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+e2e: PASS {'PASS': 3, 'FAIL': 0, 'SKIP': 0} → report.json

@@ -1,0 +1,46 @@
+The chain worker (mutis-chain) and the SealLog log around the outage, 2026-10-20 (UTC). From
+`journalctl -u mutis-chain --utc` (events only) and read-only queries of seal_checkpoints and jobs.
+
+== Timeline
+05:06:46 checkpoint #776 committed (chain index 775, epoch 12502): the last before the outage
+05:12:44, 05:12:47 chain.indexer_error   (the indexers restarting onto v0.47.0)
+05:21:46 chain.seal_failed + chain.walletd_down   (#777: walletd 0.46.0 can't read the service component)
+         … the same every 10 minutes (#777 to #789, 13 checkpoints, none submitted, so nothing stuck in walletd)
+05:21:53 chain.canary_sealed → 05:22:08 job_done → 05:22:19 chain.canary_verified   (sends kept working)
+05:33:15 chain.reconcile_mismatch   (the hourly reconcile read every credited output as `missing`: the
+         indexer's answer no longer had a top-level `substate`)
+05:38:15 chain.credit_freeze (critical)   (the five-minute recheck agreed: meta credit_freeze = 1)
+06:38:15 chain.credit_freeze; 07:05:39 chain.credit_freeze (after a deploy's restart at 07:05:30)
+07:19:23 walletd 0.47.0 (drill-log.txt)
+07:21:46 chain.seal_failed (#789: the worker's stale JWT, walletd.txt)
+07:22:20 the live release notarized again (below)
+07:22:34 job_done, 07:22:45 chain.canary_verified
+07:26:55 chain.seal_checkpoint: #790 committed (after `mutis-admin seal-now`)
+
+Jobs between 05:21 and 07:19 (decoys and canary deliveries from `sponsor`): every one `done`, none
+failed. Mirror: no gap (`mirror_ok_at` stayed fresh; rows up to the 06:37 decoy at epoch 12505).
+
+== The first checkpoint after the upgrade
+  #790  committed  tx a3e11f3933b8caaac26bee8711a63ab34e9a9b151dffd6c734650d5666a1b6f3
+        created and submitted 07:26:54, epoch 12506, chain index 776, tree size 50,560
+  It follows #776 (index 775) on the component; #777 to #789 were never submitted, and #790's tree
+  places their leaves (a failed checkpoint's leaves go into the next one: seallog.py).
+
+== Notarization
+`deploy.sh` notarizes after each deploy; the release deployed at 07:05:30 during the outage
+(bfd72c8a4fd6…-c0c434b1c) had failed to. Run again with walletd 0.47.0:
+  $ sudo python3 -I /srv/mutis/app/current/deploy/scripts/notarize-release.py      (07:22:13 to 07:22:20)
+  notarize: bfd72c8a4fd605ebdcc617423e2cf249a2d6ded6-c0c434b1c manifest 1816058925e6… in tx 244f57fda41ef1ddaeab5052092752d7c3c18670b1c229fdf3d9bca9d53ebb00
+  /releases.json: {"release": "bfd72c8…-c0c434b1c", "manifest_sha256": "1816058925e6…7909",
+                   "tx_id": "244f57fd…bb00", "at": "2026-10-20T07:22:20Z"}
+
+== After the fix (release e6d5f7c, the worker restarted at 07:56:29)
+07:56:38 chain.reconcile_ok (the first round with the new code; credits were unfrozen at 07:56:46)
+07:56:55 chain.seal_checkpoint: #792 committed (chain index 778)
+  `e6d5f7c` notarized at 07:56:32 by deploy.sh (tx 465464d32ab4fc1018182e3f807abd3b4e8a50aca7163f52825da1a5cf48a2a6)
+By 12:01: #790 to #808 all committed (19; #808 at 11:56:58, chain index 794), chain.reconcile_ok every
+hour (5), 23 jobs done, 5 canaries sealed and verified; /status.json green.
+The live log read through our proxy with the app's own readSealLog (web/app/lib/seallog.js) at 07:59:
+64 checkpoints, the last index 778, epoch 12507, 50,688 leaves, the 2.0.0 template, the service key as
+writer; the code before the fix throws "a SealLog that can be rewritten" on the same answer (what
+/verify showed from 05:12 to 07:56).

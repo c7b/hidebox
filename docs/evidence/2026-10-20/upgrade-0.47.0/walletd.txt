@@ -1,0 +1,36 @@
+walletd around the indexers' move to v0.47.0 and the upgrade, 2026-10-20 (UTC; journalctl --utc).
+Ids are cut where the full value isn't the point.
+
+== 0.46.0 when the indexers moved (journal of walletd[771])
+05:12:41 WARN finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+05:12:42 ERROR Error checking pending transactions: … HTTP status server error (521 <unknown status code>) for url (https://ootle-indexer-b…
+05:12:52 ERROR Error checking pending transactions: … HTTP status server error (500 Internal Server Error) …   (the indexers restarting)
+05:13:07 ERROR account_monitor Error refreshing all accounts: Substate API error: Network interface error: Indexer client error:
+         Failed to deserialize response for path substates/component_ae57…ca71   (the `service` account; every minute from here)
+05:21:46 WARN json_rpc 🌐 JSON-RPC error: Network interface error: Indexer client error: Failed to deserialize response for path
+         substates/component_ae57…ca71: error decoding response body   (the chain worker's checkpoint #777: submit_manifest)
+… 142 "Failed to deserialize" lines between 05:13 and 07:19.
+Stealth sends kept working: walletd needs no substate read it can't parse for them, and every decoy
+and canary delivery from 05:21 to 07:19 committed (chain.txt). The 21 transactions of 2026-10-13 stay
+Pending (one "result not found" line each every 5 s, as before), and a599a962…, a dry run marked New
+since 2026-10-11, logs "Dry run transaction mismatch" every 5 s; both are older than this outage
+(../../2026-10-13/upgrade-0.46.0/walletd.txt) and unchanged by 0.47.0.
+
+== 0.47.0 from 07:19:23 (walletd[123384])
+07:19:23 Started walletd.service; the log4rs ownership warnings and the "auth to none" warning as before
+07:19:37 … 07:23:xx WARN json_rpc 🌐 JSON-RPC error: JWT error: InvalidSignature   (every 15 s)
+   The chain worker's cached JWT (240 s) was signed by the stopped process; walletd answers it with
+   JSON-RPC error 401 and the worker counted each as walletd down, so its checkpoint #789 (07:21:46)
+   failed. Its token aged out at about 07:23; the canary delivery that waited went at 07:22:34.
+   Fixed in the client: on a 401 the worker drops its token, asks for a new one and repeats the call
+   once (an unauthorized call never ran, so it can't pay twice); see the CHANGELOG.
+No "Failed to deserialize" since 07:19:23; nothing else but the old noise above.
+
+validator_set.get_status (07:19:43): {"indexer_trust": "verify", "trusted": {"epoch": 12506,
+  "anchor_epoch": 12506, "anchor": "FirstUse", "walk_failing_since": null, …}, "reanchors": []}
+
+== The sandbox
+walletd 0.47.0 runs under deploy/systemd/walletd.service unchanged (the same properties were tried on
+the drill's copy first; drill-log.txt): it writes only its wallet directory (the new
+trusted_validator_sets table is in the same store) and reaches only the indexers. No directive was
+loosened.

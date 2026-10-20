@@ -1,0 +1,559 @@
+== server: python3 -I -m unittest discover -s server/tests -v
+test_a_folder_visit_counts_as_an_open (test_activity.Opens.test_a_folder_visit_counts_as_an_open) ... ok
+test_an_ended_link_keeps_its_counts_until_its_tombstone_goes (test_activity.Opens.test_an_ended_link_keeps_its_counts_until_its_tombstone_goes) ... ok
+test_counted_per_utc_hour (test_activity.Opens.test_counted_per_utc_hour) ... ok
+test_only_opens_that_happened_count (test_activity.Opens.test_only_opens_that_happened_count) ... ok
+test_the_drive_lists_a_week_and_manage_all (test_activity.Opens.test_the_drive_lists_a_week_and_manage_all) ... ok
+test_the_table_holds_a_count_and_nothing_about_who (test_activity.Opens.test_the_table_holds_a_count_and_nothing_about_who) ... ok
+test_a_judge_pass_lifts_the_network_limits_of_grants_and_demo_payments (test_admin.Admin.test_a_judge_pass_lifts_the_network_limits_of_grants_and_demo_payments)
+App-core review M1: two judges behind one address each get a sponsor grant and a demo payment. ... INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=1
+INFO route=invoices.sponsor status=202 ms=3
+INFO route=invoices.create status=201 ms=2
+INFO route=invoices.demo_pay status=202 ms=2
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=1
+INFO route=invoices.sponsor status=202 ms=2
+INFO route=invoices.create status=201 ms=4
+INFO route=invoices.demo_pay status=202 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=2
+INFO route=system.pow status=200 ms=0
+INFO route=invoices.sponsor status=202 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=invoices.sponsor status=202 ms=1
+INFO route=system.pow status=200 ms=0
+INFO route=auth.register status=201 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=invoices.sponsor status=429 ms=5
+ok
+test_budget_overrides_only_lower (test_admin.Admin.test_budget_overrides_only_lower) ... ok
+test_check_config_and_migrate (test_admin.Admin.test_check_config_and_migrate) ... ok
+test_e2e_forged_payment_is_never_credited (test_admin.Admin.test_e2e_forged_payment_is_never_credited)
+E-14 (t/402): a forged 'proven' row for a UTXO that doesn't exist stays uncredited and shows up. ... INFO route=invoices.create status=201 ms=5
+INFO route=system.health status=200 ms=1
+INFO route=uploads.create status=201 ms=3
+INFO route=uploads.chunk status=204 ms=0
+INFO route=uploads.complete status=200 ms=3
+INFO route=shares.create status=201 ms=4
+INFO route=courier.send status=202 ms=4
+INFO event=chain.canary_sealed
+INFO event=chain.reconcile_ok
+INFO event=chain.job_done
+INFO event=chain.job_done
+INFO route=shares.open status=200 ms=1
+INFO event=chain.canary_verified
+INFO event=chain.job_done
+INFO route=invoices.get status=200 ms=1
+ok
+test_fixture_sanitizer (test_admin.Admin.test_fixture_sanitizer) ... ok
+test_freeze_feature_budget_unfreeze (test_admin.Admin.test_freeze_feature_budget_unfreeze) ... INFO route=system.pow status=200 ms=1
+INFO route=uploads.create status=503 ms=3
+INFO route=system.pow status=200 ms=0
+INFO route=uploads.create status=201 ms=9
+INFO route=drops.create status=503 ms=5
+ok
+test_judge_pass (test_admin.Admin.test_judge_pass) ... INFO route=drops.create status=201 ms=3
+INFO route=drops.create status=201 ms=1
+INFO route=drops.create status=201 ms=4
+INFO route=drops.create status=403 ms=2
+INFO route=system.pow status=200 ms=0
+INFO route=drops.create status=201 ms=2
+INFO route=courier.send status=429 ms=4
+INFO route=courier.send status=202 ms=3
+INFO route=courier.send status=202 ms=5
+INFO route=courier.send status=403 ms=2
+INFO route=courier.send status=428 ms=2
+ok
+test_judge_pass_expires (test_admin.Admin.test_judge_pass_expires) ... INFO route=drops.create status=403 ms=2
+ok
+test_judge_pass_extend (test_admin.Admin.test_judge_pass_extend)
+The same passes, uses kept, valid through the day named; codes come on stdin; unknown codes change ... ok
+test_migrate_check_reports_pending_without_changing (test_admin.Admin.test_migrate_check_reports_pending_without_changing) ... ok
+test_release_pack (test_admin.Admin.test_release_pack) ... ok
+test_takedown_share_item_drop (test_admin.Admin.test_takedown_share_item_drop) ... INFO route=shares.status status=410 ms=0
+INFO route=system.pow status=200 ms=0
+INFO route=drops.create status=201 ms=3
+INFO route=drops.get status=410 ms=0
+ok
+test_once_link_fifty_threads (test_burn_race.BurnRace.test_once_link_fifty_threads) ... ok
+test_three_views_fifty_threads (test_burn_race.BurnRace.test_three_views_fifty_threads) ... ok
+test_a_canary_sealed_before_the_log_kept_copies_gets_one_while_its_link_lives (test_canary.Canary.test_a_canary_sealed_before_the_log_kept_copies_gets_one_while_its_link_lives)
+The deploy that brings the copies: canaries already sealed get theirs at the new worker's first tick, ... ok
+test_a_key_neither_the_verifier_nor_the_chain_gives_back_is_published_as_missed (test_canary.Canary.test_a_key_neither_the_verifier_nor_the_chain_gives_back_is_published_as_missed)
+App-core review L8: an hour whose key can't be had shows as missed, never skipped, and the worker ... event=chain.canary_missed
+event=chain.canary_missed
+ok
+test_a_restart_loses_no_key (test_canary.Canary.test_a_restart_loses_no_key)
+owner-5: the sidecar keeps canary keys in memory, so a restart used to publish every hour younger than a ... ok
+test_canary_round_trip_and_reveal (test_canary.Canary.test_canary_round_trip_and_reveal) ... ok
+test_daily_evidence_payment (test_canary.Canary.test_daily_evidence_payment) ... ok
+test_hourly_cadence (test_canary.Canary.test_hourly_cadence) ... ok
+test_status_says_when_walletd_stops_answering (test_canary.Canary.test_status_says_when_walletd_stops_answering)
+The healthcheck reads walletd's state from the status, so a walletd that doesn't answer must be ... ok
+test_status_says_whether_the_verifier_answers (test_canary.Canary.test_status_says_whether_the_verifier_answers)
+Before the first canary is in the mirror there is nothing to scan; the status (the healthcheck's ... event=chain.sidecar_restart
+ok
+test_abandoned_upload_releases_its_reservation (test_cleanup.Cleanup.test_abandoned_upload_releases_its_reservation) ... ok
+test_done_unlinks_at_once (test_cleanup.Cleanup.test_done_unlinks_at_once) ... ok
+test_doomed_blob_waits_for_its_ticket (test_cleanup.Cleanup.test_doomed_blob_waits_for_its_ticket) ... ok
+test_expiry_answers_410_expired_and_scrubs (test_cleanup.Cleanup.test_expiry_answers_410_expired_and_scrubs) ... ok
+test_hourly_quota_step (test_cleanup.Cleanup.test_hourly_quota_step) ... ok
+test_lapse_deletes_oldest_kept_files_after_grace (test_cleanup.Cleanup.test_lapse_deletes_oldest_kept_files_after_grace) ... ok
+test_tombstones_and_closed_drops_purged_after_30_days (test_cleanup.Cleanup.test_tombstones_and_closed_drops_purged_after_30_days) ... ok
+test_unshared_ephemeral_item_waits_then_is_doomed (test_cleanup.Cleanup.test_unshared_ephemeral_item_waits_then_is_doomed) ... ok
+test_abuse (test_contract.CanaryAbuseSeal.test_abuse) ... ok
+test_canary_absent_then_present (test_contract.CanaryAbuseSeal.test_canary_absent_then_present) ... ok
+test_seallog_endpoints (test_contract.CanaryAbuseSeal.test_seallog_endpoints) ... ok
+test_a_committed_transaction_polled_through_the_proxy_is_mirrored (test_contract.ChainReads.test_a_committed_transaction_polled_through_the_proxy_is_mirrored)
+Direct mode: a browser polls its own transaction's result through the proxy; once it has ... ok
+test_proxy_allowlist (test_contract.ChainReads.test_proxy_allowlist) ... ok
+test_submitting_takes_a_locker_session_and_relays_only_our_sends (test_contract.ChainReads.test_submitting_takes_a_locker_session_and_relays_only_our_sends)
+Claims review item 21: the submit proxy is no address-hiding relay for any Esmeralda user. ... ok
+test_tx_view (test_contract.ChainReads.test_tx_view) ... ok
+test_tx_view_asks_every_indexer_and_caches_no_miss (test_contract.ChainReads.test_tx_view_asks_every_indexer_and_caches_no_miss)
+A transaction committed seconds ago can reach one indexer before the other: the view asks each, ... ok
+test_tx_view_before_the_receipt_is_filed (test_contract.ChainReads.test_tx_view_before_the_receipt_is_filed)
+Indexers file a transaction's receipt minutes after it is final; until then the view comes from ... ok
+test_tx_view_reads_each_output_before_calling_it_hidden (test_contract.ChainReads.test_tx_view_reads_each_output_before_calling_it_hidden)
+Review M7: "hidden" only where the output was read and reveals nothing. ... ok
+test_unknown_ids_have_a_budget_of_their_own_and_never_empty_the_send_lane (test_contract.ChainReads.test_unknown_ids_have_a_budget_of_their_own_and_never_empty_the_send_lane)
+Security review, finding 2: an unknown transaction id costs the indexers up to four calls and ... ok
+test_utxos_and_seq (test_contract.ChainReads.test_utxos_and_seq) ... ok
+test_chain_unavailable_and_feature_disabled (test_contract.CourierAndJobs.test_chain_unavailable_and_feature_disabled) ... ok
+test_courier_to_drop_and_address (test_contract.CourierAndJobs.test_courier_to_drop_and_address) ... ok
+test_drop_address_errors (test_contract.Drops.test_drop_address_errors) ... ok
+test_drop_lifecycle (test_contract.Drops.test_drop_lifecycle) ... ok
+test_a_link_without_an_expiry_takes_the_files_own (test_contract.Links.test_a_link_without_an_expiry_takes_the_files_own)
+Security review, finding 6: an anonymous file's default expiry (a day, rounded up to the hour) ... ok
+test_adopt (test_contract.Links.test_adopt) ... ok
+test_create_status_peek_open_once (test_contract.Links.test_create_status_peek_open_once) ... ok
+test_expiries_are_whole_hours (test_contract.Links.test_expiries_are_whole_hours)
+An expiry at least an hour away is stored rounded up to the hour (an exact one would give the arrival ... ok
+test_items_page_cursor (test_contract.Links.test_items_page_cursor)
+Review L11: the cursor names this locker's own last row, not a global row number. ... ok
+test_kept_items (test_contract.Links.test_kept_items) ... ok
+test_no_server_side_keep (test_contract.Links.test_no_server_side_keep)
+Review H4: a recipient can't take over a sender's file; the link ends only on its own rule. ... ok
+test_password_link_status_and_kdf (test_contract.Links.test_password_link_status_and_kdf) ... ok
+test_patch_manage_revoke_delete (test_contract.Links.test_patch_manage_revoke_delete) ... ok
+test_share_errors_and_class_limits (test_contract.Links.test_share_errors_and_class_limits) ... ok
+test_stored_bytes (test_contract.Links.test_stored_bytes) ... ok
+test_ticket_range_download (test_contract.Links.test_ticket_range_download) ... ok
+test_bundle_and_delete_me (test_contract.Lockers.test_bundle_and_delete_me) ... ok
+test_register_session_me (test_contract.Lockers.test_register_session_me) ... ok
+test_invoice_and_demo_pay (test_contract.Payments.test_invoice_and_demo_pay) ... ok
+test_sold_out_and_sponsor_disabled (test_contract.Payments.test_sold_out_and_sponsor_disabled) ... ok
+test_config (test_contract.System.test_config) ... ok
+test_config_drive_blocks (test_contract.System.test_config_drive_blocks)
+16-drive-design §15 step 1: the drive's numbers are published before its routes; the features ... ok
+test_e2e_expiry_preset_only_when_configured (test_contract.System.test_e2e_expiry_preset_only_when_configured) ... ok
+test_health (test_contract.System.test_health) ... ok
+test_judge_demo_gone (test_contract.System.test_judge_demo_gone)
+14-ghost-design §9: the release's burned demo secret is served for /judges; anything that ... ok
+test_pow (test_contract.System.test_pow) ... ok
+test_stats_and_wall (test_contract.System.test_stats_and_wall) ... ok
+test_unknown_route_and_malformed_id (test_contract.System.test_unknown_route_and_malformed_id) ... ok
+test_wall_is_shuffled_and_holds_new_items_back (test_contract.System.test_wall_is_shuffled_and_holds_new_items_back)
+Review L3: no newest-first order to pick out a fresh upload, and nothing under an hour old. ... ok
+test_wall_shows_no_opens_and_no_takedowns (test_contract.System.test_wall_shows_no_opens_and_no_takedowns)
+Site review M15: nothing on the wall says whether or when a link was opened; a takedown (an abuse ... ok
+test_a_bad_rewrite_of_a_good_chunk_unregisters_it (test_contract.Uploads.test_a_bad_rewrite_of_a_good_chunk_unregisters_it)
+Review L2: the bytes on disk changed, so complete must not accept the earlier hash. ... ok
+test_anonymous_upload_flow (test_contract.Uploads.test_anonymous_upload_flow) ... ok
+test_chunk_errors_and_complete (test_contract.Uploads.test_chunk_errors_and_complete) ... ok
+test_errors (test_contract.Uploads.test_errors) ... ok
+test_locker_upload_and_quota (test_contract.Uploads.test_locker_upload_and_quota) ... ok
+test_upload_expiry_and_abort (test_contract.Uploads.test_upload_expiry_and_abort) ... ok
+test_a_slow_transaction_is_polled_and_never_sent_twice (test_courier.Courier.test_a_slow_transaction_is_polled_and_never_sent_twice) ... ok
+test_a_transaction_that_never_settles_is_given_up_and_scrubbed (test_courier.Courier.test_a_transaction_that_never_settles_is_given_up_and_scrubbed) ... event=chain.job_failed
+ok
+test_blob_must_be_125_bytes (test_courier.Courier.test_blob_must_be_125_bytes) ... ok
+test_budget_slices (test_courier.Courier.test_budget_slices) ... ok
+test_canary_evidence_courier (test_courier.Courier.test_canary_evidence_courier) ... ok
+test_claim_order_puts_evidence_and_reserved_first (test_courier.Courier.test_claim_order_puts_evidence_and_reserved_first) ... ok
+test_cleanup_scrubs_a_send_left_by_a_dead_worker (test_courier.Courier.test_cleanup_scrubs_a_send_left_by_a_dead_worker) ... ok
+test_crash_before_the_transaction_was_recorded (test_courier.Courier.test_crash_before_the_transaction_was_recorded)
+Claimed but not recorded as submitted: walletd may or may not have it. The job fails as ... event=chain.job_interrupted n=1
+ok
+test_crash_between_submit_and_result (test_courier.Courier.test_crash_between_submit_and_result)
+Review H1: the worker dies after walletd took the transfer. A restart waits for that same ... ok
+test_drop_courier_uses_the_drops_address (test_courier.Courier.test_drop_courier_uses_the_drops_address) ... ok
+test_jitter_bounds (test_courier.Courier.test_jitter_bounds) ... ok
+test_locker_and_destination_caps (test_courier.Courier.test_locker_and_destination_caps) ... ok
+test_lockers_cant_reach_the_evidence_slice (test_courier.Courier.test_lockers_cant_reach_the_evidence_slice)
+Review M3: lockers draining `reserved` leave the canary's and judges' sends untouched. ... ok
+test_memo_is_built_from_public_origin (test_courier.Courier.test_memo_is_built_from_public_origin) ... ok
+test_overrides_only_lower_a_budget (test_courier.Courier.test_overrides_only_lower_a_budget)
+Review M8: the API can write the database, so an override above the TOML value is ignored. ... ok
+test_payload_scrubbed_after_done_and_failed (test_courier.Courier.test_payload_scrubbed_after_done_and_failed) ... event=chain.job_failed
+event=chain.job_failed
+event=chain.job_failed
+ok
+test_refused_drop_deliveries_dont_use_up_the_drop (test_courier.Courier.test_refused_drop_deliveries_dont_use_up_the_drop) ... ok
+test_refused_senders_dont_use_up_a_destination (test_courier.Courier.test_refused_senders_dont_use_up_a_destination)
+Review M4: 25 refused tries from a locker with no sends left don't touch the address's 20 a day. ... ok
+test_unexpected_errors_end_the_job (test_courier.Courier.test_unexpected_errors_end_the_job) ... event=chain.job_failed
+event=chain.job_failed
+event=chain.job_failed
+ok
+test_worker_rejects_foreign_memos (test_courier.Courier.test_worker_rejects_foreign_memos) ... event=chain.job_failed
+ok
+test_decoy_send_looks_like_a_delivery (test_courier.Decoys.test_decoy_send_looks_like_a_delivery) ... ok
+test_mean_gap_over_a_simulated_day (test_courier.Decoys.test_mean_gap_over_a_simulated_day)
+S-11 as written: one simulated day (fixed seed) has a mean gap within 20 % of 900 s. ... ok
+test_mean_gap_over_a_simulated_month (test_courier.Decoys.test_mean_gap_over_a_simulated_month)
+A Poisson day varies by about ±10 % (1 σ); thirty days must land within 5 % of the mean. ... ok
+test_beats_while_the_loop_moves_and_stops_when_it_stalls (test_courier.Heartbeat.test_beats_while_the_loop_moves_and_stops_when_it_stalls) ... ok
+test_hkdf_table (test_crossvectors.FormatV1.test_hkdf_table) ... ok
+test_identity_as_the_server_sees_it (test_crossvectors.FormatV1.test_identity_as_the_server_sees_it) ... ok
+test_padme_header_and_layout (test_crossvectors.FormatV1.test_padme_header_and_layout) ... ok
+test_pbkdf2_password (test_crossvectors.FormatV1.test_pbkdf2_password) ... ok
+test_pow_cases (test_crossvectors.FormatV1.test_pow_cases) ... ok
+test_scalar_reduction (test_crossvectors.FormatV1.test_scalar_reduction) ... ok
+test_verifiers (test_crossvectors.FormatV1.test_verifiers) ... ok
+test_same_paths_as_the_browser_vectors (test_crossvectors.Merkle.test_same_paths_as_the_browser_vectors) ... ok
+test_a_file_moved_out_mid_visit_is_refused_and_one_moved_in_is_served (test_folder_shares.FolderLinks.test_a_file_moved_out_mid_visit_is_refused_and_one_moved_in_is_served)
+E-28 (server part): membership is checked when a file is asked for, not when the visit began. ... ok
+test_a_file_ticket_serves_only_its_file (test_folder_shares.FolderLinks.test_a_file_ticket_serves_only_its_file) ... ok
+test_a_folder_with_a_secret_word (test_folder_shares.FolderLinks.test_a_folder_with_a_secret_word) ... ok
+test_a_visit_counts_each_files_daily_egress_as_it_is_served (test_folder_shares.FolderLinks.test_a_visit_counts_each_files_daily_egress_as_it_is_served)
+A folder bigger than a file's daily egress still opens; each file is counted as it is taken. ... ok
+test_five_concurrent_opens_of_a_once_folder_make_one_visit (test_folder_shares.FolderLinks.test_five_concurrent_opens_of_a_once_folder_make_one_visit) ... ok
+test_links_of_a_trashed_folder_end_and_new_ones_are_refused (test_folder_shares.FolderLinks.test_links_of_a_trashed_folder_end_and_new_ones_are_refused) ... ok
+test_open_returns_exactly_the_ready_subtree_outside_the_trash (test_folder_shares.FolderLinks.test_open_returns_exactly_the_ready_subtree_outside_the_trash) ... ok
+test_peek_says_folder_and_how_many_without_a_view (test_folder_shares.FolderLinks.test_peek_says_folder_and_how_many_without_a_view) ... ok
+test_the_byte_cap_counts_across_files (test_folder_shares.FolderLinks.test_the_byte_cap_counts_across_files) ... ok
+test_the_folder_ticket_serves_what_is_inside_and_nothing_else (test_folder_shares.FolderLinks.test_the_folder_ticket_serves_what_is_inside_and_nothing_else) ... ok
+test_too_many_items_answer_413_before_a_view_is_used (test_folder_shares.FolderLinks.test_too_many_items_answer_413_before_a_view_is_used) ... ok
+test_another_live_link_keeps_it_until_the_date (test_folder_shares.ThenDelete.test_another_live_link_keeps_it_until_the_date) ... ok
+test_exit_receipt_only_when_the_file_leaves (test_folder_shares.ThenDelete.test_exit_receipt_only_when_the_file_leaves)
+C42: a Once link on a kept file ends with no receipt (the viewer says the file stays); ... ok
+test_it_leaves_at_the_links_end_even_unopened (test_folder_shares.ThenDelete.test_it_leaves_at_the_links_end_even_unopened) ... ok
+test_rules (test_folder_shares.ThenDelete.test_rules) ... ok
+test_the_file_leaves_with_its_once_link (test_folder_shares.ThenDelete.test_the_file_leaves_with_its_once_link) ... ok
+test_another_drives_folder_is_forbidden (test_folders.Drive.test_another_drives_folder_is_forbidden) ... ok
+test_children_and_drive_limits (test_folders.Drive.test_children_and_drive_limits) ... ok
+test_create_at_root_and_nested (test_folders.Drive.test_create_at_root_and_nested) ... ok
+test_delete_after_dooms_a_kept_file_and_writes_its_exit_leaf (test_folders.Drive.test_delete_after_dooms_a_kept_file_and_writes_its_exit_leaf) ... ok
+test_delete_after_limits (test_folders.Drive.test_delete_after_limits) ... ok
+test_delete_folder_dooms_the_subtree (test_folders.Drive.test_delete_folder_dooms_the_subtree) ... ok
+test_deleting_the_drive_with_folders (test_folders.Drive.test_deleting_the_drive_with_folders) ... ok
+test_depth_limit (test_folders.Drive.test_depth_limit) ... ok
+test_drive_upload_limits (test_folders.Drive.test_drive_upload_limits)
+Folder uploads need more than the locker's 60 an hour: 600 per drive (100 on its first day), ... ok
+test_feature_off (test_folders.Drive.test_feature_off) ... ok
+test_gone_lists_what_left_for_the_tombstone_days (test_folders.Drive.test_gone_lists_what_left_for_the_tombstone_days) ... ok
+test_header_flag_rules (test_folders.Drive.test_header_flag_rules)
+Flags 1 with no chunks only on POST /folders; flags 0 with chunks only on uploads. ... ok
+test_lapse_deletes_the_trash_first (test_folders.Drive.test_lapse_deletes_the_trash_first) ... ok
+test_move_cycle_and_root (test_folders.Drive.test_move_cycle_and_root) ... ok
+test_move_keeps_the_depth_limit (test_folders.Drive.test_move_keeps_the_depth_limit) ... ok
+test_pages_in_a_folder_and_in_the_trash (test_folders.Drive.test_pages_in_a_folder_and_in_the_trash) ... ok
+test_rename_keeps_ct_hash_and_the_stored_leaf (test_folders.Drive.test_rename_keeps_ct_hash_and_the_stored_leaf) ... ok
+test_restore (test_folders.Drive.test_restore) ... ok
+test_takedown_of_a_folder_removes_what_it_holds (test_folders.Drive.test_takedown_of_a_folder_removes_what_it_holds) ... ok
+test_the_public_wall_shows_files_not_folders (test_folders.Drive.test_the_public_wall_shows_files_not_folders) ... ok
+test_trash_empties_after_its_days_with_exit_receipts (test_folders.Drive.test_trash_empties_after_its_days_with_exit_receipts) ... ok
+test_trash_ends_links_below_and_still_counts (test_folders.Drive.test_trash_ends_links_below_and_still_counts) ... ok
+test_uploads_with_a_parent_are_validated (test_folders.Drive.test_uploads_with_a_parent_are_validated) ... ok
+test_bad_query_values (test_input_safety.InputSafety.test_bad_query_values) ... ok
+test_binds_to_loopback_only (test_input_safety.InputSafety.test_binds_to_loopback_only) ... ok
+test_blob_paths_only_from_valid_ids (test_input_safety.InputSafety.test_blob_paths_only_from_valid_ids) ... ok
+test_chunk_longer_than_expected_is_rejected (test_input_safety.InputSafety.test_chunk_longer_than_expected_is_rejected) ... ok
+test_config_rules (test_input_safety.InputSafety.test_config_rules) ... ok
+test_headers_over_16_kib (test_input_safety.InputSafety.test_headers_over_16_kib) ... ok
+test_malformed_ids_fail_before_any_db_access (test_input_safety.InputSafety.test_malformed_ids_fail_before_any_db_access) ... ok
+test_malformed_json_and_chunked_bodies (test_input_safety.InputSafety.test_malformed_json_and_chunked_bodies) ... ok
+test_non_canonical_ticket_is_not_found (test_input_safety.InputSafety.test_non_canonical_ticket_is_not_found)
+Review L1: 43 base64url characters that don't encode 32 bytes canonically are a 404, not a 500. ... ok
+test_origin_check_on_state_changes (test_input_safety.InputSafety.test_origin_check_on_state_changes) ... ok
+test_oversized_json_is_413 (test_input_safety.InputSafety.test_oversized_json_is_413) ... ok
+test_requests_in_flight_are_capped_per_network (test_input_safety.InputSafety.test_requests_in_flight_are_capped_per_network)
+Deploy review M6: slow downloads from one /64 (or /48) can't hold every API thread. ... ok
+test_secret_comparisons_are_constant_time (test_input_safety.InputSafety.test_secret_comparisons_are_constant_time) ... ok
+test_x_real_ip_only_from_loopback (test_input_safety.InputSafety.test_x_real_ip_only_from_loopback) ... ok
+test_recorded_fetch (test_mirror.Framing.test_recorded_fetch) ... ok
+test_recorded_stream (test_mirror.Framing.test_recorded_stream) ... ok
+test_recorded_substates_of_the_0_47_indexer (test_mirror.Framing.test_recorded_substates_of_the_0_47_indexer)
+`state.up.substate` (0.47.0) and `substate` (before) give the same value; a proven down has none. ... ok
+test_source_names (test_mirror.Framing.test_source_names) ... ok
+test_a_committed_transactions_outputs_are_read_from_the_indexer (test_mirror.Mirror.test_a_committed_transactions_outputs_are_read_from_the_indexer)
+mirror.add_committed reads each new output with GET /substates (the fake indexer answers in ... ok
+test_cursors_paging_and_idempotence (test_mirror.Mirror.test_cursors_paging_and_idempotence) ... ok
+test_every_indexer_is_mirrored_with_its_own_cursors (test_mirror.Mirror.test_every_indexer_is_mirrored_with_its_own_cursors)
+A stale indexer (it answers, but its stream stopped advancing) hides nothing another one streams; ... ok
+test_mirror_records_what_each_output_reveals (test_mirror.Mirror.test_mirror_records_what_each_output_reveals) ... ok
+test_our_own_outputs_are_mirrored_when_they_commit (test_mirror.Mirror.test_our_own_outputs_are_mirrored_when_they_commit)
+The indexers stream an output only once the network's consensus epoch reaches it; the outputs of ... ok
+test_output_spent_before_fetch_is_skipped (test_mirror.Mirror.test_output_spent_before_fetch_is_skipped) ... ok
+test_contract_suite_logs_only_fixed_formats (test_never_store.Logs.test_contract_suite_logs_only_fixed_formats) ... ok
+test_known_values_never_logged (test_never_store.Logs.test_known_values_never_logged) ... ok
+test_forbidden_columns_absent (test_never_store.Schema.test_forbidden_columns_absent) ... ok
+test_a_pack_ended_early_frees_its_place_for_the_day (test_packs.Brakes.test_a_pack_ended_early_frees_its_place_for_the_day)
+A test run's pack ended with release-pack (or a deleted drive) no longer holds a place. ... ok
+test_one_pack_a_day_per_network_and_two_with_a_judge_pass (test_packs.Brakes.test_one_pack_a_day_per_network_and_two_with_a_judge_pass) ... ok
+test_our_evidence_invoice_and_a_refused_purchase_dont_count (test_packs.Brakes.test_our_evidence_invoice_and_a_refused_purchase_dont_count) ... ok
+test_the_kill_switch_stops_sales_and_test_money_at_once (test_packs.Brakes.test_the_kill_switch_stops_sales_and_test_money_at_once) ... ok
+test_three_public_packs_a_day_and_ten_with_judge_passes (test_packs.Brakes.test_three_public_packs_a_day_and_ten_with_judge_passes) ... ok
+test_brake_settings_are_checked (test_packs.Config.test_brake_settings_are_checked) ... ok
+test_a_judge_pass_has_its_own_and_a_paid_drive_its_pack (test_packs.FreeSpaceBrakes.test_a_judge_pass_has_its_own_and_a_paid_drive_its_pack) ... ok
+test_a_network_s_free_uploads_a_day (test_packs.FreeSpaceBrakes.test_a_network_s_free_uploads_a_day) ... ok
+test_a_refused_upload_gives_its_bytes_back (test_packs.FreeSpaceBrakes.test_a_refused_upload_gives_its_bytes_back) ... ok
+test_five_new_drives_a_day_per_network_unless_a_judge_pass (test_packs.FreeSpaceBrakes.test_five_new_drives_a_day_per_network_unless_a_judge_pass) ... ok
+test_twenty_new_drives_a_day_per_48_whatever_its_64s (test_packs.FreeSpaceBrakes.test_twenty_new_drives_a_day_per_48_whatever_its_64s) ... ok
+test_a_drive_with_a_pack_is_refused_until_its_last_days (test_packs.OnePackPerDrive.test_a_drive_with_a_pack_is_refused_until_its_last_days) ... ok
+test_a_renewal_reserves_no_bytes_and_passes_a_full_slice (test_packs.OnePackPerDrive.test_a_renewal_reserves_no_bytes_and_passes_a_full_slice) ... ok
+test_a_renewal_stacks_days_not_bytes (test_packs.OnePackPerDrive.test_a_renewal_stacks_days_not_bytes) ... ok
+test_an_open_invoice_is_handed_back_and_a_swap_costs_no_second_sale (test_packs.OnePackPerDrive.test_an_open_invoice_is_handed_back_and_a_swap_costs_no_second_sale) ... ok
+test_active_packs_count_and_expired_ones_dont (test_packs.Slices.test_active_packs_count_and_expired_ones_dont) ... ok
+test_judges_have_a_slice_the_public_cant_take (test_packs.Slices.test_judges_have_a_slice_the_public_cant_take) ... ok
+test_judges_spill_into_the_public_slice_when_theirs_is_used (test_packs.Slices.test_judges_spill_into_the_public_slice_when_theirs_is_used) ... ok
+test_the_big_pack_is_5_gib_for_1_ttari (test_packs.Slices.test_the_big_pack_is_5_gib_for_1_ttari) ... ok
+test_cleanup_writes_what_the_healthcheck_reads (test_packs.Visibility.test_cleanup_writes_what_the_healthcheck_reads) ... ok
+test_stats_show_the_public_slice_in_whole_gib (test_packs.Visibility.test_stats_show_the_public_slice_in_whole_gib) ... ok
+test_cleanup_expires_waiting_claims_and_ends_underpaid_ones_after_grace (test_paid_shares.Expiry.test_cleanup_expires_waiting_claims_and_ends_underpaid_ones_after_grace) ... ok
+test_a_claim_needs_pow_and_gets_its_own_address (test_paid_shares.PaidLinks.test_a_claim_needs_pow_and_gets_its_own_address) ... ok
+test_a_folder_page_counts_its_files (test_paid_shares.PaidLinks.test_a_folder_page_counts_its_files) ... ok
+test_a_link_without_its_key_still_needs_the_key (test_paid_shares.PaidLinks.test_a_link_without_its_key_still_needs_the_key) ... ok
+test_a_paid_link_is_a_plain_link_row_plus_its_price_and_our_half (test_paid_shares.PaidLinks.test_a_paid_link_is_a_plain_link_row_plus_its_price_and_our_half) ... ok
+test_claims_are_capped_per_link_and_refused_when_not_for_sale (test_paid_shares.PaidLinks.test_claims_are_capped_per_link_and_refused_when_not_for_sale) ... ok
+test_create_needs_the_feature_and_sidecar_proofs (test_paid_shares.PaidLinks.test_create_needs_the_feature_and_sidecar_proofs) ... ok
+test_create_refuses_what_cant_be_sold (test_paid_shares.PaidLinks.test_create_refuses_what_cant_be_sold) ... ok
+test_deleting_the_item_ends_its_paid_link (test_paid_shares.PaidLinks.test_deleting_the_item_ends_its_paid_link) ... ok
+test_ending_the_link_scrubs_our_half_and_voids_waiting_claims (test_paid_shares.PaidLinks.test_ending_the_link_scrubs_our_half_and_voids_waiting_claims) ... ok
+test_open_gate_402_403_410_and_each_open_spends_one (test_paid_shares.PaidLinks.test_open_gate_402_403_410_and_each_open_spends_one) ... ok
+test_pausing_stops_new_claims_and_keeps_released_opens (test_paid_shares.PaidLinks.test_pausing_stops_new_claims_and_keeps_released_opens) ... ok
+test_peek_and_stored_bytes_need_the_claim_too (test_paid_shares.PaidLinks.test_peek_and_stored_bytes_need_the_claim_too) ... ok
+test_the_claim_token_is_the_only_way_to_read_a_claim (test_paid_shares.PaidLinks.test_the_claim_token_is_the_only_way_to_read_a_claim) ... ok
+test_the_owner_sees_counts_and_earnings_never_who (test_paid_shares.PaidLinks.test_the_owner_sees_counts_and_earnings_never_who) ... ok
+test_the_pay_page_shows_only_what_a_buyer_needs (test_paid_shares.PaidLinks.test_the_pay_page_shows_only_what_a_buyer_needs) ... ok
+test_get_sales_shows_the_registration_and_nothing_to_check (test_paid_shares.SalesAddress.test_get_sales_shows_the_registration_and_nothing_to_check) ... ok
+test_put_refuses_a_reference_a_short_blob_no_session_and_too_many (test_paid_shares.SalesAddress.test_put_refuses_a_reference_a_short_blob_no_session_and_too_many) ... ok
+test_put_registers_and_replaces_the_sales_address (test_paid_shares.SalesAddress.test_put_registers_and_replaces_the_sales_address) ... ok
+test_a_confirm_from_someone_else_is_refused (test_paid_shares.TestMoneyGuards.test_a_confirm_from_someone_else_is_refused) ... ok
+test_demo_pay_caps_each_selling_drive (test_paid_shares.TestMoneyGuards.test_demo_pay_caps_each_selling_drive)
+Two test-money payments a day per selling drive, whatever network asks. ... ok
+test_demo_pay_queues_one_job_to_the_claim_address (test_paid_shares.TestMoneyGuards.test_demo_pay_queues_one_job_to_the_claim_address) ... ok
+test_demo_pay_refuses_without_the_token_when_paid_or_when_off (test_paid_shares.TestMoneyGuards.test_demo_pay_refuses_without_the_token_when_paid_or_when_off) ... ok
+test_backoff_then_permanent_lock (test_password.LinkPassword.test_backoff_then_permanent_lock) ... ok
+test_missing_link_proof_is_never_counted (test_password.LinkPassword.test_missing_link_proof_is_never_counted) ... ok
+test_backoff_and_pow_per_ip_key_never_permanent (test_password.PasswordOnly.test_backoff_and_pow_per_ip_key_never_permanent) ... ok
+test_busy_day_needs_twenty_bits (test_password.PasswordOnly.test_busy_day_needs_twenty_bits) ... ok
+test_memo_forms (test_payments.PayRef.test_memo_forms) ... ok
+test_a_forged_payment_still_freezes_when_the_indexers_answer_in_the_0_47_shape (test_payments.Payments.test_a_forged_payment_still_freezes_when_the_indexers_answer_in_the_0_47_shape)
+E-14 with 0.47.0 answers: a credited row for an output both indexers say doesn't exist holds ... event=chain.reconcile_mismatch
+event=chain.credit_freeze
+ok
+test_a_mismatch_needs_every_indexer_to_agree (test_payments.Payments.test_a_mismatch_needs_every_indexer_to_agree)
+Missing on one indexer and proven on the other is no mismatch; missing on both, twice in a row, ... event=chain.reconcile_unknown
+event=chain.reconcile_mismatch
+event=chain.credit_freeze
+ok
+test_a_one_off_mismatch_holds_credits_until_the_recheck (test_payments.Payments.test_a_one_off_mismatch_holds_credits_until_the_recheck)
+One hourly round can find a mismatch no other round finds (it happened once in production), and ... ok
+test_a_proven_spent_credited_output_freezes (test_payments.Payments.test_a_proven_spent_credited_output_freezes)
+A credited output both indexers prove spent (`state.down`) is gone, like a 404 "… is down": the ... event=chain.reconcile_mismatch
+event=chain.credit_freeze
+ok
+test_a_transient_indexer_error_never_freezes_credits (test_payments.Payments.test_a_transient_indexer_error_never_freezes_credits)
+Review H3: a 503 or 429 from the indexers' CDN skips the hourly check; the next buyer is credited. ... event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+ok
+test_an_answer_in_a_shape_we_cant_read_never_freezes_credits (test_payments.Payments.test_an_answer_in_a_shape_we_cant_read_never_freezes_credits)
+A 200 whose shape has neither a `state` nor a `substate` we can read (an indexer release that moved ... event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_unknown
+event=chain.reconcile_mismatch
+event=chain.credit_freeze
+ok
+test_check_outcomes (test_payments.Payments.test_check_outcomes)
+ok needs a verified Utxo; the indexer's own 404 or an unverified answer is missing; the rest, ... ok
+test_check_outcomes_of_the_0_47_indexer (test_payments.Payments.test_check_outcomes_of_the_0_47_indexer)
+tari_indexer 0.47.0 answers `state.up.substate` for a live output and, for a spent version it can ... ok
+test_crafted_mismatch_is_rejected_by_the_sidecar (test_payments.Payments.test_crafted_mismatch_is_rejected_by_the_sidecar)
+Swapping nonce and encrypted data between outputs claims a value the commitment doesn't hold. ... ok
+test_demo_pay_end_to_end (test_payments.Payments.test_demo_pay_end_to_end)
+The judge path: demo-pay → sponsor sends → mirror → sidecar proves → indexer confirms → +2 GiB. ... ok
+test_demo_payments_go_only_to_our_receiver (test_payments.Payments.test_demo_payments_go_only_to_our_receiver)
+Review M8: the API can write `meta.receiver_address`; the worker pays only the receiver it ... event=chain.job_failed
+ok
+test_duplicate_utxo_is_credited_once (test_payments.Payments.test_duplicate_utxo_is_credited_once)
+Seeing the same UTXO twice must not credit twice (t/402: deposits were inflated). ... ok
+test_indexer_failover_after_three_failures (test_payments.Payments.test_indexer_failover_after_three_failures)
+After three failed reads on indexer-b the check moves to indexer-a; it still needs verified:true. ... ok
+test_indexer_refusals_never_credit (test_payments.Payments.test_indexer_refusals_never_credit)
+404, verified:false, "is down" and proven-spent answers are failures, never credits (t/402). ... ok
+test_one_payment_credits_at_most_the_price (test_payments.Payments.test_one_payment_credits_at_most_the_price)
+An oversized payment is recorded with its value, but credits only the invoice price. ... ok
+test_outputs_that_are_not_ours_are_ignored (test_payments.Payments.test_outputs_that_are_not_ours_are_ignored)
+The sidecar can't open other people's outputs, so they never become payments (t/402). ... ok
+test_reconcile_mismatch_freezes_credits (test_payments.Payments.test_reconcile_mismatch_freezes_credits)
+A credited row the sidecar can't re-prove (a forged insert, E-14) holds all crediting, and the ... event=chain.reconcile_mismatch
+event=chain.credit_freeze
+event=chain.credit_freeze
+ok
+test_the_0_47_answers_never_freeze_credits (test_payments.Payments.test_the_0_47_answers_never_freeze_credits)
+Every credited output read in the 0.47.0 shape is proven: the hourly check and its recheck stay ok, ... ok
+test_the_fake_indexer_answers_like_0_47 (test_payments.Payments.test_the_fake_indexer_answers_like_0_47)
+The dev stack's indexer: a live output in `state.up.substate`; a spent one a 404 "… is down", or a ... ok
+test_underpaid_then_topped_up (test_payments.Payments.test_underpaid_then_topped_up)
+Partial payments add up; the invoice is credited only when proven value reaches the price. ... ok
+test_unknown_pay_ref_is_unattributed (test_payments.Payments.test_unknown_pay_ref_is_unattributed)
+A proven payment with no matching invoice is recorded for a manual refund, never credited (t/402). ... ok
+test_wallet_mode_credit (test_payments.WalletFallback.test_wallet_mode_credit) ... ok
+test_a_challenge_is_bound_to_the_network_it_was_issued_to (test_pow.Escalation.test_a_challenge_is_bound_to_the_network_it_was_issued_to) ... ok
+test_a_stockpile_cant_skip_the_escalation (test_pow.Escalation.test_a_stockpile_cant_skip_the_escalation) ... ok
+test_padme (test_quota.Formula.test_padme) ... ok
+test_smoothing (test_quota.Formula.test_smoothing) ... ok
+test_spec_worked_examples (test_quota.Formula.test_spec_worked_examples) ... ok
+test_vectors (test_quota.Formula.test_vectors) ... ok
+test_concurrent_reservations_never_exceed_the_lane (test_quota.Lanes.test_concurrent_reservations_never_exceed_the_lane) ... ok
+test_freeze_thresholds (test_quota.Lanes.test_freeze_thresholds) ... ok
+test_n_counts_only_lockers_active_on_two_days_that_store_something (test_quota.Lanes.test_n_counts_only_lockers_active_on_two_days_that_store_something)
+Review L6: lockers made only to be counted (a request on a second day, nothing stored) don't ... ok
+test_paid_locker_limits (test_quota.Lanes.test_paid_locker_limits) ... ok
+test_small_lane_demo_reserve (test_quota.Lanes.test_small_lane_demo_reserve) ... ok
+test_canary_sealed_through_this_api_and_opened_with_robot_keys (test_real_sidecar.RealSidecar.test_canary_sealed_through_this_api_and_opened_with_robot_keys) ... skipped 'set MUTIS_SIDECAR_DIR (needs Debian nodejs)'
+test_pinned_wasm_selftest_and_scan (test_real_sidecar.RealSidecar.test_pinned_wasm_selftest_and_scan) ... skipped 'set MUTIS_SIDECAR_DIR (needs Debian nodejs)'
+test_receiver_ownership_with_the_real_library (test_real_sidecar.RealSidecar.test_receiver_ownership_with_the_real_library)
+R1 (16-drive-architecture §1.1): the worker's ownership check with the official library, on the ... skipped 'set MUTIS_SIDECAR_DIR (needs Debian nodejs)'
+test_wrong_pin_refused (test_real_sidecar.RealSidecar.test_wrong_pin_refused) ... skipped 'set MUTIS_SIDECAR_DIR (needs Debian nodejs)'
+test_a_genuine_payment_after_a_forgery_still_credits (test_receiver_ownership.ReceiverOwnership.test_a_genuine_payment_after_a_forgery_still_credits) ... event=chain.payment_not_ours
+ok
+test_a_sidecar_that_cant_answer_holds_the_payment (test_receiver_ownership.ReceiverOwnership.test_a_sidecar_that_cant_answer_holds_the_payment)
+No answer about ownership is never a credit: the payment waits, then credits once the sidecar ... event=chain.sidecar_error
+event=chain.sidecar_error
+event=chain.sidecar_error
+ok
+test_a_spend_rule_that_is_not_a_key_is_rejected (test_receiver_ownership.ReceiverOwnership.test_a_spend_rule_that_is_not_a_key_is_rejected)
+An output locked by another rule than a one-time key can't be spent by our owner key either. ... event=chain.payment_not_ours
+ok
+test_an_output_our_view_key_opens_but_we_cant_spend_is_rejected (test_receiver_ownership.ReceiverOwnership.test_an_output_our_view_key_opens_but_we_cant_spend_is_rejected)
+The forgery: amount proven with our view key, committed on chain, memo naming the invoice, and ... ok
+test_the_check_reads_the_key_and_nonce_the_indexer_shows (test_receiver_ownership.ReceiverOwnership.test_the_check_reads_the_key_and_nonce_the_indexer_shows)
+`owns` gets the substate's own nonce and one-time key; the verdicts map to credit, reject, wait. ... ok
+test_the_reconcile_ignores_rejected_outputs (test_receiver_ownership.ReceiverOwnership.test_the_reconcile_ignores_rejected_outputs)
+The forger spends their output back: the hourly reconcile only re-proves credited outputs, so it ... event=chain.payment_not_ours
+ok
+test_a_forgery_the_owner_marks_bad_is_void (test_release_gate.ReleaseGate.test_a_forgery_the_owner_marks_bad_is_void)
+The R2 forgery on the fake chain: the seller's view key opens it, the payer keeps the spend key. ... ok
+test_a_payment_from_a_wallet_never_releases_before_the_owners_check (test_release_gate.ReleaseGate.test_a_payment_from_a_wallet_never_releases_before_the_owners_check) ... ok
+test_only_the_owner_answers_and_only_for_a_paid_claim (test_release_gate.ReleaseGate.test_only_the_owner_answers_and_only_for_a_paid_claim) ... ok
+test_payments_list_for_received (test_release_gate.ReleaseGate.test_payments_list_for_received)
+§10 track two step 5: GET /me/sales lists this drive's payments with their link, the ... ok
+test_test_money_releases_at_paid_without_a_check (test_release_gate.ReleaseGate.test_test_money_releases_at_paid_without_a_check) ... ok
+test_the_owner_ending_the_link_before_the_check_voids_the_claim (test_release_gate.ReleaseGate.test_the_owner_ending_the_link_before_the_check_voids_the_claim) ... ok
+test_the_owners_ok_releases_on_the_next_poll (test_release_gate.ReleaseGate.test_the_owners_ok_releases_on_the_next_poll) ... ok
+test_two_outputs_release_only_when_both_are_the_owners (test_release_gate.ReleaseGate.test_two_outputs_release_only_when_both_are_the_owners) ... ok
+test_a_claim_reference_never_goes_to_our_receiver_check_and_back (test_sales_worker.DemoPayForClaims.test_a_claim_reference_never_goes_to_our_receiver_check_and_back)
+`inv_` refs keep the old rule (our receiver only); a `clm_` ref is checked against the claim. ... event=chain.job_failed
+ok
+test_a_top_up_of_someone_elses_partial_payment_is_not_test_money (test_sales_worker.DemoPayForClaims.test_a_top_up_of_someone_elses_partial_payment_is_not_test_money) ... ok
+test_test_money_pays_marks_the_claim_and_releases_it (test_sales_worker.DemoPayForClaims.test_test_money_pays_marks_the_claim_and_releases_it) ... ok
+test_the_worker_refuses_a_closed_claim_or_an_unready_seller (test_sales_worker.DemoPayForClaims.test_the_worker_refuses_a_closed_claim_or_an_unready_seller) ... event=chain.job_failed
+event=chain.job_failed
+ok
+test_the_worker_refuses_another_address (test_sales_worker.DemoPayForClaims.test_the_worker_refuses_another_address) ... event=chain.job_failed
+ok
+test_the_worker_refuses_more_than_what_is_missing (test_sales_worker.DemoPayForClaims.test_the_worker_refuses_more_than_what_is_missing) ... event=chain.job_failed
+ok
+test_a_blob_that_doesnt_hold_the_addresses_view_key_is_bad_key (test_sales_worker.SalesWorker.test_a_blob_that_doesnt_hold_the_addresses_view_key_is_bad_key) ... event=chain.seller_bad_key
+event=chain.seller_bad_key
+event=chain.seller_bad_key
+ok
+test_a_message_memo_with_the_claim_id_counts_like_a_pay_ref (test_sales_worker.SalesWorker.test_a_message_memo_with_the_claim_id_counts_like_a_pay_ref) ... ok
+test_a_payment_after_the_grace_is_never_seen (test_sales_worker.SalesWorker.test_a_payment_after_the_grace_is_never_seen) ... ok
+test_a_utxo_counts_once_ever (test_sales_worker.SalesWorker.test_a_utxo_counts_once_ever) ... ok
+test_after_a_restart_the_worker_opens_the_sealed_key_again (test_sales_worker.SalesWorker.test_after_a_restart_the_worker_opens_the_sealed_key_again) ... ok
+test_an_overpayment_counts_in_full_and_a_later_one_is_extra (test_sales_worker.SalesWorker.test_an_overpayment_counts_in_full_and_a_later_one_is_extra) ... ok
+test_found_seen_counted_paid (test_sales_worker.SalesWorker.test_found_seen_counted_paid) ... ok
+test_nothing_runs_with_the_feature_off (test_sales_worker.SalesWorker.test_nothing_runs_with_the_feature_off) ... ok
+test_sellers_take_turns (test_sales_worker.SalesWorker.test_sellers_take_turns) ... ok
+test_the_pack_credit_freeze_does_not_stop_sales (test_sales_worker.SalesWorker.test_the_pack_credit_freeze_does_not_stop_sales) ... ok
+test_the_scan_starts_where_the_oldest_waiting_claim_was_made (test_sales_worker.SalesWorker.test_the_scan_starts_where_the_oldest_waiting_claim_was_made) ... ok
+test_the_sellers_other_income_and_other_sellers_claims_are_not_recorded (test_sales_worker.SalesWorker.test_the_sellers_other_income_and_other_sellers_claims_are_not_recorded) ... ok
+test_the_watch_key_opens_and_the_seller_is_ready (test_sales_worker.SalesWorker.test_the_watch_key_opens_and_the_seller_is_ready) ... ok
+test_underpaid_then_topped_up_within_the_grace (test_sales_worker.SalesWorker.test_underpaid_then_topped_up_within_the_grace) ... ok
+test_a_new_database_is_group_writable (test_schema.Migration.test_a_new_database_is_group_writable)
+Under the services' umask 007, the database and its -wal/-shm files are 0660 (group mutis). ... ok
+test_connections_zero_deleted_bytes (test_schema.Migration.test_connections_zero_deleted_bytes)
+Review L7: a scrubbed wrapped key must not linger in free pages, whatever the SQLite build. ... ok
+test_migrated_schema_equals_a_fresh_one (test_schema.Migration.test_migrated_schema_equals_a_fresh_one) ... ok
+test_rows_after_migration (test_schema.Migration.test_rows_after_migration) ... ok
+test_upgrade_from_v3_with_data (test_schema.Migration.test_upgrade_from_v3_with_data)
+Migration 004 (16-drive-design §15 step 1) is additive: every row of a schema-3 database keeps ... ok
+test_every_checkpoint_grows_by_at_least_one_pad (test_seallog.LeafOrder.test_every_checkpoint_grows_by_at_least_one_pad)
+Template 2.0.0 refuses a size that doesn't grow, and an idle window must look like any other. ... ok
+test_new_leaves_have_no_index_until_a_checkpoint_shuffles_them (test_seallog.LeafOrder.test_new_leaves_have_no_index_until_a_checkpoint_shuffles_them) ... ok
+test_a_refused_append_fails_and_the_next_checkpoint_covers_its_leaves (test_seallog.Receipts.test_a_refused_append_fails_and_the_next_checkpoint_covers_its_leaves)
+A checkpoint that committed after we gave it up makes the component refuse the same size again. ... event=chain.seal_failed
+ok
+test_failed_submission_retries_in_ten_minutes_and_force_is_rate_limited (test_seallog.Receipts.test_failed_submission_retries_in_ten_minutes_and_force_is_rate_limited)
+Review M8: the worker alone decides when a root is published, and it can't be hurried. ... event=chain.seal_failed
+event=chain.walletd_down
+ok
+test_off_means_no_receipts_at_all (test_seallog.Receipts.test_off_means_no_receipts_at_all)
+Review M2: while SealLog is off, nothing may promise a checkpoint that will never come. ... ok
+test_restart_settles_a_half_made_checkpoint (test_seallog.Receipts.test_restart_settles_a_half_made_checkpoint) ... ok
+test_stored_and_exit_receipts_end_to_end (test_seallog.Receipts.test_stored_and_exit_receipts_end_to_end) ... ok
+test_leaves (test_seallog.SharedVector.test_leaves) ... ok
+test_padding_rule (test_seallog.SharedVector.test_padding_rule) ... ok
+test_roots_and_proofs (test_seallog.SharedVector.test_roots_and_proofs) ... ok
+test_leaf_encodings (test_seallog.Tree.test_leaf_encodings) ... ok
+test_root_and_proofs_match_rfc_9162 (test_seallog.Tree.test_root_and_proofs_match_rfc_9162) ... ok
+test_hello_and_commands (test_sidecar.SidecarClient.test_hello_and_commands) ... ok
+test_missing_binary (test_sidecar.SidecarClient.test_missing_binary) ... event=chain.sidecar_restart
+ok
+test_refuses_a_different_wasm (test_sidecar.SidecarClient.test_refuses_a_different_wasm) ... event=chain.sidecar_hash_mismatch
+ok
+test_restart_after_timeout (test_sidecar.SidecarClient.test_restart_after_timeout) ... event=chain.sidecar_restart
+ok
+test_imports (test_stdlib.Stdlib.test_imports) ... ok
+test_spdx_headers (test_stdlib.Stdlib.test_spdx_headers) ... ok
+test_two_gib_round_trip_under_96_mib (test_streaming.Streaming.test_two_gib_round_trip_under_96_mib) ... skipped 'set MUTIS_BIG=1 to move 2 GiB through the API'
+test_a_write_that_fails_is_a_500_and_the_api_keeps_serving (test_uploads_inert.FullDisk.test_a_write_that_fails_is_a_500_and_the_api_keeps_serving) ... event=api.internal_error
+ok
+test_no_room_to_reserve_is_a_503_and_leaves_nothing (test_uploads_inert.FullDisk.test_no_room_to_reserve_is_a_503_and_leaves_nothing) ... ok
+test_a_symlink_in_place_of_a_stored_file_is_not_followed (test_uploads_inert.HostileBytes.test_a_symlink_in_place_of_a_stored_file_is_not_followed) ... ok
+test_stored_as_sent_never_executable_served_only_as_a_download (test_uploads_inert.HostileBytes.test_stored_as_sent_never_executable_served_only_as_a_download) ... ok
+test_the_client_names_nothing_on_disk (test_uploads_inert.HostileBytes.test_the_client_names_nothing_on_disk)
+A drop id, a parent id or a meta field never reaches a path: the file is named by the server's id. ... ok
+test_no_decoder_or_launcher_is_imported (test_uploads_inert.NothingDecodesOrRuns.test_no_decoder_or_launcher_is_imported) ... ok
+test_no_eval_exec_or_os_launcher (test_uploads_inert.NothingDecodesOrRuns.test_no_eval_exec_or_os_launcher) ... ok
+test_only_storage_builds_a_path_under_the_blob_directory (test_uploads_inert.NothingDecodesOrRuns.test_only_storage_builds_a_path_under_the_blob_directory) ... ok
+test_the_readers_of_stored_files_are_the_known_ones (test_uploads_inert.NothingDecodesOrRuns.test_the_readers_of_stored_files_are_the_known_ones) ... ok
+test_classifier (test_vectors.Addresses.test_classifier) ... ok
+test_emoji_alphabet (test_vectors.Addresses.test_emoji_alphabet) ... ok
+test_invalid (test_vectors.Addresses.test_invalid) ... ok
+test_valid_round_trip (test_vectors.Addresses.test_valid_round_trip) ... ok
+test_b64u_is_strict (test_vectors.Codec.test_b64u_is_strict) ... ok
+test_hkdf_rfc5869 (test_vectors.Codec.test_hkdf_rfc5869) ... ok
+test_ids (test_vectors.Codec.test_ids) ... ok
+test_migrations_apply_in_order (test_vectors.Codec.test_migrations_apply_in_order) ... ok
+test_committed_vectors_match_the_code (test_vectors.Files.test_committed_vectors_match_the_code) ... ok
+test_in_memory_tables_are_bounded (test_vectors.Memory.test_in_memory_tables_are_bounded)
+Review L16: rotating IPv6 addresses can't grow the password and SMALL-lane tables without end. ... ok
+test_a_real_flood_still_escalates (test_vectors.ProofOfWork.test_a_real_flood_still_escalates) ... ok
+test_a_shared_network_retries_at_base_difficulty (test_vectors.ProofOfWork.test_a_shared_network_retries_at_base_difficulty)
+Review H2: a phone and a laptop behind one IPv4 address, each retrying, stay at the base. ... ok
+test_asking_for_challenges_never_escalates (test_vectors.ProofOfWork.test_asking_for_challenges_never_escalates) ... ok
+test_escalation_per_ip_key_and_global_cap (test_vectors.ProofOfWork.test_escalation_per_ip_key_and_global_cap) ... ok
+test_single_use_expiry_and_purpose (test_vectors.ProofOfWork.test_single_use_expiry_and_purpose) ... ok
+test_vectors (test_vectors.ProofOfWork.test_vectors) ... ok
+test_a_refused_send_runs_once (test_walletd.WalletdClient.test_a_refused_send_runs_once)
+walletd refuses an unauthorized call before it runs, so the send made again pays once. ... ok
+test_a_second_refusal_is_an_error (test_walletd.WalletdClient.test_a_second_refusal_is_an_error) ... ok
+test_a_token_refused_after_a_restart_is_replaced_once (test_walletd.WalletdClient.test_a_token_refused_after_a_restart_is_replaced_once)
+walletd signs tokens with a key it makes at start: the cached token gets 401 until it is replaced. ... ok
+test_other_errors_are_not_retried (test_walletd.WalletdClient.test_other_errors_are_not_retried) ... ok
+
+----------------------------------------------------------------------
+Ran 355 tests in 73.572s
+
+OK (skipped=5)

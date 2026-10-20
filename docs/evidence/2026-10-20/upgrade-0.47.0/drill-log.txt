@@ -1,0 +1,95 @@
+The drill (deploy/ootle/upgrade-drill.md) as run on 2026-10-20, times UTC (the server's journal is
+read with --utc; its local clock shows CST, UTC-6). Commands ran over a multiplexed ssh connection as
+the operator with sudo; walletd's RPC as root on the loopback port (the port guard admits root, the
+operator and drive). Hashes in RPC output are cut to 8 hex.
+
+== §3 the new walletd on a copy of the wallet, with no network   07:17:42 to 07:18:21
+scripts/drill.sh: the drill's script with NEW=/opt/tari/bin/tari_ootle_walletd-0.47.0-9dabb2a, and
+the transient unit given every hardening property of deploy/systemd/walletd.service (the drill's own
+list is a subset), plus PrivateNetwork=yes, so a sandbox denial would show here first. Read-only
+additions: the copy's applied migrations before and after, and scripts/wsum.py's summary.
+
+copy schema migrations before: (15, '20261008120000')
+drill start 2026-10-20T07:17:42Z
+Running as unit: walletd-drill.service; invocation ID: fbd3dba0e3f243b08268d2b774cd05c8
+active
+wallet.get_info: {'network': 'esmeralda', 'version': '0.47.0'}
+validator_set.get_status: indexer_trust verify | trusted epoch None anchor epoch None anchor None synced_at None walk_failing_since None | reanchors 0
+  buyer-demo  revealed 0, confidential 3500000 µT
+  operator    revealed 13940, confidential 0 µT
+  service     revealed 13775475, confidential 10508000 µT
+  sponsor     revealed 0, confidential 349422762 µT
+transactions.get_all: 2003: Accepted 1981, New 1, Pending 21
+  a599a962…  New        2026-10-11 23:06:51
+  2749858a…  Pending    2026-10-13 10:39:22
+  (… the same 20 manifests from service, 2026-10-13 10:43 to 16:58, as in ../../2026-10-13/upgrade-0.46.0/)
+sponsor stealth_utxos.list: 1144: LockedUnconfirmed (on chain False) 1, Spent (on chain True) 1142, Unspent (on chain True) 1
+  commitment 58b16c5b…  Unspent  is_on_chain True  value 349422762 µT
+  commitment 3ee453ab…  LockedUnconfirmed  is_on_chain False  value 8851452000 µT
+copy schema migrations after: (17, '20261016000000')
+drill copy vs live balances (version aside): SAME
+  (diff drill-balances.json live-balances.json: the version line, nothing else)
+
+Two migrations, both additive (release-notes.txt): lock_owner adds a nullable column to `locks`,
+trusted_validator_sets adds a table. The same accounts and balances as the live wallet read a
+moment later. Under the full production sandbox walletd 0.47.0 started, migrated, answered RPC and
+logged only what a network-less copy should (it can't reach an indexer, so it has no trusted
+validator set yet): no EPERM, no denied path, nothing about the sandbox. So no directive of
+walletd.service needed loosening.
+
+The copy holds keys, and the script's exit trap is meant to delete it on every path. It didn't this
+time: the trap ran `systemctl stop` (07:17:58) and then `systemctl reset-failed`, which an extra line of
+this run's script added; on a transient unit that stopped cleanly that command fails ("not loaded"),
+and under `set -e` a failing command inside the trap ends the trap, so `rm -rf` never ran. (The script
+had reached the trap early: a `journalctl | head` pipe ended by SIGPIPE under pipefail, after every
+check above had printed.) The copy was deleted by hand at 07:18:21, 23 s after the unit stopped
+("drill copy removed: /var/lib/walletd-drill no longer exists"); it never left the 0700 directory.
+The drill's own trap has the same weakness when `systemctl stop` itself fails (a unit that never
+started), so upgrade-drill.md §3 now writes the trap as `systemctl stop walletd-drill 2>/dev/null || true;
+rm -rf "$T"`.
+
+walletd-drill's journal (warnings only; the no-network copy can't reach an indexer, as intended):
+07:17:42.42 Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+07:17:42.42 WARNING: The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user … (as on 0.46.0)
+07:17:42.53 WARN transaction_service Failed to bring the trusted validator set up to date: Network interface error: Indexer client error: Failed to send request …
+07:17:42.53 WARN finalized_watch Failed to subscribe to transaction finalization stream, retrying in 5s …
+07:17:42.54 WARN indexer_rest_api Indexer https://ootle-indexer-b.tari.com/ was unavailable for 3 consecutive requests, switching to https://ootle-indexer-a.tari.com/
+07:17:42.54 ERROR account_monitor Error refreshing all accounts: … Failed to send request …
+07:17:42.54 ERROR transaction_service Error resubmitting new transactions: Transaction API error: Dry run transaction mismatch error: Transaction is marked as dry run and cannot be submitted
+07:17:42.54 WARN stealth_utxo_scanner Error during UTXO scan for component_ae57… (and the other three accounts) …
+07:17:57.55 ERROR Error checking pending transaction 2749858a…: … (the network-less copy)
+"Dry run transaction mismatch" is a599a962…'s doing, the one `New` transaction (a dry run from
+2026-10-11 that walletd keeps trying to resubmit every 5 s); 0.45.0 and 0.46.0 logged it the same
+way (../../2026-10-13/upgrade-0.46.0/drill-log.txt). It is not part of this outage.
+
+== §4 the live walletd   07:19:21 to 07:19:43   (scripts/swap.sh)
+  TS=20261020T071921Z
+  balances (walletd-rpc.py balances) → /var/backups/mutis/balances-20261020T071921Z-before-0.47.0.json (root 0600)
+  systemctl stop walletd                                         inactive at 07:19:22
+  tar -C /home/drive -cf /var/backups/mutis/wallet-20261020T071921Z-pre-upgrade.tar wallet
+     292,659,200 B, root 0600, 46 entries (the wallet directory with its daily store backups), sha256 79d6980dd680c12b…
+  cp -a /opt/tari/bin/tari_ootle_walletd /var/backups/mutis/tari_ootle_walletd.20261020T071921Z   (the replaced 0.46.0 file, 26d4c269…6e05)
+  install -m 0755 -o root -g root …/tari_ootle_walletd-0.47.0-9dabb2a /opt/tari/bin/tari_ootle_walletd
+     919579e6…ba52, "tari_ootle_walletd 0.47.0"
+  systemctl start walletd                                        active since 07:19:23 (down 1 s)
+  balances → …-after-0.47.0.json; diff before after:
+     49c49 <  "version": "0.46.0"  --- >  "version": "0.47.0"          (nothing else)
+  The live wallet directory was not moved, copied over or re-initialised; the unit, its config,
+  config.toml and run-walletd.sh are unchanged (nothing in them is removed or renamed in 0.47.0).
+  The script's exit trap starts walletd again if anything after the stop fails; nothing did.
+
+  Balances, before = after (walletd's store, µT):
+    buyer-demo  revealed 0          confidential 3,500,000
+    operator    revealed 13,940     confidential 0
+    service     revealed 13,775,475 confidential 10,508,000
+    sponsor     revealed 0          confidential 349,422,762
+  validator_set.get_status (07:19:43): indexer_trust verify | trusted epoch 12506, anchor epoch 12506,
+    anchor FirstUse, synced, walk_failing_since None | reanchors 0
+    ("FirstUse": walletd took its indexer's word for the first validator set, as 0.47.0 does on first
+    use, and verifies every later set by its handover.)
+
+Rollback, if ever needed: stop walletd, restore the tar above over /home/drive/wallet (the store is
+now at migration 20261016000000, which 0.46.0 doesn't know), install /opt/tari/bin/
+tari_ootle_walletd-0.46.0-cc8a83b (or /var/backups/mutis/tari_ootle_walletd.20261020T071921Z) at the
+unit's path, start. 0.46.0 can't read the v0.47.0 indexers' substates, so a rollback only makes sense
+together with Tari rolling back.
