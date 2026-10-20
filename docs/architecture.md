@@ -177,8 +177,10 @@ The template is published from this repository's exact bytes; `template/check.sh
 Every build writes a manifest with the SHA-256 of every served file and its commit
 (`/.well-known/mutis-manifest.json`); each release's manifest hash is notarized through SealLog
 (`/releases.json`). `python3 -I tools/verify-deploy.py <origin> <commit>` rebuilds that commit,
-downloads every served file and prints any difference. Each page carries SRI for its top-level
-scripts and stylesheets, and the manifest covers the modules they import.
+downloads every served file (and each text file again as the gzip and Brotli copies a browser gets, decoded) and
+prints any difference. Each page carries SRI for its top-level scripts and stylesheets, and the manifest covers the
+modules they import. Every asset's name carries a hash of its content (`tools/assets.py`), so browsers keep it a
+year and a release can only add names, never change what an old one holds.
 
 ## How it's built
 
