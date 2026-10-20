@@ -12,6 +12,7 @@ export const NAV = [
   ['mine', 'hard-drive', '/drive'],
   ['received', 'inbox', '/drive/received'],
   ['shared', 'share-2', '/drive/shared'],
+  ['earnings', 'coins', '/drive/earnings', 'pay_to_open'],   // only where pay to open is on
   ['activity', 'activity', '/drive/activity'],
   ['trash', 'trash', '/drive/trash'],
 ];
@@ -22,8 +23,8 @@ function brandBlock() {
     h('span', { class: 'brand-text' }, wordmark(), h('span', { class: 'sr-only' }, BRAND), h('small', {}, t('drive.side.mine'))));
 }
 
-function navList(p) {
-  return h('ul', { class: 'sidebar-menu', role: 'list' }, NAV.map(([view, glyph, href]) =>
+function navList(p, features) {
+  return h('ul', { class: 'sidebar-menu', role: 'list' }, NAV.filter(([, , , needs]) => !needs || features[needs]).map(([view, glyph, href]) =>
     h('li', { class: 'sidebar-menu-item' },
       h('a', { class: 'sidebar-menu-button', href, 'data-nav': '', 'data-view': view, 'data-testid': `nav-${view}` },
         icon(glyph), h('span', {}, t(`drive.side.${view}`))),
@@ -74,14 +75,14 @@ function account(p) {
   return [trigger, menu];
 }
 
-function sidebarContent(p, folders) {
+function sidebarContent(p, folders, features) {
   const [nt, nm] = newMenu(p, folders);
   const [at, am] = account(p);
   return [
     h('div', { class: 'sidebar-header' }, brandBlock()),
     h('div', { class: 'side-new' }, nt), nm,
     h('div', { class: 'sidebar-content' },
-      h('nav', { class: 'sidebar-group', 'aria-label': t('drive.side.nav') }, navList(p)),
+      h('nav', { class: 'sidebar-group', 'aria-label': t('drive.side.nav') }, navList(p, features)),
       meter(p)),
     h('div', { class: 'sidebar-footer' }, at), am,
   ];
@@ -102,7 +103,7 @@ function themeMenu() {
 }
 
 // -> {page, root, setView(view), setMeter(me), setAccount(identity)}
-export function mountShell({ folders }) {
+export function mountShell({ folders, features = {} }) {
   const app = document.getElementById('app');
   const [tt, tm] = themeMenu();
   const search = h('div', { class: 'search', role: 'search' }, icon('search'),
@@ -110,10 +111,10 @@ export function mountShell({ folders }) {
     h('span', { class: 'sr-only', id: 'search-note' }, t('drive.search.note')));
   const page = h('main', { class: 'page', id: 'main', tabindex: '-1', 'data-testid': 'locker-root' });
   const sheet = h('div', { class: 'sheet sidebar-sheet', 'data-side': 'left', role: 'dialog', id: 'side-sheet', hidden: true, 'aria-label': t('drive.side.menu') },
-    h('div', { class: 'sidebar-inner' }, sidebarContent('m', folders)));
+    h('div', { class: 'sidebar-inner' }, sidebarContent('m', folders, features)));
   const root = h('div', { class: 'sidebar-wrapper', 'data-state': 'expanded', 'data-mobile-sheet': 'side-sheet', 'data-testid': 'drive-root' },
     h('div', { class: 'sidebar-gap', 'aria-hidden': 'true' }),
-    h('aside', { class: 'sidebar', 'aria-label': t('drive.side.label') }, h('div', { class: 'sidebar-inner' }, sidebarContent('d', folders))),
+    h('aside', { class: 'sidebar', 'aria-label': t('drive.side.label') }, h('div', { class: 'sidebar-inner' }, sidebarContent('d', folders, features))),
     h('div', { class: 'sidebar-inset' },
       h('header', { class: 'app-header' },
         h('button', { class: 'btn', 'data-variant': 'ghost', 'data-size': 'icon', type: 'button', 'data-sidebar-trigger': '', 'aria-label': t('drive.side.toggle'), 'data-tooltip': t('drive.side.toggle_tip'), 'data-tooltip-side': 'bottom' }, icon('panel-left')),

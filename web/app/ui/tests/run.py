@@ -66,7 +66,7 @@ DYNAMIC = {
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
     "gone": ["burned", "expired", "revoked", "removed"],
     # the drive's families (ui/drive*.js)
-    "drive.side": ["mine", "received", "shared", "activity", "trash", "storage"],
+    "drive.side": ["mine", "received", "shared", "earnings", "activity", "trash", "storage"],
     "drive.theme": ["light", "dark", "system"],
     "drive.sto.kind": ["media", "docs", "other", "trash"],
     "drive.error": ["quota_exceeded", "probation_limit", "too_large_locker", "auth_required", "bad_auth"],

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Entry of drive.html: the drive (16-drive-design §2), Google Drive's layout in shadcn's clothes.
 // Routes: /drive (My drive), /drive/folders/<id>, /drive/shared, /drive/activity, /drive/trash,
-// /drive/storage, /drive/received; moving between them keeps the page (and the open session).
+// /drive/storage, /drive/received, /drive/earnings (where pay to open is on); moving between them keeps the page (and the open session).
 // The drive opens without WebAssembly: the list needs only the vault key (WebCrypto); the Tari keys load
 // after the first render, for the address and the actions that need Tari (16-drive-architecture §6.4).
 import { loadStrings, t, BRAND } from '../lib/i18n.js';
@@ -19,6 +19,7 @@ const VIEWS = {
   shared: () => import('./drive-list.js').then((m) => m.renderShared),
   trash: () => import('./drive-list.js').then((m) => m.renderTrash),
   activity: () => import('./activity.js').then((m) => m.renderFeed),
+  earnings: () => import('./drive-earnings.js').then((m) => m.render),
   storage: () => import('./drive-storage.js').then((m) => m.render),
   received: () => import('./drive-received.js').then((m) => m.render),
 };
@@ -100,6 +101,7 @@ class Drive {
 
   async render() {
     this.route = parseRoute(location.pathname);
+    if (this.route.view === 'earnings' && !this.cfg.features?.pay_to_open) this.route = { view: 'missing' };
     const { view } = this.route;
     this.shell.setView(view === 'missing' ? null : view);
     this.shell.setNew(false);
@@ -186,7 +188,7 @@ async function boot(identity, { made }) {
       errorAlert(e, { action: { label: t('drive.retry'), onClick: () => boot(identity, { made }) } }))));
   }
   drive.made = made;
-  drive.shell = mountShell({ folders: drive.folders });
+  drive.shell = mountShell({ folders: drive.folders, features: cfg.features ?? {} });
   drive.shell.setMeter(drive.me);
   wireNav(drive);
   wireMenus(drive);

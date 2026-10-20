@@ -102,9 +102,7 @@ export async function render(drive, page) {
     drive.cfg.features?.drops === false ? null : dropCard(drive),
     scanLine, problems,
     h('section', { 'aria-label': t('rec.files'), 'data-testid': 'received-root' }, table, empty),
-    // The payments to this drive's pay links, with the owner check (ui/sales.js).
-    drive.cfg.features?.pay_to_open ? await import('./sales.js').then((m) => m.salesSection(drive)).catch(() => null) : null,
-    tariRow(drive)].filter(Boolean));
+    tariRow(drive)].filter(Boolean));   // payments to the drive's pay links are under Earnings (ui/drive-earnings.js)
   init(page);
 
   let identity;

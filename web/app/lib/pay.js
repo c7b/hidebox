@@ -31,6 +31,8 @@ import { withPow } from './pow.js';
 const claimHeader = (t) => ({ 'X-Mutis-Claim': t });
 const putSales = (body, headers) => request('PUT', '/me/sales', { json: body, headers, expect: 'none' });
 const getSales = (headers) => request('GET', '/me/sales', { headers });
+// The drive's payments as our server counts them (any device): the newest 50, each paid link's take, the total.
+export const salesList = getSales;
 const confirmSale = (claimId, body, headers) => request('POST', `/me/sales/claims/${enc(claimId)}/confirm`, { json: body, headers });
 const payInfo = (shareId) => request('GET', `/p/${enc(shareId)}`);
 const createClaim = (shareId, body, headers = {}) => request('POST', `/p/${enc(shareId)}/claims`, { json: body, headers });
@@ -317,6 +319,7 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
   const sales = await getSales(headers).catch(() => null);
   const waits = sales ? sales.to_check ?? [] : null;
   const asked = new Map();
+  let answered = false;
   for (const c of waits ?? []) for (const u of c.utxo_ids ?? []) asked.set(u, c.claim_id);
   for (const [utxoId, claimId] of asked) {
     // An output our walk didn't meet (paid before this drive's first page): checked from the indexer alone.
@@ -335,6 +338,7 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
       try {
         await confirmSale(claimId, { utxo_id: o.utxoId, spendable: o.check === 'ok' }, headers);
         o.confirmed = 'sent';
+        answered = true;
       } catch (e) {
         if (!(e instanceof ApiError)) throw e;
         if (e.status === 409 && OPEN_CLAIM.has(e.details?.status)) o.confirmed = null;
@@ -344,8 +348,11 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
     onOutput?.(o);
   }
   await saveSales(identity, state);
-  // Our server's list of this drive's payments (which link, test money, checked, the tx), for
-  // Received → Payments on any device; not kept in this browser.
-  state.paid = sales?.paid ?? null;
+  // Our server's list of this drive's payments (which link, test money, checked, the tx) and its totals, for
+  // Earnings on any device; not kept in this browser.
+  // Asked again after an answer, so a payment the payer kept leaves the totals at once.
+  const now = answered ? await getSales(headers).catch(() => sales) : sales;
+  state.paid = now?.paid ?? null;
+  state.sales = now;
   return state;
 }

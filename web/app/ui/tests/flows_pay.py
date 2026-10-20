@@ -27,8 +27,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from flows import Intercept, scenario
-from flows_drive import row_menu, upload_files
+from flows import Intercept, no_hscroll, scenario
+from flows_drive import row_menu, set_device, theme_shots, upload_files
+from flows_share import LIMES, LINES
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "server"))
 from mutis import ootle_addr  # noqa: E402
@@ -111,6 +112,7 @@ class PayFake:
         # Test money as production orders it (owner-5): [(seconds after demo-pay, "tx" | "paid")]. The demo wallet's
         # transaction shows first; seen and paid land in one step of the payment checker; the next poll releases.
         self.demo_timeline = None
+        self.server_list = False  # GET /me/sales also answers paid, total and links, as the server does
 
     # ---- wiring ----
 
@@ -166,7 +168,34 @@ class PayFake:
                     "received_ut": str(c["received"]), "utxo_ids": [u for u in c["utxos"] if u not in c["answered"]]}
                    for cid, c in self.claims.items() if c["status"] == "paid" and not c["demo"] and c["owner_check"] == "pending"]
         seller = {"address": self.sales["address"], "state": "ok"} if self.sales else None
-        return 200, {"seller": seller, "to_check": [w for w in waiting if w["utxo_ids"]]}
+        out = {"seller": seller, "to_check": [w for w in waiting if w["utxo_ids"]]}
+        return 200, {**out, **self.earnings()} if self.server_list else out
+
+    def earnings(self):
+        """GET /me/sales's payments and totals in the server's shapes (handlers/pay.py): every claim with money in,
+        test money told apart, a payment the owner's drive found the payer kept listed but counted nowhere."""
+        paid, links = [], {}
+        for cid, c in self.claims.items():
+            if not c["received"] or c["status"] in ("pending", "expired"):
+                continue
+            owner_ok = None if c["demo"] else {"ok": True, "bad": False}.get(c["owner_check"])
+            seen = c.get("seen_at") or int(time.time())
+            paid.append({"utxo_id": (c["utxos"] or [UTXO_PREFIX + hashlib.sha256(cid.encode()).hexdigest()])[0], "share_id": c["share"],
+                         "value_ut": str(c["received"]), "seen_at": seen, "demo": c["demo"], "checked": True, "owner_ok": owner_ok,
+                         "tx_id": c.get("tx")})
+            if owner_ok is False:
+                continue
+            link = links.setdefault(c["share"], {"share_id": c["share"], "received_ut": 0, "test_ut": 0, "payments": 0, "last_at": 0,
+                                                 "views_used": sum(x["opened"] for x in self.claims.values() if x["share"] == c["share"])})
+            link["received_ut"] += c["received"]
+            link["test_ut"] += c["received"] if c["demo"] else 0
+            link["payments"] += 1
+            link["last_at"] = max(link["last_at"], seen)
+        rows = sorted(links.values(), key=lambda x: -x["last_at"])
+        total = {"received_ut": str(sum(x["received_ut"] for x in rows)), "test_ut": str(sum(x["test_ut"] for x in rows)),
+                 "payments": sum(x["payments"] for x in rows), "links": len(rows)}
+        return {"paid": sorted(paid, key=lambda x: -x["seen_at"]), "total": total,
+                "links": [{**x, "received_ut": str(x["received_ut"]), "test_ut": str(x["test_ut"])} for x in rows]}
 
     def create_share(self, params):
         body = body_of(params)
@@ -816,7 +845,7 @@ def sell_stop(t):
 
 # --- §15 step 16: the owner check -----------------------------------------------------------------------
 
-@scenario("owner-check", "The owner check (step 16, R1): the seller's drive finds its sales outputs, compares each one-time key with its own, confirms the genuine one and voids the one the payer kept; Received lists both", features=FEATURES)
+@scenario("owner-check", "The owner check (step 16, R1): the seller's drive finds its sales outputs, compares each one-time key with its own, confirms the genuine one and voids the one the payer kept; Earnings lists both", features=FEATURES)
 def owner_check(t):
     fake = PayFake(t)
     a = seller(t, fake)
@@ -846,12 +875,12 @@ def owner_check(t):
     t.check(fake.claims[good]["owner_check"] == "ok" and fake.claims[bad]["status"] == "void", "the release gate moved: one to release, one void")
     t.check(set(ids) <= set(fake.substate_reads), "each output's one-time key was read from the indexer")
     t.check(early not in got and fake.claims[early]["status"] == "pending", "a claim our server doesn't wait on yet (not paid) gets no answer")
-    a.goto(t.origin + "/drive/received")
+    a.goto(t.origin + "/drive/earnings")
     a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 3", 60)
     checks = a.eval("[...document.querySelectorAll('[data-testid=\"sales-row\"]')].map((r) => r.dataset.check).sort()")
-    t.check(checks == ["bad", "ok", "ok"], f"Received lists the payments with their check ({checks})")
+    t.check(checks == ["bad", "ok", "ok"], f"Earnings lists the payments with their check ({checks})")
     t.check("The payer kept control of this payment" in a.text("sales-root") and "Yours to spend" in a.text("sales-root"), "in words")
-    t.shot(a, "pay-received-1440")
+    t.shot(a, "pay-earnings-1440")
     a.wait(CONFIRMED_JS, 60)
     before = len(fake.confirms)
     a.reload()
@@ -865,15 +894,15 @@ def owner_check(t):
     while time.time() < deadline and len(fake.confirms) == before:
         a.eval("new Promise((r) => setTimeout(r, 500))")
     t.check(fake.confirms[before:] == [(early, {"utxo_id": ids[2], "spendable": True})], "once that claim is paid, the next opening answers it")
-    # Track two step 5: a payment made while Received is open shows up
+    # Track two step 5: a payment made while Earnings is open shows up
     # without a reload; the drive asks again every 20 seconds there.
-    a.goto(t.origin + "/drive/received")
+    a.goto(t.origin + "/drive/earnings")
     a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 3", 60)
     late, _ = fake.new_claim(sid, "w")
     more = a.eval(OUTPUTS_JS + f"""([{{ to: 'sales', amount: '100000', memo: {{ Message: '{late}' }} }}])""", timeout=120)
     fake.add_outputs(more)
     t.check(a.wait("document.querySelectorAll('[data-testid=\"sales-row\"]').length === 4", 50),
-            "a payment made while Received is open shows up there without a reload")
+            "a payment made while Earnings is open shows up there without a reload")
 
 
 # --- owner-5: the buyer page draws its final state at once, and stays put --------------------------------
@@ -1090,3 +1119,82 @@ def pay_progress(t):
 
 
 POLL_FAST_MS = 1500
+
+
+# --- Earnings (docs/review/drive-earnings-activity.md): where's my money? ------------------------------------------
+
+EARNED = "(document.querySelector('[data-testid=\"earn-total\"]')?.dataset.receivedUt ?? '')"
+
+
+@scenario("drive-earnings", "Earnings: the total our server counted (test money told apart, a payment the payer kept left out), each link's take, "
+          "opens and tx, the payments with the owner check, the sales address with Copy, what moving it out means today; the testnet line; "
+          "no lime; payments in Activity with their chip", features=FEATURES)
+def drive_earnings(t):
+    fake = PayFake(t)
+    fake.server_list = True
+    a = seller(t, fake)
+    notes = re.search(PAY_LINK, sell(a, "notes.txt", price="100000"))[1]
+    close_dialog(a)
+    song = re.search(PAY_LINK, sell(a, "song.txt", price="250000"))[1]
+    close_dialog(a)
+    for sid in (notes, song):
+        fake.links[sid]["seller_state"] = "ok"
+    t.check(a.exists("nav-earnings") and a.attr("nav-earnings", "href") == "/drive/earnings", "the sidebar has Earnings where pay to open is on")
+    a.click("nav-earnings")
+    a.wait_for("earn-empty", 60)
+    t.check("No payments yet." in a.text("earn-empty"), "before anyone pays: No payments yet, and how to get one")
+    t.check(a.wait("!document.querySelector('[data-testid=\"earn-where\"]').hidden", 10), "the sales address shows once the drive sells")
+    a.wait("(document.querySelector('[data-testid=\"earn-address\"]')?.value || '').startsWith('otl_esm_1')", 120)
+    t.check(a.value("earn-address") == fake.sales["address"], "the address this browser derives is the one the drive registered (PUT /me/sales)")
+    t.shot(a, "earnings-1440-empty")
+    now = int(time.time())
+    # Test money from our demo wallet (its tx known), a wallet payment, and on the other link a wallet payment and one whose payer kept the key.
+    test, _ = fake.new_claim(notes, "t")
+    fake.claims[test].update(status="released", demo=True, received=100000, tx="ab" * 32, seen_at=now - 7200, opened=2)
+    wallet, _ = fake.new_claim(notes, "w")
+    other, _ = fake.new_claim(song, "s")
+    kept, _ = fake.new_claim(song, "k")
+    rows = a.eval(OUTPUTS_JS + f"""([{{ to: 'sales', amount: '100000', memo: {{ Message: '{wallet}' }} }},
+      {{ to: 'sales', amount: '250000', memo: {{ Message: '{other}' }} }}, {{ to: 'sales-other', amount: '250000', memo: {{ Message: '{kept}' }} }}])""", timeout=120)
+    ids = fake.add_outputs(rows)
+    for cid, utxo, value, seen in ((wallet, ids[0], 100000, now - 3600), (other, ids[1], 250000, now - 600), (kept, ids[2], 250000, now - 300)):
+        fake.claims[cid].update(status="paid", owner_check="pending", received=value, utxos=[utxo], seen_at=seen)
+    fake.claims[other]["opened"] = 1
+    a.reload()
+    a.wait_for("drive-root", 90)
+    t.check(a.wait(f"{EARNED} === '450000'", 120), f"the total our server counts once the drive checked each payment: 0.45 tTARI ({a.eval(EARNED)})")
+    t.check(a.text("earn-amount") == "0.45 tTARI" and "3 payments to your pay links." in a.text("earn-total"), f"in words ({a.text('earn-total')[:80]})")
+    t.check(a.text("earn-test").replace("\n", " ") in ("Test money +0.1 tTARI", "Test money+0.1 tTARI") and "+0.35 tTARI" in a.text("earn-wallet"),
+            f"test money told apart from what came from wallets ({a.text('earn-test')}, {a.text('earn-wallet')})")
+    t.check("testnet: tTARI is test money, worth nothing." in a.text("earn-total"), "the testnet line (C19-k) under the total")
+    links = a.eval("[...document.querySelectorAll('[data-testid=\"earn-link\"]')].map((r) => [r.dataset.share, r.dataset.receivedUt, r.dataset.opens, r.querySelector('.name').textContent])")
+    t.check(links == [[song, "250000", "1", "song.txt"], [notes, "200000", "2", "notes.txt"]], f"by link, paid last first: what each took in and its opens ({links})")
+    tx = a.eval("[...document.querySelectorAll('[data-testid=\"earn-link\"]')].map((r) => r.querySelector('[data-testid=\"earn-tx\"]')?.getAttribute('href') ?? null)")
+    t.check(tx == [None, "/verify/tx/" + "ab" * 32], f"the tx we know (test money) links to What the chain sees ({tx})")
+    checks = a.eval("[...document.querySelectorAll('[data-testid=\"sales-row\"]')].map((r) => r.dataset.check).sort()")
+    t.check(checks == ["bad", "ok", "ok", "ok"], f"the payments, each with the owner check ({checks})")
+    where = a.text("earn-where")
+    t.check("The money goes straight to your Tari address. We never hold it." in where and "Only your drive's key can spend it." in where
+            and "Not yet." in where and "Tari's wallets can't use this key today" in where, "where the money is, and what moving it out means today")
+    t.check(a.eval(LIMES) == [], f"no lime: nothing on Earnings is a next step ({a.eval(LIMES)})")
+    t.check(not a.eval(LINES), f"every sentence of a paragraph starts on its own line ({a.eval(LINES)[:3]})")
+    t.check(a.ax_unnamed() == [], f"every control has a name ({a.ax_unnamed()[:4]})")
+    theme_shots(t, a, "earnings")
+    a.click("earn-copy")
+    t.check(a.wait("navigator.clipboard.readText()", 10) == fake.sales["address"], "Copy puts the sales address on the clipboard")
+    set_device(a, "narrow")
+    t.check(no_hscroll(a), "no sideways scroll at 360 px")
+    set_device(a, "desktop")
+    a.click("nav-received")
+    a.wait_for("received-root", 60)
+    t.check(not a.exists("sales-root"), "Received keeps what was sent to the drive; payments live under Earnings")
+    # Activity lists the payments our server counted (not the one the payer kept), and the Payments chip keeps them alone.
+    a.click("nav-activity")
+    a.wait_for("activity-feed", 60)
+    paid = a.wait("(() => { const n = document.querySelectorAll('[data-event=\"paid\"]').length; return n === 3 ? n : 0; })()", 30)
+    t.check(paid == 3, f"three payments in Activity ({paid})")
+    a.click("activity-filter-payments")
+    kinds = a.eval("[...document.querySelectorAll('[data-testid=\"activity-feed\"] .feed > li')].map((e) => e.dataset.event || e.dataset.group)")
+    t.check(kinds and set(kinds) == {"paid"}, f"Payments: payments alone ({kinds})")
+    t.check("+0.1 tTARI" in a.text("activity-feed") and "Test money" in a.text("activity-feed"), "each with its amount, test money marked")
+    t.shot(a, "activity-1440-payments")

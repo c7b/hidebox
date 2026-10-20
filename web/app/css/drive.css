@@ -23,6 +23,7 @@
 @media (min-width: 768px) { .h1 { font-size: var(--text-5xl); } }
 .h2 { font-size: var(--text-2xl); line-height: var(--text-2xl--lh); font-weight: 600; letter-spacing: var(--tracking-tight); text-wrap: balance; }
 .h3 { font-size: var(--text-lg); line-height: var(--text-lg--lh); font-weight: 600; letter-spacing: var(--tracking-tight); }
+.h4 { font-size: var(--text-base); line-height: var(--text-base--lh); font-weight: 600; }
 .lead { font-size: var(--text-lg); line-height: 1.6; color: var(--muted-foreground); text-wrap: pretty; }
 .muted { color: var(--muted-foreground); }
 .small { font-size: var(--text-xs); line-height: var(--text-xs--lh); }
@@ -294,6 +295,18 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .feed-members .t-meta { justify-self: end; text-align: right; font-variant-numeric: tabular-nums; }
 .feed-members [data-testid="exit-receipt"] { grid-column: 2 / -1; justify-self: start; text-align: left; }
 @media (prefers-reduced-motion: reduce) { .feed-toggle .icon { transition: none; } }
+/* Earnings: the total in violet (an amount of tTARI), each link's take, where the money is. */
+.earn-body { display: grid; gap: 1rem; }
+.earn-num { font-size: var(--text-3xl); line-height: 1.1; font-weight: 600; letter-spacing: var(--tracking-tight); font-variant-numeric: tabular-nums; color: var(--tari); }
+.earn-num small { font-size: var(--text-base); font-weight: 500; letter-spacing: 0; }
+.earn-parts { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+.earn-parts b { margin-left: 0; }
+.num-cell.earn-amount { color: var(--tari); }
+.earn-amount .badge { margin-left: 0.5rem; }
+@media (max-width: 767px) { .earn-amount .badge { display: none; } }
+.file-text .link-btn { justify-self: start; text-align: left; }
+.earn-field { --gap: 0.5rem; }
+.earn-move { --gap: 0.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .timeline.known li .t-title { font-weight: 400; }
 /* Storage: one neutral ramp for what fills the drive; violet only for paid space (the bar's tail). */
 .c1 { background: color-mix(in oklab, var(--foreground) 82%, transparent); }
