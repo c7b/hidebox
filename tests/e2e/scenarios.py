@@ -10,7 +10,7 @@ import flows
 from harness import STAGING, T, big_fixture_sha256, poll, scenario
 
 # The site's six pages, the drive's (16-drive-design §12) and the app's; the old pages answer 301 (D-01).
-ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/drive", "/drive/received", "/drive/storage", "/drive/activity",
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/drive", "/drive/received", "/drive/earnings", "/drive/storage", "/drive/activity",
              "/send", "/watch", "/t", "/verify/tx/" + "0" * 64, "/no-such-page"]
 # E-03 searches their traffic: file and folder keys, child keys, names, key files and passphrases (E-08, E-26,
 # E-27, E-28 register them), link keys and view keys. (The sales keys join with pay to open, step 17.)

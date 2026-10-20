@@ -47,10 +47,10 @@ UA = "mutis-check-seo/1 (+https://github.com/c7b/hidebox)"
 TITLE_MAX, DESC_MAX = 60, 155
 CARD_SIZE = (1200, 630)
 WHATSAPP_MAX = 300 * 1024      # WhatsApp drops a preview image over about 300 KB
-ROBOTS_BLOCKED = ("/drive", "/drive/received", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t",
+ROBOTS_BLOCKED = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t",
                   "/api/v1/stats/wall", "/send", "/verify/tx/" + "0" * 64)
 # Private routes: never in an index. They answer X-Robots-Tag (Caddy); the HTML ones also carry a robots meta.
-PRIVATE = ("/drive", "/drive/received", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t", "/d/7kq2x9mdh4",
+PRIVATE = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t", "/d/7kq2x9mdh4",
            "/send", "/watch", "/verify/tx/" + "0" * 64, "/v2", "/app/drive.html", "/app/view.html", "/app/app.html",
            "/api/v1/config")
 # The bots that draw a pasted link's card (robots.txt's second group): they may read a shared link's page.

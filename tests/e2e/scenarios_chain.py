@@ -428,10 +428,10 @@ def e30(t: T) -> None:
     t.check(pay_wait(phone, ("check", "open", "expired", "void", "error"), 600) == "check",
             f"paid from the drive: it waits for the owner's drive ({pay_steps(phone)})")
     t.shot(phone, "2-owner-check")
-    desk.goto(t.origin + "/drive/received")                            # the owner check runs as the drive opens
+    desk.goto(t.origin + "/drive/earnings")                            # the owner check runs as the drive opens
     t.check(bool(desk.wait("document.querySelector('[data-testid=\"sales-row\"]')?.dataset.check === 'ok'", 300)),
             "the seller's drive checks the payment: Yours to spend")
-    t.shot(desk, "3-received")
+    t.shot(desk, "3-earnings")
     t.check(pay_wait(phone, ("open", "void", "error"), 300) == "open", "the owner's drive confirmed it: the phone can open it")
     phone.click("pay-open")
     phone.wait_for("pay-file", 90)
@@ -536,7 +536,7 @@ def ej(t: T) -> None:
         url, sid = sell(t, desk, folder)
         seller_ready(t, sid)
         t.shot(desk, "2-1-pay-link")
-        desk.goto(t.origin + "/drive/received")            # Received is open before the phone pays
+        desk.goto(t.origin + "/drive/earnings")            # Earnings is open before the phone pays
         desk.wait_for("drive-root", 120)
         done("T1")
         t.check(pay_page(phone, url) == "wait" and phone.text("pay-name") == folder and "2" in phone.text("pay-what"),
@@ -555,8 +555,8 @@ def ej(t: T) -> None:
                " && !!r.querySelector('[data-testid=\"sales-test\"]') && !!r.querySelector('[data-testid=\"sales-checked\"]')"
                " && !!r.querySelector('[data-testid=\"sales-tx\"]') && r.textContent.includes(" + json.dumps(folder) + "); })()")
         t.check(bool(desk.wait(row, 300)),
-                "T5: Received, Payments (open since T1, no reload): the folder's payment, marked Test money, Checked and Yours to spend, with its tx")
-        t.shot(desk, "2-5-received")
+                "T5: Earnings, Payments (open since T1, no reload): the folder's payment, marked Test money, Checked and Yours to spend, with its tx")
+        t.shot(desk, "2-5-earnings")
         done("T5")
         phone.reload()
         pay_wait(phone, ("open",), 90)

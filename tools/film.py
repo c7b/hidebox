@@ -14,7 +14,7 @@ Python stdlib here; Chromium and ffmpeg run on the server.
    (Locking, Uploading, Private); one file shared Once with Delete it from my drive after; the phone
    opens it and reloads to "This link has ended."; Activity (Opened, It left your drive); What our
    server knows. Track two: the folder shared to Someone who pays you; the phone scans the pay link,
-   pays with test money, opens a photo; Received → Payments shows it, Test money and Checked; What the
+   pays with test money, opens a photo; Earnings → Payments shows it, Test money and Checked; What the
    chain sees. Each shot is marked with the page clock; waiting between shots is cut, and each shot's
    real time is retimed to its slot in the film.
 3. On the server, as build, Debian's ffmpeg places the two tracks on the dark ground, burns in the
@@ -247,7 +247,7 @@ def story(t: T, take: Take) -> None:
     sid = PAY_LINK.search(pay_url)[1]
     desk.key("Escape")
     seller_ready(t, sid)
-    desk.goto(t.origin + "/drive/received")
+    desk.goto(t.origin + "/drive/earnings")
     desk.wait_for("drive-root", 120)
     with take.shot(SCAN, 6):
         t.check(pay_page(phone, pay_url) == "wait", "the phone has the pay page")

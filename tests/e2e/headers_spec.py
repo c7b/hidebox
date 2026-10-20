@@ -41,6 +41,7 @@ ROUTES = {
     "/drive": (APP_CSP, NOINDEX),                       # the drive
     "/drive/storage": (APP_CSP, NOINDEX),               # the drive
     "/drive/received": (APP_CSP, NOINDEX),
+    "/drive/earnings": (APP_CSP, NOINDEX),
     "/drive/activity": (APP_CSP, NOINDEX),
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/app/drive.html": (APP_CSP, NOINDEX),              # the drive's own pages under their file names
