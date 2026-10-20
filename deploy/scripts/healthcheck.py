@@ -10,6 +10,7 @@ A red check also writes one CRIT line with its fixed code to the journal. The ch
 comes from the database (meta.chain_status, written by mutis-chain), because `mutis` cannot reach
 walletd. No check reads or writes anything that identifies a visitor, a link or an address.
 """
+import contextlib
 import datetime
 import json
 import os
@@ -17,6 +18,7 @@ import socket
 import sqlite3
 import ssl
 import sys
+import tempfile
 import time
 import tomllib
 import urllib.error
@@ -178,13 +180,20 @@ def public_subset(report: dict) -> dict:
 
 
 def write_json(path: Path, doc: dict, mode: int) -> None:
-    tmp = path.with_name(path.name + ".tmp")
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
-    with os.fdopen(fd, "w") as f:
-        json.dump(doc, f, indent=1, sort_keys=True)
-        f.write("\n")
-    os.chmod(tmp, mode)
-    os.replace(tmp, path)
+    """Write `path` in the shared status directory through a new file of a random name, created exclusively,
+    its mode set on the open file, then renamed over `path`: a name another service user planted there (a
+    symlink to some other file) is never opened or followed (security-audit-1)."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        os.fchmod(fd, mode)
+        with os.fdopen(fd, "w") as f:
+            json.dump(doc, f, indent=1, sort_keys=True)
+            f.write("\n")
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
+        raise
 
 
 def main() -> int:

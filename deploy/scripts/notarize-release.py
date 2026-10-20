@@ -11,18 +11,36 @@ only service user walletd lets in) and appends {release, manifest_sha256, tx_id,
 A release that is already listed is not notarized twice. With SealLog off it does nothing.
 Python standard library only.
 """
+import contextlib
 import datetime
 import hashlib
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
 CONFIG = Path("/etc/mutis/mutis.toml")
 CURRENT = Path("/srv/mutis/app/current")
 LEDGER = Path("/srv/mutis/status/releases.json")
+
+
+def publish(path: Path, text: str) -> None:
+    """Write `path` in the shared status directory through a new file of a random name, created exclusively,
+    its mode set on the open file, then renamed over `path`: a name another service user planted there (a
+    symlink to some other file) is never opened or followed (security-audit-1). This runs as root.."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        os.fchmod(fd, 0o644)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
+        raise
 
 
 def main() -> int:
@@ -49,10 +67,7 @@ def main() -> int:
         return 1
     ledger.append({"release": release, "manifest_sha256": digest, "tx_id": result["tx_id"],
                    "at": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")})
-    tmp = LEDGER.with_name(LEDGER.name + ".tmp")
-    tmp.write_text(json.dumps(ledger, indent=1) + "\n", encoding="utf-8")
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, LEDGER)
+    publish(LEDGER, json.dumps(ledger, indent=1) + "\n")
     print(f"notarize: {release} manifest {digest[:12]}… in tx {result['tx_id']}")
     return 0
 

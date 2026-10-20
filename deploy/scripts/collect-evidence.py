@@ -13,12 +13,13 @@ Every field is something observed: wasm_sha256 is what the running sidecar repor
 it has. Python stdlib only.
 """
 import argparse
+import contextlib
 import datetime
 import json
 import os
-import shutil
 import sqlite3
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -85,13 +86,20 @@ def collect(cfg: dict, conn: sqlite3.Connection, robot_file: Path, now: datetime
 
 
 def write(path: Path, doc: dict) -> None:
-    tmp = path.with_name(path.name + ".tmp")
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
-    with os.fdopen(fd, "w") as f:
-        json.dump(doc, f, indent=1, sort_keys=True)
-        f.write("\n")
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, path)
+    """Write `path` in the shared status directory through a new file of a random name, created exclusively,
+    its mode set on the open file, then renamed over `path`: a name another service user planted there (a
+    symlink to some other file) is never opened or followed (security-audit-1)."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        os.fchmod(fd, 0o644)
+        with os.fdopen(fd, "w") as f:
+            json.dump(doc, f, indent=1, sort_keys=True)
+            f.write("\n")
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
+        raise
 
 
 def main() -> int:
@@ -109,8 +117,7 @@ def main() -> int:
     write(STATUS / "evidence.json", doc)
     if args.archive:
         archived = STATUS / f"evidence-archive-{now.strftime('%Y%m%d')}.json"
-        shutil.copyfile(STATUS / "evidence.json", archived)
-        os.chmod(archived, 0o644)
+        write(archived, doc)
         print(f"evidence: archived {archived.name}")
     print(f"evidence: {len(doc['deliveries'])} deliveries, {len(doc['payments'])} payments")
     return 0

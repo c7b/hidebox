@@ -28,6 +28,7 @@ def load(name: str, path: Path):
 backup = load("backup", SCRIPTS / "backup.py")
 health = load("healthcheck", SCRIPTS / "healthcheck.py")
 evidence = load("collect_evidence", SCRIPTS / "collect-evidence.py")
+notarize = load("notarize_release", SCRIPTS / "notarize-release.py")
 demo_gone = load("demo_gone", SCRIPTS / "demo-gone.py")
 
 
@@ -241,6 +242,34 @@ class HealthTest(unittest.TestCase):
     def test_phase(self):
         self.assertEqual(health.phase(int(time.mktime((2026, 11, 10, 23, 0, 0, 0, 0, 0))) - time.timezone, "2026-11-11"), "pre")
         self.assertEqual(health.phase(1_800_000_000, "2026-11-11"), "mainnet")
+
+
+class StatusWritersTest(unittest.TestCase):
+    """security-audit-1: the status directory is shared by mutis and drive (and root writes releases.json
+    there). A writer never opens a name another user planted: links at the old fixed temp name and at the
+    file itself are replaced, not followed."""
+
+    def test_no_writer_follows_a_planted_link(self):
+        writers = {
+            "status.json": lambda path: health.write_json(path, {"overall": "green"}, 0o644),
+            "evidence.json": lambda path: evidence.write(path, {"deliveries": []}),
+            "releases.json": lambda path: notarize.publish(path, '[{"release": "r"}]\n'),
+        }
+        for name, write in writers.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                status, victim = Path(tmp) / "status", Path(tmp) / "victim.bin"
+                status.mkdir()
+                victim.write_bytes(b"CIPHERTEXT")
+                victim.chmod(0o600)
+                os.symlink(victim, status / (name + ".tmp"))
+                os.symlink(victim, status / name)
+                write(status / name)
+                self.assertEqual((victim.read_bytes(), stat.S_IMODE(victim.stat().st_mode)), (b"CIPHERTEXT", 0o600))
+                st = os.lstat(status / name)
+                self.assertTrue(stat.S_ISREG(st.st_mode))
+                self.assertEqual(stat.S_IMODE(st.st_mode), 0o644)
+                json.loads((status / name).read_text())
+                self.assertEqual(sorted(p.name for p in status.iterdir()), sorted([name, name + ".tmp"]))
 
 
 class EvidenceTest(unittest.TestCase):
