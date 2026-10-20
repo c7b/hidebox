@@ -79,10 +79,11 @@ REDIRECTS = {
 # error response is never stored. The one font served is the drive's Geist (DESIGN.md "Typography",
 # pinned in tools/build.py); any other font path answers 404 like any missing file (MISSING below).
 REVALIDATE = {"cache-control": "no-cache"}
-# /v2's loops and the home's stills (media/v3): kept a day (their names carry no version), served with their types, in
-# byte ranges.
+# /v2's loops, the home's stills (media/v3) and the 404 page's art (media/404): kept a day (their names carry no
+# version), served with their types, in byte ranges.
 MEDIA = {"/site/media/motion/hidebox-A-hero.webm": "video/webm", "/site/media/motion/hidebox-A-hero.mp4": "video/mp4",
-         "/site/media/v3/hero-1024.avif": "image/avif", "/site/media/v3/hero-1024.webp": "image/webp"}
+         "/site/media/v3/hero-1024.avif": "image/avif", "/site/media/v3/hero-1024.webp": "image/webp",
+         "/site/media/404/box-zero-480.avif": "image/avif"}
 MEDIA_CACHE = {"cache-control": "public, max-age=86400"}
 ERROR_CACHE = {"cache-control": "no-store"}
 # The pages search engines may index: no route above without NOINDEX may send X-Robots-Tag (test_headers.py).
