@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480" height="320" viewBox="0 0 480 320"
+     onload="top.__pwned='svg-onload';try{localStorage.setItem('__pwned','svg-onload')}catch(e){};fetch('/__canary/svg-onload')">
+  <script>top.__pwned='svg-script';try{localStorage.setItem('__pwned','svg-script')}catch(e){};fetch('/__canary/svg-script')</script>
+  <rect width="480" height="320" rx="24" fill="#17191C"/>
+  <path d="M150 140 L240 110 L330 140 L240 170 Z" fill="#BCFE00"/>
+  <path d="M150 140 L240 170 L240 250 L150 220 Z" fill="#9BD000"/>
+  <path d="M330 140 L240 170 L240 250 L330 220 Z" fill="#7FAE00"/>
+  <a xlink:href="javascript:top.__pwned='svg-link';try{localStorage.setItem('__pwned','svg-link')}catch(e){};fetch('/__canary/svg-link')"><text x="24" y="296" fill="#F5F5F5" font-family="sans-serif" font-size="18">hostile.svg</text></a>
+  <image href="/__canary/svg-image.png" x="0" y="0" width="8" height="8"/>
+  <foreignObject x="0" y="0" width="480" height="40">
+    <div xmlns="http://www.w3.org/1999/xhtml"><img src="x" onerror="top.__pwned='svg-foreign';try{localStorage.setItem('__pwned','svg-foreign')}catch(e){};fetch('/__canary/svg-foreign')"/></div>
+  </foreignObject>
+</svg>

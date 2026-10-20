@@ -1,0 +1,6 @@
+<!doctype html>
+<html><head><title>Invoice</title></head>
+<body><h1>Invoice</h1>
+<script>top.__pwned='txt-html';try{localStorage.setItem('__pwned','txt-html')}catch(e){};fetch('/__canary/txt-html')</script>
+<img src="x" onerror="top.__pwned='txt-img';try{localStorage.setItem('__pwned','txt-img')}catch(e){};fetch('/__canary/txt-img')">
+</body></html>

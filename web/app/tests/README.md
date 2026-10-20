@@ -35,7 +35,7 @@ PASS/FAIL lines and `title: TESTS PASS n/n`) or `node web/app/tests/node-run.mjs
 |---|---|
 | `run.html`, `run.js`, `run.css`, `suites.js` | browser runner; the title becomes `TESTS PASS n/n` or `TESTS FAIL k/n` |
 | `node-run.mjs` | Node 20 runner for the same suites (those with `env = 'any'`); `--api <origin>` runs `contract.test.js` against a real API instead |
-| `*.test.js` | suites: `b64 sha256 crypto format links identity emoji ootle courier pow filetype exif seal-open pow-gates scan wallet locker receipts ui-helpers`, plus `nowasm` for the jitless run and `contract` for the real API |
+| `*.test.js` | suites: `b64 sha256 crypto format links identity emoji ootle courier pow filetype exif seal-open pow-gates scan wallet locker receipts ui-helpers drive zip pay preview`, plus `nowasm` for the jitless run and `contract` for the real API |
 | `harness.js` | assertions and fixture loading for both runners |
 | `fake-api.js` | in-memory stand-in for the §6 API (installed over `fetch`) that records every request, so tests can show no secret leaves the client; it follows the server where the client depends on it (upload session vs item expiry, link expiry rules, PoW or judge pass on gated routes, password-only PoW after 3 wrong tries), and `contract` checks the same flows against the server itself |
 | `outputs.js` | builds chain-shaped stealth outputs offline with the official library |
@@ -49,6 +49,7 @@ PASS/FAIL lines and `title: TESTS PASS n/n`) or `node web/app/tests/node-run.mjs
 | `vectors/esmeralda-outputs.json`, `vectors/fetch_outputs.py` | real outputs of four Esmeralda transactions (kept as data, so tests survive a testnet reset) |
 | `vectors/merkle-rfc9162.json`, `vectors/merkle_vectors.py` | RFC 9162 inclusion proofs from an independent Python implementation |
 | `vectors/seallog-component.json` | the research SealLog component on Esmeralda, as an indexer returned it: it has an owner, so `/verify` must refuse it. The 2.0.0 state and the Merkle leaves, roots and proofs come from the template builder (`template/seal_log/tests/vectors/`, served by `headless.py`) |
+| `fixtures/preview/*`, `fixtures/preview/make_fixtures.py` | hostile files for the preview (`preview.test.js`, `ui/tests/flows_preview.py`): an SVG with scripts, the same SVG named `.png`, a PNG named `.svg`, Markdown with scripts and `javascript:` links, HTML named `.txt`, a GIF with HTML after it, 300 KB of text, an empty file, UTF-16 text, a PDF |
 | `fixtures/exif/*`, `fixtures/exif/make_fixtures.py` | photos with planted GPS/Exif/XMP/IPTC/comments/trailers, and truncated copies (ffmpeg + stdlib) |
 | `bench/bench.html`, `bench/bench.js` | PoW and scan benchmarks |
 | `gates/chain.html`, `gates/chain.js`, `gates/walletd_send.py` | the live gate checks on Esmeralda (below) |
