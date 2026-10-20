@@ -7,8 +7,8 @@ The icons are SVGs drawn at their pixel size: static/favicon.svg (the open box o
 transparent) as favicon-32.png, icon-192.png and icon-512.png, and at 16, 32 and 48 px into favicon.ico (an ICO may
 hold PNG data; Bing, feed readers and some unfurlers ask for that path by name); og/icon.svg (the same box on a
 full-bleed square, which iOS rounds) as apple-touch-icon.png; og/icon-maskable.svg (the box inside the safe zone) as
-icon-maskable-512.png. Name some of those files to render only them. Python standard library only; run as `build`
-on the server:
+icon-maskable-512.png. Each PNG, and each one inside the ICO, is then shrunk without changing a pixel (png_shrink.py).
+Name some of those files to render only them. Python standard library only; run as `build` on the server:
 python3 -I web/site/tools/render-images.py [FILE ...]
 """
 import base64
@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # -I leaves the script's own directory out
 from cdp import Browser  # noqa: E402
+from png_shrink import shrink  # noqa: E402
 
 SITE = Path(__file__).resolve().parents[1]
 ROOT = SITE.parents[1]
@@ -58,7 +59,7 @@ def draw(browser, source: Path, size: int) -> bytes:
     page.goto(source.as_uri(), settle=0.5)
     data = base64.b64decode(page.cmd("Page.captureScreenshot", {"format": "png"})["data"])
     page.close()
-    return data
+    return shrink(data)
 
 
 def write_ico(pngs: list[bytes], out: Path) -> None:
@@ -90,6 +91,7 @@ def main() -> int:
             page.eval(f"{PREPARE}({json.dumps(font)}, {json.dumps(name)})", await_promise=True)
             out = SITE / "static" / target
             page.screenshot(str(out))
+            out.write_bytes(shrink(out.read_bytes()))
             size = out.stat().st_size
             print(f"{target}: {width}x{height}, {size} bytes")
             if size > OG_MAX_BYTES:

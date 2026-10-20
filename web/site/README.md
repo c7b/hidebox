@@ -49,7 +49,7 @@ the icons, the manifest, robots.txt, the sitemap and noindex on the private rout
 | `media/404/` | The 404 page's art (the open box as the zero of 404), an AVIF and a WebP at 480, 720 and 960 px for `srcset`, made with ffmpeg on the server like the home's stills, from the owner's PNG (not committed). Its budget and checks: `check_not_found` in `tests/static_checks.py` and `browser_checks.py` ([docs/review/site-404.md](../../docs/review/site-404.md)) |
 | `static/` | `robots.txt`, `llms.txt`, `llms-full.txt`, `.well-known/security.txt`, `manifest.webmanifest`, `favicon.svg` (the open box) and `favicon-32.png`, `favicon.ico` (16, 32 and 48 px), the app icons (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`), `og.png` (the home's first screen with its still), `og-s.png` |
 | `og/` | HTML sources of the OG cards; `icon.svg` and `icon-maskable.svg`, the full-bleed app icons (not served) |
-| `tools/` | `subset-fonts.sh`, `subset-geist.sh`, `rename-font.py`, `render-images.py`, `llms_full.py`, `variants.py`, `cdp.py` |
+| `tools/` | `subset-fonts.sh`, `subset-geist.sh`, `rename-font.py`, `render-images.py`, `png_shrink.py`, `llms_full.py`, `variants.py`, `cdp.py` |
 | `tests/` | `run.py`, `static_checks.py`, `browser_checks.py`, `dates.test.mjs`, `serve.py`, `shots.py`, `make-canary.mjs`, `fixtures/` |
 | `shots/` | curated WebP screenshots of the six pages at 1440 and 390, light and dark, made by `tests/shots.py` |
 
@@ -88,6 +88,7 @@ as served.
 |---|---|
 | `sh web/site/tools/subset-fonts.sh` | subsets Debian's Courier Prime and Courier Prime Code, renames them Mutis Script / Mutis Script Code (OFL condition 3), writes WOFF2, `OFL.txt` and `NOTICE`; deterministic |
 | `python3 -I web/site/tools/render-images.py [FILE ...]` | renders `og/*.html` to `og.png` and `og-s.png`, and the app icons and favicons from `static/favicon.svg` and `og/icon*.svg`; only the files named, if any; fails on a card over 150 KB or an OTS error |
+| `python3 -I web/site/tools/png_shrink.py FILE ...` | rewrites PNGs (and the PNGs in an ICO) smaller with the same pixels: RGB, palette or grey where nothing is lost, the best filter and zlib 9; checks every pixel before it writes; `render-images.py` runs it on what it renders |
 | `python3 -I web/site/tools/llms_full.py` | writes `static/llms-full.txt` from `/how`, `/made` and `/fine-print` as a reader without JavaScript sees them (`--check` is part of the tests) |
 | `python3 -I web/site/tools/variants.py --config mutis.toml dist` | sets a deployment's copy variants into its built pages and writes its `llms-full.txt` (for `tools/build.py`, before includes and placeholders) |
 | `python3 -I web/site/tests/serve.py` | the pages with includes and placeholders expanded, production CSP headers and the API from fixtures (`--api URL` forwards to a real server, `--dist DIR` serves a built tree) |

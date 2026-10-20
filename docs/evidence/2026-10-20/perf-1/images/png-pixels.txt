@@ -1,0 +1,13 @@
+# Every PNG decoded to RGBA by ffmpeg on the server (an independent decoder), before (HEAD) and after png_shrink.py: SHA-256 of the pixels
+# file  bytes-before  bytes-after  pixels-before  pixels-after  verdict
+apple-touch-icon.png 5147 2319 9c2cee40274ad64d 9c2cee40274ad64d same
+favicon-32.png 1597 1042 1bd5a0ea70995d71 1bd5a0ea70995d71 same
+icon-192.png 7072 4276 791ca53034d2aa18 791ca53034d2aa18 same
+icon-512.png 19129 11888 74c46d11bc9c4a76 74c46d11bc9c4a76 same
+icon-maskable-512.png 10572 4722 64dcf37f8ab8438e 64dcf37f8ab8438e same
+og.png 142970 141178 a2f931c8dfba0eb0 a2f931c8dfba0eb0 same
+og-s.png 48468 24901 a45f4135a853cd2d a45f4135a853cd2d same
+favicon.ico[0] - - 13f6cd26f6f85829 13f6cd26f6f85829 same
+favicon.ico[1] - - 1c85b3f9fa3aba3f 1c85b3f9fa3aba3f same
+favicon.ico[2] - - 32643965a66792cc 32643965a66792cc same
+favicon.ico 5142 3889
