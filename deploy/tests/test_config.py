@@ -331,6 +331,30 @@ class UnitsTest(unittest.TestCase):
         self.assertTrue(svc["LoadCredential"].startswith("keyring-pass:/etc/mutis/credentials/"))
         self.assertNotIn("--override-keyring-password", (ROOT / "deploy" / "ootle" / "run-walletd.sh").read_text().split("set -euo")[1])
 
+    def test_the_upgrade_drill_tries_walletd_under_its_unit_sandbox(self):
+        """deploy/ootle/upgrade-drill.md §3 runs a new walletd on a copy of the wallet under walletd.service's own
+        sandbox (its paths pointing at the copy) and with no network, so a directive the new version can't live
+        with shows on the copy first; the copy holds keys, so nothing in the exit trap may fail before `rm -rf`."""
+        import shlex
+        drill = (ROOT / "deploy" / "ootle" / "upgrade-drill.md").read_text()
+        start = drill.index("systemd-run --unit=walletd-drill")
+        words = shlex.split(drill[start:drill.index("run-walletd.sh", start)].replace("\\\n", " "))
+        props = {words[i + 1] for i, w in enumerate(words) if w == "-p"}
+        service = (UNITS / "walletd.service").read_text().split("[Service]")[1].split("[Install]")[0]
+        how = {"Type", "ExecStart", "Restart", "RestartSec", "TimeoutStopSec", "KillSignal", "StandardOutput",
+               "StandardError", "SyslogIdentifier"}             # how the service runs, not its sandbox
+        moved = {"RuntimeDirectory", "BindPaths", "NoExecPaths"}   # the same directive, at the copy's paths
+        for line in (l.strip() for l in service.splitlines()):
+            key = line.split("=", 1)[0]
+            if not line or line.startswith("#") or key in how:
+                continue
+            if key in moved:
+                self.assertTrue(any(p.startswith(key + "=") for p in props), f"the drill sets no {key}")
+            else:
+                self.assertIn(line, props, "the drill's walletd runs without this directive of walletd.service")
+        self.assertIn("PrivateNetwork=yes", props)
+        self.assertIn("""trap 'systemctl stop walletd-drill 2>/dev/null || true; rm -rf "$T"' EXIT""", drill)
+
     def test_every_timer_has_its_service(self):
         for timer in UNITS.glob("*.timer"):
             self.assertTrue((UNITS / timer.name.replace(".timer", ".service")).is_file(), timer.name)
