@@ -10,7 +10,7 @@ import { concat, u32be, readU32be, utf8 } from './bytes.js';
 import { aesGcmDecrypt, aesGcmEncrypt, hkdf, pbkdf2Sha256, randomBytes } from './crypto.js';
 import { sha256Sync } from './sha256sync.js';
 import { chainUtxos } from './api-locker.js';
-import { idbDelete, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
+import { idbClear, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
 import { localSet, set as setState } from './store.js';
 import { PBKDF2_ITER } from './password.js';
 import { BRAND } from './i18n.js';
@@ -139,9 +139,14 @@ export async function updateIdentity(identity, patch) {
   return persist(identity);
 }
 
+// Lock my drive, Forget this browser, Delete my drive: the key goes, and with it everything the drive kept
+// beside it, since a link's URL is its key (security-audit-1): the links it made (each URL with its secret,
+// and a secret word), what it bought (each pay URL with its half key), the inbox and sales state, and the
+// claim tokens of its purchases. Both stores hold only this browser's one drive.
 export async function forgetIdentity() {
-  await idbDelete('identity', 'current');
-  await idbDelete('inbox', 'current');
+  await idbClear('identity');
+  await idbClear('inbox');
+  localSet('mutis.claims', null);
   hasDrive(false);
   setState('identity', null);
 }

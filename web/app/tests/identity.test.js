@@ -2,8 +2,13 @@
 import { b64uEncode, hex, unhex } from '../lib/b64.js';
 import { sha256 } from '../lib/crypto.js';
 import {
-  KeyError, identityFromSeed, keyFileName, keyFileText, lockedKeyFileText, parseRecoveryCode, recoveryCode, restoreFromText,
+  KeyError, createIdentity, forgetIdentity, identityFromSeed, keyFileName, keyFileText, loadIdentity, lockedKeyFileText,
+  parseRecoveryCode, recoveryCode, restoreFromText,
 } from '../lib/identity.js';
+import { idbGet } from '../lib/idb.js';
+import { rememberLink } from '../lib/links.js';
+import { keepClaim, savedClaim } from '../lib/pay.js';
+import { rememberPurchase } from '../lib/purchases.js';
 import { bytesEq, deepEq, eq, loadJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
@@ -28,6 +33,30 @@ export default [
     eq(hex(id.dropTag(0)), row(v, 'dropTag(0)'));
     eq(hex(id.dropManage(15)), row(v, 'dropManage(15)'));
     await rejects(async () => id.dropTag(16), RangeError);
+  }],
+  ['forgetting the drive erases what it kept in this browser: its links, their secret words, purchases and claims', async () => {
+    const shim = !globalThis.localStorage;          // Node: a Map stands in for localStorage
+    if (shim) {
+      const m = new Map();
+      globalThis.localStorage = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)),
+        removeItem: (k) => m.delete(k) };
+    }
+    try {
+      const id = await createIdentity({ lazy: true });
+      const link = 'A'.repeat(22);
+      const paid = 'B'.repeat(22);
+      await rememberLink(id, link, { url: `https://h.example/s/${link}#2${'s'.repeat(43)}`, word: 'secret word' });
+      await rememberPurchase(id, paid, { url: `https://h.example/p/${paid}#5${'h'.repeat(43)}`, price_ut: '100000' });
+      keepClaim(paid, { claimId: 'clm_aaaaaaaaaaaaaaaaaaaa', t: 'T' });
+      ok((await idbGet('identity', `links:${id.id}`))?.[link]?.word === 'secret word', 'kept while the drive is here');
+      await forgetIdentity();
+      eq(await loadIdentity(), null);
+      eq(await idbGet('identity', `links:${id.id}`), null);
+      eq(await idbGet('identity', `purchases:${id.id}`), null);
+      eq(savedClaim(paid), null);
+    } finally {
+      if (shim) delete globalThis.localStorage;
+    }
   }],
   ['recovery code: Crockford base32 of seed + 2-byte checksum, MUTIS- + 11 groups of 5', async () => {
     const v = await loadJson('vectors/format-v1.json');

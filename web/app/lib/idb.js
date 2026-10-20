@@ -65,6 +65,13 @@ export async function idbPut(storeName, key, value) {
   await tx(db, storeName, 'readwrite', (s) => s.put(value, key));
 }
 
+// Empties a store: what a drive kept in it goes with the drive (forgetIdentity).
+export async function idbClear(storeName) {
+  const db = await openDb();
+  if (!db) return void fallback.get(storeName).clear();
+  await tx(db, storeName, 'readwrite', (s) => s.clear());
+}
+
 export async function idbDelete(storeName, key) {
   const db = await openDb();
   if (!db) return void fallback.get(storeName).delete(key);
