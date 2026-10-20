@@ -4,14 +4,14 @@
 // gate); the key leaves the address bar only after a successful open; every state carries the
 // report link. Each screen starts with an icon tile for its state; an ended link says "This link has
 // ended", the reason, and (C42) only when the file left our server, that we wrote so on the Tari chain
-// (or when it lands there). Previews follow the allowlist of §12.3.4.
+// (or when it lands there). The file shows in the shared preview (ui/lightbox.js), which picks what to show from
+// the decrypted bytes alone.
 import { h, lines } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
 import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';
 import { parseFragment } from '../lib/share.js';
 import { SNIFF_BYTES, checkRisky, isArchiveName, sanitizeFileName } from '../lib/filetype.js';
-import { makePreview } from '../lib/preview.js';
 import { saveFile, warnLargeOnPhone } from '../lib/download.js';
 import { concat } from '../lib/bytes.js';
 import { clearFragment, current } from '../lib/router.js';
@@ -284,11 +284,24 @@ export function viewer(root, opts) {
     }
   }
 
-  // The secret itself: content first, then Save; under the rule Once, "This was its only look".
-  function openedState(opened, name, parts, risk) {
+  // The file in the shared preview: what it shows comes from its bytes, never its name or stored type.
+  async function preview(label, name, size, parts, trigger) {
+    try {
+      const { openLightbox } = await import('./lightbox.js');
+      await openLightbox({ files: [{ name: label, saveAs: name, size, parts }], read: async (f) => f.parts, returnFocus: trigger,
+        refocus: () => root.querySelector('[data-testid="view-show"]') });
+    } catch {
+      // The card under it opens it again, and Save still works.
+    }
+  }
+
+  // The secret itself: it shows at once in the preview; under it the card that opens it again, then Save; under the
+  // rule Once, "This was its only look".
+  async function openedState(opened, name, parts, risk) {
     const { meta } = opened;
     const label = meta.kind === 'text' ? t('viewer.note_label') : name;
-    const preview = makePreview(parts, meta, { label });
+    const see = h('button', { type: 'button', class: 'a-filecard a-filecard--open', 'data-testid': 'view-show' }, icon('external'), h('span', { class: 'a-filename' }, label));
+    see.addEventListener('click', () => preview(label, name, meta.size, parts, see));
     const once = opened.burned;
     if (once) opts.onEnded?.('burned');
     const notices = [
@@ -298,9 +311,10 @@ export function viewer(root, opts) {
     ];
     const what = h('div', { class: 'a-what-you-see' },
       opts.delivery ? h('h3', { class: 'a-split-h' }, t('viewer.you_see')) : null,
-      preview?.el ?? h('div', { class: 'a-filecard' }, icon('lock'), h('p', { class: 'a-filename' }, label)),
+      see,
       h('p', { class: 'a-meta' }, meta.kind === 'text' ? t('viewer.note_label') : h('span', { 'data-testid': 'view-filename' }, name), ' · ', h('span', { class: 'mono' }, formatBytes(meta.size))));
     const after = once ? t('viewer.burn_line') : opened.viewsLeft === null ? '' : t('viewer.left', { count: opened.viewsLeft });
+    await preview(label, name, meta.size, parts, see);   // over the page as it is; the opened page is drawn under it
     set('opened', [
       h(small ? 'h3' : 'h1', { class: 'a-opened-h', tabindex: '-1' }, t('viewer.opened')),
       notices,
@@ -311,7 +325,7 @@ export function viewer(root, opts) {
         keepButton(opened, name, parts)),
       after ? h('p', { class: ['a-after', once ? 'a-after--once' : null] }, after) : null,
       h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { count: opened.chunkCount })))]);
-    if (!small) root.querySelector('.a-opened-h')?.focus({ preventScroll: true });
+    if (!small && !document.getElementById('lightbox')) root.querySelector('.a-opened-h')?.focus({ preventScroll: true });
   }
 
   // What the chain saw for a delivery found in this browser's inbox: built only from the mirror row

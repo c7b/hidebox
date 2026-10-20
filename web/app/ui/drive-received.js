@@ -221,7 +221,9 @@ export async function render(drive, page) {
         const parts = await open.fetchContent(opened);
         const name = opened.meta.kind === 'text' ? t('fv.note') : sanitizeFileName(opened.meta.name);
         title.textContent = name;
-        body.replaceChildren(await fileBody(d, opened, parts, name));
+        const file = await fileBody(d, opened, parts, name);
+        await file.show();   // the file itself, in the preview over this dialog; the dialog under it keeps Save to my drive
+        body.replaceChildren(file.el);
       }
       body.dataset.state = 'opened';
       init(body);
@@ -237,12 +239,22 @@ export async function render(drive, page) {
     }
   }
 
+  // A single file: the shared preview (ui/lightbox.js) shows it, choosing what to show from its bytes alone; the
+  // dialog under it keeps its name (which opens it again), Save to my drive and Save. -> {el, show()}
   async function fileBody(d, opened, parts, name) {
-    const { checkRisky } = await import('../lib/filetype.js');
-    const { makePreview } = await import('../lib/preview.js');
-    const { saveFile } = await import('../lib/download.js');
-    const risk = opened.meta.kind === 'text' ? { risky: false, active: false } : checkRisky(name, parts[0]?.subarray(0, 0x8006) ?? null);
-    const shown = risk.risky || risk.active ? null : makePreview(parts, opened.meta, { label: name });
+    const [{ checkRisky, SNIFF_BYTES }, { saveFile }] = await Promise.all([import('../lib/filetype.js'), import('../lib/download.js')]);
+    const size = opened.meta.size ?? 0;
+    const risk = opened.meta.kind === 'text' ? { risky: false } : checkRisky(name, parts[0]?.subarray(0, SNIFF_BYTES) ?? null);
+    const show = async (trigger = see) => {
+      try {
+        const { openLightbox } = await import('./lightbox.js');
+        await openLightbox({ files: [{ name, saveAs: opened.meta.kind === 'text' ? 'note.txt' : name, size, parts }], read: async (f) => f.parts,
+          returnFocus: trigger, refocus: () => document.querySelector('[data-testid="received-show"]') });
+      } catch {
+        toast(t('drive.oops'), { type: 'error' });   // Save still works
+      }
+    };
+    const see = h('button', { type: 'button', class: 'link-plain name', 'data-testid': 'received-show', onclick: (e) => show(e.currentTarget) }, name);
     const save = button(t('fv.save'), { variant: 'outline', glyph: 'download', testid: 'received-save-file', onclick: () => saveFile(parts, name) });
     const keepIt = button(t('rec.save'), { glyph: 'hard-drive', testid: 'received-keep', onclick: async (e) => {
       const b = e.currentTarget;
@@ -253,11 +265,12 @@ export async function render(drive, page) {
         b.disabled = false;
       }
     } });
-    return h('div', { class: 'stack', 'data-testid': 'inbox-opened', 'data-state': 'opened' },
-      shown ? h('div', { class: 'fv-media' }, shown.el) : h('div', { class: 'locked-note' }, icon('file'), t(risk.risky ? 'fv.program' : 'fv.no_preview')),
-      h('p', { class: 'small muted' }, formatBytes(opened.meta.size ?? 0)),
+    const el = h('div', { class: 'stack', 'data-testid': 'inbox-opened', 'data-state': 'opened' },
+      h('ul', { class: 'preview-list', role: 'list' }, h('li', {}, icon('file'), see, h('span', { class: 'size' }, formatBytes(size)))),
+      risk.risky ? h('p', { class: 'small fv-warn', 'data-testid': 'received-program' }, icon('triangle-alert'), t('fv.program')) : null,
       h('div', { class: 'row wrap' }, keepIt, save),
       h('p', { class: 'small muted path-line' }, icon('info'), h('span', {}, t('fv.scan'))));
+    return { el, show };
   }
 
   // Save to my drive: lock the plaintext again as the drive's own kept files (the upload panel shows it).

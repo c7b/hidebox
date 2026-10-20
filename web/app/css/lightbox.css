@@ -2,9 +2,12 @@
    file opens, so no page's first screen carries it. The stage is v3's black void in both themes, as the start screen's
    still sits on v3's dark stage in light mode: a picture is judged on neutral black. The chrome floats on it as the
    drive's frosted glass (a light from above on an opaque gunmetal base, no blur under words), and the one lime is
-   Download. A text file is a page laid on the void: white in light, the drive's gunmetal glass in dark. */
+   Download. A text file is a page laid on the void: white in light, the drive's gunmetal glass in dark.
+   The link pages keep the site's look (no drive stylesheet), so everything the lightbox needs is here: its buttons,
+   icons, the page's colours for both themes and the turning dot; on the drive these rules match its own. */
 .lightbox {
-  --lb-fg: oklch(0.985 0 0); --lb-muted: oklch(0.78 0 0);
+  --lb-fg: oklch(0.985 0 0); --lb-muted: oklch(0.78 0 0); --lb-target: 2.25rem;
+  --lb-paper: #FFFFFF; --lb-ink: #0A0A0A; --lb-paper-muted: #666666; --lb-paper-line: #E5E5E5; --lb-paper-light: none; --lb-paper-top: #E5E5E5;
   --lb-base: #131417;                                   /* gunmetal 850, v3 */
   --lb-light: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
   --lb-edge: rgb(255 255 255 / 0.085); --lb-top: rgb(255 255 255 / 0.16); --lb-hover: rgb(255 255 255 / 0.08);
@@ -42,7 +45,7 @@
 .lb-meta { font-size: 0.75rem; line-height: 1rem; color: var(--lb-muted); font-variant-numeric: tabular-nums; }
 .lb-actions { flex: none; display: flex; align-items: center; gap: 0.25rem; padding: 0.375rem; }
 .lightbox .lb-download { padding-inline: 0.875rem; box-shadow: none; }   /* lime on the void needs no edge */
-.lightbox .lb-icon { color: var(--lb-fg); border-color: transparent; }
+.lightbox .lb-icon { width: var(--lb-target); padding: 0; background: transparent; color: var(--lb-fg); border-color: transparent; }
 .lightbox .lb-icon:hover, .lightbox .lb-icon:active { background: var(--lb-hover); color: var(--lb-fg); }
 .lightbox .btn:focus-visible { outline: 2px solid var(--lb-fg); outline-offset: 2px; }
 
@@ -81,8 +84,8 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
 .lb-sheet {
   align-self: stretch; justify-self: center; width: min(100%, 52rem); min-height: 0; max-height: 100%; overflow: auto;
   overscroll-behavior: contain; color-scheme: light; touch-action: pan-y pinch-zoom;   /* a text file scrolls */
-  background-color: var(--card, #FFFFFF); background-image: var(--glass, none); color: var(--card-foreground, var(--foreground, #0A0A0A));
-  border: 1px solid var(--glass-edge, var(--border, #E5E5E5)); border-top-color: var(--glass-top, var(--border, #E5E5E5));
+  background-color: var(--lb-paper); background-image: var(--lb-paper-light); color: var(--lb-ink);
+  border: 1px solid var(--lb-paper-line); border-top-color: var(--lb-paper-top);
   border-radius: var(--radius-xl, 0.875rem); box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.95);
   scrollbar-width: thin; scrollbar-color: color-mix(in oklab, currentColor 28%, transparent) transparent;
   animation: lb-in 0.34s var(--lb-ease) both;
@@ -95,7 +98,7 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
 }
 .lb-more {
   position: sticky; bottom: 0; margin: 0; padding: 0.875rem 1.75rem; font-size: 0.8125rem; line-height: 1.25rem;
-  color: var(--muted-foreground, #666666); background: inherit; background-color: var(--card, #FFFFFF); border-top: 1px solid var(--border, #E5E5E5);
+  color: var(--lb-paper-muted); background-color: var(--lb-paper); border-top: 1px solid var(--lb-paper-line);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lb-sheet { color-scheme: dark; } }
 :root[data-theme="dark"] .lb-sheet { color-scheme: dark; }
@@ -112,7 +115,7 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
 
 /* --- moving through a folder: a pager under the stage on phones, the stage's sides on computers --------------- */
 .lb-nav { grid-area: nav; justify-self: center; display: flex; gap: 0.25rem; margin: 0 0.75rem 0.75rem; padding: 0.25rem; border-radius: var(--radius-full, 9999px); }
-.lightbox .lb-step { border-radius: var(--radius-full, 9999px); width: 2.75rem; height: 2.75rem; }
+.lightbox .lb-step { border-radius: var(--radius-full, 9999px); width: 2.75rem; height: 2.75rem; }   /* 44 px everywhere: they sit on the void, often under a thumb */
 .lb-prev .icon { transform: scaleX(-1); }
 
 @media (max-width: 399px) { .lb-tile { display: none; } .lb-file { padding-left: 0.875rem; } }
@@ -134,6 +137,27 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
   .lb-next { grid-area: next; }
 }
 
+@media (pointer: coarse) { .lightbox { --lb-target: 2.75rem; } }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lightbox { --lb-paper: #131417; --lb-ink: #FAFAFA; --lb-paper-muted: #A1A1A1; --lb-paper-line: rgb(255 255 255 / 0.085); --lb-paper-light: var(--lb-light); --lb-paper-top: rgb(255 255 255 / 0.16); }
+}
+:root[data-theme="dark"] .lightbox { --lb-paper: #131417; --lb-ink: #FAFAFA; --lb-paper-muted: #A1A1A1; --lb-paper-line: rgb(255 255 255 / 0.085); --lb-paper-light: var(--lb-light); --lb-paper-top: rgb(255 255 255 / 0.16); }
+
+/* --- its own buttons, icons and dot (the drive's components, for pages that don't load them) ------------------ */
+.lightbox .btn {
+  display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 0.5rem; height: var(--lb-target);
+  padding: 0.5rem 0.875rem; border: 1px solid transparent; border-radius: var(--radius-md, 0.5rem); outline: none;
+  font: 500 0.875rem/1.25rem var(--font-sans, Geist, ui-sans-serif, system-ui, sans-serif); white-space: nowrap; text-decoration: none;
+  cursor: pointer; user-select: none; transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+.lightbox .btn:disabled { pointer-events: none; opacity: 0.5; }
+.lightbox .btn:active { transform: translateY(0.5px); }
+.lightbox .lb-download { background: var(--brand-solid, #BCFE00); color: var(--on-brand, #0A0A0A); font-weight: 600; }
+.lightbox .lb-download:hover { background: var(--brand-solid-hover, #B1EC20); }
+.lightbox .icon { width: 1rem; height: 1rem; flex-shrink: 0; pointer-events: none; }
+.lightbox .spinner { animation: lb-spin 1s linear infinite; }
+
+@keyframes lb-spin { to { transform: rotate(360deg); } }
 @keyframes lb-fade { from { opacity: 0; } }
 @keyframes lb-in { from { opacity: 0; transform: scale(0.97); } }
 @media (prefers-reduced-motion: reduce) {

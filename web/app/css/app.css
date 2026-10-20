@@ -148,12 +148,11 @@
 .a-filecard .a-icon { width: 40px; height: 40px; }
 .a-meta { font: var(--t-small); color: var(--fg-2); overflow-wrap: anywhere; }
 .a-what-you-see { display: grid; gap: var(--s-3); min-width: 0; }
-.a-what-you-see img, .a-what-you-see video { max-height: 70svh; width: auto; min-width: min(100%, 240px); border-radius: var(--r-input); }
-.a-what-you-see audio { width: 100%; }
-.a-what-you-see pre {
-  max-height: 60svh; overflow: auto; padding: var(--s-4); border-radius: var(--r-input); background: var(--bg-raised); box-shadow: var(--shadow);
-  font: var(--t-code); white-space: pre-wrap; overflow-wrap: anywhere;
-}
+/* The opened file: a card that opens the preview again (ui/lightbox.js shows the file itself) */
+button.a-filecard { width: 100%; border: 0; font: inherit; color: inherit; cursor: pointer; transition: translate .15s ease; }
+button.a-filecard:hover { translate: 0 -1px; }
+button.a-filecard:active { translate: 0 0.5px; }
+@media (prefers-reduced-motion: reduce) { button.a-filecard { transition: none; } }
 .a-split { display: grid; gap: var(--s-5); }
 @media (min-width: 900px) { .a-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .a-view:has(.a-split) { max-width: 1040px; } }
 .a-split-h { font: var(--t-ui); }

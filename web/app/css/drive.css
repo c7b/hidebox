@@ -390,10 +390,6 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 .fv[data-state="ended"] .visit { color: var(--foreground); font-weight: 500; }
 .fv-warn { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--warning); }
 .fv-warn .icon { width: 0.875rem; height: 0.875rem; color: var(--warning); }
-.fv-media { display: grid; place-items: center; border-radius: var(--radius-lg); background: var(--muted); overflow: hidden; }
-.fv-media :is(img, video) { max-width: 100%; max-height: min(60vh, 32rem); object-fit: contain; }
-.fv-media audio { width: 100%; margin: 1rem; }
-.fv-media pre { width: 100%; max-height: min(60vh, 32rem); overflow: auto; margin: 0; padding: 1rem; font-family: var(--font-mono); font-size: 0.8125rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 .fv-card { width: min(100%, 32rem); margin-inline: auto; }
 .fv-card .card-footer .btn { width: 100%; }
 #rec-open .fv .files { max-height: min(50vh, 28rem); overflow: auto; }

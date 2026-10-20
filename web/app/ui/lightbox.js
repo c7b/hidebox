@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-// The file preview (docs/review/preview-1.md): one lightbox for the drive (a file's name) and the link pages (a
-// file in a folder visit, a paid file once it opens). Security first: what it shows comes from lib/sniff.js, which
+// The file preview (docs/review/preview-1.md): one lightbox for every place a file opens: a drive file's name, a
+// file in a folder visit, a paid file, a single-file link (/s/, /t) and a single file in Received. Security first: what it shows comes from lib/sniff.js, which
 // reads the decrypted bytes and never the file's name or stored type, and every kind it knows is shown without a
 // live document of the file's own:
 //   - a picture: an <img> of a Blob typed to the sniffed raster type;
@@ -160,7 +160,7 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
       tile.replaceChildren(icon('file-image'));
       const url = URL.createObjectURL(new Blob(parts, { type: seen.type }));
       shown.revoke = () => URL.revokeObjectURL(url);
-      const img = h('img', { class: 'lb-media', src: url, alt: f.name, decoding: 'async', draggable: 'false', 'data-testid': 'lightbox-image', 'data-type': seen.type });
+      const img = h('img', { class: 'lb-media', src: url, alt: f.name, decoding: 'async', draggable: 'false', 'data-testid': 'view-image', 'data-type': seen.type });
       img.addEventListener('error', () => { if (mine === seq) put('none', note('broken')); });
       put('image', img);
     } else if (seen.kind === 'svg') {
@@ -174,7 +174,7 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
     } else if (seen.kind === 'text') {
       tile.replaceChildren(icon('file-text'));
       put('text', h('div', { class: 'lb-sheet', tabindex: '0', role: 'region', 'aria-label': f.name, 'data-testid': 'lightbox-sheet' },
-        h('pre', { class: 'lb-text', 'data-testid': 'lightbox-text' }, seen.text),
+        h('pre', { class: 'lb-text', 'data-testid': 'view-text' }, seen.text),
         seen.more ? h('p', { class: 'lb-more', 'data-testid': 'lightbox-more' }, t('pv.more', { size: formatBytes(TEXT_CAP) })) : null));
     } else {
       put('none', note(seen.why));

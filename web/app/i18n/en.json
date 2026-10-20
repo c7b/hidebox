@@ -449,7 +449,6 @@
  "fv.opening": "Opening…",
  "fv.keep": "Save to my drive",
  "fv.keeping": "Saving to your drive…",
- "fv.no_preview": "No preview for this kind of file. Save it to open it.",
  "fv.program": "This is a program. Only run it if you expected it.",
  "fv.skipped": {"one": "{count} item didn't open and is left out.", "other": "{count} items didn't open and are left out."},
  "fv.scan": "We can't see inside, so we can't scan it either. Only open files you expected.",
