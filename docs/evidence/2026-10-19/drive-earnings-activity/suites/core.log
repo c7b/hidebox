@@ -1,0 +1,60 @@
+
+== lint (A-08)
+widget path, library modules: 18 files, 27,915 bytes gzip-9 (no ootle-wasm in the graph); 13,045 bytes of the 40 KB A-06 budget left for drop-widget.js, its CSS and strings
+on demand: exif.js 2,867 B, password.js 3,128 B
+LINT PASS 1003/1003 checks, 92 files
+
+== vectors, independent Python cross-check
+crosscheck: 97/97 checks passed
+
+== KATs under Node 20 (A-01)
+NODE PASS 147/147 (node v20.19.2)
+
+== KATs in headless Chromium, app CSP (A-01, A-05)
+title: TESTS PASS 147/147  (25.1s)
+
+== no WebAssembly, V8 --jitless (A-09)
+title: TESTS PASS 84/84  (34.6s, jitless)
+
+== sidecar protocol, permissions, G4 (A-12)
+PASS hello: version, pinned wasm hash, node 20, permission model on  [v20.19.2 mutis-sidecar/1]
+PASS selftest: real outputs open, every forgery is rejected (G4)  [real output 02631965 opens=ok; real output ee6ba768 opens=ok; real output 14c78116 opens=ok; rejected: value claim: commitment of 2,000,000 w=ok; rejected: swap: one locker output's commitment w=ok; rejected: commitment one bit off=ok; fresh genuine output opens=ok; fresh swapped payload rejected=ok; ownership KAT: genuine output opens with our vie=ok; ownership KAT: genuine output is spendable by ou=ok; ownership KAT: not ours output opens with our vi=ok; ownership KAT: not ours output is not spendable =ok; fresh output for another owner opens with our vi=ok; sealed sales view key opens=ok; sealed sales view key refused without the watch =ok; sealed sales view key refused for another addres=ok; sealed sales view key refused with a key not the=ok]
+PASS oneTimeKey: a nonce that isn't a point is refused  [bad_point]
+PASS scan: finds exactly this view key's real outputs with proven values; crafted rows skipped  [['1969000', '2000000']]
+PASS scan speed ≥ 2,000 UTXOs/s (3,000 foreign rows, median of 3)  [2,136 rows/s]
+PASS recoverCanary: another drive's keys, another link, another file's header are refused  [['cannot_open', 'other_share', 'cannot_unwrap']]
+PASS protocol errors are fixed codes  [['bad_json', 'unknown_cmd', 'bad_request', 'bad_request']]
+PASS stderr carries fixed strings only (ours, plus Node's own permission notice)  ['(node:160820) ExperimentalWarning: Permission is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning']
+PASS permission model: writes, child processes, workers, reads outside, eval all denied  [write:ERR_ACCESS_DENIED spawn:ERR_ACCESS_DENIED worker:ERR_ACCESS_DENIED read-outside:ERR_ACCESS_DENIED eval:EvalError]
+PASS a wasm file that isn't the pinned build: the sidecar refuses to start  [exit 2]
+SIDECAR PASS 20/20
+
+== 18-bit PoW at 6x CPU throttling (A-13)
+POW_WORKER_MEDIAN_MS 257 P90 882 RUNS 15
+POW_MAIN_MEDIAN_MS 1284 RUNS 5
+title: BENCH PASS  (13.2s, 6.0x CPU)
+
+== in-browser scan, phone emulation at 4x (report)
+SCAN_ROWS_PER_S median 861 rounds 861,866,813 ROWS 3000 floor 500
+title: BENCH PASS  (49.1s, 4.0x CPU)
+
+== contract: the library against mutis-api --dev
+PASS contract: config: the gate values are strings, the memo origins include ours, the text limit is this library's  [send_mode=relay amount_proof=sidecar]
+PASS contract: anonymous text, Once: the item keeps its 20 h expiry (rounded up to the hour) and the link inherits it; opens once, then burned  [second open: gone/burned]
+PASS contract: password only: after 3 wrong tries the server says wait, then wants a PoW; the library solves it and opens  [waited 60 s]
+PASS contract: locker: register with a PoW; a 7-day Bearer upload and its link without an expiry last 7 days  [link lasts 7.02 days; createdSeq 2]
+PASS contract: inbox scan and /watch over the mirror: cursor saved; /watch starts at the epoch about 7 days back  [head=6 watch from seq 0, 4 rows]
+CONTRACT PASS 12/12 (node v20.19.2)
+
+== summary
+PASS  lint (A-08)                                             0.2s  LINT PASS 1003/1003 checks, 92 files
+PASS  vectors, independent Python cross-check                 0.2s  crosscheck: 97/97 checks passed
+PASS  KATs under Node 20 (A-01)                              22.1s  NODE PASS 147/147 (node v20.19.2)
+PASS  KATs in headless Chromium, app CSP (A-01, A-05)        26.6s  title: TESTS PASS 147/147  (25.1s)
+PASS  no WebAssembly, V8 --jitless (A-09)                    35.7s  title: TESTS PASS 84/84  (34.6s, jitless)
+PASS  sidecar protocol, permissions, G4 (A-12)               10.7s  SIDECAR PASS 20/20
+PASS  18-bit PoW at 6x CPU throttling (A-13)                 14.8s  title: BENCH PASS  (13.2s, 6.0x CPU)
+PASS  in-browser scan, phone emulation at 4x (report)        50.0s  title: BENCH PASS  (49.1s, 4.0x CPU)
+PASS  contract: the library against mutis-api --dev          91.5s  CONTRACT PASS 12/12 (node v20.19.2)
+
+ALL PASS (9 steps)
