@@ -1,6 +1,38 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- ootle-0.47 -->
+## 2026-10-20: Ootle v0.47.0 (docs/evidence/2026-10-20/upgrade-0.47.0/)
+
+- **What broke.** Esmeralda's indexers moved to tari-ootle v0.47.0 at 05:12 UTC, and `GET /substates/{id}`
+  now answers `{"state": {"up": {"substate": …}}}` where it answered `{"substate": …}`. walletd 0.46.0 couldn't
+  read it, so every SealLog checkpoint and release notarization failed from 05:21 (its stealth sends, the
+  decoys and canary deliveries, kept committing). Our own code read every output as missing: the hourly
+  reconcile froze pack credits at 05:38 (the outputs were all there), browsers couldn't read their own
+  wallet's outputs before a send (`send_mode = "direct"`), and /verify couldn't read the SealLog log.
+- **walletd 0.47.0** (`tari_ootle_walletd-0.47.0-9dabb2a-linux-x86_64`, SHA-256 `919579e6…ba52`, four sources
+  agree, the tag's signature verified) runs since 07:19 UTC, after the drill on a copy of the wallet under the
+  whole production sandbox: two additive store migrations, the same balances before and after, no sandbox
+  directive loosened, no config change (its indexer list is still `indexer_api_url`, both indexers). It
+  verifies what the indexer serves against the validator sets it trusts (anchored on first use at epoch 12506).
+  The 0.46.0 binary and a pre-upgrade tar of the wallet are kept for a rollback. Checkpoints commit again (#790
+  on), and the release deployed during the outage is notarized.
+- **The code** reads both shapes (the dev server's fake chain answers like 0.47.0 now), and a spent output the
+  indexer proves (`state.down`) is never a credit. An indexer answer in a shape we don't know counts as the
+  indexer's problem (`unknown`: the reconcile skips the round and alerts after three hours) instead of a
+  missing output, so a format change can no longer freeze credits. After a walletd restart the chain worker's
+  cached token is refused (401); it now gets a new one and repeats the call once, where it used to fail every
+  call for up to four minutes. Fixtures and test vectors hold real answers from both indexers (a live output,
+  a spent output's down proof, the live SealLog log). ootle-wasm stays at 0.46.0: the sidecar never reads an
+  indexer answer, and its suites pass. Deployed as `e6d5f7c`: `verify-deploy` finds 0 differences (the
+  SealLog template check included), and E-13 (a pack paid from the browser's own wallet), E-25 and E-29 pass
+  on production.
+- **Credits.** No payment, invoice or claim was made during the outage, so nothing was credited late and no
+  claim expired because of it; credits were unfrozen once every credited output read `ok` on both indexers.
+- The upgrade drill tries a new walletd under the unit's own sandbox (a deploy test keeps the two lists the
+  same), and its exit trap can no longer end before it deletes the copy.
+<!-- /ootle-0.47 -->
+
 <!-- preview 1 -->
 ## 2026-10-19: file previews
 
