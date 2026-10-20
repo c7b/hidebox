@@ -1,0 +1,108 @@
+$ ssh hidebox -- for u in mutis-api mutis-chain mutis-cleanup mutis-backup mutis-backup-wallet mutis-evidence mutis-health walletd caddy; do sudo systemd-analyze security --no-pager $u.service | grep -E "✗|Overall"; done
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                               0.3
+✗ PrivateNetwork=                                             Service has access to the host's network                                            0.5
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-writable by default                              0.1
+→ Overall exposure level for mutis-api.service: 1.2 OK 🙂
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ SupplementaryGroups=                                        Service runs with supplementary groups                                              0.1
+✗ MemoryDenyWriteExecute=                                     Service may create writable executable memory mappings                              0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                               0.3
+✗ ProtectHome=                                                Service has read-only access to home directories                                    0.1
+✗ PrivateNetwork=                                             Service has access to the host's network                                            0.5
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-writable by default                              0.1
+→ Overall exposure level for mutis-chain.service: 1.4 OK 🙂
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-writable by default                              0.1
+→ Overall exposure level for mutis-cleanup.service: 0.5 SAFE 😀
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-writable by default                              0.1
+→ Overall exposure level for mutis-backup.service: 0.5 SAFE 😀
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ ProtectHome=                                                Service has read-only access to home directories                                    0.1
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+→ Overall exposure level for mutis-backup-wallet.service: 0.6 SAFE 😀
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ SupplementaryGroups=                                        Service runs with supplementary groups                                              0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                               0.3
+✗ ProtectHome=                                                Service has read-only access to home directories                                    0.1
+✗ PrivateNetwork=                                             Service has access to the host's network                                            0.5
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-writable by default                              0.1
+→ Overall exposure level for mutis-evidence.service: 1.4 OK 🙂
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                               0.3
+✗ PrivateNetwork=                                             Service has access to the host's network                                            0.5
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-writable by default                              0.1
+→ Overall exposure level for mutis-health.service: 1.2 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ MemoryDenyWriteExecute=                                     Service may create writable executable memory mappings                                                   0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                                                    0.3
+✗ PrivateNetwork=                                             Service has access to the host's network                                                                 0.5
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ ProtectHome=                                                Service has access to fake empty home directories                                                        0.1
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                                           0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+→ Overall exposure level for walletd.service: 1.4 OK 🙂
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                       0.1
+✗ AmbientCapabilities=                                        Service process receives ambient capabilities                                       0.1
+✗ RestrictAddressFamilies=~AF_NETLINK                         Service may allocate netlink sockets                                                0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                  0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                               0.3
+✗ ProcSubset=                                                 Service has full access to non-process /proc files (/proc subset=)                  0.1
+✗ CapabilityBoundingSet=~CAP_NET_(BIND_SERVICE|BROADCAST|RAW) Service has elevated networking privileges                                          0.1
+✗ PrivateNetwork=                                             Service has access to the host's network                                            0.5
+✗ PrivateUsers=                                               Service has access to other users                                                   0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                      0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                    0.2
+✗ UMask=                                                      Files created by service are group-readable by default                              0.1
+→ Overall exposure level for caddy.service: 1.5 OK 🙂
+[exit 0]
+
+$ ssh hidebox -- cd /tmp/mutis-deploy-safety/deploy/systemd && for u in mutis-*.service walletd.service; do sudo systemd-analyze security --offline=yes --no-pager $u 2>&1 | grep Overall; done
+→ Overall exposure level for mutis-api.service: 1.2 OK 🙂
+→ Overall exposure level for mutis-backup.service: 0.5 SAFE 😀
+→ Overall exposure level for mutis-backup-wallet.service: 0.6 SAFE 😀
+→ Overall exposure level for mutis-chain.service: 1.4 OK 🙂
+→ Overall exposure level for mutis-cleanup.service: 0.5 SAFE 😀
+→ Overall exposure level for mutis-evidence.service: 1.4 OK 🙂
+→ Overall exposure level for mutis-health.service: 1.2 OK 🙂
+→ Overall exposure level for walletd.service: 1.4 OK 🙂
+[exit 0]
+
+$ ssh hidebox -- for u in mutis-api mutis-chain walletd caddy; do pid=$(systemctl show -p MainPID --value $u); printf "%-12s since %s  seccomp=%s nnp=%s capbnd=%s  /:%s  /tmp:%s\n" $u "$(systemctl show -p ActiveEnterTimestamp --value $u | cut -d" " -f2,3)" $(sudo awk "/^Seccomp:/{print \$2}" /proc/$pid/status) $(sudo awk "/^NoNewPrivs:/{print \$2}" /proc/$pid/status) $(sudo awk "/^CapBnd:/{print \$2}" /proc/$pid/status) $(sudo awk "{t[\$5]=\$6} END {print t[\"/\"]}" /proc/$pid/mountinfo) $(sudo awk "{t[\$5]=\$6} END {print t[\"/tmp\"]}" /proc/$pid/mountinfo); done; echo "(mutis-chain and walletd still run the definition they started with at 16:44; they take the final one at their next start)"
+mutis-api    since 2026-10-19 17:24:14  seccomp=2 nnp=1 capbnd=0000000000000000  /:ro,nosuid,relatime  /tmp:rw,nosuid,nodev,noexec
+mutis-chain  since 2026-10-19 16:44:06  seccomp=2 nnp=1 capbnd=0000000000000000  /:ro,nosuid,noexec,relatime  /tmp:rw,nosuid,nodev
+walletd      since 2026-10-19 16:44:19  seccomp=2 nnp=1 capbnd=0000000000000000  /:ro,nosuid,noexec,relatime  /tmp:rw,nosuid,nodev
+caddy        since 2026-10-19 17:24:00  seccomp=2 nnp=1 capbnd=0000000000000400  /:ro,nosuid,relatime  /tmp:rw,nosuid,nodev,noexec
+(mutis-chain and walletd still run the definition they started with at 16:44; they take the final one at their next start)
+[exit 0]
+

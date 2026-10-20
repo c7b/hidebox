@@ -1,0 +1,31 @@
+$ python3 -I tests/e2e/run.py --host hidebox --origin https://hidebox.app --out $TMPDIR/e2e
+(the full suite, once, after every change on the server. E-24, E-26, E-27 and E-31 stopped at "Too many new drives from this network":
+ the hourly limit on new drives per /64, which the earlier scenarios of the run had used up; see the targeted rerun below.)
+PASS E-01      9.9s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     15.0s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     28.7s  Link + password and password-only; path-only attempts never lock a link
+SKIP E-05      0.2s  Expiry 60 s: after 65 s the link is expired
+           this deployment offers no short expiry preset (config e2e_expiry_s = 60, tests/e2e/README.md)
+PASS E-06     10.3s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      4.7s  A link without its #key shows incomplete
+PASS E-08      9.1s  Drive: Make my drive at once; the key file locked with a passphrase; restored in a clean browser (same address and safety code)
+PASS E-15     12.1s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      3.5s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+PASS E-17      8.0s  Abuse: a reported link and drop are taken down by id
+PASS E-18     18.7s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19    105.2s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20     12.2s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+PASS E-21     59.9s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-22     11.7s  Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning
+FAIL E-24    133.6s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+           timed out after 120 s waiting for: document.querySelector('[data-testid="drive-root"]') ? 'drive' : (document.querySelector('[data-code="needs_wasm"]') ? 'needs_wasm' : '')
+FAIL E-26    123.0s  Drive: upload a folder (3 files, 1 subfolder) with the folder picker; restored in a clean browser with the key file: the same tree
+           timed out after 120 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drive-root\"]"); return !!e && e.getClientRects().length > 0; })()
+FAIL E-27    123.4s  Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended
+           timed out after 120 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drive-root\"]"); return !!e && e.getClientRects().length > 0; })()
+PASS E-28     57.2s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
+FAIL E-31    122.9s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+           timed out after 120 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drive-root\"]"); return !!e && e.getClientRects().length > 0; })()
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+e2e: FAIL {'PASS': 16, 'FAIL': 4, 'SKIP': 1} → $TMPDIR/e2e/20261019-165605/report.json
+exit 1

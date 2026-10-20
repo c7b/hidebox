@@ -1,0 +1,179 @@
+$ ssh hidebox -- getent passwd root mutis drive build caddy $(id -un) | cut -d: -f1,3,4,6,7; for u in mutis drive build caddy; do id $u; done; for u in root $(id -un) mutis drive build caddy; do sudo passwd -S $u | cut -d" " -f1,2; done
+root:0:0:/root:/bin/bash
+mutis:995:987:/srv/mutis:/usr/sbin/nologin
+drive:1002:1002:/home/drive:/bin/bash
+build:1001:1001:/home/build:/bin/bash
+caddy:999:989:/var/lib/caddy:/usr/sbin/nologin
+<operator>:1000:1000:/home/<operator>:/bin/bash
+uid=995(mutis) gid=987(mutis) groups=987(mutis)
+uid=1002(drive) gid=1002(drive) groups=1002(drive),987(mutis)
+uid=1001(build) gid=1001(build) groups=1001(build)
+uid=999(caddy) gid=989(caddy) groups=989(caddy),33(www-data)
+root P
+<operator> P
+mutis L
+drive L
+build L
+caddy L
+[exit 0]
+
+$ ssh hidebox -- sudo bash -c "stat -c \"%A %U:%G %n\" /home/* /srv/mutis /srv/mutis/* /srv/mutis/data/* /etc/mutis /etc/mutis/* /etc/mutis/credentials /var/backups/mutis"
+drwx------ build:build /home/build
+drwx------ drive:drive /home/drive
+drwx------ <operator>:<operator> /home/<operator>
+drwxr-xr-x root:root /srv/mutis
+drwxr-xr-x root:root /srv/mutis/app
+drwxrws--- mutis:mutis /srv/mutis/data
+drwxrwsr-x mutis:mutis /srv/mutis/status
+drwx--S--- mutis:mutis /srv/mutis/data/backup
+drwx--S--- mutis:mutis /srv/mutis/data/blobs
+drwxrws--- mutis:mutis /srv/mutis/data/db
+-rw-r----- mutis:mutis /srv/mutis/data/health.json
+drwxr-x--- root:mutis /etc/mutis
+-rw-r----- root:mutis /etc/mutis/caddy.env
+drwx------ root:root /etc/mutis/credentials
+-rw-r----- root:mutis /etc/mutis/mutis.toml
+-rw-r----- root:root /etc/mutis/mutis.toml.bak-seallog
+-rw-r----- root:mutis /etc/mutis/secret.key
+-rw-r----- root:mutis /etc/mutis/walletd-log4rs.yml
+drwx------ root:root /etc/mutis/credentials
+drwx------ root:root /var/backups/mutis
+[exit 0]
+
+$ ssh hidebox -- for u in mutis drive build caddy; do for d in /srv/mutis/data /srv/mutis/data/db /srv/mutis/data/blobs /srv/mutis/data/backup /srv/mutis/status /srv/mutis/app/current/dist /etc/mutis; do sudo runuser -u $u -- test -r $d -a -x $d && r=read || r=- ; sudo runuser -u $u -- test -w $d && w=write || w=-; printf "%-6s %-32s %s %s\n" $u $d $r $w; done; done
+mutis  /srv/mutis/data                  read write
+mutis  /srv/mutis/data/db               read write
+mutis  /srv/mutis/data/blobs            read write
+mutis  /srv/mutis/data/backup           read write
+mutis  /srv/mutis/status                read write
+mutis  /srv/mutis/app/current/dist      read -
+mutis  /etc/mutis                       read -
+drive  /srv/mutis/data                  read write
+drive  /srv/mutis/data/db               read write
+drive  /srv/mutis/data/blobs            - -
+drive  /srv/mutis/data/backup           - -
+drive  /srv/mutis/status                read write
+drive  /srv/mutis/app/current/dist      read -
+drive  /etc/mutis                       read -
+build  /srv/mutis/data                  - -
+build  /srv/mutis/data/db               - -
+build  /srv/mutis/data/blobs            - -
+build  /srv/mutis/data/backup           - -
+build  /srv/mutis/status                read -
+build  /srv/mutis/app/current/dist      read -
+build  /etc/mutis                       - -
+caddy  /srv/mutis/data                  - -
+caddy  /srv/mutis/data/db               - -
+caddy  /srv/mutis/data/blobs            - -
+caddy  /srv/mutis/data/backup           - -
+caddy  /srv/mutis/status                read -
+caddy  /srv/mutis/app/current/dist      read -
+caddy  /etc/mutis                       - -
+[exit 0]
+
+$ ssh hidebox -- sudo ls -l /etc/sudoers.d; sudo bash -c "grep -hvE \"^\s*(#|$)\" /etc/sudoers /etc/sudoers.d/*"; for u in mutis drive build caddy; do sudo -l -U $u 2>&1 | tail -1; done
+total 12
+-r--r----- 1 root root  120 Oct 11 01:51 90-cloud-init-users
+-r--r----- 1 root root  278 Oct 11 03:24 90-<operator>-autonomo
+-r--r----- 1 root root 1068 Apr 11  2026 README
+Defaults	env_reset
+Defaults	mail_badpass
+Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults	use_pty
+root	ALL=(ALL:ALL) ALL
+%sudo	ALL=(ALL:ALL) ALL
+@includedir /etc/sudoers.d
+root ALL=(ALL) NOPASSWD:ALL
+<operator> ALL=(ALL) NOPASSWD: ALL
+User mutis is not allowed to run sudo on <server>.
+User drive is not allowed to run sudo on <server>.
+User build is not allowed to run sudo on <server>.
+User caddy is not allowed to run sudo on <server>.
+[exit 0]
+
+$ ssh hidebox -- sudo sshd -T | grep -iE "^(port|permitrootlogin|passwordauthentication|kbdinteractiveauthentication|pubkeyauthentication|permitemptypasswords|allowusers|allowagentforwarding|allowtcpforwarding|x11forwarding|permittunnel|maxauthtries|authenticationmethods) "; sudo bash -c "grep -H -vE \"^\s*(#|$)\" /etc/ssh/sshd_config.d/*.conf"; sudo bash -c "for f in /root/.ssh/authorized_keys /home/*/.ssh/authorized_keys; do [ -f \$f ] && echo \"\$f: \$(grep -c . \$f) key(s)\"; done"
+port 22
+maxauthtries 3
+permitrootlogin no
+pubkeyauthentication yes
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding no
+permitemptypasswords no
+allowtcpforwarding local
+allowagentforwarding no
+allowusers <operator>
+authenticationmethods any
+permittunnel no
+/etc/ssh/sshd_config.d/00-<ops>.conf:PermitRootLogin no
+/etc/ssh/sshd_config.d/00-<ops>.conf:PasswordAuthentication no
+/etc/ssh/sshd_config.d/00-<ops>.conf:KbdInteractiveAuthentication no
+/etc/ssh/sshd_config.d/00-<ops>.conf:PubkeyAuthentication yes
+/etc/ssh/sshd_config.d/00-<ops>.conf:AllowUsers <operator>
+/etc/ssh/sshd_config.d/00-<ops>.conf:AllowAgentForwarding no
+/etc/ssh/sshd_config.d/00-<ops>.conf:AllowTcpForwarding local
+/etc/ssh/sshd_config.d/00-<ops>.conf:X11Forwarding no
+/etc/ssh/sshd_config.d/00-<ops>.conf:PermitTunnel no
+/etc/ssh/sshd_config.d/00-<ops>.conf:MaxAuthTries 3
+/etc/ssh/sshd_config.d/50-cloud-init.conf:PasswordAuthentication yes
+/root/.ssh/authorized_keys: 1 key(s)
+/home/<operator>/.ssh/authorized_keys: 2 key(s)
+[exit 0]
+
+$ ssh hidebox -- sudo ufw status verbose; sudo grep -n -- "--dport \(5100\|8787\|18143\)" /etc/ufw/before.rules /etc/ufw/before6.rules; sudo ss -Hltnu | awk "{print \$1, \$5}" | sort -u; systemctl is-active fail2ban 2>&1
+Status: active
+Logging: off
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     LIMIT IN    Anywhere                   # ssh
+80/tcp                     ALLOW IN    Anywhere                   # mutis http
+443/tcp                    ALLOW IN    Anywhere                   # mutis https
+22/tcp (v6)                LIMIT IN    Anywhere (v6)              # ssh
+80/tcp (v6)                ALLOW IN    Anywhere (v6)              # mutis http
+443/tcp (v6)               ALLOW IN    Anywhere (v6)              # mutis https
+
+/etc/ufw/before.rules:23:-A ufw-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+/etc/ufw/before.rules:24:-A ufw-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+/etc/ufw/before.rules:25:-A ufw-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+/etc/ufw/before.rules:26:-A ufw-before-output -o lo -p tcp --dport 5100 -j REJECT --reject-with tcp-reset
+/etc/ufw/before.rules:27:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 0 -j ACCEPT
+/etc/ufw/before.rules:28:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1000 -j ACCEPT
+/etc/ufw/before.rules:29:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1002 -j ACCEPT
+/etc/ufw/before.rules:30:-A ufw-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 999 -j ACCEPT
+/etc/ufw/before.rules:31:-A ufw-before-output -o lo -p tcp --dport 8787 -j REJECT --reject-with tcp-reset
+/etc/ufw/before.rules:32:-A ufw-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 0 -j ACCEPT
+/etc/ufw/before.rules:33:-A ufw-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1000 -j ACCEPT
+/etc/ufw/before.rules:34:-A ufw-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1002 -j ACCEPT
+/etc/ufw/before.rules:35:-A ufw-before-output -o lo -p tcp --dport 18143 -j REJECT --reject-with tcp-reset
+/etc/ufw/before6.rules:22:-A ufw6-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+/etc/ufw/before6.rules:23:-A ufw6-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+/etc/ufw/before6.rules:24:-A ufw6-before-output -o lo -p tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+/etc/ufw/before6.rules:25:-A ufw6-before-output -o lo -p tcp --dport 5100 -j REJECT --reject-with tcp-reset
+/etc/ufw/before6.rules:26:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 0 -j ACCEPT
+/etc/ufw/before6.rules:27:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1000 -j ACCEPT
+/etc/ufw/before6.rules:28:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 1002 -j ACCEPT
+/etc/ufw/before6.rules:29:-A ufw6-before-output -o lo -p tcp --dport 8787 -m owner --uid-owner 999 -j ACCEPT
+/etc/ufw/before6.rules:30:-A ufw6-before-output -o lo -p tcp --dport 8787 -j REJECT --reject-with tcp-reset
+/etc/ufw/before6.rules:31:-A ufw6-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 0 -j ACCEPT
+/etc/ufw/before6.rules:32:-A ufw6-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1000 -j ACCEPT
+/etc/ufw/before6.rules:33:-A ufw6-before-output -o lo -p tcp --dport 18143 -m owner --uid-owner 1002 -j ACCEPT
+/etc/ufw/before6.rules:34:-A ufw6-before-output -o lo -p tcp --dport 18143 -j REJECT --reject-with tcp-reset
+tcp 0.0.0.0:22
+tcp 127.0.0.1:38835
+tcp 127.0.0.1:44269
+tcp 127.0.0.1:49865
+tcp 127.0.0.1:5100
+tcp 127.0.0.1:8787
+tcp 127.0.0.53%lo:53
+tcp 127.0.0.54:53
+tcp [::]:22
+tcp *:443
+tcp *:80
+udp 127.0.0.53%lo:53
+udp 127.0.0.54:53
+inactive
+[exit 4]
+

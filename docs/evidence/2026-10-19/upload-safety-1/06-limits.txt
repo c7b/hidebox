@@ -1,0 +1,56 @@
+$ grep -nE "max_size|@too_large expression|max_buffer_size|read_body|read_header" deploy/caddy/Caddyfile; grep -nE "^(JSON_MAX|HEADERS_MAX)|DRAIN_MAX|IN_FLIGHT_(64|48) =" server/mutis/http_util.py server/mutis/api.py; grep -nE "^(CHUNK|TAG|INLINE_MAX_STORED|FREEZE_FREE_MARGIN|FREEZE_ALL_MARGIN|RESERVE_FRACTION|ANON_FRACTION|QUOTA_CEILING) |\"max_file_bytes\"" server/mutis/quota.py; grep -nE "UPLOAD_TTL_S =|posix_fallocate|uploads_frozen" server/mutis/handlers/uploads.py server/mutis/storage.py server/mutis/lanes.py; grep -nE "reserve_min_bytes|small_lane_bytes|drop_lane_bytes|anon_lane_max_bytes|upload_bytes_per" server/mutis/config.py
+12:			read_header 10s
+13:			read_body 120s
+161:			max_size 5MB
+166:		@too_large expression `{http.request.header.Content-Length} != "" && int({http.request.header.Content-Length}) > 5242880`
+177:				max_buffer_size 6MB
+server/mutis/http_util.py:10:JSON_MAX = 65_536
+server/mutis/http_util.py:11:HEADERS_MAX = 16 * 1024
+server/mutis/api.py:30:DRAIN_MAX = 8 * 1024 * 1024       # an early error still reads a body this small, so the client sees the answer
+server/mutis/api.py:32:IN_FLIGHT_64 = 32                 # requests in progress per IPv6 /64 or IPv4 address (a browser uses about 6)
+server/mutis/api.py:33:IN_FLIGHT_48 = 128                # per IPv6 /48 or IPv4 /24
+server/mutis/api.py:360:        if 0 < req.content_length <= DRAIN_MAX and not req.headers.get("Transfer-Encoding"):
+9:CHUNK = 4 * MiB
+10:TAG = 16
+11:INLINE_MAX_STORED = 256 * KiB
+20:QUOTA_CEILING = 5 * GiB
+25:RESERVE_FRACTION = 0.10
+26:ANON_FRACTION = 0.08
+27:FREEZE_FREE_MARGIN = 2 * GiB
+28:FREEZE_ALL_MARGIN = 256 * MiB
+32:    "anon": {"max_file_bytes": 25 * MiB, "small_lane_max_bytes": SMALL_PLAINTEXT_MAX, "max_expiry_s": 86400,
+34:    "drop": {"max_file_bytes": 25 * MiB, "expiry_s": 7 * 86400, "views": 3, "links_per_item": 1},
+35:    "probation": {"max_file_bytes": 64 * MiB, "quota_bytes": 64 * MiB, "max_expiry_s": 7 * 86400,
+37:    "locker": {"max_file_bytes": 512 * MiB, "max_expiry_s": 30 * 86400, "default_expiry_s": 7 * 86400,
+39:    "paid": {"max_file_bytes": 2 * GiB, "max_expiry_s": 30 * 86400, "default_expiry_s": 7 * 86400,
+server/mutis/handlers/uploads.py:14:UPLOAD_TTL_S = 7200
+server/mutis/handlers/uploads.py:201:            raise ApiError(503, "uploads_frozen", "The disk is full.", details={"scope": "all"}) from None
+server/mutis/storage.py:46:            os.posix_fallocate(fd, 0, size)
+server/mutis/lanes.py:26:    operator = db.get_meta(conn, "uploads_frozen", "none")
+server/mutis/lanes.py:37:        raise ApiError(503, "uploads_frozen", "Uploads are paused while the disk is nearly full.",
+server/mutis/lanes.py:53:        raise ApiError(503, "uploads_frozen", "Uploads are paused while the disk is nearly full.",
+37:    "limits": {"reserve_min_bytes": 10 << 30, "small_lane_bytes": 1 << 30, "drop_lane_bytes": 2 << 30,
+38:               "anon_lane_max_bytes": 6 << 30},
+51:               "upload_bytes_per_network_day": 2 << 30, "upload_bytes_per_wide_network_day": 6 << 30,
+52:               "judge_upload_bytes_per_network_day": 8 << 30, "exempt_addresses": []},
+[exit 0]
+
+$ curl -s https://hidebox.app/api/v1/stats | python3 -c "import json,sys; d=json.load(sys.stdin); print({k: d[k] for k in sorted(d) if any(w in k for w in (\"disk\", \"frozen\", \"quota\", \"lane\"))})"; curl -s https://hidebox.app/api/v1/config | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps({k: d[k] for k in sorted(d) if any(w in k for w in (\"limit\", \"class\", \"max\", \"quota\", \"chunk\"))})[:1500])"
+{'disk_free_bytes': 79671643044, 'disk_total_bytes': 105441446724, 'disk_used_pct': 24, 'free_quota_bytes': 2214592512, 'uploads_frozen': 'none'}
+{"chunk_size": 4194304, "inline_max_stored": 262144, "limits": {"anon": {"max_file_bytes": 26214400, "small_lane_max_bytes": 5242880, "max_expiry_s": 86400, "default_expiry_s": 86400, "max_views": 10, "links_per_item": 3, "courier_per_day": 3, "uploads_per_hour": 30, "large_uploads_per_hour": 10}, "drop": {"max_file_bytes": 26214400, "expiry_s": 604800, "views": 3}, "probation": {"max_file_bytes": 67108864, "quota_bytes": 67108864, "max_expiry_s": 604800, "default_expiry_s": 604800, "max_views": 50, "sends_per_day": 3, "links_per_item": 10}, "locker": {"max_file_bytes": 536870912, "max_expiry_s": 2592000, "default_expiry_s": 604800, "max_views": 50, "sends_per_day": 20, "links_per_item": 50}, "paid": {"max_file_bytes": 2147483648, "max_expiry_s": 2592000, "default_expiry_s": 604800, "max_views": 50, "sends_per_day": 50, "links_per_item": 50}, "demo_pay_per_day": 2}, "quota": {"floor_bytes": 268435456, "ceiling_bytes": 5368709120, "overcommit": 4, "active_days": 30}, "text_max_bytes": 65536, "text_max_chars": 10000}
+[exit 0]
+
+$ python3 -I -m unittest discover -s server/tests -p test_uploads_inert.py -v 2>&1 | grep -E "FullDisk|Ran|^OK|FAIL"; python3 -I -m unittest discover -s server/tests -p test_quota.py -k freeze -v 2>&1 | grep -E "freeze|Ran|^OK|FAIL"; python3 -I -m unittest discover -s server/tests -p test_input_safety.py -k oversized -k chunk_longer -v 2>&1 | grep -E "test_|Ran|^OK|FAIL"
+test_a_write_that_fails_is_a_500_and_the_api_keeps_serving (test_uploads_inert.FullDisk.test_a_write_that_fails_is_a_500_and_the_api_keeps_serving) ... event=api.internal_error
+test_no_room_to_reserve_is_a_503_and_leaves_nothing (test_uploads_inert.FullDisk.test_no_room_to_reserve_is_a_503_and_leaves_nothing) ... ok
+Ran 9 tests in 1.855s
+OK
+test_freeze_thresholds (test_quota.Lanes.test_freeze_thresholds) ... ok
+Ran 1 test in 0.158s
+OK
+test_chunk_longer_than_expected_is_rejected (test_input_safety.InputSafety.test_chunk_longer_than_expected_is_rejected) ... ok
+test_oversized_json_is_413 (test_input_safety.InputSafety.test_oversized_json_is_413) ... ok
+Ran 2 tests in 0.158s
+OK
+[exit 0]
+

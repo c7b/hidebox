@@ -1,0 +1,13 @@
+$ python3 -I tests/e2e/run.py --host hidebox --origin https://hidebox.app --only E-24,E-26,E-27,E-31,E-03 --out $TMPDIR/e2e-rerun   (18:15, an hour after the full run)
+(E-24, E-26 and E-27 pass. E-31 now gets past the drive and fails on its last check: it finds "the visitors' address" in
+ /var/backups/mutis/mutis.toml.20261018T212521Z, a configuration copy made on 2026-10-18 before this pass. The browsers run on
+ the server, so the visitors' address is the server's own, which [brakes] exempt_addresses lists by design; no visitor's
+ address is involved, and nothing this pass wrote matches. The copy is left for the owner (docs/review/upload-safety-1.md).)
+PASS E-24     23.5s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+PASS E-26      9.4s  Drive: upload a folder (3 files, 1 subfolder) with the folder picker; restored in a clean browser with the key file: the same tree
+PASS E-27     12.5s  Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended
+FAIL E-31     14.6s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+           no IP address, user agent or name in the database, its WAL or the backups ([["the visitors' address", '/var/backups/mutis/mutis.toml.20261018T212521Z'], ["the visitors' address", '/var/backups/mutis/mutis.toml.20261018T212521Z']])
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+e2e: FAIL {'PASS': 4, 'FAIL': 1, 'SKIP': 0} → $TMPDIR/e2e-rerun/20261019-181508/report.json
+exit 1

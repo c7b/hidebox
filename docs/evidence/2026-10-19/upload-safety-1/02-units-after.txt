@@ -1,0 +1,63 @@
+$ ssh hidebox -- for u in mutis-cleanup mutis-health mutis-evidence mutis-backup mutis-backup-wallet; do sudo systemctl start $u.service; echo "$u: $(systemctl show -p Result --value $u) (exit $(systemctl show -p ExecMainStatus --value $u))"; sudo journalctl -u $u --since "-2min" --no-pager -o cat | tail -2 | sed "s/^/   /"; done
+mutis-cleanup: success (exit 0)
+   mutis-cleanup.service: Deactivated successfully.
+   Finished mutis-cleanup.service - mutis cleanup pass.
+mutis-health: success (exit 0)
+   mutis-health.service: Deactivated successfully.
+   Finished mutis-health.service - mutis healthcheck.
+mutis-evidence: success (exit 0)
+   mutis-evidence.service: Deactivated successfully.
+   Finished mutis-evidence.service - mutis evidence collector.
+mutis-backup: success (exit 0)
+   mutis-backup.service: Deactivated successfully.
+   Finished mutis-backup.service - mutis database backup.
+mutis-backup-wallet: success (exit 0)
+   Finished mutis-backup-wallet.service - mutis wallet and key backup.
+   mutis-backup-wallet.service: Consumed 567ms CPU time, 98.4M memory peak.
+[exit 0]
+
+$ ssh hidebox -- sudo systemctl restart mutis-api && sleep 2 && systemctl is-active mutis-api && curl -s http://127.0.0.1:8787/api/v1/health; echo; sudo systemctl restart mutis-chain && sleep 3 && systemctl is-active mutis-chain; sudo journalctl -u mutis-api -u mutis-chain --since "-1min" --no-pager -o cat | grep -vE "^(Started|Stopping|Stopped|mutis-.*(Deactivated|Consumed))" | tail -8
+active
+{"ok":true,"version":"13382aff82c3c50316bf61f76d5d8d250fb05895","time":1792449846}
+active
+INFO route=pay.claim_get status=200 ms=5
+INFO route=system.health status=200 ms=1
+INFO event=chain.stop
+INFO event=chain.start
+(node:1246016) ExperimentalWarning: Permission is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+mutis-sidecar: ready
+INFO route=pay.claim_get status=200 ms=1
+[exit 0]
+
+$ ssh hidebox 'sudo bash -s'   # walletd's one restart under its new unit, checked as provision checks a move
+ts=$(date -u +%Y%m%dT%H%M%SZ); B=/var/backups/mutis; cd /tmp
+(umask 077; sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py balances > $B/balances-$ts-before-hardening.json)
+systemctl restart walletd
+for i in $(seq 1 90); do (exec 3<>/dev/tcp/127.0.0.1/5100) 2>/dev/null && break; sleep 1; done
+(umask 077; sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py balances > $B/balances-$ts-after-hardening.json)
+cmp -s $B/balances-$ts-before-hardening.json $B/balances-$ts-after-hardening.json && echo "balances identical"
+pid=$(systemctl show -p MainPID --value walletd); awk '$5=="/" || $5 ~ /^\/srv/ {print $5, $6}' /proc/$pid/mountinfo
+before: /var/backups/mutis/balances-20261019T224419Z-before-hardening.json
+walletd listening after 2s: active
+after: /var/backups/mutis/balances-20261019T224419Z-after-hardening.json
+balances identical
+/ ro,nosuid,noexec,relatime
+/srv/mutis ro,nosuid,nodev,noexec,relatime
+(the second line is InaccessiblePaths=/srv/mutis: an empty, mode-000 directory in walletd's view)
+[exit 0]
+
+Note: mutis-chain and walletd were restarted here, before the owner's instruction not to restart mutis-chain
+(it keeps the last day's canary keys in memory) reached this pass. Neither was restarted again.
+$ ssh hidebox -- sudo systemctl restart mutis-api && sleep 2 && systemctl is-active mutis-api && curl -s http://127.0.0.1:8787/api/v1/health; echo; for u in mutis-cleanup mutis-health mutis-evidence mutis-backup mutis-backup-wallet; do sudo systemctl start $u.service; echo "$u: $(systemctl show -p Result --value $u) (exit $(systemctl show -p ExecMainStatus --value $u))"; done; for u in mutis-api caddy; do pid=$(systemctl show -p MainPID --value $u); echo "$u: $(sudo awk "{top[\$5]=\$6} END {print \"/ \" top[\"/\"] \"; /tmp \" top[\"/tmp\"] \"; /var/tmp \" top[\"/var/tmp\"] \"; /dev/shm \" top[\"/dev/shm\"]}" /proc/$pid/mountinfo)"; done
+active
+{"ok":true,"version":"13382aff82c3c50316bf61f76d5d8d250fb05895","time":1792452256}
+mutis-cleanup: success (exit 0)
+mutis-health: success (exit 0)
+mutis-evidence: success (exit 0)
+mutis-backup: success (exit 0)
+mutis-backup-wallet: success (exit 0)
+mutis-api: / ro,nosuid,relatime; /tmp rw,nosuid,nodev,noexec; /var/tmp rw,nosuid,noexec,relatime; /dev/shm rw,nosuid,nodev,noexec
+caddy: / ro,nosuid,relatime; /tmp rw,nosuid,nodev,noexec; /var/tmp rw,nosuid,noexec,relatime; /dev/shm rw,nosuid,nodev,noexec
+[exit 0]
+

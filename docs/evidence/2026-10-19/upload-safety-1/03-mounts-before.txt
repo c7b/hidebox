@@ -1,0 +1,27 @@
+$ ssh hidebox -- findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS --target /srv/mutis/data; findmnt -o TARGET,FSTYPE,OPTIONS /tmp; findmnt -o TARGET,FSTYPE,OPTIONS /dev/shm; findmnt -o TARGET,FSTYPE,OPTIONS --target /var/tmp; findmnt -o TARGET,FSTYPE,OPTIONS --target /home/build
+TARGET SOURCE    FSTYPE OPTIONS
+/      /dev/sda1 ext4   rw,relatime,discard,errors=remount-ro
+TARGET FSTYPE OPTIONS
+/tmp   tmpfs  rw,nosuid,nodev,nr_inodes=1048576,inode64
+TARGET   FSTYPE OPTIONS
+/dev/shm tmpfs  rw,nosuid,nodev,inode64
+TARGET FSTYPE OPTIONS
+/      ext4   rw,relatime,discard,errors=remount-ro
+TARGET FSTYPE OPTIONS
+/      ext4   rw,relatime,discard,errors=remount-ro
+[exit 0]
+
+$ ssh hidebox -- p=/srv/mutis/data/.exec-probe-before; printf "#!/bin/sh\necho ran as \$(id -un)\n" | sudo tee $p.sh >/dev/null; sudo cp /usr/bin/id $p.elf; sudo chown mutis:mutis $p.sh $p.elf; sudo chmod 0700 $p.sh $p.elf; sudo runuser -u mutis -- $p.sh; echo "script exit $?"; sudo runuser -u mutis -- $p.elf -un; echo "elf exit $?"; sudo rm -f $p.sh $p.elf
+ran as mutis
+script exit 0
+mutis
+elf exit 0
+[exit 0]
+
+$ ssh hidebox -- sudo find /srv/mutis/data/blobs -mindepth 1 -maxdepth 1 -type d -printf "%m\n" | sort | uniq -c; sudo find /srv/mutis/data/blobs -mindepth 2 -maxdepth 2 -type d -printf "%m\n" | sort | uniq -c; sudo find /srv/mutis/data/blobs -type f -printf "%m\n" | sort | uniq -c; d=$(sudo find /srv/mutis/data/blobs -mindepth 1 -maxdepth 1 -type d -print -quit); sudo runuser -u drive -- touch $d/.group-probe && echo "drive (group mutis) COULD create a file inside blobs/<level 1>"; sudo rm -f $d/.group-probe
+    770 2770
+    851 2700
+    105 600
+touch: cannot touch '/srv/mutis/data/blobs/qm/.group-probe': Permission denied
+[exit 0]
+

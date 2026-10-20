@@ -1,0 +1,16 @@
+$ curl -s -o /dev/null -D - -r 0-15 https://hidebox.app/api/v1/canary/raw | grep -iE "^(HTTP|content-type|content-disposition|x-content-type-options|content-security-policy|content-encoding|cache-control|x-robots)"; echo; curl -s -D - https://hidebox.app/api/v1/blobs/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | grep -iE "^(HTTP|content-type|x-content-type-options|content-security-policy)|error"
+HTTP/2 206 
+cache-control: public, max-age=60
+content-disposition: attachment; filename="mutis-canary-197.bin"
+content-security-policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+content-type: application/octet-stream
+x-content-type-options: nosniff
+x-robots-tag: noindex, nofollow
+
+HTTP/2 404 
+content-security-policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+content-type: application/json; charset=utf-8
+x-content-type-options: nosniff
+{"error":{"code":"not_found","message":"This download has ended."}}
+[exit 0]
+

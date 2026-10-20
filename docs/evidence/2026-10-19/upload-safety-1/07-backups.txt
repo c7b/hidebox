@@ -1,0 +1,84 @@
+$ grep -nE "^(User|ExecStart|ExecStartPre|ReadWritePaths|UMask|NoExecPaths|ExecPaths)=" deploy/systemd/mutis-backup.service deploy/systemd/mutis-backup-wallet.service; grep -nE "Blobs are never backed up|os.chmod\(tmp, 0o600\)|0o600\)|def check_copy|TemporaryDirectory" deploy/scripts/backup.py
+deploy/systemd/mutis-backup.service:13:User=mutis
+deploy/systemd/mutis-backup.service:16:ExecStartPre=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py prune-root
+deploy/systemd/mutis-backup.service:17:ExecStart=/usr/bin/python3 -I /usr/local/lib/mutis/backup.py db
+deploy/systemd/mutis-backup.service:24:ReadWritePaths=/srv/mutis/data/db /srv/mutis/data/backup
+deploy/systemd/mutis-backup.service:27:NoExecPaths=/
+deploy/systemd/mutis-backup.service:28:ExecPaths=/usr
+deploy/systemd/mutis-backup.service:53:UMask=0007
+deploy/systemd/mutis-backup-wallet.service:9:User=drive
+deploy/systemd/mutis-backup-wallet.service:11:ExecStart=/usr/bin/python3 -I /usr/local/lib/mutis/backup.py wallet
+deploy/systemd/mutis-backup-wallet.service:17:ReadWritePaths=/home/drive/wallet/backup
+deploy/systemd/mutis-backup-wallet.service:20:NoExecPaths=/
+deploy/systemd/mutis-backup-wallet.service:21:ExecPaths=/usr
+deploy/systemd/mutis-backup-wallet.service:46:UMask=0077
+17:nothing holds open. Blobs are never backed up: mutis isn't a backup service, and a file that made its
+64:    os.chmod(tmp, 0o600)
+70:    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+99:        os.chmod(migrated, 0o600)
+136:def check_copy(path: Path) -> dict:
+138:    with tempfile.TemporaryDirectory(prefix="mutis-restore-") as scratch:
+[exit 0]
+
+$ ssh hidebox -- sudo bash -c "ls -l /srv/mutis/data/backup /home/drive/wallet/backup | sed -E \"s/ [A-Z][a-z]{2} +[0-9]+ [0-9:]+ / /\"; echo \"files with any execute bit: \$(find /srv/mutis/data/backup /home/drive/wallet/backup /var/backups/mutis -type f -perm /0111 | wc -l)\"; echo \"blob files in the backups: \$(find /srv/mutis/data/backup /home/drive/wallet/backup /var/backups/mutis -name \"*.bin\" | wc -l)\"; findmnt -n -o TARGET,OPTIONS --target /srv/mutis/data/backup; findmnt -n -o TARGET,OPTIONS --target /home/drive/wallet/backup"
+/home/drive/wallet/backup:
+total 221040
+-rw------- 1 drive drive      452 receiver-20261014.json
+-rw------- 1 drive drive      452 receiver-20261015.json
+-rw------- 1 drive drive      452 receiver-20261016.json
+-rw------- 1 drive drive      452 receiver-20261017.json
+-rw------- 1 drive drive      452 receiver-20261018.json
+-rw------- 1 drive drive      452 receiver-20261019.json
+-rw------- 1 drive drive      452 robot-20261014.json
+-rw------- 1 drive drive      452 robot-20261015.json
+-rw------- 1 drive drive      452 robot-20261016.json
+-rw------- 1 drive drive      452 robot-20261017.json
+-rw------- 1 drive drive      452 robot-20261018.json
+-rw------- 1 drive drive      452 robot-20261019.json
+-rw------- 1 drive drive 20484096 wallet-20261014.sqlite
+-rw------- 1 drive drive 27361280 wallet-20261015.sqlite
+-rw------- 1 drive drive 33865728 wallet-20261016.sqlite
+-rw------- 1 drive drive 40599552 wallet-20261017.sqlite
+-rw------- 1 drive drive 46891008 wallet-20261018.sqlite
+-rw------- 1 drive drive 57094144 wallet-20261019.sqlite
+
+/srv/mutis/data/backup:
+total 42408
+-rw------- 1 mutis mutis 3014656 mutis-20261014.sqlite3
+-rw------- 1 mutis mutis 4165632 mutis-20261015.sqlite3
+-rw------- 1 mutis mutis 5115904 mutis-20261016.sqlite3
+-rw------- 1 mutis mutis 6258688 mutis-20261017.sqlite3
+-rw------- 1 mutis mutis 7270400 mutis-20261018.sqlite3
+-rw------- 1 mutis mutis 8826880 mutis-20261019.sqlite3
+-rw------- 1 mutis mutis 2461696 pre-migrate-20261014-015253.sqlite3
+-rw------- 1 mutis mutis 2793472 pre-migrate-20261014-062401.sqlite3
+-rw------- 1 mutis mutis 3518464 pre-migrate-20261014-175200.sqlite3
+files with any execute bit: 0
+blob files in the backups: 0
+/srv/mutis/data rw,nosuid,nodev,noexec,relatime,discard,errors=remount-ro
+/ rw,relatime,discard,errors=remount-ro
+[exit 0]
+
+$ ssh hidebox -- cd /tmp && sudo -u mutis python3 -I - restore-drill < /usr/local/lib/mutis/backup.py; cd /tmp && sudo -u drive python3 -I - restore-drill < /usr/local/lib/mutis/backup.py
+[
+ {
+  "backup": "mutis-20261019.sqlite3",
+  "integrity": "ok",
+  "tables": 26,
+  "rows": 55425,
+  "copies": 6
+ }
+]
+restore-drill: PASS
+[
+ {
+  "backup": "wallet-20261019.sqlite",
+  "integrity": "ok",
+  "tables": 27,
+  "rows": 29420,
+  "copies": 6
+ }
+]
+restore-drill: PASS
+[exit 0]
+

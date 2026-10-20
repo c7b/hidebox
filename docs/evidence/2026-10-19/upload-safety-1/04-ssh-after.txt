@@ -1,0 +1,14 @@
+$ ssh hidebox -- sudo sed -i "s/^PasswordAuthentication yes$/PasswordAuthentication no/" /etc/ssh/sshd_config.d/50-cloud-init.conf && sudo cat /etc/ssh/sshd_config.d/50-cloud-init.conf && sudo sshd -t && echo "sshd -t: ok" && sudo systemctl reload ssh && systemctl is-active ssh && sudo sshd -T | grep -E "^(passwordauthentication|permitrootlogin|kbdinteractiveauthentication) "
+PasswordAuthentication no
+sshd -t: ok
+reloading
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+[exit 0]
+
+$ timeout 20 ssh -o ControlPath=none -o ControlMaster=no -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive -o BatchMode=yes -o NumberOfPasswordPrompts=0 hidebox true 2>&1 | sed -E "s/[a-z0-9]+@/<operator>@/"; timeout 20 ssh -o ControlPath=none -o ControlMaster=no -o BatchMode=yes -l root hidebox true 2>&1 | tail -1
+<operator>@<ip>: Permission denied (publickey).
+root@<ip>: Permission denied (publickey).
+[exit 0]
+

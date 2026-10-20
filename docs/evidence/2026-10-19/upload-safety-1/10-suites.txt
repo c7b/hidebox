@@ -1,0 +1,54 @@
+Suites for upload-safety-1, 2026-10-19 (local time CST, UTC-6). The full end-to-end run and its rerun are in 10-e2e-full.txt and 10-e2e-rerun.txt.
+
+== On the server as build (Python 3.13), from a git archive of this branch
+tree: 960733b, Python 3.13.5
+== server
+Ran 340 tests in 75.520s
+
+OK (skipped=5)
+== deploy
+
+OK
+SealLog: this deployment names no log
+== lint
+lint: PASS (0 problems)
+== copy
+check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+
+== On the workstation, the final tree
+$ python3 -I -m unittest discover -s server/tests -q
+Ran 340 tests in 83.852s
+
+OK (skipped=5)
+$ python3 -I -m unittest discover -s deploy/tests -v | tail
+Ran 96 tests in 4.770s
+OK
+$ python3 -I tools/lint.py
+lint: PASS (0 problems)
+$ python3 -I tools/check-copy.py --config https://hidebox.app/api/v1/config
+check-copy: PASS (0 problems, 18 to read)
+
+== Against the live site, after the last change on the server (17:30)
+$ python3 -I tests/e2e/test_headers.py --origin https://hidebox.app
+PASS GET /api/v1/health → 200 (security headers on API responses, noindex, the API's sandbox)
+PASS GET /api/v1/canary/raw → 200 (stored bytes: an octet-stream attachment, nosniff, the sandbox)
+PASS GET /api/v1/blobs/<unknown ticket> → 404 (the download route's answer carries the sandbox)
+PASS PUT 6 MB to /api/v1/uploads/…/chunks/0 → 413 (413 in the API's error shape, not a bare 502)
+test_headers: PASS
+$ python3 -I tests/e2e/test_stored_bytes.py --host hidebox
+PASS opening /api/v1/canary/raw in a tab downloads it and renders nothing (navigation: net::ERR_ABORTED)
+PASS the browser's copy is byte for byte the stored file
+PASS /made's "Download the stored bytes" link downloads, the page stays
+PASS a page of the origin can't frame it (false)
+PASS content-type: application/octet-stream
+PASS x-content-type-options: nosniff
+PASS content-security-policy ends in sandbox: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox
+test_stored_bytes: PASS
+$ python3 -I tests/e2e/test_privileges.py --host hidebox: see 09-test_privileges.txt (97/97)
+$ python3 -I tests/e2e/smoke.py --origin https://hidebox.app --manifest <the live manifest> --api --chain   (run after every step; the last run:)
+active active active active
+no failed timer units
+PASS smoke home
+PASS smoke manifest
+PASS smoke health
+PASS smoke chain

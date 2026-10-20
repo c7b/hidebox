@@ -1,0 +1,21 @@
+Caddy under the drop-in's sandbox, as a throwaway unit before the real one was restarted (2026-10-19, on the
+server, as root). The test config (served from /run, since the unit's /tmp is private) listens on
+127.0.0.1:18080 without TLS or admin API, serves the live release and proxies /api/ to mutis-api.
+
+$ props=(); while IFS= read -r line; do props+=(-p "$line"); done < <(sed -n '/^NoNewPrivileges=/,$p' deploy/systemd/caddy.service.d/mutis.conf | grep -E '^[A-Za-z]')
+$ props+=(-p User=caddy -p Group=caddy -p LimitNOFILE=1048576)
+$ systemd-run --unit=caddy-sandbox-test "${props[@]}" /usr/bin/caddy run --config /run/mutis-caddy-sandbox-test/test.caddy --adapter caddyfile
+Running as unit: caddy-sandbox-test.service; invocation ID: 78a7f88d036a4a0780d53a36bf3821d0
+$ systemctl is-active caddy-sandbox-test
+active
+$ curl -s -o /dev/null -w "page /how: %{http_code}, %{size_download} bytes\n" http://127.0.0.1:18080/how
+page /how: 308, 41 bytes
+$ curl -s -D - -o /dev/null http://127.0.0.1:18080/api/v1/health | grep -iE "^(HTTP|content-security|x-content)"
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox
+X-Content-Type-Options: nosniff
+$ # the process: seccomp filter on, no new privileges, CAP_NET_BIND_SERVICE (0x400) the only capability, / noexec
+seccomp mode: 2, NoNewPrivs: 1, CapBnd: 0000000000000400, CapAmb: 0000000000000400
+root mount in its view: ro,nosuid,noexec,relatime
+$ systemctl stop caddy-sandbox-test; journalctl -u caddy-sandbox-test -o cat | grep -iE '"level":"error"|denied|not permitted'
+(nothing)

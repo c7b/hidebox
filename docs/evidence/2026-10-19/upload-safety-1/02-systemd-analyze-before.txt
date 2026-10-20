@@ -1,0 +1,186 @@
+$ ssh hidebox -- for u in mutis-api mutis-chain mutis-cleanup mutis-backup mutis-backup-wallet mutis-evidence mutis-health walletd caddy; do sudo systemd-analyze security --no-pager $u.service | grep -E "✗|Overall"; done
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                                                    0.3
+✗ PrivateNetwork=                                             Service has access to the host's network                                                                 0.5
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                                           0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+✗ UMask=                                                      Files created by service are group-writable by default                                                   0.1
+→ Overall exposure level for mutis-api.service: 1.5 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ SupplementaryGroups=                                        Service runs with supplementary groups                                                                   0.1
+✗ MemoryDenyWriteExecute=                                     Service may create writable executable memory mappings                                                   0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                                                    0.3
+✗ ProtectHome=                                                Service has read-only access to home directories                                                         0.1
+✗ PrivateNetwork=                                             Service has access to the host's network                                                                 0.5
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                                           0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+✗ UMask=                                                      Files created by service are group-writable by default                                                   0.1
+→ Overall exposure level for mutis-chain.service: 1.6 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                                           0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+✗ UMask=                                                      Files created by service are group-writable by default                                                   0.1
+→ Overall exposure level for mutis-cleanup.service: 0.8 SAFE 😀
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ ProtectClock=                                               Service may write to the hardware clock or system clock                                                  0.2
+✗ RestrictSUIDSGID=                                           Service may create SUID/SGID files                                                                       0.2
+✗ ProtectHostname=                                            Service may change system host/domainname                                                                0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictRealtime=                                           Service may acquire realtime scheduling                                                                  0.1
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+✗ UMask=                                                      Files created by service are group-writable by default                                                   0.1
+→ Overall exposure level for mutis-backup.service: 1.1 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ ProtectClock=                                               Service may write to the hardware clock or system clock                                                  0.2
+✗ RestrictSUIDSGID=                                           Service may create SUID/SGID files                                                                       0.2
+✗ ProtectHostname=                                            Service may change system host/domainname                                                                0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictRealtime=                                           Service may acquire realtime scheduling                                                                  0.1
+✗ ProtectHome=                                                Service has read-only access to home directories                                                         0.1
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+→ Overall exposure level for mutis-backup-wallet.service: 1.2 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ SupplementaryGroups=                                        Service runs with supplementary groups                                                                   0.1
+✗ ProtectClock=                                               Service may write to the hardware clock or system clock                                                  0.2
+✗ RestrictSUIDSGID=                                           Service may create SUID/SGID files                                                                       0.2
+✗ ProtectHostname=                                            Service may change system host/domainname                                                                0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                                                    0.3
+✗ RestrictRealtime=                                           Service may acquire realtime scheduling                                                                  0.1
+✗ ProtectHome=                                                Service has read-only access to home directories                                                         0.1
+✗ PrivateNetwork=                                             Service has access to the host's network                                                                 0.5
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+✗ UMask=                                                      Files created by service are group-writable by default                                                   0.1
+→ Overall exposure level for mutis-evidence.service: 2.0 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ ProtectClock=                                               Service may write to the hardware clock or system clock                                                  0.2
+✗ RestrictSUIDSGID=                                           Service may create SUID/SGID files                                                                       0.2
+✗ ProtectHostname=                                            Service may change system host/domainname                                                                0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                                                    0.3
+✗ RestrictRealtime=                                           Service may acquire realtime scheduling                                                                  0.1
+✗ PrivateNetwork=                                             Service has access to the host's network                                                                 0.5
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+✗ UMask=                                                      Files created by service are group-writable by default                                                   0.1
+→ Overall exposure level for mutis-health.service: 1.8 OK 🙂
+✗ SystemCallFilter=~@resources                                System call allow list defined for service, and @resources is included (e.g. ioprio_set is allowed)      0.2
+✗ SystemCallFilter=~@privileged                               System call allow list defined for service, and @privileged is included (e.g. chown is allowed)          0.2
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                                                           0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                                            0.1
+✗ MemoryDenyWriteExecute=                                     Service may create writable executable memory mappings                                                   0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                                                       0.1
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                                                    0.3
+✗ PrivateNetwork=                                             Service has access to the host's network                                                                 0.5
+✗ PrivateUsers=                                               Service has access to other users                                                                        0.2
+✗ ProtectHome=                                                Service has access to fake empty home directories                                                        0.1
+✗ DeviceAllow=                                                Service has a device ACL with some special devices: char-rtc:r                                           0.1
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                                                         0.2
+→ Overall exposure level for walletd.service: 1.5 OK 🙂
+✗ RemoveIPC=                                                  Service user may leave SysV IPC objects around                               0.1
+✗ RootDirectory=/RootImage=                                   Service runs within the host's root directory                                0.1
+✗ CapabilityBoundingSet=~CAP_SYS_TIME                         Service processes may change the system clock                                0.2
+✗ NoNewPrivileges=                                            Service processes may acquire new privileges                                 0.2
+✗ AmbientCapabilities=                                        Service process receives ambient capabilities                                0.1
+✗ PrivateDevices=                                             Service potentially has access to hardware devices                           0.2
+✗ ProtectClock=                                               Service may write to the hardware clock or system clock                      0.2
+✗ CapabilityBoundingSet=~CAP_SYS_PACCT                        Service may use acct()                                                       0.1
+✗ CapabilityBoundingSet=~CAP_KILL                             Service may send UNIX signals to arbitrary processes                         0.1
+✗ ProtectKernelLogs=                                          Service may read from or write to the kernel log ring buffer                 0.2
+✗ CapabilityBoundingSet=~CAP_WAKE_ALARM                       Service may program timers that wake up the system                           0.1
+✗ CapabilityBoundingSet=~CAP_(DAC_*|FOWNER|IPC_OWNER)         Service may override UNIX file/IPC permission checks                         0.2
+✗ ProtectControlGroups=                                       Service may modify the control group file system                             0.2
+✗ CapabilityBoundingSet=~CAP_LINUX_IMMUTABLE                  Service may mark files immutable                                             0.1
+✗ CapabilityBoundingSet=~CAP_IPC_LOCK                         Service may lock memory into RAM                                             0.1
+✗ ProtectKernelModules=                                       Service may load or read kernel modules                                      0.2
+✗ CapabilityBoundingSet=~CAP_SYS_MODULE                       Service may load kernel modules                                              0.2
+✗ CapabilityBoundingSet=~CAP_BPF                              Service may load BPF programs                                                0.1
+✗ CapabilityBoundingSet=~CAP_SYS_TTY_CONFIG                   Service may issue vhangup()                                                  0.1
+✗ CapabilityBoundingSet=~CAP_SYS_BOOT                         Service may issue reboot()                                                   0.1
+✗ CapabilityBoundingSet=~CAP_SYS_CHROOT                       Service may issue chroot()                                                   0.1
+✗ SystemCallArchitectures=                                    Service may execute system calls with all ABIs                               0.2
+✗ CapabilityBoundingSet=~CAP_BLOCK_SUSPEND                    Service may establish wake locks                                             0.1
+✗ MemoryDenyWriteExecute=                                     Service may create writable executable memory mappings                       0.1
+✗ RestrictNamespaces=~user                                    Service may create user namespaces                                           0.3
+✗ RestrictNamespaces=~pid                                     Service may create process namespaces                                        0.1
+✗ RestrictNamespaces=~net                                     Service may create network namespaces                                        0.1
+✗ RestrictNamespaces=~uts                                     Service may create hostname namespaces                                       0.1
+✗ RestrictNamespaces=~mnt                                     Service may create file system namespaces                                    0.1
+✗ CapabilityBoundingSet=~CAP_LEASE                            Service may create file leases                                               0.1
+✗ CapabilityBoundingSet=~CAP_MKNOD                            Service may create device nodes                                              0.1
+✗ RestrictNamespaces=~cgroup                                  Service may create cgroup namespaces                                         0.1
+✗ RestrictSUIDSGID=                                           Service may create SUID/SGID files                                           0.2
+✗ RestrictNamespaces=~ipc                                     Service may create IPC namespaces                                            0.1
+✗ ProtectHostname=                                            Service may change system host/domainname                                    0.1
+✗ CapabilityBoundingSet=~CAP_(CHOWN|FSETID|SETFCAP)           Service may change file ownership/access mode/capabilities unrestricted      0.2
+✗ CapabilityBoundingSet=~CAP_SET(UID|GID|PCAP)                Service may change UID/GID identities/capabilities                           0.3
+✗ LockPersonality=                                            Service may change ABI personality                                           0.1
+✗ ProtectKernelTunables=                                      Service may alter kernel tunables                                            0.2
+✗ RestrictAddressFamilies=~AF_PACKET                          Service may allocate packet sockets                                          0.2
+✗ RestrictAddressFamilies=~AF_NETLINK                         Service may allocate netlink sockets                                         0.1
+✗ RestrictAddressFamilies=~AF_UNIX                            Service may allocate local sockets                                           0.1
+✗ RestrictAddressFamilies=~…                                  Service may allocate exotic sockets                                          0.3
+✗ RestrictAddressFamilies=~AF_(INET|INET6)                    Service may allocate Internet sockets                                        0.3
+✗ CapabilityBoundingSet=~CAP_MAC_*                            Service may adjust SMACK MAC                                                 0.1
+✗ RestrictRealtime=                                           Service may acquire realtime scheduling                                      0.1
+✗ ProtectSystem=                                              Service has very limited write access to the OS file hierarchy               0.1
+✗ CapabilityBoundingSet=~CAP_SYS_RAWIO                        Service has raw I/O access                                                   0.2
+✗ CapabilityBoundingSet=~CAP_SYS_PTRACE                       Service has ptrace() debugging abilities                                     0.3
+✗ CapabilityBoundingSet=~CAP_SYS_(NICE|RESOURCE)              Service has privileges to change resource use parameters                     0.1
+✗ DeviceAllow=                                                Service has no device ACL                                                    0.2
+✗ CapabilityBoundingSet=~CAP_NET_ADMIN                        Service has network configuration privileges                                 0.2
+✗ ProtectProc=                                                Service has full access to process tree (/proc hidepid=)                     0.2
+✗ ProcSubset=                                                 Service has full access to non-process /proc files (/proc subset=)           0.1
+✗ ProtectHome=                                                Service has full access to home directories                                  0.2
+✗ CapabilityBoundingSet=~CAP_NET_(BIND_SERVICE|BROADCAST|RAW) Service has elevated networking privileges                                   0.1
+✗ CapabilityBoundingSet=~CAP_AUDIT_*                          Service has audit subsystem access                                           0.1
+✗ CapabilityBoundingSet=~CAP_SYS_ADMIN                        Service has administrator privileges                                         0.3
+✗ PrivateNetwork=                                             Service has access to the host's network                                     0.5
+✗ PrivateUsers=                                               Service has access to other users                                            0.2
+✗ CapabilityBoundingSet=~CAP_SYSLOG                           Service has access to kernel logging                                         0.1
+✗ SystemCallFilter=~@clock                                    Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@cpu-emulation                            Service does not filter system calls                                         0.1
+✗ SystemCallFilter=~@debug                                    Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@module                                   Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@mount                                    Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@obsolete                                 Service does not filter system calls                                         0.1
+✗ SystemCallFilter=~@privileged                               Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@raw-io                                   Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@reboot                                   Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@resources                                Service does not filter system calls                                         0.2
+✗ SystemCallFilter=~@swap                                     Service does not filter system calls                                         0.2
+✗ IPAddressDeny=                                              Service does not define an IP address allow list                             0.2
+✗ UMask=                                                      Files created by service are world-readable by default                       0.1
+→ Overall exposure level for caddy.service: 8.8 EXPOSED 🙁
+[exit 0]
+

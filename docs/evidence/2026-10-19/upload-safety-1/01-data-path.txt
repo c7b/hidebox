@@ -1,0 +1,66 @@
+$ git rev-parse --short HEAD; git grep -n -E "blobs\.(read_all|read_range|write_at|create_part|finalize|unlink|exists)|\bBlobs\(" -- server/mutis
+13382af
+server/mutis/admin.py:45:    now, blobs = codec.now(), Blobs(cfg.blob_dir)
+server/mutis/api.py:84:        self.blobs = Blobs(cfg.blob_dir)
+server/mutis/handlers/blobs.py:47:                    stream=lambda: blobs.read_range(item_id, start, length))
+server/mutis/handlers/blobs.py:84:    if item is None or item["state"] not in ("ready", "doomed") or not ctx.app.blobs.exists(item["id"]):
+server/mutis/handlers/canary.py:60:    if item is None or not ctx.app.blobs.exists(item["id"]):
+server/mutis/handlers/me.py:237:        "inline_ct": codec.b64u(ctx.app.blobs.read_all(item_id)) if inline else None})
+server/mutis/handlers/shares.py:465:        "inline_ct": codec.b64u(ctx.app.blobs.read_all(item["id"])) if inline else None}
+server/mutis/handlers/uploads.py:199:            ctx.app.blobs.create_part(item_id, size)
+server/mutis/handlers/uploads.py:241:    digest = ctx.app.blobs.write_at(row["id"], idx * (quota.CHUNK + quota.TAG), ctx.req.body_slices(expected))
+server/mutis/handlers/uploads.py:262:    ctx.app.blobs.finalize(row["id"])
+server/mutis/items.py:75:    blobs.unlink(item_id)
+[exit 0]
+
+$ git grep -n -E "^\s*(import|from) (subprocess|zipfile|tarfile|gzip|zlib|bz2|lzma|shutil|mimetypes|imghdr|pickle|marshal|shelve|ctypes|multiprocessing)\b" -- server/mutis
+server/mutis/dev.py:10:import mimetypes
+server/mutis/sidecar.py:11:import subprocess
+[exit 0]
+
+$ git grep -n -E "os\.(system|popen|exec[lv]p?e?|spawn[lv]p?e?|posix_spawnp?|fork)\(|\b(eval|exec)\(" -- server/mutis
+[exit 1]
+
+$ git grep -n -E "PARAM_RE\[.id.\]|def new_id|def _dir|def part|def bin" -- server/mutis/http_util.py server/mutis/codec.py server/mutis/storage.py
+server/mutis/codec.py:54:def new_id() -> str:
+server/mutis/storage.py:23:    def _dir(self, item_id: str) -> Path:
+server/mutis/storage.py:24:        if not PARAM_RE["id"].match(item_id):
+server/mutis/storage.py:28:    def part(self, item_id: str) -> Path:
+server/mutis/storage.py:31:    def bin(self, item_id: str) -> Path:
+[exit 0]
+
+$ git grep -n -E "Content-Type|Content-Disposition|nosniff" -- server/mutis/handlers/blobs.py server/mutis/api.py
+server/mutis/api.py:297:                             {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"}))
+server/mutis/api.py:383:        headers = {"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store", **resp.headers}
+server/mutis/handlers/blobs.py:41:    headers = {"Content-Type": "application/octet-stream", "Accept-Ranges": "bytes", "Cache-Control": cache,
+server/mutis/handlers/blobs.py:42:               "Content-Disposition": f'attachment; filename="{filename}"'}
+[exit 0]
+
+$ git grep -n -E "request_body|max_size|buffer_requests|max_buffer_size|header_down|root \*|import (site|app|api)_csp|handle @api" -- deploy/caddy/Caddyfile
+deploy/caddy/Caddyfile:87:	root * /srv/mutis/app/current/dist
+deploy/caddy/Caddyfile:155:	handle @api {
+deploy/caddy/Caddyfile:156:		import api_csp
+deploy/caddy/Caddyfile:160:		request_body {
+deploy/caddy/Caddyfile:161:			max_size 5MB
+deploy/caddy/Caddyfile:176:				buffer_requests
+deploy/caddy/Caddyfile:177:				max_buffer_size 6MB
+deploy/caddy/Caddyfile:182:				header_down -X-Content-Type-Options
+deploy/caddy/Caddyfile:191:		import site_csp
+deploy/caddy/Caddyfile:198:		import app_csp
+deploy/caddy/Caddyfile:206:		import app_csp
+deploy/caddy/Caddyfile:215:		import app_csp
+deploy/caddy/Caddyfile:223:		import app_csp
+deploy/caddy/Caddyfile:231:		import site_csp
+deploy/caddy/Caddyfile:233:		root * /srv/mutis/status
+deploy/caddy/Caddyfile:240:		import site_csp
+deploy/caddy/Caddyfile:249:		import site_csp
+deploy/caddy/Caddyfile:257:		import site_csp
+deploy/caddy/Caddyfile:265:		import app_csp
+deploy/caddy/Caddyfile:274:		import app_csp
+deploy/caddy/Caddyfile:286:		import site_csp
+deploy/caddy/Caddyfile:292:		import site_csp
+deploy/caddy/Caddyfile:301:		root * /srv/mutis/app/current/dist
+deploy/caddy/Caddyfile:303:		import site_csp
+deploy/caddy/Caddyfile:322:	import site_csp
+[exit 0]
+

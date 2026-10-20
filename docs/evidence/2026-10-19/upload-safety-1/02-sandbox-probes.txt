@@ -1,0 +1,101 @@
+The review's independent check found that NoExecPaths=/ (the first version of the units) left each service's private
+/tmp, /var/tmp and /dev/shm executable, and that ExecPaths=/usr lifted ProtectSystem's read-only flag from /usr.
+Reproduced in throwaway units on the server (as root), then fixed by naming every writable place in NoExecPaths.
+
+$ systemd-run --wait --pipe -p User=mutis -p PrivateTmp=yes -p PrivateDevices=yes -p ProtectSystem=strict \
+    -p NoNewPrivileges=yes -p NoExecPaths=/ -p ExecPaths=/usr /bin/sh -c '<copy /usr/bin/true into each place, run it>'
+/tmp: RAN
+/var/tmp: RAN
+/dev/shm: RAN
+$ systemd-run ... -p "NoExecPaths=/ /tmp /var/tmp /dev/shm" -p ExecPaths=/usr ...
+/tmp: refused
+/var/tmp: refused
+/dev/shm: refused
+$ systemd-run --wait --pipe -p ProtectSystem=strict -p PrivateTmp=yes -p PrivateDevices=yes \
+    -p "NoExecPaths=/ /tmp /var/tmp /dev/shm" -p ExecPaths=/usr /bin/sh -c '<mountinfo; touch /usr/.ro-probe as root>'
+/ ro,noexec,relatime
+/usr rw,relatime
+root COULD write /usr
+$ systemd-run ... -p "NoExecPaths=/tmp /var/tmp /dev/shm" (no ExecPaths) ...
+/ ro,relatime
+root cannot write /usr
+exec from /usr ok
+
+Each unit's final sandbox, as a throwaway unit with exactly its [Service] settings (all but how it starts,
+restarts and logs, its runtime directory and credentials), running a probe as the unit's user. This is how
+mutis-chain's and walletd's sandboxes were checked without restarting them (they take them at their next start).
+
+$ bash sandbox-probe.sh deploy/systemd/<unit> /bin/bash -c "$(cat view-check.sh)"
+== mutis-api (as mutis)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-cleanup (as mutis)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-health (as mutis)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-backup (as mutis)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-backup-wallet (as drive)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-evidence (as drive)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-chain (as drive)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== walletd (as drive)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+== mutis-chain: the verifier sidecar answers hello under this sandbox
+   {"id":1,"ok":true,"version":"mutis-sidecar/1","wasm_sha256":"2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2","node":"v20.19.2","permission":true}
+   
+== walletd: the binary starts under this sandbox, and sees neither the data nor mutis's secret
+   tari_ootle_walletd 0.46.0
+   ls: cannot open directory '/srv/mutis': Permission denied
+   secret.key unreadable
+== caddy (as caddy)
+   visible writable mounts without noexec: none
+   /tmp: refused
+   /var/tmp: refused
+   /dev/shm: refused
+
+--- sandbox-probe.sh
+#!/bin/bash
+# sandbox-probe.sh <unit file> <probe command...>: run the probe as a throwaway unit with the unit's [Service]
+# sandbox (everything but how it starts, restarts, logs and its runtime directory/credentials).
+set -u
+unit=$1; shift
+props=()
+while IFS= read -r line; do props+=(-p "$line"); done < <(
+  awk '/^\[Service\]/{s=1; next} /^\[/{s=0} s' "$unit" | grep -E '^[A-Za-z]+=' |
+  grep -vE '^(Type|ExecStart|ExecStartPre|ExecReload|Restart|RestartSec|TimeoutStopSec|TimeoutStartSec|SyslogIdentifier|KillSignal|StandardOutput|StandardError|RuntimeDirectory|RuntimeDirectoryMode|LoadCredential|EnvironmentFile)=')
+systemd-run --wait --pipe --quiet --collect "${props[@]}" "$@"
+--- view-check.sh
+# Inside the sandbox: the visible (top-most) mount of each writable place is noexec, /usr is not a writable mount of
+# its own, and exec from the private tmp places is refused.
+awk '{top[$5] = $6} END {for (m in top) print m, top[m]}' /proc/self/mountinfo > /dev/shm/.m 2>/dev/null || true
+bad=$(awk '{top[$5] = $6} END {for (m in top) if (top[m] ~ /(^|,)rw(,|$)/ && top[m] !~ /noexec/ && m !~ /^\/(proc|sys)(\/|$)/ && m != "/dev/hugepages") print m}' /proc/self/mountinfo | sort | tr '\n' ' ')
+rm -f /dev/shm/.m
+echo "visible writable mounts without noexec: ${bad:-none}"
+awk '$5=="/usr" {print "/usr is a mount of its own: " $6}' /proc/self/mountinfo
+for d in /tmp /var/tmp /dev/shm; do cp /usr/bin/true $d/.p 2>/dev/null && chmod 0700 $d/.p && { $d/.p 2>/dev/null && echo "$d: RAN" || echo "$d: refused"; rm -f $d/.p; }; done

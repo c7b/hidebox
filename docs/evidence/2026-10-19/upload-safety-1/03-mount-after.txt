@@ -1,0 +1,56 @@
+$ ssh hidebox -- sudo find /srv/mutis/data/blobs -mindepth 1 -type d -perm /0077 -exec chmod go-rwx {} +; sudo find /srv/mutis/data/blobs -type f ! -perm 0600 -exec chmod 0600 {} +; sudo chmod 2750 /srv/mutis/data; sudo find /srv/mutis/data/blobs -mindepth 1 -maxdepth 1 -type d -printf "%m\n" | sort | uniq -c; sudo find /srv/mutis/data/blobs -mindepth 2 -maxdepth 2 -type d -printf "%m\n" | sort | uniq -c; sudo find /srv/mutis/data/blobs -type f -printf "%m\n" | sort | uniq -c; sudo stat -c "%a %U:%G %n" /srv/mutis/data /srv/mutis/data/db /srv/mutis/data/blobs /srv/mutis/data/backup
+    770 2700
+    851 2700
+    105 600
+2750 mutis:mutis /srv/mutis/data
+2770 mutis:mutis /srv/mutis/data/db
+2700 mutis:mutis /srv/mutis/data/blobs
+2700 mutis:mutis /srv/mutis/data/backup
+[exit 0]
+
+$ ssh hidebox -- sudo install -m 0644 -o root -g root /tmp/mutis-deploy-safety/deploy/systemd/srv-mutis-data.mount /etc/systemd/system/srv-mutis-data.mount && sudo systemctl daemon-reload && sudo systemctl enable --now srv-mutis-data.mount; systemctl status --no-pager srv-mutis-data.mount | head -6; findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS --target /srv/mutis/data
+Created symlink '/etc/systemd/system/local-fs.target.wants/srv-mutis-data.mount' → '/etc/systemd/system/srv-mutis-data.mount'.
+● srv-mutis-data.mount - mutis data directory (noexec, nosuid, nodev)
+     Loaded: loaded (/etc/systemd/system/srv-mutis-data.mount; enabled; preset: enabled)
+     Active: active (mounted) since Mon 2026-10-19 16:43:24 CST; 17ms ago
+ Invocation: 3c00260df47d4833846f2e02e61b322a
+      Where: /srv/mutis/data
+       What: /dev/sda1
+TARGET          SOURCE                     FSTYPE OPTIONS
+/srv/mutis/data /dev/sda1[/srv/mutis/data] ext4   rw,nosuid,nodev,noexec,relatime,discard,errors=remount-ro
+[exit 0]
+
+$ ssh hidebox -- p=/srv/mutis/data/.exec-probe-after; printf "#!/bin/sh\necho ran as \$(id -un)\n" | sudo tee $p.sh >/dev/null; sudo cp /usr/bin/id $p.elf; sudo chown mutis:mutis $p.sh $p.elf; sudo chmod 0700 $p.sh $p.elf; ls -l --time-style=+ $p.sh $p.elf 2>/dev/null || sudo ls -l --time-style=+ $p.sh $p.elf; sudo runuser -u mutis -- $p.sh; echo "script exit $?"; sudo runuser -u mutis -- $p.elf -un; echo "elf exit $?"; sudo runuser -u mutis -- /lib64/ld-linux-x86-64.so.2 $p.elf -un; echo "through the loader: exit $?"; sudo $p.elf -un; echo "even as root: exit $?"; sudo chmod 4755 $p.elf; sudo chown root $p.elf; sudo runuser -u mutis -- $p.elf -un; echo "a set-uid root copy: exit $?"; sudo rm -f $p.sh $p.elf
+-rwx------ 1 mutis mutis 51656  /srv/mutis/data/.exec-probe-after.elf
+-rwx------ 1 mutis mutis    32  /srv/mutis/data/.exec-probe-after.sh
+runuser: failed to execute /srv/mutis/data/.exec-probe-after.sh: Permission denied
+script exit 1
+runuser: failed to execute /srv/mutis/data/.exec-probe-after.elf: Permission denied
+elf exit 1
+/srv/mutis/data/.exec-probe-after.elf: error while loading shared libraries: /srv/mutis/data/.exec-probe-after.elf: failed to map segment from shared object
+through the loader: exit 127
+even as root: exit 1
+sudo: unable to execute /srv/mutis/data/.exec-probe-after.elf: Permission denied
+runuser: failed to execute /srv/mutis/data/.exec-probe-after.elf: Permission denied
+a set-uid root copy: exit 1
+[exit 0]
+
+$ ssh hidebox -- cd /tmp && sudo -u mutis python3 -I -c "
+import os, string
+os.umask(0o077)
+alphabet = string.ascii_letters + string.digits + \"-_\"
+made = 0
+for a in alphabet:
+    for b in alphabet:
+        try:
+            os.mkdir(f\"/srv/mutis/data/blobs/{a}{b}\", 0o700)
+            made += 1
+        except FileExistsError:
+            pass
+print(\"first-level directories made:\", made)
+"; sudo find /srv/mutis/data/blobs -mindepth 1 -maxdepth 1 -type d -printf "%m\n" | sort | uniq -c; sudo find /srv/mutis/data/blobs -mindepth 1 -type d -perm /0077 | wc -l
+first-level directories made: 3326
+   4096 2700
+0
+[exit 0]
+

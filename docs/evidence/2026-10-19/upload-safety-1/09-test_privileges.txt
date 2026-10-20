@@ -1,0 +1,99 @@
+$ python3 -I tests/e2e/test_privileges.py --host hidebox --origin https://hidebox.app
+PASS mutis cannot connect to 127.0.0.1:5100
+PASS build cannot connect to 127.0.0.1:5100
+PASS caddy cannot connect to 127.0.0.1:5100
+PASS drive can connect to 127.0.0.1:5100
+SKIP nothing listens on 127.0.0.1:18143
+PASS build cannot connect to 127.0.0.1:8787 (the API)
+PASS mutis cannot connect to 127.0.0.1:8787 (the API)
+PASS caddy can connect to 127.0.0.1:8787 (the API)
+PASS drive can connect to 127.0.0.1:8787 (the API)
+PASS nothing listens on Caddy's default admin port 2019
+PASS Caddy's admin socket exists
+PASS mutis cannot use Caddy's admin socket
+PASS build cannot use Caddy's admin socket
+PASS drive cannot use Caddy's admin socket
+PASS mutis cannot read /home/drive
+PASS build cannot read /srv/mutis/data
+PASS caddy cannot read /srv/mutis/data
+PASS build cannot read /etc/mutis/secret.key
+PASS mutis can read /etc/mutis/secret.key
+PASS mutis cannot read the walletd keyring credential
+PASS drive cannot read the walletd keyring credential
+PASS build cannot read the walletd keyring credential
+PASS mutis cannot write the served release
+PASS drive cannot write the served release
+PASS caddy can read the served release
+PASS build cannot read /home/drive/mutis keys
+PASS the database and its -wal/-shm files are 0660
+PASS drive (group mutis) can write the database
+PASS /srv/mutis/data is mounted noexec,nosuid,nodev
+PASS srv-mutis-data.mount is enabled (it comes back at boot)
+PASS control: the same program runs as mutis from /usr/bin
+PASS control: the dynamic loader runs a program as mutis from /usr/bin
+PASS mutis cannot run a script stored in /srv/mutis/data (mode 0700)
+PASS mutis cannot run a program stored in /srv/mutis/data (mode 0700)
+PASS mutis cannot run it through the dynamic loader either
+PASS drive (group mutis) cannot add a file to /srv/mutis/data itself (only to db/)
+PASS every directory under blobs/ is 0700 and every stored file 0600
+PASS drive (group mutis) cannot add a file inside blobs/
+PASS mutis-api sees / read-only and its /tmp, /var/tmp and /dev/shm noexec
+SKIP mutis-chain runs the definition it started with; restart it to apply its sandbox
+SKIP walletd runs the definition it started with; restart it to apply its sandbox
+PASS caddy sees / read-only and its /tmp, /var/tmp and /dev/shm noexec
+PASS sysctl kernel.kptr_restrict = 2
+PASS sysctl kernel.dmesg_restrict = 1
+PASS sysctl kernel.unprivileged_bpf_disabled = 1
+PASS sysctl net.core.bpf_jit_harden = 2
+PASS sysctl kernel.yama.ptrace_scope = 1
+PASS sysctl kernel.kexec_load_disabled = 1
+PASS sysctl dev.tty.ldisc_autoload = 0
+PASS sysctl kernel.io_uring_disabled = 2
+PASS sysctl fs.protected_hardlinks = 1
+PASS sysctl fs.protected_symlinks = 1
+PASS sysctl fs.protected_fifos = 2
+PASS sysctl fs.protected_regular = 2
+PASS sysctl fs.suid_dumpable = 0
+PASS sysctl kernel.randomize_va_space = 2
+PASS sysctl kernel.perf_event_paranoid = 3
+PASS sysctl vm.unprivileged_userfaultfd = 0
+PASS sysctl net.ipv4.conf.all.rp_filter = 1
+PASS sysctl net.ipv4.conf.default.rp_filter = 1
+PASS sysctl net.ipv4.tcp_syncookies = 1
+PASS sysctl net.ipv4.conf.all.send_redirects = 0
+PASS sysctl net.ipv4.conf.default.send_redirects = 0
+PASS sysctl net.ipv4.conf.all.accept_redirects = 0
+PASS sysctl net.ipv4.conf.default.accept_redirects = 0
+PASS sysctl net.ipv4.conf.all.secure_redirects = 0
+PASS sysctl net.ipv4.conf.default.secure_redirects = 0
+PASS sysctl net.ipv6.conf.all.accept_redirects = 0
+PASS sysctl net.ipv6.conf.default.accept_redirects = 0
+PASS sysctl net.ipv4.conf.all.accept_source_route = 0
+PASS sysctl net.ipv4.conf.default.accept_source_route = 0
+PASS sysctl net.ipv6.conf.all.accept_source_route = 0
+PASS sysctl net.ipv6.conf.default.accept_source_route = 0
+PASS sysctl net.ipv4.icmp_echo_ignore_broadcasts = 1
+PASS strict reverse-path filtering on every interface
+PASS no SSH configuration file asks for passwords
+PASS SSH refuses passwords
+PASS SSH refuses keyboard-interactive logins
+PASS SSH refuses root
+PASS walletd's keyring password is on no process command line
+PASS npm is not installed
+PASS npx is not installed
+PASS pnpm is not installed
+PASS yarn is not installed
+PASS pip is not installed
+PASS port 5100 is closed from outside (IPv4 <ip>)
+PASS port 8787 is closed from outside (IPv4 <ip>)
+PASS port 18143 is closed from outside (IPv4 <ip>)
+PASS port 2019 is closed from outside (IPv4 <ip>)
+PASS port 9000 is closed from outside (IPv4 <ip>)
+PASS port 9100 is closed from outside (IPv4 <ip>)
+PASS port 5100 is closed from outside (IPv6 <ip6>)
+PASS port 8787 is closed from outside (IPv6 <ip6>)
+PASS port 18143 is closed from outside (IPv6 <ip6>)
+PASS port 2019 is closed from outside (IPv6 <ip6>)
+PASS port 9000 is closed from outside (IPv6 <ip6>)
+PASS port 9100 is closed from outside (IPv6 <ip6>)
+test_privileges: PASS (97/97)

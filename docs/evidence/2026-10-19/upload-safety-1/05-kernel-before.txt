@@ -1,0 +1,84 @@
+$ ssh hidebox -- uname -r; ls /var/run/reboot-required && cat /var/run/reboot-required.pkgs; dpkg -l "linux-image-*" | grep ^ii | awk "{print \$2, \$3}"
+6.12.111+deb13-amd64
+/var/run/reboot-required
+linux-image-6.12.113+deb13-amd64
+linux-image-6.12.111+deb13-amd64 6.12.111-1
+linux-image-6.12.113+deb13-amd64 6.12.113-1
+linux-image-amd64 6.12.113-1
+[exit 0]
+
+$ ssh hidebox -- /usr/sbin/sysctl kernel.kptr_restrict kernel.dmesg_restrict kernel.unprivileged_bpf_disabled net.core.bpf_jit_harden kernel.yama.ptrace_scope kernel.kexec_load_disabled dev.tty.ldisc_autoload kernel.io_uring_disabled fs.protected_hardlinks fs.protected_symlinks fs.protected_fifos fs.protected_regular fs.suid_dumpable kernel.randomize_va_space kernel.perf_event_paranoid vm.unprivileged_userfaultfd kernel.unprivileged_userns_clone kernel.modules_disabled kernel.sysrq net.ipv4.conf.all.rp_filter net.ipv4.conf.default.rp_filter net.ipv4.conf.eth0.rp_filter net.ipv4.conf.lo.rp_filter net.ipv4.tcp_syncookies net.ipv4.conf.all.send_redirects net.ipv4.conf.default.send_redirects net.ipv4.conf.all.accept_redirects net.ipv4.conf.all.secure_redirects net.ipv6.conf.all.accept_redirects net.ipv4.conf.all.accept_source_route net.ipv6.conf.all.accept_source_route net.ipv4.icmp_echo_ignore_broadcasts net.ipv4.conf.all.log_martians
+kernel.kptr_restrict = 0
+kernel.dmesg_restrict = 1
+kernel.unprivileged_bpf_disabled = 2
+sysctl: permission denied on key 'net.core.bpf_jit_harden'
+kernel.yama.ptrace_scope = 0
+kernel.kexec_load_disabled = 0
+dev.tty.ldisc_autoload = 1
+kernel.io_uring_disabled = 0
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+fs.protected_fifos = 1
+fs.protected_regular = 2
+fs.suid_dumpable = 0
+kernel.randomize_va_space = 2
+kernel.perf_event_paranoid = 3
+vm.unprivileged_userfaultfd = 0
+kernel.unprivileged_userns_clone = 1
+kernel.modules_disabled = 0
+kernel.sysrq = 438
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.default.rp_filter = 2
+net.ipv4.conf.eth0.rp_filter = 2
+net.ipv4.conf.lo.rp_filter = 2
+net.ipv4.tcp_syncookies = 1
+net.ipv4.conf.all.send_redirects = 1
+net.ipv4.conf.default.send_redirects = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.secure_redirects = 1
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv6.conf.all.accept_source_route = 0
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.conf.all.log_martians = 0
+[exit 1]
+
+$ ssh hidebox -- dpkg -l unattended-upgrades needrestart apparmor apparmor-utils fail2ban auditd 2>&1 | grep -E "^(ii|un|dpkg)" ; systemctl is-enabled unattended-upgrades apt-daily.timer apt-daily-upgrade.timer; apt-config dump | grep -E "^(APT::Periodic|Unattended-Upgrade::(Origins-Pattern|Automatic-Reboot))"; sudo tail -3 /var/log/unattended-upgrades/unattended-upgrades.log
+dpkg-query: no packages found matching fail2ban
+dpkg-query: no packages found matching auditd
+ii  apparmor            4.1.0-1      amd64        user-space parser utility for AppArmor
+un  apparmor-utils      <none>       <none>       (no description available)
+un  needrestart         <none>       <none>       (no description available)
+ii  unattended-upgrades 2.12         all          automatic installation of security upgrades
+enabled
+enabled
+enabled
+APT::Periodic "";
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+Unattended-Upgrade::Origins-Pattern "";
+Unattended-Upgrade::Origins-Pattern:: "origin=Debian,codename=${distro_codename},label=Debian";
+Unattended-Upgrade::Origins-Pattern:: "origin=Debian,codename=${distro_codename},label=Debian-Security";
+Unattended-Upgrade::Origins-Pattern:: "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+2026-10-19 06:50:36,797 INFO Initial blacklist: 
+2026-10-19 06:50:36,797 INFO Initial whitelist (not strict): 
+2026-10-19 06:50:37,613 INFO No packages found that can be upgraded unattended and no pending auto-removals
+[exit 0]
+
+$ ssh hidebox -- sudo aa-status 2>&1 | head -8; cat /sys/module/apparmor/parameters/enabled; for u in caddy mutis-api mutis-chain walletd; do pid=$(systemctl show -p MainPID --value $u); echo "$u: $(sudo cat /proc/$pid/attr/current 2>/dev/null)"; done; cat /sys/kernel/security/lockdown
+apparmor module is loaded.
+106 profiles are loaded.
+7 profiles are in enforce mode.
+   /usr/bin/man
+   lsb_release
+   man_filter
+   man_groff
+   nvidia_modprobe
+Y
+caddy: unconfined
+mutis-api: unconfined
+mutis-chain: unconfined
+walletd: unconfined
+[none] integrity confidentiality
+[exit 0]
+

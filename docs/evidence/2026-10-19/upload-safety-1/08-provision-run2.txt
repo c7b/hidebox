@@ -1,0 +1,129 @@
+$ ssh hidebox "sudo bash /tmp/mutis-deploy-safety/deploy/scripts/provision.sh"   (second run: nothing left to change; the privilege check passes)
+
+== Debian packages (installed by the owner; this script installs nothing)
+ok: caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg present; npm and npx absent
+
+== users and directories (spec §8.1)
+ok: users mutis, drive, build; operator <operator>; tree under /srv/mutis
+
+== configuration and secrets (generated here; nothing comes from another machine)
+ok: MUTIS_HOST=hidebox.app
+
+== scripts, units and logging configuration
+ok
+
+== the data directory: noexec, nosuid, nodev (srv-mutis-data.mount)
+ok: /srv/mutis/data rw,nosuid,nodev,noexec,relatime,discard,errors=remount-ro
+
+== kernel settings (/etc/sysctl.d/90-mutis.conf)
+ok: 33 settings applied
+
+== ufw: web ports open, logging off, loopback ports guarded by owner
+  22/tcp                     LIMIT       Anywhere                   # ssh
+  80/tcp                     ALLOW       Anywhere                   # mutis http
+  443/tcp                    ALLOW       Anywhere                   # mutis https
+  22/tcp (v6)                LIMIT       Anywhere (v6)              # ssh
+  80/tcp (v6)                ALLOW       Anywhere (v6)              # mutis http
+  443/tcp (v6)               ALLOW       Anywhere (v6)              # mutis https
+
+== Caddy
+ok: active
+
+== walletd as a systemd unit
+ok: walletd.service already active
+
+== timers that don't need the API: wallet backups always, database backups once a database exists
+  NEXT                         LEFT LAST                              PASSED UNIT                      ACTIVATES
+  Mon 2026-10-19 16:53:53 CST   30s Mon 2026-10-19 16:48:53 CST 4min 29s ago mutis-health.timer        mutis-health.service
+  Mon 2026-10-19 16:54:19 CST   56s Mon 2026-10-19 16:53:19 CST       3s ago mutis-cleanup.timer       mutis-cleanup.service
+  Mon 2026-10-19 17:43:51 CST 50min Mon 2026-10-19 16:27:14 CST    26min ago mutis-evidence.timer      mutis-evidence.service
+
+== receiver and robot-locker keys
+init-keys: receiver.json and robot.json exist; nothing to do
+
+== privilege self-test (spec §15.1 step 9)
+PASS mutis cannot connect to 127.0.0.1:5100
+PASS build cannot connect to 127.0.0.1:5100
+PASS caddy cannot connect to 127.0.0.1:5100
+PASS drive can connect to 127.0.0.1:5100
+SKIP nothing listens on 127.0.0.1:18143
+PASS build cannot connect to 127.0.0.1:8787 (the API)
+PASS mutis cannot connect to 127.0.0.1:8787 (the API)
+PASS caddy can connect to 127.0.0.1:8787 (the API)
+PASS drive can connect to 127.0.0.1:8787 (the API)
+PASS nothing listens on Caddy's default admin port 2019
+PASS Caddy's admin socket exists
+PASS mutis cannot use Caddy's admin socket
+PASS build cannot use Caddy's admin socket
+PASS drive cannot use Caddy's admin socket
+PASS mutis cannot read /home/drive
+PASS build cannot read /srv/mutis/data
+PASS caddy cannot read /srv/mutis/data
+PASS build cannot read /etc/mutis/secret.key
+PASS mutis can read /etc/mutis/secret.key
+PASS mutis cannot read the walletd keyring credential
+PASS drive cannot read the walletd keyring credential
+PASS build cannot read the walletd keyring credential
+PASS mutis cannot write the served release
+PASS drive cannot write the served release
+PASS caddy can read the served release
+PASS build cannot read /home/drive/mutis keys
+PASS the database and its -wal/-shm files are 0660
+PASS drive (group mutis) can write the database
+PASS /srv/mutis/data is mounted noexec,nosuid,nodev
+PASS srv-mutis-data.mount is enabled (it comes back at boot)
+PASS control: the same program runs as mutis from /usr/bin
+PASS mutis cannot run a script stored in /srv/mutis/data (mode 0700)
+PASS mutis cannot run a program stored in /srv/mutis/data (mode 0700)
+PASS mutis cannot run it through the dynamic loader either
+PASS drive (group mutis) cannot add a file to /srv/mutis/data itself (only to db/)
+PASS every directory under blobs/ is 0700 and every stored file 0600
+PASS drive (group mutis) cannot add a file inside blobs/
+PASS mutis-api runs with / noexec in its view (NoExecPaths=/)
+PASS mutis-chain runs with / noexec in its view (NoExecPaths=/)
+PASS walletd runs with / noexec in its view (NoExecPaths=/)
+PASS caddy runs with / noexec in its view (NoExecPaths=/)
+PASS sysctl kernel.kptr_restrict = 2
+PASS sysctl kernel.dmesg_restrict = 1
+PASS sysctl kernel.unprivileged_bpf_disabled = 1
+PASS sysctl net.core.bpf_jit_harden = 2
+PASS sysctl kernel.yama.ptrace_scope = 1
+PASS sysctl kernel.kexec_load_disabled = 1
+PASS sysctl dev.tty.ldisc_autoload = 0
+PASS sysctl kernel.io_uring_disabled = 2
+PASS sysctl fs.protected_hardlinks = 1
+PASS sysctl fs.protected_symlinks = 1
+PASS sysctl fs.protected_fifos = 2
+PASS sysctl fs.protected_regular = 2
+PASS sysctl fs.suid_dumpable = 0
+PASS sysctl kernel.randomize_va_space = 2
+PASS sysctl kernel.perf_event_paranoid = 3
+PASS sysctl vm.unprivileged_userfaultfd = 0
+PASS sysctl net.ipv4.conf.all.rp_filter = 1
+PASS sysctl net.ipv4.conf.default.rp_filter = 1
+PASS sysctl net.ipv4.tcp_syncookies = 1
+PASS sysctl net.ipv4.conf.all.send_redirects = 0
+PASS sysctl net.ipv4.conf.default.send_redirects = 0
+PASS sysctl net.ipv4.conf.all.accept_redirects = 0
+PASS sysctl net.ipv4.conf.default.accept_redirects = 0
+PASS sysctl net.ipv4.conf.all.secure_redirects = 0
+PASS sysctl net.ipv4.conf.default.secure_redirects = 0
+PASS sysctl net.ipv6.conf.all.accept_redirects = 0
+PASS sysctl net.ipv6.conf.default.accept_redirects = 0
+PASS sysctl net.ipv4.conf.all.accept_source_route = 0
+PASS sysctl net.ipv4.conf.default.accept_source_route = 0
+PASS sysctl net.ipv6.conf.all.accept_source_route = 0
+PASS sysctl net.ipv6.conf.default.accept_source_route = 0
+PASS sysctl net.ipv4.icmp_echo_ignore_broadcasts = 1
+PASS strict reverse-path filtering on every interface
+PASS no SSH configuration file asks for passwords
+PASS SSH refuses passwords
+PASS SSH refuses keyboard-interactive logins
+PASS SSH refuses root
+PASS walletd's keyring password is on no process command line
+PASS npm is not installed
+PASS npx is not installed
+PASS pnpm is not installed
+PASS yarn is not installed
+PASS pip is not installed
+privilege-check: PASS

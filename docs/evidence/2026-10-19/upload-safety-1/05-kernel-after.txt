@@ -1,0 +1,45 @@
+$ ssh hidebox -- sudo install -m 0644 -o root -g root /tmp/mutis-deploy-safety/deploy/sysctl/90-mutis.conf /etc/sysctl.d/90-mutis.conf && sudo /usr/lib/systemd/systemd-sysctl /etc/sysctl.d/90-mutis.conf; echo "systemd-sysctl exit $?"; /usr/sbin/sysctl kernel.kptr_restrict kernel.unprivileged_bpf_disabled net.core.bpf_jit_harden kernel.yama.ptrace_scope kernel.kexec_load_disabled dev.tty.ldisc_autoload kernel.io_uring_disabled fs.protected_fifos net.ipv4.conf.all.rp_filter net.ipv4.conf.eth0.rp_filter net.ipv4.conf.lo.rp_filter net.ipv4.conf.all.send_redirects net.ipv4.conf.all.secure_redirects
+systemd-sysctl exit 0
+kernel.kptr_restrict = 2
+kernel.unprivileged_bpf_disabled = 1
+kernel.yama.ptrace_scope = 1
+kernel.kexec_load_disabled = 1
+dev.tty.ldisc_autoload = 0
+kernel.io_uring_disabled = 2
+fs.protected_fifos = 2
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.eth0.rp_filter = 1
+net.ipv4.conf.lo.rp_filter = 1
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.secure_redirects = 0
+sysctl: permission denied on key 'net.core.bpf_jit_harden'
+[exit 1]
+
+$ ssh hidebox -- sudo python3 -I -c "
+import os, re
+stale = {}
+for pid in filter(str.isdigit, os.listdir(\"/proc\")):
+    try:
+        maps = open(f\"/proc/{pid}/maps\").read()
+        comm = open(f\"/proc/{pid}/comm\").read().strip()
+    except OSError:
+        continue
+    libs = sorted({m for m in re.findall(r\"(/usr/\S+) \(deleted\)\", maps)})
+    if libs:
+        stale.setdefault(comm, set()).update(libs)
+print(\"processes still mapping a replaced library (what needrestart would list):\", len(stale) or \"none\")
+for comm, libs in sorted(stale.items()):
+    print(\" \", comm, sorted(libs)[:3])
+"; echo "running kernel: $(uname -r); newest installed: $(ls /boot/vmlinuz-* | sort -V | tail -1 | sed s,/boot/vmlinuz-,,); reboot-required: $(test -e /var/run/reboot-required && echo yes || echo no)"
+processes still mapping a replaced library (what needrestart would list): 3
+  dbus-daemon ['/usr/lib/x86_64-linux-gnu/libexpat.so.1.12.3']
+  polkitd ['/usr/lib/x86_64-linux-gnu/libexpat.so.1.12.3']
+  unattended-upgr ['/usr/lib/x86_64-linux-gnu/libexpat.so.1.12.3']
+running kernel: 6.12.111+deb13-amd64; newest installed: 6.12.113+deb13-amd64; reboot-required: yes
+[exit 0]
+
+$ ssh hidebox -- sudo systemctl restart polkit unattended-upgrades && systemctl is-active polkit unattended-upgrades | paste -sd" "; sudo grep -l "libexpat.so.1.12.3 (deleted)" /proc/[0-9]*/maps 2>/dev/null | cut -d/ -f3 | xargs -r -I{} cat /proc/{}/comm
+active active
+dbus-daemon
+[exit 0]
+
