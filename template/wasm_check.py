@@ -88,6 +88,19 @@ def describe(module: bytes) -> str:
     return f"{len(module)} bytes, sha256 {hashlib.sha256(module).hexdigest()}"
 
 
+def substate_value(body) -> dict | None:
+    """The substate value of a GET /substates answer: `state.up.substate` (tari_indexer 0.47.0) or `substate`
+    (earlier indexers); None for anything else, a spent version (`state.down`) included."""
+    if not isinstance(body, dict):
+        return None
+    if "state" in body:
+        up = body["state"].get("up") if isinstance(body["state"], dict) else None
+        value = up.get("substate") if isinstance(up, dict) else None
+    else:
+        value = body.get("substate")
+    return value if isinstance(value, dict) else None
+
+
 def onchain(address: str, indexer: str, wasm: Path, out: Path | None) -> int:
     address = address.removeprefix("template_")
     url = f"{indexer.rstrip('/')}/substates/template_{address}"
@@ -95,7 +108,10 @@ def onchain(address: str, indexer: str, wasm: Path, out: Path | None) -> int:
     request = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "mutis-wasm-check/1"})
     with urllib.request.urlopen(request, timeout=60) as response:
         body = json.load(response)
-    template = body["substate"]["Template"]
+    template = (substate_value(body) or {}).get("Template")
+    if not isinstance(template, dict):
+        print(f"FAIL: the indexer holds no live template at template_{address}")
+        return 1
     binary = bytes.fromhex(template["binary"])
     print(f"template_{address}: {template['template_name']}, author {template['author']}, "
           f"epoch {template['at_epoch']}, indexer verified: {body.get('verified')}")

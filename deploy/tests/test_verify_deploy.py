@@ -5,18 +5,30 @@ variant tables the live manifest records, and nothing else a manifest could smug
 import hashlib
 import http.server
 import importlib.util
+import io
+import json
 import shutil
+import subprocess
 import tempfile
 import threading
 import tomllib
 import unittest
 from functools import partial
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("verify_deploy", ROOT / "tools" / "verify-deploy.py")
 verify = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verify)
+spec = importlib.util.spec_from_file_location("wasm_check", ROOT / "template" / "wasm_check.py")
+wasm_check = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(wasm_check)
+# GET /substates answers of tari_indexer 0.47.0, recorded from both Esmeralda indexers (the live SealLog among them).
+RECORDED = json.loads((ROOT / "server" / "tests" / "fixtures" / "indexer-substates-0.47.0.json").read_text())
+SEALLOG = RECORDED["seallog_component"]
+SEALLOG_TEMPLATE = "40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47"
+SERVICE_KEY = "9c686313d4ebe9c442196ccdce78cf802eab4549961cbc69522d967ed8a55420"
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -88,6 +100,56 @@ class BuildConfigTest(unittest.TestCase):
         diffs = verify.seallog_check({"seal_log": {"component": "component_../../evil?x="}}, ROOT)
         self.assertEqual(len(diffs), 1)
         self.assertIn("no valid component", diffs[0])
+
+
+class SealLogTemplateTest(unittest.TestCase):
+    """The SealLog check reads the log's template from the indexer in tari_indexer 0.47.0's shape
+    (`state.up.substate`) and the earlier one (`substate`), and runs wasm_check.py on exactly that address."""
+
+    def check(self, body) -> tuple[list[str], list]:
+        runs = []
+
+        def run(cmd, **kwargs):
+            runs.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, "the chain runs seal_log.wasm byte for byte\n", "")
+        with mock.patch.object(verify, "fetch", return_value=json.dumps(body).encode()), \
+                mock.patch.object(verify.subprocess, "run", run), mock.patch("builtins.print"):
+            diffs = verify.seallog_check({"seal_log": {"component": SEALLOG["id"]}}, ROOT)
+        return diffs, runs
+
+    def test_the_live_logs_template_is_checked_in_either_shape(self):
+        older = {"verified": True, "substate": SEALLOG["body"]["state"]["up"]["substate"]}
+        for body in (SEALLOG["body"], older):
+            diffs, runs = self.check(body)
+            self.assertEqual(diffs, [])
+            self.assertEqual(runs[0][-2:], ["onchain", f"template_{SEALLOG_TEMPLATE}"])
+
+    def test_no_live_component_is_a_difference(self):
+        for body in (RECORDED["spent_utxo_at_version"]["body"], {"state": {"up": {"substate": {"Utxo": {}}}}},
+                     RECORDED["spent_utxo"]["body"], []):
+            diffs, runs = self.check(body)
+            self.assertEqual((len(diffs), runs), (1, []), body if isinstance(body, list) else list(body))
+            self.assertIn("could not read its template", diffs[0])
+
+    def onchain(self, body) -> int:
+        reply = io.BytesIO(json.dumps(body).encode())
+        with mock.patch.object(wasm_check.urllib.request, "urlopen", return_value=reply), \
+                mock.patch("builtins.print"):
+            return wasm_check.onchain(SEALLOG_TEMPLATE, "https://indexer.example", ROOT / "template" / "dist" /
+                                      "seal_log.wasm", None)
+
+    def test_wasm_check_reads_the_template_in_either_shape(self):
+        """The live template holds dist/seal_log.wasm, published by the service key (setup-accounts.md §4)."""
+        wasm = (ROOT / "template" / "dist" / "seal_log.wasm").read_bytes()
+        value = {"Template": {"template_name": "SealLog", "author": SERVICE_KEY, "binary": wasm.hex(),
+                              "at_epoch": 12149, "metadata_hash": None}}
+        self.assertEqual(wasm_check.template_address(SERVICE_KEY, wasm), SEALLOG_TEMPLATE)
+        self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": value}}, "verified": True}), 0)
+        self.assertEqual(self.onchain({"verified": True, "substate": value}), 0)
+        other = {"Template": {**value["Template"], "binary": (wasm + b"\0").hex()}}
+        self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": other}}, "verified": True}), 1)
+        self.assertEqual(self.onchain({"version": 0, "state": {"down": {}}, "verified": True}), 1)
+        self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": {"Component": {}}}}}), 1)
 
 
 if __name__ == "__main__":

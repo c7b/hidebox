@@ -103,8 +103,10 @@ deploy/ootle/publish-template.sh check                     # dry run: Accept, th
 deploy/ootle/publish-template.sh publish                   # ends with "the chain runs seal_log.wasm byte for byte"
 deploy/ootle/publish-template.sh instantiate template_<hex>   # dry run, then the log: component_<hex>
 curl -s -H 'User-Agent: mutis' https://ootle-indexer-b.tari.com/substates/component_<hex> |
-  python3 -I -c 'import json, sys; h = json.load(sys.stdin)["substate"]["Component"]["header"]; print(h["owner_rule"], h["template_address"], json.dumps(h["access_rules"]["method_access"]["append_root"]))'
+  python3 -I -c 'import json, sys; b = json.load(sys.stdin); h = b["state"]["up"]["substate"]["Component"]["header"]; print(h["owner_rule"], h["template_address"], json.dumps(h["access_rules"]["method_access"]["append_root"]))'
 ```
+
+(tari_indexer 0.47.0 answers the live value at `state.up.substate`; earlier indexers put it at `substate`.)
 
 The header must show `owner_rule` `"None"`, the 2.0.0 template, and `append_root` restricted to a
 badge whose id is the `service` public key (template ACCEPTANCE E-2 shows the shape). Then in

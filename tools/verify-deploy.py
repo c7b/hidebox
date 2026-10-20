@@ -112,7 +112,8 @@ def seallog_check(cfg: dict, src: Path) -> list[str]:
         return [f"SealLog: /api/v1/config names no valid component ({str(component)[:80]!r})"]
     try:
         body = json.loads(fetch(f"{INDEXER}/substates/{component}"))
-        template = body["substate"]["Component"]["header"]["template_address"]
+        live = body["state"]["up"] if "state" in body else body     # tari_indexer 0.47.0, or an earlier one
+        template = live["substate"]["Component"]["header"]["template_address"]
     except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError) as e:
         return [f"SealLog {component}: could not read its template from {INDEXER} ({e})"]
     if not ADDRESS.fullmatch(str(template)):
