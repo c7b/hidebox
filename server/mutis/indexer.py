@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: MIT
-"""Client for the public Ootle indexers (tari_indexer 0.45.0 REST API), spec §10.5–§10.7.
+"""Client for the public Ootle indexers (tari_indexer 0.47.0 REST API), spec §10.5–§10.7.
 
 Framing of the UTXO stream was pinned by gate G3 (server/NOTES-for-integrator.md): POST /utxos/stream
 with `Accept: application/json` answers NDJSON lines {"sos","update","eos"}; an Unspent update carries
 only (tag, public_nonce), so full outputs come from POST /utxos/fetch by (tag, nonce) pairs.
+
+GET /substates/{id} answers `{"version", "state": {"up": {"substate": {...}}}, "verified", "proof"}` for a
+live substate and, asked for a named version with `include_proof=true`, `{"state": {"down": {}}, …}` with a
+down proof for a spent one; an unversioned read of a spent substate is a 404 "… is down". Indexers before
+0.47.0 put the value at `substate`; `substate_value` reads both.
 """
 import json
 import re
@@ -219,10 +224,31 @@ def one_time_key(output: dict) -> str | None:
     return key if isinstance(key, str) and _HEX32.match(key) else None
 
 
+def substate_value(obj) -> dict | None:
+    """The substate value (`{"Utxo": …}`, `{"Component": …}`, …) of a `GET /substates/{id}` answer: the
+    live version's `state.up.substate`, or `substate` from an indexer before 0.47.0. None for anything
+    else, a spent version (`state.down`) included. An answer with a `state` is read from it alone."""
+    if not isinstance(obj, dict):
+        return None
+    if "state" in obj:
+        state = obj["state"]
+        up = state.get("up") if isinstance(state, dict) and "down" not in state else None
+        value = up.get("substate") if isinstance(up, dict) else None
+    else:
+        value = obj.get("substate")
+    return value if isinstance(value, dict) else None
+
+
+def substate_down(obj) -> bool:
+    """True for an answer that says the version asked for is spent (`state.down`, served with a down proof)."""
+    state = obj.get("state") if isinstance(obj, dict) else None
+    return isinstance(state, dict) and "down" in state
+
+
 def substate_output(obj) -> tuple[str | None, str | None]:
     """(one-time key, public nonce) of a verified `GET /substates/{utxo}` answer's Utxo, each None when
-    the indexer didn't send it in the expected shape (`substate.Utxo.output.{auth, output.public_nonce}`)."""
-    utxo = (obj.get("substate") or {}).get("Utxo") if isinstance(obj, dict) else None
+    the indexer didn't send it in the expected shape (`Utxo.output.{auth, output.public_nonce}`)."""
+    utxo = (substate_value(obj) or {}).get("Utxo")
     output = utxo.get("output") if isinstance(utxo, dict) else None
     if not isinstance(output, dict):
         return None, None

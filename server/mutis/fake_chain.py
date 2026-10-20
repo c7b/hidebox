@@ -11,6 +11,7 @@ import secrets
 import struct
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlsplit
 
 from . import codec, ootle_addr
 
@@ -154,12 +155,20 @@ class FakeChain:
                     for o in self.outputs if (o["tag"], o["nonce"]) in wanted and not o["spent"]]
 
     def substate(self, substate_id: str) -> dict | None:
+        """GET /substates/{id} as tari_indexer 0.47.0 answers it for a live output (its proof is a stand-in)."""
         with self.lock:
             for o in self.outputs:
                 if substate_id == f"utxo_{TARI_HEX}_{o['commitment']}" and not o["spent"]:
-                    return {"version": 0, "verified": True, "proof": {"anchor": {"epoch": self.epoch}},
-                            "substate": {"Utxo": {"output": self._output(o), "is_frozen": False}}}
+                    return {"version": 0,
+                            "state": {"up": {"substate": {"Utxo": {"output": self._output(o), "is_frozen": False}}}},
+                            "verified": True,
+                            "proof": {"anchor": {"epoch": self.epoch}, "commit_proof": "", "value_proof": "",
+                                      "value_hash_epoch": self.epoch}}
         return None
+
+    def spent(self, substate_id: str) -> bool:
+        with self.lock:
+            return any(substate_id == f"utxo_{TARI_HEX}_{o['commitment']}" and o["spent"] for o in self.outputs)
 
 
 def result_of(receipt: dict) -> dict:
@@ -194,8 +203,19 @@ class _IndexerHandler(BaseHTTPRequestHandler):
         if path == "/network":
             return self._send(200, {"network": "esmeralda", "network_byte": 38, "epoch": chain.epoch})
         if path.startswith("/substates/"):
-            found = chain.substate(path.removeprefix("/substates/"))
-            return self._send(200, found) if found else self._send(404, {"error": "not found"})
+            substate_id = path.removeprefix("/substates/")
+            found = chain.substate(substate_id)
+            if found:
+                return self._send(200, found)
+            if not chain.spent(substate_id):
+                return self._send(404, {"error": "not found"})
+            # A spent output: proven down when its version is named with a proof, else the indexer's 404.
+            query = parse_qs(urlsplit(self.path).query)
+            if query.get("version") == ["0"] and query.get("include_proof") == ["true"]:
+                return self._send(200, {"version": 0, "state": {"down": {}}, "verified": True,
+                                        "proof": {"anchor": {"epoch": chain.epoch}, "commit_proof": "", "value_proof": "",
+                                                  "value_hash_epoch": chain.epoch, "down_proof": ""}})
+            return self._send(404, {"error": f"Input substate {substate_id} (v0) is down"})
         if path.startswith("/transaction-receipts/"):
             receipt = chain.receipts.get(path.removeprefix("/transaction-receipts/"))
             return self._send(200, {"receipt": receipt}) if receipt and self.server.receipts_ready \

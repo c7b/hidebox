@@ -5,7 +5,7 @@ The 2026-09-29 forged-deposit incident (community.tari.com/t/402) came from a wa
 amount proof and then ignored the result. Here a credit needs two separate facts:
   1. the amount: the official ootle-wasm `unblindOutput` (in the sidecar) opened the output's
      commitment with the decrypted value, so the value is proven, not reported; and
-  2. existence: a Tari indexer (not walletd) serves a verified `Utxo` substate at exactly that id
+  2. existence: a Tari indexer (not walletd) serves a verified live `Utxo` substate at exactly that id
      (the id contains the commitment).
 walletd never decides a credit. In the G4 fallback (`amount_proof = "wallet"`) step 1 comes from
 walletd's own list and the API reports `checks.amount_proven: false` ("Seen by our wallet").
@@ -26,7 +26,7 @@ import re
 import sqlite3
 
 from . import db, logsafe, quota
-from .indexer import IndexerError, substate_output
+from .indexer import IndexerError, substate_down, substate_output, substate_value
 
 INVOICE_TTL_S = 3600
 UNDERPAID_GRACE_DAYS = 7
@@ -89,8 +89,9 @@ def record_found(conn: sqlite3.Connection, found: list[dict], proven: bool, now:
 def utxo_on_indexer(indexers, utxo_id: str, position: int) -> tuple[str, dict]:
     """One indexer's answer about a UTXO id: (`ok` | `missing` | `unknown`, {"auth_key", "nonce"}).
 
-    ok: HTTP 200, verified == true and a Utxo substate at exactly that id. missing: the indexer says
-    so (its JSON 404 "… not found", or "… is down" for a spent output, or a 200 that isn't a verified
+    ok: HTTP 200, verified == true and a live Utxo substate at exactly that id (`state.up.substate`, or
+    `substate` from an indexer before 0.47.0). missing: the indexer says so (its JSON 404 "… not found",
+    or "… is down" for a spent output, a 200 whose `state` is `down`, or a 200 that isn't a verified live
     Utxo). unknown: anything about the indexer rather than the output (5xx, 429, a 404 or 200 that isn't
     the indexer's JSON, such as a gateway's page while it deploys, a timeout). With `ok` come the
     output's one-time key and public nonce as the indexer shows them (None when absent), for R1.
@@ -108,8 +109,9 @@ def utxo_on_indexer(indexers, utxo_id: str, position: int) -> tuple[str, dict]:
         return "unknown", none
     if status == 404:
         return ("missing" if isinstance(obj, dict) and isinstance(obj.get("error"), str) else "unknown"), none
-    if isinstance(obj, dict) and obj.get("verified") is True and isinstance(obj.get("substate"), dict) \
-            and "Utxo" in obj["substate"]:
+    value = substate_value(obj)
+    if isinstance(obj, dict) and obj.get("verified") is True and not substate_down(obj) \
+            and value is not None and "Utxo" in value:
         auth_key, nonce = substate_output(obj)
         return "ok", {"auth_key": auth_key, "nonce": nonce}
     return "missing", none

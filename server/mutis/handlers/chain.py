@@ -265,7 +265,7 @@ def _indexer_facts(ctx, substate_id: str) -> dict:
     """The output's facts from the indexer (an output spent since then answers "… is down": no facts)."""
     try:
         status, obj, _ = ctx.app.indexers.get_json(f"/substates/{substate_id}")
-        output = obj["substate"]["Utxo"]["output"]
+        output = (indexer.substate_value(obj) or {})["Utxo"]["output"]
         enc = output["output"]["encrypted_data"]
     except (IndexerError, KeyError, TypeError):
         return {}

@@ -5,7 +5,9 @@ Every case here guards against the 2026-09-29 forged-deposit incident (community
 a wallet checked an amount proof and ignored the result. We credit only a value the sidecar proved
 against the commitment AND an indexer shows committed; nothing else moves an invoice to credited.
 """
+import json
 import unittest
+from pathlib import Path
 
 from harness import Stack
 from mutis import codec, db, ootle_addr, payments
@@ -13,8 +15,19 @@ from mutis.chain_worker import RECONCILE_RECHECK_S
 from mutis.fake_chain import FakeIndexer, fake_keys
 from mutis.indexer import IndexerError, Indexers
 
-VERIFIED = (200, b'{"verified": true, "substate": {"Utxo": {}}}')
+VERIFIED = (200, b'{"verified": true, "substate": {"Utxo": {}}}')             # an indexer before 0.47.0
 NOT_FOUND = (404, b'{"error": "Substate utxo_x not found"}')
+# tari_indexer 0.47.0's answers, recorded from both Esmeralda indexers (fixtures/indexer-substates-0.47.0.json).
+RECORDED = json.loads((Path(__file__).parent / "fixtures" / "indexer-substates-0.47.0.json").read_text())
+
+
+def recorded(name: str) -> tuple[int, bytes]:
+    answer = RECORDED[name]
+    return answer["status"], json.dumps(answer["body"]).encode()
+
+
+LIVE = recorded("live_utxo")
+DOWN = recorded("spent_utxo_at_version")
 
 
 class Payments(unittest.TestCase):
@@ -89,10 +102,16 @@ class Payments(unittest.TestCase):
         self.assertEqual(tuple(row), ("unattributed", None))
 
     def test_indexer_refusals_never_credit(self):
-        """404, verified:false and "is down" answers are failures, never credits (t/402)."""
+        """404, verified:false, "is down" and proven-spent answers are failures, never credits (t/402)."""
         inv = self.invoice()
+        spent = RECORDED["spent_utxo_at_version"]["body"]
+        live = RECORDED["live_utxo"]["body"]
         for answer in (lambda sid: None, lambda sid: {"verified": False, "substate": {"Utxo": {}}},
-                       lambda sid: {"verified": True, "substate": {"Component": {}}}):
+                       lambda sid: {"verified": True, "substate": {"Component": {}}},
+                       lambda sid: spent, lambda sid: {**live, "verified": False},
+                       lambda sid: {**live, "state": {"up": {"substate": {"Component": {}}}}},
+                       lambda sid: {**live, "state": {**live["state"], "down": {}}},
+                       lambda sid: {"verified": True, "state": None, "substate": live["state"]["up"]["substate"]}):
             self.s.chain.substate = answer
             self.pay(inv["address"], 500000)
             self.ticks()
@@ -215,6 +234,73 @@ class Payments(unittest.TestCase):
         for reply, outcome in cases:
             self.answer(reply)
             self.assertEqual(payments.committed_on_indexer(self.w.indexers, "utxo_x", 0), outcome, reply)
+
+    def test_check_outcomes_of_the_0_47_indexer(self):
+        """tari_indexer 0.47.0 answers `state.up.substate` for a live output and, for a spent version it can
+        prove, `state.down` with a down proof: recorded answers of both indexers. Only a verified live Utxo is
+        `ok`; a proven down is `missing`, like the "… is down" 404 (t/402)."""
+        live = RECORDED["live_utxo"]["body"]
+        cases = [(LIVE, "ok"), (recorded("live_utxo_without_proof"), "ok"), (recorded("live_utxo_at_version"), "ok"),
+                 (DOWN, "missing"), (recorded("spent_utxo"), "missing"),
+                 ((200, json.dumps({**live, "verified": False}).encode()), "missing"),
+                 ((200, json.dumps({k: v for k, v in live.items() if k != "verified"}).encode()), "missing"),
+                 ((200, json.dumps({**live, "state": {"up": {"substate": {"Component": {}}}}}).encode()), "missing"),
+                 ((200, json.dumps({**live, "state": {**live["state"], "down": {}}}).encode()), "missing"),
+                 ((200, json.dumps({**live, "state": {}}).encode()), "missing"),
+                 ((200, json.dumps({**live, "state": "up"}).encode()), "missing")]
+        for reply, outcome in cases:
+            self.answer(reply)
+            self.assertEqual(payments.committed_on_indexer(self.w.indexers, "utxo_x", 0), outcome, reply[1][:80])
+        self.answer(LIVE)
+        verdict, seen = payments.utxo_on_indexer(self.w.indexers, RECORDED["live_utxo"]["id"], 0)
+        self.assertEqual((verdict, seen), ("ok", {
+            "auth_key": "6892417fe10f69cc21abd98b963160d872e03fe9a8882d9f531e7bb3efde7a06",
+            "nonce": "2adc08fe942c440039a76272abb9cdec08b0a166aecd841d020a7fe12d69c50b"}))
+
+    def test_the_0_47_answers_never_freeze_credits(self):
+        """Every credited output read in the 0.47.0 shape is proven: the hourly check and its recheck stay ok,
+        and the next buyer is credited. Reading only the older `substate` field, every output looked gone and
+        two rounds froze every pack (t/402: a spent credited output still freezes, below)."""
+        self.credited_invoice()
+        self.answer(LIVE, LIVE)
+        for later in (0, RECONCILE_RECHECK_S):
+            with self.assertLogs("mutis", "INFO") as logs:
+                self.assertEqual(payments.reconcile(
+                    self.s.conn, lambda rows: {f["id"]: f["value_ut"] for f in self.w._scan(
+                        self.s.receiver["view_sk"], rows)},
+                    lambda uid: payments.committed_anywhere(self.w.indexers, uid), self.s.now + later), "ok")
+            self.assertEqual(logs.records[-1].getMessage(), "event=chain.reconcile_ok")
+        self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_mismatch")), (None, None))
+        del self.w.indexers.call_one
+        self.w.indexers.upstreams = self.w.indexers.upstreams[:1]
+        self.credited_invoice()
+
+    def test_the_fake_indexer_answers_like_0_47(self):
+        """The dev stack's indexer: a live output in `state.up.substate`; a spent one a 404 "… is down", or a
+        proven down when its version is named with a proof."""
+        self.s.chain.add_output(fake_keys()["address"], 1000, None)
+        utxo = f"utxo_{'01' * 32}_{self.s.chain.outputs[-1]['commitment']}"
+        indexers = self.w.indexers
+        self.assertEqual(payments.utxo_on_indexer(indexers, utxo, 0)[0], "ok")
+        status, body, _ = indexers.get_json(f"/substates/{utxo}")
+        self.assertEqual((status, sorted(body), sorted(body["state"])), (200, ["proof", "state", "verified", "version"], ["up"]))
+        with self.s.chain.lock:
+            self.s.chain.outputs[-1]["spent"] = True
+        self.assertEqual(payments.utxo_on_indexer(indexers, utxo, 0)[0], "missing")
+        self.assertEqual(indexers.get_json(f"/substates/{utxo}?include_proof=true")[:2],
+                         (404, {"error": f"Input substate {utxo} (v0) is down"}))
+        status, body, _ = indexers.get_json(f"/substates/{utxo}?version=0&include_proof=true")
+        self.assertEqual((status, body["state"]), (200, {"down": {}}))
+
+    def test_a_proven_spent_credited_output_freezes(self):
+        """A credited output both indexers prove spent (`state.down`) is gone, like a 404 "… is down": the
+        check and its recheck freeze credits (t/402; our receiver never spends)."""
+        self.credited_invoice()
+        self.answer(DOWN, DOWN)
+        self.w.reconcile(self.s.now)
+        self.assertEqual(self.s.meta("reconcile_mismatch"), str(self.s.now))
+        self.w.reconcile(self.s.now + RECONCILE_RECHECK_S)
+        self.assertEqual(self.s.meta("credit_freeze"), "1")
 
     def test_a_mismatch_needs_every_indexer_to_agree(self):
         """Missing on one indexer and proven on the other is no mismatch; missing on both, twice in a row,

@@ -31,7 +31,7 @@ def add_committed(conn: sqlite3.Connection, indexers: Indexers, substate_ids: li
             status, obj, _ = indexers.get_json(f"/substates/{substate_id}")
         except IndexerError:
             continue
-        utxo = (obj.get("substate") or {}).get("Utxo") if status == 200 and isinstance(obj, dict) else None
+        utxo = (indexer.substate_value(obj) or {}).get("Utxo") if status == 200 else None
         out = indexer.parse_fetched([commitment, utxo]) if isinstance(utxo, dict) else None
         if out is not None:
             found.append(out)

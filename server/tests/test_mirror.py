@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: MIT
 """Gate G3: the UTXO mirror. Parsing is checked against responses recorded from ootle-indexer-b on
-2026-10-11 (public chain data, tests/fixtures/), and the worker's cursor logic against the fake indexer."""
+2026-10-11 and, for GET /substates in tari_indexer 0.47.0's shape, from both indexers on 2026-10-20
+(public chain data, tests/fixtures/), and the worker's cursor logic against the fake indexer."""
 import json
 import os
 import unittest
 from pathlib import Path
 
 from harness import Stack
-from mutis import chain_worker, codec, db, indexer
+from mutis import chain_worker, codec, db, indexer, mirror
 from mutis.fake_chain import FakeChain, FakeIndexer, fake_keys
 from mutis.indexer import Indexers
 
@@ -45,6 +46,36 @@ class Framing(unittest.TestCase):
                          f"utxo_{'01' * 32}_{parsed[0]['commitment']}")
         self.assertIsNone(indexer.parse_fetched(["zz", {}]))
         self.assertIsNone(indexer.parse_fetched([parsed[0]["commitment"], {"output": {"output": {}}}]))
+
+    def test_recorded_substates_of_the_0_47_indexer(self):
+        """`state.up.substate` (0.47.0) and `substate` (before) give the same value; a proven down has none."""
+        recorded = json.loads((FIXTURES / "indexer-substates-0.47.0.json").read_text())
+        live = recorded["live_utxo"]["body"]
+        utxo = live["state"]["up"]["substate"]["Utxo"]
+        self.assertEqual(indexer.substate_value(live), {"Utxo": utxo})
+        self.assertEqual(indexer.substate_value({"verified": True, "substate": {"Utxo": utxo}}), {"Utxo": utxo})
+        self.assertEqual(indexer.substate_output(live),
+                         ("6892417fe10f69cc21abd98b963160d872e03fe9a8882d9f531e7bb3efde7a06",
+                          "2adc08fe942c440039a76272abb9cdec08b0a166aecd841d020a7fe12d69c50b"))
+        for name in ("live_utxo_without_proof", "live_utxo_at_version"):
+            self.assertIn("Utxo", indexer.substate_value(recorded[name]["body"]), name)
+            self.assertFalse(indexer.substate_down(recorded[name]["body"]), name)
+        down = recorded["spent_utxo_at_version"]["body"]
+        self.assertTrue(indexer.substate_down(down))
+        self.assertIsNone(indexer.substate_value(down))
+        self.assertEqual(indexer.substate_output(down), (None, None))
+        self.assertIn("down_proof", down["proof"])
+        self.assertIsNone(indexer.substate_value(recorded["spent_utxo"]["body"]))
+        self.assertIn("Component", indexer.substate_value(recorded["seallog_component"]["body"]))
+        # An answer with a `state` is read from it alone, never from a `substate` beside it.
+        self.assertIsNone(indexer.substate_value({"state": {"down": {}}, "substate": {"Utxo": utxo}}))
+        self.assertIsNone(indexer.substate_value({"state": None, "substate": {"Utxo": utxo}}))
+        self.assertIsNone(indexer.substate_value({"state": {"up": {"substate": {"Utxo": utxo}}, "down": {}}}))
+        for junk in (None, [], "x", {}, {"state": {"up": None}}, {"state": {"up": {"substate": []}}}):
+            self.assertIsNone(indexer.substate_value(junk), junk)
+        # The mirror reads a committed transaction's outputs the same way (mirror.add_committed).
+        out = indexer.parse_fetched([recorded["live_utxo"]["id"].rsplit("_", 1)[1], utxo])
+        self.assertEqual((out["nonce"], out["auth"], out["promise"]), (utxo["output"]["output"]["public_nonce"], "key", 0))
 
     def test_source_names(self):
         self.assertEqual(indexer.source_name("https://ootle-indexer-b.tari.com", 0), "indexer-b")
@@ -85,6 +116,17 @@ class Mirror(unittest.TestCase):
         self.w.mirror(self.s.now)
         row = self.s.conn.execute("SELECT promise, viewable, auth FROM chain_utxos").fetchone()
         self.assertEqual(tuple(row), (8000, 0, "key"))
+
+    def test_a_committed_transactions_outputs_are_read_from_the_indexer(self):
+        """mirror.add_committed reads each new output with GET /substates (the fake indexer answers in
+        tari_indexer 0.47.0's shape) before the stream lists it; ids that aren't TARI outputs are skipped."""
+        self.s.chain.add_output(fake_keys()["address"], 1000, None, promise=10)
+        o = self.s.chain.outputs[-1]
+        ids = [indexer.utxo_id(o["commitment"]), f"component_{'ab' * 32}", indexer.utxo_id("cd" * 32)]
+        self.assertEqual(mirror.add_committed(self.s.conn, self.w.indexers, ids, 7, self.s.now), 1)
+        row = self.s.conn.execute("SELECT id, epoch, promise, auth FROM chain_utxos").fetchone()
+        self.assertEqual(tuple(row), (ids[0], 7, 10, "key"))
+        self.assertEqual(self.w.mirror(self.s.now), 0)            # the stream's copy is the same row
 
     def test_every_indexer_is_mirrored_with_its_own_cursors(self):
         """A stale indexer (it answers, but its stream stopped advancing) hides nothing another one streams;
