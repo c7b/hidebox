@@ -192,6 +192,16 @@ def main():
     rev = sc.ask("reveal", n=812)
     check("reveal (P1): the canary's file key stays in memory and can be published later",
           rev["ok"] and len(unb64u(rev["fk"])) == 32 and not sc.ask("reveal", n=1)["ok"])
+    # owner-5: after a restart the key comes back from the delivery and the copy of the link's wrapped key
+    ask = dict(memo={"Message": memo}, owner_sk=robot["owner_sk"], view_sk=robot["view_sk"], origins=[memo.split("/t#")[0]],
+               share_id=SHARE_ID, wrapped_key=unb64u(share["body"]["wrapped_key"]).hex(), header=unb64u(up["body"]["header"]).hex())
+    rec = sc.ask("recoverCanary", **ask)
+    check("recoverCanary (P1): the robot keys open the delivery, its secret opens the kept wrapped key: the same file key",
+          rec["ok"] and rec["fk"] == rev["fk"], rec.get("error", ""))
+    refused = [sc.ask("recoverCanary", **{**ask, **change}).get("error") for change in (
+        {"owner_sk": keys["owner_sk"], "view_sk": keys["view_sk"]}, {"share_id": b64u(bytes(16))}, {"header": "00" * 32})]
+    check("recoverCanary: another drive's keys, another link, another file's header are refused",
+          refused == ["cannot_open", "other_share", "cannot_unwrap"], str(refused))
 
     errs = [sc.raw("{not json"), sc.ask("rm -rf"), sc.ask("scan", view_sk="zz", utxos=[]), sc.ask("canary", n=1, canary_token="x", robot_address="nope")]
     check("protocol errors are fixed codes", [e.get("error") for e in errs] == ["bad_json", "unknown_cmd", "bad_request", "bad_request"],

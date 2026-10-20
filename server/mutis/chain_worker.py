@@ -582,13 +582,21 @@ class Worker:
                 continue
             item = self.conn.execute("SELECT state, header FROM items WHERE id = ?", (entry["item_id"],)).fetchone()
             if item is None or item["state"] not in ("ready", "doomed"):
+                if entry.get("wrap"):     # its ciphertext is gone, so its key will never be published
+                    entry["wrap"] = None
+                    changed = True
                 continue
             try:
                 entry["fk"] = self.sidecar.request("reveal", n=entry["n"])["fk"]
             except SidecarError as e:
                 if e.code != "not_found":
                     continue      # the sidecar is down or busy: try again next hour
-                entry["fk"] = self._recover_canary(entry, item["header"])
+                try:
+                    entry["fk"] = self._recover_canary(entry, item["header"])
+                except SidecarError:
+                    if changed:
+                        self._save_log(log)   # keep what this pass already published; this one waits an hour
+                    raise
                 if entry["fk"] is None:
                     entry["missed"] = True
                     logsafe.event("chain.canary_missed", "warning")
