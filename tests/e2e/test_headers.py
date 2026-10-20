@@ -20,12 +20,17 @@ made-up Host name gets a 421 with the same headers on both ports (never a redire
 certificate verifies and has more than 14 days left, .wasm is served as application/wasm, /v2's loops and the
 home's stills with their types in byte ranges, kept a day, and each --redirect-from host answers 308 to the same path on the origin (browsers carry
 the #fragment across it). --holding accepts 404 for pages that the holding build doesn't have.
+Fingerprinted files (headers_spec.HASHED, looked up in the live manifest's "assets"): their plain name's type, a year
+and immutable, the policy of their folder; a hashed name no build made is the 404 page. Precompressed text
+(PRECOMPRESSED_*): br when the browser takes it, gzip that decodes to the file when it takes only gzip, the file
+itself otherwise, each with Vary: Accept-Encoding.
 A header sent twice counts as its values joined, so a header both Caddy and the API set fails.
 --local runs everything but the certificate on the server's private copy of the stack: every route
 of the table answers there, app pages included (the app-ui files are stubbed if they don't exist).
 """
 import argparse
 import datetime
+import gzip
 import http.client
 import json
 import socket
@@ -40,17 +45,20 @@ import headers_spec  # noqa: E402
 WASM = "/app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm"
 
 
-def fetch(url: str, method: str = "GET", host: str | None = None, body: bytes = b"") -> tuple[int, dict, bytes]:
+def fetch(url: str, method: str = "GET", host: str | None = None, body: bytes = b"", encoding: str = "identity",
+          limit: int | None = 1 << 16) -> tuple[int, dict, bytes]:
     """`host` replaces the Host header (the misdirected-request checks). A body is sent after the
-    headers and may be cut short by the server (a 413 arrives before it is read)."""
+    headers and may be cut short by the server (a 413 arrives before it is read). `encoding` is the
+    Accept-Encoding sent; `limit` how much of the body is read (None: all of it)."""
     u = urllib.parse.urlsplit(url)
     if u.scheme == "https":
         conn = http.client.HTTPSConnection(u.hostname, u.port or 443, timeout=20, context=ssl.create_default_context())
     else:
         conn = http.client.HTTPConnection(u.hostname, u.port or 80, timeout=20)
     try:
-        conn.putrequest(method, (u.path or "/") + (f"?{u.query}" if u.query else ""), skip_host=host is not None)
-        for name, value in {"User-Agent": "mutis-test-headers", "Accept-Encoding": "identity",
+        conn.putrequest(method, (u.path or "/") + (f"?{u.query}" if u.query else ""), skip_host=host is not None,
+                        skip_accept_encoding=True)
+        for name, value in {"User-Agent": "mutis-test-headers", "Accept-Encoding": encoding,
                             **({"Host": host} if host else {}), **({"Content-Length": str(len(body))} if body else {})}.items():
             conn.putheader(name, value)
         conn.endheaders()
@@ -59,7 +67,7 @@ def fetch(url: str, method: str = "GET", host: str | None = None, body: bytes = 
         except OSError:
             pass    # the server answered and closed before the body was through
         res = conn.getresponse()
-        data = res.read(1 << 16)
+        data = res.read() if limit is None else res.read(limit)
         headers = {}
         for k, v in res.getheaders():
             headers[k.lower()] = f"{headers[k.lower()]}, {v}" if k.lower() in headers else v
@@ -172,6 +180,7 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         problems = [] if status == 200 and headers.get("content-type") == "application/wasm" else \
             [f"status {status}, content-type {headers.get('content-type')!r}"]
         results.append((f"HEAD {WASM} is application/wasm", problems))
+        results += fingerprinted(origin)
 
     oversized = b"\0" * (6 << 20)
     status, headers, data = fetch(origin + "/api/v1/uploads/AAAAAAAAAAAAAAAAAAAAAA/chunks/0", "PUT", body=oversized)
@@ -214,6 +223,69 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         status, headers, _ = fetch(f"https://{old}/s/AAAAAAAAAAAAAAAAAAAAAA")
         ok = status == 308 and headers.get("location") == origin + "/s/AAAAAAAAAAAAAAAAAAAAAA"
         results.append((f"https://{old}/s/… → {status} {headers.get('location')}", [] if ok else ["expected 308 to the origin"]))
+    return results
+
+
+def encoded(origin: str, path: str) -> list[str]:
+    """The same address asked for with br, with gzip alone and with neither: the encodings and Vary, and the gzip
+    body decoding to the plain one."""
+    url = origin + path
+    answers = {enc: fetch(url, encoding=enc, limit=None) for enc in ("identity", "gzip", "br, gzip")}
+    plain_status, plain_headers, plain = answers["identity"]
+    problems = []
+    if len({status for status, _, _ in answers.values()}) != 1:
+        problems.append(f"statuses {[status for status, _, _ in answers.values()]}")
+    if "content-encoding" in plain_headers:
+        problems.append(f"Accept-Encoding: identity answered {plain_headers['content-encoding']!r}")
+    for enc, want in (("gzip", "gzip"), ("br, gzip", "br")):
+        _, headers, data = answers[enc]
+        if headers.get("content-encoding") != want:
+            problems.append(f"Accept-Encoding: {enc} answered content-encoding {headers.get('content-encoding')!r}, not {want}")
+        if "accept-encoding" not in headers.get("vary", "").lower():
+            problems.append(f"Accept-Encoding: {enc}: no Vary: Accept-Encoding ({headers.get('vary')!r})")
+        if want == "gzip" and headers.get("content-encoding") == "gzip":
+            try:
+                if gzip.decompress(data) != plain:
+                    problems.append("the gzip copy decodes to other bytes than the file")
+            except (OSError, EOFError) as e:
+                problems.append(f"the gzip copy doesn't decode ({e})")
+        if want == "br" and headers.get("content-encoding") == "br" and not 0 < len(data) < len(plain):
+            problems.append(f"the br copy is {len(data)} B for a {len(plain)} B file")
+    return problems
+
+
+def fingerprinted(origin: str) -> list[tuple[str, list[str]]]:
+    """headers_spec.HASHED, HASHED_MISSING and PRECOMPRESSED_*: the hashed names from the live manifest."""
+    results = []
+    status, _, body = fetch(origin + "/.well-known/mutis-manifest.json", limit=None)
+    try:
+        names = json.loads(body).get("assets", {}) if status == 200 else {}
+    except ValueError:
+        names = {}
+    for plain in headers_spec.HASHED:
+        hashed = names.get(plain)
+        if not hashed:
+            results.append((f"/{plain} has a fingerprinted name in the live manifest", ["no entry in its \"assets\""]))
+            continue
+        _, plain_headers, _ = fetch(f"{origin}/{plain}", "HEAD")
+        status, headers, _ = fetch(f"{origin}/{hashed}", "HEAD")
+        app = hashed.startswith(("app/", "vendor/"))
+        problems = [] if status == 200 and headers.get("content-type") == plain_headers.get("content-type") else \
+            [f"status {status}, content-type {headers.get('content-type')!r} (the plain name's: {plain_headers.get('content-type')!r})"]
+        problems += header_problems(headers, headers_spec.APP_CSP if app else headers_spec.SITE_CSP,
+                                    headers_spec.IMMUTABLE | (headers_spec.NOINDEX if app else {}))
+        if not app and "x-robots-tag" in headers:
+            problems.append(f"x-robots-tag {headers['x-robots-tag']!r} on a site file")
+        results.append((f"HEAD /{hashed}: {headers.get('content-type')}, kept a year, immutable, the "
+                        f"{'app' if app else 'site'} policy", problems))
+    for path in headers_spec.HASHED_MISSING:
+        status, headers, _ = fetch(origin + path)
+        problems = ([] if status == 404 else [f"status {status}"]) + \
+            header_problems(headers, headers_spec.SITE_CSP, headers_spec.ERROR_CACHE)
+        results.append((f"GET {path} → {status} (a hashed name no build made: the 404 page, never stored)", problems))
+    for path in ["/" + names.get(p, p) for p in headers_spec.PRECOMPRESSED_ASSETS] + list(headers_spec.PRECOMPRESSED_PAGES):
+        results.append((f"GET {path}: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)",
+                        encoded(origin, path)))
     return results
 
 

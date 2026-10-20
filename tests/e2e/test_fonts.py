@@ -3,8 +3,8 @@
 """11-brand P-18, for the drive (DESIGN.md "Typography": one family, Geist, vendored and pinned): the
 live hash manifest lists exactly the font files tools/build.py pins (/shared/fonts/geist/Geist-Variable.woff2,
 and Geist-Latin.woff2, the home's subset of it), with the hashes it pins, and the bytes the origin serves
-have those hashes too. It must load in Chromium with
-no `OTS parsing error`.
+have those hashes too; their fingerprinted copies (the manifest's "assets", the names the pages ask for) hold the
+same bytes. Each must load in Chromium with no `OTS parsing error`.
 
   python3 -I tests/e2e/test_fonts.py [--origin URL] [--host H]
 
@@ -44,9 +44,13 @@ def main() -> int:
     def get(path):
         with urllib.request.urlopen(urllib.request.Request(origin + path, headers={"User-Agent": "mutis-e2e"}), timeout=20) as res:
             return res.read()
-    files = json.loads(get("/.well-known/mutis-manifest.json"))["files"]
-    fonts = sorted("/" + path for path in files if path.endswith((".woff2", ".woff", ".ttf", ".otf")))
+    manifest = json.loads(get("/.well-known/mutis-manifest.json"))
+    files, hashed = manifest["files"], manifest.get("assets", {})
+    copies = {"/" + hashed[p]: "/" + p for p in hashed if p.endswith((".woff2", ".woff", ".ttf", ".otf"))}
+    fonts = sorted("/" + path for path in files if path.endswith((".woff2", ".woff", ".ttf", ".otf")) and "/" + path not in copies)
     pins = build_pins()
+    pins.update({copy: pins[plain] for copy, plain in copies.items() if plain in pins})
+    fonts = sorted(fonts + [copy for copy, plain in copies.items() if plain in pins])
     if fonts != sorted(pins):
         print(f"FAIL the manifest lists {fonts}, not the pinned {sorted(pins)}")
         print("test_fonts: FAIL (Geist only)")

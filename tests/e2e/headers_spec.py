@@ -98,6 +98,25 @@ CARD_HEADERS = {"cache-control": "public, max-age=86400", "cross-origin-resource
 # robots.txt and the sitemap: their types, kept an hour.
 CRAWL = {"/robots.txt": "text/plain; charset=utf-8", "/sitemap.xml": "application/xml; charset=utf-8"}
 CRAWL_CACHE = {"cache-control": "public, max-age=3600"}
+# Fingerprinted files (tools/assets.py; the Caddyfile's @hashed and @hashed_app): every asset a page asks for, under a
+# name with a hash of its bytes, kept a year. test_headers.py looks up each plain name below in the live manifest's
+# "assets" and checks the hashed address: 200, the plain name's type, a year and immutable, the folder's policy
+# (the app's under /app/, with noindex), the security headers. One of each kind the pages load.
+IMMUTABLE = {"cache-control": "public, max-age=31536000, immutable"}
+HASHED = ("shared/tokens.css", "site/css/site.css", "site/js/site.js", "shared/theme.js", "app/drop-widget.js",
+          "app/css/widget.css", "app/lib/pow-worker.js", "app/i18n/widget-en.json", "shared/ui/icons.svg",
+          "shared/fonts/geist/Geist-Latin.woff2", "site/media/v3/hero-480.avif", "site/media/v3/hero-480.webp",
+          "site/media/404/box-zero-480.avif", "favicon-32.png", "icon-512.png",
+          "app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm")
+# A hashed name that no build made: the 404 page, never stored, through both hashed routes.
+HASHED_MISSING = ("/site/css/site.0000000000.css", "/app/ui/app.0000000000.js")
+# The text a browser gets compressed from the .br and .gz copies the build and the activation make
+# (deploy/scripts/precompress.py): with Accept-Encoding br, Content-Encoding br; with gzip alone, gzip that decodes
+# to the file's bytes; with neither, the file. Each with Vary: Accept-Encoding. A hashed asset of each text type, and
+# pages (whose names never change: they keep revalidating, compressed the same way).
+PRECOMPRESSED_ASSETS = ("site/css/site.css", "site/js/site.js", "shared/ui/icons.svg", "app/i18n/en.json",
+                        "app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm")
+PRECOMPRESSED_PAGES = ("/", "/how", "/manifest.webmanifest", "/this-page-does-not-exist")
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
 STATUS_FILES = ("/status.json", "/evidence.json", "/releases.json")
 # Always 404, each through a different route of the Caddyfile (a nested error once leaked Server: Caddy),
