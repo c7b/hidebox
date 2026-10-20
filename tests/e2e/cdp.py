@@ -40,6 +40,8 @@ class CdpError(RuntimeError):
 
 
 class Browser:
+    override = None    # run.py --candidate: a candidate.Override that answers the origin's static files
+
     def __init__(self, command: list[str]):
         self.proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         self.fd = self.proc.stdout.fileno()
@@ -74,7 +76,9 @@ class Browser:
     def _note(self, msg: dict) -> None:
         """An event: kept for take()/wait_event(), except screencast frames, which are saved and
         acknowledged at once (Chromium sends the next frame only after the ack). Stale replies are dropped."""
-        if msg.get("method") == "Page.screencastFrame" and msg.get("sessionId") in self.recordings:
+        if msg.get("method") == "Fetch.requestPaused" and self.override:
+            self.override.handle(self, msg)
+        elif msg.get("method") == "Page.screencastFrame" and msg.get("sessionId") in self.recordings:
             p = msg["params"]
             self.recordings[msg["sessionId"]].add(p["metadata"]["timestamp"], base64.b64decode(p["data"]))
             self._write("Page.screencastFrameAck", {"sessionId": p["sessionId"]}, msg["sessionId"])
@@ -181,6 +185,8 @@ class Page:
         for domain in ("Page", "Runtime", "Log", "Audits", "DOM"):
             self.cmd(f"{domain}.enable")
         self.cmd("Network.enable", {"maxPostDataSize": 65536})
+        if browser.override:
+            self.cmd("Fetch.enable", {"patterns": browser.override.patterns()})
         d = self.device
         self.cmd("Emulation.setDeviceMetricsOverride", {"width": d["width"], "height": d["height"],
                                                         "deviceScaleFactor": d["scale"], "mobile": d["mobile"]})

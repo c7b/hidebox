@@ -7,6 +7,7 @@
   python3 -I tests/e2e/run.py --only E-01,E-15        just these
   python3 -I tests/e2e/run.py --chain --final         submission day: any SKIP fails the run
   python3 -I tests/e2e/run.py --list
+  python3 -I tests/e2e/run.py --only E-29 --candidate DIST   a local build's front end on the live API (candidate.py)
 
 It runs on the workstation (or as the operator on the server with --local) and drives headless Chromium 154 on
 the server as the unprivileged `build` user through relay.py, over one multiplexed ssh connection. Admin
@@ -98,6 +99,8 @@ def main() -> int:
     p.add_argument("--final", action="store_true", help="a skipped scenario fails the run (acceptance D-08)")
     p.add_argument("--out", type=Path, default=Path("e2e-artifacts"))
     p.add_argument("--list", action="store_true")
+    p.add_argument("--candidate", type=Path, help="a local build (tools/build.py --origin ORIGIN --out DIR) whose pages and "
+                   "static files the browser gets in place of the live ones; /api/ stays live (tests/e2e/candidate.py)")
     args = p.parse_args()
     chosen = select(args.only, args.chain, args.staging)
     if args.list:
@@ -108,6 +111,9 @@ def main() -> int:
     out.mkdir(parents=True)
     control = Path(tempfile.mkdtemp(prefix="mutis-e2e-"))
     env = Env(args.origin.rstrip("/"), Remote(None if args.local else args.host, control), out)
+    if args.candidate:
+        import candidate
+        cdp.Browser.override = candidate.Override(args.candidate, env.origin)
     browser_ok = app_deployed(env.origin)
     if browser_ok:
         env.stage()
@@ -121,7 +127,8 @@ def main() -> int:
     failed = [r for r in results if r["status"] == "FAIL" or (args.final and r["status"] == "SKIP")]
     counts = {s: sum(r["status"] == s for r in results) for s in ("PASS", "FAIL", "SKIP")}
     verdict = "FAIL" if failed else "PASS" if not counts["SKIP"] else "PASS (with skips; --final fails on them)"
-    print(f"e2e: {verdict} {counts} → {out}/report.json")
+    served = f", {cdp.Browser.override.served} files from the candidate" if cdp.Browser.override else ""
+    print(f"e2e: {verdict} {counts}{served} → {out}/report.json")
     return 1 if failed else 0
 
 

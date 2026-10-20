@@ -346,8 +346,12 @@ def open_paid_folder(t: T, page, wanted: list[str], one: str) -> None:
     names = sorted(page.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].map((e) => e.dataset.name)"))
     t.check(names == sorted(wanted), f"the folder lists its names ({names})")
     page.eval(f"[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === {json.dumps(one)}).querySelector('[data-testid=\"fv-open\"]').click()")
-    page.wait("document.querySelector('[data-testid=\"fv-preview\"] .fv-preview-body')?.dataset.state === 'open'", 90)
-    t.check(page.exists("fv-preview-save"), f"{one} opens on the phone, with Save")
+    page.wait("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]')?.dataset.view === 'open'", 90)
+    kind = page.eval("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]').dataset.kind")
+    t.check(kind == "text" and page.exists("lightbox-download"),
+            f"{one} opens on the phone in the preview, as text, with Download ({kind})")
+    page.key("Escape")
+    page.wait("!document.getElementById('lightbox')", 10)
 
 
 @scenario("E-29", "Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402", CHAIN)
