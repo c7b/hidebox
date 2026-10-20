@@ -1,0 +1,5 @@
+lint exit 0
+check-copy exit 0
+build exit 0
+deploy exit 0
+site exit 0

@@ -1,6 +1,20 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- site 404 -->
+## 2026-10-19: the 404 page
+
+- **A new 404 page:** the owner's picture above the words, "4", the open box as the "0", "4", with the lid hovering
+  and a lime "?" rising out of the box. On the void in dark mode, on an ink card in light mode. The words are new:
+  "We can't see inside your files. Or, apparently, this page." and "Maybe the address has a typo, or the link
+  expired. Ask whoever sent it for a fresh one." One button, Go home; Open my drive left the page. Still a 404, still
+  noindex, and the page itself is never cached.
+- **The picture** is AVIF and WebP at three widths (6.6 KB for a computer's screen), under `/site/media/` like the
+  home's stills. No new script on other pages.
+- **Three easter eggs**, for whoever looks: a line that shows only when you select the page, a comment in the source,
+  and a note in the browser's console with a ghost by Donovan Baker (asciiart.eu). Review: `docs/review/site-404.md`.
+<!-- /site 404 -->
+
 <!-- upload safety 1 -->
 ## 2026-10-19: uploads are inert
 

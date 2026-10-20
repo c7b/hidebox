@@ -1,0 +1,109 @@
+{
+ "note": "The 404 page at load, uncached, against web/site/tests/serve.py, headless Chromium on the server as build. 'before' is main after the brand kit (72f3871), 'after' this branch.",
+ "before": {
+  "1440": {
+   "requests": 17,
+   "html_css_js_gzip": 25572,
+   "other": 112847,
+   "total": 138419,
+   "files": {
+    "/no-such-page": 5957,
+    "/shared/tokens.css": 8981,
+    "/shared/base.css": 2383,
+    "/site/css/site.css": 18159,
+    "/site/css/pages.css": 23640,
+    "/shared/theme.js": 2298,
+    "/site/js/site.js": 5364,
+    "/shared/ui/icons.svg": 31300,
+    "/manifest.webmanifest": 735,
+    "/shared/dates.js": 1229,
+    "/site/js/stats.js": 7894,
+    "/api/v1/config": 2516,
+    "/app/lib/store.js": 2767,
+    "/shared/fonts/geist/Geist-Variable.woff2": 69760,
+    "/favicon.svg": 1697,
+    "/favicon.ico": 5142
+   },
+   "dom_content_words": 26
+  },
+  "390": {
+   "requests": 16,
+   "html_css_js_gzip": 25572,
+   "other": 107705,
+   "total": 133277,
+   "files": {
+    "/no-such-page": 5957,
+    "/shared/tokens.css": 8981,
+    "/shared/base.css": 2383,
+    "/site/css/site.css": 18159,
+    "/site/css/pages.css": 23640,
+    "/shared/theme.js": 2298,
+    "/site/js/site.js": 5364,
+    "/shared/ui/icons.svg": 31300,
+    "/manifest.webmanifest": 735,
+    "/shared/dates.js": 1229,
+    "/site/js/stats.js": 7894,
+    "/shared/fonts/geist/Geist-Variable.woff2": 69760,
+    "/api/v1/config": 2516,
+    "/app/lib/store.js": 2767,
+    "/favicon.svg": 1697
+   },
+   "dom_content_words": 26
+  }
+ },
+ "after": {
+  "1440": {
+   "requests": 19,
+   "html_css_js_gzip": 27271,
+   "other": 119421,
+   "total": 146692,
+   "files": {
+    "/no-such-page": 6730,
+    "/shared/tokens.css": 8981,
+    "/shared/base.css": 2383,
+    "/site/css/site.css": 18159,
+    "/site/css/pages.css": 25890,
+    "/shared/theme.js": 2298,
+    "/site/js/site.js": 5652,
+    "/site/media/404/box-zero-480.avif": 6574,
+    "/manifest.webmanifest": 735,
+    "/shared/ui/icons.svg": 31300,
+    "/shared/dates.js": 1229,
+    "/site/js/stats.js": 7894,
+    "/api/v1/config": 2516,
+    "/app/lib/store.js": 2767,
+    "/shared/fonts/geist/Geist-Variable.woff2": 69760,
+    "/favicon.svg": 1697,
+    "/favicon.ico": 5142,
+    "/site/js/egg.js": 755
+   },
+   "dom_content_words": 43
+  },
+  "390": {
+   "requests": 18,
+   "html_css_js_gzip": 27271,
+   "other": 114279,
+   "total": 141550,
+   "files": {
+    "/no-such-page": 6730,
+    "/shared/tokens.css": 8981,
+    "/shared/base.css": 2383,
+    "/site/css/site.css": 18159,
+    "/site/css/pages.css": 25890,
+    "/shared/theme.js": 2298,
+    "/site/js/site.js": 5652,
+    "/site/media/404/box-zero-480.avif": 6574,
+    "/manifest.webmanifest": 735,
+    "/shared/ui/icons.svg": 31300,
+    "/shared/dates.js": 1229,
+    "/site/js/stats.js": 7894,
+    "/shared/fonts/geist/Geist-Variable.woff2": 69760,
+    "/api/v1/config": 2516,
+    "/app/lib/store.js": 2767,
+    "/favicon.svg": 1697,
+    "/site/js/egg.js": 755
+   },
+   "dom_content_words": 43
+  }
+ }
+}

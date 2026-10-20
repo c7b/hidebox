@@ -1,0 +1,31 @@
+Mutants of the 404 page on a copy of the branch (static half on the workstation, browser half on the server as build):
+  1. the hidden line in --fg-2 instead of --bg (visible)
+  2. the source comment removed
+  3. Open my drive back beside Go home
+  4. the ghost's fifth line with two spaces instead of three
+
+== static_checks (run.py --static) ==
+FAIL 404: the owner's words, one way home, the art sized from media/404, the three eggs
+     pages/404.html: main's links are [(' class="btn" href="/"', 'Go home'), (' class="quiet" href="/drive?open"', 'Open my drive')], expected one: Go home to /
+     pages/404.html: expected the art, the h1, the lede, Go home, the hidden line, then the comment, in that order
+     css/pages.css: no '.not-found .nf-egg { margin-top: var(--s-2); font: var(--t-small); color: var(--bg); }' (the hidden line shows only when selected)
+PASS llms-full.txt matches /how, /made and /fine-print
+
+== browser_checks.check_not_found ==
+     /no-such-page @1440 dark: main's links are [['Go home', '/'], ['Open my drive', '/drive?open']], expected Go home to /
+     /no-such-page @1440 dark: the hidden line is rgb(163, 163, 163) on rgb(10, 10, 10), rgb(250, 250, 250) when selected (text rgb(250, 250, 250)), aria-hidden 'true': "for real, this is a 404, we couldn't find the page, stop looking"
+     /no-such-page @1440 dark: the comment isn't in the served page ([' SPDX-License-Identifier: MIT ', ' SPDX-License-Identifier: MIT '])
+     /no-such-page @1440 dark: the console says ["log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\  \\\n  `~~~'", 'log: %cghost: Donovan Baker, asciiart.eu font-size: 10px'], expe
+     /no-such-page @1440 light: main's links are [['Go home', '/'], ['Open my drive', '/drive?open']], expected Go home to /
+     /no-such-page @1440 light: the hidden line is rgb(102, 102, 102) on rgb(255, 255, 255), rgb(10, 10, 10) when selected (text rgb(10, 10, 10)), aria-hidden 'true': "for real, this is a 404, we couldn't find the page, stop looking"
+     /no-such-page @1440 light: the comment isn't in the served page ([' SPDX-License-Identifier: MIT ', ' SPDX-License-Identifier: MIT '])
+     /no-such-page @1440 light: the console says ["log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\  \\\n  `~~~'", 'log: %cghost: Donovan Baker, asciiart.eu font-size: 10px'], exp
+     /no-such-page @390 dark: main's links are [['Go home', '/'], ['Open my drive', '/drive?open']], expected Go home to /
+     /no-such-page @390 dark: the hidden line is rgb(163, 163, 163) on rgb(10, 10, 10), rgb(250, 250, 250) when selected (text rgb(250, 250, 250)), aria-hidden 'true': "for real, this is a 404, we couldn't find the page, stop looking"
+     /no-such-page @390 dark: the comment isn't in the served page ([' SPDX-License-Identifier: MIT ', ' SPDX-License-Identifier: MIT '])
+     /no-such-page @390 dark: the console says ["log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\  \\\n  `~~~'", 'log: %cghost: Donovan Baker, asciiart.eu font-size: 10px'], expec
+     /no-such-page @390 light: main's links are [['Go home', '/'], ['Open my drive', '/drive?open']], expected Go home to /
+     /no-such-page @390 light: the hidden line is rgb(102, 102, 102) on rgb(255, 255, 255), rgb(10, 10, 10) when selected (text rgb(10, 10, 10)), aria-hidden 'true': "for real, this is a 404, we couldn't find the page, stop looking"
+     /no-such-page @390 light: the comment isn't in the served page ([' SPDX-License-Identifier: MIT ', ' SPDX-License-Identifier: MIT '])
+     /no-such-page @390 light: the console says ["log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\  \\\n  `~~~'", 'log: %cghost: Donovan Baker, asciiart.eu font-size: 10px'], expe
+note 404 @1440 dark: 206,888 B at load, the art from box-zero-480.avif

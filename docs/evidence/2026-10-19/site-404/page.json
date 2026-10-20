@@ -1,0 +1,179 @@
+{
+ "404-1440-dark": {
+  "status": 404,
+  "art": "box-zero-480.avif",
+  "box": [
+   480,
+   109,
+   480,
+   320
+  ],
+  "bottom_of_go_home": 708,
+  "bytes_at_load": 206897,
+  "requests": [
+   "/api/v1/config",
+   "/app/lib/store.js",
+   "/favicon.ico",
+   "/favicon.svg",
+   "/favicon.svg",
+   "/manifest.webmanifest",
+   "/no-such-page",
+   "/shared/base.css",
+   "/shared/dates.js",
+   "/shared/fonts/geist/Geist-Variable.woff2",
+   "/shared/theme.js",
+   "/shared/tokens.css",
+   "/shared/ui/icons.svg",
+   "/site/css/pages.css",
+   "/site/css/site.css",
+   "/site/js/egg.js",
+   "/site/js/site.js",
+   "/site/js/stats.js",
+   "/site/media/404/box-zero-480.avif"
+  ],
+  "console": [
+   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\   \\\n  `~~~'",
+   "log: %cghost: Donovan Baker, asciiart.eu font-size: 10px"
+  ],
+  "selected_text_ends": [
+   "For judges",
+   "Under the hood",
+   "The fine print",
+   "My drive",
+   "Built on the Tari\u2122 Ootle testnet.",
+   "Free to use.",
+   "Esmeralda testnet: tTARI is test money, worth nothing.",
+   "Ootle mainnet: Nov 11, 2026.",
+   "hidebox is an independent open-source project.",
+   "It is not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project.",
+   "\u201cTari\u201d is a trademark of Tari Labs.",
+   "All rights reserved."
+  ]
+ },
+ "404-1440-light": {
+  "status": 404,
+  "art": "box-zero-480.avif",
+  "box": [
+   480,
+   109,
+   480,
+   320
+  ],
+  "bottom_of_go_home": 708,
+  "bytes_at_load": 201513,
+  "requests": [
+   "/api/v1/config",
+   "/app/lib/store.js",
+   "/favicon.svg",
+   "/favicon.svg",
+   "/manifest.webmanifest",
+   "/no-such-page",
+   "/shared/base.css",
+   "/shared/dates.js",
+   "/shared/fonts/geist/Geist-Variable.woff2",
+   "/shared/theme.js",
+   "/shared/tokens.css",
+   "/shared/ui/icons.svg",
+   "/site/css/pages.css",
+   "/site/css/site.css",
+   "/site/js/egg.js",
+   "/site/js/site.js",
+   "/site/js/stats.js",
+   "/site/media/404/box-zero-480.avif"
+  ],
+  "console": [
+   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\   \\\n  `~~~'",
+   "log: %cghost: Donovan Baker, asciiart.eu font-size: 10px"
+  ]
+ },
+ "404-390-dark": {
+  "status": 404,
+  "art": "box-zero-480.avif",
+  "box": [
+   16,
+   109,
+   358,
+   239
+  ],
+  "bottom_of_go_home": 708,
+  "bytes_at_load": 201513,
+  "requests": [
+   "/api/v1/config",
+   "/app/lib/store.js",
+   "/favicon.svg",
+   "/favicon.svg",
+   "/manifest.webmanifest",
+   "/no-such-page",
+   "/shared/base.css",
+   "/shared/dates.js",
+   "/shared/fonts/geist/Geist-Variable.woff2",
+   "/shared/theme.js",
+   "/shared/tokens.css",
+   "/shared/ui/icons.svg",
+   "/site/css/pages.css",
+   "/site/css/site.css",
+   "/site/js/egg.js",
+   "/site/js/site.js",
+   "/site/js/stats.js",
+   "/site/media/404/box-zero-480.avif"
+  ],
+  "console": [
+   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\   \\\n  `~~~'",
+   "log: %cghost: Donovan Baker, asciiart.eu font-size: 10px"
+  ]
+ },
+ "404-390-light": {
+  "status": 404,
+  "art": "box-zero-480.avif",
+  "box": [
+   16,
+   109,
+   358,
+   239
+  ],
+  "bottom_of_go_home": 708,
+  "bytes_at_load": 201513,
+  "requests": [
+   "/api/v1/config",
+   "/app/lib/store.js",
+   "/favicon.svg",
+   "/favicon.svg",
+   "/manifest.webmanifest",
+   "/no-such-page",
+   "/shared/base.css",
+   "/shared/dates.js",
+   "/shared/fonts/geist/Geist-Variable.woff2",
+   "/shared/theme.js",
+   "/shared/tokens.css",
+   "/shared/ui/icons.svg",
+   "/site/css/pages.css",
+   "/site/css/site.css",
+   "/site/js/egg.js",
+   "/site/js/site.js",
+   "/site/js/stats.js",
+   "/site/media/404/box-zero-480.avif"
+  ],
+  "console": [
+   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "log: you found the last easter egg, you found the ghost of John McAfee...\n .-.\n(o o) boo!\n| O \\\n \\   \\\n  `~~~'",
+   "log: %cghost: Donovan Baker, asciiart.eu font-size: 10px"
+  ],
+  "selected_text_ends": [
+   "For judges",
+   "Under the hood",
+   "The fine print",
+   "My drive",
+   "Built on the Tari\u2122 Ootle testnet.",
+   "Free to use.",
+   "Esmeralda testnet: tTARI is test money, worth nothing.",
+   "Ootle mainnet: Nov 11, 2026.",
+   "hidebox is an independent open-source project.",
+   "It is not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project.",
+   "\u201cTari\u201d is a trademark of Tari Labs.",
+   "All rights reserved."
+  ]
+ }
+}
