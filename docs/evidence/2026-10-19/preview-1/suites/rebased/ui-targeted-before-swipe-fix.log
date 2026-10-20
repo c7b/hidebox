@@ -1,0 +1,195 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: phone: widget payload compressed: 25013 B at load, 40510 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: computer: 43477 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+  A-06 measured: computer 43477 B gzip -9, files: /app/css/widget.css, /app/drop-widget.js, /app/i18n/widget-en.json, /app/lib/api.js, /app/lib/b64.js, /app/lib/bytes.js, /app/lib/crypto.js, /app/lib/dom.js, /app/lib/format.js, /app/lib/i18n.js, /app/lib/pow-worker.js, /app/lib/pow.js, /app/lib/seal.js, /app/lib/sha256sync.js, /app/lib/share.js, /app/lib/store.js, /app/ui/card.js, /app/ui/core.js, /app/ui/more.js, /app/ui/qr.js, /app/ui/sealing.js, /app/ui/widget.js, /app/ui/zone.js
+PASS budget: phone, after a photo: 45548 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
+PASS drive-budget: a drive of 20 items
+PASS drive-budget: no ootle-wasm before the file table renders
+PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.woff2'])
+PASS drive-budget: A-06d: 125645 B compressed until the table renders, 38 files (≤ 131072 B)
+  A-06d measured: 125645 B gzip -9, files: app/css/drive.css, app/css/flow.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
+PASS drive-budget: no CSP or Trusted Types violation ([])
+--- pay-page-states The buyer page (steps 15 and 16): teaser, price and fee, C39, C37, one primary; the address only after a claim; test money to Unlocked and the open; resume; the owner's check; Pay from my drive; paused, gone, no key
+PASS pay-page-states: a stranger's first screen: waiting, nothing claimed (wait)
+PASS pay-page-states: the title, and the name the owner allowed (read from the teaser with the link's half)
+PASS pay-page-states: the price and the public fee ('0.1tTARI', 'Plus a network fee of 0.03 tTARI. The fee is public.')
+PASS pay-page-states: what you get (C39: Paying lets you open it 3 times until Oct 27. Anyone who opens a file can pass it on. The owner can still delete it.)
+PASS pay-page-states: no take-backs, before Pay (C37)
+PASS pay-page-states: one primary: Pay with test money
+PASS pay-page-states: no Pay from my drive without a drive here
+PASS pay-page-states: Another Ootle wallet shows no address before a claim exists
+PASS pay-page-states: the content stays locked
+PASS pay-page-states: names on every control; no CSP violation
+PASS pay-page-states: a browser without a drive: the top bar says Make your own drive
+PASS pay-page-states: Another Ootle wallet: the address just for this claim (the owner's sales address with the claim's reference), after the claim
+PASS pay-page-states: the claim asked for its proof of work (claim)
+PASS pay-page-states: C38 under the other wallet
+PASS pay-page-states: Pay with test money starts the steps
+PASS pay-page-states: test money pays the claim that exists
+PASS pay-page-states: released: the page has both halves
+PASS pay-page-states: test money skips the owner's check (['wait:done', 'seen:done', 'chain:done', 'open:done'])
+PASS pay-page-states: 3 opens left until Oct 27.
+PASS pay-page-states: what the chain shows, with test money's grouping (C36)
+PASS pay-page-states: Open it: the real open, with the claim's token, decrypts here
+PASS pay-page-states: one open used (2 opens left until Oct 27.)
+PASS pay-page-states: a reload resumes the claim kept in this browser
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: Payment seen: the steps take over
+PASS pay-page-states: paid from another wallet: the owner's drive checks it
+PASS pay-page-states: the owner step, and C38 (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-page-states: no sideways scroll at 390
+PASS pay-page-states: after the owner's drive confirms, it opens
+PASS pay-page-states: a closed payment window: Start again
+PASS pay-page-states: Start again: a fresh page, no old address
+PASS pay-page-states: Not selling: no Pay, and why
+PASS pay-page-states: a link without its half of the key says so
+PASS pay-page-states: an ended paid link says it ended
+PASS pay-page-states: a funded drive here: Pay from my drive, with C38 under it
+PASS pay-page-states: Pay from my drive: this browser built and sent the payment; it waits for the owner's check
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: no CSP or Trusted Types violation ([])
+--- pay-steady owner-5: the buyer page draws its final state at once and stays put: no layout shift and no redraw on arrival, while it asks about a claim every 3 s, when Another Ootle wallet opens (the address and its code arrive once), on a reload with that claim, and in a browser with a drive (its line is held while the drive is checked)
+PASS pay-steady: arrival: drawn once, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Another Ootle wallet: its code is built once, and the address never shows without it ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 2, 'moves': 2, 'others_moved': 2, 'first_moves': [[5346, '211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -'], [5594, '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162']], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: while the page asks about the claim every 3 s, nothing moves or redraws ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: a reload with the claim kept: drawn once with its code, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: a browser with a drive: Pay from my drive takes the line held for it while it was checked, nothing else moves ({'shift': 0.0119, 'shift_after_draw': 0, 'shift_no_input': 0.0094, 'shifted': ['top-end #text A', 'top-end', '#text #text top-end', 'pay-page'], 'redraws': 1, 'moves': 1, 'others_moved': 0, 'first_moves': [[1334, '566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -', '566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -']], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Pay from my drive and its note fit the held line at 390, 360 and 1440 ({'iphone': [92, 92], 'narrow': [92, 92], 'desktop': [92, 92]})
+  pay-steady: {"arrival": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "other_opens": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 2, "moves": 2, "others_moved": 2, "first_moves": [[5346, "211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -"], [5594, "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162"]], "qr_built": 1, "empty_qr_frames": 0}, "other_polls": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "reload_with_claim": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 1, "empty_qr_frames": 0}, "drive_arrival": {"shift": 0.0119, "shift_after_draw": 0, "shift_no_input": 0.0094, "shifted": ["top-end #text A", "top-end", "#text #text top-end", "pay-page"], "redraws": 1, "moves": 1, "others_moved": 0, "first_moves": [[1334, "566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -", "566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -"]], "qr_built": 0, "empty_qr_frames": 0}, "drive_line": {"iphone": [92, 92], "narrow": [92, 92], "desktop": [92, 92]}}
+PASS pay-steady: no CSP or Trusted Types violation ([])
+--- pay-progress owner-5: after Pay with test money the steps move: shown at the click, the step in progress turning with its time and what it waits on (getting ready, our demo wallet sending it, then the chain), ticked as each state arrives; a live region says each step; with reduced motion, words and the time instead of motion
+PASS pay-progress: motion: test money reaches Ready to open
+PASS pay-progress: motion: the steps show at the click (79 ms)
+PASS pay-progress: motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: motion: the transaction's line comes within a poll of it (3457 ms after the steps)
+PASS pay-progress: motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: motion: never more than about 2 s without something new to read (1599 ms)
+PASS pay-progress: motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: the step in progress turns and the bar sweeps (2 animations running)
+PASS pay-progress: reduced_motion: test money reaches Ready to open
+PASS pay-progress: reduced_motion: the steps show at the click (45 ms)
+PASS pay-progress: reduced_motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: reduced_motion: the transaction's line comes within a poll of it (3356 ms after the steps)
+PASS pay-progress: reduced_motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: reduced_motion: never more than about 2 s without something new to read (1700 ms)
+PASS pay-progress: reduced_motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: reduced_motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: reduced motion: nothing moves in the steps, the words and the time say it (0 running)
+  pay-progress: {"motion": {"steps_shown_ms": 79, "open_ms": 8101, "longest_still_ms": 1599, "running_animations": 2, "live_region": ["polite", "Waiting for your payment"]}, "reduced_motion": {"steps_shown_ms": 45, "open_ms": 8000, "longest_still_ms": 1700, "running_animations": 0, "live_region": ["polite", "Waiting for your payment"]}}
+PASS pay-progress: no CSP or Trusted Types violation ([])
+--- preview-drive The preview in the drive: every hostile fixture by its name; the bytes pick the kind; nothing runs; Esc, focus back on the name, arrows through the list; Download saves the same bytes; phones and both themes
+PASS preview-drive: drive: an empty file is refused before upload, so it never reaches a preview
+PASS preview-drive: drive: big.txt is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: drive: big.txt: one text node in the <pre>
+PASS preview-drive: drive: big.txt shows the first 256 KB and says so
+PASS preview-drive: drive: big.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: big.txt: Download is there
+PASS preview-drive: drive: big.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: drive: notes.md: one text node in the <pre>
+PASS preview-drive: drive: notes.md: its markup and links read as characters
+PASS preview-drive: drive: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: notes.md: Download is there
+PASS preview-drive: drive: notes.md: Esc closes and focus is back on its name
+PASS preview-drive: drive: page.txt is shown as its bytes say (none markup), not as its name says (none markup)
+PASS preview-drive: drive: page.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: page.txt: Download is there
+PASS preview-drive: drive: page.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-drive: drive: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: png-named.svg: Download is there
+PASS preview-drive: drive: png-named.svg: Esc closes and focus is back on its name
+PASS preview-drive: drive: polyglot.htm is shown as its bytes say (image image/gif), not as its name says (image image/gif)
+PASS preview-drive: drive: polyglot.htm: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: polyglot.htm: Download is there
+PASS preview-drive: drive: polyglot.htm: Esc closes and focus is back on its name
+PASS preview-drive: drive: script.svg is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-drive: drive: script.svg: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-drive: drive: script.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: script.svg: Download is there
+PASS preview-drive: drive: script.svg: Esc closes and focus is back on its name
+PASS preview-drive: drive: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-drive: drive: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-drive: drive: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: svg-named.png: Download is there
+PASS preview-drive: drive: svg-named.png: Esc closes and focus is back on its name
+PASS preview-drive: drive: tiny.pdf is shown as its bytes say (none pdf), not as its name says (none pdf)
+PASS preview-drive: drive: tiny.pdf: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: tiny.pdf: Download is there
+PASS preview-drive: drive: tiny.pdf: Esc closes and focus is back on its name
+PASS preview-drive: drive: utf16.txt is shown as its bytes say (none binary), not as its name says (none binary)
+PASS preview-drive: drive: utf16.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: drive: utf16.txt: Download is there
+PASS preview-drive: drive: utf16.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: nothing asked for /__canary/ ([])
+PASS preview-drive: drive: no console error or exception ([])
+PASS preview-drive: ArrowRight: the next file in the list
+PASS preview-drive: ArrowLeft past the first: the last one
+PASS preview-drive: Tab stays inside the lightbox ([True, True, True, True, True, True, True, True, True, True, True, True])
+PASS preview-drive: Download in the lightbox saves big.txt, the same bytes
+PASS preview-drive: Download in the lightbox saves polyglot.htm, the same bytes
+PASS preview-drive: Download in the lightbox saves page.txt, the same bytes
+PASS preview-drive: Download in the lightbox saves svg-named.png, the same bytes
+PASS preview-drive: Download never navigates or opens a window ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0)
+PASS preview-drive: phone: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-drive: phone: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: phone: png-named.svg: Download is there
+PASS preview-drive: phone: Download, Close and the stage fit at 390, 44 px targets, no sideways scroll
+PASS preview-drive: phone: a swipe to the left on the picture shows the next file (notes.md)
+PASS preview-drive: phone: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: phone: notes.md: one text node in the <pre>
+PASS preview-drive: phone: notes.md: its markup and links read as characters
+PASS preview-drive: phone: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:47117/drive'}, 0 navigations)
+PASS preview-drive: phone: notes.md: Download is there
+FAIL preview-drive: TimeoutError: waited 60s for (() => { const s = document.querySelector('#lightbox [data-testid="lightbox-stage"]'); return !!s && s.dataset.view !== 
+Traceback (most recent call last):
+  File "<repo>/web/app/ui/tests/run.py", line 285, in main
+    fn(t)
+    ~~^^^
+  File "<repo>/web/app/ui/tests/flows_preview.py", line 228, in preview_drive
+    got = shown(p, last)
+  File "<repo>/web/app/ui/tests/flows_preview.py", line 94, in shown
+    page.wait(f"(() => {{ const s = {STAGE}; return !!s && s.dataset.view !== 'loading'"
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              f" && document.querySelector('#lightbox [data-testid=\"lightbox-name\"]')?.textContent === {json.dumps(name)}; }})()", timeout)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/web/app/ui/tests/cdp.py", line 210, in wait
+    raise TimeoutError(f"waited {timeout}s for {expr[:120]}")
+TimeoutError: waited 60s for (() => { const s = document.querySelector('#lightbox [data-testid="lightbox-stage"]'); return !!s && s.dataset.view !== 
+  page 0: http://127.0.0.1:47117/drive :: Skip to content hidebox My drive New My drive Received Shared Activity Trash Storage 313 KB of 64 MB used Get more space My Tari address otl_esm_1ve067r…evdw6v Search runs in this browser. Our server can't read your file names. Upgrade My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size Actions big.t
+    errors: []
+  page 1: http://127.0.0.1:47117/drive :: Skip to content Search runs in this browser. Our server can't read your file names. My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files notes.md Private page.txt Private png-named.svg Private New 3 uploads done png-named.svg Locked and saved notes.md Locked and saved page.txt Locked and saved 3 files locked and saved. notes.m
+    errors: []
+--- preview-pay The preview on a paid link (/p/): the SVG named as a picture, sold, paid with test money; Open it shows it drawn in a canvas, nothing runs; Esc, the name opens it again; Download; a phone
+PASS preview-pay: desktop: paid with test money, ready to open
+PASS preview-pay: /p/ on desktop: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-pay: /p/ on desktop: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-pay: /p/ on desktop: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:40875/p/EhG5NVzTxCD1PefLaBB2dw#5bIoZwjkKeJNTNLk22no3sJDhMJ3RUG-t_QJ8OPuVU_w'}, 0 navigations)
+PASS preview-pay: /p/ on desktop: svg-named.png: Download is there
+PASS preview-pay: desktop: Esc, and focus is on the file's name
+PASS preview-pay: desktop: Download saves the same bytes
+PASS preview-pay: /p/ on desktop: nothing asked for /__canary/, no console error, no navigation ([])
+PASS preview-pay: iphone: paid with test money, ready to open
+PASS preview-pay: /p/ on iphone: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-pay: /p/ on iphone: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-pay: /p/ on iphone: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:40875/p/EhG5NVzTxCD1PefLaBB2dw#5bIoZwjkKeJNTNLk22no3sJDhMJ3RUG-t_QJ8OPuVU_w'}, 0 navigations)
+PASS preview-pay: /p/ on iphone: svg-named.png: Download is there
+PASS preview-pay: iphone: Esc, and focus is on the file's name
+PASS preview-pay: iphone: Download saves the same bytes
+PASS preview-pay: /p/ on iphone: nothing asked for /__canary/, no console error, no navigation ([])
+PASS preview-pay: no CSP or Trusted Types violation ([])
+
+UI FAIL 162/163
+  failed: preview-drive: TimeoutError: waited 60s for (() => { const s = document.querySelector('#lightbox [data-testid="lightbox-stage"]'); return !!s && s.dataset.view !== 

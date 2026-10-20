@@ -93,7 +93,8 @@ Download is `lib/download.js`'s `saveFile`, unchanged: an `application/octet-str
   through the files listed beside it (a drive view as shown, search included; a folder's files), wrapping at the ends;
   Enter on a name opens it. The name is the dialog's label and is read out when the file changes.
 - **Phones:** the capsules fill the width (the tile goes below 400 px), the pager sits under the stage, a sideways
-  swipe on the stage moves to the next file, every control is 44 px; nothing scrolls sideways at 390.
+  swipe on the stage moves to the next file (the stage starts no browser pan; a text file still scrolls), every
+  control is 44 px; nothing scrolls sideways at 390.
 - **States:** opening (the shared wait: a turning dot, "Opening…", and the 4 px bar that fills as the file arrives),
   shown, a read that failed (the caller's own alert: the drive's error, the folder visit's "This visit ended"), a
   picture that didn't decode, empty, no preview.
@@ -148,16 +149,18 @@ its bytes say markup. The second lightbox test fails after each because the firs
 
 | Budget | Before (`main`) | After |
 |---|---|---|
-| A-06d, `/drive` until the table renders (of 131,072 B) | 125,365 B, 38 files (`72f3871`) | 125,485 B, 38 files (+120 B: the six strings and `drive-list.js`'s open action) |
+| A-06d, `/drive` until the table renders (of 131,072 B) | 125,365 B, 38 files (`72f3871`, the first base); 125,523 B (`bfd72c8`, today's `main`) | 125,485 B (+120 B: the six strings and `drive-list.js`'s open action); 125,645 B rebased (+122 B) |
 | The files of A-06d this change touches | `en.json` 20,649 B, `drive-list.js` 6,066 B | 20,751 B (+102, the six strings), 6,084 B (+18) |
 | On first open (not in any first screen) | | `lightbox.js` 4,269 B, `lightbox.css` 3,138 B, `sniff.js` 3,163 B |
 | A-06 (the home's widget) | no file of the widget's path changed | unchanged: phone 25,013 / 40,510 B, computer 43,477 B, after a photo 45,548 B |
 
 ## Suites
 
-On the server as `build`, from copies of the branch (`docs/evidence/2026-10-19/preview-1/suites/`):
+On the server as `build`, from copies of the branch (`docs/evidence/2026-10-19/preview-1/suites/`). The branch was
+rebased twice onto a moving `main` (the 404 page, upload safety, the steadier pay page); `da05e87` and `e4dd45d` are
+the ids the runs had before the rebase, and the rebased tree is the one pushed.
 
-| Suite | Full run on `da05e87` | Final tree (`e4dd45d`, after the review's fixes) |
+| Suite | Full run (`da05e87`) | The review's fixes (`e4dd45d`) |
 |---|---|---|
 | `tools/lint.py` | PASS (0 problems) | PASS (0 problems) |
 | `tools/check-copy.py` | PASS (0 problems) | PASS (0 problems) |
@@ -166,6 +169,16 @@ On the server as `build`, from copies of the branch (`docs/evidence/2026-10-19/p
 | App UI, `web/app/ui/tests/run.py` | **940/940** (the three `preview-*` flows new, `drive-upload-files` and `folder-viewer` changed) | 243/243: `budget`, `drive-budget`, the three `preview-*`, `drive-upload-files`, `folder-viewer`, `folder-zip`, `received-folder`, `pay-page-states` |
 | Mutants of the preview | | 3 of 3 fail the core suite |
 | E2E on production, E-29 with `--candidate` | PASS (53 s) | |
+
+**After the rebase** onto `main`'s new pay page (`paypage.js` had changed under this branch's edits; git merged them
+cleanly): the core suite in Chromium 150/150, and the UI scenarios that touch the pay page, the folder viewer and the
+budgets: `budget`, `drive-budget`, `preview-drive` (twice), `preview-folder`, `preview-pay`, `pay-page-states`,
+`pay-progress`, `pay-steady`, `drive-upload-files`, `folder-viewer`: 172/172 and 75/75 twice (`suites/rebased/`).
+The first try failed one check, and it was a real one: run without the screenshots' pauses, the phone's tap on Next
+right after a swipe never became a click. The test's swipe had no time between its moves, so it ended as a fast fling,
+and the next touch only stopped the fling. Two changes: the stage now takes a swipe as its own (`touch-action:
+pinch-zoom`, the text page keeps its vertical scroll), so the browser starts no pan there, and the flow swipes like a
+person (about 30 ms between moves, a short hold before lifting).
 
 The impeccable detector over `lightbox.js` and `lightbox.css` leaves five advisories, all the alpha blacks of the
 stage's shadows (`rgb(0 0 0 / …)`), which DESIGN.md's palette doesn't list; the off-scale size and radius it found
@@ -185,7 +198,7 @@ deployment without it the scenario fails until this is deployed.
 ## Independent review
 
 A code critic read the change against the brief (criteria 1 to 9 above): PASS_WITH_NITS, no blocking issue, "no way
-for decrypted bytes to become a live document, script or navigation". Its nits, all fixed in `e4dd45d`: a late error
+for decrypted bytes to become a live document, script or navigation". Its nits, all fixed in the commit after the review: a late error
 could replace the next file's view; a failed load of the module had no message; "MZ team notes" sniffed as a program
 (the signature now needs a binary header); a double click could open two lightboxes or close the one it opened;
 `candidate.py` served pages without the inside-the-build check its files had. Noted and left: the SVG drawing time

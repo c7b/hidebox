@@ -1,0 +1,93 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- preview-drive The preview in the drive: every hostile fixture by its name; the bytes pick the kind; nothing runs; Esc, focus back on the name, arrows through the list; Download saves the same bytes; phones and both themes
+PASS preview-drive: drive: an empty file is refused before upload, so it never reaches a preview
+PASS preview-drive: drive: big.txt is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: drive: big.txt: one text node in the <pre>
+PASS preview-drive: drive: big.txt shows the first 256 KB and says so
+PASS preview-drive: drive: big.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: big.txt: Download is there
+PASS preview-drive: drive: big.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: drive: notes.md: one text node in the <pre>
+PASS preview-drive: drive: notes.md: its markup and links read as characters
+PASS preview-drive: drive: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: notes.md: Download is there
+PASS preview-drive: drive: notes.md: Esc closes and focus is back on its name
+PASS preview-drive: drive: page.txt is shown as its bytes say (none markup), not as its name says (none markup)
+PASS preview-drive: drive: page.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: page.txt: Download is there
+PASS preview-drive: drive: page.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-drive: drive: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: png-named.svg: Download is there
+PASS preview-drive: drive: png-named.svg: Esc closes and focus is back on its name
+PASS preview-drive: drive: polyglot.htm is shown as its bytes say (image image/gif), not as its name says (image image/gif)
+PASS preview-drive: drive: polyglot.htm: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: polyglot.htm: Download is there
+PASS preview-drive: drive: polyglot.htm: Esc closes and focus is back on its name
+PASS preview-drive: drive: script.svg is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-drive: drive: script.svg: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-drive: drive: script.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: script.svg: Download is there
+PASS preview-drive: drive: script.svg: Esc closes and focus is back on its name
+PASS preview-drive: drive: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-drive: drive: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-drive: drive: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: svg-named.png: Download is there
+PASS preview-drive: drive: svg-named.png: Esc closes and focus is back on its name
+PASS preview-drive: drive: tiny.pdf is shown as its bytes say (none pdf), not as its name says (none pdf)
+PASS preview-drive: drive: tiny.pdf: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: tiny.pdf: Download is there
+PASS preview-drive: drive: tiny.pdf: Esc closes and focus is back on its name
+PASS preview-drive: drive: utf16.txt is shown as its bytes say (none binary), not as its name says (none binary)
+PASS preview-drive: drive: utf16.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: drive: utf16.txt: Download is there
+PASS preview-drive: drive: utf16.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: nothing asked for /__canary/ ([])
+PASS preview-drive: drive: no console error or exception ([])
+PASS preview-drive: ArrowRight: the next file in the list
+PASS preview-drive: ArrowLeft past the first: the last one
+PASS preview-drive: Tab stays inside the lightbox ([True, True, True, True, True, True, True, True, True, True, True, True])
+PASS preview-drive: Download in the lightbox saves big.txt, the same bytes
+PASS preview-drive: Download in the lightbox saves polyglot.htm, the same bytes
+PASS preview-drive: Download in the lightbox saves page.txt, the same bytes
+PASS preview-drive: Download in the lightbox saves svg-named.png, the same bytes
+PASS preview-drive: Download never navigates or opens a window ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0)
+PASS preview-drive: phone: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-drive: phone: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: phone: png-named.svg: Download is there
+PASS preview-drive: phone: Download, Close and the stage fit at 390, 44 px targets, no sideways scroll
+PASS preview-drive: phone: a swipe to the left on the picture shows the next file (notes.md)
+PASS preview-drive: phone: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: phone: notes.md: one text node in the <pre>
+PASS preview-drive: phone: notes.md: its markup and links read as characters
+PASS preview-drive: phone: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:51529/drive'}, 0 navigations)
+PASS preview-drive: phone: notes.md: Download is there
+FAIL preview-drive: TimeoutError: waited 60s for (() => { const s = document.querySelector('#lightbox [data-testid="lightbox-stage"]'); return !!s && s.dataset.view !== 
+Traceback (most recent call last):
+  File "<repo>/web/app/ui/tests/run.py", line 285, in main
+    fn(t)
+    ~~^^^
+  File "<repo>/web/app/ui/tests/flows_preview.py", line 228, in preview_drive
+    got = shown(p, last)
+  File "<repo>/web/app/ui/tests/flows_preview.py", line 94, in shown
+    page.wait(f"(() => {{ const s = {STAGE}; return !!s && s.dataset.view !== 'loading'"
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              f" && document.querySelector('#lightbox [data-testid=\"lightbox-name\"]')?.textContent === {json.dumps(name)}; }})()", timeout)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/web/app/ui/tests/cdp.py", line 210, in wait
+    raise TimeoutError(f"waited {timeout}s for {expr[:120]}")
+TimeoutError: waited 60s for (() => { const s = document.querySelector('#lightbox [data-testid="lightbox-stage"]'); return !!s && s.dataset.view !== 
+  page 0: http://127.0.0.1:51529/drive :: Skip to content hidebox My drive New My drive Received Shared Activity Trash Storage 313 KB of 64 MB used Get more space My Tari address otl_esm_1v6rhdw…249efj Search runs in this browser. Our server can't read your file names. Upgrade My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files Name Rule Opens Ends Size Actions big.t
+    errors: []
+  page 1: http://127.0.0.1:51529/drive :: Skip to content Search runs in this browser. Our server can't read your file names. My drive Save my key Save your key. If this browser forgets it, nobody can let you back in, not even us. Save key file Files notes.md Private page.txt Private png-named.svg Private New 3 uploads done png-named.svg Locked and saved notes.md Locked and saved page.txt Locked and saved 3 files locked and saved. notes.m
+    errors: []
+
+UI FAIL 70/71
+  failed: preview-drive: TimeoutError: waited 60s for (() => { const s = document.querySelector('#lightbox [data-testid="lightbox-stage"]'); return !!s && s.dataset.view !== 

@@ -1,0 +1,187 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: phone: widget payload compressed: 25013 B at load, 40510 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: computer: 43477 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+  A-06 measured: computer 43477 B gzip -9, files: /app/css/widget.css, /app/drop-widget.js, /app/i18n/widget-en.json, /app/lib/api.js, /app/lib/b64.js, /app/lib/bytes.js, /app/lib/crypto.js, /app/lib/dom.js, /app/lib/format.js, /app/lib/i18n.js, /app/lib/pow-worker.js, /app/lib/pow.js, /app/lib/seal.js, /app/lib/sha256sync.js, /app/lib/share.js, /app/lib/store.js, /app/ui/card.js, /app/ui/core.js, /app/ui/more.js, /app/ui/qr.js, /app/ui/sealing.js, /app/ui/widget.js, /app/ui/zone.js
+PASS budget: phone, after a photo: 45548 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
+PASS drive-budget: a drive of 20 items
+PASS drive-budget: no ootle-wasm before the file table renders
+PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.woff2'])
+PASS drive-budget: A-06d: 125645 B compressed until the table renders, 38 files (≤ 131072 B)
+  A-06d measured: 125645 B gzip -9, files: app/css/drive.css, app/css/flow.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
+PASS drive-budget: no CSP or Trusted Types violation ([])
+--- drive-upload-files Upload files (step 7): each locks here, then uploads; the panel says so; the owner downloads the same bytes, the photo without its location
+PASS drive-upload-files: the panel: each file Locked and saved (['Locked and saved', 'Locked and saved', 'Locked and saved'])
+PASS drive-upload-files: the panel's head counts them
+PASS drive-upload-files: a screen reader hears it once
+PASS drive-upload-files: the file's name opens it in the preview (its text, here)
+PASS drive-upload-files: the owner's download is the same bytes, decrypted here
+PASS drive-upload-files: the photo went up without its location data (§4.13)
+PASS drive-upload-files: no horizontal scroll with files
+PASS drive-upload-files: a phone: rows are two lines, no horizontal scroll
+PASS drive-upload-files: no CSP or Trusted Types violation ([])
+--- folder-viewer The folder viewer on a phone (step 10): a few visits, one by one beyond zip_max_bytes_phone, a picture opens here; the visit ends
+PASS folder-viewer: this flow's server has features.folders on (the real folder API, no fake)
+PASS folder-viewer: a folder says everyone sees all its files
+PASS folder-viewer: Once on a folder is one visit of {ticket_min} minutes; a folder's files stay in the drive (no Delete it after)
+PASS folder-viewer: the result says what a visit is
+PASS folder-viewer: the phone's first screen
+PASS folder-viewer: A few times on a folder: visits
+PASS folder-viewer: no horizontal scroll at 390 (ready)
+PASS folder-viewer: a phone beyond zip_max_bytes_phone: one by one, no Download all
+PASS folder-viewer: visits left after this one
+PASS folder-viewer: no horizontal scroll at 390 (open)
+PASS folder-viewer: a picture opens here, with Download
+PASS folder-viewer: the countdown counts down (This visit ends in a minute.)
+PASS folder-viewer: when the visit ends it says so, and Save stops
+PASS folder-viewer: no CSP or Trusted Types violation ([])
+--- pay-page-states The buyer page (steps 15 and 16): teaser, price and fee, C39, C37, one primary; the address only after a claim; test money to Unlocked and the open; resume; the owner's check; Pay from my drive; paused, gone, no key
+PASS pay-page-states: a stranger's first screen: waiting, nothing claimed (wait)
+PASS pay-page-states: the title, and the name the owner allowed (read from the teaser with the link's half)
+PASS pay-page-states: the price and the public fee ('0.1tTARI', 'Plus a network fee of 0.03 tTARI. The fee is public.')
+PASS pay-page-states: what you get (C39: Paying lets you open it 3 times until Oct 27. Anyone who opens a file can pass it on. The owner can still delete it.)
+PASS pay-page-states: no take-backs, before Pay (C37)
+PASS pay-page-states: one primary: Pay with test money
+PASS pay-page-states: no Pay from my drive without a drive here
+PASS pay-page-states: Another Ootle wallet shows no address before a claim exists
+PASS pay-page-states: the content stays locked
+PASS pay-page-states: names on every control; no CSP violation
+PASS pay-page-states: a browser without a drive: the top bar says Make your own drive
+PASS pay-page-states: Another Ootle wallet: the address just for this claim (the owner's sales address with the claim's reference), after the claim
+PASS pay-page-states: the claim asked for its proof of work (claim)
+PASS pay-page-states: C38 under the other wallet
+PASS pay-page-states: Pay with test money starts the steps
+PASS pay-page-states: test money pays the claim that exists
+PASS pay-page-states: released: the page has both halves
+PASS pay-page-states: test money skips the owner's check (['wait:done', 'seen:done', 'chain:done', 'open:done'])
+PASS pay-page-states: 3 opens left until Oct 27.
+PASS pay-page-states: what the chain shows, with test money's grouping (C36)
+PASS pay-page-states: Open it: the real open, with the claim's token, decrypts here
+PASS pay-page-states: one open used (2 opens left until Oct 27.)
+PASS pay-page-states: a reload resumes the claim kept in this browser
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: Payment seen: the steps take over
+PASS pay-page-states: paid from another wallet: the owner's drive checks it
+PASS pay-page-states: the owner step, and C38 (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-page-states: no sideways scroll at 390
+PASS pay-page-states: after the owner's drive confirms, it opens
+PASS pay-page-states: a closed payment window: Start again
+PASS pay-page-states: Start again: a fresh page, no old address
+PASS pay-page-states: Not selling: no Pay, and why
+PASS pay-page-states: a link without its half of the key says so
+PASS pay-page-states: an ended paid link says it ended
+PASS pay-page-states: a funded drive here: Pay from my drive, with C38 under it
+PASS pay-page-states: Pay from my drive: this browser built and sent the payment; it waits for the owner's check
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: no CSP or Trusted Types violation ([])
+--- pay-steady owner-5: the buyer page draws its final state at once and stays put: no layout shift and no redraw on arrival, while it asks about a claim every 3 s, when Another Ootle wallet opens (the address and its code arrive once), on a reload with that claim, and in a browser with a drive (its line is held while the drive is checked)
+PASS pay-steady: arrival: drawn once, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Another Ootle wallet: its code is built once, and the address never shows without it ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 2, 'moves': 2, 'others_moved': 2, 'first_moves': [[4787, '211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -'], [5037, '211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -', '211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162']], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: while the page asks about the claim every 3 s, nothing moves or redraws ({'shift': 0, 'shift_after_draw': 0, 'shift_no_input': 0, 'shifted': [], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: a reload with the claim kept: drawn once with its code, nothing moves ({'shift': 0.0458, 'shift_after_draw': 0, 'shift_no_input': 0.0458, 'shifted': ['site-footer top-end', 'top-end', 'pay-page site-footer top-end', 'pay-page'], 'redraws': 0, 'moves': 0, 'others_moved': 0, 'first_moves': [], 'qr_built': 1, 'empty_qr_frames': 0})
+PASS pay-steady: a browser with a drive: Pay from my drive takes the line held for it while it was checked, nothing else moves ({'shift': 0.0122, 'shift_after_draw': 0, 'shift_no_input': 0.0096, 'shifted': ['top-end #text A', 'top-end', '#text #text top-end', '#text', 'pay-page'], 'redraws': 1, 'moves': 1, 'others_moved': 0, 'first_moves': [[1732, '566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -', '566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -']], 'qr_built': 0, 'empty_qr_frames': 0})
+PASS pay-steady: Pay from my drive and its note fit the held line at 390, 360 and 1440 ({'iphone': [92, 92], 'narrow': [92, 92], 'desktop': [92, 92]})
+  pay-steady: {"arrival": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "other_opens": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 2, "moves": 2, "others_moved": 2, "first_moves": [[4787, "211:51 278:32 326:48 390:66 472:40 - - - 560:38 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -"], [5037, "211:51 278:32 326:48 390:66 472:40 - - - 560:114 - -", "211:51 278:32 326:48 390:66 472:40 - - - 560:308 700:36 645:162"]], "qr_built": 1, "empty_qr_frames": 0}, "other_polls": {"shift": 0, "shift_after_draw": 0, "shift_no_input": 0, "shifted": [], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 0, "empty_qr_frames": 0}, "reload_with_claim": {"shift": 0.0458, "shift_after_draw": 0, "shift_no_input": 0.0458, "shifted": ["site-footer top-end", "top-end", "pay-page site-footer top-end", "pay-page"], "redraws": 0, "moves": 0, "others_moved": 0, "first_moves": [], "qr_built": 1, "empty_qr_frames": 0}, "drive_arrival": {"shift": 0.0122, "shift_after_draw": 0, "shift_no_input": 0.0096, "shifted": ["top-end #text A", "top-end", "#text #text top-end", "#text", "pay-page"], "redraws": 1, "moves": 1, "others_moved": 0, "first_moves": [[1732, "566:51 634:32 682:48 746:86 848:44 - - 956:92 1064:46 - -", "566:51 634:32 682:48 746:86 848:44 956:44 - - 1064:46 - -"]], "qr_built": 0, "empty_qr_frames": 0}, "drive_line": {"iphone": [92, 92], "narrow": [92, 92], "desktop": [92, 92]}}
+PASS pay-steady: no CSP or Trusted Types violation ([])
+--- pay-progress owner-5: after Pay with test money the steps move: shown at the click, the step in progress turning with its time and what it waits on (getting ready, our demo wallet sending it, then the chain), ticked as each state arrives; a live region says each step; with reduced motion, words and the time instead of motion
+PASS pay-progress: motion: test money reaches Ready to open
+PASS pay-progress: motion: the steps show at the click (37 ms)
+PASS pay-progress: motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: motion: the transaction's line comes within a poll of it (3364 ms after the steps)
+PASS pay-progress: motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: motion: never more than about 2 s without something new to read (1700 ms)
+PASS pay-progress: motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: the step in progress turns and the bar sweeps (2 animations running)
+PASS pay-progress: reduced_motion: test money reaches Ready to open
+PASS pay-progress: reduced_motion: the steps show at the click (38 ms)
+PASS pay-progress: reduced_motion: what the step waits on follows the payment: our demo wallet sending it, then the chain (['Getting ready…', 'Our demo wallet is sending it…', 'Sent. Checking the chain…'])
+PASS pay-progress: reduced_motion: the transaction's line comes within a poll of it (3463 ms after the steps)
+PASS pay-progress: reduced_motion: the step in progress shows the time it has taken (['0:02', '0:03', '0:04', '0:05', '0:06', '0:07'])
+PASS pay-progress: reduced_motion: never more than about 2 s without something new to read (1700 ms)
+PASS pay-progress: reduced_motion: every step ticked (open | wait:done seen:done chain:done open:done |  | )
+PASS pay-progress: reduced_motion: a polite live region says the step in progress (['polite', 'Waiting for your payment'])
+PASS pay-progress: reduced motion: nothing moves in the steps, the words and the time say it (0 running)
+  pay-progress: {"motion": {"steps_shown_ms": 37, "open_ms": 7905, "longest_still_ms": 1700, "running_animations": 2, "live_region": ["polite", "Waiting for your payment"]}, "reduced_motion": {"steps_shown_ms": 38, "open_ms": 8000, "longest_still_ms": 1700, "running_animations": 0, "live_region": ["polite", "Waiting for your payment"]}}
+PASS pay-progress: no CSP or Trusted Types violation ([])
+--- preview-folder The preview in a folder link's visit (the folder viewer the paid folders use too): every hostile fixture; arrows through the folder; nothing runs; Download
+PASS preview-folder: this flow's server has features.folders on (the real folder API, no fake)
+PASS preview-folder: a stranger's first screen (ready)
+PASS preview-folder: the visit lists every file (['big.txt', 'notes.md', 'page.txt', 'png-named.svg', 'polyglot.htm', 'script.svg', 'svg-named.png', 'tiny.pdf', 'utf16.txt'])
+PASS preview-folder: folder link: big.txt is shown as its bytes say (text ), not as its name says (text )
+PASS preview-folder: folder link: big.txt: one text node in the <pre>
+PASS preview-folder: folder link: big.txt shows the first 256 KB and says so
+PASS preview-folder: folder link: big.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: big.txt: Download is there
+PASS preview-folder: folder link: big.txt: focus back on its name
+PASS preview-folder: folder link: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-folder: folder link: notes.md: one text node in the <pre>
+PASS preview-folder: folder link: notes.md: its markup and links read as characters
+PASS preview-folder: folder link: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: notes.md: Download is there
+PASS preview-folder: folder link: notes.md: focus back on its name
+PASS preview-folder: folder link: page.txt is shown as its bytes say (none markup), not as its name says (none markup)
+PASS preview-folder: folder link: page.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: page.txt: Download is there
+PASS preview-folder: folder link: page.txt: focus back on its name
+PASS preview-folder: folder link: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-folder: folder link: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: png-named.svg: Download is there
+PASS preview-folder: folder link: png-named.svg: focus back on its name
+PASS preview-folder: folder link: polyglot.htm is shown as its bytes say (image image/gif), not as its name says (image image/gif)
+PASS preview-folder: folder link: polyglot.htm: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: polyglot.htm: Download is there
+PASS preview-folder: folder link: polyglot.htm: focus back on its name
+PASS preview-folder: folder link: script.svg is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-folder: folder link: script.svg: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-folder: folder link: script.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: script.svg: Download is there
+PASS preview-folder: folder link: script.svg: focus back on its name
+PASS preview-folder: folder link: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-folder: folder link: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-folder: folder link: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: svg-named.png: Download is there
+PASS preview-folder: folder link: svg-named.png: focus back on its name
+PASS preview-folder: folder link: tiny.pdf is shown as its bytes say (none pdf), not as its name says (none pdf)
+PASS preview-folder: folder link: tiny.pdf: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: tiny.pdf: Download is there
+PASS preview-folder: folder link: tiny.pdf: focus back on its name
+PASS preview-folder: folder link: utf16.txt is shown as its bytes say (none binary), not as its name says (none binary)
+PASS preview-folder: folder link: utf16.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:52051/s/6Q3gTbJqqGvO-5xeqQUonA'}, 0 navigations)
+PASS preview-folder: folder link: utf16.txt: Download is there
+PASS preview-folder: folder link: utf16.txt: focus back on its name
+PASS preview-folder: Next file: the next one in the folder
+PASS preview-folder: the arrows reach the SVG named as a picture: drawn, not run
+PASS preview-folder: Download in the visit saves the same bytes
+PASS preview-folder: folder link: nothing asked for /__canary/, no console error ([])
+PASS preview-folder: no CSP or Trusted Types violation ([])
+--- preview-pay The preview on a paid link (/p/): the SVG named as a picture, sold, paid with test money; Open it shows it drawn in a canvas, nothing runs; Esc, the name opens it again; Download; a phone
+PASS preview-pay: desktop: paid with test money, ready to open
+PASS preview-pay: /p/ on desktop: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-pay: /p/ on desktop: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-pay: /p/ on desktop: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:36897/p/46b0aDHSnzquFcPbBpbQkA#54pulJz8thmtUjJBG-Gc-mJdjSgxVdkhpMcPDqaPqAVM'}, 0 navigations)
+PASS preview-pay: /p/ on desktop: svg-named.png: Download is there
+PASS preview-pay: desktop: Esc, and focus is on the file's name
+PASS preview-pay: desktop: Download saves the same bytes
+PASS preview-pay: /p/ on desktop: nothing asked for /__canary/, no console error, no navigation ([])
+PASS preview-pay: iphone: paid with test money, ready to open
+PASS preview-pay: /p/ on iphone: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-pay: /p/ on iphone: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-pay: /p/ on iphone: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:36897/p/46b0aDHSnzquFcPbBpbQkA#54pulJz8thmtUjJBG-Gc-mJdjSgxVdkhpMcPDqaPqAVM'}, 0 navigations)
+PASS preview-pay: /p/ on iphone: svg-named.png: Download is there
+PASS preview-pay: iphone: Esc, and focus is on the file's name
+PASS preview-pay: iphone: Download saves the same bytes
+PASS preview-pay: /p/ on iphone: nothing asked for /__canary/, no console error, no navigation ([])
+PASS preview-pay: no CSP or Trusted Types violation ([])
+
+UI PASS 172/172
