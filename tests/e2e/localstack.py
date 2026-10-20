@@ -57,13 +57,13 @@ def local_caddyfile(text: str, buffered: bool = True) -> str:
 
 def stub_build(out: Path) -> Path:
     """A full build of the working tree into `out`; the app-ui files that don't exist yet are stubbed
-    in a temporary copy of web/ (the real tree is not touched). server/ comes along because the
-    build's lint resolves the app's test imports of the server package against the copy."""
+    in a temporary copy of web/ (the real tree is not touched). server/ and tools/ come along because the
+    build's lint resolves the tests' imports (the server package, the build and its fingerprint step) against the copy."""
     sys.path.insert(0, str(ROOT / "tools"))
     import build
     with tempfile.TemporaryDirectory(prefix="mutis-stub-") as tmp:
         web = Path(tmp) / "web"
-        subprocess.run(["cp", "-r", str(ROOT / "web"), str(ROOT / "server"), tmp], check=True)
+        subprocess.run(["cp", "-r", str(ROOT / "web"), str(ROOT / "server"), str(ROOT / "tools"), tmp], check=True)
         for name, text in APP_STUBS.items():
             if not (web / "app" / name).exists():
                 (web / "app" / name).write_text(text)
