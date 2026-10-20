@@ -944,6 +944,87 @@ def check_how_loops(browser):
     return problems
 
 
+# The 404 page (docs/review/site-404.md): what a lost visitor sees, and the three eggs.
+NF_GHOST = """you found the last easter egg, you found the ghost of John McAfee...
+ .-.
+(o o) boo!
+| O \\
+ \\   \\
+  `~~~'"""
+NF_CREDIT = "%cghost: Donovan Baker, asciiart.eu font-size: 10px"
+NF_LOOK = """(() => { const art = document.querySelector('.nf-art'), img = art.querySelector('img'), h1 = document.querySelector('h1'),
+  egg = document.querySelector('.nf-egg'), a = art.getBoundingClientRect(), main = document.querySelector('main').getBoundingClientRect();
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT), notes = [];
+  while (walk.nextNode()) notes.push(walk.currentNode.data);
+  return { src: img.currentSrc.split('/').pop(), shown: img.complete && img.naturalWidth > 0, w: a.width, h: a.height,
+           left: a.left - main.left, right: main.right - a.right, above: a.bottom <= h1.getBoundingClientRect().top,
+           top: a.top, fold: innerHeight, btn: document.querySelector('.ways .btn').getBoundingClientRect().bottom,
+           card: getComputedStyle(art).backgroundColor, radius: getComputedStyle(art).borderRadius,
+           blend: getComputedStyle(img).mixBlendMode, page: getComputedStyle(document.body).backgroundColor,
+           egg: getComputedStyle(egg).color, picked: getComputedStyle(egg, '::selection').color, fg: getComputedStyle(h1).color,
+           hidden: egg.getAttribute('aria-hidden'), text: egg.textContent, notes,
+           links: [...document.querySelectorAll('main a')].map((l) => [l.textContent, l.getAttribute('href')]) }; })()"""
+
+
+def check_not_found(browser):
+    """404 (docs/review/site-404.md) at 1440 and 390, dark and light: the page answers 404; the art is shown from one
+    AVIF, at most 480 px wide, centred above the h1, through `lighten` on an ink card (#0A0A0A, rounded) that is the
+    page itself in dark mode; Go home is the one link and sits in the first screen. Egg 1: the hidden line is in the
+    page's own colour (invisible on purpose: this is the one text the site means not to show, so it is exempt from any
+    contrast rule) and aria-hidden, and selecting it paints it in the text colour. Egg 2: the comment is in the served
+    page. Egg 3: the console shows the ghost exactly and its credit, as log lines, never an error; no CSP violation."""
+    problems = []
+    with server() as origin:
+        for width, height, mobile in ((1440, 900, False), (390, 844, True)):
+            for dark in (True, False):
+                page = browser.page(width, height, mobile=mobile, dark=dark)
+                page.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": NO_THEME})
+                page.goto(origin + "/no-such-page", settle=1)
+                at = f"/no-such-page @{width} {'dark' if dark else 'light'}"
+                doc = [r for r in page.requests() if r["type"] == "Document"]
+                if not doc or doc[0]["status"] != 404:
+                    problems.append(f"{at}: answers {doc[0]['status'] if doc else None}, not 404")
+                page.wait_for("document.querySelector('.nf-art img').complete", 10)
+                look = page.eval(NF_LOOK)
+                if not look["shown"] or not look["src"].endswith(".avif"):
+                    problems.append(f"{at}: the art isn't shown from its AVIF ({look['src']!r})")
+                if look["w"] > 480 or abs(look["left"] - look["right"]) > 1 or not look["above"]:
+                    problems.append(f"{at}: the art is {look['w']:.0f} px wide (at most 480), {look['left']:.0f}/{look['right']:.0f} px "
+                                    f"from the sides, above the h1: {look['above']}")
+                if look["card"] != "rgb(10, 10, 10)" or look["radius"] != "14px" or look["blend"] != "lighten":
+                    problems.append(f"{at}: the art's card is {look['card']} at {look['radius']}, blend {look['blend']} "
+                                    "(expected the ink card, rounded, through lighten)")
+                if dark and look["page"] != "rgb(10, 10, 10)":
+                    problems.append(f"{at}: the page is {look['page']}, so the ink card shows in dark mode")
+                if look["btn"] > look["fold"]:
+                    problems.append(f"{at}: Go home ends at {look['btn']:.0f} px, below the first screen ({look['fold']})")
+                if look["links"] != [["Go home", "/"]]:
+                    problems.append(f"{at}: main's links are {look['links']}, expected Go home to /")
+                if look["egg"] != look["page"] or look["hidden"] != "true" or look["picked"] != look["fg"] or \
+                        look["text"] != "for real, this is a 404, we couldn't find the page, stop looking":
+                    problems.append(f"{at}: the hidden line is {look['egg']} on {look['page']}, {look['picked']} when selected "
+                                    f"(text {look['fg']}), aria-hidden {look['hidden']!r}: {look['text']!r}")
+                if " keep looking? man, give up, there is nothing to find " not in look["notes"]:
+                    problems.append(f"{at}: the comment isn't in the served page ({look['notes']})")
+                lines = []
+                for _ in range(60):   # egg.js loads after the load event, when the browser is idle
+                    lines = [l for l in page.console() if l.startswith("log: ")]
+                    if len(lines) >= 2:
+                        break
+                    page.b.pump(0.1)
+                if lines != ["log: " + NF_GHOST, "log: " + NF_CREDIT]:
+                    problems.append(f"{at}: the console says {lines!r}, expected the ghost and its credit")
+                problems += [f"{at}: {e}" for e in real_errors(page) + [l for l in page.console() if "Content Security Policy" in l]]
+                if width == 1440 and dark:
+                    page.cmd("Accessibility.enable")
+                    ax = page.cmd("Accessibility.getFullAXTree").get("nodes", [])
+                    if any("stop looking" in str((n.get("name") or {}).get("value", "")) for n in ax if not n.get("ignored")):
+                        problems.append(f"{at}: a screen reader reads the hidden line")
+                    loaded = sum(r["bytes"] for r in page.requests())
+                    NOTES.append(f"404 @1440 dark: {loaded:,} B at load, the art from {look['src']}")
+    return problems
+
+
 CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px; /v3 lands on the home", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("home words: 120 above the fold, 800 in all, Open your drive first", check_word_budget),
@@ -956,7 +1037,8 @@ CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading 
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
           ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2),
           ("V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box", check_home_stills),
-          ("/how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled", check_how_loops)]
+          ("/how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled", check_how_loops),
+          ("404: the art above the words, one way home, the hidden line, the comment, the console's ghost", check_not_found)]
 
 
 def run_all():

@@ -312,7 +312,9 @@ def check_seo():
         if links != ICONS:
             problems.append(f"{name}: icons {links}, expected {ICONS}")
         for t, a in d.tags:
-            if t == "img" and not a.get("alt"):
+            # A decorative picture on a page search never indexes (the 404's art, docs/review/site-404.md: the h1 says
+            # it) takes alt="", as WCAG asks; every other picture says what it shows.
+            if t == "img" and not a.get("alt") and (indexable or a.get("alt") != ""):
                 problems.append(f"{name}: <img src={a.get('src')!r}> has no alt text")
             if t == "img" and not (a.get("width") and a.get("height")):
                 problems.append(f"{name}: <img src={a.get('src')!r}> has no width and height")
@@ -1042,9 +1044,9 @@ def check_v2():
         body = f.read_text()
         if re.search(r'href="(\{\{ORIGIN\}\})?/v2[/"#?]', body) or "{{ORIGIN}}/v2" in body:
             problems.append(f"{f.relative_to(WEB)}: links to /v2 (the preview stays out of nav, footer, sitemap and the graph)")
-    for f in [p for p in PAGES if p.name not in ("v2.html", "index.html")] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
+    for f in [p for p in PAGES if p.name not in ("v2.html", "index.html", "404.html")] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
         if "/site/media/" in f.read_text() and f.name not in ("v2.css", "clips.js"):
-            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2 and the home load media)")
+            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2, the home and the 404 page load media)")
     videos = re.findall(r"<video\b([^>]*)>(.*?)</video>\s*(<noscript>.*?</noscript>)?", text, re.S)
     if not videos:
         problems.append("pages/v2.html: no loops")
@@ -1075,9 +1077,9 @@ def check_v2():
             if not url.startswith("/site/media/") or not (SITE / url.removeprefix("/site/")).is_file():
                 problems.append(f"{where}: {url!r} is not a file in web/site/media/")
     media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())   # the folder's total counts the home's stills too
-    for f in media:   # only two folders: /v2's loops (V-01, here) and the home's stills (V-02, check_home_stills)
-        if f.parent not in (SITE / "media" / "motion", SITE / "media" / "v3"):
-            problems.append(f"{f.relative_to(WEB)}: outside media/motion and media/v3 (V-01 and V-02 hold only those folders)")
+    for f in media:   # three folders: /v2's loops (V-01, here), the home's stills (V-02) and the 404 page's art (check_not_found)
+        if f.parent not in (SITE / "media" / "motion", SITE / "media" / "v3", SITE / "media" / "404"):
+            problems.append(f"{f.relative_to(WEB)}: outside media/motion, media/v3 and media/404 (the folders V-01, V-02 and the 404 check hold)")
     for f in [m for m in media if m.parent == SITE / "media" / "motion"]:
         limit = V2_FILE_LIMITS.get(f.suffix)
         if limit is None:
@@ -1268,6 +1270,112 @@ def check_home_stills():
     return problems
 
 
+# The 404 page (docs/review/site-404.md): its art is one picture under media/404, AVIF then WebP at three widths, as the
+# home's stills are made; its own budget. The browser half is browser_checks.check_not_found.
+NF_STILL_LIMITS = {".avif": 32_000, ".webp": 48_000}
+NF_FOLDER_LIMIT = 128 * 1024
+NF_EGG_JS_LIMIT = 1024
+NF_H1 = "We can't see inside your files. Or, apparently, this page."
+NF_LEDE = "Maybe the address has a typo, or the link expired. Ask whoever sent it for a fresh one."
+NF_EGG = '<p class="nf-egg" aria-hidden="true">for real, this is a 404, we couldn\'t find the page, stop looking</p>'
+NF_COMMENT = "<!-- keep looking? man, give up, there is nothing to find -->"
+
+
+def check_not_found():
+    """404: noindex (check_seo), the owner's words (the h1's second sentence on its own grey line, the lede one sentence
+    a line), one way home (Go home to /, nothing else in main), and the art above the h1: one <picture class="nf-art">,
+    an AVIF then a WebP srcset of the same three widths with one sizes, an <img> with empty alt (the h1 carries the
+    meaning), its width and height and fetchpriority="high" (it is the first screen); each candidate a file in
+    media/404 whose pixels match its w descriptor and the img's ratio, within the sizes here, and every file there named.
+    The eggs: the hidden line after the button (aria-hidden, the page's colour, shown by ::selection in pages.css), the
+    comment in the source, and egg.js, imported only by site.js with import(), small."""
+    import gzip
+    problems = []
+    page = SITE / "pages" / "404.html"
+    text = page.read_text()
+    d = parse(page)
+    main = re.search(r'<main id="main" class="wrap page not-found">(.*?)</main>', text, re.S)
+    if not main:
+        return ["pages/404.html: no <main class=\"wrap page not-found\">"]
+    body = main.group(1)
+    words = lambda html: " ".join(re.sub(r"<[^>]+>", " ", html).replace("&#39;", "'").split())   # noqa: E731
+    h1 = re.search(r"<h1>(.*?)</h1>", body, re.S)
+    if not h1 or words(h1.group(1)) != NF_H1 or '<span class="h1-2">Or, apparently, this page.</span>' not in h1.group(1):
+        problems.append(f"pages/404.html: the h1 is {words(h1.group(1)) if h1 else None!r}, expected {NF_H1!r} with the second sentence in .h1-2")
+    lede = re.search(r'<p class="lede">(.*?)</p>', body, re.S)
+    if not lede or words(lede.group(1)) != NF_LEDE or lede.group(1).count("<br>") != 1:
+        problems.append(f"pages/404.html: the lede is {words(lede.group(1)) if lede else None!r}, expected {NF_LEDE!r}, one sentence a line")
+    links = re.findall(r"<a\b([^>]*)>(.*?)</a>", body, re.S)
+    if [(re.search(r'href="([^"]*)"', a).group(1), words(label)) for a, label in links] != [("/", "Go home")]:
+        problems.append(f"pages/404.html: main's links are {links}, expected one: Go home to /")
+    order = [body.find(s) for s in ('<picture class="nf-art">', "<h1>", '<p class="lede">', '<p class="ways">', NF_EGG, NF_COMMENT)]
+    if -1 in order or order != sorted(order):
+        problems.append("pages/404.html: expected the art, the h1, the lede, Go home, the hidden line, then the comment, in that order")
+    if "noindex" not in (meta(d, name="robots") or ""):
+        problems.append("pages/404.html: not noindex")
+    pictures = re.findall(r'<picture class="nf-art">(.*?)</picture>', body, re.S)
+    named = set()
+    if len(pictures) != 1 or body.count("<picture") != 1:
+        problems.append("pages/404.html: expected one <picture class=\"nf-art\">")
+    else:
+        sources = re.findall(r'<source type="(image/[a-z]+)" srcset="([^"]+)" sizes="([^"]+)">', pictures[0])
+        img = re.search(r'<img src="([^"]+)" alt="" width="(\d+)" height="(\d+)" fetchpriority="high" decoding="async">', pictures[0])
+        if [s[0] for s in sources] != ["image/avif", "image/webp"] or len({s[2] for s in sources}) != 1 or not img:
+            problems.append("pages/404.html: the art needs an AVIF then a WebP <source> with one sizes, and an <img> with alt=\"\", "
+                            "width, height and fetchpriority=\"high\"")
+        else:
+            w, h = int(img.group(2)), int(img.group(3))
+            widths = []
+            for kind, srcset, _ in sources:
+                cands = [c.split() for c in srcset.split(",")]
+                if len(cands) != 3 or any(len(c) != 2 or not re.fullmatch(r"\d+w", c[1]) for c in cands):
+                    problems.append(f"pages/404.html: {kind} srcset {srcset!r}, expected three 'url Nw' candidates")
+                    continue
+                widths.append([c[1] for c in cands])
+                for url, desc in cands:
+                    f = SITE / url.removeprefix("/site/")
+                    named.add(f.name)
+                    if not url.startswith("/site/media/404/") or not f.is_file():
+                        problems.append(f"pages/404.html: {url!r} is not a file in web/site/media/404/")
+                        continue
+                    size = image_size(f)
+                    if f.suffix != "." + kind.split("/")[1] or not size:
+                        problems.append(f"pages/404.html: {url} is not a {kind} we can read (a lossy WebP without alpha, or an AVIF)")
+                        continue
+                    if f"{size[0]}w" != desc or abs(size[1] * w - size[0] * h) > w:
+                        problems.append(f"pages/404.html: {url} is {size[0]}x{size[1]}, its descriptor says {desc} at {w}:{h}")
+                    if f.stat().st_size > NF_STILL_LIMITS[f.suffix]:
+                        problems.append(f"pages/404.html: {url} is {f.stat().st_size:,} B (at most {NF_STILL_LIMITS[f.suffix]:,})")
+            if len(widths) == 2 and widths[0] != widths[1]:
+                problems.append(f"pages/404.html: the AVIF and WebP srcsets list different widths {widths}")
+            if img.group(1) not in sources[1][1]:
+                problems.append(f"pages/404.html: the img's src {img.group(1)} is none of its WebP candidates")
+    media = sorted(p for p in (SITE / "media" / "404").glob("*") if p.is_file())
+    for f in media:
+        if f.name not in named:
+            problems.append(f"{f.relative_to(WEB)}: named by no candidate of the 404 page's art")
+    folder = sum(f.stat().st_size for f in media)
+    if folder > NF_FOLDER_LIMIT:
+        problems.append(f"web/site/media/404: {folder:,} B (at most {NF_FOLDER_LIMIT:,})")
+    css = (SITE / "css" / "pages.css").read_text()
+    for rule in (".not-found .nf-egg { margin-top: var(--s-2); font: var(--t-small); color: var(--bg); }",
+                 ".not-found .nf-egg::selection { color: var(--fg);"):
+        if rule not in css:
+            problems.append(f"css/pages.css: no {rule!r} (the hidden line shows only when selected)")
+    egg = SITE / "js" / "egg.js"
+    size = len(gzip.compress(egg.read_bytes(), 9)) if egg.is_file() else 0
+    if not egg.is_file() or size > NF_EGG_JS_LIMIT:
+        problems.append(f"js/egg.js: missing or {size:,} B gzip -9 (at most {NF_EGG_JS_LIMIT:,})")
+    if "import('./egg.js')" not in (SITE / "js" / "site.js").read_text():
+        problems.append("js/site.js: egg.js loads with import('./egg.js') only")
+    for f in PAGES + PARTIALS + [p for p in JS if p.name not in ("site.js", "egg.js")]:
+        if "egg.js" in f.read_text():
+            problems.append(f"{f.relative_to(WEB)} names egg.js (only site.js loads it)")
+    NOTES_STATIC.append(f"404 files: web/site/media/404 {folder:,} B in {len(media)} files (at most {NF_FOLDER_LIMIT:,}); "
+                        f"js/egg.js {size:,} B gzip -9")
+    return problems
+
+
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
@@ -1285,4 +1393,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
           ("V-01: /v2 is noindex and unlinked, keeps the home's links and labels, its loops wait to be asked for, its budget", check_v2),
-          ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills)]
+          ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills),
+          ("404: the owner's words, one way home, the art sized from media/404, the three eggs", check_not_found)]
