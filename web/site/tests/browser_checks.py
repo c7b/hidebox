@@ -940,7 +940,8 @@ def check_fingerprinted_pages(browser):
     dist, names, error = static_checks.built()
     if error:
         return [f"tools/build.py: {error}"]
-    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
+    if str(Path(__file__).resolve().parents[3] / "tools") not in sys.path:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
     import assets
     problems, hashed, asked = [], set(names.values()), set()
     with server("--dist", str(dist)) as origin:

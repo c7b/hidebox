@@ -1327,7 +1327,8 @@ def built():
     if not _BUILT:
         import sys
         import tempfile
-        sys.path.insert(0, str(WEB.parent / "tools"))
+        if str(WEB.parent / "tools") not in sys.path:
+            sys.path.insert(0, str(WEB.parent / "tools"))
         import build
         tmp = Path(tempfile.mkdtemp(prefix="mutis-site-fp-"))
         cfg = build.load_config(build.DEFAULT_CONFIG)
@@ -1351,8 +1352,9 @@ def check_fingerprints():
     dist, names, error = built()
     if error:
         return [f"tools/build.py: {error}"]
-    sys_path_assets = __import__("sys").path
-    sys_path_assets.insert(0, str(WEB.parent / "tools"))
+    import sys
+    if str(WEB.parent / "tools") not in sys.path:
+        sys.path.insert(0, str(WEB.parent / "tools"))
     import assets
     problems, hashed = [], set(names.values())
     files = json.loads((dist / ".well-known" / "mutis-manifest.json").read_text())["files"]
@@ -1392,6 +1394,9 @@ def check_fingerprints():
             if not value.endswith("/") and value not in prefixes and any(p.startswith(value) for p in prefixes) \
                     and "." not in value.rpartition("/")[2]:
                 problems.append(f"{where}: {value!r} is the start of a fingerprinted file's name (name the file in one string)")
+    shim = dist / "app" / "vendor" / "ootle-wasm-shim.js"
+    if shim.is_file() and "{ './ootle_wasm_bg.js': glue }" not in shim.read_text():
+        problems.append("app/vendor/ootle-wasm-shim.js: the wasm's import namespace './ootle_wasm_bg.js' was rewritten (it is a name, not a file)")
     build = _BUILT["build"]
     again = _BUILT["tmp"] / "again"
     build.build(WEB, again / "dist", again / "release", _BUILT["cfg"], build.settings(_BUILT["cfg"], None), _BUILT["state"], node="")
