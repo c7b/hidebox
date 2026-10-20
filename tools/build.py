@@ -87,18 +87,26 @@ def load_config(config_path: Path) -> dict:
         return tomllib.load(f)
 
 
+# What a placeholder from the config may hold: a plain https URL, nothing that could close an attribute or
+# open a tag. tools/verify-deploy.py rebuilds with the deployment's own values, so a value that could add
+# markup would make that markup part of the "clean" build it compares against (security-audit-1).
+PLAIN_URL = re.compile(r"(https://[A-Za-z0-9.-]+(:\d+)?|http://127\.0\.0\.1:\d+)(/[A-Za-z0-9._~%/+-]*)?(#[A-Za-z0-9._~/-]*)?")
+NETWORKS = ("esmeralda",)
+
+
 def settings(cfg: dict, origin: str | None) -> dict:
     origin = (origin or cfg["public_origin"]).rstrip("/")
     if not re.fullmatch(r"https://[a-z0-9.-]+(:\d+)?|http://127\.0\.0\.1:\d+", origin):
         raise BuildError(f"origin must be https://host (or http://127.0.0.1:port for development): {origin}")
     network = cfg.get("network", "esmeralda")
-    return {
-        "ORIGIN": origin,
-        "NETWORK": network.capitalize(),
-        "SECURITY_DROP_URL": cfg.get("security_drop_url") or origin + "/fine-print#report",
-        "REPO_URL": cfg.get("repo_url", "https://github.com/c7b/hidebox").rstrip("/"),
-        "BRAND": BRAND,
-    }
+    if network not in NETWORKS:
+        raise BuildError(f"network must be one of {', '.join(NETWORKS)}: {network!r}")
+    values = {"SECURITY_DROP_URL": cfg.get("security_drop_url") or origin + "/fine-print#report",
+              "REPO_URL": cfg.get("repo_url", "https://github.com/c7b/hidebox").rstrip("/")}
+    for name, value in values.items():
+        if not (isinstance(value, str) and PLAIN_URL.fullmatch(value)):
+            raise BuildError(f"{name.lower()} must be a plain https URL: {str(value)[:80]!r}")
+    return {"ORIGIN": origin, "NETWORK": network.capitalize(), **values, "BRAND": BRAND}
 
 
 def check_brand(web: Path) -> None:

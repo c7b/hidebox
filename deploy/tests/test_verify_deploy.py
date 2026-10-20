@@ -96,6 +96,28 @@ class BuildConfigTest(unittest.TestCase):
         self.assertNotIn("secrets", doc)
         self.assertNotIn("evil", doc)
 
+    def test_config_values_that_could_add_markup_are_refused(self):
+        """security-audit-1: the deployment being verified supplies repo_url and security_drop; a value that
+        could close an attribute or open a tag is a difference, never something to rebuild with."""
+        honest = {"network": "esmeralda", "security_drop": "https://h.example/d/0123456789",
+                  "repo_url": "https://github.com/c7b/hidebox"}
+        self.assertEqual(verify.unsafe_settings(honest), [])
+        self.assertEqual(verify.unsafe_settings({}), [])
+        for key, value in (("repo_url", 'https://github.com/c7b/hidebox"><script src="/x.js"></script>'),
+                           ("security_drop", "https://h.example/<svg onload=x>"), ("repo_url", "http://code.example"),
+                           ("network", "esmeralda\"><script>"), ("repo_url", ["https://x.example"])):
+            with self.subTest(key=key):
+                self.assertEqual(len(verify.unsafe_settings({**honest, key: value})), 1)
+        evil = {**honest, "repo_url": 'https://github.com/c7b/hidebox"><script src="/x.js"></script>'}
+        out = io.StringIO()
+        with mock.patch.object(verify, "fetch", lambda url: json.dumps({"files": {}}).encode()), \
+                mock.patch.object(verify, "live_config", lambda origin: evil), \
+                mock.patch.object(verify, "build_tag", side_effect=AssertionError("built with a hostile value")), \
+                mock.patch("sys.argv", ["verify-deploy.py", "https://h.example", "v1"]), \
+                mock.patch("sys.stdout", out):
+            self.assertEqual(verify.main(), 1)
+        self.assertIn("DIFF /api/v1/config repo_url is not a plain https URL", out.getvalue())
+
     def test_no_seallog_no_check(self):
         self.assertEqual(verify.seallog_check({"seal_log": {"component": None}}, ROOT), [])
 

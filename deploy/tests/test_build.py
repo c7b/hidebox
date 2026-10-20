@@ -295,6 +295,17 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(build.settings(cfg, "https://other.example/")["ORIGIN"], "https://other.example")
         with self.assertRaises(build.BuildError):
             build.settings(cfg, "http://example.test")
+        # security-audit-1: no config value can add markup to a page (verify-deploy rebuilds with them)
+        for key, value in (("repo_url", 'https://github.com/c7b/hidebox"><script src="/x.js"></script>'),
+                           ("repo_url", "javascript:alert(1)"), ("security_drop_url", "https://h.example/<b>"),
+                           ("security_drop_url", "https://h.example/a b"), ("network", "esmeralda<script>")):
+            with self.subTest(key=key, value=value), self.assertRaises(build.BuildError):
+                build.settings({"public_origin": "https://h.example", key: value}, None)
+        self.assertEqual(build.settings({"public_origin": "https://h.example",
+                                         "security_drop_url": "https://h.example/d/0123456789#3abc_-"}, None)
+                         ["SECURITY_DROP_URL"], "https://h.example/d/0123456789#3abc_-")
+        self.assertEqual(build.settings({"public_origin": "https://h.example"}, "http://127.0.0.1:8787")
+                         ["SECURITY_DROP_URL"], "http://127.0.0.1:8787/fine-print#report")      # a development build
 
     def test_holding_build(self):
         summary = self.build(holding=True)

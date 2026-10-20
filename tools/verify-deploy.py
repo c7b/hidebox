@@ -64,6 +64,24 @@ def toml_value(value) -> str:
     return json.dumps(str(value))       # a JSON string is a valid TOML basic string
 
 
+# The values /api/v1/config hands the rebuild must be plain: a value that could close an attribute or open a
+# tag would become markup in this build too, and the comparison would vouch for it (security-audit-1). The
+# same rule as tools/build.py's, applied here because an older tag's build.py doesn't have it.
+PLAIN_URL = re.compile(r"https://[A-Za-z0-9.-]+(:\d+)?(/[A-Za-z0-9._~%/+-]*)?(#[A-Za-z0-9._~/-]*)?")
+
+
+def unsafe_settings(cfg: dict) -> list[str]:
+    """The deployment-supplied build values verify-deploy refuses to build with, as differences."""
+    out = []
+    if cfg.get("network", "esmeralda") != "esmeralda":
+        out.append(f"/api/v1/config network is not esmeralda: {str(cfg.get('network'))[:80]!r}")
+    for key in ("repo_url", "security_drop"):
+        value = cfg.get(key)
+        if value not in (None, "") and not (isinstance(value, str) and PLAIN_URL.fullmatch(value.rstrip("/"))):
+            out.append(f"/api/v1/config {key} is not a plain https URL: {str(value)[:80]!r}")
+    return out
+
+
 def build_config(origin: str, cfg: dict, variant_config: dict) -> str:
     """The mutis.toml the tag is built with: the public settings from /config, then the tables the
     live build's copy variants read, as its manifest records them (only plain names and values)."""
@@ -157,6 +175,13 @@ def main() -> int:
     origin = args.origin.rstrip("/")
     live = json.loads(fetch(origin + "/.well-known/mutis-manifest.json"))
     cfg = live_config(origin)
+    unsafe = unsafe_settings(cfg)
+    if unsafe:
+        for line in unsafe:
+            print("DIFF", line)
+        print(f"verify-deploy: {len(unsafe)} differences; not rebuilding with these values ({origin})")
+        return 1
+    print(f"verify-deploy: building with repo_url={cfg.get('repo_url')!r}, security_drop={cfg.get('security_drop')!r}")
     config = build_config(origin, cfg, live.get("variant_config") or {})
     with tempfile.TemporaryDirectory(prefix="mutis-verify-") as tmp:
         sha, local, src = build_tag(args.tag, config, "holding.css" in live["files"], Path(tmp))
