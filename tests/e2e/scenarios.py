@@ -63,6 +63,7 @@ def e02(t: T) -> None:
     for who in "BCD":
         page = t.actor()
         t.check(flows.open_link(page, url) == "opened", f"{who} opens the file")
+        flows.close_preview(page)
         page.click("view-save")
         t.check(t.download_sha256(page) == want, f"{who}'s saved file has the original SHA-256")
     t.check(flows.open_link(t.actor(), url) == "burned", "E sees burned after three views")

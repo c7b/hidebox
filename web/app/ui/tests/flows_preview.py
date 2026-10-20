@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """The file preview (docs/review/preview-1.md): one lightbox (ui/lightbox.js) for the drive's file names, a folder
-link's files and a paid file once it opens, against the real API in headless Chromium.
+link's files, a paid file once it opens, a single-file link (/s/) and a single file in Received, against the real API
+in headless Chromium.
 
 Every file is a hostile fixture from web/app/tests/fixtures/preview (make_fixtures.py): a script that ran would set
 the global canary `top.__pwned`, write `__pwned` to localStorage and ask for /__canary/<which>. Each flow checks,
@@ -15,7 +16,7 @@ import os
 import re
 import shutil
 
-from flows import VIEW_ASK, downloaded, no_hscroll, scenario
+from flows import VIEW_ASK, VIEW_END, downloaded, home, no_hscroll, open_link, scenario, wait_link
 from flows_drive import make_drive, upload_files
 from flows_pay import PAY_LINK, PayFake, buyer, seller, sell, wait_pay
 from flows_share import close_dialog, drive_page, into, make_link, new_folder, open_share, stranger, to_opens
@@ -325,3 +326,96 @@ def preview_pay(t):
         close(b)
         t.check(canary_requests(b) == [] and b.errors == [] and nav["n"] == 0,
                 f"/p/ on {device}: nothing asked for /__canary/, no console error, no navigation ({b.errors[:2]})")
+
+
+# --- a single-file link (/s/): the file shows itself once Open it opens it ------------------------------------------
+
+@scenario("preview-link", "The preview on a single-file link (/s/): every hostile fixture dropped from the home page and opened by a "
+          "stranger; the bytes pick the kind, nothing runs; Esc, the card opens it again, Download; a phone")
+def preview_link(t):
+    stock(t)
+    for name in STORED:
+        maker = t.actor()
+        home(t, maker)
+        maker.set_files("drop-input", [t.fixture(name)])
+        url = wait_link(maker)
+        device = "iphone" if name in ("notes.md", "svg-named.png") else "desktop"
+        v = t.actor(device)
+        nav = watch(v)
+        t.check(open_link(v, url, open_it=False) == "ready", f"/s/: {name}: the stranger's first screen")
+        nav["n"] = 0
+        v.errors.clear()
+        v.click("view-open")
+        t.check(v.wait_state("view-root", VIEW_END, 120) == "opened", f"/s/: {name}: Open it opens it")
+        got = shown(v, name)
+        judge(t, v, name, got, nav, f"/s/ ({device})")
+        if name in ("svg-named.png", "notes.md", "png-named.svg", "page.txt"):
+            width = 390 if device == "iphone" else 1440
+            shot(t, v, f"link-{width}-{got['kind']}")
+            shot(t, v, f"link-{width}-{got['kind']}", dark=True)
+        close(v)
+        t.check(v.focused() == "view-show", f"/s/: {name}: Esc, and focus is on the card that opens it again")
+        if name in ("svg-named.png", "page.txt"):
+            v.click("view-show")
+            shown(v, name)
+            before = os.listdir(v.downloads) if os.path.isdir(v.downloads) else []
+            v.click("lightbox-download")
+            saved = downloaded(v, before, 30)
+            t.check(saved is not None and open(saved, "rb").read() == fixture_bytes(t, name), f"/s/: {name}: Download saves the same bytes")
+            close(v)
+        t.check(canary_requests(v) == [] and v.errors == [] and nav["n"] == 0,
+                f"/s/: {name}: nothing asked for /__canary/, no console error, no navigation ({v.errors[:2]})")
+
+
+# --- Received: a single file sent by Tari shows itself over the dialog that keeps Save to my drive ----------------------
+
+@scenario("preview-received", "The preview in Received: hostile files sent by Tari to a drive; each opens over its dialog, the bytes pick "
+          "the kind, nothing runs; Esc keeps the dialog (Save to my drive, Save), focus on the file's name", features=("folders",))
+def preview_received(t):
+    stock(t)
+    sent = ["svg-named.png", "page.txt", "notes.md"]   # a new drive sends three a day
+    b = drive_page(t)
+    a = drive_page(t)
+    a.wait_for("drive-empty", 30)
+    address = b.wait("(() => { const e = document.querySelector('[data-testid=\"locker-address\"]'); return e && e.textContent.startsWith('otl_esm_1') ? e.textContent : ''; })()", 90)
+    t.realizer.addresses.add(address)
+    upload(t, a, sent)
+    for name in sent:
+        open_share(a, name)
+        a.click("share-choice", "tari")
+        a.click("share-next")
+        a.wait("document.getElementById('share-dialog')?.dataset.step === 'tari'", 10)
+        a.fill("send-recipient", address)
+        a.wait_for("send-safety", 60)
+        a.click("send-submit")
+        t.check(a.wait_state("send-status", ("delivered", "failed"), 180) == "delivered", f"Received: {name} sent by Tari to another drive")
+        close_dialog(a)
+    t.realizer.attach(b)
+    nav = watch(b)
+    b.goto(t.origin + "/drive/received")
+    b.wait(f"document.querySelectorAll('[data-testid=\"received-row\"]').length >= {len(sent)}", 240)
+    nav["n"] = 0
+    b.errors.clear()
+    seen = []
+    for _ in sent:
+        b.eval("[...document.querySelectorAll('[data-testid=\"received-row\"]')].find((r) => r.dataset.state === 'new')"
+               ".querySelector('[data-testid=\"received-open-button\"]').click()")
+        b.wait("document.querySelector('[data-testid=\"received-open\"]')?.dataset.state === 'opened'", 120)
+        name = b.eval("document.querySelector('#lightbox [data-testid=\"lightbox-name\"]')?.textContent ?? ''")
+        t.check(name in sent, f"Received: a delivery opens in the preview ({name!r})")
+        if name not in sent:
+            break
+        seen.append(name)
+        got = shown(b, name)
+        judge(t, b, name, got, nav, "Received")
+        if name == "svg-named.png":
+            shot(t, b, "received-1440-svg")
+            shot(t, b, "received-1440-svg", dark=True)
+        close(b)
+        t.check(b.focused() == "received-show" and b.exists("received-keep") and b.exists("received-save-file"),
+                f"Received: {name}: Esc closes the preview; the dialog keeps Save to my drive and Save, focus on the name")
+        b.key("Escape")
+        b.wait("!document.querySelector('#rec-open') || document.querySelector('#rec-open').hidden", 10)
+    t.check(sorted(seen) == sorted(sent), f"Received: every delivery opened ({seen})")
+    t.check(canary_requests(b) == [] and b.errors == [] and nav["n"] == 0,
+            f"Received: nothing asked for /__canary/, no console error, no navigation ({b.errors[:2]})")

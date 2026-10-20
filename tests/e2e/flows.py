@@ -111,6 +111,13 @@ def open_link(page: Page, url: str, password: str | None = None, open_it: bool =
     return state
 
 
+def close_preview(page: Page) -> None:
+    """An opened file shows in the preview (web/app/ui/lightbox.js) over the page; Esc puts the page's own controls back."""
+    if page.exists("lightbox"):
+        page.key("Escape")
+        page.wait("!document.getElementById('lightbox')", 10)
+
+
 def share_id(url: str) -> str:
     return urllib.parse.urlsplit(url).path.rsplit("/", 1)[-1]
 

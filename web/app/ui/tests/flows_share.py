@@ -496,8 +496,12 @@ def received_list(t):
     t.shot(b, "received-1440-list")
     b.click("received-open-button")
     b.wait("document.querySelector('[data-testid=\"received-open\"]')?.dataset.state === 'opened'", 120)
-    t.check(b.exists("inbox-opened") and "arrives.txt" in b.text("view-text"), "it opens here, in the drive")
+    t.check(b.exists("inbox-opened") and "arrives.txt" in b.text("view-text") and b.attr("lightbox-stage", "data-kind") == "text",
+            "it opens here, in the drive, in the preview")
     t.shot(b, "received-1440-open")
+    b.key("Escape")
+    b.wait("!document.getElementById('lightbox')", 10)
+    t.check(b.focused() == "received-show" and not b.attr("received-open", "hidden"), "Esc closes the preview; the dialog stays, focus on the file's name")
     b.click("received-keep")
     b.wait("[...document.querySelectorAll('.toast')].some((e) => e.textContent.includes('Saved to your drive.'))", 120)
     b.key("Escape")
@@ -645,7 +649,7 @@ def folder_viewer(t):
     t.shot(p, "folder-390-open", full_page=True)
     p.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === 'photo-gps.jpg').querySelector('[data-testid=\"fv-open\"]').click()")
     p.wait("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]')?.dataset.view === 'open'", 60)
-    t.check(p.attr("lightbox-image", "data-type") == "image/jpeg" and p.exists("lightbox-download"), "a picture opens here, with Download")
+    t.check(p.attr("view-image", "data-type") == "image/jpeg" and p.exists("lightbox-download"), "a picture opens here, with Download")
     t.shot(p, "folder-390-preview")
     p.key("Escape")
     # The visit's clock: a short visit, to see it end.

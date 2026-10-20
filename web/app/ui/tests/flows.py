@@ -62,6 +62,13 @@ def open_link(page, url, password=None, open_it=True):
     return state
 
 
+def close_preview(page):
+    """An opened file shows in the preview (ui/lightbox.js) over the page; Esc puts the page's own controls back."""
+    if page.exists("lightbox"):
+        page.key("Escape")
+        page.wait("!document.getElementById('lightbox')", 10)
+
+
 def rule_version(page):
     return page.eval("document.querySelector('.md-card')?.dataset.rule ?? ''")
 
@@ -306,6 +313,7 @@ def rules(t):
     for who in "BCD":
         p = t.actor()
         t.check(open_link(p, url) == "opened", f"{who} opens the file")
+        close_preview(p)
         p.click("view-save")
         p.b.drain(1.5)
         saved = [f for f in os.listdir(p.downloads)] if os.path.isdir(p.downloads) else []
@@ -657,6 +665,7 @@ def deaddrop(t):
     saw = a.text("view-chain-saw")
     t.check(f"reads {amount} tTARI" in saw, f"What the chain saw: hidden on chain, the locker reads {amount} tTARI ({saw[saw.find('Amount'):][:60]!r})")
     t.shot(a, "inbox-390-opened", full_page=True)
+    close_preview(a)
     a.click("view-keep")
     a.wait("!!document.querySelector('.a-item-view .a-done')", 120)
     a.goto(t.origin + "/locker")
@@ -924,6 +933,10 @@ def keyboard(t):
     t.check(b.eval("document.activeElement?.dataset?.testid") == "view-open", "the viewer focuses Open it")
     b.key("Enter", text="\r")
     t.check(b.wait_state("view-root", VIEW_END, 60) == "opened", "Enter opens it")
+    t.check(b.eval("!!document.activeElement?.closest('#lightbox')"), "it shows in the preview, which takes the focus")
+    b.key("Escape")
+    b.wait("!document.getElementById('lightbox')", 10)
+    t.check(b.eval("document.activeElement?.dataset?.testid") == "view-show", "Esc closes it; focus is on the card that opens it again")
     o = t.actor()
     o.goto(t.origin + "/locker")
     o.wait_for("drop-create", 60)

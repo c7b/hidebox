@@ -96,6 +96,7 @@ def e09(t: T) -> None:
     tx_view(t, b, tx)
     t.check(open_inbox_item(t, a, "drop") == "opened", "the phone opens the delivery in Received")
     a.wait_for("received-save-file", 60)
+    flows.close_preview(a)
     a.click("received-save-file")
     gps, orientation = t.env.remote.as_build(f"python3 -I -c {shlex.quote(PHOTO_CHECK)} {t.downloaded(a)}").split()
     t.check(gps == "clean", "the decrypted photo has no GPS")
