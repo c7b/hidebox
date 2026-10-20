@@ -30,6 +30,15 @@ def scenario(sid, title, **opts):
 
 # --- steps shared by the flows -------------------------------------------------------------------
 
+# The build names every asset a page asks for name.<10 hex of its content>.ext (tools/assets.py); checks that name a
+# file compare its plain name.
+FINGERPRINT = re.compile(r"\.[0-9a-f]{10}(\.[a-z0-9]+)(?=$|[?#])")
+
+
+def plain(url):
+    return FINGERPRINT.sub(r"\1", url)
+
+
 def home(t, page, path="/"):
     page.goto(t.origin + path)
     page.wait_for("drop-input", 60)
@@ -615,7 +624,7 @@ def deaddrop(t):
     a, drop, address = owner_with_drop(t)
     safety = safety_emoji(a, "locker-safety")
     a.b.drain(1)
-    t.check(not a.exists("locker-qr") and not a.exists("drop-qr") and not [r for r in a.requests if r["url"].endswith("/app/ui/qr.js")],
+    t.check(not a.exists("locker-qr") and not a.exists("drop-qr") and not [r for r in a.requests if plain(r["url"]).endswith("/app/ui/qr.js")],
             "a phone's locker shows no codes to scan (it is the phone that scans)")
     b = t.actor()
     b.goto(drop)
@@ -1065,7 +1074,7 @@ def budget(t):
             path = os.path.join(dist, u[len(t.origin) + 1:].split("?")[0])
             if os.path.isfile(path):
                 total += len(gzip.compress(open(path, "rb").read(), 9))
-                files.append(u[len(t.origin):])
+                files.append(plain(u[len(t.origin):]))
         return total, files
     a = t.actor("iphone")
     home(t, a)
@@ -1198,7 +1207,7 @@ def no_ghost(t):
             font = a.eval("getComputedStyle(document.querySelector('.a-scene-h') || document.body).fontFamily")
             t.check("Geist" in font, f"{path.split('#')[0]}: Geist ({font[:40]})")
             tile = a.eval("document.querySelector('.a-figure use')?.getAttribute('href') ?? ''")
-            t.check(tile.startswith("/shared/ui/icons.svg#i-"), f"{path.split('#')[0]}: a Lucide tile ({tile})")
+            t.check(plain(tile).startswith("/shared/ui/icons.svg#i-"), f"{path.split('#')[0]}: a Lucide tile ({tile})")
         t.shot(a, f"no-ghost-{'dark' if dark else 'light'}")
 
 

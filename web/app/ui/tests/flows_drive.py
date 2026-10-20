@@ -13,7 +13,7 @@ import time
 
 from cdp import DEVICES
 from drivefake import DriveFake
-from flows import Intercept, downloaded, no_hscroll, same_origin, scenario
+from flows import Intercept, downloaded, no_hscroll, plain, same_origin, scenario
 
 # The drive's features (off in config.py's defaults). run.py starts a dev server with them on for a flow
 # that asks; otherwise the flows run on drivefake.py.
@@ -104,7 +104,7 @@ def drive_shell(t):
     t.check(a.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(addr)})", 10), "Copy puts the address on the clipboard")
     fonts = a.wait("document.fonts.ready.then(() => document.fonts.check('14px Geist') && getComputedStyle(document.body).fontFamily.startsWith('Geist'))", 20)
     t.check(fonts, "the drive is set in Geist")
-    woff = sorted({r["url"][len(t.origin):] for r in a.requests if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))})
+    woff = sorted({plain(r["url"][len(t.origin):]) for r in a.requests if r["url"].endswith((".woff2", ".woff", ".ttf", ".otf"))})
     t.check(woff == ["/shared/fonts/geist/Geist-Latin.woff2"], f"one font file, the pinned Geist's 18 KB Latin subset ({woff})")
     t.check(not same_origin(t, a), f"no third-party request ({same_origin(t, a)[:3]})")
     t.check(a.ax_unnamed() == [], f"every control has a name ({a.ax_unnamed()[:5]})")
