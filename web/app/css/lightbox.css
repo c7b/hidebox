@@ -58,7 +58,7 @@
 /* --- the stage: one thing at a time, centred, never past the edges ------------------------------------------- */
 .lb-stage {
   grid-area: stage; position: relative; display: grid; place-items: center; min-width: 0; min-height: 0; padding: 0.25rem 0.75rem 0.75rem;
-  overflow: hidden; touch-action: pan-y pinch-zoom;   /* a sideways swipe is ours: it moves to the next file */
+  overflow: hidden; touch-action: pinch-zoom;   /* a swipe is ours (the next file), never a pan with a fling that eats the next tap */
 }
 .lb-stage > * { grid-area: 1 / 1; }
 .lb-media {
@@ -80,7 +80,7 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
 /* a text file: a page on the void; it scrolls inside, the rest stays put */
 .lb-sheet {
   align-self: stretch; justify-self: center; width: min(100%, 52rem); min-height: 0; max-height: 100%; overflow: auto;
-  overscroll-behavior: contain; color-scheme: light;
+  overscroll-behavior: contain; color-scheme: light; touch-action: pan-y pinch-zoom;   /* a text file scrolls */
   background-color: var(--card, #FFFFFF); background-image: var(--glass, none); color: var(--card-foreground, var(--foreground, #0A0A0A));
   border: 1px solid var(--glass-edge, var(--border, #E5E5E5)); border-top-color: var(--glass-top, var(--border, #E5E5E5));
   border-radius: var(--radius-xl, 0.875rem); box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.95);

@@ -215,9 +215,13 @@ def preview_drive(t):
     t.check(fits and no_hscroll(p), "phone: Download, Close and the stage fit at 390, 44 px targets, no sideways scroll")
     shot(t, p, "drive-390-picture")
     shot(t, p, "drive-390-picture", dark=True)
+    # A person's swipe: about 30 ms between moves, then a short hold before lifting (no fling left to eat the next tap).
     p.cmd("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": 330, "y": 420}]})
     for x in range(330, 60, -45):
+        p.b.drain(0.03)
         p.cmd("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": 422}]})
+    p.b.drain(0.15)
+    p.cmd("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": 60, "y": 422}]})
     p.cmd("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
     got = shown(p, after)
     t.check(got["kind"] == HOSTILE[after][0], f"phone: a swipe to the left on the picture shows the next file ({after})")
