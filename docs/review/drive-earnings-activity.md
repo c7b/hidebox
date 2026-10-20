@@ -126,7 +126,7 @@ created" with the folder-plus icon, in the feed, the file's sheet and the CSV. T
 
 | Budget | Before (`main`) | After |
 |---|---|---|
-| A-06d, `/drive` until the table renders (of 131,072 B) | 125,523 B, 38 files (`main` at `3e8b3d3`) | **126,636 B**, 38 files (+1,113 B) |
+| A-06d, `/drive` until the table renders (of 131,072 B) | 125,555 B, 38 files (`main` at `c842fcc`) | **126,662 B**, 38 files (+1,107 B) |
 | What changed in those files (gzip -9) | | `drive.css` +459 B, `en.json` +508 B, `drive-shell.js` +95 B, `drive.js` +59 B |
 | Loaded only on their views | | `activity.js` 6,074 B (was 3,259), `drive-earnings.js` 2,969 B (new), `lib/feed.js` 1,813 B (new), `sales.js` 2,675 B (was 2,332) |
 
@@ -139,13 +139,13 @@ the evidence's `suites/`.
 
 | Suite | Result |
 |---|---|
-| App UI (`web/app/ui/tests/run.py --shots`) | 868 of 869 on the rebased tree: `share-rules` (the share dialog, not touched here) timed out once waiting for the dialog of its third file under load and passed when run again (`ui-rerun.log`, with `drive-budget`). Before the rebase: 850/850 twice. The new scenarios: `activity-groups` 24 checks, `drive-earnings` 22; `owner-check` (now in Earnings) 12, `seller-activity` and `activity-gone` 8 each |
-| App core (`web/app/tests/run_all.py`) | ALL PASS, 9 steps (the new `feed` suite under Node and in Chromium) |
-| Server (`unittest discover -s server/tests`) | 344 OK, 5 skipped (`test_release_gate` has the totals; `test_paid_shares` the new answer's shape) |
+| App UI (`web/app/ui/tests/run.py --shots`) | 1115/1115 on the branch rebased onto `c842fcc`. The new scenarios: `activity-groups` 24 checks, `drive-earnings` 22; `owner-check` (now in Earnings) 12, `seller-activity` and `activity-gone` 8 each. On earlier rebases `share-rules` (the share dialog, not touched here) timed out once in the full run and passed alone, the flake `owner-5.md` records on `main` |
+| App core (`web/app/tests/run_all.py`) | ALL PASS, 9 steps (the new `feed` suite under Node and in Chromium). On the previous rebase its phone scan benchmark timed out once under the server's load and passed when run again |
+| Server (`unittest discover -s server/tests`) | 356 OK, 5 skipped (`test_release_gate` has the totals; `test_paid_shares` the new answer's shape) |
 | Site (`web/site/tests/run.py`) | 44 of 44 (`/judges` now says Earnings, then Payments) |
-| Deploy (`unittest discover -s deploy/tests`) | 96 OK |
+| Deploy (`unittest discover -s deploy/tests`) | 100 OK |
 | `tools/lint.py`, `tools/check-copy.py` | PASS, PASS |
-| `tools/build.py` | OK, 215 files |
+| `tools/build.py` | OK, 218 files |
 | `tools/check-seo.py --dist` (on the workstation, a fresh build) | PASS, 13 checks (`/drive/earnings` among the private routes) |
 
 An independent review (a second agent, read-only) found the e2e chain scenarios, the film and `/judges` still sent
