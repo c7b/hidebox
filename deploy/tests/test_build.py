@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: MIT
-"""tools/build.py: copy layout, includes, placeholders, SRI, vendored hashes, lint gate, sitemap, manifest."""
+"""tools/build.py: copy layout, includes, placeholders, fingerprinted names, SRI, vendored hashes, lint gate, sitemap,
+manifest, precompressed copies."""
 import base64
+import gzip
 import hashlib
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -66,9 +69,13 @@ class BuildTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp)
 
-    def build(self, holding: bool = False, cfg: dict = CFG) -> dict:
+    def build(self, holding: bool = False, cfg: dict = CFG, node: str = "") -> dict:
+        """Gzip copies only unless `node` is given: Brotli at quality 11 on the vendored wasm takes seconds a build."""
         state = build.source_state(SOURCE)
-        return build.build(self.web, self.tmp / "dist", self.tmp / "release", cfg, VALUES, state, holding=holding)
+        return build.build(self.web, self.tmp / "dist", self.tmp / "release", cfg, VALUES, state, holding=holding, node=node)
+
+    def assets(self) -> dict:
+        return json.loads((self.tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text())["assets"]
 
     def test_the_drive_font_is_pinned(self):
         """A tree with the drive serves Geist, the pinned bytes only (a font can't carry SRI)."""
@@ -212,10 +219,136 @@ class BuildTest(unittest.TestCase):
     def test_sri_is_sha384_of_the_served_file(self):
         self.build()
         how = (self.tmp / "dist" / "how" / "index.html").read_text()
-        js = (self.tmp / "dist" / "site" / "js" / "site.js").read_bytes()
+        hashed = self.assets()["site/js/site.js"]
+        js = (self.tmp / "dist" / hashed).read_bytes()
         digest = base64.b64encode(hashlib.sha384(js).digest()).decode()
-        self.assertIn(f'src="/site/js/site.js" integrity="sha384-{digest}"', how)
+        self.assertIn(f'src="/{hashed}" integrity="sha384-{digest}"', how)
         self.assertNotIn("{{SRI}}", how)
+
+    def test_assets_get_content_hashed_names(self):
+        """tools/assets.py: each file a page, stylesheet or script asks for is copied to name.<10 hex of the SHA-256 of
+        its bytes>.ext and every reference names the copy (relative stays relative, the #fragment stays); a script's
+        hash covers the names it imports, so a change reaches every name that leads to it. The plain names stay, with
+        the same bytes; the manifest lists both and maps one to the other."""
+        site = self.web / "site"
+        (site / "js" / "site.js").write_text("// SPDX-License-Identifier: MIT\nimport { y } from './stats.js';\n"
+                                             "export const x = () => import('/site/js/motion.js?v=1');\n")
+        (site / "js" / "stats.js").write_text("// SPDX-License-Identifier: MIT\nexport const y = 2;\n")
+        (site / "js" / "motion.js").write_text("// SPDX-License-Identifier: MIT\nexport const z = 3;\n")
+        (site / "js" / "unused.js").write_text("// SPDX-License-Identifier: MIT\nexport const u = 4;\n")
+        (site / "css" / "site.css").write_text("/* SPDX-License-Identifier: MIT */\n.a { background: url(../media/pic.webp); }\n"
+                                               ".b { mask: url('/shared/icons.svg#x'); }\n")
+        (site / "media").mkdir()
+        (site / "media" / "pic.webp").write_bytes(b"RIFF\0\0\0\0WEBPVP8 pixels")
+        (self.web / "shared" / "icons.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"><use href="/shared/icons.svg#y"/></svg>\n')
+        page = PAGE.replace("</main>", '<img src="/site/media/pic.webp" srcset="/site/media/pic.webp 1x, /site/media/pic.webp 2x" alt="">'
+                                       '<svg><use href="/shared/icons.svg#x"/></svg></main>')
+        (site / "pages" / "how.html").write_text(page)
+        self.build()
+        dist, names = self.tmp / "dist", self.assets()
+        for plain in ("site/js/site.js", "site/js/stats.js", "site/js/motion.js", "site/css/site.css", "site/media/pic.webp",
+                      "shared/icons.svg"):
+            self.assertIn(plain, names)
+            hashed = names[plain]
+            self.assertRegex(hashed, r"\.[0-9a-f]{10}\.[a-z]+$")
+            self.assertEqual((dist / hashed).read_bytes(), (dist / plain).read_bytes(), "the plain name keeps the same bytes")
+            if plain != "shared/icons.svg":    # a file that names itself shares a hash of its content instead
+                self.assertEqual(hashed.split(".")[-2], hashlib.sha256((dist / hashed).read_bytes()).hexdigest()[:10])
+        self.assertNotIn("site/js/unused.js", names, "a file nothing asks for keeps its name only")
+        site_js = (dist / names["site/js/site.js"]).read_text()
+        self.assertIn(f"from './{names['site/js/stats.js'].rpartition('/')[2]}'", site_js)
+        self.assertIn(f"import('/{names['site/js/motion.js']}?v=1')", site_js)
+        css = (dist / names["site/css/site.css"]).read_text()
+        self.assertIn(f"url(../media/{names['site/media/pic.webp'].rpartition('/')[2]})", css)
+        self.assertIn(f"url('/{names['shared/icons.svg']}#x')", css)
+        how = (dist / "how" / "index.html").read_text()
+        pic = "/" + names["site/media/pic.webp"]
+        self.assertIn(f'src="{pic}" srcset="{pic} 1x, {pic} 2x"', how)
+        self.assertIn(f'<use href="/{names["shared/icons.svg"]}#x"/>', how)
+        self.assertIn(f'href="/{names["site/css/site.css"]}"', how)
+        self.assertIn('href="https://example.test/how"', how, "absolute addresses are names other products keep")
+        files = json.loads((dist / ".well-known" / "mutis-manifest.json").read_text())["files"]
+        self.assertLessEqual(set(names) | set(names.values()), set(files))
+        before = dict(names)
+        (site / "js" / "stats.js").write_text("// SPDX-License-Identifier: MIT\nexport const y = 3;\n")
+        self.build()
+        after = self.assets()
+        self.assertNotEqual(after["site/js/stats.js"], before["site/js/stats.js"])
+        self.assertNotEqual(after["site/js/site.js"], before["site/js/site.js"], "the importer's name follows its import")
+        self.assertEqual(after["site/js/motion.js"], before["site/js/motion.js"])
+        self.assertEqual(after["site/css/site.css"], before["site/css/site.css"])
+
+    def test_entry_points_keep_their_names(self):
+        """Pages, /favicon.ico, /favicon.svg, /apple-touch-icon.png, og.png, the web manifest, robots.txt and .well-known
+        keep their names (nothing else may call them); an icon the manifest names is fingerprinted there."""
+        static = self.web / "site" / "static"
+        for name in ("icon-192.png", "apple-touch-icon.png", "og.png"):
+            (static / name).write_bytes(b"\x89PNG\r\n" + name.encode())
+        (static / "favicon.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"/>\n')
+        (static / "manifest.webmanifest").write_text('{"start_url": "/", "icons": [{"src": "/icon-192.png"}, {"src": "/favicon.svg"}]}\n')
+        page = PAGE.replace("<title>", '<link rel="icon" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">'
+                                      '<link rel="manifest" href="/manifest.webmanifest"><meta property="og:image" content="{{ORIGIN}}/og.png"><title>')
+        (self.web / "site" / "pages" / "how.html").write_text(page)
+        self.build()
+        names, dist = self.assets(), self.tmp / "dist"
+        self.assertLessEqual({"icon-192.png", "site/css/site.css", "site/js/site.js"}, set(names))
+        for kept in ("favicon.svg", "apple-touch-icon.png", "og.png", "manifest.webmanifest", ".well-known/security.txt"):
+            self.assertNotIn(kept, names)
+        how = (dist / "how" / "index.html").read_text()
+        for kept in ('href="/favicon.svg"', 'href="/apple-touch-icon.png"', 'href="/manifest.webmanifest"',
+                     'content="https://example.test/og.png"'):
+            self.assertIn(kept, how)
+        manifest = json.loads((dist / "manifest.webmanifest").read_text())
+        self.assertEqual([i["src"] for i in manifest["icons"]], ["/" + names["icon-192.png"], "/favicon.svg"])
+
+    def test_files_that_ask_for_each_other_share_a_hash(self):
+        """A cycle (two modules importing each other) gets names from a hash of their joint content: stable from build
+        to build, each naming the other's hashed name, and both new when either changes."""
+        js = self.web / "site" / "js"
+        (js / "site.js").write_text("// SPDX-License-Identifier: MIT\nimport './a.js';\n")
+        (js / "a.js").write_text("// SPDX-License-Identifier: MIT\nimport './b.js';\nexport const a = 1;\n")
+        (js / "b.js").write_text("// SPDX-License-Identifier: MIT\nimport { a } from './a.js';\nexport const b = a;\n")
+        self.build()
+        first = self.assets()
+        dist = self.tmp / "dist"
+        self.assertIn(first["site/js/b.js"].rpartition("/")[2], (dist / first["site/js/a.js"]).read_text())
+        self.assertIn(first["site/js/a.js"].rpartition("/")[2], (dist / first["site/js/b.js"]).read_text())
+        self.build()
+        self.assertEqual(self.assets(), first)
+        (js / "b.js").write_text("// SPDX-License-Identifier: MIT\nimport { a } from './a.js';\nexport const b = a + 1;\n")
+        self.build()
+        second = self.assets()
+        for name in ("site/js/a.js", "site/js/b.js", "site/js/site.js"):
+            self.assertNotEqual(second[name], first[name], name)
+
+    def test_a_source_file_named_like_a_hashed_one_stops_the_build(self):
+        """Caddy keeps a hashed-looking name a year: a source file may not have one."""
+        (self.web / "site" / "js" / "old.0123456789.js").write_text("// SPDX-License-Identifier: MIT\n")
+        with self.assertRaisesRegex(build.BuildError, "named like a fingerprinted one"):
+            self.build()
+
+    def test_precompressed_copies(self):
+        """deploy/scripts/precompress.py: a .gz beside each text file of 512 B or more that decodes to it (gzip -9, mtime
+        0: the same every build), none for small or binary files, and none in the manifest; with Node, a .br too."""
+        (self.web / "site" / "css" / "site.css").write_text("/* SPDX-License-Identifier: MIT */\n" + ".a { margin: 0; }\n" * 64)
+        self.build()
+        dist = self.tmp / "dist"
+        hashed = dist / self.assets()["site/css/site.css"]
+        for css in (dist / "site" / "css" / "site.css", hashed):
+            self.assertEqual(gzip.decompress((css.parent / (css.name + ".gz")).read_bytes()), css.read_bytes())
+        self.assertFalse((dist / "site" / "js" / "site.js.gz").exists(), "smaller than 512 B: left to Caddy")
+        self.assertFalse(list(dist.rglob("*.wasm.br")), "no node given: gzip only")
+        self.assertFalse(list(dist.rglob("*.png.gz")) or list(dist.rglob("*.woff2.gz")))
+        files = json.loads((dist / ".well-known" / "mutis-manifest.json").read_text())["files"]
+        self.assertFalse([f for f in files if f.endswith((".gz", ".br"))])
+        packed = (hashed.parent / (hashed.name + ".gz")).read_bytes()
+        self.build()
+        self.assertEqual((hashed.parent / (hashed.name + ".gz")).read_bytes(), packed)
+        node = shutil.which("node")
+        if node:
+            self.build(node=node)
+            self.assertTrue((hashed.parent / (hashed.name + ".br")).is_file())
+            self.assertTrue(list(dist.rglob("ootle_wasm_bg.*.wasm.br")))
 
     def test_sitemap_skips_404_and_noindex(self):
         self.build()
@@ -235,7 +368,8 @@ class BuildTest(unittest.TestCase):
 
     def test_manifest_lists_every_file_and_is_deterministic(self):
         first = json.loads((self.tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text()) if self.build() else None
-        files = {p.relative_to(self.tmp / "dist").as_posix() for p in (self.tmp / "dist").rglob("*") if p.is_file()}
+        files = {p.relative_to(self.tmp / "dist").as_posix() for p in (self.tmp / "dist").rglob("*")
+                 if p.is_file() and not re.search(r"\.(gz|br)$", p.name)}
         self.assertEqual(set(first["files"]) | {".well-known/mutis-manifest.json"}, files)
         self.build()
         second = json.loads((self.tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text())

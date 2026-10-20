@@ -6,8 +6,10 @@
 
 Python standard library only. Deterministic: the same commit and config give byte-identical files
 (the manifest's built_at is the one timestamp), which is what tools/verify-deploy.py relies on.
-Steps: copy; the deployment's copy variants; includes; placeholders; SRI; vendored artifact hashes;
-lint; sitemap; hash manifest. Any error stops the build with exit status 1.
+Steps: lint; vendored artifact hashes; copy; the deployment's copy variants; includes; placeholders; content-hashed
+names for every asset a page, stylesheet, script or the web manifest asks for (tools/assets.py); SRI; sitemap; hash
+manifest; precompressed .gz and .br copies of the text files (deploy/scripts/precompress.py; never in the manifest).
+Any error stops the build with exit status 1.
 """
 import argparse
 import base64
@@ -22,7 +24,10 @@ import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(1, str(Path(__file__).resolve().parent.parent / "deploy" / "scripts"))
+import assets  # noqa: E402
 import lint  # noqa: E402
+import precompress  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 # The public name (14-ghost-design §2). The owner can swap it here, in one word; the internal codename
@@ -279,10 +284,21 @@ def process_files(dist: Path, partials: Path, values: dict) -> None:
             text = expand_includes(text, partials, where)
         text = fill(text, values, where)
         path.write_text(text, encoding="utf-8", newline="\n")
-    for path in files:
-        if path.suffix == ".html":
-            where = path.relative_to(dist).as_posix()
-            path.write_text(add_sri(path.read_text(encoding="utf-8"), dist, where), encoding="utf-8", newline="\n")
+
+
+def fingerprint(dist: Path) -> dict:
+    """{plain path: hashed path} of every asset the served files ask for (tools/assets.py); after placeholders, so the
+    pages' references are final, and before SRI, which hashes the files the rewritten tags name."""
+    try:
+        return assets.fingerprint(dist)
+    except ValueError as e:
+        raise BuildError(str(e)) from e
+
+
+def integrity(dist: Path) -> None:
+    for path in sorted(p for p in dist.rglob("*.html") if p.is_file()):
+        where = path.relative_to(dist).as_posix()
+        path.write_text(add_sri(path.read_text(encoding="utf-8"), dist, where), encoding="utf-8", newline="\n")
 
 
 def verify_vendored(web: Path) -> list[str]:
@@ -322,11 +338,14 @@ def sitemap(dist: Path, pages: list[str], origin: str, lastmod: str) -> None:
                                       f"{body}</urlset>\n", encoding="utf-8", newline="\n")
 
 
-def manifest(dist: Path, state: dict, variant_config: dict) -> dict:
-    files = {p.relative_to(dist).as_posix(): sha256(p) for p in sorted(dist.rglob("*")) if p.is_file()}
+def manifest(dist: Path, state: dict, variant_config: dict, names: dict) -> dict:
+    """Every served file and its SHA-256 (the precompressed sidecars aside: they are written after this, decode to
+    a listed file, and their bytes depend on the compressor); `assets` maps each plain name to its hashed one."""
+    files = {p.relative_to(dist).as_posix(): sha256(p) for p in sorted(dist.rglob("*"))
+             if p.is_file() and p.suffix not in precompress.SIDECARS}
     doc = {"version": state["version"], "git_sha": state["sha"],
            "built_at": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-           "variant_config": variant_config, "files": files}
+           "variant_config": variant_config, "files": files, "assets": names}
     out = dist / ".well-known" / "mutis-manifest.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
@@ -340,8 +359,9 @@ def content_id(files: dict) -> str:
 
 
 def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: dict, with_tests: bool = False,
-          holding: bool = False) -> dict:
-    """`cfg` is the deployment's mutis.toml; `values` fill the {{PLACEHOLDERS}} (settings())."""
+          holding: bool = False, node: str | None = None) -> dict:
+    """`cfg` is the deployment's mutis.toml; `values` fill the {{PLACEHOLDERS}} (settings()); `node` the program that
+    makes the .br copies (default: `node` on the PATH; "" for none, gzip only)."""
     for out in (dist, release / "sidecar"):
         if out.exists():
             shutil.rmtree(out)
@@ -360,9 +380,17 @@ def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: 
     copy_sidecar(web, release)
     process_files(dist, web / "shared" / "partials", values | {
         "GIT_SHA": state["sha"], "VERSION": state["version"], "BUILD_DATE": state["date"]})
+    names = fingerprint(dist)
+    integrity(dist)
     sitemap(dist, pages, values["ORIGIN"], state["date"])
-    doc = manifest(dist, state, variant_config)
+    doc = manifest(dist, state, variant_config, names)
+    try:
+        packed = precompress.precompress(dist, node)
+    except (RuntimeError, ValueError, subprocess.TimeoutExpired) as e:
+        raise BuildError(f"precompress: {e}") from e
     return {"pages": len(pages), "files": len(doc["files"]), "content_id": content_id(doc["files"]),
+            "fingerprinted": len(names), "gzip": packed["gzip"], "br": packed["br"],
+            "brotli": packed["brotli"] or "none (gzip only)",
             "vendored_checked": len(vendored), "holding": holding,
             "version": state["version"], "git_sha": state["sha"], "origin": values["ORIGIN"]}
 
