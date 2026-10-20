@@ -43,7 +43,7 @@ function raster(b) {
 
 // Known kinds that are never previewed, named so the review and the tests can say why. Anything else that
 // isn't text falls to 'binary' below anyway. Each signature carries a byte past its letters where it has one,
-// so a note that merely starts with the same letters still reads as text.
+// so a note that merely starts with the same letters ("MZ team", "OTTO was here") still reads as text.
 const HEIF = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1', 'miaf'];
 
 function known(b) {
@@ -55,7 +55,7 @@ function known(b) {
   if (at(b, ascii('ftyp'), 4)) return b.length >= 12 && HEIF.includes(brand(b, 8)) ? 'heif' : 'video';
   if (at(b, [0x1a, 0x45, 0xdf, 0xa3]) || (at(b, ascii('RIFF')) && at(b, ascii('AVI '), 8))) return 'video';
   if (at(b, [0x50, 0x4b, 0x03, 0x04]) || at(b, [0x1f, 0x8b]) || at(b, [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c]) || at(b, [0x52, 0x61, 0x72, 0x21, 0x1a, 0x07])) return 'archive';
-  if (at(b, [0x4d, 0x5a]) || at(b, [0x7f, 0x45, 0x4c, 0x46])) return 'program';
+  if ((at(b, [0x4d, 0x5a]) && b.subarray(2, 64).includes(0)) || at(b, [0x7f, 0x45, 0x4c, 0x46])) return 'program';   // MZ and a binary header
   return null;
 }
 

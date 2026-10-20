@@ -23,6 +23,7 @@ const CANVAS_MAX = 4096;    // an SVG's longest side in device pixels
 const SVG_UPSCALE = 8;      // a small drawing grows to fit the stage, up to this many times its own size
 const SVG_WAIT_MS = 5000;   // an SVG not drawn by then is shown as one that didn't open
 const SWIPE_PX = 56;
+let opening = false;
 
 const spinner = () => {
   const s = icon('loader-circle');
@@ -69,7 +70,14 @@ async function rasterize(bytes, room, label) {
 // -> its decrypted parts; problem(e) -> an element for a read that failed; returnFocus: where focus goes on close,
 // unless refocus(file) finds the control of the file last shown (its row may have been drawn again meanwhile).
 export async function openLightbox({ files, at = 0, read, problem = null, returnFocus = document.activeElement, refocus = null }) {
-  await stylesheet(SHEET);
+  // One at a time: a second open while one is loading or showing (a double click) does nothing.
+  if (opening || document.getElementById('lightbox')?.dataset.state === 'open') return null;
+  opening = true;
+  try {
+    await stylesheet(SHEET);
+  } finally {
+    opening = false;
+  }
   const many = files.length > 1;
   let index = -1;
   let seq = 0;           // each show() takes a number; a slower one that finishes late changes nothing
@@ -134,9 +142,10 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
         setVar(bar, '--value', Math.max(0, Math.min(1, x)));
       });
     } catch (e) {
+      const el = problem ? await problem(e) : note('broken');
       if (mine !== seq) return;
       stage.dataset.view = 'error';
-      stage.replaceChildren(problem ? await problem(e) : note('broken'));
+      stage.replaceChildren(el);
       return;
     }
     if (mine !== seq) return;
@@ -175,7 +184,7 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
 
   function go(dir) {
     if (!many) return;
-    show(index + dir).then(() => { said.textContent = files[index].name; });
+    show(index + dir).then(() => { said.textContent = files[index].name; }, () => null);
   }
 
   // Arrows move through the list (while this lightbox is the top layer and nothing has taken the key).
@@ -195,7 +204,8 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
     from = null;
     if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > 1.5 * Math.abs(dy)) go(dx < 0 ? 1 : -1);
   });
-  stage.addEventListener('click', (e) => { if (e.target === stage && e.pointerType === 'mouse') closeModal(box); });
+  // (e.detail 1: the second click of a double click on a file's name lands here, and is not a close)
+  stage.addEventListener('click', (e) => { if (e.target === stage && e.pointerType === 'mouse' && e.detail === 1) closeModal(box); });
 
   document.getElementById('lightbox')?.remove();
   document.body.append(box);

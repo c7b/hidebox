@@ -37,9 +37,12 @@ class Override:
             for prefix, page in PAGES:
                 if path.startswith(prefix) if prefix.endswith("/") else path == prefix or path.startswith(prefix + "/"):
                     return self.dist / page
-            f = self.dist / ("index.html" if path == "/" else path.strip("/") + "/index.html")
-            return f if f.is_file() else None
-        f = (self.dist / path.lstrip("/")).resolve()
+            return self.inside("index.html" if path == "/" else path.strip("/") + "/index.html")
+        return self.inside(path.lstrip("/"))
+
+    def inside(self, rel: str) -> Path | None:
+        """A file of the build, never one outside it (a path with .. or a link out)."""
+        f = (self.dist / rel).resolve()
         return f if f.is_file() and self.dist in f.parents else None
 
     def handle(self, browser, msg: dict) -> None:

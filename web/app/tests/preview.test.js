@@ -57,6 +57,7 @@ export default [
     eq(of(b('wOF2', 'OTTO')).why, 'font');
     eq(of(b('PK', [3, 4, 0])).why, 'archive');
     eq(of(b('MZ', [0x90, 0])).why, 'program');
+    eq(of(utf8('MZ team notes, OTTO was here')).kind, 'text', 'letters that start a signature are still text');
   }],
   ['sniff: markup is download only (HTML by any of the signatures a browser sniffs, XHTML, other XML); text that only mentions it is text', () => {
     for (const s of ['<!DOCTYPE html><p>x', '  <html>', '\n<script>x</script>', '<p>hello</p>', '<!-- note -->', '<?xml version="1.0"?><rss/>',
@@ -188,8 +189,11 @@ export default [
       ok(await until(() => name() === 'png-named.svg'), 'past the last: the first again');
       document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
       ok(await until(() => name() === 'notes.md'), 'ArrowLeft: back');
+      eq(await openLightbox({ files: [{ name: 'again', size: 1 }], read: async () => [Uint8Array.of(0x41)] }), null, 'a second open while one shows does nothing');
+      eq(document.querySelectorAll('#lightbox').length, 1, 'one lightbox');
       document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       ok(await until(() => !box.isConnected, 2000), 'Escape closes');
+      ok(!document.querySelector('.overlay'), 'and its overlay goes with it');
       eq(document.activeElement, opener, 'focus is back where it was');
       ok(made.every((m) => revoked.has(m.u)), 'every blob: URL revoked');
     } finally {

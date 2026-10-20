@@ -197,9 +197,13 @@ export function folderPanel(opened, { cfg, heading = 'h1', onSaveToDrive = null 
   // it shows comes from the bytes, never the name; Download is always there.
   async function preview(node, trigger) {
     const files = at.children.filter((n) => !n.folder).map((n) => ({ name: nameOf(n), size: n.size, node: n }));
-    const { openLightbox } = await import('./lightbox.js');
-    return openLightbox({ files, at: files.findIndex((f) => f.node === node), read: (f, onProgress) => read(f.node, onProgress), problem, returnFocus: trigger,
-      refocus: (f) => [...tbody.querySelectorAll('[data-testid="fv-row"]')].find((r) => r.dataset.name === f.name)?.querySelector('[data-testid="fv-open"]') });
+    try {
+      const { openLightbox } = await import('./lightbox.js');
+      await openLightbox({ files, at: files.findIndex((f) => f.node === node), read: (f, onProgress) => read(f.node, onProgress), problem, returnFocus: trigger,
+        refocus: (f) => [...tbody.querySelectorAll('[data-testid="fv-row"]')].find((r) => r.dataset.name === f.name)?.querySelector('[data-testid="fv-open"]') });
+    } catch (e) {
+      errors.replaceChildren(await problem(e));
+    }
   }
 
   function tick() {

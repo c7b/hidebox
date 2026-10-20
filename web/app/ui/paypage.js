@@ -396,9 +396,13 @@ export async function payPage(root, cfg, shareId) {
   async function showFile(trigger) {
     const f = P.opened?.file;
     if (!f) return;
-    const { openLightbox } = await import('./lightbox.js');
-    await openLightbox({ files: [{ name: sanitizeFileName(f.name), size: f.size, parts: f.parts }], read: async (x) => x.parts, returnFocus: trigger,
-      refocus: () => root.querySelector('[data-testid="pay-file-open"]') });
+    try {
+      const { openLightbox } = await import('./lightbox.js');
+      await openLightbox({ files: [{ name: sanitizeFileName(f.name), size: f.size, parts: f.parts }], read: async (x) => x.parts, returnFocus: trigger,
+        refocus: () => root.querySelector('[data-testid="pay-file-open"]') });
+    } catch {
+      toast(t('drive.oops'), { type: 'error' });   // the row's Save still works
+    }
   }
 
   function otherBox(phase) {
