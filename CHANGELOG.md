@@ -20,6 +20,7 @@
   can serve a local build's front end against the live site (`--candidate`); pay to open a folder (E-29) passed that
   way on production. Review: `docs/review/preview-1.md`; the threat model has a new section, "Previews".
 <!-- /preview 1 -->
+
 <!-- owner-5 -->
 ## 2026-10-19: owner 5
 
