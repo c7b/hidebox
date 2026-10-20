@@ -23,6 +23,11 @@ die() { echo "activate: $*" >&2; exit 1; }
 # umask 007: the database and its -wal/-shm files are shared with group mutis (the chain worker runs as drive).
 as_mutis() { (umask 007 && runuser -u mutis -- env MUTIS_CONFIG=/etc/mutis/mutis.toml "$@"); }
 
+# The live release's fingerprinted files go along for one release: a page loaded before the switch still asks for them.
+live=$(readlink "$app/current" 2>/dev/null || true)
+if [ -n "$live" ] && [ "$live" != "releases/$id" ] && [ -d "$app/$live/dist" ] && [ -f "$new/deploy/scripts/carry-assets.py" ]; then
+  python3 -I "$new/deploy/scripts/carry-assets.py" "$app/$live/dist" "$new/dist" || echo "notice: carry-assets failed; pages loaded before the switch may miss a file"
+fi
 # The text files' .br copies, with the server's Node (provision.sh), where the build had none to make them; the
 # .gz copies come with the build. Never in the hash manifest; without them Caddy compresses on the fly as before.
 if [ -f "$new/deploy/scripts/precompress.py" ]; then

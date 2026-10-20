@@ -119,8 +119,9 @@ workstation can't pass them by accident); then it builds here with the live `/et
 release id ends in a hash of what the build serves, so the same commit built with a new
 `public_origin`, `security_drop_url` or copy-variant setting (`gates`, `features`, `hosting`; the
 manifest records these for verify-deploy) is a new release that really goes live. Then one tarball
-over one multiplexed SSH connection; on the server `activate-release.sh` adds the Brotli copies of the text files
-that the build couldn't make (`deploy/scripts/precompress.py`, with the server's Node), fixes ownership, makes the
+over one multiplexed SSH connection; on the server `activate-release.sh` keeps the live release's fingerprinted files
+for one more release (`carry-assets.py`: a page loaded before the switch still asks for them), adds the Brotli copies
+of the text files that the build couldn't make (`precompress.py`, with the server's Node), fixes ownership, makes the
 sidecar prove it runs the pinned ootle-wasm, checks the config, migrates the database with
 mutis-chain stopped (the migration backs it up; copies are made 0600), switches `current` with one
 rename, restarts what is enabled,
