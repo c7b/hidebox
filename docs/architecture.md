@@ -27,7 +27,7 @@ of every route is in [api.md](api.md); what each guarantee defends against is in
  └──────────────────────────┘           │ sponsor grants, payment proofs, canaries, SealLog      │
              ▲                          │ checkpoints, decoys                                    │
              │                          │   ├─► sidecar (Node 20, permission model, ootle-wasm)  │
-             │                          │   └─► tari_ootle_walletd 0.46 (user drive, :5100)      │
+             │                          │   └─► tari_ootle_walletd 0.47 (user drive, :5100)      │
              │                          └───────────────┬──────────────────────────────────────┘
              └───────────── Esmeralda ◄─────────────────┘
 ```
