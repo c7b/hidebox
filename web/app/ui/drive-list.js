@@ -46,7 +46,7 @@ function rowMenu(drive) {
 }
 
 // Every row and folder action, by name. Share and Copy a once link are the share dialog's
-// (ui/share-dialog.js); the rest live in drive-menu.js and activity.js.
+// (ui/share-dialog.js); the rest live in drive-menu.js (a file's name opens it there) and activity.js.
 export async function act(drive, value, items, trigger = null) {
   try {
     if (value === 'share' || value === 'once') {
@@ -55,7 +55,7 @@ export async function act(drive, value, items, trigger = null) {
     }
     if (value === 'stop-share' || value === 'stop-sell' || value === 'sell-again') return (await import('./share-dialog.js')).stopFromMenu(drive, items[0], value);
     if (value === 'activity') return (await import('./activity.js')).openActivity(drive, items[0]);
-    return (await import('./drive-menu.js')).menuAction(drive, value, items);
+    return (await import('./drive-menu.js')).menuAction(drive, value, items, trigger);
   } catch (e) {
     toast(t('drive.oops'), { type: 'error', description: e?.message });
   }
@@ -114,7 +114,7 @@ function fileRow(drive, it) {
   const meta = [opens, ends].filter(Boolean).join(' · ');
   const name = it.folder
     ? h('a', { class: 'name', href: drive.folderPath(it.id), 'data-nav': '' }, itemName(it))
-    : h('button', { class: 'name link-plain', type: 'button', 'data-open': null, onclick: () => act(drive, 'download', [it]) }, itemName(it));
+    : h('button', { class: 'name link-plain', type: 'button', 'data-testid': 'file-open', onclick: (e) => act(drive, 'open', [it], e.currentTarget) }, itemName(it));
   const none = () => h('span', { class: 'sr-only' }, t('drive.state.none'));
   return h('tr', { 'data-id': it.id, 'data-testid': 'file-row', 'data-name': itemName(it), class: r.kind === 'ended' ? 'row-ended' : null },
     h('td', {}, h('button', { class: 'checkbox', type: 'button', 'aria-checked': 'false', 'aria-label': t('drive.sel.pick', { name: itemName(it) }) })),

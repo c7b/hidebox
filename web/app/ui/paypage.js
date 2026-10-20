@@ -306,6 +306,7 @@ export async function payPage(root, cfg, shareId) {
         } else {
           const parts = await fetchContent(opened);
           P.opened = { file: { name: opened.meta.name || t('buy.unnamed_file'), size: opened.meta.size ?? 0, parts } };
+          P.show = true;   // a paid file shows itself once it opens (the preview, once the page has drawn its row)
         }
         remember('opened');
         // On a phone the files sit under the summary: bring them into view once they draw.
@@ -368,8 +369,13 @@ export async function payPage(root, cfg, shareId) {
       content = keep(P.panel.el);
     } else if (P.opened?.file) {
       const f = P.opened.file;
+      const see = h('button', { type: 'button', class: 'link-plain name', 'data-testid': 'pay-file-open', onclick: (e) => showFile(e.currentTarget) }, sanitizeFileName(f.name));
+      if (P.show) {
+        P.show = false;
+        requestAnimationFrame(() => showFile(see));
+      }
       content = h('ul', { class: 'preview-list', role: 'list', 'data-testid': 'pay-file' },
-        h('li', {}, icon('file'), h('span', { class: 'name' }, sanitizeFileName(f.name)), h('span', { class: 'size' }, formatBytes(f.size)),
+        h('li', {}, icon('file'), see, h('span', { class: 'size' }, formatBytes(f.size)),
           button(t('buy.save'), { variant: 'ghost', size: 'sm', glyph: 'download', testid: 'pay-save', 'aria-label': t('buy.save_one', { name: sanitizeFileName(f.name) }), onclick: () => saveFile(f.parts, f.name) })));
     } else {
       const paid = phase === 'open';
@@ -384,6 +390,15 @@ export async function payPage(root, cfg, shareId) {
           h('p', { class: 'card-description', 'data-testid': 'pay-what' }, folder ? t('buy.count', { count: P.teaser.count ?? 0, size }) : t('buy.about', { size }))),
         h('div', { class: 'card-content stack' }, content)),
       P.opened?.folder ? null : h('p', { class: 'small muted' }, t('fv.scan'))); // the folder panel says it once
+  }
+
+  // The paid file in the shared preview (ui/lightbox.js): what it shows comes from its bytes, never its name.
+  async function showFile(trigger) {
+    const f = P.opened?.file;
+    if (!f) return;
+    const { openLightbox } = await import('./lightbox.js');
+    await openLightbox({ files: [{ name: sanitizeFileName(f.name), size: f.size, parts: f.parts }], read: async (x) => x.parts, returnFocus: trigger,
+      refocus: () => root.querySelector('[data-testid="pay-file-open"]') });
   }
 
   function otherBox(phase) {

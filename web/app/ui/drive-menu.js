@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // What a row's menu does to the owner's own items (16-drive-design §2, §5, §7; 16-drive-architecture
-// §2.4): Download, Rename, Move (it asks first when the folder has a link: "This shares it too"),
-// Delete it after… (a day, a week or {max_days} days; the file then leaves and gets its receipt, C42),
+// §2.4): Open (a file's name: the preview, ui/lightbox.js), Download, Rename, Move (it asks first when the
+// folder has a link: "This shares it too"), Delete it after… (a day, a week or {max_days} days; the file
+// then leaves and gets its receipt, C42),
 // Move to trash with Undo (its links stop now; it can come back for {trash_days} days, C47), and, from the
 // trash, bring back or delete now. Names change in this browser only: the server gets new ciphertext.
 import { formatDate, t } from '../lib/i18n.js';
@@ -52,6 +53,23 @@ async function download(drive, items) {
       toast(t('drive.toast.open_failed', { name: itemName(it) }), { type: 'error' });
     }
   }
+}
+
+// A file's name opens it in the preview (ui/lightbox.js): what it shows comes from the decrypted bytes, never the name,
+// and Download is always there. The arrows move through the files listed beside it, as shown (search hides some).
+async function open(drive, item, trigger) {
+  const rows = [...(trigger?.closest('tbody')?.querySelectorAll('tr[data-id]') ?? [])].filter((tr) => !tr.hidden);
+  let list = rows.map((tr) => drive.index.get(tr.dataset.id)).filter((x) => x && !x.folder);
+  if (!list.includes(item)) list = [item];
+  const [{ openLightbox }, { openKept, fetchContent }] = await Promise.all([import('./lightbox.js'), import('../lib/open.js')]);
+  return openLightbox({
+    files: list.map((it) => ({ name: itemName(it), saveAs: it.meta.kind === 'text' ? 'note.txt' : it.meta.name, size: it.meta.size ?? 0, it })),
+    at: list.indexOf(item),
+    read: async (f, onProgress) => fetchContent(await openKept(drive.identity, f.it.row, drive.headers()), { onProgress }),
+    problem: (e) => errorAlert(e),
+    returnFocus: trigger,
+    refocus: (f) => document.querySelector(`[data-testid="file-row"][data-id="${CSS.escape(f.it.id)}"] [data-testid="file-open"]`),
+  });
 }
 
 function rename(drive, item) {
@@ -236,9 +254,10 @@ function remove(drive, items, { fromTrash = false } = {}) {
   }));
 }
 
-export async function menuAction(drive, value, items) {
+export async function menuAction(drive, value, items, trigger = null) {
   const list = items.filter(Boolean);
   if (!list.length) return null;
+  if (value === 'open') return open(drive, list[0], trigger);
   if (value === 'download') return download(drive, list);
   if (value === 'rename') return rename(drive, list[0]);
   if (value === 'move') return move(drive, list);

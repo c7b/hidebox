@@ -55,6 +55,7 @@ viewer, is the product code unchanged.
 | `app.html`, `view.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`) |
 | `ui/widget.js`, `zone.js`, `sealing.js`, `card.js`, `rules.js`, `noise.js`, `recent.js` | the drop widget: zone, sealing progress (the ¡ mark), the locked card with its noise strip, the Change panel, recent drops |
 | `ui/scene.js` | the head of every app screen: the ghost in the pose of its rule (cloned from the page's `#ghost-tpl`), the screen's line and the ghost's sentence; Tari™ words in Tari purple |
+| `ui/lightbox.js`, `css/lightbox.css`, `lib/sniff.js` | the file preview (docs/review/preview-1.md): one lightbox for a drive file's name, a folder visit's files and a paid file once it opens; the kind comes from the decrypted bytes (`sniff.js`: png, jpeg, gif, webp, avif in an `<img>`; SVG drawn into a canvas; UTF-8 text as text nodes; the rest download only), Download always there; loaded the first time a file opens |
 | `ui/view.js` | the viewer and the gone page: every state of spec §12.3.2 on the ghost, the goodbye receipt (on chain or pending), previews (lib/preview.js), the program warning, `/t` deliveries |
 | `ui/known.js` | "What we know about this link", the glass box |
 | `ui/locker.js`, `keyflow.js`, `locker-ctx.js` | `/locker` (first screen: its three things by name; a drop link asks nothing first), the key (save, restore one tap away, the one-time prompt with Later), opening a locker only when something needs it |
@@ -69,7 +70,7 @@ viewer, is the product code unchanged.
 | `css/widget.css`, `css/parts.css`, `css/app.css` | what a first drop needs; the components beyond it; app pages. Shared tokens only; `md-` for the widget, `a-` for app pages and shared components |
 | `i18n/en.json` | the copy deck (11-brand §8–§14 with 12-integration's terms); every number is a `{variable}` from `/config` or computed |
 | `i18n/widget-en.json`, `subset.py` | the strings a first drop needs, generated from the full dictionary |
-| `ui/tests/` | `run.py` (the command above), `flows.py`, `flows_drive.py` (the drive), `cdp.py` (DevTools over a pipe), `realize.py`, `devserver.py` (the dev server in another payment mode), `drivefake.py` (the server lane's folder API in front of the dev server until it has `features.folders`) |
+| `ui/tests/` | `run.py` (the command above), `flows.py`, `flows_drive.py` (the drive), `flows_preview.py` (the preview with the hostile fixtures of `tests/fixtures/preview`), `cdp.py` (DevTools over a pipe), `realize.py`, `devserver.py` (the dev server in another payment mode), `drivefake.py` (the server lane's folder API in front of the dev server until it has `features.folders`) |
 | `shots/` | curated screenshots (WebP) from `run.py --shots`; test evidence, not served (NOTES-ui.md asks deploy to skip it) |
 | `ACCEPTANCE.md`, `NOTES-ui.md` | acceptance evidence; requests to other builders and decisions |
 

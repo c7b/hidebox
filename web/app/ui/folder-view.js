@@ -2,14 +2,14 @@
 // The folder viewer (16-drive-design §5, 16-drive-architecture §2.5): what someone sees after
 // opening a folder link, in the drive's look. Every name below the folder is opened in this browser from
 // the folder's key. One open is one visit of retention.ticket_s, shown as a countdown; inside it, Open a
-// file (a preview for pictures, video, sound and plain text), Save one, or Download all as one ZIP built
+// file (the shared preview, ui/lightbox.js), Save one, or Download all as one ZIP built
 // here (lib/zip.js) when the folder fits folders.zip_max_bytes (on phones folders.zip_max_bytes_phone);
 // beyond that, one by one. Used by the link page (/s/<id>, view.html) and by the drive's Received.
 import { BRAND, formatBytes, formatDate, t } from '../lib/i18n.js';
 import { checkRisky, sanitizeFileName } from '../lib/filetype.js';
 import { saveFile } from '../lib/download.js';
 import { filesBelow, pathTo, readNode } from '../lib/folder-open.js';
-import { h, icon, init, openModal, wordmark } from './behaviors.js';
+import { h, icon, init, wordmark } from './behaviors.js';
 
 const MiB = 1024 * 1024;
 const TICK_MS = 15000;
@@ -118,7 +118,7 @@ export function folderPanel(opened, { cfg, heading = 'h1', onSaveToDrive = null 
   function row(node) {
     const name = nameOf(node);
     const risk = node.folder ? null : checkRisky(name, null);
-    const open = h('button', { type: 'button', class: 'link-plain name', 'data-testid': 'fv-open', onclick: () => (node.folder ? (at = node, draw()) : preview(node)) }, name);
+    const open = h('button', { type: 'button', class: 'link-plain name', 'data-testid': 'fv-open', onclick: (e) => (node.folder ? (at = node, draw()) : preview(node, e.currentTarget)) }, name);
     const meta = node.folder ? t('fv.items', { count: node.children.length }) : formatBytes(node.size);
     return h('tr', { 'data-testid': 'fv-row', 'data-name': name, 'data-kind': node.folder ? 'folder' : 'file' },
       h('td', {}, h('div', { class: 'file-name' }, icon(fileGlyph(node)),
@@ -193,35 +193,13 @@ export function folderPanel(opened, { cfg, heading = 'h1', onSaveToDrive = null 
     }, t('fv.keeping'));
   }
 
-  async function preview(node) {
-    const name = nameOf(node);
-    const body = h('div', { class: 'stack fv-preview-body', 'data-state': 'loading' }, h('p', { class: 'row muted' }, spinner(), t('fv.opening')));
-    const box = h('div', { class: 'dialog', role: 'dialog', id: 'fv-preview', hidden: true, 'data-size': 'lg', 'data-testid': 'fv-preview' },
-      h('div', { class: 'dialog-header' }, h('h2', { class: 'dialog-title', tabindex: '-1', 'data-autofocus': '' }, name),
-        h('p', { class: 'dialog-description' }, formatBytes(node.size))),
-      body,
-      h('div', { class: 'dialog-footer' }, btn(t('drive.close'), { variant: 'outline', 'data-close': '' })),
-      h('button', { class: 'dialog-close', type: 'button', 'data-close': '', 'aria-label': t('drive.close') }, icon('x')));
-    document.getElementById('fv-preview')?.remove();
-    document.body.append(box);
-    init(box);
-    let revoke = null;
-    openModal(box, { onClose: () => { revoke?.(); setTimeout(() => box.remove(), 600); } });
-    try {
-      const parts = await read(node);
-      const risk = checkRisky(name, parts[0]?.subarray(0, 0x8006) ?? null);
-      const { makePreview } = await import('../lib/preview.js');
-      const shown = risk.risky || risk.active ? null : makePreview(parts, node.meta, { label: name });
-      revoke = shown?.revoke ?? null;
-      const save = btn(t('fv.save'), { glyph: 'download', testid: 'fv-preview-save', onclick: () => saveFile(parts, name) });
-      body.dataset.state = 'open';
-      body.replaceChildren(
-        shown ? h('div', { class: 'fv-media' }, shown.el) : h('div', { class: 'locked-note' }, icon(fileGlyph(node)), t(risk.risky ? 'fv.program' : 'fv.no_preview')),
-        h('div', { class: 'row' }, save));
-    } catch (e) {
-      body.dataset.state = 'error';
-      body.replaceChildren(await problem(e));
-    }
+  // Open a file: the shared preview (ui/lightbox.js), with the files beside it in this folder for the arrows. What
+  // it shows comes from the bytes, never the name; Download is always there.
+  async function preview(node, trigger) {
+    const files = at.children.filter((n) => !n.folder).map((n) => ({ name: nameOf(n), size: n.size, node: n }));
+    const { openLightbox } = await import('./lightbox.js');
+    return openLightbox({ files, at: files.findIndex((f) => f.node === node), read: (f, onProgress) => read(f.node, onProgress), problem, returnFocus: trigger,
+      refocus: (f) => [...tbody.querySelectorAll('[data-testid="fv-row"]')].find((r) => r.dataset.name === f.name)?.querySelector('[data-testid="fv-open"]') });
   }
 
   function tick() {
