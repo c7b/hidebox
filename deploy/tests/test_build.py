@@ -326,7 +326,7 @@ class BuildTest(unittest.TestCase):
         if node:
             self.build(node=node)
             self.assertTrue((hashed.parent / (hashed.name + ".br")).is_file())
-            self.assertTrue(list(dist.rglob("ootle_wasm_bg.*.wasm.br")))
+            self.assertTrue(list(dist.rglob("ootle_wasm_bg.wasm.br")), "the wasm too (Brotli in generic mode)")
 
     def test_sitemap_skips_404_and_noindex(self):
         self.build()

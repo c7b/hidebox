@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MIT
 """Content-hashed names for the files a build serves (tools/build.py's fingerprint step). Python standard library only.
 
-Every file that a page, stylesheet, script, SVG or the web manifest asks for by a local URL (stylesheets, scripts,
-images, fonts, sprites, JSON, wasm) gets a copy named NAME.<10 hex digits of a SHA-256>.EXT beside it, and every
-reference to it in dist/ is rewritten to that name: a relative reference stays relative, a query or #fragment stays.
+Every file that a page or the web manifest asks for by a local URL, directly or through the stylesheets, scripts and
+SVGs it loads (stylesheets, scripts, images, fonts, sprites, JSON, wasm), gets a copy named
+NAME.<10 hex digits of a SHA-256>.EXT beside it, and every reference to it in dist/ is rewritten to that name: a
+relative reference stays relative, a query or #fragment stays.
 A file's hash covers its bytes after its own references are rewritten, so a change in a file reaches every name that
 leads to it. Files that ask for each other (a cycle, or a sprite that names itself) share one hash of their joint
 content. Caddy keeps the hashed names a year, immutable (deploy/caddy/Caddyfile, @hashed): a name can only ever hold
@@ -171,7 +172,15 @@ def fingerprint(dist: Path) -> dict[str, str]:
                 raise ValueError(f"{f}: not UTF-8 text ({e.reason})") from e
     refs = {f: Refs(f, assets) for f in texts}
     edges = {f: refs[f].apply(texts[f])[1] for f in texts}
-    hashed = set().union(*edges.values()) if edges else set()
+    # What the pages and the web manifest reach, through every stylesheet, script and SVG on the way: a file only an
+    # unreached script names (a test module, the old /vendor/ copy of the shim) keeps its plain name only.
+    hashed: set[str] = set()
+    todo = [f for f in texts if f not in assets]
+    while todo:
+        for target in edges.get(todo.pop(), ()):
+            if target not in hashed:
+                hashed.add(target)
+                todo.append(target)
     names: dict[str, str] = {}
     final: dict[str, bytes] = {}
     for comp in components(sorted(hashed), {f: edges.get(f, set()) & hashed for f in hashed}):
