@@ -1,0 +1,137 @@
+# command: bash cf-audit/bin/sbx.sh p5-caddysym 120 -- bash /scratch/harness-01.sh  (script: agents/p5-caddysym/artifacts/harness-01.sh; input = release deploy/caddy/Caddyfile lines 47-316 with admin off, auto_https off, site address http://127.0.0.1:18080, /srv/mutis -> /work/srv/mutis)
+# harness source:
+#   #!/bin/bash
+#   # p5-caddysym independent repro: deployed Caddy 2.6.2 + release @status route, symlink in status root.
+#   set -u
+#   W=/work; mkdir -p $W/srv/mutis/status $W/srv/mutis/app/current/dist $W/xdg/data $W/xdg/config
+#   export XDG_DATA_HOME=$W/xdg/data XDG_CONFIG_HOME=$W/xdg/config MUTIS_HOST=localhost
+#   echo "== caddy sha256"; sha256sum /tools/caddy; /tools/caddy version
+#   # Build the config from the release Caddyfile: keep snippets and the main site block; drop global block, import, http redirect.
+#   python3 -I - <<'PY'
+#   src=open('/target/deploy/caddy/Caddyfile').read().split('\n')
+#   out=['{','\tadmin off','\tauto_https off','}']
+#   i=0; skip=False
+#   # lines 1-36 global block, 38-46 import + http redirect -> dropped; keep from line 47 on
+#   body='\n'.join(src[46:316])  # keep release lines 47-316: snippets + main site block; drop misdirected catch-all 317-333
+#   body=body.replace('{$MUTIS_HOST} {','http://127.0.0.1:18080 {',1).replace('/srv/mutis','/work/srv/mutis')
+#   open('/work/Caddyfile','w').write('\n'.join(out)+'\n'+body)
+#   PY
+#   echo "== diff release vs test config"; diff /target/deploy/caddy/Caddyfile /work/Caddyfile | head -60
+#   /tools/caddy adapt --config /work/Caddyfile --adapter caddyfile >/dev/null 2>$W/adapt.err; echo "adapt rc=$?"; tail -3 $W/adapt.err
+#   # Dummy key in Caddy-like storage
+#   K=$XDG_DATA_HOME/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test
+#   mkdir -p $K; chmod 0700 $XDG_DATA_HOME/caddy $XDG_DATA_HOME/caddy/certificates $XDG_DATA_HOME/caddy/certificates/acme-v02.api.letsencrypt.org-directory $K
+#   printf -- '-----BEGIN EC PRIVATE KEY-----\nDUMMY-NOT-A-REAL-KEY-p5-caddysym\n-----END EC PRIVATE KEY-----\n' > $K/dummy.test.key; chmod 0600 $K/dummy.test.key
+#   chmod 2775 $W/srv/mutis/status
+#   echo '{"ok":true}' > $W/srv/mutis/status/status.json
+#   ln -s $K/dummy.test.key $W/srv/mutis/status/evidence-archive-x.json
+#   ln -s $K/dummy.test.key $W/srv/mutis/status/evidence.json
+#   ln -s /work/Caddyfile $W/srv/mutis/status/releases.json
+#   echo "== status root"; ls -la $W/srv/mutis/status; ls -la $K
+#   /tools/caddy run --config /work/Caddyfile --adapter caddyfile >$W/caddy.log 2>&1 &
+#   for n in $(seq 1 50); do python3 -I -c 'import socket;socket.create_connection(("127.0.0.1",18080),0.2)' 2>/dev/null && break; sleep 0.1; done
+#   python3 -I - <<'PY'
+#   import http.client,hashlib
+#   key=open('/work/xdg/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key','rb').read()
+#   print("key sha256", hashlib.sha256(key).hexdigest(), len(key))
+#   for p in ['/status.json','/evidence-archive-x.json','/evidence.json','/releases.json','/evidence-archive-y.json']:
+#       c=http.client.HTTPConnection('127.0.0.1',18080,timeout=5); c.request('GET',p); r=c.getresponse(); b=r.read()
+#       print("GET",p,"->",r.status,"CT=",r.getheader('Content-Type'),"CL=",r.getheader('Content-Length'),"sha256=",hashlib.sha256(b).hexdigest(),"same_as_key=",b==key)
+#       if p!='/releases.json': print("   body:",b[:120])
+#   PY
+#   kill %1; echo "== caddy log tail"; tail -5 $W/caddy.log
+# output:
+== caddy sha256
+43c709fc86caeab63a9fc1677d15868039c4f4eaf3ef4e5c1328f46af799a589  /tools/caddy
+2.6.2
+== diff release vs test config
+1,4d0
+< # SPDX-License-Identifier: MIT
+< # mutis on Caddy 2.6 (spec §15.2). Installed as /etc/caddy/Caddyfile by deploy/scripts/provision.sh.
+< # MUTIS_HOST comes from /etc/mutis/caddy.env, which provision.sh writes from public_origin in
+< # /etc/mutis/mutis.toml. Headers and CSPs are spec §14.2, checked by tests/e2e/test_headers.py.
+6,45c2,3
+< 	# The admin API listens on a socket only root and caddy can reach, so no local user can
+< 	# reconfigure the web server (the default is an unauthenticated TCP port).
+< 	admin unix//run/caddy/admin.sock
+< 	servers {
+< 		protocols h1 h2
+< 		timeouts {
+< 			read_header 10s
+< 			read_body 120s
+< 			write 600s
+< 			idle 120s
+< 		}
+< 	}
+< 	# No access log anywhere. Errors only, with every request field that could identify a visitor
+< 	# or a link removed (spec §14.3). tests/e2e/test_logs.py checks the journal from outside.
+< 	log default {
+< 		output stderr
+< 		format filter {
+< 			wrap console
+< 			fields {
+< 				request>remote_ip delete
+< 				request>client_ip delete
+< 				request>remote_port delete
+< 				request>host delete
+< 				request>uri delete
+< 				request>headers delete
+< 				request>tls delete
+< 			}
+< 		}
+< 		level ERROR
+< 	}
+< }
+< 
+< # A move to a new domain adds its redirect blocks here (deploy/README.md, "Moving to a domain").
+< import /etc/caddy/mutis.d/*.caddy
+< 
+< # Plain HTTP only redirects (Let's Encrypt's HTTP challenge is answered before this block). Written
+< # out instead of Caddy's automatic redirect so that it, too, sends no Server header.
+< http://{$MUTIS_HOST} {
+< 	header -Server
+< 	redir https://{host}{uri} 308
+---
+> 	admin off
+> 	auto_https off
+85c43
+< {$MUTIS_HOST} {
+---
+> http://127.0.0.1:18080 {
+87c45
+< 	root * /srv/mutis/app/current/dist
+---
+> 	root * /work/srv/mutis/app/current/dist
+233c191
+< 		root * /srv/mutis/status
+---
+adapt rc=0
+{"level":"warn","ts":1792497781.1036556,"logger":"caddyfile","msg":"Caddyfile input is not formatted; run the 'caddy fmt' command to fix inconsistencies","file":"/work/Caddyfile","line":274}
+== status root
+total 4
+drwxrwsr-x 2 operator operator 120 Oct 20 06:03 .
+drwxr-xr-x 4 operator operator  80 Oct 20 06:03 ..
+lrwxrwxrwx 1 operator operator  98 Oct 20 06:03 evidence-archive-x.json -> /work/xdg/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key
+lrwxrwxrwx 1 operator operator  98 Oct 20 06:03 evidence.json -> /work/xdg/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key
+lrwxrwxrwx 1 operator operator  15 Oct 20 06:03 releases.json -> /work/Caddyfile
+-rw-r--r-- 1 operator operator  12 Oct 20 06:03 status.json
+total 4
+drwx------ 2 operator operator 60 Oct 20 06:03 .
+drwx------ 3 operator operator 60 Oct 20 06:03 ..
+-rw------- 1 operator operator 93 Oct 20 06:03 dummy.test.key
+key sha256 78a659d73a0a9833cd3196131f4c70da68b1734c70e245570d6705d7ac7dfa31 93
+GET /status.json -> 200 CT= application/json CL= 12 sha256= e5f1eb4d806641698a35efe20e098efd20d7d57a9b90ee69079d5bb650920726 same_as_key= False
+   body: b'{"ok":true}\n'
+GET /evidence-archive-x.json -> 200 CT= application/json CL= 93 sha256= 78a659d73a0a9833cd3196131f4c70da68b1734c70e245570d6705d7ac7dfa31 same_as_key= True
+   body: b'-----BEGIN EC PRIVATE KEY-----\nDUMMY-NOT-A-REAL-KEY-p5-caddysym\n-----END EC PRIVATE KEY-----\n'
+GET /evidence.json -> 200 CT= application/json CL= 93 sha256= 78a659d73a0a9833cd3196131f4c70da68b1734c70e245570d6705d7ac7dfa31 same_as_key= True
+   body: b'-----BEGIN EC PRIVATE KEY-----\nDUMMY-NOT-A-REAL-KEY-p5-caddysym\n-----END EC PRIVATE KEY-----\n'
+GET /releases.json -> 200 CT= application/json CL= 9813 sha256= 68050e416b793f0ad74a66661f611e94bda4c9675915fbe455c56249714bc556 same_as_key= False
+GET /evidence-archive-y.json -> 404 CT= None CL= 0 sha256= e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 same_as_key= False
+   body: b''
+== caddy log tail
+{"level":"error","ts":1792497782.0395331,"logger":"http.log.error","msg":"error handling handler error","request":{"remote_ip":"127.0.0.1","remote_port":"50064","proto":"HTTP/1.1","method":"GET","host":"127.0.0.1:18080","uri":"/evidence-archive-y.json","headers":{"Accept-Encoding":["identity"]}},"duration":0.000502915,"error":"{id=tk1md37rn} fileserver.(*FileServer).notFound (staticfiles.go:579): HTTP 404","first_error":{"msg":"{id=2eqpz1yi4} fileserver.(*FileServer).notFound (staticfiles.go:579): HTTP 404","status":404,"err_id":"2eqpz1yi4","err_trace":"fileserver.(*FileServer).notFound (staticfiles.go:579)"}}
+{"level":"info","ts":1792497782.2390122,"msg":"shutting down apps, then terminating","signal":"SIGTERM"}
+{"level":"warn","ts":1792497782.2390654,"msg":"exiting; byeee!! 👋","signal":"SIGTERM"}
+{"level":"info","ts":1792497782.239227,"logger":"tls.cache.maintenance","msg":"stopped background certificate maintenance","cache":"0xc00031ed20"}
+{"level":"info","ts":1792497782.239293,"msg":"shutdown complete","signal":"SIGTERM","exit_code":0}

@@ -1,0 +1,84 @@
+Status: active
+Logging: off
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     LIMIT IN    Anywhere                   # ssh
+80/tcp                     ALLOW IN    Anywhere                   # mutis http
+443/tcp                    ALLOW IN    Anywhere                   # mutis https
+22/tcp (v6)                LIMIT IN    Anywhere (v6)              # ssh
+80/tcp (v6)                ALLOW IN    Anywhere (v6)              # mutis http
+443/tcp (v6)               ALLOW IN    Anywhere (v6)              # mutis https
+
+---IPT
+-N ufw-before-output
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -j REJECT --reject-with tcp-reset
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 5100 -j REJECT --reject-with tcp-reset
+-A ufw-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 0 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 999 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 8787 -j REJECT --reject-with tcp-reset
+-A ufw-before-output -o lo -p tcp -m tcp --dport 18143 -m owner --uid-owner 0 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 18143 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 18143 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw-before-output -o lo -p tcp -m tcp --dport 18143 -j REJECT --reject-with tcp-reset
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 0 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 5100 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 5100 -j REJECT --reject-with tcp-reset
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 0 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 8787 -m owner --uid-owner 999 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 8787 -j REJECT --reject-with tcp-reset
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 18143 -m owner --uid-owner 0 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 18143 -m owner --uid-owner 1000 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 18143 -m owner --uid-owner 1002 -j ACCEPT
+-A ufw6-before-output -o lo -p tcp -m tcp --dport 18143 -j REJECT --reject-with tcp-reset
+drwxrwsr-x mutis:mutis /srv/mutis/status
+-rw-r--r-- drive:mutis /srv/mutis/status/evidence.json
+-rw-r--r-- root:mutis /srv/mutis/status/releases.json
+-rw-r--r-- mutis:mutis /srv/mutis/status/status.json
+drwx------ caddy:caddy /var/lib/caddy
+drwx------ caddy:caddy /var/lib/caddy/.config
+drwx------ caddy:caddy /var/lib/caddy/.config/caddy
+drwx------ caddy:caddy /var/lib/caddy/.local
+drwx------ caddy:caddy /var/lib/caddy/.local/share
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/acme
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/acme/acme-v02.api.letsencrypt.org-directory
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/acme/<ca>/<name>
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/certificates
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/certificates/<ca>/<name>
+drwx------ caddy:caddy /var/lib/caddy/.local/share/caddy/locks
+drwx------ caddy:caddy /var/lib/caddy/.step
+/etc/systemd/system/mutis-chain.service:User=drive
+/etc/systemd/system/mutis-chain.service:SupplementaryGroups=mutis
+/etc/systemd/system/mutis-chain.service:ReadWritePaths=/srv/mutis/data/db /srv/mutis/status
+/etc/systemd/system/mutis-health.service:User=mutis
+/etc/systemd/system/mutis-health.service:ReadWritePaths=/srv/mutis/data /srv/mutis/status
+/etc/systemd/system/mutis-evidence.service:User=drive
+/etc/systemd/system/mutis-evidence.service:SupplementaryGroups=mutis
+/etc/systemd/system/mutis-evidence.service:ReadWritePaths=/srv/mutis/status /srv/mutis/data/db
+242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2 SCHEMA_VERSION = 6 strict_lt_gate=1
+460a3891b07b1c144e338009c71f95f483e1d59e-cb784e1ea SCHEMA_VERSION = 6 strict_lt_gate=1
+62004f5f90bf6bd8ef728ade34aa246d9901a0c7-cf3fa744c SCHEMA_VERSION = 6 strict_lt_gate=1
+72f387175c628cd58cabc97b50d4b2e6aede668b-cedd0bb93 SCHEMA_VERSION = 6 strict_lt_gate=1
+bfd72c8a4fd605ebdcc617423e2cf249a2d6ded6-c0c434b1c SCHEMA_VERSION = 6 strict_lt_gate=1
+
+2026-10-19T22:15:56Z 13382aff82c3c50316bf61f76d5d8d250fb05895-c195a6cb7
+2026-10-19T23:31:39Z 72f387175c628cd58cabc97b50d4b2e6aede668b-cedd0bb93
+2026-10-20T02:09:48Z 242eaaf4265a2c1b7bc66fd1f22b0d952ad18718-c327b17a2
+2026-10-20T02:16:17Z 62004f5f90bf6bd8ef728ade34aa246d9901a0c7-cf3fa744c
+2026-10-20T02:35:26Z 460a3891b07b1c144e338009c71f95f483e1d59e-cb784e1ea
+2026-10-20T07:05:31Z bfd72c8a4fd605ebdcc617423e2cf249a2d6ded6-c0c434b1c

@@ -1,0 +1,33 @@
+$ bash sbx.sh p5-stream 300 -- python3 -I /scratch/harness-01.py /target
+event=chain.loop_error
+event=chain.loop_error
+event=chain.loop_error
+event=chain.loop_error
+event=chain.loop_error
+event=chain.loop_error
+root /target RLIMIT_AS (4294967296, 4294967296)
+== part A: parse_stream directly
+P1 string nonce -> TypeError isIndexerError= False string argument without an encoding
+P2 int nonce 5e7 -> returned; hex len 100000000 tracemalloc peak 150000727
+P3 top-level [] -> AttributeError isIndexerError= False 'list' object has no attribute 'get'
+P4 non-JSON -> JSONDecodeError isIndexerError= False Expecting value: line 1 column 1 (char 0)
+P5 int nonce 9999999999 -> MemoryError isIndexerError= False 
+== part B: hostile-first
+ tick 0: events=['chain.loop_error'] chain_utxos=0 cursors={} mirror_ok_at=None
+ tick 1: events=['chain.loop_error'] chain_utxos=0 cursors={} mirror_ok_at=None
+ tick 2: events=['chain.loop_error'] chain_utxos=0 cursors={} mirror_ok_at=None
+ direct mirror(): raised TypeError isIndexerError= False
+== part B: hostile-last
+ tick 0: events=['chain.loop_error'] chain_utxos=3 cursors={'indexer-1': {'228': 1, '247': 1, '72': 1}} mirror_ok_at=None
+ tick 1: events=['chain.loop_error'] chain_utxos=3 cursors={'indexer-1': {'228': 1, '247': 1, '72': 1}} mirror_ok_at=None
+ tick 2: events=['chain.loop_error'] chain_utxos=3 cursors={'indexer-1': {'228': 1, '247': 1, '72': 1}} mirror_ok_at=None
+ direct mirror(): raised TypeError isIndexerError= False
+== part C: proposed fixed parse_stream
+ fixture equal to current: True
+  P1 -> IndexerError bad_upstream
+  P2 -> IndexerError bad_upstream
+  P3 -> IndexerError bad_upstream
+  P4 -> IndexerError bad_upstream
+  P5 -> IndexerError bad_upstream
+  bool tag -> IndexerError bad_upstream
+exit=0

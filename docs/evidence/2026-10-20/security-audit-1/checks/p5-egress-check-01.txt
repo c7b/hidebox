@@ -1,0 +1,11 @@
+$ bash cf-audit/bin/sbx.sh p5-egress 300 -- python3 -I /scratch/harness-01.py   (target = audited snapshot 460a389 at /target)
+size_stored 311312 today 2026-10-11 cap 10737418240
+A trial 0: 200s=24/24 bytes_served=7471488 egress_bytes=1245248 (= 4 downloads) lost=20 statuses [200]
+A trial 1: 200s=24/24 bytes_served=7471488 egress_bytes=933936 (= 3 downloads) lost=21 statuses [200]
+A trial 2: 200s=24/24 bytes_served=7471488 egress_bytes=933936 (= 3 downloads) lost=21 statuses [200]
+B trial 0 (1 left): 200s=1/24 over_cap_bytes=0 egress_bytes=10737418240 cap=10737418240 statuses [200, 429]
+B trial 1 (1 left): 200s=1/24 over_cap_bytes=0 egress_bytes=10737418240 cap=10737418240 statuses [200, 429]
+B trial 2 (1 left): 200s=1/24 over_cap_bytes=0 egress_bytes=10737418240 cap=10737418240 statuses [200, 429]
+B control sequential: 200s=1/24 egress_bytes=10737418240 statuses [200, 429]
+A control sequential: 200s=24/24 egress_bytes=7471488 (= 24 downloads)
+exit=0

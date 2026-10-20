@@ -1,0 +1,30 @@
+# What was applied on the server (security-audit-1), 2026-10-20 12:22 UTC. Read-only checks before; no service restarted.
+
+## Before (saved on the server as /var/backups/mutis/status-mount-before.20261020T122234Z.txt)
+findmnt -T /srv/mutis/status   -> part of /, no nosymfollow
+/srv/mutis/status              -> drwxrwsr-x mutis:mutis (2775)
+
+## Applied
+install -m 0644 deploy/systemd/srv-mutis-status.mount /etc/systemd/system/srv-mutis-status.mount   (a new file; nothing replaced)
+systemctl daemon-reload
+systemctl enable --now srv-mutis-status.mount
+  Created symlink '/etc/systemd/system/local-fs.target.wants/srv-mutis-status.mount' -> '/etc/systemd/system/srv-mutis-status.mount'.
+
+## After
+host:            /srv/mutis/status rw,nosuid,nodev,noexec,relatime,nosymfollow,...
+Caddy's own mount namespace (nsenter -t <caddy MainPID> -m findmnt -T /srv/mutis/status):
+                 /srv/mutis/status rw,nosuid,nodev,noexec,relatime,nosymfollow,...   (the running Caddy sees it; no restart)
+systemctl is-active caddy mutis-api mutis-chain walletd srv-mutis-status.mount -> active x5
+
+## Probe (a link to a harmless temp file, removed at once)
+ln -s <tmpfile containing "audit-probe-not-secret"> /srv/mutis/status/evidence-archive-auditprobe.json
+root reads the link:   cat: ...: Too many levels of symbolic links
+caddy reads the link:  cat: ...: Too many levels of symbolic links
+public GET https://hidebox.app/evidence-archive-auditprobe.json -> 500, empty body (before the mount this name would have served the target)
+control: public GET https://hidebox.app/status.json -> 200
+link and temp file removed; /srv/mutis/status holds evidence.json, releases.json, status.json
+
+## Left for the next deploy (the release carries them)
+the code fixes in server/, web/app/, tools/ and deploy/scripts/ (healthcheck.py, collect-evidence.py and
+notarize-release.py run from the release); provision.sh's status_mount step finds the unit already installed and
+enabled; privilege-check.sh's new checks run with the next provision.

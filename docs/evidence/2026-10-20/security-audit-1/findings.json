@@ -1,0 +1,1522 @@
+[
+ {
+  "verdict": "confirmed",
+  "fingerprint": "deploy/caddy/Caddyfile:status-root-symlink-serves-caddy-private-files",
+  "title": "Caddy follows symlinks in /srv/mutis/status, which drive can write, so drive can publish files only caddy can read, such as the site's TLS private key",
+  "description": "The public @status route (/evidence.json, /evidence-archive-*.json, /status.json, /releases.json) serves files with file_server from /srv/mutis/status. That directory is mode 2775 mutis:mutis. drive belongs to group mutis, and mutis-chain and mutis-evidence both have the directory in ReadWritePaths; mutis-health, running as mutis, can write it too. Because the directory is group-writable and not sticky, drive can create new names there and can also unlink and replace evidence.json or status.json. The deployed Caddy 2.6.2 binary, run with the release Caddyfile, follows a symlink placed at one of these names and returns the target's bytes with 200. In the test, a link to a dummy 0600 key in a 0700 directory laid out like Caddy's certificate storage was served at both /evidence-archive-x.json and /evidence.json, and the served bytes hashed the same as the key file. Caddy opens the file as user caddy, which owns /var/lib/caddy (owner-observed: 0700 caddy:caddy all the way down to certificates/<ca>/<name>). Creating a symlink needs no access to its target. fs.protected_symlinks does not apply, because the directory is not world-writable with the sticky bit. So code running as drive (or mutis) can publish the site certificate's private key, the ACME account key or Caddy's autosaved config to anyone on the internet. These are files the service users cannot read themselves. With the TLS key, an attacker who has a network position can impersonate the site and serve altered JavaScript, which defeats the client-side encryption model.",
+  "root_cause": "Caddy serves a public root that lower-trust service users (drive and mutis) can write. Caddy 2.6 file_server has no option to refuse symlinks, so whoever writes that directory can choose any path Caddy can read and have it served publicly.",
+  "intended_behavior": "Only the regular status JSON files written by the status writers should be reachable at the @status paths. A service user that can write status files should never be able to make Caddy serve a file outside /srv/mutis/status, and certainly not Caddy's own private storage.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "deploy/systemd/mutis-chain.service",
+    "line": 25,
+    "scope": "[Service] ReadWritePaths (User=drive, SupplementaryGroups=mutis)",
+    "description": "The chain worker and its sidecar run as drive in group mutis with /srv/mutis/status writable. mutis-evidence.service (lines 10 and 21) grants drive the same, and mutis-health.service (lines 9 and 19) grants it to mutis. Code running under these units can create, unlink or replace entries there, including symlinks."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/scripts/provision.sh",
+    "line": 83,
+    "scope": "users_and_dirs",
+    "description": "install -d -m 2775 -o mutis -g mutis /srv/mutis/status: group-writable, setgid, not sticky. Any member of group mutis (drive) can add names and remove or replace other users' files. Owner-observed live state matches: drwxrwsr-x mutis:mutis."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/caddy/Caddyfile",
+    "line": 148,
+    "scope": "@status matcher",
+    "description": "Maps the public paths /evidence.json, /evidence-archive-*.json, /status.json and /releases.json to the status root. The wildcard accepts names that no writer produces (tests/e2e/headers_spec.py:104 expects /evidence-archive-x.json to be a 404), and the fixed names can be replaced by a group member."
+   },
+   {
+    "kind": "sink",
+    "file": "deploy/caddy/Caddyfile",
+    "line": 234,
+    "scope": "handle @status { root * /srv/mutis/status; file_server }",
+    "description": "file_server, running as caddy, opens the requested name, follows a symlink to any path caddy can read (including /var/lib/caddy, its ReadWritePaths in caddy.service.d/mutis.conf line 20) and sends the contents to the public with 200."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "deploy/caddy/Caddyfile",
+    "line": 233,
+    "description": "root * /srv/mutis/status for the @status handle; the installed /etc/caddy/Caddyfile is byte-identical (owner-observed)."
+   },
+   {
+    "file": "deploy/systemd/mutis-evidence.service",
+    "line": 21,
+    "description": "ReadWritePaths=/srv/mutis/status for a second drive-run unit (User=drive at line 10)."
+   },
+   {
+    "file": "deploy/systemd/caddy.service.d/mutis.conf",
+    "line": 20,
+    "description": "ReadWritePaths=/var/lib/caddy: Caddy's certificates, ACME account and autosave live there and caddy can read them. Nothing in the unit hides them from file_server. Owner-observed: every level is drwx------ caddy:caddy, so drive and mutis cannot read them directly."
+   },
+   {
+    "file": "deploy/sysctl/90-mutis.conf",
+    "line": 24,
+    "description": "fs.protected_symlinks=1 only restricts following symlinks in sticky, world-writable directories. /srv/mutis/status is 2775 (not sticky, not o+w), so it gives no protection here."
+   },
+   {
+    "file": "deploy/systemd/mutis-api.service",
+    "line": 25,
+    "description": "The internet-facing API (mutis) does not have /srv/mutis/status writable, so the writers are limited to mutis-chain and mutis-evidence (drive) and mutis-health (mutis)."
+   },
+   {
+    "file": "tests/e2e/headers_spec.py",
+    "line": 104,
+    "description": "The project expects /evidence-archive-x.json to return 404: no writer is meant to create evidence-archive-* names, yet the route accepts them."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authorization_role",
+    "description": "The attacker must already execute code (or write to the filesystem) as drive in mutis-chain or mutis-evidence, or as mutis in mutis-health. No path from the internet to that was established in this check; this is a privilege-boundary escalation from those service users to caddy's secrets."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "Owner-observed live state: /srv/mutis/status is drwxrwsr-x mutis:mutis, the installed Caddyfile is identical to the release, Caddy is 2.6.2 (same SHA-256 as the tested binary), and /var/lib/caddy is 0700 caddy:caddy. No LSM (e.g. AppArmor) confinement of caddy was observed or ruled out on the host."
+   },
+   {
+    "kind": "data_state",
+    "description": "The attacker needs the target path. Caddy's storage layout is predictable from the public host name (owner listing shows .local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/<name>/)."
+   },
+   {
+    "kind": "network_routing",
+    "description": "Reading the leaked key needs only a public GET. Using the key to impersonate the site additionally needs a network position or DNS control."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "Code running as service user drive (group mutis), for example inside the chain worker or evidence collector, which can write /srv/mutis/status but cannot read /var/lib/caddy.",
+   "payloads": [
+    "ln -s /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/<host>/<host>.key /srv/mutis/status/evidence-archive-x.json",
+    "GET /evidence-archive-x.json"
+   ],
+   "instructions": [
+    "Inside the approved sandbox (no network), start the deployed Caddy 2.6.2 binary (/tools/caddy, sha256 43c709fc…a589) with the release Caddyfile. The only changes: admin off, auto_https off, loopback HTTP port 18080, /srv/mutis remapped to /work/srv/mutis, and the mutis.d import, HTTP-redirect and misdirected catch-all blocks dropped (the diff is recorded in the artifact).",
+    "Create a dummy key file (not a real key), mode 0600, in 0700 directories at XDG_DATA_HOME/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key.",
+    "In the 2775 status root, create symlinks evidence-archive-x.json and evidence.json pointing to that key file, plus a regular status.json as a control.",
+    "GET /status.json, /evidence-archive-x.json and /evidence.json from 127.0.0.1:18080, and compare the SHA-256 of the served body with the key file."
+   ],
+   "observed_result": "/status.json returned 200 (control). /evidence-archive-x.json and /evidence.json each returned 200 OK, Content-Length 93, Content-Type application/json, and the body was the dummy PEM key. The served body's SHA-256 (3cd41981…be01b) equals the key file's. A symlink to a directory returned 404. The cross-uid part (drive creates the link, caddy reads its own 0700 storage) was not run in the single-uid sandbox; it follows from the owner-observed modes and from POSIX symlink semantics. Artifact: agents/v3-caddysym/artifacts/check-01.txt."
+  },
+  "remediation": {
+   "strategy": "Serve the status files from a directory that no lower-trust user can write. drive and mutis write into a staging directory. A trusted root-run step (an ExecStartPost or a path unit) copies each expected name: it opens with O_NOFOLLOW, requires S_ISREG and nlink==1, and writes into a root:root 0755 /srv/mutis/status that Caddy serves, replacing atomically. In the Caddyfile, list exact names only and drop the /evidence-archive-* wildcard that no writer produces. Until then, give each served file a single owner in a non-group-writable directory. Caddy 2.6 file_server has no setting to refuse symlinks, so the fix has to be on the filesystem side.",
+   "code_changes": [
+    {
+     "file_name": "deploy/caddy/Caddyfile",
+     "fixed_code": "\t@status path /evidence.json /status.json /releases.json\n\t# /srv/mutis/status is root:root 0755, filled only by mutis-status-publish (regular files, O_NOFOLLOW)"
+    },
+    {
+     "file_name": "deploy/scripts/provision.sh",
+     "fixed_code": "  install -d -m 2770 -o mutis -g mutis /srv/mutis/status-in\n  install -d -m 0755 -o root -g root /srv/mutis/status"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "Requires prior code execution or file write as drive (chain worker or evidence collector) or as mutis (healthcheck). No internet-reachable route to that was shown. Once that foothold exists, the step is a single symlink and needs no race."
+   },
+   "impact": {
+    "score": "high",
+    "reason": "Publicly discloses Caddy-only secrets: the site's TLS private key, the ACME account key and the autosave config. With the TLS key and a network position, an attacker can impersonate the origin and serve altered JavaScript, defeating the client-side-encryption trust model. It also breaks the stated boundary that each service holds only its own authority."
+   },
+   "overall_severity": "medium"
+  },
+  "confidence": {
+   "score": "medium",
+   "reason": "Symlink following was reproduced with the exact deployed Caddy binary and the release Caddyfile route. Directory modes, unit grants and Caddy storage permissions are owner-observed and match source. The cross-uid step was not executed locally (single-uid sandbox), and host LSM confinement of caddy was not observed."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "deploy/scripts/healthcheck.py:write_json:tmp-symlink-follow-in-group-writable-status",
+  "title": "Status files are written through fixed temp names in a directory drive can write, so drive can redirect writes by mutis (health) and root (notarize-release)",
+  "description": "/srv/mutis/status is mode 2775 mutis:mutis with no sticky bit. The owner observed drwxrwsr-x on the live host. drive is in group mutis, and both mutis-chain and mutis-evidence run as drive with this directory in ReadWritePaths. Two higher-privilege writers save their files there through a fixed, predictable temp name. Both open that name in a way that follows a symlink and then call chmod by path. (1) Every 5 minutes, healthcheck.write_json runs as mutis with /srv/mutis/data writable. It writes status.json.tmp with O_WRONLY|O_CREAT|O_TRUNC (no O_NOFOLLOW or O_EXCL) and then calls os.chmod(tmp, 0o644). If drive plants status.json.tmp as a symlink, mutis truncates and overwrites the link's target (for example a stored ciphertext under data/blobs or a backup under data/backup) with health JSON and sets it to 0644. If the target does not exist, mutis creates a new 0644 file there, inside blobs/. (2) After each deploy, deploy.sh runs notarize-release.py as root through sudo, outside any systemd sandbox. It reads /srv/mutis/status/releases.json, which drive can delete and replace with its own JSON because the directory is group-writable and not sticky. It then writes releases.json.tmp with Path.write_text and calls os.chmod(tmp, 0o644), and both follow a symlink. A link that drive planted makes root create or overwrite any path on the host, mode 0644. The written content keeps the JSON keys and values drive chose. The kernel's fs.protected_symlinks does not apply because the directory is neither sticky nor world-writable, and fs.protected_regular=2 covers only sticky directories. The live releases.json is root:mutis, so the root writer has run on the live host. The third writer, collect-evidence.py, runs as drive itself, so the same pattern there crosses no boundary.",
+  "root_cause": "Writers with more privilege than drive build a fixed temp name (path.name + '.tmp') inside a directory drive can write, without the sticky bit. They open it without O_NOFOLLOW or O_EXCL and chmod it by path, so they follow a symlink that another service user placed.",
+  "intended_behavior": "Only mutis may change files under data/blobs (provision.sh:80; privilege-check.sh:104 checks 'drive (group mutis) cannot add a file inside blobs/'). drive must not be able to make mutis or root write, create or chmod files outside the status files those writers own. A file written by root or mutis should never follow a link another user placed.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "deploy/systemd/mutis-chain.service",
+    "line": 12,
+    "scope": "[Service] User=drive",
+    "description": "The lower-trust workload: the chain worker and Node sidecar run as drive and parse upstream chain and indexer data. SupplementaryGroups=mutis (line 14) puts it in group mutis."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/systemd/mutis-chain.service",
+    "line": 25,
+    "scope": "ReadWritePaths",
+    "description": "/srv/mutis/status is writable inside drive's sandbox, so drive can create and unlink names there, including symlinks. mutis-evidence.service:21 grants drive the same access."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/scripts/provision.sh",
+    "line": 83,
+    "scope": "users_and_dirs",
+    "description": "The status directory is created mode 2775 mutis:mutis: writable by group mutis, setgid, not sticky. drive joins group mutis at line 73. The owner observed drwxrwsr-x mutis:mutis on the live host."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/scripts/deploy.sh",
+    "line": 113,
+    "scope": "post-smoke notarization",
+    "description": "Variant writer: after every deploy that passes the smoke test, notarize-release.py runs as root through sudo, with no systemd sandbox."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/scripts/notarize-release.py",
+    "line": 53,
+    "scope": "main",
+    "description": "Root reads the ledger drive can replace (line 36). It then writes releases.json.tmp with Path.write_text (O_CREAT|O_TRUNC, follows symlinks) and calls os.chmod(tmp, 0o644) at line 54. A planted link makes root create or overwrite any path with JSON that keeps drive's planted keys, mode 0644."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/systemd/mutis-health.service",
+    "line": 19,
+    "scope": "ReadWritePaths",
+    "description": "The health service runs as mutis (line 9) and may write all of /srv/mutis/data, including blobs/ and backup/, and /srv/mutis/status."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/scripts/healthcheck.py",
+    "line": 202,
+    "scope": "main",
+    "description": "write_json is called on <data>/../status/status.json with mode 0o644 on every 5-minute run (mutis-health.timer)."
+   },
+   {
+    "kind": "sink",
+    "file": "deploy/scripts/healthcheck.py",
+    "line": 182,
+    "scope": "write_json",
+    "description": "os.open(tmp, O_WRONLY|O_CREAT|O_TRUNC, mode) follows a status.json.tmp symlink planted by drive. Line 186 os.chmod(tmp, mode) follows it again, and line 187 os.replace moves the link onto status.json."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "deploy/scripts/healthcheck.py",
+    "line": 181,
+    "description": "The temp name is the predictable path.name + '.tmp' in the shared status directory."
+   },
+   {
+    "file": "deploy/scripts/notarize-release.py",
+    "line": 52,
+    "description": "The root writer uses the same fixed releases.json.tmp name in the same directory."
+   },
+   {
+    "file": "deploy/scripts/notarize-release.py",
+    "line": 36,
+    "description": "Root loads the existing releases.json and appends to it, so ledger content planted by drive (any extra JSON keys) is written back verbatim."
+   },
+   {
+    "file": "deploy/scripts/provision.sh",
+    "line": 79,
+    "description": "blobs/ and backup/ are 0700 mutis. Line 80 says only mutis may add or rename anything under blobs/, and every file there is 0600."
+   },
+   {
+    "file": "deploy/scripts/privilege-check.sh",
+    "line": 104,
+    "description": "The project's own invariant: drive (group mutis) cannot add a file inside blobs/. The health sink breaks it, creating a 0644 file there."
+   },
+   {
+    "file": "deploy/sysctl/90-mutis.conf",
+    "line": 24,
+    "description": "fs.protected_symlinks=1 restricts following only inside directories that are both sticky and world-writable. Line 26, fs.protected_regular=2, applies only to sticky directories. 2775 is neither, so the kernel does not block either sink."
+   },
+   {
+    "file": "deploy/scripts/collect-evidence.py",
+    "line": 89,
+    "description": "The same fixed-temp pattern (evidence.json.tmp, O_CREAT|O_TRUNC, then chmod at line 93), but mutis-evidence runs as drive (mutis-evidence.service:10), so drive gains nothing new from it."
+   },
+   {
+    "file": "server/mutis/cleanup.py",
+    "line": 69,
+    "description": "Calibration: cleanup (as mutis) unlinks the blobs of items in state 'doomed'. drive can write the shared DB (privilege-check.sh:71), so it can already get ciphertext deleted. The health sink adds a direct write, create and chmod inside blobs/ and backup/. The notarize sink adds a root-level file write."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "The attacker already runs code as drive inside mutis-chain or mutis-evidence, for example through the chain worker or Node sidecar parsing upstream data."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "/srv/mutis/status is mode 2775 without the sticky bit, and the drive units list it in ReadWritePaths. Both are owner-observed on the live host."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "Root variant: features.seallog and ootle.seallog_component are on, so notarize-release.py gets past its early return. The default in mutis.toml.example is false. The owner observed the live releases.json as root:mutis, which means it has already run as root on the live host."
+   },
+   {
+    "kind": "data_state",
+    "description": "Health variant against an existing blob: drive knows an item id from the shared DB. The blob path is blobs/<id[0:2]>/<id[2:4]>/<id>.bin (storage.py _dir)."
+   },
+   {
+    "kind": "timing_dependency",
+    "description": "Health variant: the next mutis-health run, at most 5 minutes later. Root variant: the next operator deploy (deploy.sh:113) of a release not yet in the ledger, with a committed SealLog notarization. A planted link stays until it is used."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "A process running as drive (group mutis) with write access to /srv/mutis/status and read access to the shared SQLite DB.",
+   "payloads": [
+    "os.symlink('/srv/mutis/data/blobs/ab/cd/<item_id>.bin', '/srv/mutis/status/status.json.tmp')",
+    "os.unlink('/srv/mutis/status/releases.json'); open('/srv/mutis/status/releases.json','w').write('[{\"release\":\"old\",\"manifest_sha256\":\"0\",\"<chosen key>\":1}]'); os.symlink('<any path>', '/srv/mutis/status/releases.json.tmp')"
+   ],
+   "instructions": [
+    "Inside the approved sandbox, load deploy/scripts/healthcheck.py. Create a temp tree with status/ at mode 2775 and a dummy 0600 blob at data/blobs/ab/cd/<id>.bin. Plant status/status.json.tmp as a symlink to the blob and call write_json(status/'status.json', {...}, 0o644). Then point the link at a name that does not exist under blobs/ and call write_json again.",
+    "Inside the sandbox, load deploy/scripts/notarize-release.py. Point CONFIG, CURRENT and LEDGER at a temp tree with seallog on, and replace the drive-side mutis-admin subprocess with a stub that returns committed with a dummy tx id. Plant a releases.json containing an extra key '$(echo ATTACKER-CHOSEN)' and a releases.json.tmp symlink to a file that does not exist yet. Run main()."
+   ],
+   "observed_result": "Health (agents/v3-healthsym/artifacts/check-01.txt): the dummy blob went from 0o600 with 'CIPHERTEXT-DUMMY...' to 0o644 with the health JSON, and status.json became the planted symlink. A link to a name that did not exist created a new 0o644 file inside blobs/. Notarize (agents/v3-healthsym/artifacts/check-02.txt): main() returned 0, and the link target that did not exist before became a 0o644 file. It holds the planted entry, '$(echo ATTACKER-CHOSEN)' key included, plus the new release entry, and releases.json became the symlink. Both runs used a single uid. The drive-to-mutis and drive-to-root boundary comes from the unit files, provision.sh, deploy.sh and the owner-observed modes. Nothing further, such as execution of the written content, was tested."
+  },
+  "remediation": {
+   "strategy": "Never write a privileged file through a predictable name in a directory another user can write. Create the temp file with tempfile.mkstemp in the target directory (O_CREAT|O_EXCL with a random name), call fchmod on the descriptor rather than chmod on the path, then os.replace. Apply this to healthcheck.write_json, notarize-release.py and collect-evidence.py. In notarize-release.py, keep the canonical ledger in a root-only location (for example /var/lib/mutis/releases.json, opened with O_NOFOLLOW) and only publish a copy into the status directory, so root never reads content drive can replace. Better still, give each writer its own status directory (health/mutis, evidence/drive, releases/root) that only that writer can write, and serve the fixed file names from there. A sticky bit alone does not stop symlink following here, because protected_symlinks also requires the directory to be world-writable.",
+   "code_changes": [
+    {
+     "file_name": "deploy/scripts/healthcheck.py",
+     "fixed_code": "import tempfile  # with the other imports\n\ndef write_json(path: Path, doc: dict, mode: int) -> None:\n    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix='.' + path.name + '.')\n    try:\n        os.fchmod(fd, mode)\n        with os.fdopen(fd, 'w') as f:\n            json.dump(doc, f, indent=1, sort_keys=True)\n            f.write('\\n')\n        os.replace(tmp, path)\n    except BaseException:\n        try:\n            os.unlink(tmp)\n        except FileNotFoundError:\n            pass\n        raise"
+    },
+    {
+     "file_name": "deploy/scripts/notarize-release.py",
+     "fixed_code": "import tempfile  # with the other imports\n\nSTATE = Path('/var/lib/mutis/releases.json')   # root-only canonical ledger (0700 dir)\n# ... read the ledger from STATE (os.open(STATE, os.O_RDONLY | os.O_NOFOLLOW)) instead of LEDGER ...\n\ndef publish(path: Path, text: str) -> None:\n    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix='.' + path.name + '.')\n    try:\n        os.fchmod(fd, 0o644)\n        with os.fdopen(fd, 'w', encoding='utf-8') as f:\n            f.write(text)\n        os.replace(tmp, path)\n    except BaseException:\n        try:\n            os.unlink(tmp)\n        except FileNotFoundError:\n            pass\n        raise\n\n# in main(): text = json.dumps(ledger, indent=1) + '\\n'; publish(STATE, text); publish(LEDGER, text)"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "It needs code execution as drive inside the chain worker or evidence collector first. The root variant also waits for the next operator deploy with SealLog on, which is a recurring, operator-triggered event."
+   },
+   "impact": {
+    "score": "high",
+    "reason": "Root variant: drive can make root create or overwrite any path on the host, mode 0644 and root-owned, with JSON that keeps keys drive chose. That moves drive's authority to root-level file integrity. Health variant: drive can make mutis truncate, overwrite and chmod files under data/blobs and data/backup, or create new files in blobs/. drive's DB write access already lets it get ciphertext deleted (cleanup.py:69), so the health variant's own extra impact is limited to bypassing the blobs/ write and mode invariants."
+   },
+   "overall_severity": "medium"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "Both symlink-following writes were reproduced locally against the real target functions. The cross-user conditions (directory mode, group membership, ReadWritePaths, root through sudo) come from active in-repo sources and match the owner-observed live modes and unit files. That the root writer is live rests on the owner-observed root:mutis releases.json. The local runs used a single uid and a stubbed SealLog call."
+  }
+ },
+ {
+  "verdict": "rejected",
+  "fingerprint": "server/bin/mutis-api:schema-gate:older-release-boots-on-newer-schema",
+  "title": "Schema-version start gate and healthcheck do not detect a rollback onto a newer, already-migrated database (rollback runs older code against the current schema)",
+  "description": "rollback.sh (lines 7-8) says that a release older than the schema refuses to start and that the healthcheck turns red. Neither protection exists. mutis-api's start gate `db.version(cfg.db_path) < db.SCHEMA_VERSION` (server/bin/mutis-api:29) only catches a database that is behind the code. mutis-chain and mutis-cleanup have no schema check. healthcheck.py api_ok only reads the /health `ok` flag. Migrations only move forward (db.py:112-118), and rollback.sh only switches the `current` symlink and restarts the units (lines 30-36). A rollback that crosses a migration would therefore run older code on a newer schema. In the deployed state this cannot happen. The owner-observed facts and the git history show that all five releases on disk, and the pruned 13382aff, have SCHEMA_VERSION = 6 and the same migrations 002-006. Schema 6 has been current since commit 6806501 (2026-10-14). Only root or the deploy pipeline can start a rollback, and no lower-trust principal controls it. No concrete authority regression has been shown.",
+  "claimed_root_cause": "The schema-version boot gate uses `<` instead of an exact-match check, and no other component (chain worker, cleanup, healthcheck) detects a database whose schema is ahead of the running code; combined with forward-only migrations and a rollback that only swaps the code symlink, an operator (or deploy.sh's automatic --from-failed rollback) can make a release whose SCHEMA_VERSION is below the migrated database the live release.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "deploy/scripts/rollback.sh",
+    "line": 31,
+    "scope": "rollback.sh: switch `current` to an earlier release (root only, line 13)",
+    "description": "A root operator, or the deploy pipeline's automatic `rollback.sh --from-failed` (deploy.sh:108, activate-release.sh:79), points `current` at a release directory that is already on disk (line 28). This is not a lower-trust entrypoint. The target can only be one of the kept releases, and the owner reports that all of them are SCHEMA_VERSION 6."
+   },
+   {
+    "kind": "propagation",
+    "file": "deploy/scripts/rollback.sh",
+    "line": 36,
+    "scope": "rollback.sh: restart enabled services",
+    "description": "mutis-api and mutis-chain restart on the selected release. The pre-migrate database backup is not restored."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/bin/mutis-api",
+    "line": 29,
+    "scope": "mutis-api main(): start gate",
+    "description": "The gate refuses only when db.version < SCHEMA_VERSION, so it would not refuse a database that is ahead of the code. With the deployed DB at 6 and every on-disk release at 6, the gate compares 6 < 6, and the comparison is the same whatever the operator was at."
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/sales.py",
+    "line": 71,
+    "scope": "release gate `releasable()` in the selected release",
+    "description": "The claimed sink is an older release's authorization gate running against newer-schema data. In every release that is on disk or reachable, the schema matches the code, so no newer-schema data exists. No release has been shown whose gate grants authority that the schema-6 gate refuses."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/bin/mutis-api",
+    "line": 29,
+    "description": "`if db.version(cfg.db_path) < db.SCHEMA_VERSION:`. A strict less-than refuses only a database that is behind the code. Reproduced in the sandbox (agents/v3-schema/artifacts/check-01.txt): with db.version set to 6, 7 or 8 the gate does not refuse, and pending() is False."
+   },
+   {
+    "file": "deploy/scripts/rollback.sh",
+    "line": 7,
+    "description": "The comment claims an older release refuses to start and the healthcheck turns red. Neither exists, so the comment is inaccurate. This is a documentation and hardening gap."
+   },
+   {
+    "file": "server/mutis/db.py",
+    "line": 12,
+    "description": "SCHEMA_VERSION = 6. Per git, this is identical in all five owner-reported on-disk releases (242eaaf, 460a389, 62004f5, 72f3871, bfd72c8) and in the pruned 13382aff. Each of them ships migrations 002-006 and nothing more (check-01.txt). No reachable rollback target is older than the schema."
+   },
+   {
+    "file": "server/mutis/db.py",
+    "line": 112,
+    "description": "migrate() applies only migrations numbered above the stored version and never lowers schema_version. Forward-only migrations are confirmed, but they matter only once a release with a different SCHEMA_VERSION is on disk."
+   },
+   {
+    "file": "deploy/scripts/rollback.sh",
+    "line": 13,
+    "description": "`[ \"$(id -u)\" = 0 ] || die \"run as root\"`. Only root, or the root-run deploy and activation flow, can choose or trigger a rollback. No lower-trust actor can reach it."
+   },
+   {
+    "file": "deploy/scripts/healthcheck.py",
+    "line": 58,
+    "description": "api_ok checks only the /api/v1/health `ok` flag, and healthcheck.py has no schema-version comparison. Confirmed, but this is the same hardening gap as the start gate."
+   }
+  ],
+  "reason": "Two things refute the candidate as a vulnerability. First, the deciding fact in its first blocker is now known and answers against it. The owner-observed list of on-disk releases, checked against git, shows every rollback target has SCHEMA_VERSION 6, which equals the live database schema (schema 6 has been current since 2026-10-14, before every deployed release). No reachable rollback crosses a migration boundary, so the `<` gate, the unchecked worker and cleanup, and the healthcheck never see a database that is ahead of the code. Second, the entrypoint is a root-only operator or deploy-pipeline action, not a lower-trust principal. No attacker can pick the rollback target or force a cross-schema rollback, and no concrete authority regression has been demonstrated. What remains is a latent hardening and documentation gap. Once a future migration 007 ships while schema-6 releases are still kept, a failed-smoke automatic rollback would run schema-6 code on a schema-7 database without being stopped. Recommended fixes: make the gates exact-match, `db.version(...) != db.SCHEMA_VERSION`, in mutis-api, mutis-chain and mutis-cleanup; add a schema-version check to healthcheck.py; and have rollback.sh refuse a target whose SCHEMA_VERSION is below the database's unless the pre-migrate backup is restored. Without these, the comment on rollback.sh lines 7-8 is wrong."
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "server/mutis/admin.py:cmd-reports:unescaped-stored-report-text",
+  "title": "Anonymous abuse reports can forge rows and inject terminal control characters into the operator's `mutis-admin reports` listing",
+  "description": "POST /api/v1/abuse stores free-text details (2000 chars), contact (200 chars) and the link fragment. The only check on this text is http_util.get_str. It rejects C0 controls other than \\n and \\t, but it lets through DEL, C1 controls (U+0080-U+009F, including U+009B CSI and U+009D OSC) and Unicode format/bidi characters such as U+202E. `mutis-admin reports` prints details (indenting continuation lines) and contact (without indenting them) directly to the operator's terminal. An anonymous visitor can therefore (a) use newlines in contact to add complete, unindented report rows in the real row format, with any share or item id, category, date, state and key flag they choose, and (b) send raw UTF-8-encoded C1 controls (CSI), DEL and bidi overrides to the terminal. On a terminal that honors UTF-8-encoded C1 controls, these could move the cursor and erase earlier lines, for example a genuine report printed just before. The operator uses this listing to decide on `takedown`, so stored visitor data can mislead moderation. A forged row is only plausible for share or item ids the attacker already knows. A link holder can already file honest reports about those, so the added effect is misleading presentation: a fake category, key=yes, extra rows, and hidden or reordered text. It does not give new reach over other users' shares.",
+  "root_cause": "cmd_reports (server/mutis/admin.py:105-113) writes visitor-controlled abuse_reports.details and abuse_reports.contact to stdout without escaping. Newline indentation is applied to details only, not to contact. The input check (http_util.get_str, line 162) blocks C0 controls except \\n and \\t, but not DEL, C1 controls or format characters, and it allows newlines in the single-line contact field.",
+  "intended_behavior": "Admin actions and their output cannot be steered by stored visitor data. Each report row printed by `mutis-admin reports` comes from exactly one DB row, and report text reaches the terminal only as inert, escaped characters.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "server/mutis/router.py",
+    "line": 127,
+    "scope": "POST /api/v1/abuse",
+    "description": "Anonymous route to abuse.report (per-/64 limit of 10 per hour at handlers/abuse.py:30, plus the 'report' proof of work at line 35)"
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/abuse.py",
+    "line": 33,
+    "scope": "report",
+    "description": "details = get_str(body, 'details', 2000); contact = get_str(body, 'contact', 200, optional=True) at line 34; a link fragment is appended to details at line 37"
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/http_util.py",
+    "line": 162,
+    "scope": "get_str",
+    "description": "Rejects only ord(c) < 32 other than \\n and \\t. Newlines in contact, DEL, C1 controls (U+009B CSI, U+009D OSC) and bidi/format characters pass"
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/abuse.py",
+    "line": 44,
+    "scope": "report",
+    "description": "INSERT INTO abuse_reports stores details and contact verbatim"
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/admin.py",
+    "line": 113,
+    "scope": "cmd_reports",
+    "description": "print('    contact: ' + r['contact']) prints the newline-bearing contact with no indentation. print('    ' + r['details'].replace('\\n', '\\n    ')) at line 111 prints raw C1, DEL and bidi characters to the operator's terminal"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/mutis/http_util.py",
+    "line": 162,
+    "description": "The control-character filter covers C0 only and allows \\n and \\t. Independently observed: \\r and ESC in details are refused with 422, while U+009B, U+202E and DEL are accepted with 201"
+   },
+   {
+    "file": "server/mutis/handlers/abuse.py",
+    "line": 34,
+    "description": "The contact field, meant to be one line, accepts newlines"
+   },
+   {
+    "file": "server/mutis/admin.py",
+    "line": 111,
+    "description": "details is printed raw. Newlines are indented, which stops row forgery through details, but nothing else is escaped"
+   },
+   {
+    "file": "server/mutis/admin.py",
+    "line": 113,
+    "description": "contact is printed raw with no newline indentation, which allows a forged unindented row"
+   },
+   {
+    "file": "server/mutis/admin.py",
+    "line": 109,
+    "description": "Real rows use the format '<id>  <date>  <state>  <category>  share <id>  item=<id>  key=<yes|no>', which a contact string can reproduce exactly"
+   },
+   {
+    "file": "deploy/scripts/mutis-admin",
+    "line": 13,
+    "description": "The production wrapper runs the same admin.main via python3 -I. Python's UTF-8 handling (even under LANG=C) sends U+009B to the terminal as the bytes C2 9B"
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "None. Any anonymous visitor who solves the 'report' proof of work (at most 10 reports per hour per /64) and submits a /s/ or /d/ link on the deployment's origin"
+   },
+   {
+    "kind": "user_interaction",
+    "description": "The operator runs `sudo mutis-admin reports` (or `reports --new`) and reads the listing to decide on takedowns"
+   },
+   {
+    "kind": "environmental_dependency",
+    "description": "Row forgery through newlines in contact works in any terminal. Erasing or rewriting earlier lines with UTF-8-encoded C1 controls (U+009B CSI) needs an operator terminal that interprets them, and bidi reordering needs a terminal that applies bidi. Neither terminal behavior was observed locally"
+   },
+   {
+    "kind": "data_state",
+    "description": "A forged row is only plausible for share or item ids the attacker knows. Ids are random, so in practice these are links the attacker holds"
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "Anonymous visitor with no account, calling the public abuse-report API directly",
+   "payloads": [
+    "POST /api/v1/abuse {\"link\": \"<origin>/s/<share B>\", \"category\": \"other\", \"details\": \"\\u009b1A\\u009b2K\\u009b1A\\u009b2K benign \\u202eevil\\u202c \\u007f\", \"contact\": \"x\\nrep_FORGEDv3xxxxxxxxx  2026-10-11 11:00  new       csam        share <share B>  item=<item B>  key=yes\\n    CONFIRMED BY OPERATOR\", \"pow\": <solved>}",
+    "python3 -I server/bin/mutis-admin --config <tmp toml> reports"
+   ],
+   "instructions": [
+    "Inside the approved sandbox, start server/tests/harness.Stack (a real mutis-api on isolated loopback with fake chain components), write its config as TOML, and upload two dummy files with one link each (A and B).",
+    "File an honest csam report about link A. Advance the clock 60 s and file the crafted report above about link B. As a calibration, also send details containing \\r and ESC.",
+    "Run server/bin/mutis-admin as a separate `python3 -I` process with `--config <toml> reports` under LANG=C.UTF-8 and again under LANG=C. Capture raw stdout bytes and print each line with repr."
+   ],
+   "observed_result": "Both reports were accepted with 201. \\r and ESC in details were refused with 422 'invalid'. The DB held 2 rows, but under both locales the listing had 3 unindented 'rep_' rows. Line 05 was 'rep_FORGEDv3xxxxxxxxx  2026-10-11 11:00  new       csam        share lYlcWAfvh0UJnTwfP4mxTw  item=qERutjq8V1YV44rhGgg78w  key=yes', followed by '    CONFIRMED BY OPERATOR', in the same format as real rows. Line 03 carried 4 raw C2 9B (U+009B CSI) sequences, E2 80 AE (U+202E) and 7F (DEL) directly to stdout."
+  },
+  "remediation": {
+   "strategy": "Treat report text as untrusted where it is printed. Escape every non-printable or format character (including \\n in contact, \\r, DEL, C1 and bidi/format controls) before printing, and keep visitor text visibly prefixed so it cannot pass as a row header. Also tighten input: reject newlines in contact, and reject DEL and C1 in get_str (or in an abuse-specific validator).",
+   "code_changes": [
+    {
+     "file_name": "server/mutis/admin.py",
+     "fixed_code": "import unicodedata\n\ndef _inert(text: str, keep_newlines: bool = False) -> str:\n    \"\"\"Visitor text for the operator's terminal: every non-printable or format character escaped.\"\"\"\n    out = []\n    for c in text:\n        if keep_newlines and c == \"\\n\":\n            out.append(\"\\n    | \")\n        elif c.isprintable() and unicodedata.category(c) not in (\"Cf\", \"Cc\"):\n            out.append(c)\n        else:\n            out.append(c.encode(\"unicode_escape\").decode(\"ascii\"))\n    return \"\".join(out)\n\n\ndef cmd_reports(cfg, conn, args) -> None:\n    ...\n        print(\"    | \" + _inert(r[\"details\"], keep_newlines=True))\n        if r[\"contact\"]:\n            print(\"    contact: \" + _inert(r[\"contact\"]))"
+    },
+    {
+     "file_name": "server/mutis/http_util.py",
+     "fixed_code": "def get_str(body, name, max_chars, optional=False, multiline=True):\n    ...\n    bad = lambda c: (ord(c) < 32 and (c not in \"\\n\\t\" or not multiline)) or 0x7f <= ord(c) <= 0x9f\n    if not isinstance(value, str) or len(value) > max_chars or any(bad(c) for c in value):\n        raise invalid(name)\n# handlers/abuse.py: contact = get_str(body, \"contact\", 200, optional=True, multiline=False)"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "medium",
+    "reason": "Anyone can file reports behind a cheap proof of work (10 per hour per /64), and the operator's normal workflow is to read `mutis-admin reports`"
+   },
+   "impact": {
+    "score": "low",
+    "reason": "Only the integrity of operator-facing output is affected. Forged rows (and, on terminals that honor C1, possibly hidden lines) can mislead moderation. DB rows stay intact, forged rows only name ids the attacker knows, and no code execution, data access or new reach over other users' content was shown"
+   },
+   "overall_severity": "low"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "All trace lines check out against source. The result was reproduced independently through the real API and the real server/bin/mutis-admin entry point in a separate process, showing the forged row and raw C1, bidi and DEL bytes on stdout under both UTF-8 and C locales. Only the terminal's interpretation of C1 and bidi is unverified, and that affects only the hide/reorder variant"
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "server/mutis/api.py:Handler._serve:unread-transfer-encoding-body-keepalive",
+  "title": "mutis-api keeps the Caddy upstream connection open with an unread chunked body; the deployed Caddy 2.6.2 forwards chunked bodies, so the API writes a second, unsolicited reply on a pooled connection",
+  "description": "When a request reaches mutis-api with Transfer-Encoding: chunked and no Content-Length, the API answers it but never reads or discards the body. It also leaves the connection open. Python's HTTP/1.1 keep-alive loop then reads the leftover chunk-size line as a new request and writes a second reply on the same connection. That reply is a bare JSON 400 with no status line, in HTTP/0.9 form, and then the connection closes. A local check with the deployed Caddy binary (2.6.2, same SHA-256) and the deployed @api block shows that Caddy does not re-frame such a body. With buffer_requests and max_buffer_size 6MB, Caddy forwards a client's HTTP/1.1 chunked body upstream still as Transfer-Encoding: chunked with no Content-Length, for both POST and GET. The @too_large guard does not apply because it only checks Content-Length. So any anonymous client can produce the API-side framing break through the deployed proxy, on any /api/* route. Caddy assigns the chunk bytes to request 1, while the API treats them as a malformed request 2 and answers it. The extra bytes are fixed: Go writes the chunk-size line, and the API answers with a fixed 400 and closes. So this is error injection or connection churn, not request smuggling or a response leak. It has not been shown whether Caddy's Go transport ever hands that upstream connection to a different visitor's request before it notices the extra bytes. If it does, that visitor gets a 502. If it does not, Caddy just drops the connection.",
+  "claimed_root_cause": "Handler._serve decides whether to drain or close only from req.content_length (api.py:347). That value is 0 when there is no Content-Length header (http_util.py:84-89). Request.check_length refuses Transfer-Encoding without reading the body and without marking the connection for close (http_util.py:96-97). GET routes never touch the body at all. So for a chunked request the code takes neither the _drain path nor the close_connection path (api.py:358-367). BaseHTTPRequestHandler, with protocol_version HTTP/1.1 (api.py:283), then parses the unread chunk framing as the next request.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "deploy/caddy/Caddyfile",
+    "line": 175,
+    "scope": "handle @api reverse_proxy 127.0.0.1:8787 { buffer_requests; max_buffer_size 6MB }",
+    "description": "Any client request under /api/* is proxied over pooled HTTP/1.1 upstream connections. The @too_large guard (line 166) checks only Content-Length, so a chunked body passes it. With the deployed 2.6.2 binary, a chunked client body is forwarded upstream as Transfer-Encoding: chunked with no Content-Length (agents/v3b-chunked/artifacts/check-01.txt)."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/api.py",
+    "line": 322,
+    "scope": "Handler._serve",
+    "description": "A Request is built from the proxied headers. With Transfer-Encoding: chunked and no Content-Length, content_length is 0 (http_util.py:84-89)."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/http_util.py",
+    "line": 96,
+    "scope": "Request.check_length (called from Request.json)",
+    "description": "A body-reading route raises 400 'Send a Content-Length body.' without reading the body, so body_read stays False. A GET route never looks at the body."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/api.py",
+    "line": 347,
+    "scope": "Handler._serve",
+    "description": "'if not req.body_read and req.content_length' is False because content_length is 0, so _drain is skipped and close_connection is never set. The response is written and the connection stays open with the chunk bytes unread."
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/api.py",
+    "line": 293,
+    "scope": "Handler.send_error (from BaseHTTPRequestHandler.parse_request on the next keep-alive iteration)",
+    "description": "The leftover '<hex>\\r\\n' chunk-size line fails to parse as a request line. send_error then writes a second response on the same upstream connection. request_version is the HTTP/0.9 default, so the bytes are a bare JSON body with no status line or headers, and the connection then closes."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/mutis/api.py",
+    "line": 347,
+    "description": "The drain-or-close decision is keyed only on content_length, which is 0 for a chunked request."
+   },
+   {
+    "file": "server/mutis/api.py",
+    "line": 360,
+    "description": "_drain deliberately excludes Transfer-Encoding bodies and closes for them, but it is never reached for them because content_length is 0."
+   },
+   {
+    "file": "server/mutis/http_util.py",
+    "line": 96,
+    "description": "check_length refuses Transfer-Encoding without consuming the body or forcing close."
+   },
+   {
+    "file": "server/mutis/http_util.py",
+    "line": 87,
+    "description": "An absent Content-Length becomes content_length 0."
+   },
+   {
+    "file": "server/mutis/api.py",
+    "line": 283,
+    "description": "protocol_version is HTTP/1.1, so keep-alive is the default after the response."
+   },
+   {
+    "file": "deploy/caddy/Caddyfile",
+    "line": 176,
+    "description": "buffer_requests with max_buffer_size 6MB. Local check agents/v3b-chunked/artifacts/check-01.txt shows that Caddy 2.6.2 still forwards a chunked client body upstream as Transfer-Encoding: chunked (POST /api/v1/pow and GET /api/v1/health), while a Content-Length control keeps Content-Length."
+   },
+   {
+    "file": "deploy/caddy/Caddyfile",
+    "line": 166,
+    "description": "The @too_large expression only checks the Content-Length header, so chunked requests are not intercepted before the proxy."
+   },
+   {
+    "file": "server/tests/test_input_safety.py",
+    "line": 86,
+    "description": "The existing chunked-body test checks only the first status (400). It does not check that the connection closes or that no second response follows."
+   },
+   {
+    "file": "server/mutis/api.py",
+    "line": 293,
+    "description": "send_error writes the unsolicited reply. For an unparsable request line it has no status line (HTTP/0.9 form), as observed directly against the API in agents/h-http/artifacts/check-01.txt."
+   }
+  ],
+  "blockers": [
+   "The cross-request effect has not been observed. It needs Caddy's Go HTTP transport to hand the affected pooled upstream connection to another visitor's request before it reads the stray bytes as an unsolicited response on an idle connection. That depends on transport timing under concurrent load and was not demonstrated in this verification. The proxy framing question is resolved: the deployed Caddy 2.6.2 binary forwards HTTP/1.1 chunked client bodies upstream as chunked. The HTTP/2 client path (a body with no length) was not tested."
+  ],
+  "validation_plan": {
+   "local": "Fix first, then verify without load. In Handler._serve, set close_connection = True whenever the request has a Transfer-Encoding header, content_length < 0, or a body was started but not fully consumed. Extend test_malformed_json_and_chunked_bodies so that after the first 400 for a chunked POST, and after the 200 for a chunked GET /api/v1/health, the test asserts the response carries 'Connection: close' and the socket reaches EOF with no further bytes. Re-run harness-01 (deployed Caddy binary + @api block) against the fixed API to confirm that the single chunked request gets one normal answer and the upstream connection closes. Whether pooled reuse delivers the stray bytes to another request does not need to be settled once the fix lands, because the fix removes the second reply entirely.",
+   "deployment": "No traffic to production is needed. The owner can confirm the version with `caddy version` (already observed as 2.6.2, same SHA-256 as the local binary) and check that the installed Caddyfile is unchanged (already observed byte-identical). The owner can also look in Caddy's journal for 'Unsolicited response received on idle HTTP channel' or reverse_proxy 502 errors on /api/*. Go's transport emits that message through the stdlib logger, and with the deployed log level ERROR it may be filtered, so an empty journal is not evidence that the issue is absent."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "server/mutis/handlers/shares.py:stored_bytes:egress-check-on-stale-pre-tx-item-row",
+  "title": "Racing GET /s/{id}/stored loses egress charges, so an item can be served past its 10 GiB/day cap",
+  "description": "GET /api/v1/s/{id}/stored is handled by stored_bytes. It gets its item row from authorized_share, which runs its `SELECT * FROM items` at shares.py:168 only after its own `with db.tx(conn)` block has committed. That read happens outside any transaction. stored_bytes then opens a new BEGIN IMMEDIATE transaction (shares.py:511) and passes this old row to items.egress_ok (shares.py:512). egress_ok computes `used` from the row the caller supplied (items.py:21). It then overwrites the counter with `UPDATE items SET egress_bytes = used + size` (items.py:24) instead of adding to the stored value. Each request uses its own SQLite connection, opened per Ctx in api.py:158-161, and the database runs in WAL mode (db.py:21). When several requests to the same item overlap, they all read the same committed egress_bytes before any of their charges commit. Each then writes the same `used + size`, so the per-item daily counter goes up by about one download's size while every one of the downloads is allowed and served. The same overwrite can also erase charges that /open or folder-ticket downloads commit between a stored request's read and its write. The other egress_ok callers do not have this problem: shares._open_in_tx (shares.py:418/437), me.open_item (me.py:216-223) and blobs.charge (blobs.py:95-96) all read the item inside the same transaction that writes it. An end-to-end run against the real API showed it. With 24 concurrent downloads of one item, all 24 were served (HTTP 200) while the counter recorded only 4 to 6 downloads. With the counter set so that exactly one more download fit under EGRESS_PER_ITEM_DAY, one of three concurrent bursts got 3 downloads served instead of 1.",
+  "root_cause": "stored_bytes charges the per-item egress counter using an item row it read outside the write transaction: authorized_share returns a row SELECTed after its db.tx block (shares.py:168). items.egress_ok then trusts that row's egress_bytes and writes `used + size` as a plain overwrite (items.py:21-24) instead of an atomic conditional increment. Concurrent stored_bytes requests therefore lose each other's increments, and they can also overwrite increments from other paths.",
+  "intended_behavior": "Across all links, tickets, owner opens and the stored-bytes endpoint, the bytes served for one item in one UTC day stay within EGRESS_PER_ITEM_DAY. Each charge reads and updates the item's egress counter atomically inside one BEGIN IMMEDIATE transaction, so concurrent charges are serialized and no increment is lost.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "server/mutis/handlers/shares.py",
+    "line": 500,
+    "scope": "stored_bytes(ctx, share_id): GET /api/v1/s/{share_id}/stored (router.py:77). Any link holder can call it with X-Mutis-Access, plus the link proof or claim for password or paid links, and it uses no view.",
+    "description": "A link holder sends many concurrent GET /stored requests for the same share. ThreadingHTTPServer runs each one on its own thread, with its own SQLite connection."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/shares.py",
+    "line": 506,
+    "scope": "stored_bytes",
+    "description": "`item` comes from authorized_share(ctx, share_id, {}), and the returned row includes egress_day and egress_bytes."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/shares.py",
+    "line": 168,
+    "scope": "authorized_share",
+    "description": "The item row is read by a SELECT that runs after the function's `with db.tx(conn)` block (lines 159-165) has committed. It is outside any transaction, so it holds the last committed egress_bytes, from before this request's charge."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/shares.py",
+    "line": 512,
+    "scope": "stored_bytes",
+    "description": "_egress_ok(ctx.db, item, ctx.now, item['size_stored']) is called inside a new `with db.tx(ctx.db)` (line 511) with that old row. The item is not read again under the lock."
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/items.py",
+    "line": 24,
+    "scope": "egress_ok",
+    "description": "`UPDATE items SET egress_day = ?, egress_bytes = ?` writes `used + size`, where `used` (line 21) came from the caller's old row. This overwrites any increments committed in the meantime, so overlapping requests are all allowed while the counter goes up by about one `size`."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/mutis/handlers/shares.py",
+    "line": 168,
+    "description": "authorized_share's item SELECT runs after the `with db.tx(conn)` block has closed, so the row it returns was read outside a transaction."
+   },
+   {
+    "file": "server/mutis/handlers/shares.py",
+    "line": 506,
+    "description": "stored_bytes keeps that row as `item`."
+   },
+   {
+    "file": "server/mutis/handlers/shares.py",
+    "line": 512,
+    "description": "stored_bytes passes that old `item` to _egress_ok (an alias of items.egress_ok, shares.py:400) inside a separate BEGIN IMMEDIATE transaction."
+   },
+   {
+    "file": "server/mutis/items.py",
+    "line": 21,
+    "description": "egress_ok takes `used` from the egress_bytes of the row the caller passed in."
+   },
+   {
+    "file": "server/mutis/items.py",
+    "line": 24,
+    "description": "egress_ok writes egress_bytes = used + size as a plain overwrite, not as an atomic increment of the stored value."
+   },
+   {
+    "file": "server/mutis/db.py",
+    "line": 21,
+    "description": "PRAGMA journal_mode=WAL: readers outside a transaction see the last committed value and are not blocked by the writer."
+   },
+   {
+    "file": "server/mutis/db.py",
+    "line": 33,
+    "description": "The db.tx docstring says BEGIN IMMEDIATE takes the lock up front 'so check-then-act code can't race'. stored_bytes gets around this by doing its check-read before taking the lock."
+   },
+   {
+    "file": "server/mutis/api.py",
+    "line": 160,
+    "description": "Each request context opens its own SQLite connection, so concurrent requests really do read and commit independently."
+   },
+   {
+    "file": "server/mutis/handlers/me.py",
+    "line": 223,
+    "description": "For comparison, open_item reads the item inside its db.tx (me.py:216) before calling _egress_ok, so its charges are serialized."
+   },
+   {
+    "file": "server/mutis/handlers/blobs.py",
+    "line": 95,
+    "description": "For comparison, the folder-ticket charge reads `fresh` again inside the db.tx before calling egress_ok (line 96), so it is not affected."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "The attacker holds a valid link to a ready file item that is not a folder: X-Mutis-Access, plus X-Mutis-Link or a released X-Mutis-Claim for link+password or paid links. Any recipient of the link has this. Only the per-item egress (bandwidth) cap is bypassed; confidentiality is not affected."
+   },
+   {
+    "kind": "timing_dependency",
+    "description": "The requests must overlap so that their item reads happen before earlier charges commit. Bursts released with a barrier did this in every local trial. How many increments are lost depends on how many requests run at once."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "SQLite in WAL mode (db.py:21), with one connection per request under ThreadingHTTPServer. Per-IP limits bound each burst: stored64 allows 30 requests per 60 s per ip64 (shares.py:505), and IN_FLIGHT_64 allows 32 in-flight requests per /64. Using several networks multiplies the effect."
+   },
+   {
+    "kind": "data_state",
+    "description": "The cap is only exceeded materially when size_stored is large compared with EGRESS_PER_ITEM_DAY (10 GiB, items.py:14). Smaller items need more uncounted requests to go past it."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "A link holder for a large file wants the server to keep serving that item's ciphertext past its 10 GiB/day egress budget, at the operator's bandwidth cost. They send stored-bytes requests in concurrent bursts so that most downloads are never recorded.",
+   "payloads": [
+    "GET /api/v1/s/{share_id}/stored with header X-Mutis-Access: <link token>, sent K times in parallel for the same share"
+   ],
+   "instructions": [
+    "Write a harness that starts the real API with server/tests/harness.py Stack (real ThreadingHTTPServer on the sandbox loopback, temporary data dir, fake chain), uploads a 300 KiB-plaintext item (size_stored=311312) and creates a 'link' share for it.",
+    "Experiment A: set items.egress_bytes=0 and egress_day=today, then send 24 GET /api/v1/s/{id}/stored requests released together by a threading.Barrier, using a dummy X-Real-IP (198.51.100.x). Count the 200 responses and compare final egress_bytes with 200s × size_stored.",
+    "Experiment B: set egress_bytes = EGRESS_PER_ITEM_DAY - size_stored, so exactly one more download fits, and send the same concurrent burst. Count the 200s. Control: send the same 24 requests one after another.",
+    "Run it in the sandbox: bash cf-audit/bin/sbx.sh v3-egress 300 -- python3 -I /scratch/harness-01.py"
+   ],
+   "observed_result": "Experiment A: in each of 3 trials all 24 downloads were served (HTTP 200, 7,471,488 bytes authorized), but egress_bytes recorded only 1,867,872, 1,556,560 and 1,245,248 bytes (6, 5 and 4 downloads), so 18 to 20 charges were lost per burst. Experiment B: with exactly one download left under the cap, one of three concurrent bursts got 3 downloads served instead of 1 (622,624 bytes past the cap); the other two got 1. The sequential control got exactly 1. See agents/v3-egress/artifacts/check-01.txt."
+  },
+  "remediation": {
+   "strategy": "Never charge egress from a row read outside the transaction that writes it. Minimal fix: in stored_bytes, read the item again inside the `with db.tx` block, check it is still ready, and pass that row to egress_ok, as open_item and blobs.charge already do. Stronger fix: make items.egress_ok one atomic conditional UPDATE that ignores the egress_bytes value the caller passes in and treats rowcount != 1 as over the cap. This also prevents other paths' charges from being overwritten.",
+   "code_changes": [
+    {
+     "file_name": "server/mutis/handlers/shares.py",
+     "fixed_code": "    with db.tx(ctx.db):\n        fresh = ctx.db.execute(\"SELECT * FROM items WHERE id = ?\", (item[\"id\"],)).fetchone()\n        allowed = fresh is not None and fresh[\"state\"] == \"ready\" and _egress_ok(ctx.db, fresh, ctx.now, fresh[\"size_stored\"])\n    if not allowed:\n        raise ApiError(429, \"rate_limited\", \"This file was downloaded a lot today.\")"
+    },
+    {
+     "file_name": "server/mutis/items.py",
+     "fixed_code": "def egress_ok(conn, item, now, size):\n    today = codec.day(now)\n    cur = conn.execute(\n        \"UPDATE items SET egress_day = ?, \"\n        \"egress_bytes = (CASE WHEN egress_day = ? THEN egress_bytes ELSE 0 END) + ? \"\n        \"WHERE id = ? AND (CASE WHEN egress_day = ? THEN egress_bytes ELSE 0 END) + ? <= ?\",\n        (today, today, size, item[\"id\"], today, size, EGRESS_PER_ITEM_DAY))\n    return cur.rowcount == 1"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "medium",
+    "reason": "Any link holder can send parallel GET /stored requests, and no extra privilege is needed. In local runs, concurrent bursts reliably lost increments. stored64 (30 per 60 s per ip64) and IN_FLIGHT_64 (32) limit each burst from one network but not how many charges are lost within it. More networks or links multiply the effect."
+   },
+   "impact": {
+    "score": "low",
+    "reason": "The per-item daily egress cap can be exceeded, so the server serves an item's ciphertext beyond EGRESS_PER_ITEM_DAY at the operator's bandwidth cost. The holder could already fetch that ciphertext, so this is a quota and resource bypass, not a confidentiality or integrity breach. It is limited by concurrency and the per-network request limits."
+   },
+   "overall_severity": "low"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "The source shows the item read outside the transaction (shares.py:168/506) feeding a plain-overwrite charge (items.py:21/24). An end-to-end run against the real API reproduced it: concurrent stored downloads were served while most charges were lost, and the cap was exceeded in one of three bursts, while the sequential control behaved correctly. Only the exact factor by which the cap is exceeded depends on scheduling."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "server/mutis/indexer.py:parse_stream:unvalidated-unspent-fields",
+  "title": "Malformed UTXO-stream record from one indexer raises a non-IndexerError that aborts every mirror cycle (and an integer public_nonce scales memory)",
+  "description": "indexer.parse_stream decodes the NDJSON body of POST /utxos/stream and applies json.loads, msg.get, int(), bool() and bytes(u['public_nonce']).hex() to upstream values with no type or size checks. A malformed line (string public_nonce -> TypeError, non-JSON line -> JSONDecodeError, top-level array -> AttributeError) escapes as an exception that is not IndexerError; an integer public_nonce makes bytes(N) allocate N bytes (8-digit value -> 50 MB plus a retained 100 MB hex string; 10-digit value -> MemoryError under a 4 GiB address-space limit). Worker.mirror catches only IndexerError, so the exception ends the whole mirror() call; _step logs the generic chain.loop_error, the cursor transaction for that indexer is never committed, and the same stream fails again on every 3 s mirror tick. Reproduced end-to-end with the real Worker and a FakeIndexer: when the hostile upstream is first in the list (the default config lists indexer-b first), the healthy indexer is never polled and 0 of 3 new outputs reach chain_utxos across repeated ticks; when it is last, the healthy indexer's rows are still committed but mirror_ok_at never updates, so the health check goes RED (mirror_lagging). This defeats the code's stated multi-indexer redundancy: one bad upstream that keeps answering with a malformed record halts mirroring, which feeds the browser's delivery scan (handlers/chain.py) and the worker's payment and sales scans, until the upstream changes or an operator removes it from the config.",
+  "root_cause": "parse_stream trusts upstream JSON shape and types: it calls int()/bytes() on attacker-controlled values without checking that shard, version and tag are bounded ints and public_nonce is a 32-byte list, and it never turns parse failures into IndexerError. Worker.mirror's per-upstream isolation (except IndexerError only) therefore does not cover them, so a single malformed record stops the loop over all upstreams.",
+  "intended_behavior": "A malformed or oversized stream record should be rejected as a bounded IndexerError('bad_upstream') before any allocation sized by an upstream value. Worker.mirror would then treat it like any failing upstream and keep mirroring from the others, as test_every_indexer_is_mirrored_with_its_own_cursors expects for an unreachable one.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "server/mutis/indexer.py",
+    "line": 128,
+    "scope": "Indexers.stream_utxos",
+    "description": "POST /utxos/stream to a configured indexer (defaults ootle-indexer-b/-a.tari.com, config.py:66). Up to MAX_STREAM (16 MiB) of the answer goes to parse_stream at line 132. The only checks are HTTP status 200 and the size cap."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/indexer.py",
+    "line": 162,
+    "scope": "parse_stream",
+    "description": "Each line goes through json.loads(line) and msg.get(...) with no check that the line is JSON or that msg is an object. Failures raise JSONDecodeError or AttributeError, not IndexerError."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/indexer.py",
+    "line": 171,
+    "scope": "parse_stream",
+    "description": "int(u['tag']) and bytes(u['public_nonce']).hex(). A string raises TypeError. An integer N allocates N zero bytes and keeps a 2N-character hex string in the result."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/chain_worker.py",
+    "line": 228,
+    "scope": "Worker.mirror",
+    "description": "Only IndexerError is caught per upstream, so any other exception ends the loop over all upstreams. Later upstreams are not polled, and mirror_ok_at at line 232 is not set."
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/chain_worker.py",
+    "line": 110,
+    "scope": "Worker._step",
+    "description": "The generic handler logs chain.loop_error and moves on. The cursor db.tx at lines 246-255 was never reached, so the next 3 s mirror tick (line 181) pulls the same poisoned stream again."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/mutis/indexer.py",
+    "line": 171,
+    "description": "current['unspent'].append((int(u['tag']), bytes(u['public_nonce']).hex())): no type or length check on upstream values."
+   },
+   {
+    "file": "server/mutis/indexer.py",
+    "line": 165,
+    "description": "int(sos['shard']), int(sos['max_state_version']), bool(sos['has_more']) have no range check either."
+   },
+   {
+    "file": "server/mutis/chain_worker.py",
+    "line": 228,
+    "description": "'except IndexerError as e' is the only handler in mirror()."
+   },
+   {
+    "file": "server/mutis/chain_worker.py",
+    "line": 252,
+    "description": "The cursor update inside the db.tx runs only after parse_stream and fetch succeed, so a poisoned stream is never stepped past."
+   },
+   {
+    "file": "server/mutis/config.py",
+    "line": 66,
+    "description": "The default upstream order is indexer-b first, then indexer-a. A poisoned answer from the first one blocks the second."
+   },
+   {
+    "file": "deploy/scripts/healthcheck.py",
+    "line": 94,
+    "description": "mirror_lagging turns RED when mirror_ok_at is stale. This detects the stall but does not recover from it."
+   },
+   {
+    "file": "server/mutis/indexer.py",
+    "line": 185,
+    "description": "Contrast: parse_fetched on the same upstream catches KeyError/TypeError/ValueError and checks shapes. Only the stream path is unvalidated."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "third_party_dependency",
+    "description": "One configured indexer answers /utxos/stream with HTTP 200 and at least one malformed NDJSON line. The defaults are Tari-operated HTTPS indexers, so the producer is that operator, a compromise of it, or a buggy release that emits a non-JSON or reshaped line. No authentication applies to what the indexer returns."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "Full halt (no indexer mirrored) needs the bad upstream ahead of the healthy ones in ootle.indexers. In the default order that is indexer-b. If it comes later, healthy rows still land, but mirror_ok_at stays stale and the health check stays RED."
+   },
+   {
+    "kind": "data_state",
+    "description": "The bad record must stay in the stream answer for the current cursor. Because the cursor never advances, a stable bad record keeps failing every tick."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "A malicious, compromised or malfunctioning upstream Ootle indexer answering the chain worker's POST /utxos/stream poll.",
+   "payloads": [
+    "{\"sos\":{\"shard\":1,\"max_state_version\":0,\"has_more\":false}}\n{\"update\":{\"Unspent\":{\"tag\":1,\"public_nonce\":\"deadbeef\"}}}\n{\"eos\":{\"max_state_version\":1}}",
+    "{\"sos\":{\"shard\":1,\"max_state_version\":0,\"has_more\":false}}\n{\"update\":{\"Unspent\":{\"tag\":1,\"public_nonce\":50000000}}}\n{\"eos\":{\"max_state_version\":1}}",
+    "{\"sos\":{\"shard\":1,\"max_state_version\":0,\"has_more\":false}}\n[]"
+   ],
+   "instructions": [
+    "In the sandbox, call indexer.parse_stream on each payload. Expect TypeError for the string nonce, a 50,000,000-byte allocation for the integer nonce (MemoryError at 9999999999), and AttributeError for the '[]' line. None of these is an IndexerError.",
+    "Start the harness Stack(chain=True) with three new outputs on the FakeChain. Set worker.indexers = Indexers([hostile_url, live_fake_indexer_url]), where the hostile loopback server always returns payload 1. Run worker._step(worker.mirror, now) three times.",
+    "Repeat with the order [live, hostile]."
+   ],
+   "observed_result": "check-01: string nonce raised TypeError, not IndexerError. Non-JSON raised JSONDecodeError. Nonce 50000000 returned a hex string of 100,000,000 chars, with a tracemalloc peak of 150,000,727 bytes. Nonce 9999999999 raised MemoryError. With hostile first, every tick logged event=chain.loop_error, chain_utxos stayed at 0 rows (3 outputs were on the live fake chain), mirror_cursors stayed {} and mirror_ok_at stayed None. A direct mirror() raised TypeError. With hostile last, the live indexer's 3 rows and cursors were committed, but every tick still logged chain.loop_error and mirror_ok_at stayed None. check-02: the '[]' line raised AttributeError, which the hunter's proposed except-clause would not catch. The corrected parser parses the recorded fixture the same way as the current one and maps all poison variants to IndexerError bad_upstream."
+  },
+  "remediation": {
+   "strategy": "Validate every stream field before using it, and raise IndexerError(502, 'bad_upstream') for any line that is not a JSON object or has the wrong shape. The checks: shard is an int in [0, 2^16), versions are non-negative ints, has_more is a bool, tag is an int in [0, 2^32), public_nonce is a list of exactly 32 ints in [0, 255]. Never call bytes() on an untrusted int. Worker.mirror's existing 'except IndexerError' then isolates the bad upstream and keeps mirroring the others, with mirror_ok_at set. Unlike the hunter's version, this also rejects non-object lines (AttributeError) and bool-typed ints. Add a test that pairs a poisoning FakeIndexer with a live one. The same upstream can also halt the mirror through the sibling /utxos/fetch parse in Indexers.fetch_utxos (indexer.py:143: json.loads(data).get('utxos', []) with no handling): with the stream fix alone, a hostile first upstream that streams one well-formed pair and answers /utxos/fetch with a non-JSON body or a top-level array still makes mirror() raise JSONDecodeError / AttributeError, with 0 rows mirrored from the healthy second indexer and mirror_ok_at unset (agents/p5-stream/artifacts/check-03.txt). So map fetch_utxos parse failures to IndexerError(502, 'bad_upstream') as well, and as defense in depth have Worker.mirror treat any non-IndexerError from one upstream (log it, record it as that upstream's error) as a failure of that upstream only, so a future unvalidated field cannot again stop the loop over the others. With the fetch_utxos change below applied, the same scenario mirrors all 3 rows from the healthy indexer and sets mirror_ok_at (agents/p5-stream/artifacts/check-04.txt).",
+   "code_changes": [
+    {
+     "file_name": "server/mutis/indexer.py",
+     "fixed_code": "def _uint(v, limit=2 ** 63):\n    if type(v) is not int or not 0 <= v < limit:\n        raise IndexerError(502, \"bad_upstream\")\n    return v\n\n\ndef _nonce32(v) -> str:\n    if not (type(v) is list and len(v) == 32 and all(type(b) is int and 0 <= b <= 255 for b in v)):\n        raise IndexerError(502, \"bad_upstream\")\n    return bytes(v).hex()\n\n\ndef parse_stream(data: bytes) -> list[dict]:\n    \"\"\"NDJSON lines; a `sos` line opens a shard section and every following update belongs to it.\n    Any malformed line is a bounded IndexerError, so Worker.mirror skips this upstream and keeps the others.\"\"\"\n    shards, current = [], None\n    for line in data.splitlines():\n        if not line.strip():\n            continue\n        try:\n            msg = json.loads(line)\n        except ValueError:\n            raise IndexerError(502, \"bad_upstream\") from None\n        if not isinstance(msg, dict):\n            raise IndexerError(502, \"bad_upstream\")\n        sos, update, eos = msg.get(\"sos\"), msg.get(\"update\"), msg.get(\"eos\")\n        if sos:\n            if not isinstance(sos, dict) or type(sos.get(\"has_more\")) is not bool:\n                raise IndexerError(502, \"bad_upstream\")\n            current = {\"shard\": _uint(sos.get(\"shard\"), 2 ** 16), \"version\": _uint(sos.get(\"max_state_version\")),\n                       \"has_more\": sos[\"has_more\"], \"unspent\": []}\n            shards.append(current)\n        if current is not None and isinstance(update, dict) and \"Unspent\" in update:\n            u = update[\"Unspent\"]\n            if not isinstance(u, dict):\n                raise IndexerError(502, \"bad_upstream\")\n            current[\"unspent\"].append((_uint(u.get(\"tag\"), 2 ** 32), _nonce32(u.get(\"public_nonce\"))))\n        if eos and current is not None:\n            if not isinstance(eos, dict):\n                raise IndexerError(502, \"bad_upstream\")\n            current[\"version\"] = _uint(eos.get(\"max_state_version\"))\n    return shards"
+    },
+    {
+     "file_name": "server/mutis/indexer.py",
+     "fixed_code": "class Indexers:\n    # ... unchanged members ...\n    def fetch_utxos(self, pairs: list[tuple[int, str]], only: int | None = None) -> dict[tuple[int, str], dict]:\n        \"\"\"POST /utxos/fetch → {(tag, nonce_hex): parse_fetched(…)}; a malformed answer is IndexerError.\"\"\"\n        found = {}\n        for i in range(0, len(pairs), FETCH_BATCH):\n            batch = [[tag, nonce] for tag, nonce in pairs[i:i + FETCH_BATCH]]\n            body = json.dumps({\"resource_address\": TARI, \"tag_and_nonce_pairs\": batch}).encode()\n            status, data, _ = self.call(\"POST\", \"/utxos/fetch\", body, only=only)\n            if status != 200:\n                raise IndexerError(502, \"bad_upstream\")\n            try:\n                obj = json.loads(data)\n            except ValueError:\n                raise IndexerError(502, \"bad_upstream\") from None\n            utxos = obj.get(\"utxos\", []) if isinstance(obj, dict) else None\n            if not isinstance(utxos, list):\n                raise IndexerError(502, \"bad_upstream\")\n            for entry in utxos:\n                parsed = parse_fetched(entry)\n                if parsed:\n                    found[(parsed[\"tag\"], parsed[\"nonce\"])] = parsed\n        return found"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "Needs a configured indexer, by default a Tari-operated HTTPS endpoint, to return malformed stream records: the operator, a compromise of it, or a buggy release. No network-position or unauthenticated-internet path exists. The architecture still treats indexers as untrusted upstreams, and the worker queries several of them precisely to tolerate one misbehaving."
+   },
+   "impact": {
+    "score": "high",
+    "reason": "Persistent and service-wide while it lasts. With the bad upstream first (the default order), no new UTXOs are mirrored from any indexer, so drives stop seeing courier/drop deliveries and the worker's payment and sales scans see nothing new, until the upstream changes or an operator edits the config. Recovery is not automatic. The health check flags it (mirror_lagging RED). There is no confidentiality or integrity effect. The integer-nonce variant also scales worker memory with a value the attacker picks (MemoryError, or possibly a cgroup OOM-kill under MemoryMax=1G with Restart=always; the latter was not observed)."
+   },
+   "overall_severity": "medium"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "Reproduced end-to-end in the sandbox with the real Worker.mirror/_step, the real Indexers HTTP client and a loopback hostile indexer next to the FakeIndexer. Both upstream orders were observed. Line references were checked against the snapshot."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "server/mutis/jobs.py:enqueue:courier-job-delivers-to-closed-or-removed-drop",
+  "title": "Queued courier delivery is still sent on chain after its drop is closed or taken down",
+  "description": "A courier delivery to a drop is accepted only while the drop is active. It is then put in the jobs table with a 5-45 s jitter (`not_before`), and the job's payload holds only {address, memo}, with no drop id. Closing the drop (PATCH /drops/{id} {state:closed}, or DELETE /drops/{id}) and the operator's takedown (`mutis-admin takedown drop`) change only `drops.state`. They never touch the jobs table. The chain worker re-checks only the shape of the address and the memo, and then transfers to `payload['address']`. So a delivery that is still queued when the drop is closed or removed is sent on chain to that drop's address anyway. New POSTs are correctly refused with 410 drop_closed. In this window, the 'closable drops' control from the threat model (against unwanted deliveries) and the completeness of an operator takedown are not enforced.",
+  "root_cause": "The only check that a drop is still live is `active_drop()`, and it runs only at POST time (handlers/courier.py:64). The courier job payload carries no drop id (handlers/courier.py:100 → jobs.enqueue, jobs.py:37). `jobs.validate` requires the payload keys to be exactly {address, memo} (jobs.py:70). `ChainWorker._payload` (chain_worker.py:380) adds no drop lookup for courier jobs. `submit()` sends to `payload['address']` without any further check (chain_worker.py:453-455). `drops._close` (handlers/drops.py:87) and `admin.cmd_takedown` (admin.py:52) only update `drops.state`. No code path fails or cancels a drop's queued courier jobs, and cleanup does not do it either (cleanup.py:114 only deletes old non-active drop rows).",
+  "intended_behavior": "Once a drop is closed by its owner or removed by the operator, no delivery for that drop should go on chain, including jobs that were queued earlier. The threat model names closable drops as the mitigation for unwanted deliveries, and a takedown is meant to cut off the drop's derived paths.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "server/mutis/handlers/courier.py",
+    "line": 64,
+    "scope": "send(ctx), to=='drop'",
+    "description": "An anonymous drop sender (PoW only) POSTs /api/v1/courier. `active_drop()` checks the drop's state at this moment only, and its row is used only to read drop['address']."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/courier.py",
+    "line": 100,
+    "scope": "send(ctx)",
+    "description": "The job is enqueued with not_before = now + 5..45 s and payload {address, memo}. The drop id is not stored."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/jobs.py",
+    "line": 37,
+    "scope": "enqueue()",
+    "description": "The payload is written to the jobs row as given. No column or field links the job back to its drop."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/drops.py",
+    "line": 87,
+    "scope": "_close() (PATCH state=closed and DELETE)",
+    "description": "Closing sets drops.state='closed' and leaves the drop's queued courier jobs untouched. admin.cmd_takedown (admin.py:52) does the same with state='removed'."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/chain_worker.py",
+    "line": 380,
+    "scope": "ChainWorker._payload() -> jobs.validate()",
+    "description": "The worker re-checks only the shape of the courier address and memo (jobs.py:70) and never reads the drops table."
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/chain_worker.py",
+    "line": 453,
+    "scope": "ChainWorker.submit(), kind=='courier'",
+    "description": "walletd.stealth_transfer sends courier_amount_ut and the server-built memo from the sponsor account to payload['address'], which is the closed or removed drop's address."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/mutis/handlers/courier.py",
+    "line": 64,
+    "description": "`drop = active_drop(ctx.db, body.get(\"drop_id\"))` is the only check on the drop's state, and it runs only during the POST."
+   },
+   {
+    "file": "server/mutis/handlers/courier.py",
+    "line": 100,
+    "description": "`jobs.enqueue(ctx.db, \"courier\", slice_, {\"address\": address, \"memo\": memo}, not_before, ...)`: the payload has no drop id."
+   },
+   {
+    "file": "server/mutis/jobs.py",
+    "line": 70,
+    "description": "`validate()` for courier requires `set(payload) == {\"address\",\"memo\"}`, so with the current design the payload cannot carry a drop id for a later check."
+   },
+   {
+    "file": "server/mutis/handlers/drops.py",
+    "line": 87,
+    "description": "`_close()` only runs `UPDATE drops SET state = 'closed' ...`; queued jobs are not cancelled."
+   },
+   {
+    "file": "server/mutis/admin.py",
+    "line": 52,
+    "description": "The drop branch of `cmd_takedown` only runs `UPDATE drops SET state = 'removed'` (it also marks abuse reports actioned). Jobs are not touched."
+   },
+   {
+    "file": "server/mutis/chain_worker.py",
+    "line": 380,
+    "description": "`_payload()` re-checks only demo_pay against other tables (sales / receiver). Courier jobs get no check against the drops table."
+   },
+   {
+    "file": "server/mutis/chain_worker.py",
+    "line": 453,
+    "description": "The courier branch of `submit()` calls walletd.stealth_transfer to payload['address'] with no condition."
+   },
+   {
+    "file": "server/mutis/cleanup.py",
+    "line": 114,
+    "description": "purge_tombstones deletes non-active drop rows after retention but never fails their queued courier jobs, so no later layer makes up for it."
+   },
+   {
+    "file": "server/mutis/handlers/drops.py",
+    "line": 11,
+    "description": "COURIER_PER_DAY = 50 caps the queued deliveries per drop per day, which bounds how many late deliveries are possible."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "timing_dependency",
+    "description": "At least one courier job for the drop must be queued and not yet claimed when the close or takedown commits. The default window is the 5-45 s jitter (config.py:70). It is longer under worker backlog or rejection-retry backoff."
+   },
+   {
+    "kind": "authorization_role",
+    "description": "The state change is made by the drop owner (manage token, PATCH/DELETE) or by the operator (mutis-admin takedown). The delivery sender is an anonymous drop submitter who needs only PoW."
+   },
+   {
+    "kind": "data_state",
+    "description": "The drop is active when the POST arrives and becomes 'closed' or 'removed' before the queued job's not_before."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "An anonymous drop sender whose delivery is waiting in the jitter queue. The owner's close or the operator's takedown should stop that delivery, but it does not. The delivery can only reach the drop's own address with a memo the server builds, so this is a gap in how completely close and takedown revoke deliveries. It is not a redirect.",
+   "payloads": [
+    "POST /api/v1/courier {\"to\":\"drop\",\"drop_id\":\"<active drop>\",\"kind\":3,\"blob\":\"<125-byte b64u>\",\"pow\":\"<solved courier PoW>\"}",
+    "PATCH /api/v1/drops/<id> {\"state\":\"closed\"} with X-Mutis-Manage",
+    "DELETE /api/v1/drops/<id> with X-Mutis-Manage",
+    "mutis-admin --config <mutis.toml> takedown drop <id>"
+   ],
+   "instructions": [
+    "In the offline harness, build Stack(chain=True), call worker.setup() and quiet_chain(), and create a dummy drop with s.drop().",
+    "While the drop is active, POST one courier delivery to it. Expect 202 with not_before = now + 5..45 s.",
+    "Confirm that the queued job's payload keys are exactly ['address','memo'] and that its address equals the drop's address.",
+    "Apply one state change: PATCH state=closed (200), or DELETE (204), or admin takedown drop (stdout 'removed').",
+    "Check that a new courier POST to the drop is refused with 410 drop_closed.",
+    "Advance s.now by 46 and call worker.run_jobs(s.now).",
+    "Check the job row and s.chain.transfers for a transfer to the drop's address."
+   ],
+   "observed_result": "Independently reproduced for all three state changes (agents/v3-dropjob/artifacts/check-01.txt). In each case: drops.state became 'closed' (PATCH, DELETE) or 'removed' (takedown), a new POST got 410 drop_closed, and the job that was already queued stayed 'queued'. After the worker ran, the job was state=done with its payload scrubbed and no error. Exactly one new FakeChain transfer appeared, with destination equal to the drop's address, value=1000, and a memo prefixed by the public origin."
+  },
+  "remediation": {
+   "strategy": "Make the drop's liveness a condition of delivery, not only of admission. For drop deliveries, carry the drop id in the courier job payload (the drop address is already public, and the payload is scrubbed when the job ends). Have jobs.validate accept that optional key. Have the worker fail the job without retry when the drop is no longer active. In addition, fail the drop's queued courier jobs inside the close and takedown transactions.",
+   "code_changes": [
+    {
+     "file_name": "server/mutis/handlers/courier.py",
+     "fixed_code": "    payload = {\"address\": address, \"memo\": memo}\n    if to == \"drop\":\n        payload[\"drop_id\"] = drop[\"id\"]\n    ...\n            job_id = jobs.enqueue(ctx.db, \"courier\", slice_, payload, not_before, ctx.now, evidence=evidence)"
+    },
+    {
+     "file_name": "server/mutis/jobs.py",
+     "fixed_code": "    if kind == \"courier\":\n        memo, drop_id = payload.get(\"memo\"), payload.get(\"drop_id\")\n        if not ({\"address\", \"memo\"} <= set(payload) <= {\"address\", \"memo\", \"drop_id\"}) or not isinstance(memo, str) \\\n                or (\"drop_id\" in payload and not (isinstance(drop_id, str) and len(drop_id) == 10)) \\\n                or len(memo.encode()) > MEMO_MAX_BYTES or not memo_regex(memo_origins).match(memo):\n            raise PayloadError()\n        out = {\"address\": address(payload[\"address\"]), \"memo\": memo}\n        if drop_id is not None:\n            out[\"drop_id\"] = drop_id\n        return out"
+    },
+    {
+     "file_name": "server/mutis/chain_worker.py",
+     "fixed_code": "    def _payload(self, job):\n        payload = jobs.validate(job[\"kind\"], json.loads(job[\"payload\"] or \"null\"), list(self.cfg[\"memo_origins\"]))\n        if job[\"kind\"] == \"courier\" and \"drop_id\" in payload:\n            row = self.conn.execute(\"SELECT state, address FROM drops WHERE id = ?\", (payload[\"drop_id\"],)).fetchone()\n            if row is None or row[\"state\"] != \"active\" or row[\"address\"] != payload[\"address\"]:\n                raise jobs.PayloadError()   # drop closed or removed since enqueue: never deliver\n        # ... existing demo_pay checks unchanged ..."
+    },
+    {
+     "file_name": "server/mutis/handlers/drops.py",
+     "fixed_code": "def _close(ctx, drop_id: str) -> None:\n    with db.tx(ctx.db):\n        ctx.db.execute(\"UPDATE drops SET state = 'closed', ended_day = ? WHERE id = ? AND state = 'active'\",\n                       (codec.day(ctx.now), drop_id))\n        ctx.db.execute(\"UPDATE jobs SET state = 'failed', payload = NULL, error = 'drop_closed', updated_at = ? \"\n                       \"WHERE kind = 'courier' AND state = 'queued' AND json_extract(payload, '$.drop_id') = ?\",\n                       (ctx.now, drop_id))\n# admin.cmd_takedown drop branch: same jobs UPDATE with error = 'drop_removed' inside its transaction."
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "A courier job must still be queued after the close or takedown commits. The natural window is the 5-45 s jitter, longer only under worker backlog or retry backoff. A sender cannot predict an operator takedown, though an owner closing a drop while a delivery is in the jitter queue is an ordinary race."
+   },
+   "impact": {
+    "score": "low",
+    "reason": "The delivery can go only to the drop's own address, with a memo the server builds, and its budget was already charged at enqueue. The effect is a bounded number of late sealed deliveries (at most COURIER_PER_DAY=50 per drop per day, in practice those queued in the last ~45 s) landing after the control was applied, plus testnet sponsor-wallet spend. There is no cross-tenant disclosure, redirect, or key exposure."
+   },
+   "overall_severity": "low"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "The source lineage is complete and was verified line by line: the liveness check runs only at POST, the payload has no drop id, close and takedown never touch jobs, and the worker submits without checking the drop. An independent bounded local run (FakeChain/FakeWalletd, offline sandbox) showed an on-chain transfer to the drop's address after a PATCH close, a DELETE close, and an admin takedown, while new POSTs were correctly refused."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "server/mutis/payments.py:credit:lapsed-invoice-reservation-credited-without-slice-check",
+  "title": "Swapped or expired pack invoices still credit for 7 days without a slice check, so paid space goes over its cap",
+  "description": "A pack invoice holds its bytes in the paid-space slice only while it is pending or seen and has not expired (packs.slices). Two things end that hold. First, when a drive swaps to another pack (POST /api/v1/invoices with a different pack), the old unpaid invoice is closed as 'expired' with expires_at=now. Second, an unpaid invoice expires after INVOICE_TTL_S (1 h) through payments.expire_invoices. Either way it stops holding its bytes, and other buyers' invoices then pass the room check in the freed space. But payments.record_found still attributes a later payment to that invoice whatever its status. payments.credit() still credits it until expires_at + UNDERPAID_GRACE_DAYS (7 days), and grant_pack() grants the full pack bytes with no new room check. Paid drives can therefore hold more than the public (or judges') slice and the deployment-wide paid cap. That breaks the stated anti-griefing rule (packs.py docstring and docs/threat-model.md): 'an open invoice holds its bytes until it expires, so paying many invoices at once can't overbook a slice'. The bytes are real quota: quota.locker_limit adds paid_bytes to a paid drive's limit. A zero-cost variant exists because demo_pay is on by default. A locker asks the operator's sponsor wallet to pay its m30 invoice, then swaps to s30 before the worker sends or records the payment. The queued demo_pay job is neither cancelled nor re-checked against the invoice's status (the worker checks only the receiver address), so the expired m30 invoice is still paid and credited. From source, but not reproduced here: grant_pack's max(old, new) branch lets a late m30 payment raise a drive that already holds s30 to 5 GiB, which gets around the one-pack/same-pack-renewal rule. Also, because sold_today counts invoices by their creation day, invoices opened on earlier days and paid later do not count against the day they are credited.",
+  "root_cause": "The reservation lifetime is shorter than the crediting lifetime. The reservation is packs.slices (status IN ('pending','seen') AND expires_at > now) plus the swap UPDATE to status='expired', expires_at=now in invoices.create. Crediting is payments.credit, which accepts any invoice that is not yet credited until expires_at + 7 days. grant_pack applies the pack's bytes without checking that the invoice still held a reservation or that the slice still has room. The only room check runs once, when the invoice is created (handlers/invoices.py:90).",
+  "intended_behavior": "Bytes are granted only for an invoice that was counted against its slice up to the moment of credit, or after a fresh room check of that slice. Otherwise the late payment is held or flagged for refund and no bytes are granted. A renewal of the pack the drive already holds still only adds days, and a late payment for a different pack never raises a held pack's bytes.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "server/mutis/handlers/invoices.py",
+    "line": 34,
+    "scope": "invoices.create",
+    "description": "A drive session (any free drive) creates an m30 invoice. The room check at line 90 counts its 5 GiB against the public slice while it is pending and unexpired."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/handlers/invoices.py",
+    "line": 84,
+    "scope": "invoices.create (swap)",
+    "description": "A second create for another pack closes the unpaid m30 invoice with status='expired' and expires_at=now ('a late payment still credits'). Unpaid invoices also become 'expired' after INVOICE_TTL_S through payments.expire_invoices (payments.py:268-272)."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/packs.py",
+    "line": 67,
+    "scope": "packs.slices",
+    "description": "Only invoices with status pending/seen and expires_at > now count as open. The expired m30 invoice's 5 GiB is released, so another buyer's m30 invoice passes the room check."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/payments.py",
+    "line": 78,
+    "scope": "payments.record_found",
+    "description": "A later output that carries the expired invoice's pay-ref is attributed to that invoice as pending_check whatever the invoice's status."
+   },
+   {
+    "kind": "propagation",
+    "file": "server/mutis/payments.py",
+    "line": 175,
+    "scope": "payments.credit",
+    "description": "Crediting stops only when the invoice is already 'credited' or now is past expires_at + 7 days, so an 'expired' invoice is credited in full."
+   },
+   {
+    "kind": "sink",
+    "file": "server/mutis/payments.py",
+    "line": 201,
+    "scope": "payments.grant_pack",
+    "description": "The drive gets the pack's bytes without any slice room check, so active public paid bytes go over public_cap. If the drive already holds a pack, lines 196-199 apply max(old, new) bytes instead."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "server/mutis/packs.py",
+    "line": 7,
+    "description": "Stated control: open invoices count against their slice until they expire, 'so paying several at once can't overbook a slice' (also docs/threat-model.md:106)."
+   },
+   {
+    "file": "server/mutis/handlers/invoices.py",
+    "line": 90,
+    "description": "The only slice room check runs when the invoice is created."
+   },
+   {
+    "file": "server/mutis/handlers/invoices.py",
+    "line": 84,
+    "description": "A swap marks the replaced unpaid invoice 'expired' with expires_at=now. The comment says a late payment still credits."
+   },
+   {
+    "file": "server/mutis/payments.py",
+    "line": 175,
+    "description": "credit() accepts any invoice that is not yet credited until expires_at + UNDERPAID_GRACE_DAYS*86400."
+   },
+   {
+    "file": "server/mutis/payments.py",
+    "line": 185,
+    "description": "grant_pack is called unconditionally for the invoice's drive once received >= price."
+   },
+   {
+    "file": "server/mutis/handlers/invoices.py",
+    "line": 125,
+    "description": "demo_pay checks only the invoice's status and grace window at enqueue time. The queued job is not cancelled when the invoice is swapped, and the worker re-checks only that the address is our receiver (chain_worker.py:386)."
+   },
+   {
+    "file": "server/mutis/config.py",
+    "line": 34,
+    "description": "Default features: demo_pay True (and packs True at line 36)."
+   },
+   {
+    "file": "server/mutis/quota.py",
+    "line": 153,
+    "description": "paid_bytes is added to a paid drive's storage limit, so the overbooked bytes are real usable quota."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "Any locker (drive) session. A free drive is enough."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "The packs feature is on. The zero-cost path also needs demo_pay on. Both are defaults (config.py:34-36)."
+   },
+   {
+    "kind": "timing_dependency",
+    "description": "Swap path: the swap must happen while the old invoice is still 'pending', that is before the worker records the payment. Expiry path: the payment must land within 7 days after the invoice expires."
+   },
+   {
+    "kind": "data_state",
+    "description": "The slice must have room for the invoice when it is first created. The overbooking appears when other invoices fill the released room, or when the attacker repeats this from more drives or networks within the per-network and daily brakes."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "A visitor holding ordinary drive sessions on distinct non-exempt addresses. It uses only the public invoice and demo-pay routes and on-chain payments to the invoice address (or the operator's sponsor wallet through demo-pay).",
+   "payloads": [
+    "POST /api/v1/invoices {\"pack\":\"m30\"} (drive A)",
+    "POST /api/v1/invoices/{A's m30 invoice}/demo-pay {\"pow\":...} (drive A) [zero-cost variant]",
+    "POST /api/v1/invoices {\"pack\":\"s30\"} (drive A, swap: the m30 invoice becomes 'expired')",
+    "POST /api/v1/invoices {\"pack\":\"m30\"} (drive B, passes the room check in the released space)",
+    "transfer 1000000 uT to A's expired m30 invoice address (or let the queued demo payment land)"
+   ],
+   "instructions": [
+    "Inside the approved sandbox, run python3 -I harness-01.py. It builds server/tests/harness.py Stack(chain=True) with Disk(total=100 GiB, avail=36 GiB), which gives a public paid slice of 7.28 GiB. Drives are registered and call from distinct non-exempt IPs.",
+    "Scenario 1 (swap): A creates m30, then swaps to s30, so the m30 invoice becomes 'expired'. B creates m30 (accepted). C's s30 is refused as sold_out. A's expired m30 invoice and B's invoice are each paid 1000000 uT via FakeChain.transfer, then the worker ticks.",
+    "Scenario 2 (TTL): A creates m30. The clock moves past INVOICE_TTL_S and payments.expire_invoices runs. B creates m30 and C creates s30 (both accepted). A's expired invoice and B's invoice are paid, then the worker ticks.",
+    "Scenario 3 (demo-pay): A creates m30 and demo-pays it (202, job queued). A swaps to s30 before any worker tick. B creates m30 and demo-pays it. Then the worker ticks.",
+    "Afterwards, read the invoices and identities rows and packs.slices()."
+   ],
+   "observed_result": "All three scenarios ended the same way. Both m30 invoices were 'credited', drives A and B each held paid_bytes=5368709120 (paid_pack m30), and packs.slices reported public_cap 7.28 GiB with public_active 10.0 GiB (overbooked). In scenario 1, C's s30 had been refused sold_out just before the late credit. In scenario 2, C's s30 invoice was also still open (2 GiB). In scenario 3, both payments came from the operator's sponsor account: [('sponsor', 1000000), ('sponsor', 1000000)]."
+  },
+  "remediation": {
+   "strategy": "Make crediting respect the reservation. (1) In credit(), grant bytes only if the invoice still held its reservation (status pending/seen and now <= expires_at) or is a same-pack renewal for a drive that holds that pack. Otherwise re-check slice room. Without room, hold the payment (leave it pending_check or give it a distinct 'held' status, and alert or flag it for refund) and never grant bytes. check_pending must pass the room callback, which needs the pool and packs config. (2) Alternatively, keep counting an invoice that has a recorded payment (status 'seen', or received_ut > 0) in packs.slices until its grace ends. (3) In invoices.create, refuse to replace an invoice that has a queued or sending demo_pay job, as is already done for 'seen'. Or have the worker re-check that an inv_ ref is still pending/seen before sending. (4) In grant_pack, never raise the bytes of a held pack from a different pack's invoice. Regression test: a swapped m30 invoice and an expired m30 invoice, each paid late, must not raise public_active above public_cap.",
+   "code_changes": [
+    {
+     "file_name": "server/mutis/payments.py",
+     "fixed_code": "def credit(conn, utxo_id, now, room=None):\n    \"\"\"room(nbytes, judge) -> bool re-checks the slice for an invoice whose reservation lapsed.\"\"\"\n    with db.tx(conn):\n        pay = conn.execute(\"SELECT * FROM payments WHERE utxo_id = ? AND status = 'pending_check'\", (utxo_id,)).fetchone()\n        if pay is None:\n            return\n        inv = conn.execute(\"SELECT * FROM invoices WHERE id = ?\", (pay[\"invoice_id\"],)).fetchone()\n        if inv is not None and inv[\"status\"] != \"credited\" and inv[\"identity_id\"] \\\n                and inv[\"received_ut\"] + min(pay[\"value_ut\"], inv[\"price_ut\"]) >= inv[\"price_ut\"]:\n            reserved = inv[\"status\"] in (\"pending\", \"seen\") and now <= inv[\"expires_at\"]\n            d = conn.execute(\"SELECT paid_bytes, paid_until, paid_pack FROM identities WHERE id = ?\",\n                             (inv[\"identity_id\"],)).fetchone()\n            renewal = d is not None and (d[\"paid_until\"] or 0) > now and d[\"paid_bytes\"] > 0 and d[\"paid_pack\"] == inv[\"pack\"]\n            if not (reserved or renewal or (room and room(quota.PACKS[inv[\"pack\"]][\"bytes\"], bool(inv[\"judge\"])))):\n                logsafe.event(\"chain.invoice_late_no_room\", \"warning\")\n                return                     # held: never granted without room\n        conn.execute(\"UPDATE payments SET committed = 1, status = 'credited' WHERE utxo_id = ?\", (utxo_id,))\n        # ... rest unchanged (received_ut update, status, grant_pack)\n"
+    },
+    {
+     "file_name": "server/mutis/handlers/invoices.py",
+     "fixed_code": "        if row[\"status\"] == \"seen\" or row[\"received_ut\"] or ctx.db.execute(\n                \"SELECT 1 FROM jobs WHERE kind = 'demo_pay' AND state IN ('queued','sending') \"\n                \"AND json_extract(payload, '$.ref') = ?\", (row[\"id\"],)).fetchone():\n            raise ApiError(409, \"conflict\", \"A payment for your other invoice is on its way.\")\n"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "medium",
+    "reason": "Any free drive can do it through public routes. The demo-pay variant costs the attacker nothing but needs the swap before the worker sends or records the payment, and it is bounded by the per-locker and per-network demo limits. The paid variant needs testnet tTARI and payment within the 7-day grace window. The per-network and daily sales brakes limit how many invoices one actor can open."
+   },
+   "impact": {
+    "score": "medium",
+    "reason": "The paid-space cap and its public/judge slices are the main anti-griefing bound on the shared disk, and they can be exceeded. Observed: 10 GiB of active public packs against a 7.28 GiB public slice, and paid_bytes raises the drive's storage limit. Actual disk exhaustion was not observed. The free-space brakes and the disk reserve still apply."
+   },
+   "overall_severity": "medium"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "The verifier wrote its own harness and reproduced the result deterministically in three variants (swap, TTL expiry, demo-pay then swap). The run used the real API, chain worker, crediting and slice code over the repository's fake chain, indexer and sidecar, with non-exempt client addresses. Every trace and evidence line was checked against the snapshot."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "verify-deploy:placeholder-values-from-live-config-unvalidated",
+  "title": "verify-deploy rebuilds with HTML placeholder values chosen by the deployment it verifies, so injected script tags pass as 0 differences",
+  "description": "tools/verify-deploy.py is the stated mitigation for a compromised server that serves code which is not the published source (docs/threat-model.md line 206). To rebuild, it takes network, security_drop and repo_url from the live deployment's /api/v1/config and writes them into the mutis.toml it passes to the tag's tools/build.py. build.py validates only the origin. It puts {{REPO_URL}}, {{SECURITY_DROP_URL}} and {{NETWORK}} into .html/.txt/.xml/.webmanifest files without escaping, after includes are expanded. Lint runs only on the sources before they are filled. A deployment can therefore answer /api/v1/config with a repo_url that contains '\"><script src=\"/x.js\"></script>' and serve the build made from it. The header partial puts {{REPO_URL}} inside an href attribute. That partial is included in every site page and in web/app/view.html and web/app/app.html, so all of those pages load an extra same-origin script. The verifier's clean rebuild with the same values produces the same bytes, and compare() reports 0 differences. /x.js is never downloaded because only manifest-listed paths are fetched. The app CSP (script-src 'self') allows a same-origin script inserted by the HTML parser. require-trusted-types-for 'script' does not cover such tags. So on the link viewer page (/app/view.html) the script can read the link secret in the URL fragment. For calibration: verify-deploy also sends a fixed User-Agent ('mutis-verify-deploy'), so a compromised server could already serve different bytes to the verifier. This finding is a different variant. Every client, the verifier included, gets the same modified bytes and the tool vouches for them, so hashing the bytes a normal browser receives and comparing them with the verifier also passes.",
+  "root_cause": "verify-deploy treats values from the deployment under verification as trusted build configuration. build.py settings() checks ORIGIN with a strict regex but takes NETWORK, SECURITY_DROP_URL and REPO_URL from the config unchecked, and fill() inserts them raw into markup. Neither the server's config.validate() nor any lint of the filled output limits them. verify-deploy takes them from the live /api/v1/config, so the party being verified controls HTML that the verifier reproduces byte for byte.",
+  "intended_behavior": "A deployment that serves any HTML which a clean build of the tag would not produce from plain public settings must yield at least one difference. Values taken from the deployment must be limited to plain URL or name formats that cannot change markup, or verify-deploy must refuse them and show the values it used.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "tools/verify-deploy.py",
+    "line": 158,
+    "scope": "main",
+    "description": "cfg = live_config(origin): the deployment's own /api/v1/config JSON (read at line 54), fully controlled by the server being verified"
+   },
+   {
+    "kind": "propagation",
+    "file": "tools/verify-deploy.py",
+    "line": 72,
+    "scope": "build_config",
+    "description": "security_drop and repo_url (and network on line 71) are copied from cfg into the generated mutis.toml; toml_value only quotes them as JSON/TOML strings"
+   },
+   {
+    "kind": "propagation",
+    "file": "tools/verify-deploy.py",
+    "line": 95,
+    "scope": "build_tag",
+    "description": "The tag's tools/build.py is run with that mutis.toml"
+   },
+   {
+    "kind": "propagation",
+    "file": "tools/build.py",
+    "line": 99,
+    "scope": "settings",
+    "description": "REPO_URL = cfg['repo_url'] with only rstrip('/'). NETWORK (97) and SECURITY_DROP_URL (98) are also unvalidated, while ORIGIN is regex-checked on line 92"
+   },
+   {
+    "kind": "propagation",
+    "file": "tools/build.py",
+    "line": 244,
+    "scope": "fill",
+    "description": "Placeholder values are returned raw into the file text; process_files expands includes (271) and then fills (272)"
+   },
+   {
+    "kind": "propagation",
+    "file": "web/shared/partials/header.html",
+    "line": 10,
+    "scope": "header partial",
+    "description": "href=\"{{REPO_URL}}\": a quote in the value closes the attribute and injects <script src=\"/x.js\">. The partial is included in every site page and in web/app/view.html and web/app/app.html"
+   },
+   {
+    "kind": "sink",
+    "file": "tools/verify-deploy.py",
+    "line": 141,
+    "scope": "compare",
+    "description": "Served bytes equal the local rebuild, so no difference is reported. Only manifest-listed paths are fetched (134-137), so the injected /x.js is never checked"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "tools/build.py",
+    "line": 92,
+    "description": "Only the origin is validated: re.fullmatch(r\"https://[a-z0-9.-]+(:\\d+)?|http://127\\.0\\.0\\.1:\\d+\", origin)"
+   },
+   {
+    "file": "tools/build.py",
+    "line": 99,
+    "description": "\"REPO_URL\": cfg.get(\"repo_url\", \"https://github.com/c7b/hidebox\").rstrip(\"/\") is used without a format check"
+   },
+   {
+    "file": "tools/build.py",
+    "line": 341,
+    "description": "lint runs on the web/ sources before placeholders are filled, so markup after filling is never linted"
+   },
+   {
+    "file": "tools/verify-deploy.py",
+    "line": 72,
+    "description": "security_drop_url and repo_url in the rebuild config come from the live deployment's /api/v1/config"
+   },
+   {
+    "file": "tools/verify-deploy.py",
+    "line": 46,
+    "description": "The verifier sends a fixed User-Agent 'mutis-verify-deploy'. Serving different bytes to each client is a separate bypass that already exists, which bounds the extra impact of this finding"
+   },
+   {
+    "file": "server/mutis/handlers/system.py",
+    "line": 65,
+    "description": "An honest server echoes repo_url from mutis.toml. server/mutis/config.py validate() (146-181) checks network but not the format of repo_url or security_drop_url"
+   },
+   {
+    "file": "deploy/caddy/Caddyfile",
+    "line": 82,
+    "description": "app_csp script-src 'self' 'wasm-unsafe-eval': a same-origin <script src> inserted by the HTML parser is allowed, and Trusted Types do not cover it"
+   },
+   {
+    "file": "deploy/caddy/Caddyfile",
+    "line": 201,
+    "description": "The link viewer route is served from /app/view.html, which carried the injected tag in the local check"
+   },
+   {
+    "file": "docs/threat-model.md",
+    "line": 206,
+    "description": "verify-deploy is named as what helps against a compromised server serving code that leaks keys"
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authorization_role",
+    "description": "The actor controls the deployment's responses (a compromised or malicious server or host), which is the adversary verify-deploy exists to detect"
+   },
+   {
+    "kind": "user_interaction",
+    "description": "A third party relies on tools/verify-deploy.py reporting 0 differences to trust the live site"
+   },
+   {
+    "kind": "system_configuration",
+    "description": "For the extra script to run under the stock CSP it is served from the same origin at a path outside the manifest, which the server's operator can arrange freely"
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "Operator of a compromised deployment who wants every visitor's pages to load extra JavaScript while tools/verify-deploy.py still reports the site as a clean build of the published tag",
+   "payloads": [
+    "/api/v1/config => {\"network\":\"esmeralda\",\"repo_url\":\"https://github.com/c7b/hidebox\\\"><script src=\\\"/x.js\\\"></script><a hidden href=\\\"\",\"security_drop\":null}"
+   ],
+   "instructions": [
+    "Inside the offline sandbox (bwrap, no network, target read-only, env -i, prlimit) run: bash bin/sbx.sh v3-verifydeploy 300 -- python3 -I /scratch/harness-01.py",
+    "The harness loads tools/verify-deploy.py and builds the 'served' dist with tools/build.py --source. It uses the mutis.toml that verify-deploy's own build_config() makes from the payload config. It puts that dist, the payload /api/v1/config and an extra /x.js into a dict that replaces fetch()",
+    "It then runs verify-deploy's own steps (fetch the manifest, live_config, build_config, a separate build.py rebuild, compare) and records which paths were fetched. As a control it repeats compare() against a rebuild with the honest repo_url"
+   ],
+   "observed_result": "compare() returned 0 differences across 213 files. /x.js was not in the manifest and was never fetched. Nine served pages carried <script src=\"/x.js\">: /404.html, /app/app.html, /app/view.html, /fine-print/index.html, /how/index.html, /index.html, /judges/index.html, /made/index.html and /v2/index.html. In /app/view.html the header read <a class=\"gh\" href=\"https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\"\" ...>. The control rebuild with the honest repo_url reported 12 differences against the same deployment."
+  },
+  "remediation": {
+   "strategy": "Limit every placeholder value to a format that cannot change markup, and fail the build otherwise. REPO_URL and a configured SECURITY_DROP_URL must be plain https URLs over a safe character set. NETWORK must be a known network name (the server already requires esmeralda). verify-deploy should refuse a /api/v1/config whose values fail the same checks. It should also print the deployment-supplied values it used, so a human sees a non-default repo_url or security_drop. Regression tests: build.py with a repo_url containing '\"' or '<' exits 1, and verify-deploy refuses such a config. Separately, consider dropping the fixed User-Agent so serving different bytes to the verifier needs more than a header match.",
+   "code_changes": [
+    {
+     "file_name": "tools/build.py",
+     "fixed_code": "SAFE_URL = re.compile(r\"https://[A-Za-z0-9.-]+(:\\d+)?(/[A-Za-z0-9._~%/-]*)?(#[A-Za-z0-9._~-]*)?\")\nNETWORKS = {\"esmeralda\"}\n\ndef settings(cfg: dict, origin: str | None) -> dict:\n    origin = (origin or cfg[\"public_origin\"]).rstrip(\"/\")\n    if not re.fullmatch(r\"https://[a-z0-9.-]+(:\\d+)?|http://127\\.0\\.0\\.1:\\d+\", origin):\n        raise BuildError(f\"origin must be https://host (or http://127.0.0.1:port for development): {origin}\")\n    network = cfg.get(\"network\", \"esmeralda\")\n    if network not in NETWORKS:\n        raise BuildError(f\"unknown network: {network!r}\")\n    repo = cfg.get(\"repo_url\", \"https://github.com/c7b/hidebox\").rstrip(\"/\")\n    drop = cfg.get(\"security_drop_url\") or \"\"\n    for name, value in ((\"repo_url\", repo), (\"security_drop_url\", drop)):\n        if value and not SAFE_URL.fullmatch(value):\n            raise BuildError(f\"{name} must be a plain https URL: {value!r}\")\n    return {\"ORIGIN\": origin, \"NETWORK\": network.capitalize(),\n            \"SECURITY_DROP_URL\": drop or origin + \"/fine-print#report\",\n            \"REPO_URL\": repo, \"BRAND\": BRAND}"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "Requires control of the deployment's responses (a compromised or malicious server) and a verifier who relies on the tool's verdict"
+   },
+   "impact": {
+    "score": "medium",
+    "reason": "It defeats the stated detection control for malicious served code using bytes that are identical for every client, so the tool and any independent hash cross-check agree. The injected same-origin script runs on the link viewer page, where the fragment key is present. The extra impact is bounded because a compromised server can already serve different bytes to the verifier's fixed User-Agent."
+   },
+   "overall_severity": "low"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "Reproduced independently offline with verify-deploy's own build_config/compare and the target's build.py. A control run shows compare() does report differences when the rebuild uses the honest value. The source path is fully visible"
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "web/app/lib/identity.js:forgetIdentity:leaves-link-secrets-and-claims",
+  "title": "Lock my drive / Forget this browser leaves link secrets, secret words, pay-link fragments and claim tokens in browser storage",
+  "description": "The drive keeps per-drive records in the IndexedDB 'identity' store, in the same store as its key. links:<id> holds every link the drive made as its full URL, including the #fragment secret. For link + secret-word links it also holds the secret word in plain text (share-dialog.js:294 via links.js:92-97). purchases:<id> holds the pay-page URL, including the #5<sA> half-key fragment (paypage.js:261). localStorage 'mutis.claims' holds the buyer's claim token (pay.js:180-184). When the owner presses Lock my drive (drive-account.js:310-317) or Forget this browser (locker.js:303-308), the UI promises 'This browser forgets your key' and 'This takes your key out of this browser'. forgetIdentity() then deletes only identity/current and inbox/current, and clears the mutis.drive flag (identity.js:142-147). Every link URL with its secret, every secret word, every pay fragment and every claim token stays in the origin's storage. The drive is gone from the UI, so the owner has no in-app way to clear them. A later user of the same browser profile can read them in devtools: a shared or public computer, which is the case the lock action exists for. That person can then open every still-live link the owner made, including secret-word links, learn the secret words, and re-open purchased pay links while the claim has opens left and its window is open (sales.py:68-90). Delete my drive (drive-account.js:278) uses the same forgetIdentity(). There the drive's own links are stopped on the server, but purchase records and claim tokens for other sellers' links stay usable. Calibration: the threat model accepts browser history, clipboard and malware on the device (docs/threat-model.md:203-204). The pay URL is also in history, but the owner's own link secrets, secret words and claim tokens are not. The UI explicitly promises the browser forgets, so this is a lifecycle gap and not that accepted residual.",
+  "root_cause": "forgetIdentity() deletes fixed keys ('current') only. It never removes the drive-id-keyed records (identity/links:<id>, identity/purchases:<id>) or the drive-independent localStorage 'mutis.claims', and nothing else in web/app deletes them. rememberLink() also stores the link password ('word') in plain text next to the link URL that carries the secret.",
+  "intended_behavior": "After Lock my drive, Forget this browser or Delete my drive, this browser holds nothing that opens the drive's files, links or purchases. Link URLs with secrets, secret words, pay fragments and claim tokens are erased together with the key, or are only ever stored encrypted under a key derived from the seed.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "web/app/ui/share-dialog.js",
+    "line": 294,
+    "scope": "share dialog: make a link (optionally + secret word)",
+    "description": "After makeLink, the drive calls rememberLink(drive.identity, link.shareId, {url: link.url, word}). link.url is shareUrl(origin, id, fragment), which carries the #1/#2 link secret, and word is the plain-text secret word."
+   },
+   {
+    "kind": "propagation",
+    "file": "web/app/lib/links.js",
+    "line": 97,
+    "scope": "rememberLink",
+    "description": "The record map is written unencrypted with idbPut('identity', `links:${identity.id}`, all)."
+   },
+   {
+    "kind": "propagation",
+    "file": "web/app/ui/paypage.js",
+    "line": 261,
+    "scope": "buyer page remember()",
+    "description": "rememberPurchase stores url: location.href, which includes the pay link's #5<sA> fragment, under identity/purchases:<id>. pay.js keepClaim (lines 180-184) keeps the claim token {t, claimId, ...} in localStorage 'mutis.claims'."
+   },
+   {
+    "kind": "propagation",
+    "file": "web/app/ui/drive-account.js",
+    "line": 315,
+    "scope": "lockDialog 'Lock my drive'",
+    "description": "endSession() then forgetIdentity() with no identity argument. locker.js:307 (Forget this browser) and drive-account.js:278 (Delete my drive) make the same call."
+   },
+   {
+    "kind": "sink",
+    "file": "web/app/lib/identity.js",
+    "line": 142,
+    "scope": "forgetIdentity",
+    "description": "Only identity/current (143) and inbox/current (144) are deleted, and mutis.drive is cleared. identity/links:<id>, identity/purchases:<id> and localStorage mutis.claims stay readable in the origin's storage."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "web/app/lib/identity.js",
+    "line": 142,
+    "description": "forgetIdentity() deletes identity/current and inbox/current only, then clears the mutis.drive flag and the in-memory state."
+   },
+   {
+    "file": "web/app/lib/links.js",
+    "line": 74,
+    "description": "Link records are keyed links:<identity.id> in the same 'identity' store. A grep of web/app, web/shared and web/site finds no code that deletes them."
+   },
+   {
+    "file": "web/app/ui/share-dialog.js",
+    "line": 294,
+    "description": "The stored record includes the full link URL with its fragment secret and the plain-text secret word."
+   },
+   {
+    "file": "web/app/lib/purchases.js",
+    "line": 7,
+    "description": "Purchase records are keyed purchases:<identity.id> and are never deleted."
+   },
+   {
+    "file": "web/app/lib/pay.js",
+    "line": 52,
+    "description": "Claim tokens live in localStorage 'mutis.claims' (keepClaim, lines 180-184). This entry is not bound to a drive and is never cleared on lock, forget or delete."
+   },
+   {
+    "file": "web/app/i18n/en.json",
+    "line": 894,
+    "description": "The lock dialog tells the owner 'This browser forgets your key.' leave.forget_confirm (line 975) says 'This takes your key out of this browser.'"
+   },
+   {
+    "file": "server/mutis/sales.py",
+    "line": 68,
+    "description": "A released claim keeps views_left and an open window, so a leftover claim token plus the #sA fragment can still re-open the paid link while opens remain."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "user_interaction",
+    "description": "The drive owner made links (optionally with a secret word) or bought a pay link in this browser, then used Lock my drive or Forget this browser to leave it."
+   },
+   {
+    "kind": "environmental_dependency",
+    "description": "Another person later uses the same browser profile (a shared or public computer) and reads the origin's IndexedDB 'mutis' database or its localStorage, for example through devtools."
+   },
+   {
+    "kind": "data_state",
+    "description": "The links are still live (views and expiry left), or the released claim still has opens left within its window, so the leftover secrets still open files."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "A later user of the same browser profile, after the drive owner locked or forgot the drive on that browser.",
+   "payloads": [
+    "identity = createIdentity({lazy:true}); rememberLink(identity, 'AAAAAAAAAAAAAAAAAAAAAA', {url: shareUrl('https://dummy.invalid','AAAAAAAAAAAAAAAAAAAAAA', linkFragment(2, newShareSecret())), word: 'dummy-secret-word'}); rememberPurchase(identity, 'BBBBBBBBBBBBBBBBBBBBBB', {url: 'https://dummy.invalid/p/BBBBBBBBBBBBBBBBBBBBBB#5dummyFragmentSA', ...}); keepClaim('BBBBBBBBBBBBBBBBBBBBBB', {t: 'dummyClaimTokenB64u', claimId: 'clm_aaaaaaaaaaaaaaaaaaaa'}); forgetIdentity();"
+   ],
+   "instructions": [
+    "In the approved sandbox (no network, empty environment, target read-only), run node /scratch/harness-01.mjs. It imports web/app/lib/identity.js, links.js, purchases.js, pay.js, idb.js, share.js and store.js from the target.",
+    "The harness creates a lazy identity, then records a secret-word link, a purchase and a claim exactly as share-dialog.js:294, paypage.js:261 and pay.js keepClaim do. It then calls forgetIdentity(), as Lock my drive and Forget this browser do.",
+    "It reads loadIdentity(), identity/current, mutis.drive, identity/links:<id>, identity/purchases:<id> and localStorage mutis.claims, and parses the leftover link fragment back to a secret. Stand-ins: Node has no IndexedDB, so idb.js uses its own in-memory fallback with the same keys and delete calls, and localStorage is a Map-backed shim."
+   ],
+   "observed_result": "After forgetIdentity(), loadIdentity() returns null, identity/current is null and mutis.drive is null. identity/links:<id> still holds {\"AAAAAAAAAAAAAAAAAAAAAA\":{\"url\":\"https://dummy.invalid/s/AAAAAAAAAAAAAAAAAAAAAA#2JpW0HTX...\",\"word\":\"dummy-secret-word\",...}}, and that fragment parses back to the original 32-byte link secret (kind 2). identity/purchases:<id> still has the /p/...#5dummyFragmentSA URL, and mutis.claims still has {\"t\":\"dummyClaimTokenB64u\",...}."
+  },
+  "remediation": {
+   "strategy": "Erase everything the drive wrote when it is locked, forgotten or deleted. Pass the identity to forgetIdentity and delete links:<id>, purchases:<id> and the mutis.claims entry. Because one drive lives per browser, clearing the whole 'identity' and 'inbox' object stores is simpler, and it also removes stale records left by earlier drives. Stop storing the secret word in plain text, or encrypt link and purchase records under a seed-derived key (for example HKDF(seed,'links')) so they are useless without the key. Regression test: create links, a purchase and a claim, lock, then assert that IndexedDB 'identity' and localStorage 'mutis.claims' are empty.",
+   "code_changes": [
+    {
+     "file_name": "web/app/lib/identity.js",
+     "fixed_code": "export async function forgetIdentity(identity = null) {\n  const id = identity?.id ?? null;\n  await idbDelete('identity', 'current');\n  await idbDelete('inbox', 'current');\n  if (id) {\n    await idbDelete('identity', `links:${id}`);\n    await idbDelete('identity', `purchases:${id}`);\n  }\n  localSet('mutis.claims', null);\n  hasDrive(false);\n  setState('identity', null);\n}"
+    },
+    {
+     "file_name": "web/app/ui/drive-account.js",
+     "fixed_code": "await (await identityLib()).forgetIdentity(drive.identity);"
+    },
+    {
+     "file_name": "web/app/ui/locker.js",
+     "fixed_code": "await forgetIdentity(ctx.identity);"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "It needs a later user of the same browser profile after the owner locked or forgot the drive there, which means a shared or public computer."
+   },
+   "impact": {
+    "score": "medium",
+    "reason": "It exposes the secrets of every still-live link the drive made, including secret-word links and the secret words themselves, and lets the reader re-open purchased pay links while their claims have opens left. The drive key itself is erased, so other files and the drive cannot be opened."
+   },
+   "overall_severity": "low"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "Source shows that only the 'current' keys are deleted and that no code deletes links:, purchases: or mutis.claims. An independent sandboxed harness running the target modules shows the link secret, the secret word, the pay fragment and the claim token surviving forgetIdentity(). The only stand-ins are idb.js's own in-memory fallback, which uses the same keys and deletes, and a Map-backed localStorage."
+  }
+ }
+]

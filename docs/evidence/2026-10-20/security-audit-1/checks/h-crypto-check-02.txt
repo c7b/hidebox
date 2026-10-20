@@ -1,0 +1,25 @@
+# h-crypto check-02: recipient-side name handling (recipient-parsing unit)
+Command: bash cf-audit/bin/sbx.sh h-crypto 120 -- node /scratch/harness-01.mjs   (sandbox: no network, empty env, cwd /target read-only, CPU=120 s, AS 4 GiB, fsize 64 MiB; exit=0)
+Harness: the same harness-01.mjs reproduced verbatim in check-01.txt (section 8 of it); it imports web/app/lib/zip.js and web/app/lib/filetype.js only for these lines.
+
+## Section 8 of the harness
+77:// 8. recipient-side name handling
+78:for (const n of ['../../x', '..', ' .. ', 'a\\b', 'C:', 'a/b', '‮gnp.exe']) log('zipPath_' + JSON.stringify(n), zip.zipPath([n, 'f.txt']));
+79:for (const n of ['invoice.b​at', 'setup.exe. ', 'x.EXE', 'x.exe::$DATA', 'run.command', 'a.desktop', 'x.xll', 'x.ms​i']) log('risky_' + JSON.stringify(n), { saved: ft.sanitizeFileName(n), ...ft.checkRisky(n, null) });
+
+## Observed output (name lines)
+zipPath_"../../x": .._.._x/f.txt
+zipPath_"..": _/f.txt
+zipPath_" .. ": _/f.txt
+zipPath_"a\\b": a_b/f.txt
+zipPath_"C:": C:/f.txt
+zipPath_"a/b": a_b/f.txt
+zipPath_"‮gnp.exe": ‮gnp.exe/f.txt
+risky_"invoice.b​at": {"saved":"invoice.bat","risky":true,"active":false,"reason":"name","ext":"bat"}
+risky_"setup.exe. ": {"saved":"setup.exe","risky":true,"active":false,"reason":"name","ext":"exe"}
+risky_"x.EXE": {"saved":"x.EXE","risky":true,"active":false,"reason":"name","ext":"exe"}
+risky_"x.exe::$DATA": {"saved":"x.exe$DATA","risky":false,"active":false,"reason":null,"ext":"exe$data"}
+risky_"run.command": {"saved":"run.command","risky":false,"active":false,"reason":null,"ext":"command"}
+risky_"a.desktop": {"saved":"a.desktop","risky":false,"active":false,"reason":null,"ext":"desktop"}
+risky_"x.xll": {"saved":"x.xll","risky":false,"active":false,"reason":null,"ext":"xll"}
+risky_"x.ms​i": {"saved":"x.msi","risky":true,"active":false,"reason":"name","ext":"msi"}

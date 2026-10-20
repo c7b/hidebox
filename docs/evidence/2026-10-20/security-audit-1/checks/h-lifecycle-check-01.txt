@@ -1,0 +1,26 @@
+# h-lifecycle check-01: stored abuse-report text reaches mutis-admin reports output unescaped
+# command (run from the parent shell; sandbox: no network, empty env, cwd /target read-only, scratch at /scratch):
+#   bash cf-audit/bin/sbx.sh h-lifecycle 120 -- python3 -I /scratch/harness-01.py
+# limits: wall/CPU 120 s, AS 4 GiB, fsize 64 MiB, 256 fds, 512 procs (sbx.sh defaults); env: PATH, HOME/TMPDIR (inner tmpfs), LANG, PYTHONDONTWRITEBYTECODE=1, PYTHONHASHSEED=0
+# harness: harness-01.py (server/tests/harness.Stack: real mutis-api on isolated loopback, dummy uploads only)
+# input 1: POST /api/v1/abuse {category: csam, details: 'HONEST REPORT: ...'} (honest report about dummy link A)
+# input 2: POST /api/v1/abuse {category: other, details: ('\u009bF\u009b2K' * 4) + 'nothing to see', contact: 'x\nrep_forged0000000000  2026-10-11 11:00  new       csam        share <B>  item=<B item>  key=yes\n    CONFIRMED'}
+# then admin.main(['--config', <tmp toml>, 'reports']) with stdout captured; each output line printed with unicode_escape
+# ---- observed output ----
+honest report -> 201 {'report_id': 'rep_syuugrqqwupxbydx'}
+contact length: 144
+crafted report -> 201 {'report_id': 'rep_yn7mzimybnrrlbm6'}
+=== mutis-admin reports: stdout as printed (lines) ===
+00| rep_syuugrqqwupxbydx  2026-10-11 12:00  new       csam        share hIZv3GZkJWnYnJk2ZdoO3w  item=W9XbdSkxsdxIvahS2WvS-g  key=no
+01|     HONEST REPORT: this link hosts abuse material
+02| rep_yn7mzimybnrrlbm6  2026-10-11 12:01  new       other       share rN7rTiR2fnrkWIlNV9Ixng  item=ThAcmVM7Ov3VjdyjnBlJTg  key=no
+03|     \x9bF\x9b2K\x9bF\x9b2K\x9bF\x9b2K\x9bF\x9b2Knothing to see
+04|     contact: x
+05| rep_forged0000000000  2026-10-11 11:00  new       csam        share rN7rTiR2fnrkWIlNV9Ixng  item=ThAcmVM7Ov3VjdyjnBlJTg  key=yes
+06|     CONFIRMED
+07| 
+=== checks ===
+unindented lines starting with 'rep_': 3
+forged row present unindented: True
+raw U+009B (8-bit CSI) bytes in output: 8 | UTF-8: b'\xc2\x9b'
+real reports in DB: 2

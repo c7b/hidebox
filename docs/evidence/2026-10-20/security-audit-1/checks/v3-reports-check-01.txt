@@ -1,0 +1,76 @@
+# v3-reports check-01: independent reproduction (agent v3-reports)
+# Command (from host):
+#   bash cf-audit/bin/sbx.sh v3-reports 300 -- python3 -I /scratch/harness-01.py
+# Harness: harness-01.py (verbatim below). Stack = server/tests/harness.Stack (real mutis-api on sandbox loopback, fake chain).
+# The admin listing is produced by running /target/server/bin/mutis-admin as a separate python3 -I process and capturing raw stdout bytes.
+# ===== harness-01.py =====
+# v3-reports independent reproduction: stored abuse-report text -> `mutis-admin reports` stdout bytes.
+import os, subprocess, sys
+sys.path.insert(0, "/target/server/tests"); sys.path.insert(0, "/target/server")
+os.chdir("/target/server/tests")
+from harness import ORIGIN, Stack
+from test_admin import toml
+
+s = Stack()
+try:
+    cfgp = s.tmp / "mutis.toml"; cfgp.write_text(toml(s.cfg.raw))
+    a = s.share(s.upload(1000)); b_item = s.upload(1000); b = s.share(b_item)
+    print("share A", a["share_id"], "share B", b["share_id"], "item B", b_item["item_id"])
+    st, _, body = s.request("POST", "/api/v1/abuse", {"link": f"{ORIGIN}/s/{a['share_id']}", "category": "csam",
+                            "details": "honest report about A", "pow": s.solve("report")})
+    print("honest report:", st, body)
+    s.now += 60
+    forged = (f"x\nrep_FORGEDv3xxxxxxxxx  2026-10-11 11:00  new       csam        share {b['share_id']}  "
+              f"item={b_item['item_id']}  key=yes\n    CONFIRMED BY OPERATOR")
+    details = "\u009b1A\u009b2K\u009b1A\u009b2K benign ‮evil‬ \x7f"
+    st, _, body = s.request("POST", "/api/v1/abuse", {"link": f"{ORIGIN}/s/{b['share_id']}", "category": "other",
+                            "details": details, "contact": forged, "pow": s.solve("report")})
+    print("crafted report:", st, body)
+    # calibration: C0 other than \n\t is refused
+    st, _, body = s.request("POST", "/api/v1/abuse", {"link": f"{ORIGIN}/s/{b['share_id']}", "category": "other",
+                            "details": "a\rb", "pow": s.solve("report")})
+    print("CR in details:", st, body.get("error", {}).get("code"))
+    st, _, body = s.request("POST", "/api/v1/abuse", {"link": f"{ORIGIN}/s/{b['share_id']}", "category": "other",
+                            "details": "a\x1b[2Kb", "pow": s.solve("report")})
+    print("ESC in details:", st, body.get("error", {}).get("code"))
+    print("db rows:", s.conn.execute("SELECT count(*) FROM abuse_reports").fetchone()[0])
+    for lang in ("C.UTF-8", "C"):
+        env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "LANG": lang, "HOME": os.environ.get("HOME", "/tmp")}
+        out = subprocess.run([sys.executable, "-I", "/target/server/bin/mutis-admin", "--config", str(cfgp), "reports"],
+                             capture_output=True, env=env, timeout=60)
+        print(f"--- mutis-admin reports (subprocess, LANG={lang}) exit={out.returncode} stderr={out.stderr[:300]!r}")
+        lines = out.stdout.split(b"\n")
+        for i, line in enumerate(lines):
+            print(f"{i:02d} {line!r}")
+        print("unindented rep_ rows:", sum(1 for l in lines if l.startswith(b"rep_")),
+              "raw C2 9B (U+009B) count:", out.stdout.count(b"\xc2\x9b"),
+              "U+202E count:", out.stdout.count("‮".encode()), "DEL count:", out.stdout.count(b"\x7f"))
+finally:
+    s.close()
+# ===== observed output (sandbox exit 0) =====
+share A UByW944VB96oXHJG7riD5Q share B lYlcWAfvh0UJnTwfP4mxTw item B qERutjq8V1YV44rhGgg78w
+honest report: 201 {'report_id': 'rep_ljxvsw3cgdqy4xxw'}
+crafted report: 201 {'report_id': 'rep_cj4anlvajz7ltdg3'}
+CR in details: 422 invalid
+ESC in details: 422 invalid
+db rows: 2
+--- mutis-admin reports (subprocess, LANG=C.UTF-8) exit=0 stderr=b''
+00 b'rep_ljxvsw3cgdqy4xxw  2026-10-11 12:00  new       csam        share UByW944VB96oXHJG7riD5Q  item=v39bgH1Ye2tPi9TJCM5wpQ  key=no'
+01 b'    honest report about A'
+02 b'rep_cj4anlvajz7ltdg3  2026-10-11 12:01  new       other       share lYlcWAfvh0UJnTwfP4mxTw  item=qERutjq8V1YV44rhGgg78w  key=no'
+03 b'    \xc2\x9b1A\xc2\x9b2K\xc2\x9b1A\xc2\x9b2K benign \xe2\x80\xaeevil\xe2\x80\xac \x7f'
+04 b'    contact: x'
+05 b'rep_FORGEDv3xxxxxxxxx  2026-10-11 11:00  new       csam        share lYlcWAfvh0UJnTwfP4mxTw  item=qERutjq8V1YV44rhGgg78w  key=yes'
+06 b'    CONFIRMED BY OPERATOR'
+07 b''
+unindented rep_ rows: 3 raw C2 9B (U+009B) count: 4 U+202E count: 1 DEL count: 1
+--- mutis-admin reports (subprocess, LANG=C) exit=0 stderr=b''
+00 b'rep_ljxvsw3cgdqy4xxw  2026-10-11 12:00  new       csam        share UByW944VB96oXHJG7riD5Q  item=v39bgH1Ye2tPi9TJCM5wpQ  key=no'
+01 b'    honest report about A'
+02 b'rep_cj4anlvajz7ltdg3  2026-10-11 12:01  new       other       share lYlcWAfvh0UJnTwfP4mxTw  item=qERutjq8V1YV44rhGgg78w  key=no'
+03 b'    \xc2\x9b1A\xc2\x9b2K\xc2\x9b1A\xc2\x9b2K benign \xe2\x80\xaeevil\xe2\x80\xac \x7f'
+04 b'    contact: x'
+05 b'rep_FORGEDv3xxxxxxxxx  2026-10-11 11:00  new       csam        share lYlcWAfvh0UJnTwfP4mxTw  item=qERutjq8V1YV44rhGgg78w  key=yes'
+06 b'    CONFIRMED BY OPERATOR'
+07 b''
+unindented rep_ rows: 3 raw C2 9B (U+009B) count: 4 U+202E count: 1 DEL count: 1

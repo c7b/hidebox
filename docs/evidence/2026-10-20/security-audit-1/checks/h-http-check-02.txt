@@ -1,0 +1,8 @@
+$ bash cf-audit/bin/sbx.sh h-http 120 -- python3 -I /scratch/harness-02.py
+1. nested JSON, 64006 bytes ->
+   HTTP/1.1 422 Unprocessable Content\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 103\r\n \r\n {"error":{"code":"invalid","message":"A field is missing or malformed.","details":{"field":"purpose"}}}<timeout: open>
+   threads alive after: 5
+2. GET //[x/api/v1/health -> HTTP/1.1 404 Not Found\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 60\r\n \r\n {"error":{"code":"not_found","message":"No such endpoint."}}<timeout: open>
+3. GET /api/v1/health -> HTTP/1.1 200 OK\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; char
+   inflight count: 0
+exit=0

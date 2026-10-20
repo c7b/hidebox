@@ -1,0 +1,21 @@
+$ bash cf-audit/bin/sbx.sh h-http 120 -- python3 -I /scratch/harness-01.py
+# limits: sbx.sh (no external network, isolated loopback, empty env, AS 4 GiB, CPU=wall 120 s, fsize 64 MiB)
+== A: one chunked POST /api/v1/pow, nothing else sent
+   HTTP responses in the stream: 1
+   raw: HTTP/1.1 400 Bad Request\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 72\r\n \r\n {"error":{"code":"bad_request","message":"Send a Content-Length body."}}{"error":{"code":"bad_request","message":"Malformed request."}}<EOF: server closed the connection>
+== B: one chunked GET /api/v1/health, nothing else sent
+   HTTP responses in the stream: 1
+   raw: HTTP/1.1 200 OK\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 45\r\n \r\n {"ok":true,"version":"dev","time":1791720000}{"error":{"code":"bad_request","message":"Malformed request."}}<EOF: server closed the connection>
+== C: first response (chunked POST)
+   HTTP responses in the stream: 1
+   raw: HTTP/1.1 400 Bad Request\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 72\r\n \r\n 
+== C: what arrives after the next request (GET /api/v1/health from another visitor)
+   HTTP responses in the stream: 0
+   raw: {"error":{"code":"bad_request","message":"Send a Content-Length body."}}{"error":{"code":"bad_request","message":"Malformed request."}}<EOF: server closed the connection>
+== D(control): Content-Length POST first response
+   HTTP responses in the stream: 1
+   raw: HTTP/1.1 200 OK\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 103\r\n \r\n {"challenge":"AQEBAGrLe2x7-TJX3Zayx52s8cEj9nsqef9RIhnxOOaEUkLg","difficulty":1,"expires_at":1791720300}
+== D(control): next request on the same connection
+   HTTP responses in the stream: 1
+   raw: HTTP/1.1 200 OK\r\n X-Content-Type-Options: nosniff\r\n Cache-Control: no-store\r\n Content-Type: application/json; charset=utf-8\r\n Content-Length: 45\r\n \r\n {"ok":true,"version":"dev","time":1791720000}<timeout: connection still open>
+exit=0

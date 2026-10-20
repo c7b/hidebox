@@ -1,0 +1,50 @@
+test_a_slow_transaction_is_polled_and_never_sent_twice (test_courier.Courier.test_a_slow_transaction_is_polled_and_never_sent_twice) ... ok
+test_a_transaction_that_never_settles_is_given_up_and_scrubbed (test_courier.Courier.test_a_transaction_that_never_settles_is_given_up_and_scrubbed) ... event=chain.job_failed
+ok
+test_blob_must_be_125_bytes (test_courier.Courier.test_blob_must_be_125_bytes) ... ok
+test_budget_slices (test_courier.Courier.test_budget_slices) ... ok
+test_canary_evidence_courier (test_courier.Courier.test_canary_evidence_courier) ... ok
+test_claim_order_puts_evidence_and_reserved_first (test_courier.Courier.test_claim_order_puts_evidence_and_reserved_first) ... ok
+test_cleanup_scrubs_a_send_left_by_a_dead_worker (test_courier.Courier.test_cleanup_scrubs_a_send_left_by_a_dead_worker) ... ok
+test_crash_before_the_transaction_was_recorded (test_courier.Courier.test_crash_before_the_transaction_was_recorded)
+Claimed but not recorded as submitted: walletd may or may not have it. The job fails as ... event=chain.job_interrupted n=1
+ok
+test_crash_between_submit_and_result (test_courier.Courier.test_crash_between_submit_and_result)
+Review H1: the worker dies after walletd took the transfer. A restart waits for that same ... ok
+test_drop_courier_uses_the_drops_address (test_courier.Courier.test_drop_courier_uses_the_drops_address) ... ok
+test_jitter_bounds (test_courier.Courier.test_jitter_bounds) ... ok
+test_locker_and_destination_caps (test_courier.Courier.test_locker_and_destination_caps) ... ok
+test_lockers_cant_reach_the_evidence_slice (test_courier.Courier.test_lockers_cant_reach_the_evidence_slice)
+Review M3: lockers draining `reserved` leave the canary's and judges' sends untouched. ... ok
+test_memo_is_built_from_public_origin (test_courier.Courier.test_memo_is_built_from_public_origin) ... ok
+test_overrides_only_lower_a_budget (test_courier.Courier.test_overrides_only_lower_a_budget)
+Review M8: the API can write the database, so an override above the TOML value is ignored. ... ok
+test_payload_scrubbed_after_done_and_failed (test_courier.Courier.test_payload_scrubbed_after_done_and_failed) ... event=chain.job_failed
+event=chain.job_failed
+event=chain.job_failed
+ok
+test_refused_drop_deliveries_dont_use_up_the_drop (test_courier.Courier.test_refused_drop_deliveries_dont_use_up_the_drop) ... ok
+test_refused_senders_dont_use_up_a_destination (test_courier.Courier.test_refused_senders_dont_use_up_a_destination)
+Review M4: 25 refused tries from a locker with no sends left don't touch the address's 20 a day. ... ok
+test_unexpected_errors_end_the_job (test_courier.Courier.test_unexpected_errors_end_the_job) ... event=chain.job_failed
+event=chain.job_failed
+event=chain.job_failed
+ok
+test_worker_rejects_foreign_memos (test_courier.Courier.test_worker_rejects_foreign_memos) ... event=chain.job_failed
+ok
+test_decoy_send_looks_like_a_delivery (test_courier.Decoys.test_decoy_send_looks_like_a_delivery) ... ok
+test_mean_gap_over_a_simulated_day (test_courier.Decoys.test_mean_gap_over_a_simulated_day)
+S-11 as written: one simulated day (fixed seed) has a mean gap within 20 % of 900 s. ... ok
+test_mean_gap_over_a_simulated_month (test_courier.Decoys.test_mean_gap_over_a_simulated_month)
+A Poisson day varies by about ±10 % (1 σ); thirty days must land within 5 % of the mean. ... ok
+test_beats_while_the_loop_moves_and_stops_when_it_stalls (test_courier.Heartbeat.test_beats_while_the_loop_moves_and_stops_when_it_stalls) ... ok
+test_drop_address_errors (test_contract.Drops.test_drop_address_errors) ... ok
+test_drop_lifecycle (test_contract.Drops.test_drop_lifecycle) ... ok
+test_chain_unavailable_and_feature_disabled (test_contract.CourierAndJobs.test_chain_unavailable_and_feature_disabled) ... ok
+test_courier_to_drop_and_address (test_contract.CourierAndJobs.test_courier_to_drop_and_address) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 4.412s
+
+OK
+RESULT ran=28 failures=0 errors=0 skipped=0

@@ -1,0 +1,116 @@
+# h-crypto check-01: browser crypto/format invariants (client-crypto unit)
+Command: bash cf-audit/bin/sbx.sh h-crypto 120 -- node /scratch/harness-01.mjs   (sandbox: no network, empty env, cwd /target read-only, CPU=120 s, AS 4 GiB, fsize 64 MiB; exit=0)
+Input: dummy random keys and a 5 MiB random plaintext generated inside the harness; no network, no server.
+
+## Harness (harness-01.mjs, verbatim)
+// h-crypto bounded check: browser crypto/format invariants (dummy data only, no network).
+const L = '/target/web/app/lib/';
+const fmt = await import(L + 'format.js');
+const cr = await import(L + 'crypto.js');
+const sh = await import(L + 'share.js');
+const pw = await import(L + 'password.js');
+const fo = await import(L + 'folder.js');
+const b64 = await import(L + 'b64.js');
+const { sha256Sync } = await import(L + 'sha256sync.js');
+const zip = await import(L + 'zip.js');
+const ft = await import(L + 'filetype.js');
+const out = [];
+const log = (k, v) => out.push(`${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`);
+const fails = async (f) => { try { await f(); return 'accepted'; } catch (e) { return 'rejected:' + e.name; } };
+const eq = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+// 1. round trip across 2 chunks (5 MiB plaintext) and tamper cases
+const plain = cr.randomBytes(5 * 1048576);
+const fk = cr.randomBytes(32);
+const gen = fmt.encryptFile(plain, { fk });
+const first = (await gen.next()).value;
+const chunks = [];
+for await (const c of gen) chunks.push(c.ciphertext);
+const { contentKey, metaKey } = await fmt.deriveItemKeys(fk, first.salt);
+const blob = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+let o = 0; for (const c of chunks) { blob.set(c, o); o += c.length; }
+const args = (over = {}) => ({ contentKey, headerHash: first.headerHash, chunkCount: first.chunkCount, sizeStored: first.sizeStored, plainLength: plain.length, readChunk: async (i, s, e) => blob.subarray(s, e), ...over });
+const parts = await fmt.decryptBlob(args());
+const joined = new Uint8Array(plain.length); o = 0; for (const p of parts) { joined.set(p, o); o += p.length; }
+log('roundtrip_2chunks_ok', eq(joined, plain) && first.chunkCount === 2);
+// reorder: serve chunk 1 bytes as chunk 0
+log('reorder', await fails(() => fmt.decryptBlob(args({ readChunk: async (i, s, e) => (i === 0 ? chunks[1].subarray(0, e - s) : blob.subarray(s, e)) }))));
+// truncation: claim 1 chunk with a smaller plaintext length
+log('truncate_to_first_chunk', await fails(() => fmt.decryptBlob(args({ chunkCount: 1, sizeStored: chunks[0].length, plainLength: 4194304 - 100 }))));
+// other header (same fk, other salt) as AAD
+const otherHH = await cr.sha256(fmt.makeHeader({ chunkCount: 2, salt: cr.randomBytes(16) }));
+log('wrong_header_aad', await fails(() => fmt.decryptBlob(args({ headerHash: otherHH }))));
+// 2. nonces: distinct per index and final flag
+const ivs = new Set();
+for (let i = 0; i < 4; i++) for (const f of [true, false]) {
+  const k = await cr.aesGcmEncrypt(cr.randomBytes(32), new Uint8Array(12), new Uint8Array(0)); // placeholder to exercise API
+}
+log('chunk_iv_note', 'chunkIv(index,final) = 7 zero bytes || u32be(index) || final; contentKey = HKDF(fk, salt, mutis/v1/content), unique per item');
+// 3. meta: AAD binds header; normalizeMeta re-applied
+const mct = await fmt.encryptMeta(metaKey, first.headerHash, { kind: 'file', name: 'a\u0000b.txt', type: 'text/plain', size: plain.length });
+log('meta_roundtrip', await fmt.decryptMeta(metaKey, first.headerHash, mct));
+log('meta_wrong_header', await fails(() => fmt.decryptMeta(metaKey, otherHH, mct)));
+log('meta_with_content_key', await fails(() => fmt.decryptMeta(contentKey, first.headerHash, mct)));
+// 4. wrap domain separation: share wrap vs owner wrap vs folder child wrap
+const s = sh.newShareSecret();
+const keys = await sh.shareKeys(s);
+const wrapped = await sh.wrapFileKey(keys.wrapKey, first.headerHash, fk);
+log('unwrap_ok', eq(await sh.unwrapFileKey(keys.wrapKey, first.headerHash, wrapped), fk));
+log('unwrap_with_access_token_as_key', await fails(() => sh.unwrapFileKey(keys.accessToken, first.headerHash, wrapped)));
+log('unwrap_other_header', await fails(() => sh.unwrapFileKey(keys.wrapKey, otherHH, wrapped)));
+log('accessToken_ne_wrapKey', !eq(keys.accessToken, keys.wrapKey));
+// folder: child key wraps bind child header; folder header rejected by file parser
+const vault = cr.randomBytes(32);
+const folder = await fo.newFolder(vault, 'F');
+log('folder_header_as_file', await fails(() => fmt.parseHeader(folder.header)));
+log('file_header_parseItemHeader_folder_flag', fo.parseItemHeader(first.header).folder);
+const pwrap = await fo.wrapForFolder({ fk: folder.fk, salt: folder.salt }, { fk, headerHash: first.headerHash });
+log('child_unwrap_ok', eq(await fo.unwrapFromFolder(folder.fk, folder.salt, first.headerHash, pwrap), fk));
+log('child_unwrap_with_folder_fk_raw', await fails(() => sh.unwrapFileKey(folder.fk, first.headerHash, pwrap)));
+log('child_unwrap_wrong_child_header', await fails(() => fo.unwrapFromFolder(folder.fk, folder.salt, otherHH, pwrap)));
+// 5. password: kdf parameter validation (server-supplied)
+const s0 = cr.randomBytes(32);
+for (const kdf of [{ alg: 'PBKDF2-SHA256', iter: 1000, salt: b64.b64uEncode(cr.randomBytes(16)) }, { alg: 'PBKDF2-SHA256', iter: 600000, salt: b64.b64uEncode(cr.randomBytes(8)) }, { alg: 'MD5', iter: 600000, salt: b64.b64uEncode(cr.randomBytes(16)) }, { alg: 'PBKDF2-SHA256', iter: 600000.5, salt: b64.b64uEncode(cr.randomBytes(16)) }]) {
+  log('kdf_' + JSON.stringify({ alg: kdf.alg, iter: kdf.iter, saltLen: b64.b64uDecode(kdf.salt).length }), await fails(() => pw.linkPasswordSecret(s0, 'x', kdf)));
+}
+// 6. b64u strictness
+for (const t of ['AA', 'AB', 'AA==', 'A', 'A+', 'AAA', 'AAB']) log('b64u_' + t, await fails(() => b64.b64uDecode(t)));
+// 7. sha256Sync vs WebCrypto
+let same = true;
+for (const n of [0, 1, 55, 56, 63, 64, 65, 1000, 4097]) { const d = cr.randomBytes(n); if (!eq(sha256Sync(d), await cr.sha256(d))) same = false; }
+log('sha256Sync_matches_webcrypto', same);
+// 8. recipient-side name handling
+for (const n of ['../../x', '..', ' .. ', 'a\\b', 'C:', 'a/b', '‮gnp.exe']) log('zipPath_' + JSON.stringify(n), zip.zipPath([n, 'f.txt']));
+for (const n of ['invoice.b​at', 'setup.exe. ', 'x.EXE', 'x.exe::$DATA', 'run.command', 'a.desktop', 'x.xll', 'x.ms​i']) log('risky_' + JSON.stringify(n), { saved: ft.sanitizeFileName(n), ...ft.checkRisky(n, null) });
+console.log(out.join('\n'));
+
+## Observed output (crypto lines)
+roundtrip_2chunks_ok: true
+reorder: rejected:IntegrityError
+truncate_to_first_chunk: rejected:IntegrityError
+wrong_header_aad: rejected:IntegrityError
+chunk_iv_note: chunkIv(index,final) = 7 zero bytes || u32be(index) || final; contentKey = HKDF(fk, salt, mutis/v1/content), unique per item
+meta_roundtrip: {"v":1,"kind":"file","name":"ab.txt","type":"text/plain","size":5242880,"mtime":null,"stripped":false}
+meta_wrong_header: rejected:IntegrityError
+meta_with_content_key: rejected:IntegrityError
+unwrap_ok: true
+unwrap_with_access_token_as_key: rejected:IntegrityError
+unwrap_other_header: rejected:IntegrityError
+accessToken_ne_wrapKey: true
+folder_header_as_file: rejected:IntegrityError
+file_header_parseItemHeader_folder_flag: false
+child_unwrap_ok: true
+child_unwrap_with_folder_fk_raw: rejected:IntegrityError
+child_unwrap_wrong_child_header: rejected:IntegrityError
+kdf_{"alg":"PBKDF2-SHA256","iter":1000,"saltLen":16}: rejected:TypeError
+kdf_{"alg":"PBKDF2-SHA256","iter":600000,"saltLen":8}: rejected:TypeError
+kdf_{"alg":"MD5","iter":600000,"saltLen":16}: rejected:TypeError
+kdf_{"alg":"PBKDF2-SHA256","iter":600000.5,"saltLen":16}: rejected:TypeError
+b64u_AA: accepted
+b64u_AB: rejected:TypeError
+b64u_AA==: rejected:TypeError
+b64u_A: rejected:TypeError
+b64u_A+: rejected:TypeError
+b64u_AAA: accepted
+b64u_AAB: rejected:TypeError
+sha256Sync_matches_webcrypto: true

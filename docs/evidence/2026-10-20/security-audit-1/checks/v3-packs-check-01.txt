@@ -1,0 +1,42 @@
+agent: v3-packs (independent verifier)
+command: bash cf-audit/bin/sbx.sh v3-packs 300 -- python3 -I /scratch/harness-01.py   (cwd /target, read-only snapshot origin/main 460a389)
+input: harness-01.py (this directory); server/tests/harness.py Stack(chain=True) with FakeChain/FakeIndexer/fake sidecar, Disk(total=100 GiB, avail=36 GiB) -> public slice 7.28 GiB; drives registered and calling from distinct non-exempt IPs 198.51.N.7; payments via FakeChain.transfer('service', ...) or the real demo-pay route (sponsor account); worker.tick() drives mirror -> verify_payments -> credit
+exit: 0
+=== observed output ===
+A m30: 201 pending
+  slices after A m30: {'public_cap_GiB': 7.28, 'public_active_GiB': 0.0, 'public_open_GiB': 5.0, 'overbooked': False}
+A swap->s30: 201
+  A m30 row: ('expired',)
+B m30: 201
+C s30: 409 {'error': {'code': 'sold_out', 'message': "The disk is finite. We'd rather say no than overbook."}}
+  slices before payments: {'public_cap_GiB': 7.28, 'public_active_GiB': 0.0, 'public_open_GiB': 7.0, 'overbooked': False}
+--- scenario 1 (swap, paid late)
+  invoice A.m30: status=credited received_ut=1000000
+  invoice A.s30: status=pending received_ut=0
+  invoice B.m30: status=credited received_ut=1000000
+  drive A: paid_bytes=5368709120 paid_pack=m30 judge=0
+  drive B: paid_bytes=5368709120 paid_pack=m30 judge=0
+  slices: {'public_cap_GiB': 7.28, 'public_active_GiB': 10.0, 'public_open_GiB': 0.0, 'overbooked': True}
+A m30: 201
+  A m30 row after TTL: ('expired',)
+B m30: 201
+C s30: 201 
+--- scenario 2 (expired, paid late)
+  invoice A.m30: status=credited received_ut=1000000
+  invoice B.m30: status=credited received_ut=1000000
+  drive A: paid_bytes=5368709120 paid_pack=m30 judge=0
+  drive B: paid_bytes=5368709120 paid_pack=m30 judge=0
+  slices: {'public_cap_GiB': 7.28, 'public_active_GiB': 10.0, 'public_open_GiB': 2.0, 'overbooked': True}
+A m30: 201
+A demo-pay: 202 {'job_id': '56-drkGg9uoe6ro3Oro2Yw'}
+A swap->s30 (demo job queued): 201
+B m30: 201
+B demo-pay: 202 {'job_id': 'l0cUpqM2PeewOIh27bf3_g'}
+--- scenario 3 (demo-pay then swap)
+  invoice A.m30: status=credited received_ut=1000000
+  invoice A.s30: status=pending received_ut=0
+  invoice B.m30: status=credited received_ut=1000000
+  drive A: paid_bytes=5368709120 paid_pack=m30 judge=0
+  drive B: paid_bytes=5368709120 paid_pack=m30 judge=0
+  slices: {'public_cap_GiB': 7.28, 'public_active_GiB': 10.0, 'public_open_GiB': 0.0, 'overbooked': True}
+  transfers to invoices: [('sponsor', 1000000), ('sponsor', 1000000)]

@@ -1,0 +1,75 @@
+# v3-stream check-02
+# command: bash <audit>/bin/sbx.sh v3-stream 120 -- python3 -I /scratch/harness-02.py
+# sandbox: no external network (isolated loopback), empty env, RLIMIT_AS 4 GiB, read-only /target (snapshot 460a389)
+# ---- harness-02.py (input) ----
+# v3-stream: (1) a top-level non-object line escapes even the hunter's proposed except-clause; (2) the corrected fix
+import sys, json
+sys.path[:0] = ["/target/server"]
+from mutis import indexer
+from mutis.indexer import IndexerError
+SOS = b'{"sos":{"shard":1,"max_state_version":0,"has_more":false}}\n'
+try:
+    indexer.parse_stream(SOS + b'[]\n')
+except BaseException as e:
+    print("current parse_stream on line '[]':", type(e).__name__, "(hunter's fix catches only KeyError/TypeError/ValueError)")
+
+def _uint(v, limit=2 ** 63):
+    if type(v) is not int or not 0 <= v < limit:
+        raise IndexerError(502, "bad_upstream")
+    return v
+
+def _nonce32(v) -> str:
+    if not (type(v) is list and len(v) == 32 and all(type(b) is int and 0 <= b <= 255 for b in v)):
+        raise IndexerError(502, "bad_upstream")
+    return bytes(v).hex()
+
+def parse_stream(data: bytes) -> list[dict]:
+    shards, current = [], None
+    for line in data.splitlines():
+        if not line.strip():
+            continue
+        try:
+            msg = json.loads(line)
+        except ValueError:
+            raise IndexerError(502, "bad_upstream") from None
+        if not isinstance(msg, dict):
+            raise IndexerError(502, "bad_upstream")
+        sos, update, eos = msg.get("sos"), msg.get("update"), msg.get("eos")
+        if sos:
+            if not isinstance(sos, dict) or type(sos.get("has_more")) is not bool:
+                raise IndexerError(502, "bad_upstream")
+            current = {"shard": _uint(sos.get("shard"), 2 ** 16), "version": _uint(sos.get("max_state_version")),
+                       "has_more": sos["has_more"], "unspent": []}
+            shards.append(current)
+        if current is not None and isinstance(update, dict) and "Unspent" in update:
+            u = update["Unspent"]
+            if not isinstance(u, dict):
+                raise IndexerError(502, "bad_upstream")
+            current["unspent"].append((_uint(u.get("tag"), 2 ** 32), _nonce32(u.get("public_nonce"))))
+        if eos and current is not None:
+            if not isinstance(eos, dict):
+                raise IndexerError(502, "bad_upstream")
+            current["version"] = _uint(eos.get("max_state_version"))
+    return shards
+
+fx = open("/target/server/tests/fixtures/indexer-stream.ndjson", "rb").read()
+print("fixture equal to current parser:", parse_stream(fx) == indexer.parse_stream(fx))
+EOS = b'{"eos":{"max_state_version":1}}'
+for label, line in [("string nonce", b'{"update":{"Unspent":{"tag":1,"public_nonce":"deadbeef"}}}\n'),
+                    ("int nonce", b'{"update":{"Unspent":{"tag":1,"public_nonce":9999999999}}}\n'),
+                    ("list line", b'[]\n'), ("garbage", b'garbage\n'),
+                    ("bool tag", b'{"update":{"Unspent":{"tag":true,"public_nonce":[0]}}}\n')]:
+    try:
+        parse_stream(SOS + line + EOS); print(label, "-> accepted")
+    except IndexerError as e:
+        print(label, "-> IndexerError", e.code)
+    except BaseException as e:
+        print(label, "-> ESCAPED", type(e).__name__)
+# ---- observed output (stdout+stderr) ----
+current parse_stream on line '[]': AttributeError (hunter's fix catches only KeyError/TypeError/ValueError)
+fixture equal to current parser: True
+string nonce -> IndexerError bad_upstream
+int nonce -> IndexerError bad_upstream
+list line -> IndexerError bad_upstream
+garbage -> IndexerError bad_upstream
+bool tag -> IndexerError bad_upstream

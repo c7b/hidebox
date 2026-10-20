@@ -1,0 +1,27 @@
+POST {'link': 'https://test.mutis.invalid/s/lwNUOi-BaI-Mcp1BjBHs5g', 'category': 'csam', 'details': 'honest report A'} -> 201 {'report_id': 'rep_rnefnu3b564aj3u7'}
+POST {'link': 'https://test.mutis.invalid/s/1En6ZiCRBFpTMqOJfAzSpw', 'category': 'other', 'details': '\x9b1A\x9b2K benign \u202eevil\u202c \x7f \x9d0;title\x9c', 'contact': 'zz\nrep_FORGEDp5xxxxxxxxx  2026-10-11 11:00  new       csam        share 1En6ZiCRBFpTMqOJfAzSpw  item=kLZP_hTZcWCRxiIzeK8aQg  key=yes\n    CONFIRMED BY OPERATOR'} -> 201 {'report_id': 'rep_lzcjlqmn5nww3dgp'}
+POST {'link': 'https://test.mutis.invalid/s/1En6ZiCRBFpTMqOJfAzSpw', 'category': 'other', 'details': 'cr\rhere'} -> 422 {'error': {'code': 'invalid', 'message': 'A field is missing or malformed.', 'details': {'field': 'details'}}}
+POST {'link': 'https://test.mutis.invalid/s/1En6ZiCRBFpTMqOJfAzSpw', 'category': 'other', 'details': 'esc\x1b[2Khere'} -> 422 {'error': {'code': 'invalid', 'message': 'A field is missing or malformed.', 'details': {'field': 'details'}}}
+DB rows: 2
+--- python3 -I /target/server/bin/mutis-admin --config /work/tmp/mutis-test-0cc3wzxx/mutis.toml reports  LANG=C.UTF-8 rc=0 stderr=b''
+00 b'rep_rnefnu3b564aj3u7  2026-10-11 12:00  new       csam        share lwNUOi-BaI-Mcp1BjBHs5g  item=6AYsU4qagkGHOWr4B98apQ  key=no'
+01 b'    honest report A'
+02 b'rep_lzcjlqmn5nww3dgp  2026-10-11 12:01  new       other       share 1En6ZiCRBFpTMqOJfAzSpw  item=kLZP_hTZcWCRxiIzeK8aQg  key=no'
+03 b'    \xc2\x9b1A\xc2\x9b2K benign \xe2\x80\xaeevil\xe2\x80\xac \x7f \xc2\x9d0;title\xc2\x9c'
+04 b'    contact: zz'
+05 b'rep_FORGEDp5xxxxxxxxx  2026-10-11 11:00  new       csam        share 1En6ZiCRBFpTMqOJfAzSpw  item=kLZP_hTZcWCRxiIzeK8aQg  key=yes'
+06 b'    CONFIRMED BY OPERATOR'
+07 b''
+unindented rep_ rows: 3
+raw C2 9B count: 2 E2 80 AE: 1 7F: 1 C2 9D: 1
+--- python3 -I /target/server/bin/mutis-admin --config /work/tmp/mutis-test-0cc3wzxx/mutis.toml reports  LANG=C rc=0 stderr=b''
+00 b'rep_rnefnu3b564aj3u7  2026-10-11 12:00  new       csam        share lwNUOi-BaI-Mcp1BjBHs5g  item=6AYsU4qagkGHOWr4B98apQ  key=no'
+01 b'    honest report A'
+02 b'rep_lzcjlqmn5nww3dgp  2026-10-11 12:01  new       other       share 1En6ZiCRBFpTMqOJfAzSpw  item=kLZP_hTZcWCRxiIzeK8aQg  key=no'
+03 b'    \xc2\x9b1A\xc2\x9b2K benign \xe2\x80\xaeevil\xe2\x80\xac \x7f \xc2\x9d0;title\xc2\x9c'
+04 b'    contact: zz'
+05 b'rep_FORGEDp5xxxxxxxxx  2026-10-11 11:00  new       csam        share 1En6ZiCRBFpTMqOJfAzSpw  item=kLZP_hTZcWCRxiIzeK8aQg  key=yes'
+06 b'    CONFIRMED BY OPERATOR'
+07 b''
+unindented rep_ rows: 3
+raw C2 9B count: 2 E2 80 AE: 1 7F: 1 C2 9D: 1

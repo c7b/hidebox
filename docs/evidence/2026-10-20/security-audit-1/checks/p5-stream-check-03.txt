@@ -1,0 +1,6 @@
+$ bash sbx.sh p5-stream 300 -- python3 -I /scratch/harness-03.py /target
+b'not json' -> mirror raised JSONDecodeError isIndexerError= False
+  chain_utxos= 0 mirror_ok_at= None
+b'[]' -> mirror raised AttributeError isIndexerError= False
+  chain_utxos= 0 mirror_ok_at= None
+exit=0

@@ -62,7 +62,7 @@ python3 -I tools/verify-deploy.py https://hidebox.app <tag>              # D-09 
 | `/srv/mutis/app/current` | root | symlink to the live release, switched by one rename |
 | `/srv/mutis/app/history` | root | one line per activation (rollback reads it) |
 | `/srv/mutis/data/` | mutis:mutis 2750, mounted noexec,nosuid,nodev (`srv-mutis-data.mount`) | `db/` (2770; the database, 0660, shared with drive), `blobs/` (0700 at every level, each file 0600), `backup/` (0700), `health.json` |
-| `/srv/mutis/status/` | mutis:mutis 2775 | `status.json`, `evidence.json`, `evidence-archive-*.json`, `releases.json` (served) |
+| `/srv/mutis/status/` | mutis:mutis 2775, mounted nosymfollow,noexec,nosuid,nodev (`srv-mutis-status.mount`): no process follows a link placed there | `status.json`, `evidence.json`, `evidence-archive-*.json`, `releases.json` (served) |
 | `/etc/mutis/` | root:mutis 0750 | `mutis.toml`, `secret.key` (32 random bytes, made here), `caddy.env`, `walletd-log4rs.yml` |
 | `/etc/mutis/credentials/` | root 0700 | `walletd-keyring-pass` (systemd `LoadCredential`) |
 | `/home/drive/wallet/` | drive 0700 | walletd's data (never moved, deleted or re-initialised); `backup/` daily copies |
@@ -76,7 +76,7 @@ Users: `mutis` (no login; API, cleanup, health, DB backups; cannot reach walletd
 the chain worker and its Node sidecar, wallet backups, evidence; in group `mutis`), `build`
 (compiles and runs the headless browser; no sudo, no wallet, no data), `caddy`.
 
-Units: `srv-mutis-data.mount` (enabled; every unit that uses the database needs it), `walletd.service` (enabled),
+Units: `srv-mutis-data.mount` (enabled; every unit that uses the database needs it), `srv-mutis-status.mount` (enabled), `walletd.service` (enabled),
 `caddy.service` (Debian's, plus `caddy.service.d/mutis.conf`, which gives Caddy mutis-api's sandbox),
 `mutis-backup.timer` and `mutis-backup-wallet.timer` (enabled), and, installed but left off until
 go-live ("Turning the app on"): `mutis-api`, `mutis-chain`, `mutis-cleanup.timer`, `mutis-health.timer`,

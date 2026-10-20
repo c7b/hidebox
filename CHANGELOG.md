@@ -1,6 +1,29 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- security-audit-1 -->
+## 2026-10-20: security audit 1
+
+A full audit of the repository and the deployment, unit by unit, with an independent check of every finding
+(`docs/review/security-audit-1.md`). Nine findings, each fixed with a regression test:
+
+- **The status directory follows no links.** Caddy serves `/status.json`, `/evidence.json` and `/releases.json` from
+  a directory two service users can write, and it followed a symlink planted there, so a compromised chain worker
+  could have published Caddy's own TLS key. The directory is now mounted `nosymfollow` (live on the server). The
+  status writers (the health check, the evidence collector and root's notarize step) create their files under
+  random names, so a planted link can't redirect their writes either.
+- **One bad indexer can't stop the mirror.** A malformed record from one indexer stopped mirroring from all of them,
+  every tick; every field is now checked and a bad answer counts against that indexer alone.
+- **Paid space stays within its cap.** An invoice that gave its bytes back (swapped or expired) and was paid later
+  credited anyway; it now credits only if its slice has room again.
+- **Smaller fixes:**
+  - Abuse reports reach the operator's terminal escaped.
+  - Racing downloads of a file's stored bytes can't pass its daily egress cap.
+  - A closed or taken-down drop gets no delivery still waiting in the queue.
+  - verify-deploy refuses build values from the deployment that could add markup.
+  - Lock my drive and Forget this browser now erase the drive's links, secret words, purchases and claims too.
+  - A chunked request no longer leaves a second answer on Caddy's connection to the API.
+<!-- /security-audit-1 -->
 <!-- drive earnings activity -->
 ## 2026-10-19: Earnings, and Activity at scale
 

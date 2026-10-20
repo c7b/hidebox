@@ -1,0 +1,13 @@
+SCHEMA_VERSION (code) = 6
+db.version() after migrate() on fresh DB = 6
+migrate() returned = 6
+
+-- mutis-api gate `db.version() < OLD_release.SCHEMA_VERSION` (True=refuse to start) --
+  rollback to release with SCHEMA_VERSION=1: db.version()=6 < 1 -> refuse_to_start=False
+  rollback to release with SCHEMA_VERSION=2: db.version()=6 < 2 -> refuse_to_start=False
+  rollback to release with SCHEMA_VERSION=3: db.version()=6 < 3 -> refuse_to_start=False
+  rollback to release with SCHEMA_VERSION=4: db.version()=6 < 4 -> refuse_to_start=False
+  rollback to release with SCHEMA_VERSION=5: db.version()=6 < 5 -> refuse_to_start=False
+  rollback to release with SCHEMA_VERSION=6: db.version()=6 < 6 -> refuse_to_start=False
+
+migrate() is forward-only; no code path lowers schema_version. A rolled-back DB stays at 6

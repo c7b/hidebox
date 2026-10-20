@@ -1,0 +1,75 @@
+$ bash cf-audit/bin/sbx.sh v3b-chunked 60 -- python3 -I /scratch/harness-01.py
+# Caddy = /tools/caddy (deployed 2.6.2 binary, same SHA-256), config /scratch/Caddyfile.test = deployed @api block (Caddyfile:155-185) and server timeouts, plain HTTP on sandbox loopback, admin off, auto_https off; upstream 127.0.0.1:8787 is a raw socket logger, not mutis-api.
+# --- Caddyfile.test ---
+# Local copy of the deployed @api block (deploy/caddy/Caddyfile:9-17, 155-185), plain HTTP on the sandbox loopback.
+{
+	admin off
+	auto_https off
+	storage file_system /work/caddydata
+	servers {
+		protocols h1 h2 h2c
+		timeouts {
+			read_header 10s
+			read_body 120s
+			write 600s
+			idle 120s
+		}
+	}
+}
+http://127.0.0.1:8080 {
+	@api path /api/*
+	handle @api {
+		header X-Robots-Tag "noindex, nofollow"
+		request_body {
+			max_size 5MB
+		}
+		@too_large expression `{http.request.header.Content-Length} != "" && int({http.request.header.Content-Length}) > 5242880`
+		handle @too_large {
+			header Content-Type "application/json; charset=utf-8"
+			header Cache-Control "no-store"
+			respond `{"error":{"code":"too_large","message":"Request body too large.","details":{"max_bytes":5242880}}}` 413
+		}
+		handle {
+			reverse_proxy 127.0.0.1:8787 {
+				buffer_requests
+				max_buffer_size 6MB
+				flush_interval -1
+				header_up X-Real-IP {remote_host}
+				header_up -X-Forwarded-For
+				header_down -X-Content-Type-Options
+			}
+		}
+	}
+}
+# --- output ---
+== A: HTTP/1.1 chunked POST, no Content-Length
+   client sent: b'POST /api/v1/pow HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\n\r\n14\r\n{"purpose":"upload"}\r\n0\r\n\r\n'
+   client got: b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nServer: Caddy\r\nX-Robots-Tag: noindex, nofollow\r\nDate: Tue, 20 Oct 2026 12:02:54 GMT\r\n\r\nok'
+== B: HTTP/1.1 chunked GET with a body
+   client sent: b'GET /api/v1/health HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n'
+   client got: b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nServer: Caddy\r\nX-Robots-Tag: noindex, nofollow\r\nDate: Tue, 20 Oct 2026 12:02:55 GMT\r\n\r\nok'
+== C (control): Content-Length POST
+   client sent: b'POST /api/v1/pow HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 20\r\nContent-Type: application/json\r\n\r\n{"purpose":"upload"}'
+   client got: b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nServer: Caddy\r\nX-Robots-Tag: noindex, nofollow\r\nDate: Tue, 20 Oct 2026 12:02:55 GMT\r\n\r\nok'
+== upstream request #1 as received by the logger on 127.0.0.1:8787:
+   b'POST /api/v1/pow HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\nX-Forwarded-Host: 127.0.0.1:8080\r\nX-Forwarded-Proto: http\r\nX-Real-Ip: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n14\r\n{"purpose":"upload"}\r\n0\r\n\r\n'
+== upstream request #2 as received by the logger on 127.0.0.1:8787:
+   b'GET /api/v1/health HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nTransfer-Encoding: chunked\r\nX-Forwarded-Host: 127.0.0.1:8080\r\nX-Forwarded-Proto: http\r\nX-Real-Ip: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n3\r\nabc\r\n0\r\n\r\n'
+== upstream request #3 as received by the logger on 127.0.0.1:8787:
+   b'POST /api/v1/pow HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 20\r\nContent-Type: application/json\r\nX-Forwarded-Host: 127.0.0.1:8080\r\nX-Forwarded-Proto: http\r\nX-Real-Ip: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n{"purpose":"upload"}'
+== caddy output (tail)
+{"level":"info","ts":1792497772.556231,"msg":"using provided configuration","config_file":"/scratch/Caddyfile.test","config_adapter":"caddyfile"}
+{"level":"warn","ts":1792497772.5589561,"logger":"admin","msg":"admin endpoint disabled"}
+{"level":"warn","ts":1792497772.55922,"logger":"http","msg":"automatic HTTPS is completely disabled for server","server_name":"srv0"}
+{"level":"info","ts":1792497772.560586,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc000368ee0"}
+{"level":"info","ts":1792497772.5672657,"logger":"tls","msg":"cleaning storage unit","description":"FileStorage:/work/caddydata"}
+{"level":"info","ts":1792497772.5672872,"logger":"http.log","msg":"server running","name":"srv0","protocols":["h1","h2","h2c"]}
+{"level":"info","ts":1792497772.5673375,"logger":"tls","msg":"finished cleaning storage units"}
+{"level":"info","ts":1792497772.5674007,"msg":"autosaved config (load with --resume flag)","file":"/work/xdg/caddy/autosave.json"}
+{"level":"info","ts":1792497772.5674071,"msg":"serving initial configuration"}
+{"level":"info","ts":1792497776.0499763,"msg":"shutting down apps, then terminating","signal":"SIGTERM"}
+{"level":"warn","ts":1792497776.0500674,"msg":"exiting; byeee!! 👋","signal":"SIGTERM"}
+{"level":"info","ts":1792497776.0505497,"logger":"tls.cache.maintenance","msg":"stopped background certificate maintenance","cache":"0xc000368ee0"}
+{"level":"info","ts":1792497776.050578,"msg":"shutdown complete","signal":"SIGTERM","exit_code":0}
+
+exit=0

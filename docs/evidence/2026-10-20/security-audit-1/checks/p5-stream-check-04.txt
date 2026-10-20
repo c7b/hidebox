@@ -1,0 +1,7 @@
+$ bash sbx.sh p5-stream 300 -- python3 -I /scratch/harness-04.py
+fetch_utxos patched with the replacement's fix
+b'not json' mirror returned
+  chain_utxos= 3 mirror_ok_at= 1791720000
+b'[]' mirror returned
+  chain_utxos= 3 mirror_ok_at= 1791720000
+exit=0

@@ -1,0 +1,19 @@
+=== CASE 1: owner CLOSE (PATCH state=closed) ===
+courier POST while active -> 202, job_id=CcaelD0BuCSStqw_YUTCFA, not_before-now=33
+queued payload keys=['address', 'memo']  (no drop id stored): address matches drop? True
+owner PATCH state=closed -> 200
+drop state now = closed
+NEW courier POST after close -> 410 (drop_closed)
+after worker.run_jobs: job state=done, payload=None
+on-chain transfers added = 1
+DELIVERY SENT TO CLOSED DROP ADDRESS? True  value=1000 memo_prefix=https://test.mutis.invalid
+
+=== CASE 2: operator TAKEDOWN (mutis-admin takedown drop) ===
+courier POST while active -> 202, job_id=STObvRA8uqlYYQyMnopKuQ, not_before-now=39
+admin takedown drop -> stdout='removed'
+drop state now = removed
+after worker.run_jobs: job state=done, payload=None
+on-chain transfers added = 1
+DELIVERY SENT TO REMOVED DROP ADDRESS? True  value=1000
+
+RESULT close_leaks=True  takedown_leaks=True

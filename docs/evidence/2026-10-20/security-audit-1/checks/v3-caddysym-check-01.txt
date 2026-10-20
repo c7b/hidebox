@@ -1,0 +1,213 @@
+check-01 (v3-caddysym): does the deployed Caddy 2.6.2 binary, with the release Caddyfile's @status route, follow a symlink planted in the status root?
+Command (host): bash cf-audit/bin/sbx.sh v3-caddysym 120 -- bash /scratch/harness-01.sh > scratch/check-01.raw 2>&1
+Sandbox: bwrap, no network (isolated loopback), empty env, single uid; the cross-uid part (drive plants, caddy reads its 0700 storage) is not reproducible here and rests on owner-observed modes + POSIX symlink semantics.
+Inputs: dummy key file (not a real key) at Caddy's storage layout, mode 0600 in 0700 dirs; symlinks evidence-archive-x.json and evidence.json -> that file; evidence-archive-dir.json -> /.
+
+===== harness-01.sh =====
+#!/bin/bash
+# v3-caddysym harness: deployed Caddy 2.6.2 binary + release Caddyfile (paths remapped), loopback only.
+set -u
+W=/work
+export XDG_DATA_HOME=$W/caddyhome/.local/share XDG_CONFIG_HOME=$W/caddyhome/.config
+echo "== caddy version"; /tools/caddy version; sha256sum /tools/caddy
+mkdir -p $W/srv/mutis/status $W/srv/mutis/app/current/dist $W/mutis.d
+echo '<!doctype html><title>404</title>' > $W/srv/mutis/app/current/dist/404.html
+echo '{"ok":true}' > $W/srv/mutis/status/status.json
+chmod 2775 $W/srv/mutis/status
+# Dummy "caddy-only" private key at Caddy's certificate storage layout (certificates/<issuer>/<name>/<name>.key)
+K=$XDG_DATA_HOME/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test
+mkdir -p $K; chmod -R 0700 $W/caddyhome
+printf -- '-----BEGIN EC PRIVATE KEY-----\nDUMMY-NOT-A-REAL-KEY-v3-caddysym\n-----END EC PRIVATE KEY-----\n' > $K/dummy.test.key
+chmod 0600 $K/dummy.test.key
+# The "lower-trust writer" plants links in the status root (no access to the target needed to create a symlink)
+ln -s $K/dummy.test.key $W/srv/mutis/status/evidence-archive-x.json
+ln -s $K/dummy.test.key $W/srv/mutis/status/evidence.json
+ln -s / $W/srv/mutis/status/evidence-archive-dir.json
+echo "== status dir"; ls -la $W/srv/mutis/status; ls -la $K
+# Release Caddyfile with only: admin off + auto_https off, /srv/mutis -> /work/srv/mutis,
+# the import/redirect/catch-all blocks dropped, the site address pinned to loopback HTTP.
+awk '(NR<38 || NR>47)' /target/deploy/caddy/Caddyfile | awk '/^# Any other Host name/{exit} {print}' | \
+  sed -e 's#admin unix//run/caddy/admin.sock#admin off\n\tauto_https off\n\thttp_port 18080\n\thttps_port 18443#' \
+    -e 's#/srv/mutis#/work/srv/mutis#g' \
+    -e 's#^{\$MUTIS_HOST} {#http://127.0.0.1:18080 {#' > $W/Caddyfile
+echo "== diff release Caddyfile vs test Caddyfile"; diff /target/deploy/caddy/Caddyfile $W/Caddyfile
+/tools/caddy validate --config $W/Caddyfile --adapter caddyfile 2>&1 | tail -2
+/tools/caddy run --config $W/Caddyfile --adapter caddyfile > $W/caddy.log 2>&1 &
+P=$!
+for i in $(seq 1 50); do curl -s -o /dev/null http://127.0.0.1:18080/status.json && break; sleep 0.2; done
+for u in /status.json /evidence-archive-x.json /evidence.json /evidence-archive-dir.json; do
+  echo "== GET $u"; curl -s -D - http://127.0.0.1:18080$u -o $W/body; echo "-- body:"; head -c 400 $W/body; echo
+done
+echo "== sha256 of served body for /evidence-archive-x.json vs key file"
+curl -s http://127.0.0.1:18080/evidence-archive-x.json | sha256sum; sha256sum $K/dummy.test.key
+kill $P; wait $P 2>/dev/null
+echo "== caddy log (errors only)"; tail -5 $W/caddy.log
+
+===== observed output =====
+== caddy version
+2.6.2
+43c709fc86caeab63a9fc1677d15868039c4f4eaf3ef4e5c1328f46af799a589  /tools/caddy
+== status dir
+total 4
+drwxrwsr-x 2 operator operator 120 Oct 20 01:57 .
+drwxr-xr-x 4 operator operator  80 Oct 20 01:57 ..
+lrwxrwxrwx 1 operator operator   1 Oct 20 01:57 evidence-archive-dir.json -> /
+lrwxrwxrwx 1 operator operator 112 Oct 20 01:57 evidence-archive-x.json -> /work/caddyhome/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key
+lrwxrwxrwx 1 operator operator 112 Oct 20 01:57 evidence.json -> /work/caddyhome/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key
+-rw-r--r-- 1 operator operator  12 Oct 20 01:57 status.json
+total 4
+drwx------ 2 operator operator 60 Oct 20 01:57 .
+drwx------ 3 operator operator 60 Oct 20 01:57 ..
+-rw------- 1 operator operator 93 Oct 20 01:57 dummy.test.key
+== diff release Caddyfile vs test Caddyfile
+8c8,11
+< 	admin unix//run/caddy/admin.sock
+---
+> 	admin off
+> 	auto_https off
+> 	http_port 18080
+> 	https_port 18443
+38,47d40
+< # A move to a new domain adds its redirect blocks here (deploy/README.md, "Moving to a domain").
+< import /etc/caddy/mutis.d/*.caddy
+< 
+< # Plain HTTP only redirects (Let's Encrypt's HTTP challenge is answered before this block). Written
+< # out instead of Caddy's automatic redirect so that it, too, sends no Server header.
+< http://{$MUTIS_HOST} {
+< 	header -Server
+< 	redir https://{host}{uri} 308
+< }
+< 
+85c78
+< {$MUTIS_HOST} {
+---
+> http://127.0.0.1:18080 {
+87c80
+< 	root * /srv/mutis/app/current/dist
+---
+> 	root * /work/srv/mutis/app/current/dist
+233c226
+< 		root * /srv/mutis/status
+---
+> 		root * /work/srv/mutis/status
+299c292
+< 	# for one, is looked up in /srv/mutis/status), and are never cached.
+---
+> 	# for one, is looked up in /work/srv/mutis/status), and are never cached.
+301c294
+< 		root * /srv/mutis/app/current/dist
+---
+> 		root * /work/srv/mutis/app/current/dist
+318,333d310
+< # Any other Host name, on either port: no site here. The same headers, nothing reflected, no
+< # redirect to a name a client made up (421 Misdirected Request).
+< (misdirected) {
+< 	import security_headers
+< 	import site_csp
+< 	header Cache-Control "no-store"
+< 	respond 421
+< }
+< 
+< https:// {
+< 	import misdirected
+< }
+< 
+< http:// {
+< 	import misdirected
+< }
+{"level":"warn","ts":1792483052.669123,"msg":"Caddyfile input is not formatted; run the 'caddy fmt' command to fix inconsistencies","adapter":"caddyfile","file":"/work/Caddyfile","line":310}
+Valid configuration
+== GET /status.json
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: no-cache
+Content-Length: 12
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+Content-Type: application/json
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Etag: "tn74rwc"
+Last-Modified: Tue, 20 Oct 2026 07:57:32 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Date: Tue, 20 Oct 2026 07:57:32 GMT
+
+-- body:
+{"ok":true}
+
+== GET /evidence-archive-x.json
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: no-cache
+Content-Length: 93
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+Content-Type: application/json
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Etag: "tn74rw2l"
+Last-Modified: Tue, 20 Oct 2026 07:57:32 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Date: Tue, 20 Oct 2026 07:57:32 GMT
+
+-- body:
+-----BEGIN EC PRIVATE KEY-----
+DUMMY-NOT-A-REAL-KEY-v3-caddysym
+-----END EC PRIVATE KEY-----
+
+== GET /evidence.json
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: no-cache
+Content-Length: 93
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+Content-Type: application/json
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Etag: "tn74rw2l"
+Last-Modified: Tue, 20 Oct 2026 07:57:32 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Date: Tue, 20 Oct 2026 07:57:32 GMT
+
+-- body:
+-----BEGIN EC PRIVATE KEY-----
+DUMMY-NOT-A-REAL-KEY-v3-caddysym
+-----END EC PRIVATE KEY-----
+
+== GET /evidence-archive-dir.json
+HTTP/1.1 404 Not Found
+Accept-Ranges: bytes
+Cache-Control: no-store
+Content-Length: 34
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+Content-Type: text/html; charset=utf-8
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Etag: "tn74rwy"
+Last-Modified: Tue, 20 Oct 2026 07:57:32 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Date: Tue, 20 Oct 2026 07:57:32 GMT
+
+-- body:
+<!doctype html><title>404</title>
+
+== sha256 of served body for /evidence-archive-x.json vs key file
+3cd419811780620ea11ea8dc9a6c6fa796f1c96ad134942904ce53e3d92be01b  -
+3cd419811780620ea11ea8dc9a6c6fa796f1c96ad134942904ce53e3d92be01b  /work/caddyhome/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key
+== caddy log (errors only)
+{"level":"info","ts":1792483052.7048628,"msg":"using provided configuration","config_file":"/work/Caddyfile","config_adapter":"caddyfile"}
+{"level":"warn","ts":1792483052.7149081,"msg":"Caddyfile input is not formatted; run the 'caddy fmt' command to fix inconsistencies","adapter":"caddyfile","file":"/work/Caddyfile","line":310}

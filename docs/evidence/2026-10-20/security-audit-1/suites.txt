@@ -1,0 +1,38 @@
+# Suites for security-audit-1 (branch security/audit-1, the ten fix commits on top of main), 2026-10-20
+
+## On the workstation (Python 3.14, Node 26), from the branch's worktree
+server   python3 -I -m unittest discover -s server/tests      Ran 364 tests, OK (skipped=5)
+deploy   python3 -I -m unittest discover -s deploy/tests      Ran 103 tests, OK
+lint     python3 -I tools/lint.py                             PASS (0 problems)
+copy     python3 -I tools/check-copy.py                       PASS (0 problems)
+core     node web/app/tests/node-run.mjs                      NODE PASS 153/153
+
+## On the server as build (Python 3.13, Debian's Node 20, Chromium), from an archive of the branch
+server   python3 -I -m unittest discover -s server/tests      OK (skipped=5)
+deploy   python3 -I -m unittest discover -s deploy/tests      OK
+lint     python3 -I tools/lint.py --root .                    PASS
+copy     python3 -I tools/check-copy.py --root .              PASS
+core     python3 -I web/app/tests/run_all.py                  ALL PASS (9 steps), contract 12/12
+site     python3 -I web/site/tests/run.py                     44 of 44 checks without failures
+ui       python3 -I web/app/ui/tests/run.py                   first run: the build refused the development origin's
+                                                              http://127.0.0.1:<port> drop link (fixed in the
+                                                              verify-deploy commit: the local development origin passes,
+                                                              test_build.test_settings covers it); second run:
+                                                              UI FAIL 1068/1069, the one failure
+                                                              "keyboard: it shows in the preview, which takes the focus"
+ui       run.py --only keyboard, branch, twice                UI PASS 37/37, UI PASS 37/37
+ui       run.py --only keyboard, main without the branch, twice  UI PASS 37/37, UI PASS 37/37
+         (the preview focus check failed once in the full run, with other lanes' UI suites running on the same
+         machine; it passes alone on the branch and on main, and the branch changes no preview or focus code)
+
+## Each fix's regression test fails without its fix and passes with it (run on the workstation)
+test_burn_race.EgressRace                                    before: 2 failures   after: OK
+test_mirror (Framing, Mirror new cases)                      before: 10 failures/errors   after: OK
+test_admin.test_reports_show_a_reporters_text_inert          before: error        after: OK
+test_courier.test_a_drop_that_closes_gets_no_queued_delivery before: error; test_admin takedown case before: failure   after: OK
+test_payments.test_a_late_payment_for_a_lapsed_invoice_...   before: ('credited', 'credited') != ('credited', 'expired')   after: OK
+test_build.test_settings, test_verify_deploy new case        before: 5 failures each   after: OK
+identity.test.js forgetting the drive                        before: NODE FAIL 153/154   after: NODE PASS 154/154
+test_ops.StatusWritersTest                                   before: 2 failures, 1 error   after: OK
+test_config.test_the_status_directory_follows_no_symlink    fails without the mount unit (by construction); the live probe is in server-applied.txt
+test_input_safety.test_a_chunked_body_closes_...             before: 2 failures   after: OK

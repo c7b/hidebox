@@ -1,0 +1,83 @@
+# check-01: SealLog cross-implementation proof check and readSealLog header pinning
+# command: bash cf-audit/bin/sbx.sh h3-seallog 120 -- bash -c 'python3 -I /scratch/harness-01.py && node /scratch/harness-02.mjs'
+# env: sandbox allowlist only (PATH, HOME/TMPDIR on inner tmpfs, LANG, PYTHONDONTWRITEBYTECODE=1, PYTHONHASHSEED=0); no network
+# inputs: harness-01.py (server/mutis/seallog.py trees of 64..448 random leaves, make_checkpoint on in-memory schema), harness-02.mjs (web/app/lib/seallog.js verifyInclusion on those proofs + 6 tamper variants each; readSealLog on template/seal_log/tests/vectors/seallog-state-v1.json with template_address, writer key changed and an extra AllowAll method)
+# note: variant 0 = same proof with tree_size+64; for left-side leaves RFC 9162 recomputes the identical root, so it is not a forgery (the browser takes size and root from the same on-chain checkpoint).
+# --- output ---
+checkpoint sizes [64, 128, 192, 320, 512] all multiples of 64 and strictly growing: True
+python cases 30
+accepted variant 0 size 192 index 0 pathlen 8
+accepted variant 0 size 192 index 96 pathlen 8
+accepted variant 0 size 192 index 120 pathlen 8
+accepted variant 0 size 320 index 0 pathlen 9
+accepted variant 0 size 320 index 92 pathlen 9
+accepted variant 0 size 320 index 160 pathlen 9
+accepted variant 0 size 448 index 0 pathlen 9
+accepted variant 0 size 448 index 86 pathlen 9
+accepted variant 0 size 448 index 100 pathlen 9
+accepted variant 0 size 448 index 224 pathlen 9
+JS verified 30/30 server proofs; tampered variants accepted: 10
+readSealLog accepted unpinned template eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee writer abababababababababababababababababababababababababababababababab with extra AllowAll method rewrite_root
+
+# --- harness-02.mjs (verbatim) ---
+// JS verifier against the server's proofs, plus readSealLog acceptance of headers it doesn't pin.
+import { readFileSync } from 'node:fs';
+const sl = await import('/target/web/app/lib/seallog.js');
+const { unhex } = await import('/target/web/app/lib/b64.js');
+const cases = JSON.parse(readFileSync('/scratch/cases.json', 'utf8'));
+let good = 0, badAccepted = 0;
+for (const c of cases) {
+  const leaf = unhex(c.leaf), path = c.path.map(unhex), root = unhex(c.root);
+  if (await sl.verifyInclusion(leaf, c.index, c.size, path, root)) good++;
+  // tamper: wrong size, wrong index, truncated path, extended path, non-32-byte step
+  const variants = [
+    [leaf, c.index, c.size + 64, path, root],
+    [leaf, (c.index + 1) % c.size, c.size, path, root],
+    [leaf, c.index, c.size, path.slice(0, -1), root],
+    [leaf, c.index, c.size, [...path, new Uint8Array(32)], root],
+    [leaf, c.index, c.size, [path[0].subarray(0, 31), ...path.slice(1)], root],
+    [leaf, c.index, c.size, [new Uint8Array(0), ...path], root],
+  ];
+  for (const [vi, v] of variants.entries()) if (await sl.verifyInclusion(...v)) { badAccepted++; console.log("accepted variant", vi, "size", c.size, "index", c.index, "pathlen", path.length); }
+}
+console.log(`JS verified ${good}/${cases.length} server proofs; tampered variants accepted: ${badAccepted}`);
+const state = JSON.parse(readFileSync('/target/template/seal_log/tests/vectors/seallog-state-v1.json', 'utf8'));
+const s2 = structuredClone(state);
+s2.substate.Component.header.template_address = 'ee'.repeat(32);
+s2.substate.Component.header.access_rules.method_access.rewrite_root = 'AllowAll';
+s2.substate.Component.header.access_rules.method_access.append_root.Restricted.Require.Require.NonFungibleAddress.id.U256 = 'ab'.repeat(32);
+try {
+  const log = sl.readSealLog(s2);
+  console.log('readSealLog accepted unpinned template', log.template, 'writer', log.writer, 'with extra AllowAll method rewrite_root');
+} catch (e) { console.log('readSealLog refused:', e.message); }
+
+# --- harness-01.py (verbatim) ---
+# Cross-implementation check: server seallog.py trees/proofs (and make_checkpoint padding) -> JSON for the JS verifier.
+import json, os, random, sqlite3, sys
+sys.path.insert(0, "/target/server")
+from mutis import seallog, codec
+rng = random.Random(7)
+cases = []
+for size in (64, 128, 192, 256, 320, 448):
+    leaves = [codec.sha256(b"\x00", bytes(rng.getrandbits(8) for _ in range(20))) for _ in range(size)]
+    tree = seallog.levels(leaves)
+    r = seallog.root(leaves)
+    for idx in sorted(set([0, size - 1, size // 2, rng.randrange(size), rng.randrange(size)])):
+        path = seallog.inclusion_proof(tree, idx)
+        assert seallog.verify_inclusion(leaves[idx], idx, size, path, r)
+        cases.append({"size": size, "index": idx, "leaf": leaves[idx].hex(), "path": [p.hex() for p in path], "root": r.hex()})
+# prefix property: each checkpoint's tree is a prefix of the next (pads stay)
+conn = sqlite3.connect(":memory:")
+conn.row_factory = sqlite3.Row
+conn.executescript(open("/target/server/mutis/schema.sql").read())
+ok_prefix = True
+sizes = []
+for n_new in (0, 5, 63, 64, 130):
+    for _ in range(n_new):
+        seallog.append(conn, "stored", codec.sha256(b"\x00", os.urandom(16)))
+    cp = seallog.make_checkpoint(conn, 1000)
+    sizes.append(cp["tree_size"])
+print("checkpoint sizes", sizes, "all multiples of 64 and strictly growing:",
+      all(s % 64 == 0 for s in sizes) and all(a < b for a, b in zip(sizes, sizes[1:])))
+json.dump(cases, open("/scratch/cases.json", "w"))
+print("python cases", len(cases))

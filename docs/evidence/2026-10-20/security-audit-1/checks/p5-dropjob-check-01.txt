@@ -1,0 +1,68 @@
+# p5-dropjob check-01: queued drop courier job vs PATCH close / DELETE / admin takedown (offline Stack, FakeChain/FakeWalletd)
+# Harness: harness-01.py (same scratch dir). Input per scenario: POST /api/v1/courier {to:drop, drop_id, kind:3, blob:125 random bytes b64u, pow:solved}; then one state change; then new POST; then s.now += 46 and worker.run_jobs(s.now).
+
+## Audited snapshot 460a389
+$ bash cf-audit/bin/sbx.sh p5-dropjob 300 -- python3 -I /scratch/harness-01.py /target
+INFO route=system.pow status=200 ms=0
+INFO route=courier.send status=410 ms=1
+INFO event=chain.job_done
+[patch] POST courier -> 202 not_before-now=20
+[patch] job state=queued payload keys=['address', 'memo'] address==drop=True
+[patch] PATCH state=closed -> 200
+[patch] drops.state=closed
+[patch] new POST courier -> 410 drop_closed
+[patch] queued job state after close = queued
+[patch] after worker: job state=done payload=None error=None
+[patch] new transfers=1
+[patch]   dest==drop=True value=1000 memo="{'Message': 'https://test.mutis.invalid/t#3KM7f8U-QReyNP3NWJ"
+[delete] POST courier -> 202 not_before-now=35
+[delete] job state=queued payload keys=['address', 'memo'] address==drop=True
+[delete] DELETE -> 204
+[delete] drops.state=closed
+[delete] new POST courier -> 410 drop_closed
+[delete] queued job state after close = queued
+[delete] after worker: job state=done payload=None error=None
+[delete] new transfers=1
+[delete]   dest==drop=True value=1000 memo="{'Message': 'https://test.mutis.invalid/t#3Gjg1eabpWcIh__7f5"
+[takedown] POST courier -> 202 not_before-now=5
+[takedown] job state=queued payload keys=['address', 'memo'] address==drop=True
+[takedown] admin takedown stdout='removed'
+[takedown] drops.state=removed
+[takedown] new POST courier -> 410 drop_closed
+[takedown] queued job state after close = queued
+[takedown] after worker: job state=done payload=None error=None
+[takedown] new transfers=1
+[takedown]   dest==drop=True value=1000 memo="{'Message': 'https://test.mutis.invalid/t#3p5Hf3jG1oTvE6RQQL"
+
+## Head snapshot e6d5f7c
+$ bash cf-audit/bin/sbx.sh p5-dropjob 300 -- python3 -I /scratch/harness-01.py /target-head
+INFO route=system.pow status=200 ms=1
+INFO route=courier.send status=410 ms=1
+INFO event=chain.job_done
+[patch] POST courier -> 202 not_before-now=32
+[patch] job state=queued payload keys=['address', 'memo'] address==drop=True
+[patch] PATCH state=closed -> 200
+[patch] drops.state=closed
+[patch] new POST courier -> 410 drop_closed
+[patch] queued job state after close = queued
+[patch] after worker: job state=done payload=None error=None
+[patch] new transfers=1
+[patch]   dest==drop=True value=1000 memo="{'Message': 'https://test.mutis.invalid/t#3CUYN9tZLwVG9ip9rV"
+[delete] POST courier -> 202 not_before-now=21
+[delete] job state=queued payload keys=['address', 'memo'] address==drop=True
+[delete] DELETE -> 204
+[delete] drops.state=closed
+[delete] new POST courier -> 410 drop_closed
+[delete] queued job state after close = queued
+[delete] after worker: job state=done payload=None error=None
+[delete] new transfers=1
+[delete]   dest==drop=True value=1000 memo="{'Message': 'https://test.mutis.invalid/t#3ByqtWfbQHqfnhfrho"
+[takedown] POST courier -> 202 not_before-now=45
+[takedown] job state=queued payload keys=['address', 'memo'] address==drop=True
+[takedown] admin takedown stdout='removed'
+[takedown] drops.state=removed
+[takedown] new POST courier -> 410 drop_closed
+[takedown] queued job state after close = queued
+[takedown] after worker: job state=done payload=None error=None
+[takedown] new transfers=1
+[takedown]   dest==drop=True value=1000 memo="{'Message': 'https://test.mutis.invalid/t#3jIgC0OqVQfXTD5r31"

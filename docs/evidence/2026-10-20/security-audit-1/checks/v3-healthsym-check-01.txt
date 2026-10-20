@@ -1,0 +1,31 @@
+## command: bash sbx.sh v3-healthsym 60 -- python3 -I /scratch/harness-01.py
+## harness:
+# v3-healthsym check 01: healthcheck.write_json follows a planted status.json.tmp symlink (single uid, sandbox).
+import importlib.util, os, stat, tempfile, json
+from pathlib import Path
+spec = importlib.util.spec_from_file_location("healthcheck", "/target/deploy/scripts/healthcheck.py")
+hc = importlib.util.module_from_spec(spec); spec.loader.exec_module(hc)
+root = Path(tempfile.mkdtemp(prefix="srv-mutis-"))
+data = root / "data"; status = root / "status"; blobs = data / "blobs" / "ab" / "cd"
+blobs.mkdir(parents=True); status.mkdir(); os.chmod(status, 0o2775)
+blob = blobs / ("abcd" + "0" * 28 + ".bin")
+blob.write_bytes(b"CIPHERTEXT-DUMMY" * 4); os.chmod(blob, 0o600)
+print("status dir mode:", oct(stat.S_IMODE(os.stat(status).st_mode)), "sticky:", bool(os.stat(status).st_mode & stat.S_ISVTX))
+print("A. before: blob mode", oct(stat.S_IMODE(os.stat(blob).st_mode)), "content", blob.read_bytes()[:32])
+os.symlink(blob, status / "status.json.tmp")   # what drive plants
+hc.write_json(status / "status.json", {"overall": "green", "checks": {}}, 0o644)
+print("A. after:  blob mode", oct(stat.S_IMODE(os.stat(blob).st_mode)), "content", blob.read_bytes()[:60])
+print("A. status.json is symlink:", os.path.islink(status / "status.json"), "->", os.readlink(status / "status.json"))
+# B: a link to a name that does not exist yet creates a new file inside blobs/
+new = blobs / "planted.bin"
+os.unlink(status / "status.json")
+os.symlink(new, status / "status.json.tmp")
+hc.write_json(status / "status.json", {"overall": "green"}, 0o644)
+print("B. new file created in blobs/:", new.exists(), "mode", oct(stat.S_IMODE(os.stat(new).st_mode)))
+## output:
+status dir mode: 0o2775 sticky: False
+A. before: blob mode 0o600 content b'CIPHERTEXT-DUMMYCIPHERTEXT-DUMMY'
+A. after:  blob mode 0o644 content b'{\n "checks": {},\n "overall": "green"\n}\n'
+A. status.json is symlink: True -> /work/tmp/srv-mutis-1l_uli44/data/blobs/ab/cd/abcd0000000000000000000000000000.bin
+B. new file created in blobs/: True mode 0o644
+## exit: 0

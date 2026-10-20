@@ -1,0 +1,16 @@
+EGRESS_PER_ITEM_DAY = 10737418240 bytes
+item size_stored    = 4294967296 bytes
+
+[stored_bytes stale-read path]
+  egress_ok A -> True  egress_ok B -> True
+  bytes actually authorized to serve : 8589934592 (8 GiB)
+  item.egress_bytes counter now      : 4294967296 (4 GiB)
+  UNDERCOUNT (served - counted)       : 4294967296 (4 GiB)
+
+[fresh-read-before-each-charge path]
+  egress_ok 1 -> True  egress_ok 2 -> True
+  bytes authorized to serve : 8589934592 (8 GiB)
+  item.egress_bytes counter : 8589934592 (8 GiB)
+
+RESULT: stale read lets two downloads (8 GiB) be authorized while the
+per-item daily counter records only 4 GiB -> EGRESS_PER_ITEM_DAY bypassable by racing.

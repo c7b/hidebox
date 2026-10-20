@@ -1,0 +1,15 @@
+== GET allowlist: traversal/SSRF attempts (should all be 'not proxied') ==
+'substates/../../admin' -> None
+'substates/utxo_0000000000000000000000000000000000000000000000000000000000000000/../x' -> None
+'network/../epoch-manager/stats' -> None
+'transactions/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/result/../x' -> None
+'http://evil.example/x' -> None
+'substates/utxo_0000000000000000000000000000000000000000' -> '/substates/utxo_0000000000000000000000000000000000000000?include_proof=true'
+'network' -> '/network'
+'transactions/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/result' -> '/transactions/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/result'
+
+== submit shape check: non-self-send rejection ==
+empty-ish bogus -> rejected invalid
+trailing -> rejected
+indefinite -> rejected
+float -> rejected

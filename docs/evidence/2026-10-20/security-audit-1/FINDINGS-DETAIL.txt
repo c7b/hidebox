@@ -1,0 +1,282 @@
+# Findings detail (confirmed, medium and above)
+
+Each record below is copied from `findings.json` (source ref 460a389). Reproductions are bounded local checks run in an offline sandbox; no deployed system was probed.
+
+## Caddy follows symlinks in /srv/mutis/status, which drive can write, so drive can publish files only caddy can read, such as the site's TLS private key
+
+- Fingerprint: `deploy/caddy/Caddyfile:status-root-symlink-serves-caddy-private-files`
+- Severity: **medium** (likelihood low: Requires prior code execution or file write as drive (chain worker or evidence collector) or as mutis (healthcheck). No internet-reachable route to that was shown. Once that foothold exists, the step is a single symlink and needs no race. Impact high: Publicly discloses Caddy-only secrets: the site's TLS private key, the ACME account key and the autosave config. With the TLS key and a network position, an attacker can impersonate the origin and serve altered JavaScript, defeating the client-side-encryption trust model. It also breaks the stated boundary that each service holds only its own authority.)
+- Confidence: medium: Symlink following was reproduced with the exact deployed Caddy binary and the release Caddyfile route. Directory modes, unit grants and Caddy storage permissions are owner-observed and match source. The cross-uid step was not executed locally (single-uid sandbox), and host LSM confinement of caddy was not observed.
+
+### What happens
+
+The public @status route (/evidence.json, /evidence-archive-*.json, /status.json, /releases.json) serves files with file_server from /srv/mutis/status. That directory is mode 2775 mutis:mutis. drive belongs to group mutis, and mutis-chain and mutis-evidence both have the directory in ReadWritePaths; mutis-health, running as mutis, can write it too. Because the directory is group-writable and not sticky, drive can create new names there and can also unlink and replace evidence.json or status.json. The deployed Caddy 2.6.2 binary, run with the release Caddyfile, follows a symlink placed at one of these names and returns the target's bytes with 200. In the test, a link to a dummy 0600 key in a 0700 directory laid out like Caddy's certificate storage was served at both /evidence-archive-x.json and /evidence.json, and the served bytes hashed the same as the key file. Caddy opens the file as user caddy, which owns /var/lib/caddy (owner-observed: 0700 caddy:caddy all the way down to certificates/<ca>/<name>). Creating a symlink needs no access to its target. fs.protected_symlinks does not apply, because the directory is not world-writable with the sticky bit. So code running as drive (or mutis) can publish the site certificate's private key, the ACME account key or Caddy's autosaved config to anyone on the internet. These are files the service users cannot read themselves. With the TLS key, an attacker who has a network position can impersonate the site and serve altered JavaScript, which defeats the client-side encryption model.
+
+**Root cause.** Caddy serves a public root that lower-trust service users (drive and mutis) can write. Caddy 2.6 file_server has no option to refuse symlinks, so whoever writes that directory can choose any path Caddy can read and have it served publicly.
+
+**Intended behavior.** Only the regular status JSON files written by the status writers should be reachable at the @status paths. A service user that can write status files should never be able to make Caddy serve a file outside /srv/mutis/status, and certainly not Caddy's own private storage.
+
+### Trace
+
+1. `deploy/systemd/mutis-chain.service:25` (entrypoint, [Service] ReadWritePaths (User=drive, SupplementaryGroups=mutis)): The chain worker and its sidecar run as drive in group mutis with /srv/mutis/status writable. mutis-evidence.service (lines 10 and 21) grants drive the same, and mutis-health.service (lines 9 and 19) grants it to mutis. Code running under these units can create, unlink or replace entries there, including symlinks.
+2. `deploy/scripts/provision.sh:83` (propagation, users_and_dirs): install -d -m 2775 -o mutis -g mutis /srv/mutis/status: group-writable, setgid, not sticky. Any member of group mutis (drive) can add names and remove or replace other users' files. Owner-observed live state matches: drwxrwsr-x mutis:mutis.
+3. `deploy/caddy/Caddyfile:148` (propagation, @status matcher): Maps the public paths /evidence.json, /evidence-archive-*.json, /status.json and /releases.json to the status root. The wildcard accepts names that no writer produces (tests/e2e/headers_spec.py:104 expects /evidence-archive-x.json to be a 404), and the fixed names can be replaced by a group member.
+4. `deploy/caddy/Caddyfile:234` (sink, handle @status { root * /srv/mutis/status; file_server }): file_server, running as caddy, opens the requested name, follows a symlink to any path caddy can read (including /var/lib/caddy, its ReadWritePaths in caddy.service.d/mutis.conf line 20) and sends the contents to the public with 200.
+
+### Evidence
+
+- `deploy/caddy/Caddyfile:233`: root * /srv/mutis/status for the @status handle; the installed /etc/caddy/Caddyfile is byte-identical (owner-observed).
+- `deploy/systemd/mutis-evidence.service:21`: ReadWritePaths=/srv/mutis/status for a second drive-run unit (User=drive at line 10).
+- `deploy/systemd/caddy.service.d/mutis.conf:20`: ReadWritePaths=/var/lib/caddy: Caddy's certificates, ACME account and autosave live there and caddy can read them. Nothing in the unit hides them from file_server. Owner-observed: every level is drwx------ caddy:caddy, so drive and mutis cannot read them directly.
+- `deploy/sysctl/90-mutis.conf:24`: fs.protected_symlinks=1 only restricts following symlinks in sticky, world-writable directories. /srv/mutis/status is 2775 (not sticky, not o+w), so it gives no protection here.
+- `deploy/systemd/mutis-api.service:25`: The internet-facing API (mutis) does not have /srv/mutis/status writable, so the writers are limited to mutis-chain and mutis-evidence (drive) and mutis-health (mutis).
+- `tests/e2e/headers_spec.py:104`: The project expects /evidence-archive-x.json to return 404: no writer is meant to create evidence-archive-* names, yet the route accepts them.
+
+### Conditions
+
+- authorization_role: The attacker must already execute code (or write to the filesystem) as drive in mutis-chain or mutis-evidence, or as mutis in mutis-health. No path from the internet to that was established in this check; this is a privilege-boundary escalation from those service users to caddy's secrets.
+- system_configuration: Owner-observed live state: /srv/mutis/status is drwxrwsr-x mutis:mutis, the installed Caddyfile is identical to the release, Caddy is 2.6.2 (same SHA-256 as the tested binary), and /var/lib/caddy is 0700 caddy:caddy. No LSM (e.g. AppArmor) confinement of caddy was observed or ruled out on the host.
+- data_state: The attacker needs the target path. Caddy's storage layout is predictable from the public host name (owner listing shows .local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/<name>/).
+- network_routing: Reading the leaked key needs only a public GET. Using the key to impersonate the site additionally needs a network position or DNS control.
+
+### Bounded local reproduction
+
+**Principal.** Code running as service user drive (group mutis), for example inside the chain worker or evidence collector, which can write /srv/mutis/status but cannot read /var/lib/caddy.
+
+**Input.**
+
+```text
+ln -s /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/<host>/<host>.key /srv/mutis/status/evidence-archive-x.json
+```
+```text
+GET /evidence-archive-x.json
+```
+
+**Steps.**
+
+1. Inside the approved sandbox (no network), start the deployed Caddy 2.6.2 binary (/tools/caddy, sha256 43c709fc…a589) with the release Caddyfile. The only changes: admin off, auto_https off, loopback HTTP port 18080, /srv/mutis remapped to /work/srv/mutis, and the mutis.d import, HTTP-redirect and misdirected catch-all blocks dropped (the diff is recorded in the artifact).
+2. Create a dummy key file (not a real key), mode 0600, in 0700 directories at XDG_DATA_HOME/caddy/certificates/acme-v02.api.letsencrypt.org-directory/dummy.test/dummy.test.key.
+3. In the 2775 status root, create symlinks evidence-archive-x.json and evidence.json pointing to that key file, plus a regular status.json as a control.
+4. GET /status.json, /evidence-archive-x.json and /evidence.json from 127.0.0.1:18080, and compare the SHA-256 of the served body with the key file.
+
+**Observed.** /status.json returned 200 (control). /evidence-archive-x.json and /evidence.json each returned 200 OK, Content-Length 93, Content-Type application/json, and the body was the dummy PEM key. The served body's SHA-256 (3cd41981…be01b) equals the key file's. A symlink to a directory returned 404. The cross-uid part (drive creates the link, caddy reads its own 0700 storage) was not run in the single-uid sandbox; it follows from the owner-observed modes and from POSIX symlink semantics. Artifact: agents/v3-caddysym/artifacts/check-01.txt.
+
+### Remediation
+
+Serve the status files from a directory that no lower-trust user can write. drive and mutis write into a staging directory. A trusted root-run step (an ExecStartPost or a path unit) copies each expected name: it opens with O_NOFOLLOW, requires S_ISREG and nlink==1, and writes into a root:root 0755 /srv/mutis/status that Caddy serves, replacing atomically. In the Caddyfile, list exact names only and drop the /evidence-archive-* wildcard that no writer produces. Until then, give each served file a single owner in a non-group-writable directory. Caddy 2.6 file_server has no setting to refuse symlinks, so the fix has to be on the filesystem side.
+
+## Status files are written through fixed temp names in a directory drive can write, so drive can redirect writes by mutis (health) and root (notarize-release)
+
+- Fingerprint: `deploy/scripts/healthcheck.py:write_json:tmp-symlink-follow-in-group-writable-status`
+- Severity: **medium** (likelihood low: It needs code execution as drive inside the chain worker or evidence collector first. The root variant also waits for the next operator deploy with SealLog on, which is a recurring, operator-triggered event. Impact high: Root variant: drive can make root create or overwrite any path on the host, mode 0644 and root-owned, with JSON that keeps keys drive chose. That moves drive's authority to root-level file integrity. Health variant: drive can make mutis truncate, overwrite and chmod files under data/blobs and data/backup, or create new files in blobs/. drive's DB write access already lets it get ciphertext deleted (cleanup.py:69), so the health variant's own extra impact is limited to bypassing the blobs/ write and mode invariants.)
+- Confidence: high: Both symlink-following writes were reproduced locally against the real target functions. The cross-user conditions (directory mode, group membership, ReadWritePaths, root through sudo) come from active in-repo sources and match the owner-observed live modes and unit files. That the root writer is live rests on the owner-observed root:mutis releases.json. The local runs used a single uid and a stubbed SealLog call.
+
+### What happens
+
+/srv/mutis/status is mode 2775 mutis:mutis with no sticky bit. The owner observed drwxrwsr-x on the live host. drive is in group mutis, and both mutis-chain and mutis-evidence run as drive with this directory in ReadWritePaths. Two higher-privilege writers save their files there through a fixed, predictable temp name. Both open that name in a way that follows a symlink and then call chmod by path. (1) Every 5 minutes, healthcheck.write_json runs as mutis with /srv/mutis/data writable. It writes status.json.tmp with O_WRONLY|O_CREAT|O_TRUNC (no O_NOFOLLOW or O_EXCL) and then calls os.chmod(tmp, 0o644). If drive plants status.json.tmp as a symlink, mutis truncates and overwrites the link's target (for example a stored ciphertext under data/blobs or a backup under data/backup) with health JSON and sets it to 0644. If the target does not exist, mutis creates a new 0644 file there, inside blobs/. (2) After each deploy, deploy.sh runs notarize-release.py as root through sudo, outside any systemd sandbox. It reads /srv/mutis/status/releases.json, which drive can delete and replace with its own JSON because the directory is group-writable and not sticky. It then writes releases.json.tmp with Path.write_text and calls os.chmod(tmp, 0o644), and both follow a symlink. A link that drive planted makes root create or overwrite any path on the host, mode 0644. The written content keeps the JSON keys and values drive chose. The kernel's fs.protected_symlinks does not apply because the directory is neither sticky nor world-writable, and fs.protected_regular=2 covers only sticky directories. The live releases.json is root:mutis, so the root writer has run on the live host. The third writer, collect-evidence.py, runs as drive itself, so the same pattern there crosses no boundary.
+
+**Root cause.** Writers with more privilege than drive build a fixed temp name (path.name + '.tmp') inside a directory drive can write, without the sticky bit. They open it without O_NOFOLLOW or O_EXCL and chmod it by path, so they follow a symlink that another service user placed.
+
+**Intended behavior.** Only mutis may change files under data/blobs (provision.sh:80; privilege-check.sh:104 checks 'drive (group mutis) cannot add a file inside blobs/'). drive must not be able to make mutis or root write, create or chmod files outside the status files those writers own. A file written by root or mutis should never follow a link another user placed.
+
+### Trace
+
+1. `deploy/systemd/mutis-chain.service:12` (entrypoint, [Service] User=drive): The lower-trust workload: the chain worker and Node sidecar run as drive and parse upstream chain and indexer data. SupplementaryGroups=mutis (line 14) puts it in group mutis.
+2. `deploy/systemd/mutis-chain.service:25` (propagation, ReadWritePaths): /srv/mutis/status is writable inside drive's sandbox, so drive can create and unlink names there, including symlinks. mutis-evidence.service:21 grants drive the same access.
+3. `deploy/scripts/provision.sh:83` (propagation, users_and_dirs): The status directory is created mode 2775 mutis:mutis: writable by group mutis, setgid, not sticky. drive joins group mutis at line 73. The owner observed drwxrwsr-x mutis:mutis on the live host.
+4. `deploy/scripts/deploy.sh:113` (propagation, post-smoke notarization): Variant writer: after every deploy that passes the smoke test, notarize-release.py runs as root through sudo, with no systemd sandbox.
+5. `deploy/scripts/notarize-release.py:53` (propagation, main): Root reads the ledger drive can replace (line 36). It then writes releases.json.tmp with Path.write_text (O_CREAT|O_TRUNC, follows symlinks) and calls os.chmod(tmp, 0o644) at line 54. A planted link makes root create or overwrite any path with JSON that keeps drive's planted keys, mode 0644.
+6. `deploy/systemd/mutis-health.service:19` (propagation, ReadWritePaths): The health service runs as mutis (line 9) and may write all of /srv/mutis/data, including blobs/ and backup/, and /srv/mutis/status.
+7. `deploy/scripts/healthcheck.py:202` (propagation, main): write_json is called on <data>/../status/status.json with mode 0o644 on every 5-minute run (mutis-health.timer).
+8. `deploy/scripts/healthcheck.py:182` (sink, write_json): os.open(tmp, O_WRONLY|O_CREAT|O_TRUNC, mode) follows a status.json.tmp symlink planted by drive. Line 186 os.chmod(tmp, mode) follows it again, and line 187 os.replace moves the link onto status.json.
+
+### Evidence
+
+- `deploy/scripts/healthcheck.py:181`: The temp name is the predictable path.name + '.tmp' in the shared status directory.
+- `deploy/scripts/notarize-release.py:52`: The root writer uses the same fixed releases.json.tmp name in the same directory.
+- `deploy/scripts/notarize-release.py:36`: Root loads the existing releases.json and appends to it, so ledger content planted by drive (any extra JSON keys) is written back verbatim.
+- `deploy/scripts/provision.sh:79`: blobs/ and backup/ are 0700 mutis. Line 80 says only mutis may add or rename anything under blobs/, and every file there is 0600.
+- `deploy/scripts/privilege-check.sh:104`: The project's own invariant: drive (group mutis) cannot add a file inside blobs/. The health sink breaks it, creating a 0644 file there.
+- `deploy/sysctl/90-mutis.conf:24`: fs.protected_symlinks=1 restricts following only inside directories that are both sticky and world-writable. Line 26, fs.protected_regular=2, applies only to sticky directories. 2775 is neither, so the kernel does not block either sink.
+- `deploy/scripts/collect-evidence.py:89`: The same fixed-temp pattern (evidence.json.tmp, O_CREAT|O_TRUNC, then chmod at line 93), but mutis-evidence runs as drive (mutis-evidence.service:10), so drive gains nothing new from it.
+- `server/mutis/cleanup.py:69`: Calibration: cleanup (as mutis) unlinks the blobs of items in state 'doomed'. drive can write the shared DB (privilege-check.sh:71), so it can already get ciphertext deleted. The health sink adds a direct write, create and chmod inside blobs/ and backup/. The notarize sink adds a root-level file write.
+
+### Conditions
+
+- authentication_level: The attacker already runs code as drive inside mutis-chain or mutis-evidence, for example through the chain worker or Node sidecar parsing upstream data.
+- system_configuration: /srv/mutis/status is mode 2775 without the sticky bit, and the drive units list it in ReadWritePaths. Both are owner-observed on the live host.
+- system_configuration: Root variant: features.seallog and ootle.seallog_component are on, so notarize-release.py gets past its early return. The default in mutis.toml.example is false. The owner observed the live releases.json as root:mutis, which means it has already run as root on the live host.
+- data_state: Health variant against an existing blob: drive knows an item id from the shared DB. The blob path is blobs/<id[0:2]>/<id[2:4]>/<id>.bin (storage.py _dir).
+- timing_dependency: Health variant: the next mutis-health run, at most 5 minutes later. Root variant: the next operator deploy (deploy.sh:113) of a release not yet in the ledger, with a committed SealLog notarization. A planted link stays until it is used.
+
+### Bounded local reproduction
+
+**Principal.** A process running as drive (group mutis) with write access to /srv/mutis/status and read access to the shared SQLite DB.
+
+**Input.**
+
+```text
+os.symlink('/srv/mutis/data/blobs/ab/cd/<item_id>.bin', '/srv/mutis/status/status.json.tmp')
+```
+```text
+os.unlink('/srv/mutis/status/releases.json'); open('/srv/mutis/status/releases.json','w').write('[{"release":"old","manifest_sha256":"0","<chosen key>":1}]'); os.symlink('<any path>', '/srv/mutis/status/releases.json.tmp')
+```
+
+**Steps.**
+
+1. Inside the approved sandbox, load deploy/scripts/healthcheck.py. Create a temp tree with status/ at mode 2775 and a dummy 0600 blob at data/blobs/ab/cd/<id>.bin. Plant status/status.json.tmp as a symlink to the blob and call write_json(status/'status.json', {...}, 0o644). Then point the link at a name that does not exist under blobs/ and call write_json again.
+2. Inside the sandbox, load deploy/scripts/notarize-release.py. Point CONFIG, CURRENT and LEDGER at a temp tree with seallog on, and replace the drive-side mutis-admin subprocess with a stub that returns committed with a dummy tx id. Plant a releases.json containing an extra key '$(echo ATTACKER-CHOSEN)' and a releases.json.tmp symlink to a file that does not exist yet. Run main().
+
+**Observed.** Health (agents/v3-healthsym/artifacts/check-01.txt): the dummy blob went from 0o600 with 'CIPHERTEXT-DUMMY...' to 0o644 with the health JSON, and status.json became the planted symlink. A link to a name that did not exist created a new 0o644 file inside blobs/. Notarize (agents/v3-healthsym/artifacts/check-02.txt): main() returned 0, and the link target that did not exist before became a 0o644 file. It holds the planted entry, '$(echo ATTACKER-CHOSEN)' key included, plus the new release entry, and releases.json became the symlink. Both runs used a single uid. The drive-to-mutis and drive-to-root boundary comes from the unit files, provision.sh, deploy.sh and the owner-observed modes. Nothing further, such as execution of the written content, was tested.
+
+### Remediation
+
+Never write a privileged file through a predictable name in a directory another user can write. Create the temp file with tempfile.mkstemp in the target directory (O_CREAT|O_EXCL with a random name), call fchmod on the descriptor rather than chmod on the path, then os.replace. Apply this to healthcheck.write_json, notarize-release.py and collect-evidence.py. In notarize-release.py, keep the canonical ledger in a root-only location (for example /var/lib/mutis/releases.json, opened with O_NOFOLLOW) and only publish a copy into the status directory, so root never reads content drive can replace. Better still, give each writer its own status directory (health/mutis, evidence/drive, releases/root) that only that writer can write, and serve the fixed file names from there. A sticky bit alone does not stop symlink following here, because protected_symlinks also requires the directory to be world-writable.
+
+## Malformed UTXO-stream record from one indexer raises a non-IndexerError that aborts every mirror cycle (and an integer public_nonce scales memory)
+
+- Fingerprint: `server/mutis/indexer.py:parse_stream:unvalidated-unspent-fields`
+- Severity: **medium** (likelihood low: Needs a configured indexer, by default a Tari-operated HTTPS endpoint, to return malformed stream records: the operator, a compromise of it, or a buggy release. No network-position or unauthenticated-internet path exists. The architecture still treats indexers as untrusted upstreams, and the worker queries several of them precisely to tolerate one misbehaving. Impact high: Persistent and service-wide while it lasts. With the bad upstream first (the default order), no new UTXOs are mirrored from any indexer, so drives stop seeing courier/drop deliveries and the worker's payment and sales scans see nothing new, until the upstream changes or an operator edits the config. Recovery is not automatic. The health check flags it (mirror_lagging RED). There is no confidentiality or integrity effect. The integer-nonce variant also scales worker memory with a value the attacker picks (MemoryError, or possibly a cgroup OOM-kill under MemoryMax=1G with Restart=always; the latter was not observed).)
+- Confidence: high: Reproduced end-to-end in the sandbox with the real Worker.mirror/_step, the real Indexers HTTP client and a loopback hostile indexer next to the FakeIndexer. Both upstream orders were observed. Line references were checked against the snapshot.
+
+### What happens
+
+indexer.parse_stream decodes the NDJSON body of POST /utxos/stream and applies json.loads, msg.get, int(), bool() and bytes(u['public_nonce']).hex() to upstream values with no type or size checks. A malformed line (string public_nonce -> TypeError, non-JSON line -> JSONDecodeError, top-level array -> AttributeError) escapes as an exception that is not IndexerError; an integer public_nonce makes bytes(N) allocate N bytes (8-digit value -> 50 MB plus a retained 100 MB hex string; 10-digit value -> MemoryError under a 4 GiB address-space limit). Worker.mirror catches only IndexerError, so the exception ends the whole mirror() call; _step logs the generic chain.loop_error, the cursor transaction for that indexer is never committed, and the same stream fails again on every 3 s mirror tick. Reproduced end-to-end with the real Worker and a FakeIndexer: when the hostile upstream is first in the list (the default config lists indexer-b first), the healthy indexer is never polled and 0 of 3 new outputs reach chain_utxos across repeated ticks; when it is last, the healthy indexer's rows are still committed but mirror_ok_at never updates, so the health check goes RED (mirror_lagging). This defeats the code's stated multi-indexer redundancy: one bad upstream that keeps answering with a malformed record halts mirroring, which feeds the browser's delivery scan (handlers/chain.py) and the worker's payment and sales scans, until the upstream changes or an operator removes it from the config.
+
+**Root cause.** parse_stream trusts upstream JSON shape and types: it calls int()/bytes() on attacker-controlled values without checking that shard, version and tag are bounded ints and public_nonce is a 32-byte list, and it never turns parse failures into IndexerError. Worker.mirror's per-upstream isolation (except IndexerError only) therefore does not cover them, so a single malformed record stops the loop over all upstreams.
+
+**Intended behavior.** A malformed or oversized stream record should be rejected as a bounded IndexerError('bad_upstream') before any allocation sized by an upstream value. Worker.mirror would then treat it like any failing upstream and keep mirroring from the others, as test_every_indexer_is_mirrored_with_its_own_cursors expects for an unreachable one.
+
+### Trace
+
+1. `server/mutis/indexer.py:128` (entrypoint, Indexers.stream_utxos): POST /utxos/stream to a configured indexer (defaults ootle-indexer-b/-a.tari.com, config.py:66). Up to MAX_STREAM (16 MiB) of the answer goes to parse_stream at line 132. The only checks are HTTP status 200 and the size cap.
+2. `server/mutis/indexer.py:162` (propagation, parse_stream): Each line goes through json.loads(line) and msg.get(...) with no check that the line is JSON or that msg is an object. Failures raise JSONDecodeError or AttributeError, not IndexerError.
+3. `server/mutis/indexer.py:171` (propagation, parse_stream): int(u['tag']) and bytes(u['public_nonce']).hex(). A string raises TypeError. An integer N allocates N zero bytes and keeps a 2N-character hex string in the result.
+4. `server/mutis/chain_worker.py:228` (propagation, Worker.mirror): Only IndexerError is caught per upstream, so any other exception ends the loop over all upstreams. Later upstreams are not polled, and mirror_ok_at at line 232 is not set.
+5. `server/mutis/chain_worker.py:110` (sink, Worker._step): The generic handler logs chain.loop_error and moves on. The cursor db.tx at lines 246-255 was never reached, so the next 3 s mirror tick (line 181) pulls the same poisoned stream again.
+
+### Evidence
+
+- `server/mutis/indexer.py:171`: current['unspent'].append((int(u['tag']), bytes(u['public_nonce']).hex())): no type or length check on upstream values.
+- `server/mutis/indexer.py:165`: int(sos['shard']), int(sos['max_state_version']), bool(sos['has_more']) have no range check either.
+- `server/mutis/chain_worker.py:228`: 'except IndexerError as e' is the only handler in mirror().
+- `server/mutis/chain_worker.py:252`: The cursor update inside the db.tx runs only after parse_stream and fetch succeed, so a poisoned stream is never stepped past.
+- `server/mutis/config.py:66`: The default upstream order is indexer-b first, then indexer-a. A poisoned answer from the first one blocks the second.
+- `deploy/scripts/healthcheck.py:94`: mirror_lagging turns RED when mirror_ok_at is stale. This detects the stall but does not recover from it.
+- `server/mutis/indexer.py:185`: Contrast: parse_fetched on the same upstream catches KeyError/TypeError/ValueError and checks shapes. Only the stream path is unvalidated.
+
+### Conditions
+
+- third_party_dependency: One configured indexer answers /utxos/stream with HTTP 200 and at least one malformed NDJSON line. The defaults are Tari-operated HTTPS indexers, so the producer is that operator, a compromise of it, or a buggy release that emits a non-JSON or reshaped line. No authentication applies to what the indexer returns.
+- system_configuration: Full halt (no indexer mirrored) needs the bad upstream ahead of the healthy ones in ootle.indexers. In the default order that is indexer-b. If it comes later, healthy rows still land, but mirror_ok_at stays stale and the health check stays RED.
+- data_state: The bad record must stay in the stream answer for the current cursor. Because the cursor never advances, a stable bad record keeps failing every tick.
+
+### Bounded local reproduction
+
+**Principal.** A malicious, compromised or malfunctioning upstream Ootle indexer answering the chain worker's POST /utxos/stream poll.
+
+**Input.**
+
+```text
+{"sos":{"shard":1,"max_state_version":0,"has_more":false}}
+{"update":{"Unspent":{"tag":1,"public_nonce":"deadbeef"}}}
+{"eos":{"max_state_version":1}}
+```
+```text
+{"sos":{"shard":1,"max_state_version":0,"has_more":false}}
+{"update":{"Unspent":{"tag":1,"public_nonce":50000000}}}
+{"eos":{"max_state_version":1}}
+```
+```text
+{"sos":{"shard":1,"max_state_version":0,"has_more":false}}
+[]
+```
+
+**Steps.**
+
+1. In the sandbox, call indexer.parse_stream on each payload. Expect TypeError for the string nonce, a 50,000,000-byte allocation for the integer nonce (MemoryError at 9999999999), and AttributeError for the '[]' line. None of these is an IndexerError.
+2. Start the harness Stack(chain=True) with three new outputs on the FakeChain. Set worker.indexers = Indexers([hostile_url, live_fake_indexer_url]), where the hostile loopback server always returns payload 1. Run worker._step(worker.mirror, now) three times.
+3. Repeat with the order [live, hostile].
+
+**Observed.** check-01: string nonce raised TypeError, not IndexerError. Non-JSON raised JSONDecodeError. Nonce 50000000 returned a hex string of 100,000,000 chars, with a tracemalloc peak of 150,000,727 bytes. Nonce 9999999999 raised MemoryError. With hostile first, every tick logged event=chain.loop_error, chain_utxos stayed at 0 rows (3 outputs were on the live fake chain), mirror_cursors stayed {} and mirror_ok_at stayed None. A direct mirror() raised TypeError. With hostile last, the live indexer's 3 rows and cursors were committed, but every tick still logged chain.loop_error and mirror_ok_at stayed None. check-02: the '[]' line raised AttributeError, which the hunter's proposed except-clause would not catch. The corrected parser parses the recorded fixture the same way as the current one and maps all poison variants to IndexerError bad_upstream.
+
+### Remediation
+
+Validate every stream field before using it, and raise IndexerError(502, 'bad_upstream') for any line that is not a JSON object or has the wrong shape. The checks: shard is an int in [0, 2^16), versions are non-negative ints, has_more is a bool, tag is an int in [0, 2^32), public_nonce is a list of exactly 32 ints in [0, 255]. Never call bytes() on an untrusted int. Worker.mirror's existing 'except IndexerError' then isolates the bad upstream and keeps mirroring the others, with mirror_ok_at set. Unlike the hunter's version, this also rejects non-object lines (AttributeError) and bool-typed ints. Add a test that pairs a poisoning FakeIndexer with a live one. The same upstream can also halt the mirror through the sibling /utxos/fetch parse in Indexers.fetch_utxos (indexer.py:143: json.loads(data).get('utxos', []) with no handling): with the stream fix alone, a hostile first upstream that streams one well-formed pair and answers /utxos/fetch with a non-JSON body or a top-level array still makes mirror() raise JSONDecodeError / AttributeError, with 0 rows mirrored from the healthy second indexer and mirror_ok_at unset (agents/p5-stream/artifacts/check-03.txt). So map fetch_utxos parse failures to IndexerError(502, 'bad_upstream') as well, and as defense in depth have Worker.mirror treat any non-IndexerError from one upstream (log it, record it as that upstream's error) as a failure of that upstream only, so a future unvalidated field cannot again stop the loop over the others. With the fetch_utxos change below applied, the same scenario mirrors all 3 rows from the healthy indexer and sets mirror_ok_at (agents/p5-stream/artifacts/check-04.txt).
+
+## Swapped or expired pack invoices still credit for 7 days without a slice check, so paid space goes over its cap
+
+- Fingerprint: `server/mutis/payments.py:credit:lapsed-invoice-reservation-credited-without-slice-check`
+- Severity: **medium** (likelihood medium: Any free drive can do it through public routes. The demo-pay variant costs the attacker nothing but needs the swap before the worker sends or records the payment, and it is bounded by the per-locker and per-network demo limits. The paid variant needs testnet tTARI and payment within the 7-day grace window. The per-network and daily sales brakes limit how many invoices one actor can open. Impact medium: The paid-space cap and its public/judge slices are the main anti-griefing bound on the shared disk, and they can be exceeded. Observed: 10 GiB of active public packs against a 7.28 GiB public slice, and paid_bytes raises the drive's storage limit. Actual disk exhaustion was not observed. The free-space brakes and the disk reserve still apply.)
+- Confidence: high: The verifier wrote its own harness and reproduced the result deterministically in three variants (swap, TTL expiry, demo-pay then swap). The run used the real API, chain worker, crediting and slice code over the repository's fake chain, indexer and sidecar, with non-exempt client addresses. Every trace and evidence line was checked against the snapshot.
+
+### What happens
+
+A pack invoice holds its bytes in the paid-space slice only while it is pending or seen and has not expired (packs.slices). Two things end that hold. First, when a drive swaps to another pack (POST /api/v1/invoices with a different pack), the old unpaid invoice is closed as 'expired' with expires_at=now. Second, an unpaid invoice expires after INVOICE_TTL_S (1 h) through payments.expire_invoices. Either way it stops holding its bytes, and other buyers' invoices then pass the room check in the freed space. But payments.record_found still attributes a later payment to that invoice whatever its status. payments.credit() still credits it until expires_at + UNDERPAID_GRACE_DAYS (7 days), and grant_pack() grants the full pack bytes with no new room check. Paid drives can therefore hold more than the public (or judges') slice and the deployment-wide paid cap. That breaks the stated anti-griefing rule (packs.py docstring and docs/threat-model.md): 'an open invoice holds its bytes until it expires, so paying many invoices at once can't overbook a slice'. The bytes are real quota: quota.locker_limit adds paid_bytes to a paid drive's limit. A zero-cost variant exists because demo_pay is on by default. A locker asks the operator's sponsor wallet to pay its m30 invoice, then swaps to s30 before the worker sends or records the payment. The queued demo_pay job is neither cancelled nor re-checked against the invoice's status (the worker checks only the receiver address), so the expired m30 invoice is still paid and credited. From source, but not reproduced here: grant_pack's max(old, new) branch lets a late m30 payment raise a drive that already holds s30 to 5 GiB, which gets around the one-pack/same-pack-renewal rule. Also, because sold_today counts invoices by their creation day, invoices opened on earlier days and paid later do not count against the day they are credited.
+
+**Root cause.** The reservation lifetime is shorter than the crediting lifetime. The reservation is packs.slices (status IN ('pending','seen') AND expires_at > now) plus the swap UPDATE to status='expired', expires_at=now in invoices.create. Crediting is payments.credit, which accepts any invoice that is not yet credited until expires_at + 7 days. grant_pack applies the pack's bytes without checking that the invoice still held a reservation or that the slice still has room. The only room check runs once, when the invoice is created (handlers/invoices.py:90).
+
+**Intended behavior.** Bytes are granted only for an invoice that was counted against its slice up to the moment of credit, or after a fresh room check of that slice. Otherwise the late payment is held or flagged for refund and no bytes are granted. A renewal of the pack the drive already holds still only adds days, and a late payment for a different pack never raises a held pack's bytes.
+
+### Trace
+
+1. `server/mutis/handlers/invoices.py:34` (entrypoint, invoices.create): A drive session (any free drive) creates an m30 invoice. The room check at line 90 counts its 5 GiB against the public slice while it is pending and unexpired.
+2. `server/mutis/handlers/invoices.py:84` (propagation, invoices.create (swap)): A second create for another pack closes the unpaid m30 invoice with status='expired' and expires_at=now ('a late payment still credits'). Unpaid invoices also become 'expired' after INVOICE_TTL_S through payments.expire_invoices (payments.py:268-272).
+3. `server/mutis/packs.py:67` (propagation, packs.slices): Only invoices with status pending/seen and expires_at > now count as open. The expired m30 invoice's 5 GiB is released, so another buyer's m30 invoice passes the room check.
+4. `server/mutis/payments.py:78` (propagation, payments.record_found): A later output that carries the expired invoice's pay-ref is attributed to that invoice as pending_check whatever the invoice's status.
+5. `server/mutis/payments.py:175` (propagation, payments.credit): Crediting stops only when the invoice is already 'credited' or now is past expires_at + 7 days, so an 'expired' invoice is credited in full.
+6. `server/mutis/payments.py:201` (sink, payments.grant_pack): The drive gets the pack's bytes without any slice room check, so active public paid bytes go over public_cap. If the drive already holds a pack, lines 196-199 apply max(old, new) bytes instead.
+
+### Evidence
+
+- `server/mutis/packs.py:7`: Stated control: open invoices count against their slice until they expire, 'so paying several at once can't overbook a slice' (also docs/threat-model.md:106).
+- `server/mutis/handlers/invoices.py:90`: The only slice room check runs when the invoice is created.
+- `server/mutis/handlers/invoices.py:84`: A swap marks the replaced unpaid invoice 'expired' with expires_at=now. The comment says a late payment still credits.
+- `server/mutis/payments.py:175`: credit() accepts any invoice that is not yet credited until expires_at + UNDERPAID_GRACE_DAYS*86400.
+- `server/mutis/payments.py:185`: grant_pack is called unconditionally for the invoice's drive once received >= price.
+- `server/mutis/handlers/invoices.py:125`: demo_pay checks only the invoice's status and grace window at enqueue time. The queued job is not cancelled when the invoice is swapped, and the worker re-checks only that the address is our receiver (chain_worker.py:386).
+- `server/mutis/config.py:34`: Default features: demo_pay True (and packs True at line 36).
+- `server/mutis/quota.py:153`: paid_bytes is added to a paid drive's storage limit, so the overbooked bytes are real usable quota.
+
+### Conditions
+
+- authentication_level: Any locker (drive) session. A free drive is enough.
+- system_configuration: The packs feature is on. The zero-cost path also needs demo_pay on. Both are defaults (config.py:34-36).
+- timing_dependency: Swap path: the swap must happen while the old invoice is still 'pending', that is before the worker records the payment. Expiry path: the payment must land within 7 days after the invoice expires.
+- data_state: The slice must have room for the invoice when it is first created. The overbooking appears when other invoices fill the released room, or when the attacker repeats this from more drives or networks within the per-network and daily brakes.
+
+### Bounded local reproduction
+
+**Principal.** A visitor holding ordinary drive sessions on distinct non-exempt addresses. It uses only the public invoice and demo-pay routes and on-chain payments to the invoice address (or the operator's sponsor wallet through demo-pay).
+
+**Input.**
+
+```text
+POST /api/v1/invoices {"pack":"m30"} (drive A)
+```
+```text
+POST /api/v1/invoices/{A's m30 invoice}/demo-pay {"pow":...} (drive A) [zero-cost variant]
+```
+```text
+POST /api/v1/invoices {"pack":"s30"} (drive A, swap: the m30 invoice becomes 'expired')
+```
+```text
+POST /api/v1/invoices {"pack":"m30"} (drive B, passes the room check in the released space)
+```
+```text
+transfer 1000000 uT to A's expired m30 invoice address (or let the queued demo payment land)
+```
+
+**Steps.**
+
+1. Inside the approved sandbox, run python3 -I harness-01.py. It builds server/tests/harness.py Stack(chain=True) with Disk(total=100 GiB, avail=36 GiB), which gives a public paid slice of 7.28 GiB. Drives are registered and call from distinct non-exempt IPs.
+2. Scenario 1 (swap): A creates m30, then swaps to s30, so the m30 invoice becomes 'expired'. B creates m30 (accepted). C's s30 is refused as sold_out. A's expired m30 invoice and B's invoice are each paid 1000000 uT via FakeChain.transfer, then the worker ticks.
+3. Scenario 2 (TTL): A creates m30. The clock moves past INVOICE_TTL_S and payments.expire_invoices runs. B creates m30 and C creates s30 (both accepted). A's expired invoice and B's invoice are paid, then the worker ticks.
+4. Scenario 3 (demo-pay): A creates m30 and demo-pays it (202, job queued). A swaps to s30 before any worker tick. B creates m30 and demo-pays it. Then the worker ticks.
+5. Afterwards, read the invoices and identities rows and packs.slices().
+
+**Observed.** All three scenarios ended the same way. Both m30 invoices were 'credited', drives A and B each held paid_bytes=5368709120 (paid_pack m30), and packs.slices reported public_cap 7.28 GiB with public_active 10.0 GiB (overbooked). In scenario 1, C's s30 had been refused sold_out just before the late credit. In scenario 2, C's s30 invoice was also still open (2 GiB). In scenario 3, both payments came from the operator's sponsor account: [('sponsor', 1000000), ('sponsor', 1000000)].
+
+### Remediation
+
+Make crediting respect the reservation. (1) In credit(), grant bytes only if the invoice still held its reservation (status pending/seen and now <= expires_at) or is a same-pack renewal for a drive that holds that pack. Otherwise re-check slice room. Without room, hold the payment (leave it pending_check or give it a distinct 'held' status, and alert or flag it for refund) and never grant bytes. check_pending must pass the room callback, which needs the pool and packs config. (2) Alternatively, keep counting an invoice that has a recorded payment (status 'seen', or received_ut > 0) in packs.slices until its grace ends. (3) In invoices.create, refuse to replace an invoice that has a queued or sending demo_pay job, as is already done for 'seen'. Or have the worker re-check that an inv_ ref is still pending/seen before sending. (4) In grant_pack, never raise the bytes of a held pack from a different pack's invoice. Regression test: a swapped m30 invoice and an expired m30 invoice, each paid late, must not raise public_active above public_cap.

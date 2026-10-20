@@ -1,0 +1,30 @@
+=== target
+generated mutis.toml (evil):
+public_origin = "https://hidebox.app"
+network = "esmeralda"
+security_drop_url = ""
+repo_url = "https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\""
+
+[served] build.py rc=0 stderr=''
+[verifier] build.py rc=0 stderr=''
+verifier compare(): 0 differences across 213 files; diffs=[]
+/x.js fetched by verifier: False
+served pages carrying <script src="/x.js"> (9): ['/404.html', '/app/app.html', '/app/view.html', '/fine-print/index.html', '/how/index.html', '/index.html', '/judges/index.html', '/made/index.html', '/v2/index.html']
+view.html header: <a class="gh" href="https://github.com/c7b/hidebox"><script src="/x.js"></script><a hidden href="" aria-label="Source code on GitHub"><svg clas
+[control] build.py rc=0 stderr=''
+control compare(): 12 differences; first=['.well-known/security.txt: served bytes differ from the build', '404.html: served bytes differ from the build', 'app/app.html: served bytes differ from the build']
+=== target-head
+generated mutis.toml (evil):
+public_origin = "https://hidebox.app"
+network = "esmeralda"
+security_drop_url = ""
+repo_url = "https://github.com/c7b/hidebox\"><script src=\"/x.js\"></script><a hidden href=\""
+
+[served] build.py rc=0 stderr=''
+[verifier] build.py rc=0 stderr=''
+verifier compare(): 0 differences across 217 files; diffs=[]
+/x.js fetched by verifier: False
+served pages carrying <script src="/x.js"> (9): ['/404.html', '/app/app.html', '/app/view.html', '/fine-print/index.html', '/how/index.html', '/index.html', '/judges/index.html', '/made/index.html', '/v2/index.html']
+view.html header: <a class="gh" href="https://github.com/c7b/hidebox"><script src="/x.js"></script><a hidden href="" aria-label="Source code on GitHub"><svg clas
+[control] build.py rc=0 stderr=''
+control compare(): 12 differences; first=['.well-known/security.txt: served bytes differ from the build', '404.html: served bytes differ from the build', 'app/app.html: served bytes differ from the build']

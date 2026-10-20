@@ -1,0 +1,14 @@
+v3-egress check-01: end-to-end concurrent GET /api/v1/s/{id}/stored against the real mutis-api (server/tests/harness.py Stack, sandbox loopback only, fake chain, temp data dir; snapshot origin/main 460a389).
+Command: bash cf-audit/bin/sbx.sh v3-egress 300 -- python3 -I /scratch/harness-01.py
+Input: one ready 300 KiB-plaintext item (size_stored=311312) with a 'link' share; dummy X-Real-IP 198.51.100.x per trial (one IP per trial, N=24 < stored64 30/60s and < IN_FLIGHT_64 32); items.egress_bytes set directly before each trial.
+A = counter starts at 0, 24 concurrent GETs (threading.Barrier). B = counter set to EGRESS_PER_ITEM_DAY - size_stored (exactly one more download fits), 24 concurrent GETs. Control = same as B but sequential.
+Harness source: harness-01.py (promoted alongside).
+--- observed output (exit 0) ---
+item size_stored=311312 EGRESS_PER_ITEM_DAY=10737418240 N=24
+A trial 0: statuses=[200] ok=24 authorized_bytes=7471488 recorded_egress_bytes=1867872 lost_increments=18
+A trial 1: statuses=[200] ok=24 authorized_bytes=7471488 recorded_egress_bytes=1556560 lost_increments=19
+A trial 2: statuses=[200] ok=24 authorized_bytes=7471488 recorded_egress_bytes=1245248 lost_increments=20
+B trial 0 (concurrent): ok_200=1 rate_limited_429=23 other=[] bytes_served_beyond_cap=0 final_counter=10737418240 cap=10737418240
+B trial 1 (concurrent): ok_200=1 rate_limited_429=23 other=[] bytes_served_beyond_cap=0 final_counter=10737418240 cap=10737418240
+B trial 2 (concurrent): ok_200=3 rate_limited_429=21 other=[] bytes_served_beyond_cap=622624 final_counter=10737418240 cap=10737418240
+B control (sequential): ok_200=1 rate_limited_429=23 final_counter=10737418240

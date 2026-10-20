@@ -1,0 +1,44 @@
+Command: bash bin/sbx.sh p5-packs 300 -- python3 -I /scratch/harness-01.py   (target snapshot 460a389 at /target)
+Input: see harness-01.py (Stack(chain=True), Disk total=100GiB avail=36GiB, drives on 198.51.100.x non-exempt IPs)
+Output:
+A m30 201 pending
+A swap->s30 201 pending
+A m30 row now {'status': 'expired', 'expires_at': 1791720000} now 1791720000
+B m30 201 pending
+C s30 409 {'error': {'code': 'sold_out', 'message': "The disk is finite. We'd rather say no than overbook."}}
+--- scenario1(swap): invoices
+    {'id': 'inv_j43ry5pdulpkywlt2jgc', 'identity_id': '1FisSves0vV11urvBvtHvw', 'pack': 'm30', 'status': 'credited', 'received_ut': 1000000, 'judge': 0}
+    {'id': 'inv_wrep26itai5pkmxjqx5h', 'identity_id': '1FisSves0vV11urvBvtHvw', 'pack': 's30', 'status': 'pending', 'received_ut': 0, 'judge': 0}
+    {'id': 'inv_qq4qkjqrc6frbmy6rmid', 'identity_id': '1RbsUjgVnbhJV5KNXqoNNA', 'pack': 'm30', 'status': 'credited', 'received_ut': 1000000, 'judge': 0}
+--- scenario1(swap): identities with packs
+    {'id': '1FisSves0vV11urvBvtHvw', 'paid_bytes': 5368709120, 'paid_pack': 'm30', 'paid_judge': 0}
+    {'id': '1RbsUjgVnbhJV5KNXqoNNA', 'paid_bytes': 5368709120, 'paid_pack': 'm30', 'paid_judge': 0}
+--- scenario1(swap): slices public_cap=7.28GiB public_active=10.00GiB public_open=0.00GiB overbooked=True
+--- scenario1(swap): transfers [('service', 1000000), ('service', 1000000)]
+A m30 201
+A m30 row now {'status': 'expired'}
+B m30 201
+C s30 201 pending
+--- scenario2(ttl): invoices
+    {'id': 'inv_cink3yunelapoga57mtg', 'identity_id': 'dLz2UaGYJlOsHaMRlWiTWw', 'pack': 'm30', 'status': 'credited', 'received_ut': 1000000, 'judge': 0}
+    {'id': 'inv_nfzbv5krunz2s4qafap6', 'identity_id': 'OkQVe_dGScg5WB3xnMZ8VA', 'pack': 'm30', 'status': 'credited', 'received_ut': 1000000, 'judge': 0}
+    {'id': 'inv_klehhnhixfpnsbn3ylvd', 'identity_id': 'i9SPPrgNTnLP67mMV-8JZQ', 'pack': 's30', 'status': 'pending', 'received_ut': 0, 'judge': 0}
+--- scenario2(ttl): identities with packs
+    {'id': 'dLz2UaGYJlOsHaMRlWiTWw', 'paid_bytes': 5368709120, 'paid_pack': 'm30', 'paid_judge': 0}
+    {'id': 'OkQVe_dGScg5WB3xnMZ8VA', 'paid_bytes': 5368709120, 'paid_pack': 'm30', 'paid_judge': 0}
+--- scenario2(ttl): slices public_cap=7.28GiB public_active=10.00GiB public_open=2.00GiB overbooked=True
+--- scenario2(ttl): transfers [('service', 1000000), ('service', 1000000), ('sponsor', 1000)]
+A m30 201
+A demo-pay 202 {'job_id': 'm3QlZxpSYzQLrw2NEf-Fag'}
+A swap->s30 201
+B m30 201 
+B demo-pay 202 {'job_id': 'WykXM7EroKKS5-7xFaZxCA'}
+--- scenario3(demo-pay): invoices
+    {'id': 'inv_fzqyqalrwigf3qelmytu', 'identity_id': 'fombzucgsrqUK0wvhg5yDg', 'pack': 'm30', 'status': 'credited', 'received_ut': 1000000, 'judge': 0}
+    {'id': 'inv_4kimajk2filocrbell54', 'identity_id': 'fombzucgsrqUK0wvhg5yDg', 'pack': 's30', 'status': 'pending', 'received_ut': 0, 'judge': 0}
+    {'id': 'inv_rutzoboz7phnerueptry', 'identity_id': 'ZcljsJbxdkpKsZHN0PveCw', 'pack': 'm30', 'status': 'credited', 'received_ut': 1000000, 'judge': 0}
+--- scenario3(demo-pay): identities with packs
+    {'id': 'fombzucgsrqUK0wvhg5yDg', 'paid_bytes': 5368709120, 'paid_pack': 'm30', 'paid_judge': 0}
+    {'id': 'ZcljsJbxdkpKsZHN0PveCw', 'paid_bytes': 5368709120, 'paid_pack': 'm30', 'paid_judge': 0}
+--- scenario3(demo-pay): slices public_cap=7.28GiB public_active=10.00GiB public_open=0.00GiB overbooked=True
+--- scenario3(demo-pay): transfers [('sponsor', 1000000), ('sponsor', 1000000)]

@@ -1,0 +1,40 @@
+# Needs validation
+
+Leads with a source-grounded trace whose decisive fact could not be established locally. No severity is assigned; they are not confirmed vulnerabilities.
+
+## mutis-api keeps the Caddy upstream connection open with an unread chunked body; the deployed Caddy 2.6.2 forwards chunked bodies, so the API writes a second, unsolicited reply on a pooled connection
+
+- Fingerprint: `server/mutis/api.py:Handler._serve:unread-transfer-encoding-body-keepalive`
+
+When a request reaches mutis-api with Transfer-Encoding: chunked and no Content-Length, the API answers it but never reads or discards the body. It also leaves the connection open. Python's HTTP/1.1 keep-alive loop then reads the leftover chunk-size line as a new request and writes a second reply on the same connection. That reply is a bare JSON 400 with no status line, in HTTP/0.9 form, and then the connection closes. A local check with the deployed Caddy binary (2.6.2, same SHA-256) and the deployed @api block shows that Caddy does not re-frame such a body. With buffer_requests and max_buffer_size 6MB, Caddy forwards a client's HTTP/1.1 chunked body upstream still as Transfer-Encoding: chunked with no Content-Length, for both POST and GET. The @too_large guard does not apply because it only checks Content-Length. So any anonymous client can produce the API-side framing break through the deployed proxy, on any /api/* route. Caddy assigns the chunk bytes to request 1, while the API treats them as a malformed request 2 and answers it. The extra bytes are fixed: Go writes the chunk-size line, and the API answers with a fixed 400 and closes. So this is error injection or connection churn, not request smuggling or a response leak. It has not been shown whether Caddy's Go transport ever hands that upstream connection to a different visitor's request before it notices the extra bytes. If it does, that visitor gets a 502. If it does not, Caddy just drops the connection.
+
+**Claimed root cause.** Handler._serve decides whether to drain or close only from req.content_length (api.py:347). That value is 0 when there is no Content-Length header (http_util.py:84-89). Request.check_length refuses Transfer-Encoding without reading the body and without marking the connection for close (http_util.py:96-97). GET routes never touch the body at all. So for a chunked request the code takes neither the _drain path nor the close_connection path (api.py:358-367). BaseHTTPRequestHandler, with protocol_version HTTP/1.1 (api.py:283), then parses the unread chunk framing as the next request.
+
+### Trace
+
+1. `deploy/caddy/Caddyfile:175` (entrypoint, handle @api reverse_proxy 127.0.0.1:8787 { buffer_requests; max_buffer_size 6MB }): Any client request under /api/* is proxied over pooled HTTP/1.1 upstream connections. The @too_large guard (line 166) checks only Content-Length, so a chunked body passes it. With the deployed 2.6.2 binary, a chunked client body is forwarded upstream as Transfer-Encoding: chunked with no Content-Length (agents/v3b-chunked/artifacts/check-01.txt).
+2. `server/mutis/api.py:322` (propagation, Handler._serve): A Request is built from the proxied headers. With Transfer-Encoding: chunked and no Content-Length, content_length is 0 (http_util.py:84-89).
+3. `server/mutis/http_util.py:96` (propagation, Request.check_length (called from Request.json)): A body-reading route raises 400 'Send a Content-Length body.' without reading the body, so body_read stays False. A GET route never looks at the body.
+4. `server/mutis/api.py:347` (propagation, Handler._serve): 'if not req.body_read and req.content_length' is False because content_length is 0, so _drain is skipped and close_connection is never set. The response is written and the connection stays open with the chunk bytes unread.
+5. `server/mutis/api.py:293` (sink, Handler.send_error (from BaseHTTPRequestHandler.parse_request on the next keep-alive iteration)): The leftover '<hex>\r\n' chunk-size line fails to parse as a request line. send_error then writes a second response on the same upstream connection. request_version is the HTTP/0.9 default, so the bytes are a bare JSON body with no status line or headers, and the connection then closes.
+
+### Evidence
+
+- `server/mutis/api.py:347`: The drain-or-close decision is keyed only on content_length, which is 0 for a chunked request.
+- `server/mutis/api.py:360`: _drain deliberately excludes Transfer-Encoding bodies and closes for them, but it is never reached for them because content_length is 0.
+- `server/mutis/http_util.py:96`: check_length refuses Transfer-Encoding without consuming the body or forcing close.
+- `server/mutis/http_util.py:87`: An absent Content-Length becomes content_length 0.
+- `server/mutis/api.py:283`: protocol_version is HTTP/1.1, so keep-alive is the default after the response.
+- `deploy/caddy/Caddyfile:176`: buffer_requests with max_buffer_size 6MB. Local check agents/v3b-chunked/artifacts/check-01.txt shows that Caddy 2.6.2 still forwards a chunked client body upstream as Transfer-Encoding: chunked (POST /api/v1/pow and GET /api/v1/health), while a Content-Length control keeps Content-Length.
+- `deploy/caddy/Caddyfile:166`: The @too_large expression only checks the Content-Length header, so chunked requests are not intercepted before the proxy.
+- `server/tests/test_input_safety.py:86`: The existing chunked-body test checks only the first status (400). It does not check that the connection closes or that no second response follows.
+- `server/mutis/api.py:293`: send_error writes the unsolicited reply. For an unparsable request line it has no status line (HTTP/0.9 form), as observed directly against the API in agents/h-http/artifacts/check-01.txt.
+
+### Blockers
+
+- The cross-request effect has not been observed. It needs Caddy's Go HTTP transport to hand the affected pooled upstream connection to another visitor's request before it reads the stray bytes as an unsolicited response on an idle connection. That depends on transport timing under concurrent load and was not demonstrated in this verification. The proxy framing question is resolved: the deployed Caddy 2.6.2 binary forwards HTTP/1.1 chunked client bodies upstream as chunked. The HTTP/2 client path (a body with no length) was not tested.
+
+### How to settle it
+
+- **local**: Fix first, then verify without load. In Handler._serve, set close_connection = True whenever the request has a Transfer-Encoding header, content_length < 0, or a body was started but not fully consumed. Extend test_malformed_json_and_chunked_bodies so that after the first 400 for a chunked POST, and after the 200 for a chunked GET /api/v1/health, the test asserts the response carries 'Connection: close' and the socket reaches EOF with no further bytes. Re-run harness-01 (deployed Caddy binary + @api block) against the fixed API to confirm that the single chunked request gets one normal answer and the upstream connection closes. Whether pooled reuse delivers the stray bytes to another request does not need to be settled once the fix lands, because the fix removes the second reply entirely.
+- **deployment**: No traffic to production is needed. The owner can confirm the version with `caddy version` (already observed as 2.6.2, same SHA-256 as the local binary) and check that the installed Caddyfile is unchanged (already observed byte-identical). The owner can also look in Caddy's journal for 'Unsolicited response received on idle HTTP channel' or reverse_proxy 502 errors on /api/*. Go's transport emits that message through the stdlib logger, and with the deployed log level ERROR it may be filtered, so an empty journal is not evidence that the issue is absent.

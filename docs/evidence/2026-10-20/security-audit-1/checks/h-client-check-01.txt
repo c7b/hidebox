@@ -1,0 +1,51 @@
+# check-01: browser storage left behind by Lock my drive / Forget this browser (forgetIdentity)
+# Command (host): bash cf-audit/bin/sbx.sh h-client 120 -- node /scratch/harness-01.mjs
+# Sandbox: no network, empty env, cwd /target read-only, limits per sbx.sh (120 s wall/CPU, 4 GiB AS).
+# Note: Node has no IndexedDB, so web/app/lib/idb.js runs on its own in-memory fallback (same idbGet/idbPut/idbDelete keys);
+# a 3-line localStorage shim stands in for the browser's. All values are dummy.
+# ---- harness-01.mjs (verbatim) ----
+// h-client harness-01: what "Lock my drive" / "Forget this browser" (forgetIdentity) leaves in browser storage.
+// Node has no IndexedDB, so web/app/lib/idb.js uses its own documented in-memory fallback (same keys,
+// same put/get/delete calls). A minimal localStorage shim stands in for the browser's.
+const mem = new Map();
+globalThis.localStorage = {
+  getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+  setItem: (k, v) => mem.set(k, String(v)),
+  removeItem: (k) => mem.delete(k),
+};
+const L = '/target/web/app/lib/';
+const { createIdentity, forgetIdentity, loadIdentity } = await import(L + 'identity.js');
+const { rememberLink } = await import(L + 'links.js');
+const { rememberPurchase, purchases } = await import(L + 'purchases.js');
+const { keepClaim, savedClaim } = await import(L + 'pay.js');
+const { idbGet } = await import(L + 'idb.js');
+const { linkFragment, shareUrl } = await import(L + 'share.js');
+
+const origin = 'https://dummy.invalid';
+const id = await createIdentity({ lazy: true });
+console.log('drive id', id.id);
+const shareId = 'AAAAAAAAAAAAAAAAAAAAAA';
+const url = shareUrl(origin, shareId, linkFragment(2, new Uint8Array(32).fill(7)));
+// share-dialog.js:294 stores exactly {url, word} after making a link + secret word link.
+await rememberLink(id, shareId, { url, word: 'dummy-secret-word' });
+// paypage.js:261 stores the pay page's location.href (with its #sA fragment); pay.js keeps the claim token.
+const payShare = 'BBBBBBBBBBBBBBBBBBBBBB';
+await rememberPurchase(id, payShare, { url: `${origin}/p/${payShare}#dummyFragmentSA`, name: 'x', price_ut: '1', state: 'paid' });
+keepClaim(payShare, { t: 'dummyClaimTokenB64u', claimId: 'c1' });
+
+console.log('BEFORE lock: current record present =', Boolean(await idbGet('identity', 'current')));
+// drive-account.js:315 / locker.js:307: Lock my drive / Forget this browser
+await forgetIdentity();
+console.log('AFTER lock: loadIdentity() ->', await loadIdentity({ lazy: true }));
+console.log('AFTER lock: identity/current ->', await idbGet('identity', 'current'));
+console.log('AFTER lock: identity/links:<id> ->', JSON.stringify(await idbGet('identity', `links:${id.id}`)));
+console.log('AFTER lock: identity/purchases:<id> ->', JSON.stringify(await idbGet('identity', `purchases:${id.id}`)));
+console.log('AFTER lock: localStorage mutis.claims ->', localStorage.getItem('mutis.claims'));
+# ---- observed output ----
+drive id 66XRXZ-_S4ARh8hia4CcIQ
+BEFORE lock: current record present = true
+AFTER lock: loadIdentity() -> null
+AFTER lock: identity/current -> null
+AFTER lock: identity/links:<id> -> {"AAAAAAAAAAAAAAAAAAAAAA":{"url":"https://dummy.invalid/s/AAAAAAAAAAAAAAAAAAAAAA#2BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc","word":"dummy-secret-word","at":1792464709}}
+AFTER lock: identity/purchases:<id> -> {"BBBBBBBBBBBBBBBBBBBBBB":{"url":"https://dummy.invalid/p/BBBBBBBBBBBBBBBBBBBBBB#dummyFragmentSA","name":"x","price_ut":"1","state":"paid","at":1792464709}}
+AFTER lock: localStorage mutis.claims -> {"BBBBBBBBBBBBBBBBBBBBBB":{"t":"dummyClaimTokenB64u","claimId":"c1"}}

@@ -1,0 +1,22 @@
+### node /scratch/harness-01.mjs /target
+root /target indexedDB present: undefined
+BEFORE current: present mutis.drive: 1
+AFTER loadIdentity(): null
+AFTER identity/current: null
+AFTER mutis.drive: null
+AFTER identity/links:<id>: {"AAAAAAAAAAAAAAAAAAAAAA":{"url":"https://dummy.invalid/s/AAAAAAAAAAAAAAAAAAAAAA#2iElg2-WGDKsxrfOC18PWFp3eD3xoPb8QFdG6RqN8q1k","word":"dummy-secret-word","at":1792497768}}
+parsed leftover fragment: {"kind":2,"s":"<32 bytes>"}
+leftover secret equals original: true
+AFTER identity/purchases:<id>: {"BBBBBBBBBBBBBBBBBBBBBB":{"url":"https://dummy.invalid/p/BBBBBBBBBBBBBBBBBBBBBB#5dummyFragmentSA","name":null,"price_ut":"1","state":"opened","demo":true,"tx":null,"at":1792497768}}
+AFTER localStorage mutis.claims: {"BBBBBBBBBBBBBBBBBBBBBB":{"t":"dummyClaimTokenB64u","claimId":"clm_aaaaaaaaaaaaaaaaaaaa"}}
+### node /scratch/harness-01.mjs /target-head
+root /target-head indexedDB present: undefined
+BEFORE current: present mutis.drive: 1
+AFTER loadIdentity(): null
+AFTER identity/current: null
+AFTER mutis.drive: null
+AFTER identity/links:<id>: {"AAAAAAAAAAAAAAAAAAAAAA":{"url":"https://dummy.invalid/s/AAAAAAAAAAAAAAAAAAAAAA#23cXed7puuvnTnLzI7QgRU9zvFb5eO7ow-CjxXHno6CY","word":"dummy-secret-word","at":1792497769}}
+parsed leftover fragment: {"kind":2,"s":"<32 bytes>"}
+leftover secret equals original: true
+AFTER identity/purchases:<id>: {"BBBBBBBBBBBBBBBBBBBBBB":{"url":"https://dummy.invalid/p/BBBBBBBBBBBBBBBBBBBBBB#5dummyFragmentSA","name":null,"price_ut":"1","state":"opened","demo":true,"tx":null,"at":1792497769}}
+AFTER localStorage mutis.claims: {"BBBBBBBBBBBBBBBBBBBBBB":{"t":"dummyClaimTokenB64u","claimId":"clm_aaaaaaaaaaaaaaaaaaaa"}}

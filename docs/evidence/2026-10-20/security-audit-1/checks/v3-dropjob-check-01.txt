@@ -1,0 +1,94 @@
+check-01 (agent v3-dropjob): queued drop courier job vs owner close (PATCH, DELETE) and operator takedown
+Command: bash cf-audit/bin/sbx.sh v3-dropjob 300 -- python3 -I /scratch/harness-01.py
+Target: read-only snapshot at /target (origin/main 460a389); harness: server/tests/harness.py Stack(chain=True) with FakeChain/FakeWalletd, worker.setup(), quiet_chain(); admin via admin.main(['--config', <tmp mutis.toml>, 'takedown','drop',<id>]).
+Input per case: fresh dummy drop (s.drop()), one POST /api/v1/courier {to:drop, drop_id, kind:3, blob:<125 random bytes b64u>, pow:<solved>} while active; then the state change; then a NEW courier POST; then s.now += 46 and worker.run_jobs(s.now); inspect jobs row and s.chain.transfers added by the run.
+--- harness-01.py ---
+# v3-dropjob: independent repro. Does a courier job queued for an active drop still deliver after
+# (a) owner close via PATCH, (b) owner close via DELETE, (c) mutis-admin takedown drop?
+import contextlib, io, json, logging, os, sys
+sys.path.insert(0, "/target/server/tests"); sys.path.insert(0, "/target/server")
+from harness import ORIGIN, Stack
+from mutis import admin, codec, ootle_addr
+from test_admin import toml
+
+V = "/api/v1"
+
+def blob():
+    return codec.b64u(os.urandom(125))
+
+def run(case):
+    s = Stack(chain=True); s.worker.setup(); s.quiet_chain()
+    try:
+        drop = s.drop()
+        did, addr = drop["drop_id"], drop["keys"]["address"]
+        st, _, body = s.request("POST", f"{V}/courier", {"to": "drop", "drop_id": did, "kind": 3, "blob": blob(),
+                                                         "pow": s.solve("courier")})
+        print(f"[{case}] POST courier while active -> {st} not_before-now={body['not_before']-s.now}")
+        jid = body["job_id"]
+        row = s.conn.execute("SELECT * FROM jobs WHERE id=?", (jid,)).fetchone()
+        payload = json.loads(row["payload"])
+        print(f"[{case}] queued job state={row['state']} payload_keys={sorted(payload)} address==drop_address={payload['address']==addr}")
+        if case == "patch":
+            st2, _, b2 = s.request("PATCH", f"{V}/drops/{did}", {"state": "closed"}, headers=drop["manage"])
+            print(f"[{case}] PATCH state=closed -> {st2} state={b2.get('state')}")
+        elif case == "delete":
+            st2, _, _ = s.request("DELETE", f"{V}/drops/{did}", headers=drop["manage"])
+            print(f"[{case}] DELETE drop -> {st2}")
+        else:
+            path = s.tmp / "mutis.toml"; path.write_text(toml(s.cfg.raw))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                admin.main(["--config", str(path), "takedown", "drop", did])
+            logging.getLogger("mutis").handlers.clear()
+            print(f"[{case}] mutis-admin takedown drop -> stdout={out.getvalue().strip()!r}")
+        dstate = s.conn.execute("SELECT state FROM drops WHERE id=?", (did,)).fetchone()["state"]
+        print(f"[{case}] drops.state now={dstate}")
+        st3, _, b3 = s.request("POST", f"{V}/courier", {"to": "drop", "drop_id": did, "kind": 3, "blob": blob(),
+                                                        "pow": s.solve("courier")})
+        print(f"[{case}] NEW POST after state change -> {st3} {b3.get('error',{}).get('code')}")
+        row = s.conn.execute("SELECT state FROM jobs WHERE id=?", (jid,)).fetchone()
+        print(f"[{case}] pre-existing job state before worker run={row['state']}")
+        before = len(s.chain.transfers)
+        s.now += 46
+        s.worker.run_jobs(s.now)
+        row = s.conn.execute("SELECT state, payload, error FROM jobs WHERE id=?", (jid,)).fetchone()
+        new = s.chain.transfers[before:]
+        print(f"[{case}] after worker: job state={row['state']} payload={row['payload']} error={row['error']}")
+        print(f"[{case}] new transfers={len(new)}")
+        for t in new:
+            dest_base = ootle_addr.base_address(t["destination"]) if t["destination"] else None
+            print(f"[{case}]   destination==drop_address={t['destination']==addr} base_match={dest_base==ootle_addr.base_address(addr)} value={t['value']} memo_prefix_is_origin={str(t['memo']['Message'][:len(ORIGIN)])==ORIGIN}")
+    finally:
+        s.close()
+
+for c in ("patch", "delete", "takedown"):
+    run(c)
+--- observed output ---
+[patch] POST courier while active -> 202 not_before-now=6
+[patch] queued job state=queued payload_keys=['address', 'memo'] address==drop_address=True
+[patch] PATCH state=closed -> 200 state=closed
+[patch] drops.state now=closed
+[patch] NEW POST after state change -> 410 drop_closed
+[patch] pre-existing job state before worker run=queued
+[patch] after worker: job state=done payload=None error=None
+[patch] new transfers=1
+[patch]   destination==drop_address=True base_match=True value=1000 memo_prefix_is_origin=True
+[delete] POST courier while active -> 202 not_before-now=38
+[delete] queued job state=queued payload_keys=['address', 'memo'] address==drop_address=True
+[delete] DELETE drop -> 204
+[delete] drops.state now=closed
+[delete] NEW POST after state change -> 410 drop_closed
+[delete] pre-existing job state before worker run=queued
+[delete] after worker: job state=done payload=None error=None
+[delete] new transfers=1
+[delete]   destination==drop_address=True base_match=True value=1000 memo_prefix_is_origin=True
+[takedown] POST courier while active -> 202 not_before-now=33
+[takedown] queued job state=queued payload_keys=['address', 'memo'] address==drop_address=True
+[takedown] mutis-admin takedown drop -> stdout='removed'
+[takedown] drops.state now=removed
+[takedown] NEW POST after state change -> 410 drop_closed
+[takedown] pre-existing job state before worker run=queued
+[takedown] after worker: job state=done payload=None error=None
+[takedown] new transfers=1
+[takedown]   destination==drop_address=True base_match=True value=1000 memo_prefix_is_origin=True
+exit=0

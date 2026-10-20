@@ -1,0 +1,4 @@
+cmd: sbx.sh h-deploy 60 -- python3 -I /scratch/harness-01.py
+before: b'CIPHERTEXT-DUMMY' 0o600
+after : b'{\n "overall": "green"\n}\n' 0o644
+status.json is symlink: True

@@ -1,0 +1,41 @@
+$ bash cf-audit/bin/sbx.sh h-money 240 -- python3 -I /scratch/harness-01.py   (limits: wall/CPU 240 s, AS 4 GiB, fsize 64 MiB, 256 fds, 512 procs, no external network, env PATH HOME TMPDIR LANG PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0)
+# input: harness-01.py (real API + chain worker over FakeChain/FakeIndexer/fake sidecar via server/tests/harness.py Stack; disk total 100 GiB avail 36 GiB -> public paid slice 7.28 GiB; every drive on its own non-exempt visitor address)
+# output:
+=== swap: replaced invoice paid late
+A m30 invoice: 201 inv_oridgevcslmjp7sn3b4y pending
+A swaps to s30: 201 inv_g7adyy5isvasjeord3mx
+A m30 invoice now: expired expires_at<=now: True
+slice after release: public_cap=7.28 GiB public_taken=2.00 GiB
+B m30 invoice: 201 inv_3sdqejfpqn663rir6s6m
+C s30 invoice: 409 sold_out
+invoice A m30 after payment: {'status': 'credited', 'received_ut': 1000000}
+invoice B m30 after payment: {'status': 'credited', 'received_ut': 1000000}
+A identity: {'paid_bytes': 5368709120, 'paid_until': 1794312010, 'paid_pack': 'm30'}
+B identity: {'paid_bytes': 5368709120, 'paid_until': 1794312010, 'paid_pack': 'm30'}
+slice after credits: public_cap=7.28 GiB public_active=10.00 GiB public_taken=10.00 GiB overbooked=True
+new drive s30 invoice after credits: 429 packs_limited
+=== plain expiry: expired invoice paid late
+A m30 invoice: 201 inv_bn7gg65jmz4wpnkf5tc7 pending
+A m30 invoice now: expired expires_at<=now: True
+slice after release: public_cap=7.28 GiB public_taken=0.00 GiB
+B m30 invoice: 201 inv_cpv22al3shvqjm6334kg
+C s30 invoice: 201 inv_dpf3gnyp4yi26qmwb5fc
+invoice A m30 after payment: {'status': 'credited', 'received_ut': 1000000}
+invoice B m30 after payment: {'status': 'credited', 'received_ut': 1000000}
+A identity: {'paid_bytes': 5368709120, 'paid_until': 1794315611, 'paid_pack': 'm30'}
+B identity: {'paid_bytes': 5368709120, 'paid_until': 1794315611, 'paid_pack': 'm30'}
+slice after credits: public_cap=7.28 GiB public_active=10.00 GiB public_taken=12.00 GiB overbooked=True
+new drive s30 invoice after credits: 429 packs_limited
+=== demo pay then swap (operator-funded)
+A m30 invoice: 201 inv_ylok3kf4emp3bvydcjvs
+A demo-pay m30: 202 {'job_id': '88aFwHcYGkpO3y-v_aj0gA'}
+A swaps to s30 before the payment is seen: 201 inv_xhix56cuafwqeqiurp75
+B m30 invoice: 201 inv_by3jj4irjxxxjypsyttr
+B demo-pay m30: 202 {'job_id': 'k02xBLz_bYYIVyBpWxgRJg'}
+invoice A m30: {'status': 'credited', 'received_ut': 1000000}
+invoice B m30: {'status': 'credited', 'received_ut': 1000000}
+sponsor transfers: [('sponsor', 1000000), ('sponsor', 1000000)]
+A identity: {'paid_bytes': 5368709120, 'paid_until': 1794312020, 'paid_pack': 'm30'}
+B identity: {'paid_bytes': 5368709120, 'paid_until': 1794312020, 'paid_pack': 'm30'}
+slice after credits: public_cap=7.28 GiB public_active=10.00 GiB public_taken=10.00 GiB overbooked=True
+rc=0

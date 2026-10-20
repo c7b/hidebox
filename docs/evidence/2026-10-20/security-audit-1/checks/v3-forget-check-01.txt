@@ -1,0 +1,22 @@
+$ bash sbx.sh v3-forget 120 -- node /scratch/harness-01.mjs   (cwd /target, read-only target, no network, empty env)
+--- harness-01.mjs sha256:
+912e8bf3f89e62c69d2fa090a76abc83e6ec90729c3d0a92e8e76f247012622a
+--- output:
+indexedDB in global: undefined
+identity.id = ZghP2z8rpzA1_WndWtAUNA
+BEFORE forgetIdentity:
+  identity/current present: true
+  links:<id>   = {"AAAAAAAAAAAAAAAAAAAAAA":{"url":"https://dummy.invalid/s/AAAAAAAAAAAAAAAAAAAAAA#2JpW0HTXfGET667keoSpVMq-SeyrsYxqSJ9GU8GEDoQo","word":"dummy-secret-word","at":1792482995}}
+  purchases:<id> = {"BBBBBBBBBBBBBBBBBBBBBB":{"url":"https://dummy.invalid/p/BBBBBBBBBBBBBBBBBBBBBB#5dummyFragmentSA","name":null,"price_ut":"1","state":"paid","demo":true,"tx":null,"at":1792482995}}
+  mutis.claims = {"BBBBBBBBBBBBBBBBBBBBBB":{"t":"dummyClaimTokenB64u","claimId":"clm_aaaaaaaaaaaaaaaaaaaa"}}
+  mutis.drive  = 1
+AFTER forgetIdentity:
+  loadIdentity() = null
+  identity/current = null
+  mutis.drive  = null
+  links:<id>   = {"AAAAAAAAAAAAAAAAAAAAAA":{"url":"https://dummy.invalid/s/AAAAAAAAAAAAAAAAAAAAAA#2JpW0HTXfGET667keoSpVMq-SeyrsYxqSJ9GU8GEDoQo","word":"dummy-secret-word","at":1792482995}}
+  purchases:<id> = {"BBBBBBBBBBBBBBBBBBBBBB":{"url":"https://dummy.invalid/p/BBBBBBBBBBBBBBBBBBBBBB#5dummyFragmentSA","name":null,"price_ut":"1","state":"paid","demo":true,"tx":null,"at":1792482995}}
+  mutis.claims = {"BBBBBBBBBBBBBBBBBBBBBB":{"t":"dummyClaimTokenB64u","claimId":"clm_aaaaaaaaaaaaaaaaaaaa"}}
+  leftover link fragment parses back to the original link secret: true kind 2
+RESULT: SURVIVED (links, purchases, claims all still readable after forget)
+exit=0
