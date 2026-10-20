@@ -13,6 +13,7 @@ import { configureApi } from '../../lib/api.js';
 import { chainIx } from '../../lib/api-locker.js';
 import { idbPut } from '../../lib/idb.js';
 import { send } from '../../lib/wallet.js';
+import { substateValue } from '../../lib/substate.js';
 
 const ORIGIN = 'https://srv2052606.hstgr.cloud';
 const out = [];
@@ -25,7 +26,7 @@ async function testIdentity() {
 
 async function fetchRow(id) {
   const sub = await chainIx('GET', `substates/${id}`);
-  const o = sub.substate.Utxo.output.output;
+  const o = substateValue(sub).Utxo.output.output;
   return { id, nonce: o.public_nonce, enc: o.encrypted_data, verified: sub.verified, version: sub.version };
 }
 

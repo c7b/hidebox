@@ -10,6 +10,7 @@ import { NETWORK_BYTE, TARI_RESOURCE, bindings, parseAddress, ready, tryDecryptU
 import { ApiError, config } from './api.js';
 import { chainIx, demoPay, postCourier, requestSponsor } from './api-locker.js';
 import { inboxState, scan, updateWallet } from './scan.js';
+import { substateValue } from './substate.js';
 import { memoFor } from './courier.js';
 import { hasJudgePass, withPow } from './pow.js';
 import { localGet, localSet } from './store.js';
@@ -51,7 +52,8 @@ export async function demoPayInvoice(invoiceId, opts = {}) {
 }
 
 // A wallet output as the indexer has it now, unblinded with the wallet's view key. A spent output is
-// gone from the indexer (404); any other failure is passed on, so a network blip spends nothing.
+// gone from the indexer (404, or a proven down); any other failure is passed on, so a network blip
+// spends nothing.
 async function loadInput(identity, utxoId) {
   let sub;
   try {
@@ -60,8 +62,9 @@ async function loadInput(identity, utxoId) {
     if (e instanceof ApiError && e.status === 404) throw new WalletError('input_gone', utxoId);
     throw e;
   }
-  const body = sub?.substate?.Utxo?.output?.output;
-  if (!body || sub.substate.Utxo.is_frozen) throw new WalletError('input_gone', utxoId);
+  const utxo = substateValue(sub)?.Utxo;
+  const body = utxo?.output?.output;
+  if (!body || utxo.is_frozen) throw new WalletError('input_gone', utxoId);
   const mine = await tryDecryptUtxo(identity.wallet.viewSk, { id: utxoId, nonce: body.public_nonce, enc: body.encrypted_data });
   if (!mine) throw new WalletError('input_gone', utxoId);
   return { utxoId, nonce: unhex(body.public_nonce), value: mine.value, mask: mine.mask };

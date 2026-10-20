@@ -6,6 +6,7 @@
 import { unhex } from './b64.js';
 import { concat, equal, u32be, utf8 } from './bytes.js';
 import { sha256 } from './crypto.js';
+import { substateValue } from './substate.js';
 
 const leaf = (data) => sha256(concat(Uint8Array.of(0), data));
 const node = (left, right) => sha256(concat(Uint8Array.of(1), left, right));
@@ -57,13 +58,14 @@ export async function verifyInclusion(leafHash, index, treeSize, path, root) {
 const KEY_BADGES = `resource_01${'0'.repeat(62)}`;
 
 // The SealLog component substate (a GET substates/component_… response, through our proxy or straight
-// from an indexer), trusted only when nobody can rewrite it: owner_rule "None" (nobody, us included,
-// can change its rules or the code behind it), every method denied by default, and append_root
-// open only to one public key's badge. The state keeps the newest 64 checkpoints after `first_index`.
+// from an indexer, in either shape lib/substate.js reads, or the bare value), trusted only when nobody
+// can rewrite it: owner_rule "None" (nobody, us included, can change its rules or the code behind it),
+// every method denied by default, and append_root open only to one public key's badge. The state keeps
+// the newest 64 checkpoints after `first_index`.
 // -> {template, writer (hex public key), checkpoints: [{index (in the whole log), epoch, root,
 //     leafCount}], oldest first}; TypeError for anything else.
 export function readSealLog(response) {
-  const component = (response.substate ?? response)?.Component;
+  const component = (substateValue(response) ?? response)?.Component;
   const header = component?.header;
   const writer = header?.access_rules?.method_access?.append_root?.Restricted?.Require?.Require?.NonFungibleAddress;
   if (header?.owner_rule !== 'None' || header.access_rules?.default !== 'DenyAll'

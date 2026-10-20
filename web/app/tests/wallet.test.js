@@ -8,9 +8,10 @@ import { inboxState } from '../lib/scan.js';
 import { FEE_UT, WalletError, balance, deliver, ensureGrant, send } from '../lib/wallet.js';
 import { setJudgePass } from '../lib/pow.js';
 import { ApiError } from '../lib/api.js';
+import { substateValue } from '../lib/substate.js';
 import { installFakeApi } from './fake-api.js';
 import { outputTo } from './outputs.js';
-import { eq, ok, rejects } from './harness.js';
+import { eq, loadJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
 
@@ -68,6 +69,42 @@ export default [
       ok(!api.state.requests.some((r) => r.url.includes(to.address)), 'the recipient address never reaches our server');
     } finally {
       api.restore();
+    }
+  }],
+  ['indexer answers: the value at state.up.substate (0.47.0, recorded) or substate (earlier); none for a proven down', async () => {
+    const v = await loadJson('vectors/indexer-substates-0.47.0.json');
+    const live = v.live_utxo.body;
+    const utxo = live.state.up.substate.Utxo;
+    eq(substateValue(live).Utxo, utxo);
+    eq(substateValue({ verified: true, substate: { Utxo: utxo } }).Utxo, utxo, 'the earlier shape');
+    eq(substateValue(live).Utxo.output.auth.Key, '6892417fe10f69cc21abd98b963160d872e03fe9a8882d9f531e7bb3efde7a06');
+    for (const name of ['live_utxo_without_proof', 'live_utxo_at_version']) ok(substateValue(v[name].body)?.Utxo, name);
+    ok('down_proof' in v.spent_utxo_at_version.body.proof);
+    for (const [name, body] of [['a proven down', v.spent_utxo_at_version.body], ['the 404 for a spent output', v.spent_utxo.body],
+      ['up and down at once', { state: { up: live.state.up, down: {} } }], ['a state beside a substate', { state: { down: {} }, substate: { Utxo: utxo } }],
+      ['a state that is not an object', { state: 'up', substate: { Utxo: utxo } }], ['an empty state', { state: {} }],
+      ['null', null], ['an array', [live]], ['a substate that is not an object', { state: { up: { substate: [utxo] } } }]]) {
+      eq(substateValue(body), null, name);
+    }
+    ok(substateValue(v.seallog_component.body).Component, 'the SealLog component');
+  }],
+  ['direct send reads its input in either indexer shape; a proven down or a frozen output is gone', async () => {
+    const to = (await newRandomKeys()).address;
+    for (const indexer of ['older', 'down', 'frozen']) {
+      const { me, funding } = await funded(2000000);
+      const api = installFakeApi({ substates: new Map([[funding.id, { ...funding, indexer, frozen: indexer === 'frozen' }]]) });
+      try {
+        if (indexer === 'older') {
+          await send(me, { to, amountUt: 1000 });
+          eq(api.state.submitted.length, 1, indexer);
+        } else {
+          await rejects(() => send(me, { to, amountUt: 1000 }), (e) => e instanceof WalletError && e.code === 'insufficient', indexer);
+          eq(api.state.submitted.length, 0, indexer);
+          ok((await inboxState(me)).wallet[0].spent, `${indexer}: marked spent`);
+        }
+      } finally {
+        api.restore();
+      }
     }
   }],
   ['direct send: refuses when the wallet can\'t cover amount + fee', async () => {

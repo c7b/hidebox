@@ -21,6 +21,7 @@ import { aesGcmDecrypt, aesGcmEncrypt, hkdf, randomBytes, sha256 } from './crypt
 import { ApiError, createShare, enc, request } from './api.js';
 import { shareKeys, wrapFileKey } from './share.js';
 import { localGet, localSet } from './store.js';
+import { substateValue } from './substate.js';
 import { idbGet, idbPut } from './idb.js';
 import { withPow } from './pow.js';
 
@@ -277,7 +278,7 @@ export async function auditOutput(keys, output) {
   } catch (e) {
     return e instanceof ApiError && e.status === 404 ? 'bad' : null;
   }
-  const out = sub?.substate?.Utxo?.output;
+  const out = substateValue(sub)?.Utxo?.output;
   const key = out?.auth?.Key;
   const nonce = out?.output?.public_nonce ?? output.nonce;
   if (typeof key !== 'string' || !/^[0-9a-f]{64}$/.test(key) || typeof nonce !== 'string') return 'bad';

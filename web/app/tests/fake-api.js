@@ -245,7 +245,11 @@ export function installFakeApi({ mirror = [], config = {}, powDifficulty = 2, su
     ['GET', /^\/chain\/ix\/substates\/(utxo_\w+)$/, (req, [, id]) => {
       const o = substates.get(id);
       if (!o) return fail(404, 'not_found');
-      return json(200, { version: 0, verified: true, substate: { Utxo: { output: { output: { public_nonce: o.nonce, encrypted_data: o.enc } }, is_frozen: false } } });
+      const value = { Utxo: { output: { output: { public_nonce: o.nonce, encrypted_data: o.enc } }, is_frozen: Boolean(o.frozen) } };
+      // tari_indexer 0.47.0's answer; `o.indexer` 'older' answers in the earlier shape, 'down' as a proven spent version.
+      if (o.indexer === 'older') return json(200, { version: 0, verified: true, substate: value });
+      if (o.indexer === 'down') return json(200, { version: 0, state: { down: {} }, verified: true, proof: { down_proof: '' } });
+      return json(200, { version: 0, state: { up: { substate: value } }, verified: true, proof: { value_hash_epoch: epoch } });
     }],
     ['POST', /^\/chain\/ix\/transactions$/, async (req) => {
       if (!req.headers.get('Authorization')) return fail(401, 'auth_required');

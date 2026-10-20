@@ -75,6 +75,24 @@ export default [
     }
     eq(checked, 4);
   }],
+  ['SealLog: the live 2.0.0 log as tari_indexer 0.47.0 answers it (state.up.substate, recorded from both indexers)', async () => {
+    const v = await loadJson('vectors/indexer-substates-0.47.0.json');
+    const live = v.seallog_component.body;
+    const log = readSealLog(live);
+    eq(log.template, '40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47');
+    eq(log.writer, '9c686313d4ebe9c442196ccdce78cf802eab4549961cbc69522d967ed8a55420', 'the service key');
+    eq(log.checkpoints.length, 64);
+    const last = log.checkpoints.at(-1);
+    eq(JSON.stringify([log.checkpoints[0].index, last.index, last.epoch, last.leafCount]), '[712,775,12502,49664]');
+    eq(hex(last.root), '68495021d20c499403222c9e9aac96e6d851eb5da1822c07051a17375bd33064');
+    eq(readSealLog({ verified: true, substate: live.state.up.substate }).checkpoints.length, 64, 'the earlier shape');
+    for (const body of [v.spent_utxo_at_version.body, { ...live, state: { ...live.state, down: {} } }, v.live_utxo.body]) {
+      await rejects(async () => readSealLog(body), TypeError);
+    }
+    const owned = structuredClone(live);
+    owned.state.up.substate.Component.header.owner_rule = { ByPublicKey: 'ab'.repeat(32) };
+    await rejects(async () => readSealLog(owned), TypeError, 'an owner could rewrite it');
+  }],
   ['SealLog: a log that could be rewritten is refused (the research log on Esmeralda has an owner)', async () => {
     const research = await loadJson('vectors/seallog-component.json');
     await rejects(async () => readSealLog(research), TypeError);

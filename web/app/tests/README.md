@@ -49,6 +49,7 @@ PASS/FAIL lines and `title: TESTS PASS n/n`) or `node web/app/tests/node-run.mjs
 | `vectors/esmeralda-outputs.json`, `vectors/fetch_outputs.py` | real outputs of four Esmeralda transactions (kept as data, so tests survive a testnet reset) |
 | `vectors/merkle-rfc9162.json`, `vectors/merkle_vectors.py` | RFC 9162 inclusion proofs from an independent Python implementation |
 | `vectors/seallog-component.json` | the research SealLog component on Esmeralda, as an indexer returned it: it has an owner, so `/verify` must refuse it. The 2.0.0 state and the Merkle leaves, roots and proofs come from the template builder (`template/seal_log/tests/vectors/`, served by `headless.py`) |
+| `vectors/indexer-substates-0.47.0.json` | `GET /substates/{id}` answers of tari_indexer 0.47.0 from both Esmeralda indexers (2026-10-20): a live output (`state.up.substate`), a spent one proven down (`state.down`) and its 404, and the live SealLog 2.0.0 log; the same file as `server/tests/fixtures/` |
 | `fixtures/preview/*`, `fixtures/preview/make_fixtures.py` | hostile files for the preview (`preview.test.js`, `ui/tests/flows_preview.py`): an SVG with scripts, the same SVG named `.png`, a PNG named `.svg`, Markdown with scripts and `javascript:` links, HTML named `.txt`, a GIF with HTML after it, 300 KB of text, an empty file, UTF-16 text, a PDF |
 | `fixtures/exif/*`, `fixtures/exif/make_fixtures.py` | photos with planted GPS/Exif/XMP/IPTC/comments/trailers, and truncated copies (ffmpeg + stdlib) |
 | `bench/bench.html`, `bench/bench.js` | PoW and scan benchmarks |
