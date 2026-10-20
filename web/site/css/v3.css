@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT — the home (docs/review/promote-v3.md; the design in docs/review/home-v3.md):
-   /v2's page with stills in place of every loop (no video at all: the hero and the closing show the open box
+   a still beside every section (no video at all: the hero and the closing show the open box
    with the files rising out of it). It loads after v2.css and keeps all of it (body.home.v2.v3):
    the cards, rhythm, tokens and layout are v2's. A still is opaque on the page's own ink (#0A0A0A), so in dark mode it
    needs no stage at all, and in light mode it sits on v2's gunmetal card through `lighten`: the picture's ink takes

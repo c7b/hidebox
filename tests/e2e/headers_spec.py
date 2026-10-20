@@ -46,8 +46,6 @@ ROUTES = {
     "/verify/tx/" + "0" * 64: (APP_CSP, NOINDEX),
     "/app/drive.html": (APP_CSP, NOINDEX),              # the drive's own pages under their file names
     "/app/view.html": (APP_CSP, NOINDEX),
-    "/v2": (APP_CSP, {"x-robots-tag": "noindex"}),      # the home with the product loops (docs/review/home-v2.md)
-    "/v2/": (APP_CSP, {"x-robots-tag": "noindex"}),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
     "/judges": (SITE_CSP, {}),
@@ -72,18 +70,19 @@ REDIRECTS = {
     "/locker": "/drive",
     "/inbox": "/drive/received",
     "/upgrade": "/drive/storage#more",
-    # /v3, the preview of the stills and the open box, became the home (docs/review/promote-v3.md)
+    # /v3, the preview of the stills and the open box, became the home (docs/review/promote-v3.md); /v2, the preview
+    # with the product loops before it, left with its loops (docs/review/perf-1.md)
     "/v3": "/",
+    "/v2": "/",
 }
 
 # Caching (deploy/caddy/Caddyfile): pages, app files and status files revalidate on every visit; an
 # error response is never stored. The one font served is the drive's Geist (DESIGN.md "Typography",
 # pinned in tools/build.py); any other font path answers 404 like any missing file (MISSING below).
 REVALIDATE = {"cache-control": "no-cache"}
-# /v2's loops, the home's stills (media/v3) and the 404 page's art (media/404): kept a day (their names carry no
-# version), served with their types, in byte ranges.
-MEDIA = {"/site/media/motion/hidebox-A-hero.webm": "video/webm", "/site/media/motion/hidebox-A-hero.mp4": "video/mp4",
-         "/site/media/v3/hero-1024.avif": "image/avif", "/site/media/v3/hero-1024.webp": "image/webp",
+# The home's stills (media/v3) and the 404 page's art (media/404) under their plain names: kept a day (those names carry
+# no version), served with their types, in byte ranges. The pages ask for the fingerprinted names (HASHED below).
+MEDIA = {"/site/media/v3/hero-1024.avif": "image/avif", "/site/media/v3/hero-1024.webp": "image/webp",
          "/site/media/404/box-zero-480.avif": "image/avif"}
 MEDIA_CACHE = {"cache-control": "public, max-age=86400"}
 ERROR_CACHE = {"cache-control": "no-store"}

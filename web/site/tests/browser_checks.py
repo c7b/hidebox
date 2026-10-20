@@ -13,12 +13,11 @@ from pathlib import Path
 import serve
 from cdp import Browser
 
-# The site's six pages (14-ghost-design §4.1); other old addresses are 301s (deploy/caddy/Caddyfile).
-# /v2 (docs/review/home-v2.md) is the home with the product loops at its own, unlisted address. /v3
-# (docs/review/home-v3.md), /v2 with stills in place of the loops and the open box as the mark, is the home
-# (docs/review/promote-v3.md), and /v3 answers 301 to /.
-ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page", "/v2"]
-GONE = {"/v3": "/", "/v3/": "/"}
+# The site's six pages (14-ghost-design §4.1); other old addresses are 301s (deploy/caddy/Caddyfile). /v3
+# (docs/review/home-v3.md) is the home (docs/review/promote-v3.md), and the preview with the product loops that came
+# before it, /v2, is gone (docs/review/perf-1.md): both answer 301 to /.
+ALL_PAGES = ["/", "/how", "/made", "/judges", "/fine-print", "/no-such-page"]
+GONE = {"/v3": "/", "/v3/": "/", "/v2": "/", "/v2/": "/"}
 NOTES: list[str] = []
 
 
@@ -633,131 +632,15 @@ def check_motion(browser):
     return problems
 
 
-# V-01 (docs/review/home-v2.md), the loading half: what /v2 may fetch before anyone scrolls (the page, the drop
-# widget's first load and the hero's loop with its poster) and after scrolling through every loop. The test server
-# caches nothing, so the closing's loop (the hero's file again) is fetched twice here; production's Caddy lets the
-# browser keep it for a day.
-V2_AT_LOAD, V2_AT_LOAD_WEBKIT, V2_SCROLLED = 3 * 1024 * 1024, 1024 * 1024, 14 * 1024 * 1024
-V2_CLIPS = ("hidebox-A-hero", "hidebox-B-sides", "hidebox-C-encrypt", "hidebox-D-pay")
-V2_STATE = """[...document.querySelectorAll('video[data-clip]')].map((v) => { const r = v.getBoundingClientRect();
-  return { stage: v.parentElement.classList[1], live: !!v.dataset.live, src: v.currentSrc.split('/').pop(), paused: v.paused,
-           t: v.currentTime, poster: (v.getAttribute('poster') || '').split('/').pop(), out: r.bottom <= 0 || r.top >= innerHeight,
-           whole: r.top >= 0 && r.bottom <= innerHeight }; })"""
+# A fresh page with no stored theme or motion choice (light=True stores the light theme first).
 NO_THEME = "try { localStorage.removeItem('mutis.theme'); localStorage.removeItem('mutis.loops'); } catch (e) {}"
 
 
-def _v2_page(browser, *, light=False, **kw):
+def _fresh_page(browser, *, light=False, **kw):
     page = browser.page(**kw)
     page.cmd("Page.addScriptToEvaluateOnNewDocument",
              {"source": NO_THEME + (" try { localStorage.setItem('mutis.theme', 'light'); } catch (e) {}" if light else "")})
     return page
-
-
-def _v2_files(page, ext=(".webm", ".mp4", ".png")):
-    return sorted({r["url"].rsplit("/", 1)[-1] for r in page.requests() if "/site/media/" in r["url"] and r["url"].endswith(ext)})
-
-
-def check_v2(browser):
-    """V-01, /v2: dark first; at load only the hero's loop and its poster are asked for (no other loop, no other
-    poster) and the hero plays; scrolling down, each loop is asked for as it comes near and plays only while on
-    screen, every one playing once wholly in view; the bytes stay in V-01. Reduced motion: posters only, nothing
-    plays. WebKit (an iPhone's Safari): the MP4s, never a WebM, its stage without light (a black card in light mode).
-    Light mode: every loop on a dark stage. Pause motion (WCAG 2.2.2) stops every loop, asks for no more of them and
-    is remembered; pressed again, the loops in view play. No console error and no CSP violation."""
-    problems = []
-    with server("--mode", "direct", "--seallog", "--pay") as origin:
-        for width, height, mobile in ((1440, 900, False), (390, 844, True)):
-            page = _v2_page(browser, width=width, height=height, mobile=mobile, android=mobile)
-            page.goto(origin + "/v2", settle=2.5)
-            at = f"/v2 @{width}"
-            if page.eval("document.documentElement.dataset.theme") != "dark" or \
-                    page.eval("getComputedStyle(document.body).backgroundColor") != "rgb(10, 10, 10)":
-                problems.append(f"{at}: not dark first")
-            files = _v2_files(page)
-            if files != ["hidebox-A-hero.webm", "hidebox-A-hero_poster.png"]:
-                problems.append(f"{at}: at load asked for {files}, expected the hero's WebM and poster only")
-            if not page.wait_for("(() => { const v = document.querySelector('.stage-a video'); return v.currentTime > .5 && !v.paused; })()", 12):
-                problems.append(f"{at}: the hero's loop doesn't play")
-            loaded = sum(r["bytes"] for r in page.requests())
-            if loaded > V2_AT_LOAD:
-                problems.append(f"{at}: {loaded:,} B at load (V-01: at most {V2_AT_LOAD:,})")
-            step = height * 0.5
-            for y in range(0, int(page.eval("document.documentElement.scrollHeight")) + int(step), int(step)):
-                page.scroll_to(y, 0.4)
-                for i, c in enumerate(page.eval(V2_STATE)):
-                    if c["out"] and not c["paused"]:
-                        problems.append(f"{at} y={y}: {c['stage']} plays off screen")
-                    if c["whole"] and not page.wait_for(f"!document.querySelectorAll('video[data-clip]')[{i}].paused", 6):
-                        problems.append(f"{at} y={y}: {c['stage']} is wholly on screen and doesn't play")
-            files = _v2_files(page)
-            want = sorted(f"{c}.webm" for c in V2_CLIPS) + sorted(f"{c}_poster.png" for c in V2_CLIPS)
-            if sorted(files) != sorted(want):
-                problems.append(f"{at}: after scrolling asked for {files}")
-            scrolled = sum(r["bytes"] for r in page.requests())
-            if scrolled > V2_SCROLLED:
-                problems.append(f"{at}: {scrolled:,} B after scrolling through (V-01: at most {V2_SCROLLED:,})")
-            problems += [f"{at}: {e}" for e in real_errors(page) + [l for l in page.console() if "Content Security Policy" in l]]
-            NOTES.append(f"V-01 /v2 @{width}: {loaded:,} B at load (the hero's loop and poster), {scrolled:,} B after "
-                         f"scrolling through, uncached")
-        quiet = _v2_page(browser, width=1440, height=900, reduce=True)
-        quiet.goto(origin + "/v2", settle=2.5)
-        for y in range(0, int(quiet.eval("document.documentElement.scrollHeight")) + 450, 450):
-            quiet.scroll_to(y, 0.3)
-        quiet.b.pump(1.0)
-        state = quiet.eval(V2_STATE)
-        if _v2_files(quiet, (".webm", ".mp4")):
-            problems.append(f"reduced motion: asked for {_v2_files(quiet, ('.webm', '.mp4'))}")
-        if any(c["live"] or not c["paused"] or c["t"] or not c["poster"] for c in state):
-            problems.append(f"reduced motion: a loop isn't its still poster: {state}")
-        iphone = _v2_page(browser, width=390, height=844, mobile=True)
-        iphone.goto(origin + "/v2", settle=2.5)
-        if not iphone.wait_for("document.querySelector('.stage-a video').currentSrc.endsWith('.mp4')", 8):
-            problems.append("WebKit: the hero isn't the MP4")
-        if _v2_files(iphone, (".webm",)) or not iphone.eval("document.querySelector('.stage-a').classList.contains('is-opaque')"):
-            problems.append(f"WebKit: asked for {_v2_files(iphone)} or the stage isn't black under the MP4")
-        if sum(r["bytes"] for r in iphone.requests()) > V2_AT_LOAD_WEBKIT:
-            problems.append(f"WebKit: {sum(r['bytes'] for r in iphone.requests()):,} B at load (V-01: at most {V2_AT_LOAD_WEBKIT:,})")
-        lit = _v2_page(browser, light=True, width=390, height=844, mobile=True)
-        lit.goto(origin + "/v2", settle=2.5)
-        lit.wait_for("document.querySelector('.stage-a').classList.contains('is-opaque')", 8)
-        card = lit.eval("(() => { const s = getComputedStyle(document.querySelector('.stage-a')); return [s.backgroundColor, s.backgroundImage]; })()")
-        if card != ["rgb(0, 0, 0)", "none"]:
-            problems.append(f"WebKit, light mode: the MP4's stage is {card}, not its black")
-        loops = browser.page(1440, 900)   # no init script: the stored choice must survive a reload
-        loops.goto(origin + "/v2", settle=0.5)
-        loops.eval("localStorage.removeItem('mutis.loops'); localStorage.removeItem('mutis.theme')")
-        loops.goto(origin + "/v2", settle=2.5)
-        loops.wait_for("!document.querySelector('.stage-a video').paused", 8)
-        switch = "document.querySelector('[data-loops]')"
-        if loops.eval(f"{switch}.hidden") or loops.eval(f"{switch}.getAttribute('aria-pressed')") != "false":
-            problems.append("Pause motion: the switch isn't shown, unpressed, with motion allowed")
-        loops.eval(f"{switch}.click()")
-        loops.b.pump(0.5)
-        if loops.eval(f"{switch}.getAttribute('aria-pressed')") != "true" or \
-                not loops.eval("[...document.querySelectorAll('video[data-clip]')].every((v) => v.paused)"):
-            problems.append("Pause motion: pressed, a loop still plays")
-        before = _v2_files(loops, (".webm", ".mp4"))
-        for y in range(0, int(loops.eval("document.documentElement.scrollHeight")) + 450, 450):
-            loops.scroll_to(y, 0.3)
-        if _v2_files(loops, (".webm", ".mp4")) != before or \
-                not loops.eval("[...document.querySelectorAll('video[data-clip]')].every((v) => v.paused)"):
-            problems.append(f"Pause motion: scrolling while paused asked for {_v2_files(loops)} or played a loop")
-        loops.goto(origin + "/v2", settle=2.5)
-        if loops.eval(f"{switch}.getAttribute('aria-pressed')") != "true" or not loops.eval("document.querySelector('.stage-a video').paused") \
-                or _v2_files(loops, (".webm", ".mp4")):
-            problems.append("Pause motion: not remembered on the next visit (the loops played or were fetched)")
-        loops.eval(f"{switch}.click()")
-        if not loops.wait_for("!document.querySelector('.stage-a video').paused", 8):
-            problems.append("Pause motion: pressed again, the hero's loop doesn't play")
-        loops.eval("localStorage.removeItem('mutis.loops')")
-        if quiet.eval("!document.querySelector('[data-loops]').hidden"):
-            problems.append("reduced motion: the Pause motion switch shows (nothing moves)")
-        light = _v2_page(browser, light=True, width=1440, height=900)
-        light.goto(origin + "/v2", settle=1.5)
-        stages = light.eval("[...document.querySelectorAll('.stage')].map((s) => getComputedStyle(s).backgroundImage)")
-        if light.eval("document.documentElement.dataset.theme") != "light" or not stages or any("gradient" not in s for s in stages):
-            problems.append(f"light mode: a loop without its dark stage: {stages}")
-    return problems
 
 
 # V-02 (docs/review/home-v3.md), the loading half, on the home (docs/review/promote-v3.md): the
@@ -808,7 +691,7 @@ def check_home_stills(browser):
     problems = []
     with server("--mode", "direct", "--seallog", "--pay") as origin:
         for width, height, mobile in ((1440, 900, False), (390, 844, True)):
-            page = _v2_page(browser, width=width, height=height, mobile=mobile, android=mobile)
+            page = _fresh_page(browser, width=width, height=height, mobile=mobile, android=mobile)
             page.goto(origin + "/", settle=2.5)
             at = f"/ @{width}"
             if page.eval("document.documentElement.dataset.theme") != "dark" or \
@@ -856,7 +739,7 @@ def check_home_stills(browser):
                          f"scrolling through, uncached; stills asked for: {', '.join(stills)}")
             if any(p["blend"] != "normal" or p["card"] != "none" for p in pics):
                 problems.append(f"{at}: dark mode, a still on a card or blended: {[(p['stage'], p['blend'], p['card'][:20]) for p in pics]}")
-        light = _v2_page(browser, light=True, width=1440, height=900)
+        light = _fresh_page(browser, light=True, width=1440, height=900)
         light.goto(origin + "/", settle=1.5)
         pics = light.eval(V3_PICS)
         if light.eval("document.documentElement.dataset.theme") != "light" or len(pics) != 5 or \
@@ -874,7 +757,7 @@ def check_home_stills(browser):
         if back != ["dark", "rgb(10, 10, 10)", "false"]:
             problems.append(f"the Lights switch doesn't take the home back to dark ({back})")
         light.eval("localStorage.removeItem('mutis.theme')")
-        quiet = _v2_page(browser, width=1440, height=900, reduce=True)
+        quiet = _fresh_page(browser, width=1440, height=900, reduce=True)
         quiet.goto(origin + "/", settle=2.0)
         if not quiet.wait_for("(() => { const i = document.querySelector('.stage-a .pic'); return i.complete && i.naturalWidth > 0; })()", 10):
             problems.append("reduced motion: the hero's still isn't shown")
@@ -1058,7 +941,6 @@ CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading 
           ("abuse form: key stripped, never sent without JavaScript", check_abuse),
           ("/made as docs: the contents follow the part being read, links open their disclosure, On this page", check_contents),
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
-          ("V-01: /v2's loops, asked for as they come near, playing only on screen; reduced motion, WebKit, light", check_v2),
           ("V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box", check_home_stills),
           ("/how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled", check_how_loops),
           ("404: the art above the words, one way home, the hidden line, the comment, the console's ghost", check_not_found)]

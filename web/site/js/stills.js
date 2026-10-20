@@ -7,7 +7,7 @@
 // turned on, every part rests at once on its last beat: the settled still, which reduced motion shows too (how.css);
 // without JavaScript the stills stay as served. The pictures stay aria-hidden, so nothing here is read out; each
 // still's words say what it shows.
-// Pause motion (WCAG 2.2.2) stops every loop on the page and is remembered on this device, with /v2's (mutis.loops).
+// Pause motion (WCAG 2.2.2) stops every loop on the page and is remembered on this device (mutis.loops).
 // site.js loads this after the load event, only when motion is allowed (html.motion).
 const KEY = 'mutis.loops', FIRST = 1500;
 

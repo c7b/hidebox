@@ -35,9 +35,8 @@ APP_CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript",
          ".mjs": "text/javascript", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
          ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json",
-         ".wasm": "application/wasm", ".webm": "video/webm", ".mp4": "video/mp4", ".webp": "image/webp",
+         ".wasm": "application/wasm", ".webp": "image/webp",
          ".avif": "image/avif", ".xml": "application/xml; charset=utf-8", ".ico": "image/vnd.microsoft.icon"}
-MEDIA = {".webm", ".mp4"}   # /v2's loops: answered in byte ranges, as Caddy's file server does
 TEXT = {".html", ".txt", ".webmanifest"}   # the build expands placeholders in pages and static text only
 INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")
 SRI_TAG = re.compile(r'(<(?:script|link)\b[^>]*?(?:src|href)="(/[^"]+)"[^>]*?) integrity="\{\{SRI\}\}"')
@@ -46,7 +45,7 @@ PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
 
 def _redirects():
     """The Caddyfile's 301s (tests/e2e/headers_spec.py REDIRECTS), each with and without its trailing slash: an
-    old page's address, and /v3 since it became the home (docs/review/promote-v3.md)."""
+    old page's address, /v3 since it became the home (docs/review/promote-v3.md) and /v2, the preview before it."""
     spec_file = WEB.parent / "tests" / "e2e" / "headers_spec.py"
     if not spec_file.is_file():
         return {}
@@ -219,16 +218,10 @@ class Handler(BaseHTTPRequestHandler):
                 f = Path(self.site.opts.dist) / "404.html"
         else:
             status = 200
-        csp = APP_CSP if path in ("/", "/v2", "/v2/") else SITE_CSP   # the pages with the drop widget (Caddyfile)
+        csp = APP_CSP if path == "/" else SITE_CSP   # the page with the drop widget (Caddyfile)
         body = self.site.render(f, path)
-        m = re.fullmatch(r"bytes=(\d+)-(\d*)", self.headers.get("Range", ""))
-        if f.suffix in MEDIA and status == 200 and m and int(m[1]) < len(body):
-            start, end = int(m[1]), min(int(m[2] or len(body) - 1), len(body) - 1)
-            return self.send(206, body[start:end + 1], TYPES[f.suffix],
-                             [("Content-Range", f"bytes {start}-{end}/{len(body)}"), ("Accept-Ranges", "bytes")])
         self.send(status, body, TYPES.get(f.suffix, "application/octet-stream"),
-                  [("Content-Security-Policy", csp)] if f.suffix == ".html" else
-                  [("Accept-Ranges", "bytes")] if f.suffix in MEDIA else [])
+                  [("Content-Security-Policy", csp)] if f.suffix == ".html" else [])
 
     do_HEAD = do_GET
 

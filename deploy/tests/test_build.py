@@ -123,28 +123,6 @@ class BuildTest(unittest.TestCase):
         for kept in ("LICENSE", "SHA256SUMS", "ootle_wasm.d.ts"):
             self.assertTrue((dist / "vendor" / "ootle-wasm-0.46.0" / kept).is_file(), kept)
 
-    def test_the_preview_and_its_loops_are_served_and_kept_out_of_the_sitemap(self):
-        """/v2 (docs/review/home-v2.md): pages/v2.html builds to v2/index.html, its loops under web/site/media reach
-        dist/site/media with their bytes (and the manifest), anything else there stays out, and noindex keeps it out
-        of the sitemap."""
-        (self.web / "site" / "pages" / "v2.html").write_text(PAGE.replace("<title>", '<meta name="robots" content="noindex"><title>'))
-        motion = self.web / "site" / "media" / "motion"
-        motion.mkdir(parents=True)
-        loops = {"loop.webm": b"\x1aE\xdf\xa3webm", "loop.mp4": b"\0\0\0 ftypisom", "loop_poster.png": b"\x89PNG\r\n"}
-        for name, data in loops.items():
-            (motion / name).write_bytes(data)
-        (motion / "loop.mov").write_bytes(b"not served")
-        summary = self.build()
-        dist = self.tmp / "dist"
-        self.assertTrue((dist / "v2" / "index.html").is_file())
-        manifest = json.loads((dist / ".well-known" / "mutis-manifest.json").read_text())["files"]
-        for name, data in loops.items():
-            self.assertEqual((dist / "site" / "media" / "motion" / name).read_bytes(), data, name)
-            self.assertIn(f"site/media/motion/{name}", manifest)
-        self.assertFalse((dist / "site" / "media" / "motion" / "loop.mov").exists())
-        self.assertNotIn("/v2", (dist / "sitemap.xml").read_text())
-        self.assertGreater(summary["files"], 3)
-
     def test_the_homes_stills_are_served_and_the_home_is_in_the_sitemap(self):
         """The home (the v3 design, docs/review/promote-v3.md): its AVIF and WebP stills under web/site/media/v3 reach
         dist/site/media/v3 byte for byte (and the manifest), and the sitemap lists / (indexable, canonical) and no

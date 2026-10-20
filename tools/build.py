@@ -187,9 +187,8 @@ def copy_site(web: Path, dist: Path, with_tests: bool) -> list[str]:
     copy_tree(web / "site" / "static", dist)
     copy_tree(web / "site" / "js", dist / "site" / "js")
     copy_tree(web / "site" / "css", dist / "site" / "css")
-    # /v2's product loops (docs/review/home-v2.md) and the home's stills (media/v3, docs/review/home-v3.md and
-    # promote-v3.md): committed like every other served file, so the manifest lists them and verify-deploy checks their
-    # bytes; no other page asks for them.
+    # The home's stills (media/v3, docs/review/home-v3.md and promote-v3.md) and the 404 page's art (media/404):
+    # committed like every other served file, so the manifest lists them and verify-deploy checks their bytes.
     copy_tree(web / "site" / "media", dist / "site" / "media")
     pages = []
     for page in sorted((web / "site" / "pages").glob("*.html")):

@@ -88,24 +88,21 @@ class CaddyfileTest(unittest.TestCase):
         self.assertEqual(sorted(home), ["/", "/index.html"])
         self.assertIs(headers_spec.ROUTES["/"][0], headers_spec.APP_CSP, "the drop widget runs on /")
 
-    def test_the_preview_gets_the_app_policy_and_its_loops_a_day(self):
-        """/v2 (docs/review/home-v2.md) carries the drop widget and plays video: the app policy (media-src 'self'),
-        noindex as its page says; the loops under /site/media/ are kept a day, never immutable."""
-        preview = re.search(r"(?m)^\t@preview path (.+)$", self.text).group(1).split()
-        self.assertEqual(sorted(preview), ["/v2", "/v2/", "/v2/index.html"])
-        body = re.search(r"(?ms)^\thandle @preview \{\n(.*?)^\t\}", self.text).group(1)
-        self.assertIn("import app_csp", body)
-        self.assertIn('header X-Robots-Tag "noindex"', body)
-        self.assertIn("media-src 'self'", headers_spec.APP_CSP)
-        for route in ("/v2", "/v2/"):
-            self.assertIs(headers_spec.ROUTES[route][0], headers_spec.APP_CSP, route)
+    def test_the_loops_preview_is_gone(self):
+        """/v2, the home with the product loops (docs/review/home-v2.md), left with its loops (docs/review/perf-1.md): no
+        route serves it, /v2 and /v2/ answer 301 to / (REDIRECTS, compared above). The stills and the 404 art keep their
+        plain names under /site/media/, kept a day, ahead of the catch-all."""
+        self.assertNotIn("@preview ", self.text)
+        self.assertNotIn("/v2/index.html", self.text)
+        self.assertEqual(re.search(r'(?m)^\tredir @old_loops "([^"]+)" 301$', self.text).group(1), "/")
+        self.assertEqual(headers_spec.REDIRECTS["/v2"], "/")
+        self.assertNotIn("/v2", headers_spec.ROUTES)
+        self.assertFalse([path for path in headers_spec.MEDIA if "/motion/" in path])
         self.assertEqual(re.search(r"(?m)^\t@media path (.+)$", self.text).group(1), "/site/media/*")
         media = re.search(r"(?ms)^\thandle @media \{\n(.*?)^\t\}", self.text).group(1)
         self.assertIn(f'header Cache-Control "{headers_spec.MEDIA_CACHE["cache-control"]}"', media)
         site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
-        catch_all = re.search(r"(?m)^\thandle \{$", site).start()
-        self.assertLess(site.index("handle @preview"), catch_all, "before the catch-all")
-        self.assertLess(site.index("handle @media"), catch_all, "before the catch-all")
+        self.assertLess(site.index("handle @media"), re.search(r"(?m)^\thandle \{$", site).start(), "before the catch-all")
 
     def test_the_v3_preview_became_the_home(self):
         """/v3 (docs/review/home-v3.md) became the home (docs/review/promote-v3.md): no route serves it any more, /v3 and

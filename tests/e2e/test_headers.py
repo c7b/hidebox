@@ -17,8 +17,8 @@ application/octet-stream attachment (never something a browser would render). Th
 404 through every other route of the Caddyfile. Also: a 6 MB upload chunk is refused with a 413 in
 the API's error shape (never a bare 502), plain HTTP answers a 308 to HTTPS with no Server header, a
 made-up Host name gets a 421 with the same headers on both ports (never a redirect to that name), the
-certificate verifies and has more than 14 days left, .wasm is served as application/wasm, /v2's loops and the
-home's stills with their types in byte ranges, kept a day, and each --redirect-from host answers 308 to the same path on the origin (browsers carry
+certificate verifies and has more than 14 days left, .wasm is served as application/wasm, the home's stills and the
+404 art under their plain names with their types in byte ranges, kept a day, and each --redirect-from host answers 308 to the same path on the origin (browsers carry
 the #fragment across it). --holding accepts 404 for pages that the holding build doesn't have.
 Fingerprinted files (headers_spec.HASHED, looked up in the live manifest's "assets"): their plain name's type, a year
 and immutable, the policy of their folder; a hashed name no build made is the 404 page. Precompressed text
@@ -157,7 +157,7 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
             problems = ([] if status == 200 and headers.get("content-type") == ctype and headers.get("accept-ranges") == "bytes"
                         else [f"status {status}, content-type {headers.get('content-type')!r}, accept-ranges {headers.get('accept-ranges')!r}"])
             problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.MEDIA_CACHE)
-            results.append((f"HEAD {path} is {ctype}, in byte ranges, kept a day", problems))
+            results.append((f"HEAD {path} is {ctype}, in byte ranges, kept a day (its plain name)", problems))
         for path, ctype in headers_spec.CARDS.items():
             status, headers, _ = fetch(origin + path, "HEAD")
             problems = [] if status == 200 and headers.get("content-type") == ctype else \

@@ -289,8 +289,6 @@ def check_seo():
         if f.stem == "404":
             if "noindex" not in robots:
                 problems.append(f"{name}: 404 should be noindex")
-        if f.stem == "v2":   # the preview keeps the head it was made with (check_v2 holds it: noindex, unlinked)
-            continue
         for prop, value in CARD.items():
             if meta(d, property=prop) != value:
                 problems.append(f"{name}: {prop} is {meta(d, property=prop)!r}, not {value!r}")
@@ -1004,99 +1002,39 @@ def _under_aria_hidden(text, marker):
     return bool(w.found)
 
 
-# V-01 (docs/review/home-v2.md): /v2, the home with the product loops, is a preview at its own address. Its files
-# have their own budget (it is outside M-01 and A-06, which stay the home's): each loop's WebM, MP4 and poster, the
-# media folder, and its own stylesheet and script (gzip -9). The browser half (what loads when) is browser_checks.
-V2_FILE_LIMITS = {".webm": 3_500_000, ".mp4": 512_000, ".png": 256_000}
-V2_FOLDER_LIMIT = 12 * 1024 * 1024
-V2_CODE_LIMITS = {"css/v2.css": 4096, "js/clips.js": 2048}
-WEBM_TYPE = 'video/webm; codecs="vp9"'
+# The media folder (docs/review/perf-1.md): the home's stills (V-02) and the 404 page's art (check_not_found), nothing
+# else. /v2, the preview with the product loops, its loops and clips.js left with it; /v2 answers 301 to / and no
+# page names it, the loops' folder or the script. v2.css stays: the home's comparison and sections are drawn by it,
+# within the budget it had (gzip -9).
+MEDIA_FOLDERS = ("v3", "404")
+V2_CSS_LIMIT = 4096
 
 
-def check_v2():
-    """V-01, the files' half: /v2 is noindex, outside the JSON-LD graph, linked from no page, partial or static file,
-    and has the home's links, variants and labels (its words stay the ones it was made with: the copy pass,
-    docs/review/copy-1.md, changed the home's and left the preview's on purpose); each <video data-clip>
-    is muted, autoplay, loop, playsinline, its sources waiting in data-src (WebM with its codec first, then MP4), the
-    first with preload="metadata" and its poster, the rest preload="none" with data-poster and a lazy still for readers
-    without JavaScript; every file they name exists, no other page names the media folder, and the budget holds."""
+def check_media():
+    """Only the home's stills and the 404 page's art under media/; no page, partial, stylesheet, script or static text
+    file names /v2, the loops' folder or clips.js; only the home and the 404 page name /site/media/; v2.css in its
+    budget."""
     import gzip
     problems = []
-    v2 = SITE / "pages" / "v2.html"
-    text = v2.read_text()
-    d, home = parse(v2), parse(SITE / "pages" / "index.html")
-    if not any("noindex" in a.get("content", "") for a in attr(d, "meta", name="robots")):
-        problems.append("pages/v2.html: no <meta name=\"robots\" content=\"noindex\">")
-    if "application/ld+json" in text:
-        problems.append("pages/v2.html: carries JSON-LD (the preview is no part of the graph)")
-    # and the same links, buttons, variants and labels in the body (the Pause motion switch is v2's own)
-    keys = ("href", "data-when", "hidden", "data-testid", "aria-label", "aria-labelledby", "id", "role")
-    def marks(doc):
-        body = doc.tags[next(i for i, (tag, _) in enumerate(doc.tags) if tag == "body"):]
-        return sorted(str((tag, [(k, a.get(k)) for k in keys if k in a])) for tag, a in body
-                      if any(k in a for k in keys) and "data-loops" not in a)
-    extra, missing = sorted(set(marks(d)) - set(marks(home))), sorted(set(marks(home)) - set(marks(d)))
-    if marks(d) != marks(home):
-        problems.append(f"pages/v2.html: its links, variants or labels differ from the home's: only in v2 {extra[:3]}, only on / {missing[:3]}")
-    if not re.search(r'<button type="button" class="loops" data-loops aria-label="Pause motion" aria-pressed="false" hidden>', text):
-        problems.append("pages/v2.html: no Pause motion switch (WCAG 2.2.2: the loops run longer than five seconds)")
-    for f in [p for p in PAGES if p != v2] + PARTIALS + sorted((SITE / "static").rglob("*.txt")):
+    for f in sorted(p for p in (SITE / "media").rglob("*") if p.is_file()):
+        if f.parent.parent != SITE / "media" or f.parent.name not in MEDIA_FOLDERS:
+            problems.append(f"{f.relative_to(WEB)}: outside media/v3 and media/404 (the folders V-02 and the 404 check hold)")
+    texts = PAGES + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS + sorted((SITE / "static").rglob("*.txt"))
+    for f in texts:
         body = f.read_text()
         if re.search(r'href="(\{\{ORIGIN\}\})?/v2[/"#?]', body) or "{{ORIGIN}}/v2" in body:
-            problems.append(f"{f.relative_to(WEB)}: links to /v2 (the preview stays out of nav, footer, sitemap and the graph)")
-    for f in [p for p in PAGES if p.name not in ("v2.html", "index.html", "404.html")] + PARTIALS + sorted((SITE / "css").glob("*.css")) + JS:
-        if "/site/media/" in f.read_text() and f.name not in ("v2.css", "clips.js"):
-            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only /v2, the home and the 404 page load media)")
-    videos = re.findall(r"<video\b([^>]*)>(.*?)</video>\s*(<noscript>.*?</noscript>)?", text, re.S)
-    if not videos:
-        problems.append("pages/v2.html: no loops")
-    for i, (attrs, inner, fallback) in enumerate(videos):
-        a = dict(re.findall(r'([a-z-]+)(?:="([^"]*)")?', attrs))
-        where = f"pages/v2.html video {i + 1}"
-        for flag in ("data-clip", "muted", "autoplay", "loop", "playsinline"):
-            if flag not in a:
-                problems.append(f"{where}: no {flag}")
-        if "src" in a:
-            problems.append(f"{where}: a src on the video itself (the sources wait in data-src)")
-        want = ("metadata", "poster") if i == 0 else ("none", "data-poster")
-        if a.get("preload") != want[0] or want[1] not in a or ("poster" in a) != (i == 0):
-            problems.append(f"{where}: needs preload=\"{want[0]}\" and {want[1]} (the hero's loop alone is asked for at load)")
-        sources = re.findall(r"<source\b([^>]*)>", inner)
-        kinds = [(re.search(r'data-src="([^"]+)"', s), re.search(r"type='([^']+)'|type=\"([^\"]+)\"", s)) for s in sources]
-        if any(re.search(r"\ssrc=", s) for s in sources):
-            problems.append(f"{where}: a <source> with src (it must wait in data-src)")
-        types = [(m.group(1) or m.group(2)) if m else None for _, m in kinds]
-        if types != [WEBM_TYPE, "video/mp4"]:
-            problems.append(f"{where}: sources {types}, expected [{WEBM_TYPE!r}, 'video/mp4']")
-        files = [m.group(1) for m, _ in kinds if m] + [a.get("poster") or a.get("data-poster") or ""]
-        if i:
-            still = re.fullmatch(r'<noscript><img class="still" src="([^"]+)" alt="" width="832" height="480" loading="lazy"></noscript>', fallback)
-            if not still or still.group(1) != a.get("data-poster"):
-                problems.append(f"{where}: no lazy still of its poster for readers without JavaScript")
-        for url in files:
-            if not url.startswith("/site/media/") or not (SITE / url.removeprefix("/site/")).is_file():
-                problems.append(f"{where}: {url!r} is not a file in web/site/media/")
-    media = sorted(p for p in (SITE / "media").rglob("*") if p.is_file())   # the folder's total counts the home's stills too
-    for f in media:   # three folders: /v2's loops (V-01, here), the home's stills (V-02) and the 404 page's art (check_not_found)
-        if f.parent not in (SITE / "media" / "motion", SITE / "media" / "v3", SITE / "media" / "404"):
-            problems.append(f"{f.relative_to(WEB)}: outside media/motion, media/v3 and media/404 (the folders V-01, V-02 and the 404 check hold)")
-    for f in [m for m in media if m.parent == SITE / "media" / "motion"]:
-        limit = V2_FILE_LIMITS.get(f.suffix)
-        if limit is None:
-            problems.append(f"{f.relative_to(WEB)}: not a loop's WebM, MP4 or poster")
-        elif f.stat().st_size > limit:
-            problems.append(f"{f.relative_to(WEB)}: {f.stat().st_size:,} B (V-01: at most {limit:,})")
-    folder = sum(f.stat().st_size for f in media)
-    if folder > V2_FOLDER_LIMIT:
-        problems.append(f"web/site/media: {folder:,} B (V-01: at most {V2_FOLDER_LIMIT:,})")
-    code = []
-    for rel, limit in V2_CODE_LIMITS.items():
-        size = len(gzip.compress((SITE / rel).read_bytes(), 9))
-        code.append(f"{rel} {size:,} B")
-        if size > limit:
-            problems.append(f"{rel}: {size:,} B gzip -9 (V-01: at most {limit:,})")
-    NOTES_STATIC.append(f"V-01 files: {len(videos)} loops on /v2, web/site/media {folder:,} B in {len(media)} files "
-                        f"(at most {V2_FOLDER_LIMIT:,}); {', '.join(code)} gzip -9")
+            problems.append(f"{f.relative_to(WEB)}: links to /v2 (a 301 to /)")
+        for gone in ("clips.js", "/site/media/motion/", "<video"):
+            if gone in body:
+                problems.append(f"{f.relative_to(WEB)}: names {gone!r} (the loops left with /v2)")
+        if "/site/media/" in body and f.name not in ("index.html", "404.html"):
+            problems.append(f"{f.relative_to(WEB)}: names /site/media/ (only the home and the 404 page load media)")
+    if (SITE / "pages" / "v2.html").exists() or (SITE / "js" / "clips.js").exists():
+        problems.append("pages/v2.html or js/clips.js is back")
+    size = len(gzip.compress((SITE / "css" / "v2.css").read_bytes(), 9))
+    if size > V2_CSS_LIMIT:
+        problems.append(f"css/v2.css: {size:,} B gzip -9 (at most {V2_CSS_LIMIT:,})")
+    NOTES_STATIC.append(f"media: {', '.join(f'media/{d}' for d in MEDIA_FOLDERS)}; css/v2.css {size:,} B gzip -9")
     return problems
 
 
@@ -1243,9 +1181,8 @@ def check_home_stills():
     if f'<a class="wm" href="/" aria-label="{{{{BRAND}}}}, home">' not in header or f"</span>{WORDMARK}</a>" not in header:
         problems.append("partials/header.html: the name beside the tile isn't the wordmark (#i-wordmark, hidden; the link named "
                         "{{BRAND}}, home)")
-    for page in (home_page, SITE / "pages" / "v2.html"):
-        if f"</span>{WORDMARK}<span class=\"sr-only\">{{{{BRAND}}}}</span></span></th>" not in page.read_text():
-            problems.append(f"pages/{page.name}: the comparison's hidebox column isn't headed by the tile and the wordmark, named in words")
+    if f"</span>{WORDMARK}<span class=\"sr-only\">{{{{BRAND}}}}</span></span></th>" not in home_page.read_text():
+        problems.append("pages/index.html: the comparison's hidebox column isn't headed by the tile and the wordmark, named in words")
     for rel, rule in (("site/css/site.css", ".wm-tile {"), ("site/css/home.css", ".us-name .wm-tile .icon {"), ("app/css/drive.css", ".brand-mark { background"),
                       ("app/css/flow.css", ".done-box {")):
         css = (WEB / rel).read_text()
@@ -1392,6 +1329,6 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("/how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch", check_how_loops),
           ("the four sides and What's tTARI? are the same on / and /how", check_shared_blocks),
           ("links to site pages and anchors land on something", check_internal_links),
-          ("V-01: /v2 is noindex and unlinked, keeps the home's links and labels, its loops wait to be asked for, its budget", check_v2),
+          ("media: the home's stills and the 404 art only; /v2, its loops and clips.js gone and unnamed; v2.css in budget", check_media),
           ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills),
           ("404: the owner's words, one way home, the art sized from media/404, the three eggs", check_not_found)]

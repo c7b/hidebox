@@ -140,6 +140,9 @@ http://{$MUTIS_HOST} {
 	# /v3 became the home (docs/review/promote-v3.md): the preview's address answers 301 to /.
 	@old_preview path /v3 /v3/
 	redir @old_preview "/" 301
+	# /v2, the preview with the product loops before it, left with its loops (docs/review/perf-1.md).
+	@old_loops path /v2 /v2/
+	redir @old_loops "/" 301
 
 	# Types Go's MIME table lacks on Debian (it reads shared-mime-info, not /etc/mime.types).
 	@webmanifest path *.webmanifest
@@ -301,20 +304,8 @@ http://{$MUTIS_HOST} {
 		import files
 	}
 
-	# /v2 (docs/review/home-v2.md): the home with the product loops, at an address no page links. It carries the
-	# drop widget too, so it gets the app policy, whose media-src lets the loops play; noindex as its page says.
-	@preview path /v2 /v2/ /v2/index.html
-	handle @preview {
-		import app_csp
-		import revalidate
-		header X-Robots-Tag "noindex"
-		rewrite * /v2/index.html
-		file_server
-	}
-
-	# /v2's loops and the home's stills (media/v3, docs/review/promote-v3.md): files whose names carry no version, kept a
-	# day like the font (never immutable), so the closing reuses the hero's bytes. The file server answers byte ranges, as
-	# video players ask.
+	# The home's stills (media/v3, docs/review/promote-v3.md) and the 404 page's art under their plain names: no version
+	# in them, so a day like the font. The pages ask for their fingerprinted names (@hashed above), kept a year.
 	@media path /site/media/*
 	handle @media {
 		import site_csp
