@@ -953,7 +953,11 @@ def keyboard(t):
     t.check(b.eval("document.activeElement?.dataset?.testid") == "view-open", "the viewer focuses Open it")
     b.key("Enter", text="\r")
     t.check(b.wait_state("view-root", VIEW_END, 60) == "opened", "Enter opens it")
-    t.check(b.eval("!!document.activeElement?.closest('#lightbox')"), "it shows in the preview, which takes the focus")
+    try:   # the preview's module loads after the file opens, then takes the focus
+        lit = bool(b.wait("!!document.activeElement?.closest('#lightbox')", 10))
+    except TimeoutError:
+        lit = False
+    t.check(lit, "it shows in the preview, which takes the focus")
     b.key("Escape")
     b.wait("!document.getElementById('lightbox')", 10)
     t.check(b.eval("document.activeElement?.dataset?.testid") == "view-show", "Esc closes it; focus is on the card that opens it again")

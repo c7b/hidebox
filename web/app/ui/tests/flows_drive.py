@@ -572,6 +572,10 @@ def drive_delete_account(t):
     a.wait("![...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === 'three.txt')", 30)
     a.eval("document.querySelector('[data-testid=\"acct-settings\"]').click()")
     a.wait_for("settings", 20)
+    # The drive's Tari address, its code and the safety code fill in above Delete my drive once the keys are ready, and
+    # push the button down: press it after that (with its modules kept by the browser, they arrive while the test
+    # presses, and the press lands where the button was).
+    a.wait("!!document.querySelector('#settings [data-testid=\"locker-address\"], #settings [role=\"alert\"]')", 60)
     a.click("delete-locker")
     a.wait_for("delete-drive", 10)
     a.wait("/3 files/.test(document.querySelector('[data-testid=\"wipe-count\"]')?.textContent || '')", 30)
