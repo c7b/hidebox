@@ -1,5 +1,5 @@
 {
- "_about": "GET /substates/{id} answers of tari_indexer 0.47.0 (tari-ootle v0.47.0), recorded from both public Esmeralda indexers (ootle-indexer-a and ootle-indexer-b answered byte for byte the same) on 2026-10-20 at 07:13 UTC: public chain data. A live stealth output with and without its proof and read at its version, a spent output read at its version (a proven down) and without one (404), and the live SealLog 2.0.0 component.",
+ "_about": "GET /substates/{id} answers of tari_indexer 0.47.0 (tari-ootle v0.47.0), recorded from the public Esmeralda indexers on 2026-10-20 at 07:13 UTC (the live output with and without its proof, the spent output's proven down and the SealLog component from ootle-indexer-a and ootle-indexer-b, byte for byte the same; the live output read at its version and the spent output's 404 from ootle-indexer-b): public chain data. A live stealth output with and without its proof and read at its version, a spent output read at its version (a proven down) and without one (404), and the live SealLog 2.0.0 component.",
  "live_utxo": {
   "id": "utxo_0101010101010101010101010101010101010101010101010101010101010101_58b16c5b14aac5122d94aaad8d8e197d1d94f032248f6f568253011fcf1c7526",
   "query": "include_proof=true",
