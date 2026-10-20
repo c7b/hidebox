@@ -1,6 +1,25 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- preview 1 -->
+## 2026-10-19: file previews
+
+- **Click a file to see it.** In the drive a file's name now opens a preview (it downloaded at once before), and so
+  does a file in a folder link's visit and a paid file once Open it decrypts it. One preview for all three: the
+  file's name and size, Download (always there, in lime), Close; Esc closes it and focus goes back to the file;
+  the arrow keys, Previous and Next, or a swipe on a phone move through the files listed beside it. It sits on v3's
+  black void in both themes, with the drive's frosted glass, and loads the first time a file opens: the drive's first
+  screen carries only its six new strings (120 bytes compressed).
+- **What it shows comes from the bytes, never the name.** PNG, JPEG, GIF, WebP and AVIF show as pictures; an SVG is
+  drawn into a canvas, so only its pixels reach the page; UTF-8 text (`.txt`, `.md`, anything else that is text)
+  shows as plain text, its first 256 KB, with a note for the rest. HTML, PDF, sound, video, fonts and everything
+  else are download only. A file named `.svg` that is a PNG shows as a PNG; an SVG named `.png` is still drawn, not run.
+- **Tested with hostile files:** an SVG with scripts, Markdown with scripts and `javascript:` links, HTML named
+  `.txt`, a GIF with a web page after it, a 300 KB text file, an empty file. Nothing runs, nothing is fetched, no page
+  navigates, in the core suite and in the drive, a folder link and a paid link in the UI suite. The end-to-end runner
+  can serve a local build's front end against the live site (`--candidate`); pay to open a folder (E-29) passed that
+  way on production. Review: `docs/review/preview-1.md`; the threat model has a new section, "Previews".
+<!-- /preview 1 -->
 <!-- owner-5 -->
 ## 2026-10-19: owner 5
 

@@ -32,6 +32,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Griefer | fill storage, push proof of work up, drain daily budgets, lock links | reserved lanes for small files and files without a locker, limits per network prefix, a first-day limit for new lockers, public and reserved budget slices with alerts, a cap on requests in flight per network | someone with many networks can use up the public slices for a day; the reserved slices keep the guided demo working |
 | Griefer, the space (sixth pass) | buy packs from many drives fast so paid space sells out; make many drives and fill free space so uploads freeze for everyone | a judges' slice of the paid cap; one pack per drive; open invoices count against the cap; daily sales brakes per network (in memory) and per deployment (from the invoices); daily brakes on new drives and free uploads per network (in memory); the hard freezes at the disk's margins; `/status.json` amber and a kill switch ("Griefing the space" below) | many networks (a botnet, or one IPv6 /32) still get through at the deployment's daily pace; a restart forgets the per-network counts |
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
+| Someone who sends or sells a hostile file | make a preview run code on our origin, where this browser's keys live: an SVG with a script, a web page named `.txt`, a picture with a page after it | the preview picks what to show from the decrypted bytes, never the name or stored type: pictures in an `<img>`, an SVG drawn into a canvas, text as text nodes, everything else download only; the content security policy still refuses inline script ("Previews" below) | a flaw in the browser's own image or SVG decoder; a downloaded file opened elsewhere is as safe as its sender (the app warns before programs) |
 | Someone uploading a program to attack the server | send any bytes in place of ciphertext: an executable, a script, a web page, an archive | the server never decodes, parses or runs what it stores, and names each file itself; the files are 0600 on a mount where nothing executes; nothing a service can write is executable in its view; stored bytes leave only as downloads ("Uploads are inert" below) | a flaw in the kernel, Python, Caddy or SQLite reached through the HTTP request itself rather than through the stored bytes |
 | Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the one vendored artifact is pinned by hash and re-hashed before it runs; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet (a firewall rule per user on the wallet port); jobs are validated; daily budget slices | at most the daily budgets |
@@ -180,6 +181,33 @@ executable, a script or a web page in place of ciphertext; on the server nothing
 
 `deploy/scripts/privilege-check.sh` checks the mount, the modes and every service's view on the live server;
 `docs/review/upload-safety-1.md` has the evidence.
+
+## Previews
+
+Anyone can send a file to someone's drive (a drop link, Send by Tari, a shared folder saved there) or sell one on a
+paid link, so the bytes a preview shows are a stranger's, and a script that ran on hidebox.app could read the keys
+this browser holds. What the API sends stays ciphertext and a download ("Uploads are inert" above); the preview is
+about what the page shows once it has decrypted a file. It reads the decrypted bytes and never the file's name or
+stored type (`web/app/lib/sniff.js`, `web/app/ui/lightbox.js`):
+
+- **Pictures** (PNG, JPEG, GIF, WebP, AVIF, by their first bytes) show in an `<img>` from a Blob of exactly that
+  type. An image runs no script and loads nothing, and opened on its own it is still only a picture.
+- **SVG** is drawn once into a canvas from an image that never joins the page, and its `blob:` address is revoked
+  before the canvas shows: what remains is pixels, with no SVG document and no address anyone can open as a page. An
+  SVG with internal entities, over 4 MiB, or not wholly UTF-8 is download only.
+- **Text** (UTF-8 without NUL bytes) shows as one text node in a `<pre>`, its first 256 KB; Markdown stays its own
+  characters, never HTML or links.
+- **Everything else is download only:** HTML and any file that starts with markup, whatever its name; PDF, sound,
+  video, fonts, archives, programs and empty files. Download saves an `application/octet-stream` Blob through a link
+  with `download`; nothing opens a window or navigates to a file.
+- **The content security policy did not change:** no inline script, and images only from this site, `blob:` and
+  `data:`.
+
+The core suite (`web/app/tests/preview.test.js`) and the UI suite (`preview-drive`, `preview-folder`, `preview-pay`)
+open hostile files (an SVG with scripts named `.png`, a web page named `.txt`, a GIF with a web page after it,
+Markdown with scripts and `javascript:` links) and check that nothing runs, nothing is fetched and nothing navigates;
+`docs/review/preview-1.md` has the table. What remains: a flaw in the browser's own decoders, and a very large or
+deeply nested SVG can keep the opener's tab busy while it draws.
 
 ## What never touches a disk
 

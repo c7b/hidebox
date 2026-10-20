@@ -1,0 +1,5 @@
+lint exit 0
+copy exit 0
+build exit 0
+core exit 0
+ui exit 0

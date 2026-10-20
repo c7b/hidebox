@@ -1,0 +1,2 @@
+PASS E-29     53.0s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0}, 371 files from the candidate → <out>

@@ -1,0 +1,14 @@
+== text-as-html
+FAIL preview: lightbox: every hostile fixture opens with nothing run, nothing fetched, no navigation, Download always there
+FAIL preview: lightbox: Esc closes and focus goes back; arrows move through a list; the SVG's blob: URL is gone once drawn
+CSP VIOLATION: This document requires 'TrustedHTML' assignment. The action has been blocked.
+title: TESTS FAIL 148/150  (41.7s)
+== svg-as-img
+FAIL preview: lightbox: every hostile fixture opens with nothing run, nothing fetched, no navigation, Download always there
+FAIL preview: lightbox: Esc closes and focus goes back; arrows move through a list; the SVG's blob: URL is gone once drawn
+title: TESTS FAIL 148/150  (28.4s)
+== name-decides
+FAIL preview: lightbox: every hostile fixture opens with nothing run, nothing fetched, no navigation, Download always there
+FAIL preview: lightbox: Esc closes and focus goes back; arrows move through a list; the SVG's blob: URL is gone once drawn
+title: TESTS FAIL 148/150  (28.6s)
+done

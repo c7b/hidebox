@@ -1,0 +1,1005 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (88 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- home-text Home: a text secret, Once; copy; open; reload and a second browser see it burned
+PASS home-text: the sealed link has the key after # (Rqscg#1ol0WB0BRu87QNfX6rScVPAgtMe3vrD6wujb3W0HsSoA)
+PASS home-text: from text to link in 0.5 s on a 390×844 phone (< 10 s)
+PASS home-text: mutis:state events ['composing', 'sealing', 'sealed']
+PASS home-text: the one live region: 'Link made. Copied.'
+PASS home-text: the copy was made the moment the link existed, and the button says so
+PASS home-text: one sentence says the rule, with its time ("It opens one time in the next 24 hours.\nThen it's gone.")
+PASS home-text: More rules: what our server got opens the glass box
+PASS home-text: and the noise strip draws real ciphertext bytes (226 grey levels)
+PASS home-text: Copy link puts the full link on the clipboard
+PASS home-text: the home page made no third-party request
+PASS home-text: localStorage holds no key and no text, only the recent-drops list (['mutis.recent'])
+PASS home-text: B sees the ready state, nothing used yet
+PASS home-text: the sentence says the rule: once
+PASS home-text: a tile for Once, and no ghost
+PASS home-text: B opens it
+PASS home-text: B reads exactly the text
+PASS home-text: the key left the address bar after the open
+PASS home-text: B's reload shows burned
+PASS home-text: a second browser sees burned
+PASS home-text: the ended page: This link has ended. ("This link has ended.Someone opened it already. If it wasn't you, tell the person")
+PASS home-text: the ended tile, no ghost
+PASS home-text: no CSP or Trusted Types violation ([])
+--- viewer-states Viewer: incomplete, not-found, a damaged key, the glass box
+PASS viewer-states: a link without its key: incomplete
+PASS viewer-states: an unknown id: not-found
+PASS viewer-states: a changed key: This key doesn't fit, no view used
+PASS viewer-states: the real link is still ready (no view was used)
+PASS viewer-states: the glass box prints the columns and what is stored nowhere
+PASS viewer-states: no CSP or Trusted Types violation ([])
+--- rules Change panel: 3 opens on the same link; link + password; password only; Delete now
+PASS rules: the progress line names its phase (encrypting)
+PASS rules: a count change keeps the same link (PATCH, spec §5.4)
+PASS rules: the card shows 3 opens
+PASS rules: the card's sentence says up to 3 opens
+PASS rules: B opens the file
+PASS rules: B's Save file downloads it
+PASS rules: C opens the file
+PASS rules: C's Save file downloads it
+PASS rules: D opens the file
+PASS rules: D's Save file downloads it
+PASS rules: the fourth browser sees burned
+PASS rules: a password makes a new link with a #2 key part
+PASS rules: the old link no longer works (revoked)
+PASS rules: a wrong password: That's not it
+PASS rules: the next wrong try says how many are left (That's not it. 3 tries left, then a wait of 1 minute.)
+PASS rules: the right password reaches ready
+PASS rules: and opens it
+PASS rules: password only: the link has no key part
+PASS rules: a password-only link opens with the password alone
+PASS rules: a revoke that fails: the card keeps the old link and no toast says it stopped working
+PASS rules: the old link still opens, as the card says
+PASS rules: Delete now: the link answers revoked
+PASS rules: no CSP or Trusted Types violation ([])
+--- card-fresh A first visit: the card's Tari action and locker rules open a locker in place; errors stay in the card
+PASS card-fresh: a drop link asks nothing before it exists
+PASS card-fresh: a locker that can't open: the error is in the result, with the link and Copy link still there
+PASS card-fresh: the locker opens in place and the send step appears
+PASS card-fresh: Sent
+PASS card-fresh: the old link isn't confirmed closed: the card still shows it, and says so
+PASS card-fresh: it still works
+PASS card-fresh: once closed, the card drops the link and Copy link
+PASS card-fresh: and says where the file went (Sent to otl_esm_1mn2jxe…9d7ken instead. The link no longer works: only)
+PASS card-fresh: the old link answers revoked
+PASS card-fresh: 7 days applies to the same link (7.00 days)
+PASS card-fresh: no CSP or Trusted Types violation ([])
+--- kept P1 kept files: Only me and Until I delete it from a first visit; /locker lists, saves and deletes them
+PASS kept: Only me: kept in the locker, no link
+PASS kept: Until I delete it: a new link whose sentence says it stays
+PASS kept: the link to the anonymous copy no longer works
+PASS kept: the kept file's link opens
+PASS kept: /locker lists both kept files by name
+PASS kept: Save gives back exactly the file that was kept
+PASS kept: Delete removes the kept file on our server: after a reload only notes.txt is listed (1)
+PASS kept: no CSP or Trusted Types violation ([])
+--- safety Programs refused before upload; a too-big file offers a locker; photos lose their GPS
+PASS safety: an anonymous .exe is refused before any upload
+PASS safety: too large: the banner offers a free locker
+PASS safety: nothing was uploaded
+PASS safety: 'invoice.b\u200bat' is refused as the .bat it would be saved as
+PASS safety: 'run.p|s1' is refused as the .ps1 it would be saved as
+PASS safety: none of them was uploaded
+PASS safety: with a locker opened in place, the program is locked as the locker's file
+PASS safety: the viewer shows the program warning
+PASS safety: no preview; Save anyway is offered
+PASS safety: a 413 from the server reads as too large, with the server's limit
+PASS safety: stored as 'invoice.b\u200bat': the program warning, named invoice.bat (program-warning, 'invoice.bat')
+PASS safety: stored as 'run.p|s1': the program warning, named run.ps1 (program-warning, 'run.ps1')
+PASS safety: stored as 'photo\u202egpj.exe': the program warning, named photogpj.exe (program-warning, 'photogpj.exe')
+PASS safety: Save anyway offers the name it showed (['photogpj.exe'])
+PASS safety: the photo chip says location and camera data were removed
+PASS safety: the photo opens with a preview
+PASS safety: no CSP or Trusted Types violation ([])
+--- locker Locker: made silently from Leave me a file; key modal; key file with passphrase; restore
+PASS locker: no Locker · Inbox · Send tabs before a locker exists
+PASS locker: the first screen: what a locker is, and its three things by name
+PASS locker: a drop link asks nothing before it exists
+PASS locker: a short drop link (http://127.0.0.1:49393/d/e6qygf3q73)
+PASS locker: the key modal asks once, now that something persistent exists
+PASS locker: with the passphrase box ticked (P-15) an empty passphrase stops the download
+PASS locker: the key file is locked with the passphrase; the plain key isn't in it
+PASS locker: the drop's name is set after the link exists (people see it)
+PASS locker: the safety code has 12 emoji (12)
+PASS locker: the locker shows its otl_esm_ Tari address
+PASS locker: the key banner stays until the key is saved
+PASS locker: a new locker is on probation
+PASS locker: localStorage holds no key material (the locker's seed lives in IndexedDB, spec §4.8.1)
+PASS locker: IndexedDB holds only the locker record and the inbox state (['identity', 'inbox'])
+PASS locker: the quota bar shows the locker's limit
+PASS locker: restored elsewhere: the same safety code and address
+PASS locker: no CSP or Trusted Types violation ([])
+--- deaddrop Dead drop: a stranger leaves a photo; Delivered; What the chain sees; the inbox opens it
+PASS deaddrop: a drop link asks nothing before it exists
+PASS deaddrop: a phone's locker shows no codes to scan (it is the phone that scans)
+PASS deaddrop: the drop page is ready
+PASS deaddrop: it shows the owner's 12-emoji safety code
+PASS deaddrop: the drop's label, isolated in a <bdi> inside the quotes
+PASS deaddrop: the page says the link's maker wrote the label and we don't check it
+PASS deaddrop: a Report this drop link in the page, filled in (/fine-print#link=http%3A%2F%2F127.0.0.1%3A49393%2Fd%2Fvhg37j)
+PASS deaddrop: a program can't be left in a drop; nothing was uploaded
+PASS deaddrop: Delivered
+PASS deaddrop: the delivery has a transaction id
+PASS deaddrop: What the chain sees: no output amount is shown
+PASS deaddrop: the fee is shown, as public
+PASS deaddrop: no request to Tari's indexer before the button is pressed
+PASS deaddrop: the explicit button asks Tari's indexer directly (['https://ootle-indexer-b.tari.com/transaction-receipts/3c8aa7', 'https://ootle-indexer-b.tari.com/transaction-receipts/3c8aa7'])
+PASS deaddrop: the scan line says how many outputs it checked
+PASS deaddrop: the owner opens what was left
+PASS deaddrop: the photo and What the chain saw
+PASS deaddrop: What the chain saw: hidden on chain, the locker reads 0.001 tTARI ('Amounthidden on chainyour drive reads 0.001 tTARIOwnera one-')
+PASS deaddrop: Keep a copy in my locker: the photo is listed under Kept in your locker
+PASS deaddrop: no CSP or Trusted Types violation ([])
+--- send Send to a Tari address (relay); the locker's codes to scan; a scanned address fills the phone's send step; the recipient's inbox opens it; /watch sees it and opens nothing
+PASS send: a drop link asks nothing before it exists
+PASS send: a computer's locker shows its address and its drop link as codes a phone reads (edylf3z3zf2z02llvkhagv0qmm43y3, http://127.0.0.1:49393/d/j742j46c7v)
+PASS send: the send screen shows the recipient's safety code
+PASS send: Sent
+PASS send: the send has a transaction id
+PASS send: the relay sentence (C8) follows how this send went
+PASS send: the recipient opens what was sent
+PASS send: the scanned address opens the home's widget with where it goes
+PASS send: after the drop the send step is open with the address filled in, its safety code shown, Send focused
+PASS send: sent from the phone to the scanned address
+PASS send: /watch with the locker's view key: deliveries seen, 0 files readable
+PASS send: another browser with the exported view key: 0 files readable
+PASS send: the rows list the arrivals
+PASS send: a view key of another address is refused
+PASS send: no CSP or Trusted Types violation ([])
+--- kind4 Kind 4: a /t#4 link opens with the address's view key alone; kind 3 refuses it
+PASS kind4: a drop link asks nothing before it exists
+PASS kind4: the address check explains it: base-layer
+PASS kind4: the address check explains it: not a testnet
+PASS kind4: the address check explains it: Ootle address
+PASS kind4: kind 4 shows its warning
+PASS kind4: Sent in other-wallet mode
+PASS kind4: the delivery's memo is a /t#4 link
+PASS kind4: a browser without a locker is asked for a key
+PASS kind4: the view key alone unlocks a kind-4 link
+PASS kind4: and it is the text that was sent
+PASS kind4: no CSP or Trusted Types violation ([])
+--- upgrade Upgrade: s30 with demo tTARI; Waiting → Seen on chain → Amount proven → Added
+PASS upgrade: a drop link asks nothing before it exists
+PASS upgrade: the invoice has a Tari address
+PASS upgrade: the stepper reaches Added (['waiting:true', 'seen:true', 'proven:true', 'added:true'])
+PASS upgrade: the quota grew by the pack's 2 GiB
+PASS upgrade: on Nov 12 the testnet line says the mainnet is live, like the footer (Esmeralda testnet: tTARI is test money, worth nothing. The Ootle mainnet is live)
+PASS upgrade: no CSP or Trusted Types violation ([])
+--- upgrade-wallet Upgrade in production's payment mode (amount_proof = wallet): Waiting → Seen by our wallet → Exists on chain → Added
+PASS upgrade-wallet: a drop link asks nothing before it exists
+PASS upgrade-wallet: the stepper names the checks this mode runs (['Waiting', 'Seen by our wallet', 'Exists on chain', 'Added'])
+PASS upgrade-wallet: the claim under it is the wallet variant (C11)
+PASS upgrade-wallet: paid with demo tTARI, every step is reached (['waiting:true', 'seen_wallet:true', 'exists:true', 'added:true'])
+PASS upgrade-wallet: no CSP or Trusted Types violation ([])
+--- receipts P1 /verify: the locked file's own hash is kept; proofs are checked against the SealLog state on chain; a log with an owner is refused
+PASS receipts: this device keeps the ciphertext hash it computed when locking (equal to our server's)
+PASS receipts: the file's own hash is in the tree on chain, at the log's checkpoint #1 (Link …AAAAThe link you came fromStored: included at checkpoint #1 (epoch 12128); the root matches the SealLog component )
+PASS receipts: its exit too, from the hour our server reports
+PASS receipts: a hash this file didn't have doesn't verify against the same root
+PASS receipts: the page says the log has no owner and names its one writer key (This log has no owner, so nobody, us included, can change its rules or the code behind it )
+PASS receipts: the research log on Esmeralda (it has an owner) is refused; nothing is checked against it
+PASS receipts: no CSP or Trusted Types violation ([])
+--- keyboard Keyboard only: drop and copy; open; make a drop link; leave a file; send; buy; watch
+PASS keyboard: home: every control has an accessible name ([])
+PASS keyboard: Tab reaches 'or paste text'
+PASS keyboard: focus lands on Copy link
+PASS keyboard: Enter copies the link
+PASS keyboard: the locked card: every control named ([])
+PASS keyboard: the viewer focuses Open it
+PASS keyboard: Enter opens it
+PASS keyboard: /locker: every control named ([])
+PASS keyboard: Tab reaches Make my drop link (nothing is asked first)
+PASS keyboard: the key modal takes the focus
+PASS keyboard: Escape closes the key modal
+PASS keyboard: the locker: every control named ([])
+PASS keyboard: the drop page: every control named ([])
+PASS keyboard: Tab reaches 'or paste text' on the drop page
+PASS keyboard: left in the drop with the keyboard
+PASS keyboard: focus moves to the recipient field
+PASS keyboard: Tab reaches Send
+PASS keyboard: sent with the keyboard
+PASS keyboard: /send: every control named ([])
+PASS keyboard: Tab reaches the s30 pack
+PASS keyboard: Tab reaches Pay with demo tTARI
+PASS keyboard: a pack bought with the keyboard
+PASS keyboard: /upgrade: every control named ([])
+PASS keyboard: Tab reaches Use my drive's view key
+PASS keyboard: Tab reaches Look
+PASS keyboard: watched with the keyboard
+PASS keyboard: /watch: every control named ([])
+PASS keyboard: no CSP or Trusted Types violation ([])
+--- layout Every app page: no horizontal scroll at 360 px, only same-origin requests, no violations
+PASS layout: narrow: no horizontal scroll ([])
+PASS layout: narrow: no third-party request ([])
+PASS layout: iphone: no horizontal scroll ([])
+PASS layout: iphone: no third-party request ([])
+PASS layout: desktop: no horizontal scroll ([])
+PASS layout: desktop: no third-party request ([])
+PASS layout: no CSP or Trusted Types violation ([])
+--- nowasm Without WebAssembly (--jitless): anonymous drop and open work; locker pages say needs_wasm
+PASS nowasm: an anonymous drop opens without WebAssembly
+PASS nowasm: /locker shows needs_wasm
+PASS nowasm: /d/2222222222 shows needs_wasm
+PASS nowasm: /inbox shows needs_wasm
+PASS nowasm: /watch shows needs_wasm
+PASS nowasm: no CSP or Trusted Types violation ([])
+--- dark Dark theme and reduced motion: the card, the viewer, the locker
+PASS dark: the drive's dark background in dark mode
+PASS dark: opens in dark mode with reduced motion
+PASS dark: no CSP or Trusted Types violation ([])
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: phone: widget payload compressed: 25013 B at load, 40510 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: computer: 43477 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+  A-06 measured: computer 43477 B gzip -9, files: /app/css/widget.css, /app/drop-widget.js, /app/i18n/widget-en.json, /app/lib/api.js, /app/lib/b64.js, /app/lib/bytes.js, /app/lib/crypto.js, /app/lib/dom.js, /app/lib/format.js, /app/lib/i18n.js, /app/lib/pow-worker.js, /app/lib/pow.js, /app/lib/seal.js, /app/lib/sha256sync.js, /app/lib/share.js, /app/lib/store.js, /app/ui/card.js, /app/ui/core.js, /app/ui/more.js, /app/ui/qr.js, /app/ui/sealing.js, /app/ui/widget.js, /app/ui/zone.js
+PASS budget: phone, after a photo: 45548 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- ten-seconds A first visit on a phone (4× slower CPU): landing to a copied link of a photo in under 10 s
+PASS ten-seconds: landing 1.2 s, then photo to copied link: 2.2 s in all (< 10 s, no human pauses)
+PASS ten-seconds: no CSP or Trusted Types violation ([])
+--- states Every remaining state: expired (a real 60-second link), removed, locked, integrity-error; drop closed and not found; empty inbox
+PASS states: the 60-second preset sets the link to leave within a minute
+PASS states: a link that ended as expired: expired
+PASS states: a link that ended as removed: removed
+PASS states: a link that ended as owner_deleted: revoked
+PASS states: a link locked after too many wrong passwords: locked
+PASS states: one flipped bit in the stored bytes: integrity-error, nothing shown
+PASS states: no plaintext and no Save after an integrity failure
+PASS states: a drop link asks nothing before it exists
+PASS states: a closed drop: This drop is closed.
+PASS states: an unknown drop: No drop here.
+PASS states: recent drops on this device list the links with their state (Opened Oct 19, 2026, 8:47 PM. Was that them?)
+PASS states: a new locker's inbox: Nothing for you yet
+PASS states: 65 seconds later the real server answers: expired
+PASS states: This link has ended. Its time ran out.
+PASS states: no CSP or Trusted Types violation ([])
+--- no-ghost No ghost: /send and the link page carry no ghost template or figure; Geist; a Lucide tile
+PASS no-ghost: /send: no ghost template and no ghost
+PASS no-ghost: /send: no ghost.css
+PASS no-ghost: /send: Geist (Geist, ui-sans-serif, system-ui, -apple-)
+PASS no-ghost: /send: a Lucide tile (/shared/ui/icons.svg#i-send)
+PASS no-ghost: /watch: no ghost template and no ghost
+PASS no-ghost: /watch: no ghost.css
+PASS no-ghost: /watch: Geist (Geist, ui-sans-serif, system-ui, -apple-)
+PASS no-ghost: /watch: a Lucide tile (/shared/ui/icons.svg#i-eye)
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: no ghost template and no ghost
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: no ghost.css
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: Geist (Geist, ui-sans-serif, system-ui, -apple-)
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: a Lucide tile (/shared/ui/icons.svg#i-triangle-alert)
+PASS no-ghost: /send: no ghost template and no ghost
+PASS no-ghost: /send: no ghost.css
+PASS no-ghost: /send: Geist (Geist, ui-sans-serif, system-ui, -apple-)
+PASS no-ghost: /send: a Lucide tile (/shared/ui/icons.svg#i-send)
+PASS no-ghost: /watch: no ghost template and no ghost
+PASS no-ghost: /watch: no ghost.css
+PASS no-ghost: /watch: Geist (Geist, ui-sans-serif, system-ui, -apple-)
+PASS no-ghost: /watch: a Lucide tile (/shared/ui/icons.svg#i-eye)
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: no ghost template and no ghost
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: no ghost.css
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: Geist (Geist, ui-sans-serif, system-ui, -apple-)
+PASS no-ghost: /s/AAAAAAAAAAAAAAAAAAAAAA: a Lucide tile (/shared/ui/icons.svg#i-triangle-alert)
+PASS no-ghost: no CSP or Trusted Types violation ([])
+--- ghost-screens Step 8 at 390 and 1440 (no ghost): the viewer, the gone page (on chain and pending), the locker (first screen, key, with a locker), the inbox, send, /watch, /upgrade, /verify
+PASS ghost-screens: 390: the viewer is ready
+PASS ghost-screens: 390: the viewer's first screen: the Once tile, one sentence, C18, Open it focused (once)
+PASS ghost-screens: 390: opened, its only look
+PASS ghost-screens: 390: the gone page (done)
+PASS ghost-screens: 390: ended, done: the receipt says 'The file left our server. We wrote that on the Tari™ chain.' and links /verify#y-axHkg3BXdy5qW5OxJBOQ
+PASS ghost-screens: 390: the gone page (pending)
+PASS ghost-screens: 390: ended, pending: the receipt says 'The file left our server. That goes on the Tari™ chain within 15 minutes.' and links /verify#latest
+PASS ghost-screens: 390: the key question, with Later
+PASS ghost-screens: 390: the locker's view key section: C15-k and C15
+PASS ghost-screens: 390: See what came, with See what a view key sees (and, on a phone, the tabs once a locker exists)
+PASS ghost-screens: 390: send: the courier tile and C25
+PASS ghost-screens: 390: /watch: the peek tile, C15-k and C15
+PASS ghost-screens: 390: See the goodbye: /verify checks this link's exit (Exit: included at checkpoint #1 (epoch 12128); the root matc)
+PASS ghost-screens: 1440: the viewer is ready
+PASS ghost-screens: 1440: the viewer's first screen: the Once tile, one sentence, C18, Open it focused (once)
+PASS ghost-screens: 1440: opened, its only look
+PASS ghost-screens: 1440: the gone page (done)
+PASS ghost-screens: 1440: ended, done: the receipt says 'The file left our server. We wrote that on the Tari™ chain.' and links /verify#XZnRS7HNeCmAgDPGle7j9w
+PASS ghost-screens: 1440: the gone page (pending)
+PASS ghost-screens: 1440: ended, pending: the receipt says 'The file left our server. That goes on the Tari™ chain within 15 minutes.' and links /verify#latest
+PASS ghost-screens: 1440: the key question, with Later
+PASS ghost-screens: 1440: the locker's view key section: C15-k and C15
+PASS ghost-screens: 1440: See what came, with See what a view key sees (and, on a phone, the tabs once a locker exists)
+PASS ghost-screens: 1440: send: the courier tile and C25
+PASS ghost-screens: 1440: /watch: the peek tile, C15-k and C15
+PASS ghost-screens: 1440: See the goodbye: /verify checks this link's exit (Exit: included at checkpoint #1 (epoch 12128); the root matc)
+PASS ghost-screens: no CSP or Trusted Types violation ([])
+--- drive-shell The drive's shell (step 3): sidebar, header, search, Upgrade, the look; Geist only, pinned; no ootle-wasm before the list
+PASS drive-shell: the drive's first screen renders before ootle-wasm loads (A-06d: lazy Tari keys)
+PASS drive-shell: the sidebar names its six places (['My drive', 'Received', 'Shared', 'Activity', 'Trash', 'Storage'])
+PASS drive-shell: My drive is the current page
+PASS drive-shell: the header has search and Upgrade; the sidebar has New
+PASS drive-shell: the storage meter shows the drive's limit
+PASS drive-shell: one filled primary on the screen (the empty drive's Upload a folder)
+PASS drive-shell: a computer: Upload a folder first, Upload files beside it
+PASS drive-shell: the Tari address row fills in once the Tari keys load, after the list
+PASS drive-shell: Copy puts the address on the clipboard
+PASS drive-shell: the drive is set in Geist
+PASS drive-shell: one font file, the pinned Geist's 18 KB Latin subset (['/shared/fonts/geist/Geist-Latin.woff2'])
+PASS drive-shell: no third-party request ([])
+PASS drive-shell: every control has a name ([])
+PASS drive-shell: Ctrl+B folds the sidebar
+PASS drive-shell: the look: dark, remembered in this browser
+PASS drive-shell: dark paints the page
+PASS drive-shell: /drive/shared in the page, its place marked
+PASS drive-shell: /drive/trash in the page, its place marked
+PASS drive-shell: /drive/activity in the page, its place marked
+PASS drive-shell: the back button walks the drive's places
+PASS drive-shell: an unknown drive address says so inside the drive
+PASS drive-shell: no CSP or Trusted Types violation ([])
+--- drive-make Make my drive on a phone (step 5): the key at once, the drive opens, Save key file (locked), reload opens it again
+PASS drive-make: a browser without a drive: Make my drive or Open my drive (C17)
+PASS drive-make: no horizontal scroll on the start screen at 390
+PASS drive-make: the drive opens with the Save-my-key reminder (an outline action, never a primary)
+PASS drive-make: a phone: Upload files first (iOS has no folder picker)
+PASS drive-make: the floating New button on a phone
+PASS drive-make: no horizontal scroll in the drive at 390
+PASS drive-make: the sidebar opens as a sheet on a phone
+PASS drive-make: the key file is locked with a passphrase unless the lock is turned off (P-15)
+PASS drive-make: the key file holds the key locked, never in plain form
+PASS drive-make: the reminder goes once the key is saved
+PASS drive-make: a new drive sets the site's flag, never the key (the home paints Open my drive)
+PASS drive-make: localStorage holds no key material
+PASS drive-make: a reload opens the drive again (the key lives in this browser)
+PASS drive-make: no horizontal scroll at 360
+PASS drive-make: no CSP or Trusted Types violation ([])
+--- drive-open-keyfile Open my drive with the key file in a clean browser (step 5): the same drive, the same files
+PASS drive-open-keyfile: with the lock off, the file holds the key in plain form (the owner chose)
+PASS drive-open-keyfile: restored elsewhere: the same files, named in this browser (['lease.txt', 'passport.txt'])
+PASS drive-open-keyfile: an opened drive sets the site's flag (the home paints Open my drive)
+PASS drive-open-keyfile: Lock my drive clears the flag (the home paints Make my drive again)
+PASS drive-open-keyfile: a wrong key: That key does not open a drive
+PASS drive-open-keyfile: no CSP or Trusted Types violation ([])
+--- drive-folders Folders (step 5): New folder, open it, breadcrumbs, a file inside, counts, search in place
+PASS drive-folders: POST /folders made the folder (its name sealed in this browser)
+PASS drive-folders: breadcrumbs: My drive › Trip (My driveTrip)
+PASS drive-folders: the tab names the folder (in this browser)
+PASS drive-folders: the file lands in the open folder
+PASS drive-folders: My drive shows the folder, not the file inside it (['Trip'])
+PASS drive-folders: the folder card counts what it holds
+PASS drive-folders: search filters in place: nothing matches
+PASS drive-folders: search: Tri finds the folder (['Trip'])
+PASS drive-folders: search says where it runs (C43)
+PASS drive-folders: search terms never reach our server
+PASS drive-folders: no CSP or Trusted Types violation ([])
+--- storage-meter Storage (step 5): the meter in padded sizes, Get more space with test money, the rules of space
+PASS storage-meter: Upgrade opens Storage at Get more space
+PASS storage-meter: the meter counts the padded sizes the server counts (2080 B)
+PASS storage-meter: the rules of space, with their numbers from /config
+PASS storage-meter: the packs from /config (2)
+PASS storage-meter: the invoice: our address with its reference inside
+PASS storage-meter: the testnet line on the money screen (C19-k)
+PASS storage-meter: one primary: Pay with test money
+PASS storage-meter: the steps reach Added, naming this mode's checks (['waiting:true', 'seen:true', 'proven:true', 'added:true'])
+PASS storage-meter: the sidebar meter grows by the pack
+PASS storage-meter: the legend names the paid space (violet only for space paid with tTARI)
+PASS storage-meter: one pack at a time: the pack held says until when, the other waits
+PASS storage-meter: the rule and the renewal date, in words
+PASS storage-meter: no CSP or Trusted Types violation ([])
+--- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
+PASS drive-budget: a drive of 20 items
+PASS drive-budget: no ootle-wasm before the file table renders
+PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.woff2'])
+PASS drive-budget: A-06d: 125485 B compressed until the table renders, 38 files (≤ 131072 B)
+  A-06d measured: 125485 B gzip -9, files: app/css/drive.css, app/css/flow.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
+PASS drive-budget: no CSP or Trusted Types violation ([])
+--- drive-upload-files Upload files (step 7): each locks here, then uploads; the panel says so; the owner downloads the same bytes, the photo without its location
+PASS drive-upload-files: the panel: each file Locked and saved (['Locked and saved', 'Locked and saved', 'Locked and saved'])
+PASS drive-upload-files: the panel's head counts them
+PASS drive-upload-files: a screen reader hears it once
+PASS drive-upload-files: the file's name opens it in the preview (its text, here)
+PASS drive-upload-files: the owner's download is the same bytes, decrypted here
+PASS drive-upload-files: the photo went up without its location data (§4.13)
+PASS drive-upload-files: no horizontal scroll with files
+PASS drive-upload-files: a phone: rows are two lines, no horizontal scroll
+PASS drive-upload-files: no CSP or Trusted Types violation ([])
+--- drive-upload-folder-input Upload a folder with the folder picker (step 7): folders top-down, files inside, names here only
+PASS drive-upload-folder-input: one folder at the root (['Trip'])
+PASS drive-upload-folder-input: two folders made, parents first
+PASS drive-upload-folder-input: inside Trip: day one and plan.txt (['day one', 'plan.txt'])
+PASS drive-upload-folder-input: inside day one: map.txt, and no .DS_Store
+PASS drive-upload-folder-input: breadcrumbs: My drive › Trip › day one
+PASS drive-upload-folder-input: no folder or file name in any request
+PASS drive-upload-folder-input: no CSP or Trusted Types violation ([])
+--- drive-upload-folder-drop Drop a folder (step 7): the entries are read inside the drop, every batch walked, the overlay names the folder
+PASS drive-upload-folder-drop: the overlay: Drop to lock and upload, Into My drive (Drop to lock and uploadInto My drive)
+PASS drive-upload-folder-drop: Box holds Inner, one.txt and two.txt; Thumbs.db skipped (['Inner', 'one.txt', 'two.txt'])
+PASS drive-upload-folder-drop: the overlay goes after the drop
+PASS drive-upload-folder-drop: no CSP or Trusted Types violation ([])
+--- drive-move-rename Move and rename (step 7): This shares it too, Move here, Undo; a new name sealed here
+PASS drive-move-rename: a folder without a link: no warning
+PASS drive-move-rename: into a folder with a link: This shares it too, before Move here (This shares it too.Shared box has a link. Anyone who opens it will see this file.)
+PASS drive-move-rename: PATCH moved it, with its key wrapped under the folder's
+PASS drive-move-rename: Undo brings it back
+PASS drive-move-rename: renamed: the new name was sealed here and opens after a reload
+PASS drive-move-rename: the new name never travels in clear
+PASS drive-move-rename: no CSP or Trusted Types violation ([])
+--- drive-trash-restore Trash and restore (step 7): Move to trash with Undo, the trash view, Bring back, Delete now
+PASS drive-trash-restore: C47 before it goes (Move it to trash?Its links stop working now. You can bring it back for 30 days.CancelMove to trash)
+PASS drive-trash-restore: the alert focuses Cancel first
+PASS drive-trash-restore: Storage counts the trash until it empties (Other files1.4 MBIn the trash1 KB)
+PASS drive-trash-restore: the trash lists it, with the day it leaves
+PASS drive-trash-restore: Bring back: it is in My drive again
+PASS drive-trash-restore: Delete now deletes it on our server
+PASS drive-trash-restore: no CSP or Trusted Types violation ([])
+--- drive-delete-account Delete my drive: the count, the tick before the button, each file into the can, the check, the done screen
+PASS drive-delete-account: the alert says how many files go, the Trash's too (We'll delete 3 files from your drive and its Trash. Every link stops. This can't be undone. Are you sure?)
+PASS drive-delete-account: the button waits for the tick
+PASS drive-delete-account: the button says what it does
+PASS drive-delete-account: the alert fits its width (the long button wraps)
+PASS drive-delete-account: the done screen says what went (We deleted 3 files, and every link stopped.)
+PASS drive-delete-account: each file is deleted on our server
+PASS drive-delete-account: Done goes back to /drive with no drive in this browser
+PASS drive-delete-account: no CSP or Trusted Types violation ([])
+--- drive-delete-after Delete it after… (step 7): a day, a week or the most; the Leaves badge; Keep it
+PASS drive-delete-after: three choices, the last from /config (['A day', 'A week', '30 days'])
+PASS drive-delete-after: it says the file leaves and its receipt goes on chain (C42)
+PASS drive-delete-after: the row wears Leaves and the day (Leaves Oct 26)
+PASS drive-delete-after: Keep it: the file stays until its owner deletes it
+PASS drive-delete-after: no CSP or Trusted Types violation ([])
+--- seller-activity Activity of a file (step 9): links made, opened, ended; C40; What our server knows, with this file's values
+PASS seller-activity: made twice, opened, the once link ended, uploaded (['uploaded', 'made', 'made', 'opened', 'ended'])
+PASS seller-activity: a link that ends on a kept file: no chain line (C42)
+PASS seller-activity: C40 under the timeline
+PASS seller-activity: the glass box lines (C44, C41)
+PASS seller-activity: what it never stores (C44 + C40)
+PASS seller-activity: the live-IP line (C4)
+PASS seller-activity: with this file's padded size (1 KB)
+PASS seller-activity: no CSP or Trusted Types violation ([])
+--- activity-gone The drive's Activity (step 9): newest first; a file that left: It left your drive, and its chain line (C42)
+PASS activity-gone: the file that left is listed by name, here (It left your drive · report.datThat goes on the Tari chain within 15 minutes.Oct)
+PASS activity-gone: before the checkpoint: within its minutes (C42) (That goes on the Tari chain within 15 minutes.)
+PASS activity-gone: after it: We wrote that on the Tari chain, with its transaction (C42) (We wrote that on the Tari chain. tx abababab…)
+PASS activity-gone: only the file that left gets a chain line (['report.dat'])
+PASS activity-gone: uploads are listed too
+PASS activity-gone: C40 on the view
+PASS activity-gone: What our server knows opens from the view
+PASS activity-gone: no CSP or Trusted Types violation ([])
+--- share-once Share a file once (step 8): who, how many times, It ends, Make link, Copy, the code; a stranger opens it once; Copy a once link; the Links tab and Stop sharing
+PASS share-once: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-once: the dialog names the file
+PASS share-once: Who can open it? Anyone with the link (the default) or one Tari address (['link', 'tari']; pay to open joins with step 15)
+PASS share-once: every control in the dialog has a name ([])
+PASS share-once: How many times? Once (the default), A few times, No limit (['once', 'few', 'nolimit'])
+PASS share-once: It ends: In a week by default
+PASS share-once: a drive's first day: Tomorrow or In a week; When I stop it waits for the second day, and the dialog says so
+PASS share-once: the secret word and Delete it from my drive after are switches on the same step
+PASS share-once: a link with its own key after the # (JCHag#1TJvOupq2mtmEBXElLEv30VlVbc-3avQf7Jhqlu7V1XQ)
+PASS share-once: the rule in one sentence (C26: It opens one time, until Oct 26, 9:00 PM. Then the link ends.)
+PASS share-once: the code on a computer reads back as the same link
+PASS share-once: under a Once code: scanning uses its one open (C27, child form)
+PASS share-once: the key note under the link (C2)
+PASS share-once: Copy link puts the whole link on the clipboard
+PASS share-once: the row wears its rule: Once
+PASS share-once: a stranger's first screen asks before it uses the open (ready)
+PASS share-once: it opens, once, in another browser
+PASS share-once: the second look finds the link ended (burned)
+PASS share-once: back in the drive the row says Link ended; the file stays
+PASS share-once: Copy a once link: a new Once link on the clipboard, in one tap
+PASS share-once: the row says Once again
+PASS share-once: a file with a link opens on two tabs: New link, Links (1)
+PASS share-once: the Links tab lists the link with its rule
+PASS share-once: Copy on a link this browser made
+PASS share-once: Stop sharing: the link ends now, the file stays
+PASS share-once: the stopped link no longer opens (revoked)
+PASS share-once: no text in the share dialog reads null, in the 5 states this flow saw ([])
+PASS share-once: no CSP or Trusted Types violation ([])
+--- share-rules A few times, Until a time and a Public link on a phone (step 8): the first day's limits, then the second day; Share is the primary
+PASS share-rules: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-rules: A few times says how many
+PASS share-rules: no horizontal scroll in the dialog at 390
+PASS share-rules: A few times, until tomorrow (C26-f: It opens up to 3 times, until Oct 20, 9:00 PM. Then the link ends.)
+PASS share-rules: a phone: Share is the primary, no code to scan
+PASS share-rules: one filled button: Share; Copy link is outline
+PASS share-rules: Share hands the link to the phone's share sheet
+PASS share-rules: the row says 3 opens
+PASS share-rules: No limit on a first day says its cap
+PASS share-rules: and the result says it (It opens up to 50 times, until Oct 26, 9:00 PM. Then the link ends.)
+PASS share-rules: from the second day: When I stop it
+PASS share-rules: No limit means no count
+PASS share-rules: Until a time (Anyone with the link can open it until Oct 26, 9:00 PM.)
+PASS share-rules: the row says Until {date}
+PASS share-rules: a link that never ends can't take the file with it: the switch goes
+PASS share-rules: When I stop it says where: this file's menu
+PASS share-rules: the Public link, and where to stop it
+PASS share-rules: the row says Public link
+PASS share-rules: no text in the share dialog reads null, in the 14 states this flow saw ([])
+PASS share-rules: no CSP or Trusted Types violation ([])
+--- share-stop Stop sharing where people look (B): the row menu ends a file's links in one click (the toast says a stopped link can't come back, no Undo); the result has its own Stop sharing; the Links tab says where
+PASS share-stop: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-stop: a file without a link has no Stop sharing (['share', 'once', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS share-stop: the result: Stop sharing, and where else it lives ("Stop it any time, here or from this file's menu.Stop sharing")
+PASS share-stop: every control in the result has a name
+PASS share-stop: the row wears its link
+PASS share-stop: the menu: Share, Copy a once link, Stop sharing (['share', 'once', 'stop-share', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS share-stop: one click; the toast says a stopped link can't come back, and offers no Undo ("Stopped sharing. The link can't open it now.A stopped link can't come back. To share again, make a new link.")
+PASS share-stop: the row says the link ended; the file stays
+PASS share-stop: the link no longer opens (revoked)
+PASS share-stop: Stop sharing in the result: the link ends, the dialog closes
+PASS share-stop: that link no longer opens either (revoked)
+PASS share-stop: the Links tab: When you stop it, from this file's menu; Stop sharing ("Public link0 so far · When you stop it, from this file's menuCopyStop sharing")
+PASS share-stop: no CSP or Trusted Types violation ([])
+--- share-word-then-delete A secret word, and Delete it from my drive after (step 8): the word box; a Once link that takes the file with it (C42)
+PASS share-word-then-delete: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-word-then-delete: turning the word on fills in four words from the list (engine-cherub-corn-merry)
+PASS share-word-then-delete: a link with a word carries only its half of the key (#2)
+PASS share-word-then-delete: the word box, and keep them apart
+PASS share-word-then-delete: the row says Secret word
+PASS share-word-then-delete: the link alone asks for the word (password)
+PASS share-word-then-delete: the word opens it
+PASS share-word-then-delete: and it is the file
+PASS share-word-then-delete: Delete it from my drive after: on
+PASS share-word-then-delete: the result says the file leaves too (C42)
+PASS share-word-then-delete: the row shows when it leaves (the Leaves badge)
+PASS share-word-then-delete: the stranger opens it once
+PASS share-word-then-delete: after its one open the file left the drive (['word.txt'])
+PASS share-word-then-delete: no CSP or Trusted Types violation ([])
+--- share-send-tari Send by Tari (step 8): the address, its safety code, the C8 line, What the chain shows; sent; kind 4; the Links tab says Sent by Tari
+PASS share-send-tari: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-send-tari: this flow's server has features.folders on (the real folder API, no fake)
+PASS share-send-tari: a wrong address is explained and Send waits
+PASS share-send-tari: their safety code: twelve symbols to compare
+PASS share-send-tari: the C8 line says who sends it
+PASS share-send-tari: What the chain shows (C9-d)
+PASS share-send-tari: They use another Ootle wallet: off by default (kind 3)
+PASS share-send-tari: every control named ([])
+PASS share-send-tari: Sent
+PASS share-send-tari: the send has a transaction id
+PASS share-send-tari: where it shows up
+PASS share-send-tari: the Links tab says Sent by Tari
+PASS share-send-tari: the row wears the Tari badge: Sent by Tari
+PASS share-send-tari: kind 4 on
+PASS share-send-tari: Sent for another wallet
+PASS share-send-tari: kind 4: their view key opens it
+PASS share-send-tari: no CSP or Trusted Types violation ([])
+--- received-list Received (step 10): Tari arrivals, By Tari, sender hidden; open one here, Save to my drive; the drop link; the chain offline
+PASS received-list: this flow's server has features.folders on (the real folder API, no fake)
+PASS received-list: this flow's server has features.folders on (the real folder API, no fake)
+PASS received-list: a drive sends a file by Tari to another drive
+PASS received-list: the row: a locked file, By Tari, sender hidden (A locked fileBy Tari, sender hidden· 1 second agoNewBy Tari, sender hidden1 seco)
+PASS received-list: no sender address anywhere on the row
+PASS received-list: New, and it came by Tari
+PASS received-list: the scan line says this browser checked the chain
+PASS received-list: it opens here, in the drive
+PASS received-list: the row says In my drive
+PASS received-list: Save to my drive: it is the drive's own file now, locked again in this browser
+PASS received-list: Make my drop link: a link anyone can leave a file at
+PASS received-list: Copy puts the drop link on the clipboard
+PASS received-list: a purchase kept on this device: what was paid, with test money, and Open (Something you boughtYou paid 0.1 tTARI· 1 second agoNewYou paid 0.1 tTARITest money1 secon)
+PASS received-list: offline: the chain can't be reached, and the drop link still works
+PASS received-list: no horizontal scroll in Received at 390
+PASS received-list: no CSP or Trusted Types violation ([])
+--- folder-zip A folder link (step 10): one visit, the names opened here, Save one, Download all as a ZIP that Python's zipfile checks
+PASS folder-zip: this flow's server has features.folders on (the real folder API, no fake)
+PASS folder-zip: a folder says everyone sees all its files
+PASS folder-zip: Once on a folder is one visit of {ticket_min} minutes; a folder's files stay in the drive (no Delete it after)
+PASS folder-zip: the result says what a visit is
+PASS folder-zip: the folder card wears its rule
+PASS folder-zip: a folder link's first screen (ready)
+PASS folder-zip: a folder link takes the drive's look
+PASS folder-zip: what it is, before anything is used (Someone shared a folder with you.One visit of 30 minutes. Then the link ends.The link works until Oct 26, 9:00 PM.6 thin)
+PASS folder-zip: folders first, then files, names opened in this browser (['Day one', 'Later', 'map.txt', 'photo-gps.jpg', 'report.dat'])
+PASS folder-zip: the visit's countdown
+PASS folder-zip: a Once folder: this was its open
+PASS folder-zip: no name in any request
+PASS folder-zip: breadcrumbs inside the folder (TripDay one)
+PASS folder-zip: Save one file: it is the file
+PASS folder-zip: Download all gives one file
+PASS folder-zip: Python's zipfile: every CRC good, the files byte for byte, the empty folder kept (['Day one/notes.txt', 'map.txt', 'photo-gps.jpg', 'report.dat'], ['Later/'], None)
+PASS folder-zip: the link ended with its one visit (burned)
+PASS folder-zip: the folder and its files stay in the drive
+PASS folder-zip: no CSP or Trusted Types violation ([])
+--- folder-viewer The folder viewer on a phone (step 10): a few visits, one by one beyond zip_max_bytes_phone, a picture opens here; the visit ends
+PASS folder-viewer: this flow's server has features.folders on (the real folder API, no fake)
+PASS folder-viewer: a folder says everyone sees all its files
+PASS folder-viewer: Once on a folder is one visit of {ticket_min} minutes; a folder's files stay in the drive (no Delete it after)
+PASS folder-viewer: the result says what a visit is
+PASS folder-viewer: the phone's first screen
+PASS folder-viewer: A few times on a folder: visits
+PASS folder-viewer: no horizontal scroll at 390 (ready)
+PASS folder-viewer: a phone beyond zip_max_bytes_phone: one by one, no Download all
+PASS folder-viewer: visits left after this one
+PASS folder-viewer: no horizontal scroll at 390 (open)
+PASS folder-viewer: a picture opens here, with Download
+PASS folder-viewer: the countdown counts down (This visit ends in a minute.)
+PASS folder-viewer: when the visit ends it says so, and Save stops
+PASS folder-viewer: no CSP or Trusted Types violation ([])
+--- received-folder A folder sent by Tari (steps 8 and 10): it arrives as A locked folder, opens here as a visit, and Save to my drive locks the whole tree again as the drive's own
+PASS received-folder: this flow's server has features.folders on (the real folder API, no fake)
+PASS received-folder: this flow's server has features.folders on (the real folder API, no fake)
+PASS received-folder: a folder goes by Tari like a file
+PASS received-folder: the folder card wears Sent by Tari
+PASS received-folder: it arrives as a locked folder, sender hidden (A locked folderBy Tari, sender hidden· nowNewBy Tari, sender hiddennowNewOpen)
+PASS received-folder: it opens here as a visit, names opened in this browser (['Day one', 'Later', 'map.txt', 'photo-gps.jpg', 'report.dat'])
+PASS received-folder: with its visit and Download all
+PASS received-folder: Save to my drive: the folder and its folders are the drive's own now (['Day one', 'Later', 'map.txt', 'photo-gps.jpg', 'report.dat'])
+PASS received-folder: the nested file came along
+PASS received-folder: no CSP or Trusted Types violation ([])
+--- share-then-delete-race The judge's step 3 under a race: a judge-pass drive in direct mode, CPU 4×; its sponsor grant answered 0, 200, 500 or 1500 ms after the share dialog opens (the view drawn again then) and an index reload between the switch and Make link; Delete it from my drive after reaches the server every time and the file leaves after its one open
+PASS share-then-delete-race: 0 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1793070000)
+PASS share-then-delete-race: 0 ms: the result says the file leaves too
+PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
+PASS share-then-delete-race: 0 ms: the link opens once
+PASS share-then-delete-race: 0 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-0.txt', 'notes.txt'])
+PASS share-then-delete-race: 200 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1793070000)
+PASS share-then-delete-race: 200 ms: the result says the file leaves too
+PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
+PASS share-then-delete-race: 200 ms: the link opens once
+PASS share-then-delete-race: 200 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-200.txt', 'notes.txt'])
+PASS share-then-delete-race: 500 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1793070000)
+PASS share-then-delete-race: 500 ms: the result says the file leaves too
+PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
+PASS share-then-delete-race: 500 ms: the link opens once
+PASS share-then-delete-race: 500 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-500.txt', 'notes.txt'])
+PASS share-then-delete-race: 1500 ms: the switch still on before Make link (true), then_delete sent (True), the file set to leave (1793070000)
+PASS share-then-delete-race: 1500 ms: the result says the file leaves too
+PASS share-then-delete-race: no text in the share dialog reads null, in the 3 states this flow saw ([])
+PASS share-then-delete-race: 1500 ms: the link opens once
+PASS share-then-delete-race: 1500 ms: after its one open minutes.txt left the drive (['agenda.txt', 'late-1500.txt', 'notes.txt'])
+PASS share-then-delete-race: no CSP or Trusted Types violation ([])
+--- drive-primary Site v4: Tari's lime on the one next step of each state (empty drive, files, one picked, the share dialog's steps, the key, a new folder, Delete it after in red), the picked row on the lime tint, one sentence a line in the app's paragraphs
+PASS drive-primary: no drive yet, a phone: one lime action, drive-make (['drive-make'])
+PASS drive-primary: no drive yet, a phone: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: this flow's server has features.folders on (the real folder API, no fake)
+PASS drive-primary: the empty drive: one lime action, empty-upload-dir (['empty-upload-dir'])
+PASS drive-primary: the empty drive: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: the empty drive: New stays the white button
+PASS drive-primary: the white New shows the focus ring on keyboard focus
+PASS drive-primary: a drive with files: one lime action, new-button (['new-button'])
+PASS drive-primary: a drive with files: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: the lime New keeps its edge beside the focus ring (rgb(89, 128, 11) 0px 0px 0px 1px inset, oklab(0.708 0 0 / 0.5) 0px 0px 0px 3px)
+PASS drive-primary: one file picked: one lime action, sel-share (['sel-share'])
+PASS drive-primary: one file picked: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: the picked row sits on the lime tint (rgb(244, 255, 230))
+PASS drive-primary: two picked: no Share (it shares one file), New stays white
+PASS drive-primary: the share dialog: who: one lime action, share-next (['share-next'])
+PASS drive-primary: the share dialog: who: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: the share dialog: how many times: one lime action, share-make (['share-make'])
+PASS drive-primary: the share dialog: how many times: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: the share dialog: the link: one lime action, share-copy (['share-copy'])
+PASS drive-primary: the share dialog: the link: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: Delete it after: its button is red, never lime
+PASS drive-primary: the new folder dialog: one lime action, folder-create (['folder-create'])
+PASS drive-primary: the new folder dialog: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: Save my key: one lime action, key-save-file (['key-save-file'])
+PASS drive-primary: Save my key: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: dark: the same one lime New
+PASS drive-primary: this flow's server has features.folders on (the real folder API, no fake)
+PASS drive-primary: the empty drive, a phone: one lime action, empty-upload (['empty-upload'])
+PASS drive-primary: the empty drive, a phone: every sentence of a paragraph starts on its own line ([])
+PASS drive-primary: the white floating New shows the focus ring on keyboard focus
+PASS drive-primary: a phone with files: the floating New is the lime (['New'])
+PASS drive-primary: no CSP or Trusted Types violation ([])
+--- drive-v3 Drive v3: the start screen's open box (AVIF, on v3's gunmetal card in light, on the void in dark), the void and gunmetal panels, frosted glass on the raised surfaces in dark only, v3's chip on the badges, Tari's violet only on Tari, the site's #666666 secondary text in light, the frosted header and the mark's frosted tile
+PASS drive-v3: the start screen shows the home's open box, from its AVIF (http://127.0.0.1:58537/site/media/v3/hero-480.avif)
+PASS drive-v3: the picture is decoration (aria-hidden; the words say it all)
+PASS drive-v3: light: the open box on v3's gunmetal card, drawn with lighten ({'background-image': 'radial-gradient(130% 95% at 50% 28%, rgb(43, 47, 53) 0%, rgb(23, 25, 28) 55%, rgb(10, 10, 10) 100%)'}, {'mix-blend-mode': 'lighten'})
+PASS drive-v3: dark: on the void itself, no card ({'background-image': 'none'}, {'mix-blend-mode': 'normal'})
+PASS drive-v3: a computer: the picture sits beside the words, inside the first screen
+PASS drive-v3: no sideways scroll
+PASS drive-v3: this flow's server has features.folders on (the real folder API, no fake)
+PASS drive-v3: dark: the black void, #0A0A0A ({'background-color': 'rgb(10, 10, 10)'})
+PASS drive-v3: dark: the rail is the gunmetal panel, #101113 ({'background-color': 'rgb(16, 17, 19)'})
+PASS drive-v3: dark: the file table is frosted glass on gunmetal, its top edge lit ({'background-image': 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.016))', 'border-top-color': 'rgba(255, 255, 255, 41)', 'border-left-color': 'rgba(255, 255, 255, 22)', 'background-color': 'rgb(19, 20, 23)'})
+PASS drive-v3: dark: the key reminder is glass too (linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 25)
+PASS drive-v3: dark: a rule badge is v3's chip, a white wash (rgba(255, 255, 255, 0.07))
+PASS drive-v3: dark: the mark's ink tile is a frosted tile ({'background-color': 'rgb(10, 10, 10)', 'box-shadow': 'rgba(255, 255, 255, 0.09) 0px 0px 0px 1px inset, rgba(255, 255, 255, 0.18) 0px 1px 0px 0px inset'})
+PASS drive-v3: the header is frosted ({'backdrop-filter': 'blur(14px) saturate(1.3)'})
+PASS drive-v3: light: plain cards, as v3's light mode ({'background-image': 'none', 'border-top-color': 'rgb(229, 229, 229)', 'border-left-color': 'rgb(229, 229, 229)'})
+PASS drive-v3: light: secondary text is the site's #666666 (rgb(102, 102, 102))
+PASS drive-v3: light: the kit's lime box (#ACFF00) on its ink tile (lime alone on white is 1.23:1) ({'background-color': 'rgb(10, 10, 10)', 'color': 'rgb(172, 255, 0)'})
+PASS drive-v3: violet text only on Tari things ([])
+PASS drive-v3: no CSP or Trusted Types violation ([])
+--- share-pay Sell a file (step 15): Someone who pays you, the price chips, the name switch, C35 the first time; the pay link with C34; Getting ready, then Pay with its count; Stop selling and Sell again
+PASS share-pay: Who can open it? adds Someone who pays you when pay to open is on (['link', 'tari', 'pay'])
+PASS share-pay: three price chips from /config, with the number (['100000', '250000', '500000'])
+PASS share-pay: the seller's C33 line
+PASS share-pay: Show the name before they pay: on by default
+PASS share-pay: C35, the first time this drive sells
+PASS share-pay: every control has a name ([])
+PASS share-pay: Make pay link makes it ()
+PASS share-pay: a /p/ link with half of the key after the # (kind 5: 2CSELBa2XKogzKQ#5VB3e4i7FnODqzNH0_jyQd-u9zyDhFerrwY42cKElECg)
+PASS share-pay: the sales address and its sealed view key went to our server once (PUT /me/sales, 125 bytes)
+PASS share-pay: the server half (32 bytes) is not the link's half, and the link doesn't carry it
+PASS share-pay: the teaser is sealed and padded to 256 bytes
+PASS share-pay: the rule in one sentence (It opens after they pay you 0.25 tTARI.)
+PASS share-pay: C34, the seller's form, with its boundary
+PASS share-pay: the row says Getting ready until our payment checker has the sales key
+PASS share-pay: then Pay 0.25 tTARI, 0 paid (['pay', 'Pay 0.25 tTARI', 'notes.txtPay 0.25 tTARI0 paid · When you stop itPay 0.25 tTARI0 paidWhen you stop it50 B'])
+PASS share-pay: a second pay link: the sales address isn't sent again
+PASS share-pay: one paid link per item: Someone who pays you is gone from its dialog
+PASS share-pay: Stop selling: PATCH /s/{id} {paused: true}
+PASS share-pay: the row says Not selling
+PASS share-pay: Sell again
+PASS share-pay: no CSP or Trusted Types violation ([])
+--- pay-page-states The buyer page (steps 15 and 16): teaser, price and fee, C39, C37, one primary; the address only after a claim; test money to Unlocked and the open; resume; the owner's check; Pay from my drive; paused, gone, no key
+PASS pay-page-states: a stranger's first screen: waiting, nothing claimed (wait)
+PASS pay-page-states: the title, and the name the owner allowed (read from the teaser with the link's half)
+PASS pay-page-states: the price and the public fee ('0.1tTARI', 'Plus a network fee of 0.03 tTARI. The fee is public.')
+PASS pay-page-states: what you get (C39: Paying lets you open it 3 times until Oct 26. Anyone who opens a file can pass it on. The owner can still delete it.)
+PASS pay-page-states: no take-backs, before Pay (C37)
+PASS pay-page-states: one primary: Pay with test money
+PASS pay-page-states: no Pay from my drive without a drive here
+PASS pay-page-states: Another Ootle wallet shows no address before a claim exists
+PASS pay-page-states: the content stays locked
+PASS pay-page-states: names on every control; no CSP violation
+PASS pay-page-states: a browser without a drive: the top bar says Make your own drive
+PASS pay-page-states: Another Ootle wallet: the address just for this claim (the owner's sales address with the claim's reference), after the claim
+PASS pay-page-states: the claim asked for its proof of work (claim)
+PASS pay-page-states: C38 under the other wallet
+PASS pay-page-states: Pay with test money starts the steps
+PASS pay-page-states: test money pays the claim that exists
+PASS pay-page-states: released: the page has both halves
+PASS pay-page-states: test money skips the owner's check (['wait:done', 'seen:done', 'chain:done', 'open:done'])
+PASS pay-page-states: 3 opens left until Oct 26.
+PASS pay-page-states: what the chain shows, with test money's grouping (C36)
+PASS pay-page-states: Open it: the real open, with the claim's token, decrypts here
+PASS pay-page-states: one open used (2 opens left until Oct 26.)
+PASS pay-page-states: a reload resumes the claim kept in this browser
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: Payment seen: the steps take over
+PASS pay-page-states: paid from another wallet: the owner's drive checks it
+PASS pay-page-states: the owner step, and C38 (['wait:done', 'seen:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-page-states: no sideways scroll at 390
+PASS pay-page-states: after the owner's drive confirms, it opens
+PASS pay-page-states: a closed payment window: Start again
+PASS pay-page-states: Start again: a fresh page, no old address
+PASS pay-page-states: Not selling: no Pay, and why
+PASS pay-page-states: a link without its half of the key says so
+PASS pay-page-states: an ended paid link says it ended
+PASS pay-page-states: a funded drive here: Pay from my drive, with C38 under it
+PASS pay-page-states: Pay from my drive: this browser built and sent the payment; it waits for the owner's check
+PASS pay-page-states: no CSP violation
+PASS pay-page-states: no CSP or Trusted Types violation ([])
+--- pay-drive Pay from my drive (A): the click shows the steps at once (Building the payment from your drive…), then Sent and Seen on the chain, then Waiting for the owner's check, then Ready to open; a refused payment spent nothing and says so where the button was, with Try again; a drive short of the price and the fee says why there is no button
+PASS pay-drive: a drive short of the price and the fee: no Pay from my drive, and why ('Your drive here has 0.05 tTARI. Paying from it takes 0.13 tTARI with the fee.')
+PASS pay-drive: no sideways scroll at 390
+PASS pay-drive: a browser with a drive: the pay page's top bar says Open my drive, not Make your own drive
+PASS pay-drive: the click shows the payment's steps at once (10 ms, at most 300)
+PASS pay-drive: step one turns: Building the payment from your drive…; the steps take the focus ({'steps': ['build:now:Building the payment from your drive…', 'chain:todo:Seen on the chain', "owner:todo:Waiting for the owner's check", 'open:todo:Ready to open'], 'status': 'Your drive is paying. Keep this page open.', 'focus': 'pay-claim-step'})
+PASS pay-drive: refused: an alert in a plain sentence, with Try again ("Your drive didn't pay.The Ootle refused that transaction. Nothing was spent.Try again")
+PASS pay-drive: the alert is on screen
+PASS pay-drive: the claim forgets the drive: nothing was paid, so a reload offers the payment again
+PASS pay-drive: Try again shows the steps at once too
+PASS pay-drive: sent: Sent from your drive, then Seen on the chain turns (['build:done', 'chain:now', 'owner:todo', 'open:todo'], 'Sent from your drive. Now we look for it on the chain.')
+PASS pay-drive: seen on the chain and paid: it waits for the owner's check
+PASS pay-drive: Waiting for the owner's check, with C38 (['build:done', 'chain:done', 'owner:now', 'open:todo'])
+PASS pay-drive: Try again paid the same claim (claims 1, transactions 2)
+PASS pay-drive: Ready to open (['build:done', 'chain:done', 'owner:done', 'open:done'])
+PASS pay-drive: no CSP violation; every control named
+PASS pay-drive: no CSP or Trusted Types violation ([])
+--- sell-stop Stop selling where people look (B): the pay link's result has Stop selling, then Sell again; the row menu's Stop selling (PATCH paused) with Undo in its toast, and Sell again; the buyer page says it stopped
+PASS sell-stop: the pay link's result: Stop selling, and where else it lives ("It sells until you stop it, here or from this file's menu.Stop selling")
+PASS sell-stop: Stop selling in the result: one click, the button flips to Sell again
+PASS sell-stop: Sell again in the result
+PASS sell-stop: the row sells
+PASS sell-stop: the row menu of a paid file: Stop selling (['share', 'once', 'stop-sell', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS sell-stop: the row says Not selling
+PASS sell-stop: Stop selling from the menu: one click, a toast with Undo
+PASS sell-stop: the buyer page: not selling, no Pay
+PASS sell-stop: Undo: it sells again
+PASS sell-stop: stopped again
+PASS sell-stop: a paused link's menu: Sell again (['share', 'once', 'sell-again', 'activity', 'download', 'rename', 'move', 'later', 'trash'])
+PASS sell-stop: Sell again from the menu
+PASS sell-stop: no CSP or Trusted Types violation ([])
+--- owner-check The owner check (step 16, R1): the seller's drive finds its sales outputs, compares each one-time key with its own, confirms the genuine one and voids the one the payer kept; Received lists both
+PASS owner-check: the drive kept what it confirmed
+PASS owner-check: the genuine payment: its one-time key is ours, confirmed ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_58088c3450cfd7ce026b6423ef529c6338cc5623d36fa424e57f8c6bb5e84000', 'spendable': True})
+PASS owner-check: the payer kept control: the claim is voided ({'utxo_id': 'utxo_0101010101010101010101010101010101010101010101010101010101010101_96b577d8cbc9d0e8f42576d91e0c51a7f8ed1524f6668b8119ab53e272192141', 'spendable': False})
+PASS owner-check: the release gate moved: one to release, one void
+PASS owner-check: each output's one-time key was read from the indexer
+PASS owner-check: a claim our server doesn't wait on yet (not paid) gets no answer
+PASS owner-check: Received lists the payments with their check (['bad', 'ok', 'ok'])
+PASS owner-check: in words
+PASS owner-check: the next opening has nothing left to answer
+PASS owner-check: once that claim is paid, the next opening answers it
+PASS owner-check: a payment made while Received is open shows up there without a reload
+PASS owner-check: no CSP or Trusted Types violation ([])
+--- ux-drop The drop page's run (ux-feedback-1): each step lit in order with its clock; a sweep while a chunk travels; the relay's countdown fills the bar; the chain's line; a failed delivery says what to retry; Delivered with the receipt, one lime; /verify/tx's summary over Details
+PASS ux-drop: a drop link asks nothing before it exists
+PASS ux-drop: the drop page is ready
+PASS ux-drop: picked: Locking it in your browser is done, Uploading lit
+PASS ux-drop: four steps, in people's words
+PASS ux-drop: once the chunk leaves, the upload step says how big it is ('1.3 KB')
+PASS ux-drop: a step past two seconds shows its clock ('0:02')
+PASS ux-drop: while the chunk travels, the bar sweeps (it never stands still)
+PASS ux-drop: the lit step's dot turns
+PASS ux-drop: the photo's chip and Stop stay with the steps
+PASS ux-drop: uploaded: Waiting for the Tari chain lit
+PASS ux-drop: the relay's own time to send, counted down ('Our relay sends it in about 22 seconds.')
+PASS ux-drop: the bar fills toward the relay's moment (0 → 8)
+PASS ux-drop: on its way: the chain's line, the bar sweeps
+PASS ux-drop: a failed delivery
+PASS ux-drop: the step that failed is marked; the ones before stay done
+PASS ux-drop: it says what failed, that the file is safe, and offers Try again ("The delivery didn't go through. Your file is stored. Try again.Try again")
+PASS ux-drop: Try again: Delivered
+PASS ux-drop: the steps lit in their order (['lock', 'upload', 'chain', 'chain'])
+PASS ux-drop: the done moment: Delivered., focused for a screen reader
+PASS ux-drop: what happened, in people's words ('Your photo is in their drive. Only that drive can open it.')
+PASS ux-drop: the transaction is a Receipt link, its id shortened
+PASS ux-drop: the chain's line, in plain words
+PASS ux-drop: the photo's chip and Leave another
+PASS ux-drop: one lime on the page: the header's Open your drive (['Open your drive'])
+PASS ux-drop: the moment sits on one axis, not floating ([0, 0, 0.0, 0, 0])
+PASS ux-drop: after its 1.2 s the moment rests: the words in full, the file inside the box
+PASS ux-drop: a slow read says what it waits for
+PASS ux-drop: the status first, the epoch in one phrase ('Confirmed.The Tari chain committed it in epoch 12000, a tick of its clock.')
+PASS ux-drop: what stays hidden: C36's registered sentence only when this transaction's own outputs show it (True, 'What stays hiddenThe chain shows a payment with a hidden amount and a hidden own')
+PASS ux-drop: what this proves, in two lines
+PASS ux-drop: a computer opens Details and the check
+PASS ux-drop: every field of the record is still there
+PASS ux-drop: no CSP or Trusted Types violation ([])
+--- ux-drop-phone The drop page on a phone with reduced motion: Delivered at once and still; /verify/tx folds its record; nothing sideways
+PASS ux-drop-phone: a drop link asks nothing before it exists
+PASS ux-drop-phone: the drop page is ready
+PASS ux-drop-phone: the steps fit a phone
+PASS ux-drop-phone: Delivered
+PASS ux-drop-phone: reduced motion: the moment is there at once, nothing flies
+PASS ux-drop-phone: the moment starts in view
+PASS ux-drop-phone: the done moment fits a phone
+PASS ux-drop-phone: a phone keeps Details and the check folded
+PASS ux-drop-phone: the summary first, nothing sideways
+PASS ux-drop-phone: Details opens to the full record
+PASS ux-drop-phone: no CSP or Trusted Types violation ([])
+--- ux-drive-waits The drive's waits (ux-feedback-1): an upload row sweeps while its chunk travels; Save key file turns and says so
+PASS ux-drive-waits: this flow's server has features.folders on (the real folder API, no fake)
+PASS ux-drive-waits: a chunk on its way: the row's bar sweeps
+PASS ux-drive-waits: the row says Uploading
+PASS ux-drive-waits: done: the sweep stops
+PASS ux-drive-waits: while the key file locks, the button turns and says so; then it is back (['Locking the key file…', 'Save key file'])
+PASS ux-drive-waits: no CSP or Trusted Types violation ([])
+--- ux-widget The home's quick share while a chunk travels: a bar moves under Locking it up
+PASS ux-widget: the busy line has a bar that moves
+PASS ux-widget: released: the link
+PASS ux-widget: no CSP or Trusted Types violation ([])
+--- preview-drive The preview in the drive: every hostile fixture by its name; the bytes pick the kind; nothing runs; Esc, focus back on the name, arrows through the list; Download saves the same bytes; phones and both themes
+PASS preview-drive: drive: an empty file is refused before upload, so it never reaches a preview
+PASS preview-drive: drive: big.txt is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: drive: big.txt: one text node in the <pre>
+PASS preview-drive: drive: big.txt shows the first 256 KB and says so
+PASS preview-drive: drive: big.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: big.txt: Download is there
+PASS preview-drive: drive: big.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: drive: notes.md: one text node in the <pre>
+PASS preview-drive: drive: notes.md: its markup and links read as characters
+PASS preview-drive: drive: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: notes.md: Download is there
+PASS preview-drive: drive: notes.md: Esc closes and focus is back on its name
+PASS preview-drive: drive: page.txt is shown as its bytes say (none markup), not as its name says (none markup)
+PASS preview-drive: drive: page.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: page.txt: Download is there
+PASS preview-drive: drive: page.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-drive: drive: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: png-named.svg: Download is there
+PASS preview-drive: drive: png-named.svg: Esc closes and focus is back on its name
+PASS preview-drive: drive: polyglot.htm is shown as its bytes say (image image/gif), not as its name says (image image/gif)
+PASS preview-drive: drive: polyglot.htm: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: polyglot.htm: Download is there
+PASS preview-drive: drive: polyglot.htm: Esc closes and focus is back on its name
+PASS preview-drive: drive: script.svg is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-drive: drive: script.svg: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-drive: drive: script.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: script.svg: Download is there
+PASS preview-drive: drive: script.svg: Esc closes and focus is back on its name
+PASS preview-drive: drive: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-drive: drive: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-drive: drive: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: svg-named.png: Download is there
+PASS preview-drive: drive: svg-named.png: Esc closes and focus is back on its name
+PASS preview-drive: drive: tiny.pdf is shown as its bytes say (none pdf), not as its name says (none pdf)
+PASS preview-drive: drive: tiny.pdf: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: tiny.pdf: Download is there
+PASS preview-drive: drive: tiny.pdf: Esc closes and focus is back on its name
+PASS preview-drive: drive: utf16.txt is shown as its bytes say (none binary), not as its name says (none binary)
+PASS preview-drive: drive: utf16.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: drive: utf16.txt: Download is there
+PASS preview-drive: drive: utf16.txt: Esc closes and focus is back on its name
+PASS preview-drive: drive: nothing asked for /__canary/ ([])
+PASS preview-drive: drive: no console error or exception ([])
+PASS preview-drive: ArrowRight: the next file in the list
+PASS preview-drive: ArrowLeft past the first: the last one
+PASS preview-drive: Tab stays inside the lightbox ([True, True, True, True, True, True, True, True, True, True, True, True])
+PASS preview-drive: Download in the lightbox saves big.txt, the same bytes
+PASS preview-drive: Download in the lightbox saves polyglot.htm, the same bytes
+PASS preview-drive: Download in the lightbox saves page.txt, the same bytes
+PASS preview-drive: Download in the lightbox saves svg-named.png, the same bytes
+PASS preview-drive: Download never navigates or opens a window ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0)
+PASS preview-drive: phone: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-drive: phone: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: phone: png-named.svg: Download is there
+PASS preview-drive: phone: Download, Close and the stage fit at 390, 44 px targets, no sideways scroll
+PASS preview-drive: phone: a swipe to the left on the picture shows the next file (notes.md)
+PASS preview-drive: phone: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-drive: phone: notes.md: one text node in the <pre>
+PASS preview-drive: phone: notes.md: its markup and links read as characters
+PASS preview-drive: phone: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: phone: notes.md: Download is there
+PASS preview-drive: phone: page.txt is shown as its bytes say (none markup), not as its name says (none markup)
+PASS preview-drive: phone: page.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/drive'}, 0 navigations)
+PASS preview-drive: phone: page.txt: Download is there
+PASS preview-drive: phone: every control named, no console error ([])
+PASS preview-drive: no CSP or Trusted Types violation ([])
+--- preview-folder The preview in a folder link's visit (the folder viewer the paid folders use too): every hostile fixture; arrows through the folder; nothing runs; Download
+PASS preview-folder: this flow's server has features.folders on (the real folder API, no fake)
+PASS preview-folder: a stranger's first screen (ready)
+PASS preview-folder: the visit lists every file (['big.txt', 'notes.md', 'page.txt', 'png-named.svg', 'polyglot.htm', 'script.svg', 'svg-named.png', 'tiny.pdf', 'utf16.txt'])
+PASS preview-folder: folder link: big.txt is shown as its bytes say (text ), not as its name says (text )
+PASS preview-folder: folder link: big.txt: one text node in the <pre>
+PASS preview-folder: folder link: big.txt shows the first 256 KB and says so
+PASS preview-folder: folder link: big.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: big.txt: Download is there
+PASS preview-folder: folder link: big.txt: focus back on its name
+PASS preview-folder: folder link: notes.md is shown as its bytes say (text ), not as its name says (text )
+PASS preview-folder: folder link: notes.md: one text node in the <pre>
+PASS preview-folder: folder link: notes.md: its markup and links read as characters
+PASS preview-folder: folder link: notes.md: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: notes.md: Download is there
+PASS preview-folder: folder link: notes.md: focus back on its name
+PASS preview-folder: folder link: page.txt is shown as its bytes say (none markup), not as its name says (none markup)
+PASS preview-folder: folder link: page.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: page.txt: Download is there
+PASS preview-folder: folder link: page.txt: focus back on its name
+PASS preview-folder: folder link: png-named.svg is shown as its bytes say (image image/png), not as its name says (image image/png)
+PASS preview-folder: folder link: png-named.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: png-named.svg: Download is there
+PASS preview-folder: folder link: png-named.svg: focus back on its name
+PASS preview-folder: folder link: polyglot.htm is shown as its bytes say (image image/gif), not as its name says (image image/gif)
+PASS preview-folder: folder link: polyglot.htm: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: polyglot.htm: Download is there
+PASS preview-folder: folder link: polyglot.htm: focus back on its name
+PASS preview-folder: folder link: script.svg is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-folder: folder link: script.svg: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-folder: folder link: script.svg: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: script.svg: Download is there
+PASS preview-folder: folder link: script.svg: focus back on its name
+PASS preview-folder: folder link: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-folder: folder link: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-folder: folder link: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: svg-named.png: Download is there
+PASS preview-folder: folder link: svg-named.png: focus back on its name
+PASS preview-folder: folder link: tiny.pdf is shown as its bytes say (none pdf), not as its name says (none pdf)
+PASS preview-folder: folder link: tiny.pdf: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: tiny.pdf: Download is there
+PASS preview-folder: folder link: tiny.pdf: focus back on its name
+PASS preview-folder: folder link: utf16.txt is shown as its bytes say (none binary), not as its name says (none binary)
+PASS preview-folder: folder link: utf16.txt: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:58537/s/ukpCuBFiWEkVNMuBBb54WA'}, 0 navigations)
+PASS preview-folder: folder link: utf16.txt: Download is there
+PASS preview-folder: folder link: utf16.txt: focus back on its name
+PASS preview-folder: Next file: the next one in the folder
+PASS preview-folder: the arrows reach the SVG named as a picture: drawn, not run
+PASS preview-folder: Download in the visit saves the same bytes
+PASS preview-folder: folder link: nothing asked for /__canary/, no console error ([])
+PASS preview-folder: no CSP or Trusted Types violation ([])
+--- preview-pay The preview on a paid link (/p/): the SVG named as a picture, sold, paid with test money; Open it shows it drawn in a canvas, nothing runs; Esc, the name opens it again; Download; a phone
+PASS preview-pay: desktop: paid with test money, ready to open
+PASS preview-pay: /p/ on desktop: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-pay: /p/ on desktop: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-pay: /p/ on desktop: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:55019/p/rgabqqA8J7WXPyBFjF2img#5DYUVpnMx2K1hpsHiVB7stvTijOUKq19kwHeOvF9rutE'}, 0 navigations)
+PASS preview-pay: /p/ on desktop: svg-named.png: Download is there
+PASS preview-pay: desktop: Esc, and focus is on the file's name
+PASS preview-pay: desktop: Download saves the same bytes
+PASS preview-pay: /p/ on desktop: nothing asked for /__canary/, no console error, no navigation ([])
+PASS preview-pay: iphone: paid with test money, ready to open
+PASS preview-pay: /p/ on iphone: svg-named.png is shown as its bytes say (svg ), not as its name says (svg )
+PASS preview-pay: /p/ on iphone: svg-named.png: drawn into a canvas, no live SVG, script, frame or object
+PASS preview-pay: /p/ on iphone: svg-named.png: nothing ran, nothing stored, no window, no navigation ({'pwned': None, 'stored': None, 'opens': 0, 'href': 'http://127.0.0.1:55019/p/rgabqqA8J7WXPyBFjF2img#5DYUVpnMx2K1hpsHiVB7stvTijOUKq19kwHeOvF9rutE'}, 0 navigations)
+PASS preview-pay: /p/ on iphone: svg-named.png: Download is there
+PASS preview-pay: iphone: Esc, and focus is on the file's name
+PASS preview-pay: iphone: Download saves the same bytes
+PASS preview-pay: /p/ on iphone: nothing asked for /__canary/, no console error, no navigation ([])
+PASS preview-pay: no CSP or Trusted Types violation ([])
+
+UI PASS 940/940

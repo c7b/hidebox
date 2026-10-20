@@ -1,0 +1,6 @@
+lint exit 0
+copy exit 0
+core-browser exit 0
+core-jitless exit 0
+mutants done
+ui exit 0
