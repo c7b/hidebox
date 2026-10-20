@@ -12,8 +12,12 @@ python3 tools/verify-deploy.py https://hidebox.app <commit>   # 0 differences, o
 ```
 
 It rebuilds the site from that commit, downloads every file in the live manifest and compares them, and
-checks that the live SealLog runs `template/dist/seal_log.wasm` byte for byte. Python 3.11 or newer. The
-commit the site runs is in [`/api/v1/health`](https://hidebox.app/api/v1/health).
+checks that the live SealLog runs `template/dist/seal_log.wasm` byte for byte. Each text file is asked for
+again with `Accept-Encoding: gzip` and `br`, because that is what a browser gets (the release's precompressed
+copies), and what each answer decodes to must be the same file (br is decoded when `node` is on your PATH). The
+assets carry a hash of their content in their names (`site.b6680ac0f9.css`, kept a year by browsers), and the
+manifest lists both names. Python 3.11 or newer. The commit the site runs is in
+[`/api/v1/health`](https://hidebox.app/api/v1/health).
 
 ## Run the tests
 

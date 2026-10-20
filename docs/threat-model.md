@@ -254,8 +254,10 @@ That isn't "nobody ever sees your IP": the server sees it while you're connected
 
 Every build writes a manifest with the SHA-256 of every served file and its commit
 (`/.well-known/mutis-manifest.json`). `tools/verify-deploy.py <origin> <commit>` rebuilds from a clean
-checkout, downloads every file in the live manifest and prints any difference, and checks the live
-SealLog's template. Since SealLog went on, each release's manifest hash is notarized through it
+checkout, downloads every file in the live manifest (and each text file again as gzip and Brotli, decoded) and
+prints any difference, and checks the live SealLog's template. Assets have the hash of their content in their
+names and are cached a year (docs/review/perf-1.md): a page that revalidates names the new files after a release,
+and an old name can never be served new bytes. Since SealLog went on, each release's manifest hash is notarized through it
 (`/releases.json`); anyone can call `notarize`, so only events signed by the log's writer key count.
 The rebuild takes the deployment's public settings (`repo_url`, `security_drop`) from its `/api/v1/config`;
 verify-deploy refuses any that isn't a plain https URL as a difference, so a server can't make markup of

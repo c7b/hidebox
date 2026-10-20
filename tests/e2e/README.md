@@ -74,11 +74,12 @@ Against production (there is no staging; 12-integration §7.7):
 | `scenarios.py`, `scenarios_chain.py` | the §17.2 scenarios and E-J (the `/judges` script) |
 | `scenarios_drive.py` | the drive's (16-drive-design §12): E-08 (Make my drive, the key file, restore), E-26 (a folder and its restore), E-27 (a folder link, Once, its zip), E-28 (move into and out of a shared folder), E-31 (opens per hour; no IP, user agent or name in the database or backups). Each makes one drive: mind the pace below |
 | `apiclient.py` | a browserless API client with real proofs of work and synthetic ciphertext |
-| `test_headers.py` | D-01: HTTPS, exact headers, CSPs and caching per route, error pages through every route, HTTP→HTTPS 308 without a Server header, certificate, redirect hosts; `--local` runs it on the throwaway stack with a full build |
+| `test_headers.py` | D-01: HTTPS, exact headers, CSPs and caching per route, the fingerprinted names (a year, immutable) and the precompressed answers (br, gzip), error pages through every route, HTTP→HTTPS 308 without a Server header, certificate, redirect hosts; `--local` runs it on the throwaway stack with a full build |
 | `test_privileges.py` | D-03, D-11: `deploy/scripts/privilege-check.sh` as root, and a port check from outside |
 | `test_logs.py` | D-02: a scripted session over IPv6 and IPv4, forced 502s, then a root search of every log and of walletd's database and backups for its values; `--walletd-probe` makes one relay-shaped send through walletd and searches for its destination and memo |
 | `test_fonts.py` | 11-brand P-18: every served WOFF2 loads in Chromium without an OTS error |
 | `test_harness.py` | self-test of the driver against a small page on the server (run it after changing `cdp.py`) |
+| `perf_probe.py` | each page's first visit, repeat visit and visit after a release in Chromium on the throwaway stack, at 1440 and 390: bytes on the wire, requests that reach the network, 304s, cache hits, the pictures taken; `--ref` builds and serves another commit with its own Caddyfile, `--check` fails on an unfingerprinted asset, a hashed answer that isn't immutable, uncompressed text or a repeat visit that refetches ([docs/review/perf-1.md](../../docs/review/perf-1.md)) |
 | `smoke.py`, `headers_spec.py` | the deploy smoke test; the §14.2 header text, verbatim |
 | `localstack.py` | a throwaway `mutis-api --dev` behind the production Caddyfile, on the server as build, on its own loopback ports; never production |
 | `griefer.py` | E-23 on the local stack: forged `X-Real-IP` values straight to the API, slow uploads through Caddy; then E-J against the real site |

@@ -77,7 +77,7 @@ commit, and run the tests: [verify.md](verify.md).
 - **API:** `mutis-api`, Python 3.13 standard library only, behind Caddy. SQLite holds ids, hashes and counters; ciphertext sits on disk. It runs as its own user and can't reach the wallet.
 - **Chain worker:** `mutis-chain` runs relay sends, the UTXO mirror, payment proofs (official library in a Node 20 sidecar) and SealLog checkpoints, through the official `tari_ootle_walletd`.
 - **SealLog:** an Ootle template (Rust, compiled to WASM): a public Merkle log of stored-file hashes, exit receipts and release notarizations, checked in your browser at `/verify`.
-- **Release:** a per-route CSP, SRI on each page's top-level scripts and stylesheets, and a hash manifest of every served file, notarized on chain; `tools/verify-deploy.py` compares the live site with a commit.
+- **Release:** a per-route CSP, SRI on each page's top-level scripts and stylesheets, and a hash manifest of every served file, notarized on chain; `tools/verify-deploy.py` compares the live site with a commit. Assets carry a hash of their content in their names and are kept a year; text is served precompressed (Brotli and gzip).
 
 Nothing is installed from npm or pip. The one third-party piece, `ootle-wasm`, is pinned and hash-checked (see [NOTICE](../NOTICE)).
 More: [architecture.md](architecture.md) · [threat-model.md](threat-model.md) · [api.md](api.md).
