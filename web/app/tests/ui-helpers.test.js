@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { utf8 } from '../lib/bytes.js';
 import { h, scriptUrl, svg } from '../lib/dom.js';
-import { makePreview, previewKind } from '../lib/preview.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import { match } from '../lib/router.js';
 import { BRAND, formatBytes, t, useStrings } from '../lib/i18n.js';
@@ -34,23 +32,6 @@ export default [
     ok(String(scriptUrl('/app/lib/pow-worker.js')).endsWith('/app/lib/pow-worker.js'));
     await rejects(async () => scriptUrl('https://evil.example/app/x.js'), TypeError);
     await rejects(async () => scriptUrl('/shared/x.js'), TypeError);
-  })],
-  ['previews: exact allowlist; never SVG, HTML or PDF; text only through textContent', browserOnly(async () => {
-    eq(previewKind({ kind: 'file', type: 'image/png', size: 10 }), 'image');
-    eq(previewKind({ kind: 'file', type: 'IMAGE/JPEG; q=1', size: 10 }), 'image');
-    eq(previewKind({ kind: 'file', type: 'image/svg+xml', size: 10 }), null);
-    eq(previewKind({ kind: 'file', type: 'text/html', size: 10 }), null);
-    eq(previewKind({ kind: 'file', type: 'application/pdf', size: 10 }), null);
-    eq(previewKind({ kind: 'file', type: 'video/mp4', size: 300 * 1024 * 1024 }), null);
-    eq(previewKind({ kind: 'text', type: '', size: 10 }), 'text');
-    const p = makePreview([utf8('<script>alert(1)</script>')], { kind: 'text', type: 'text/plain', size: 25 });
-    eq(p.el.tagName, 'PRE');
-    eq(p.el.textContent, '<script>alert(1)</script>');
-    eq(p.el.children.length, 0);
-    const img = makePreview([new Uint8Array(4)], { kind: 'file', type: 'image/png', size: 4 }, { label: 'Decrypted photo' });
-    ok(img.el.src.startsWith('blob:') && img.el.alt === 'Decrypted photo');
-    img.revoke();
-    eq(makePreview([new Uint8Array(4)], { kind: 'file', type: 'image/svg+xml', size: 4 }), null);
   })],
   ['saved file names: path, reserved and control characters stripped; RTL override removed; fallback', () => {
     eq(sanitizeFileName('../../etc/passwd'), 'etcpasswd');

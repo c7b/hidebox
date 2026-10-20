@@ -124,7 +124,7 @@ def gz(paths):
     return sum(len(gzip.compress(open(p, "rb").read(), 9)) for p in paths)
 
 
-WIDGET = ["seal.js", "open.js", "filetype.js", "pow.js", "pow-worker.js", "preview.js", "download.js", "router.js", "i18n.js", "store.js"]
+WIDGET = ["seal.js", "open.js", "filetype.js", "pow.js", "pow-worker.js", "download.js", "router.js", "i18n.js", "store.js"]
 LAZY = ["exif.js", "password.js"]
 LOCKER_ONLY = ["api-locker.js", "idb.js", "identity.js", "session.js", "scan.js", "wallet.js", "drop.js", "courier.js"]
 BUDGET = 40 * 1024

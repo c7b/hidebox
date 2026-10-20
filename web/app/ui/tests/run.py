@@ -38,15 +38,17 @@ ROOT = os.path.abspath(os.path.join(APP, "..", ".."))
 
 TESTIDS = """drop-input drop-write drop-textarea drop-seal-text seal-progress exif-chip sealed-link copy-link who when
 views-input expiry-preset password-input password-mode apply-rules known-toggle known-panel delete-drop error-banner
-view-root view-password view-password-submit view-open view-text view-image view-video view-audio view-filename view-save
+view-root view-password view-password-submit view-open view-text view-image view-filename view-save
 view-save-anyway view-known view-views-left view-chain-saw locker-root locker-safety locker-address copy-address
 key-save-file key-pm-save key-saved-check key-later key-banner restore-text restore-submit forget-device delete-locker
 export-view-key view-key-value watch-mine quota-bar drop-create drop-label drop-link drop-copy drop-close dd-root dd-label
 dd-safety dd-input dd-tx dd-chain-link inbox-root inbox-item inbox-empty inbox-scan send-recipient send-safety send-kind
 send-submit send-status send-tx watch-address watch-viewkey watch-run watch-summary watch-row pack- invoice-address
 invoice-status pay-browser demo-pay pay-step tx-root tx-output tx-fee card-change card-send-address noise-canvas""".split()
-# P-15 (accepted in 12-integration §2): no copy button for the key, so `key-copy` is not built.
-WAIVED_TESTIDS = {"key-copy"}
+# P-15 (accepted in 12-integration §2): no copy button for the key, so `key-copy` is not built. `view-video` and
+# `view-audio` are not built either: sound and video are download only (docs/review/preview-1.md); `view-text` and
+# `view-image` are the preview's text and picture (ui/lightbox.js).
+WAIVED_TESTIDS = {"key-copy", "view-video", "view-audio"}
 
 # Key families the UI builds at run time (t(`prefix.${x}`)).
 DYNAMIC = {
@@ -113,11 +115,7 @@ def static_checks(r):
     unused = sorted(k for k in en if k not in used)
     r.check(not missing, f"every string the UI asks for exists ({missing[:8]})")
     r.check(not unused, f"no string in the dictionaries goes unused ({unused[:8]})")
-    # lib/preview.js sets view-text, view-image, view-video and view-audio as `view-${kind}`.
-    preview = open(os.path.join(APP, "lib", "preview.js"), encoding="utf-8").read()
     code = "".join(sources.values())
-    if "'data-testid': `view-${kind}`" in preview:
-        code += " 'view-text 'view-image 'view-video 'view-audio"
     absent = [i for i in TESTIDS if f"'{i}" not in code and f'"{i}' not in code and f"`{i}" not in code]
     r.check(not absent, f"every data-testid of spec §3.4.9 is in the UI ({len(TESTIDS)} ids; missing {absent})")
     # drive.html preloads drive.js's static import graph: the list is exactly that graph, so a phone on a slow
