@@ -931,6 +931,43 @@ def check_not_found(browser):
     return problems
 
 
+def check_fingerprinted_pages(browser):
+    """docs/review/perf-1.md: the tree tools/build.py makes (static_checks.built()), served as it is: every page at 1440
+    and 390, scrolled through, asks only for fingerprinted files and entry points (tools/assets.py), gets each one,
+    and logs no error and no CSP violation."""
+    import sys
+    import static_checks
+    dist, names, error = static_checks.built()
+    if error:
+        return [f"tools/build.py: {error}"]
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
+    import assets
+    problems, hashed, asked = [], set(names.values()), set()
+    with server("--dist", str(dist)) as origin:
+        for width, height, mobile in ((1440, 900, False), (390, 844, True)):
+            for path in ALL_PAGES:
+                page = browser.page(width, height, mobile=mobile)
+                page.goto(origin + path, settle=1.5)
+                page.scroll_to(page.eval("document.documentElement.scrollHeight"), 1.0)
+                at = f"{path} @{width}"
+                for r in page.requests():
+                    if not r["url"].startswith(origin) or r["type"] == "Document":
+                        continue
+                    url = r["url"][len(origin):].split("?")[0].split("#")[0]
+                    rel = url.lstrip("/")
+                    if url.startswith("/api/") or url in ("/evidence.json", "/status.json") or not Path(rel).suffix:
+                        continue
+                    asked.add(rel)
+                    if r["status"] != 200:
+                        problems.append(f"{at}: {url} answered {r['status']}")
+                    if rel not in hashed and rel.rpartition("/")[2] not in assets.ENTRY_POINTS:
+                        problems.append(f"{at}: asked for {url}, neither fingerprinted nor an entry point")
+                problems += [f"{at}: {e}" for e in real_errors(page) + [l for l in page.console() if "Content Security Policy" in l]]
+        NOTES.append(f"fingerprints in the browser: {len(asked)} files asked for across {len(ALL_PAGES)} pages at 1440 and 390, "
+                     f"{len(asked & hashed)} of them fingerprinted, the rest entry points")
+    return problems
+
+
 CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading pages", check_fonts), ("every page, desktop, 390 and 360 px; /v3 lands on the home", check_pages),
           ("home page budget (M-01)", check_budget), ("live numbers and their failure (M-07)", check_live_numbers),
           ("home words: 120 above the fold, 800 in all, Open your drive first", check_word_budget),
@@ -943,7 +980,8 @@ CHECKS = [("fonts: the pinned Geist subset on the home, pinned Geist on reading 
           ("canary reveal (P1)", check_reveal), ("theme, judge pass", check_interactions),
           ("V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box", check_home_stills),
           ("/how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled", check_how_loops),
-          ("404: the art above the words, one way home, the hidden line, the comment, the console's ghost", check_not_found)]
+          ("404: the art above the words, one way home, the hidden line, the comment, the console's ghost", check_not_found),
+          ("fingerprints: the built pages ask only for fingerprinted files and entry points, and get every one", check_fingerprinted_pages)]
 
 
 def run_all():

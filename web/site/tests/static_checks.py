@@ -1313,6 +1313,95 @@ def check_not_found():
     return problems
 
 
+# Fingerprints (docs/review/perf-1.md): a build of this tree names every asset the pages, stylesheets and scripts ask
+# for name.<10 hex of its content>.ext (tools/assets.py), and Caddy keeps those names a year. built() makes that tree
+# once per run (the example config, gzip copies only), for this check and browser_checks.check_fingerprinted_pages.
+_BUILT: dict = {}
+LOCAL_REF = re.compile(r'\s(src|href|srcset|imagesrcset|poster)="([^"]+)"')
+JS_STRING = re.compile(r"""(['"])((?:/|\./|\.\./)[^'"\s]*)\1""")
+TEMPLATE = re.compile(r"`([^`]*)`")
+
+
+def built():
+    """(dist, the manifest's assets map, the build's error or None), built once."""
+    if not _BUILT:
+        import sys
+        import tempfile
+        sys.path.insert(0, str(WEB.parent / "tools"))
+        import build
+        tmp = Path(tempfile.mkdtemp(prefix="mutis-site-fp-"))
+        cfg = build.load_config(build.DEFAULT_CONFIG)
+        state = build.source_state(["0" * 40, "site-test", "1760000000"])
+        try:
+            build.build(WEB, tmp / "dist", tmp / "release", cfg, build.settings(cfg, None), state, node="")
+            names = json.loads((tmp / "dist" / ".well-known" / "mutis-manifest.json").read_text())["assets"]
+            _BUILT.update(dist=tmp / "dist", names=names, error=None, tmp=tmp, build=build, cfg=cfg, state=state)
+        except build.BuildError as e:
+            _BUILT.update(dist=tmp / "dist", names={}, error=str(e), tmp=tmp)
+    return _BUILT["dist"], _BUILT["names"], _BUILT["error"]
+
+
+def check_fingerprints():
+    """A build of this tree: every local file a page names (src, href, srcset, poster) is a fingerprinted name or an
+    entry point (tools/assets.py ENTRY_POINTS); each fingerprinted file holds its plain name's bytes, and a picture's or
+    font's name is the SHA-256 of its bytes; no served script builds the address of a fingerprinted file at run time (a
+    template with its path, or a string that is the start of its name: it would fetch the plain name, kept a day, beside
+    the hashed one); the manifest lists both names with one hash; a second build gives the same names."""
+    import hashlib
+    dist, names, error = built()
+    if error:
+        return [f"tools/build.py: {error}"]
+    sys_path_assets = __import__("sys").path
+    sys_path_assets.insert(0, str(WEB.parent / "tools"))
+    import assets
+    problems, hashed = [], set(names.values())
+    files = json.loads((dist / ".well-known" / "mutis-manifest.json").read_text())["files"]
+    for plain, name in names.items():
+        if files.get(plain) != files.get(name) or not files.get(name):
+            problems.append(f"manifest: {plain} and {name} are not both listed with the same hash")
+        if not assets.HASHED_NAME.search(name) or name.rsplit(".", 2)[0] != plain.rsplit(".", 1)[0]:
+            problems.append(f"{plain}: fingerprinted as {name}")
+        if Path(plain).suffix not in assets.REWRITTEN_EXT and \
+                name.rsplit(".", 2)[1] != hashlib.sha256((dist / name).read_bytes()).hexdigest()[:assets.HASH_LEN]:
+            problems.append(f"{name}: the name isn't the SHA-256 of its bytes")
+    for page in sorted(dist.rglob("*.html")):
+        where = page.relative_to(dist).as_posix()
+        for attr_name, value in LOCAL_REF.findall(page.read_text()):
+            urls = [c.split()[0] for c in value.split(",") if c.strip()] if "srcset" in attr_name else [value]
+            for url in urls:
+                path = url.split("#")[0].split("?")[0]
+                if not path.startswith("/") or path.startswith("//") or not Path(path).suffix or path.endswith(".html"):
+                    continue
+                rel = path.lstrip("/")
+                if path.startswith("/api/") or path in ("/evidence.json", "/status.json", "/releases.json"):
+                    continue   # the API's, and the status files the timers write beside the release
+                if not (dist / rel).is_file():
+                    problems.append(f"{where}: {url} is not in the build")
+                elif rel not in hashed and rel.rpartition("/")[2] not in assets.ENTRY_POINTS and not rel.startswith(".well-known/"):
+                    problems.append(f"{where}: {url} is neither fingerprinted nor an entry point")
+    prefixes = {"/" + plain for plain in names}
+    for f in sorted(dist.rglob("*")):
+        if f.suffix not in (".js", ".mjs", ".css", ".html") or assets.HASHED_NAME.search(f.name):
+            continue
+        text, where = f.read_text(), f.relative_to(dist).as_posix()
+        for body in TEMPLATE.findall(text) if f.suffix in (".js", ".mjs") else []:
+            hit = next((p for p in prefixes if p in body), None)
+            if hit and "${" in body:
+                problems.append(f"{where}: a template builds {hit} at run time (name the file in one string)")
+        for _, value in JS_STRING.findall(text) if f.suffix in (".js", ".mjs") else []:
+            if not value.endswith("/") and value not in prefixes and any(p.startswith(value) for p in prefixes) \
+                    and "." not in value.rpartition("/")[2]:
+                problems.append(f"{where}: {value!r} is the start of a fingerprinted file's name (name the file in one string)")
+    build = _BUILT["build"]
+    again = _BUILT["tmp"] / "again"
+    build.build(WEB, again / "dist", again / "release", _BUILT["cfg"], build.settings(_BUILT["cfg"], None), _BUILT["state"], node="")
+    if json.loads((again / "dist" / ".well-known" / "mutis-manifest.json").read_text())["assets"] != names:
+        problems.append("a second build of the same tree gives other names")
+    NOTES_STATIC.append(f"fingerprints: {len(names)} assets, {sum(1 for p in names if Path(p).suffix in ('.js', '.mjs'))} scripts, "
+                        f"{sum(1 for p in names if Path(p).suffix == '.css')} stylesheets, the same names from two builds")
+    return problems
+
+
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
@@ -1331,4 +1420,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("links to site pages and anchors land on something", check_internal_links),
           ("media: the home's stills and the 404 art only; /v2, its loops and clips.js gone and unnamed; v2.css in budget", check_media),
           ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills),
-          ("404: the owner's words, one way home, the art sized from media/404, the three eggs", check_not_found)]
+          ("404: the owner's words, one way home, the art sized from media/404, the three eggs", check_not_found),
+          ("fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time", check_fingerprints)]
