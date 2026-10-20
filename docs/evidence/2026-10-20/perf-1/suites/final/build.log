@@ -1,0 +1,1 @@
+build: OK {"br": 288, "brotli": "node v20.19.2, brotli 1.1.0", "content_id": "dab5788a", "files": 374, "fingerprinted": 170, "git_sha": "3d3596786074e7d9c0e3a2ba9d77e6a01a6978c4", "gzip": 288, "holding": false, "origin": "https://<the example config's origin>", "pages": 6, "vendored_checked": 6, "version": "perf-1"}

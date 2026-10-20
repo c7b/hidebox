@@ -1,0 +1,17 @@
+# Two UI scenarios that pressed a moving target once the drive's modules came from the browser's cache (docs/review/perf-1.md, Suites)
+
+## share-rules: the row menu slides in (position of menu-share every 50 ms after the menu shows, and what took the press)
+DBG row_menu until.txt share rects [[239, 199, 139, 42], [235, 187, 142, 43], [232, 174, 145, 44], [231, 172, 146, 44], [231, 172, 146, 44], [231, 172, 146, 44]] clicks ['pointerdown:menu-share', 'touchend:menu-share', 'click:menu-share'] items ['menu-share', 'menu-once', 'menu-activity', 'menu-download', 'menu-rename', 'menu-move', 'menu-later', 'menu-trash']
+# a run without the waits above, failing: the press made a once link (POST /items/{id}/shares) instead of opening Share
+DBG requests after click: [('/app/ui/share-dialog.7b6ceb4fc4.js', None), ('/app/ui/progress.33f4a94cce.js', None), ('/app/lib/ootle.c1b8743fc6.js', None), ('/app/lib/emoji.60f4a5c411.js', None), ('/app/vendor/ootle-wasm-shim.175bc41780.js', None), ('/shared/ui/icons.6387e30e24.svg', None), ('/api/v1/items/Zrl1nR72dl2R9V52CgQDLw/shares', None), ('/api/v1/me/items?limit=50&view=all', None), ('/app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.2a338a3c8e.js', None), ('/api/v1/me', None), ('/app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.2856d86b68.wasm', None), ('/shared/ui/icons.6387e30e24.svg', None)]
+
+## drive-delete-account: Delete my drive moves down as the settings' Tari address fills in above it
+DBG delete [[503, 661, 122, 30, 'matrix(0.95, 0, 0, 0.95, 0, 0)'], [502, 662, 122, 31, 'matrix(0.954252, 0, 0, 0.954252, 0, 0)'], [496, 1000, 126, 31, 'matrix(0.982308, 0, 0, 0.982308, 0, 0)'], [493, 1007, 128, 32, 'matrix(0.996042, 0, 0, 0.996042, 0, 0)'], [492, 1010, 128, 32, 'matrix(0.999806, 0, 0, 0.999806, 0, 0)'], [492, 1010, 128, 32, 'matrix(1, 0, 0, 1, 0, 0)'], [492, 1010, 128, 32, 'matrix(1, 0, 0, 1, 0, 0)'], [492, 1010, 128, 32, 'matrix(1, 0, 0, 1, 0, 0)']] ['pointerdown:delete-locker@556,776', 'click:delete-locker@556,775'] ['side-sheet:true', 'trash:true', 'settings:true', 'delete-drive:false']
+
+## runs of drive-delete-account before the fix
+main (4d38049): 8 of 8 passed
+branch, rerun 1: UI PASS 45/45
+branch, rerun 2: UI FAIL 37/38
+branch with the row_menu fix, run 1 of share-rules, drive-delete-account and keyboard: UI PASS 65/65
+branch with the row_menu fix, run 2 of share-rules, drive-delete-account and keyboard: UI FAIL 57/58
+branch with the row_menu fix, run 3 of share-rules, drive-delete-account and keyboard: UI PASS 65/65

@@ -1,0 +1,24 @@
+# The first full UI run on the branch (before A-06 counted the Brotli copies): the budget scenario's lines, gzip -9 of the fingerprinted files
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+FAIL budget: phone: widget payload compressed: 25463 B at load, 41294 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+FAIL budget: computer: 44271 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+  A-06 measured: computer 44271 B gzip -9, files: /app/css/widget.css, /app/drop-widget.js, /app/i18n/widget-en.json, /app/lib/api.js, /app/lib/b64.js, /app/lib/bytes.js, /app/lib/crypto.js, /app/lib/dom.js, /app/lib/format.js, /app/lib/i18n.js, /app/lib/pow-worker.js, /app/lib/pow.js, /app/lib/seal.js, /app/lib/sha256sync.js, /app/lib/share.js, /app/lib/store.js, /app/ui/card.js, /app/ui/core.js, /app/ui/more.js, /app/ui/qr.js, /app/ui/sealing.js, /app/ui/widget.js, /app/ui/zone.js
+PASS budget: phone, after a photo: 46353 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+PASS drive-shell: the drive's first screen renders before ootle-wasm loads (A-06d: lazy Tari keys)
+--- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
+PASS drive-budget: a drive of 20 items
+PASS drive-budget: no ootle-wasm before the file table renders
+PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.7e1491511d.woff2'])
+PASS drive-budget: A-06d: 126583 B compressed until the table renders, 38 files (≤ 131072 B)
+  A-06d measured: 126583 B gzip -9, files: app/css/drive.024c9b08af.css, app/css/flow.afd594577c.css, app/i18n/en.3c650e5d28.json, app/lib/api-drive.67eca7933b.js, app/lib/api-locker.8c6ed89ba0.js, app/lib/api.f62652ae97.js, app/lib/b64.0d05104471.js, app/lib/bytes.750a0e75c9.js, app/lib/crypto.712dcc0942.js, app/lib/dom.780351c43f.js, app/lib/drive.b97984ad5b.js, app/lib/entries.3460302c3d.js, app/lib/folder.4942359ef7.js, app/lib/format.aab82020fe.js, app/lib/i18n.1d42c14429.js, app/lib/idb.ad72e28635.js, app/lib/identity.490d1da890.js, app/lib/links.0888e33b24.js, app/lib/password.88c9652bb4.js, app/lib/pow.1b5dc3cc5b.js, app/lib/session.082b5d0bc3.js, app/lib/sha256sync.f304bd5203.js, app/lib/share.351aaedd49.js, app/lib/store.89554f9d8f.js, app/ui/behaviors.aa2fb6c110.js, app/ui/core.883a3c5ade.js, app/ui/drive-list.0e7e814750.js, app/ui/drive-parts.16aab64668.js, app/ui/drive-shell.7970b30df2.js, app/ui/drive-upload.2054467802.js, app/ui/drive.ace112ef8f.js, app/ui/errors.0439f2a861.js, app/ui/lines.3c5419d8a5.js, shared/ghost.9b9707a76b.js, shared/theme.e707163600.js, shared/ui/components.b5edb73dcf.css, shared/ui/icons.6387e30e24.svg, shared/ui/tokens.76ebae5845.css
+PASS drive-budget: no CSP or Trusted Types violation ([])
+  failed: budget: phone: widget payload compressed: 25463 B at load, 41294 B after a drop (≤ 40 KB), no code encoder
+  failed: budget: computer: 44271 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+
+# the whole run:
+UI FAIL 802/804
+  failed: budget: phone: widget payload compressed: 25463 B at load, 41294 B after a drop (≤ 40 KB), no code encoder
+  failed: budget: computer: 44271 B after a drop with the code to scan (≤ 43520 B, the QR waiver)

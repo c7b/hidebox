@@ -1,0 +1,14 @@
+/ @1440                              first   156,319 B 36 net (0 304)  0 cached  repeat    26,194 B 30 net (28 304)  6 cached  after_release   103,811 B 30 net (0 304)  6 cached
+/how @1440                           first   142,553 B 18 net (0 304)  0 cached  repeat    10,238 B 14 net (14 304)  4 cached  after_release    62,271 B 14 net (0 304)  4 cached
+/made @1440                          first   149,079 B 17 net (0 304)  0 cached  repeat     8,809 B 12 net (12 304)  5 cached  after_release    67,860 B 12 net (0 304)  5 cached
+/judges @1440                        first   136,332 B 17 net (0 304)  0 cached  repeat     9,523 B 13 net (13 304)  4 cached  after_release    56,050 B 13 net (0 304)  4 cached
+/fine-print @1440                    first   139,299 B 17 net (0 304)  0 cached  repeat     9,523 B 13 net (13 304)  4 cached  after_release    59,017 B 13 net (0 304)  4 cached
+/this-page-does-not-exist @1440      first   140,186 B 17 net (0 304)  0 cached  repeat    15,594 B 12 net (11 304)  5 cached  after_release    52,496 B 12 net (0 304)  5 cached
+/drive @1440                         first   205,404 B 41 net (0 304)  0 cached  repeat    34,885 B 37 net (36 304)  4 cached  after_release   168,804 B 37 net (0 304)  4 cached
+/ @390                               first   158,890 B 35 net (0 304)  0 cached  repeat    26,194 B 30 net (28 304)  5 cached  after_release   103,811 B 30 net (0 304)  5 cached
+/how @390                            first   142,553 B 18 net (0 304)  0 cached  repeat    10,238 B 14 net (14 304)  4 cached  after_release    62,271 B 14 net (0 304)  4 cached
+/made @390                           first   149,079 B 17 net (0 304)  0 cached  repeat     8,809 B 12 net (12 304)  5 cached  after_release    67,860 B 12 net (0 304)  5 cached
+/judges @390                         first   136,332 B 17 net (0 304)  0 cached  repeat     9,523 B 13 net (13 304)  4 cached  after_release    56,050 B 13 net (0 304)  4 cached
+/fine-print @390                     first   139,299 B 17 net (0 304)  0 cached  repeat     9,523 B 13 net (13 304)  4 cached  after_release    59,017 B 13 net (0 304)  4 cached
+/this-page-does-not-exist @390       first   150,063 B 17 net (0 304)  0 cached  repeat    15,594 B 12 net (11 304)  5 cached  after_release    52,496 B 12 net (0 304)  5 cached
+/drive @390                          first   221,807 B 41 net (0 304)  0 cached  repeat    34,885 B 37 net (36 304)  4 cached  after_release   168,804 B 37 net (0 304)  4 cached

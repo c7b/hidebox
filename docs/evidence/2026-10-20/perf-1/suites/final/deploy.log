@@ -1,0 +1,149 @@
+test_a_site_build_needs_the_variants_tool (test_build.BuildTest.test_a_site_build_needs_the_variants_tool) ... ok
+test_a_source_file_named_like_a_hashed_one_stops_the_build (test_build.BuildTest.test_a_source_file_named_like_a_hashed_one_stops_the_build)
+Caddy keeps a hashed-looking name a year: a source file may not have one. ... ok
+test_assets_get_content_hashed_names (test_build.BuildTest.test_assets_get_content_hashed_names)
+tools/assets.py: each file a page, stylesheet or script asks for is copied to name.<10 hex of the SHA-256 of ... ok
+test_content_id_names_what_is_served (test_build.BuildTest.test_content_id_names_what_is_served) ... ok
+test_copy_variants_follow_the_config (test_build.BuildTest.test_copy_variants_follow_the_config) ... ok
+test_entry_points_keep_their_names (test_build.BuildTest.test_entry_points_keep_their_names)
+Pages, /favicon.ico, /favicon.svg, /apple-touch-icon.png, og.png, the web manifest, robots.txt and .well-known ... ok
+test_failures (test_build.BuildTest.test_failures) ... ok
+test_files_that_ask_for_each_other_share_a_hash (test_build.BuildTest.test_files_that_ask_for_each_other_share_a_hash)
+A cycle (two modules importing each other) gets names from a hash of their joint content: stable from build ... ok
+test_holding_build (test_build.BuildTest.test_holding_build) ... ok
+test_layout_includes_placeholders (test_build.BuildTest.test_layout_includes_placeholders) ... ok
+test_manifest_lists_every_file_and_is_deterministic (test_build.BuildTest.test_manifest_lists_every_file_and_is_deterministic) ... ok
+test_only_served_types_reach_dist (test_build.BuildTest.test_only_served_types_reach_dist) ... ok
+test_precompressed_copies (test_build.BuildTest.test_precompressed_copies)
+deploy/scripts/precompress.py: a .gz beside each text file of 512 B or more that decodes to it (gzip -9, mtime ... ok
+test_release_sidecar_layout (test_build.BuildTest.test_release_sidecar_layout) ... ok
+test_settings (test_build.BuildTest.test_settings) ... ok
+test_sitemap_lastmod_is_the_commits_date (test_build.BuildTest.test_sitemap_lastmod_is_the_commits_date)
+Each URL carries the built commit's date (SOURCE's time, 1760000000), the same for every build of it. ... ok
+test_sitemap_skips_404_and_noindex (test_build.BuildTest.test_sitemap_skips_404_and_noindex) ... ok
+test_sri_is_sha384_of_the_served_file (test_build.BuildTest.test_sri_is_sha384_of_the_served_file) ... ok
+test_test_evidence_is_never_served (test_build.BuildTest.test_test_evidence_is_never_served) ... ok
+test_the_app_names_the_same_brand (test_build.BuildTest.test_the_app_names_the_same_brand) ... ok
+test_the_drive_font_is_pinned (test_build.BuildTest.test_the_drive_font_is_pinned)
+A tree with the drive serves Geist, the pinned bytes only (a font can't carry SRI). ... ok
+test_the_favicon_ico_is_served (test_build.BuildTest.test_the_favicon_ico_is_served)
+/favicon.ico, which Bing, feed readers and old browsers ask for by name, reaches dist/ (render-images.py ... ok
+test_the_homes_stills_are_served_and_the_home_is_in_the_sitemap (test_build.BuildTest.test_the_homes_stills_are_served_and_the_home_is_in_the_sitemap)
+The home (the v3 design, docs/review/promote-v3.md): its AVIF and WebP stills under web/site/media/v3 reach ... ok
+test_vendored_hash_mismatch_stops_the_build (test_build.BuildTest.test_vendored_hash_mismatch_stops_the_build) ... ok
+test_no_manifest_carries_nothing (test_carry_assets.CarryAssetsTest.test_no_manifest_carries_nothing) ... ok
+test_only_the_old_releases_own_hashed_names_and_their_copies (test_carry_assets.CarryAssetsTest.test_only_the_old_releases_own_hashed_names_and_their_copies) ... ok
+test_the_pattern_is_the_builds (test_carry_assets.CarryAssetsTest.test_the_pattern_is_the_builds) ... ok
+test_banned_words_in_visible_text_only (test_check_copy.CheckCopyTest.test_banned_words_in_visible_text_only) ... ok
+test_config_numbers_in_site_pages (test_check_copy.CheckCopyTest.test_config_numbers_in_site_pages) ... ok
+test_exceptions_and_watch_words (test_check_copy.CheckCopyTest.test_exceptions_and_watch_words) ... ok
+test_i18n_digits (test_check_copy.CheckCopyTest.test_i18n_digits) ... ok
+test_not_promises_and_retired_nouns (test_check_copy.CheckCopyTest.test_not_promises_and_retired_nouns) ... ok
+test_previews_and_structured_data_are_copy (test_check_copy.CheckCopyTest.test_previews_and_structured_data_are_copy)
+What a search result or a link preview shows is read like the page: the description, og:* and twitter:* ... ok
+test_public_keys_are_never_stored (test_check_copy.CheckCopyTest.test_public_keys_are_never_stored) ... ok
+test_registered_sentences_pass_and_paraphrases_fail (test_check_copy.CheckCopyTest.test_registered_sentences_pass_and_paraphrases_fail) ... ok
+test_the_ghost_is_retired_and_gone_forever_stays_banned (test_check_copy.CheckCopyTest.test_the_ghost_is_retired_and_gone_forever_stays_banned)
+The ghost, the locker and goodbye are retired words in copy (not in the docs). ... ok
+test_variables_in_i18n_and_the_view_key_condition (test_check_copy.CheckCopyTest.test_variables_in_i18n_and_the_view_key_condition) ... ok
+test_a_declared_body_over_the_limit_is_a_413_in_the_api_shape (test_config.CaddyfileTest.test_a_declared_body_over_the_limit_is_a_413_in_the_api_shape)
+Claims review item 24: never a bare 502 for a 6 MB chunk. ... ok
+test_any_other_host_gets_a_421_with_the_headers (test_config.CaddyfileTest.test_any_other_host_gets_a_421_with_the_headers)
+Claims review item 23: no bare 200 and no redirect to a made-up Host, on either port. ... ok
+test_caching_and_error_pages (test_config.CaddyfileTest.test_caching_and_error_pages) ... ok
+test_csp_and_headers_are_the_spec_text (test_config.CaddyfileTest.test_csp_and_headers_are_the_spec_text) ... ok
+test_every_api_answer_carries_the_sandbox_policy (test_config.CaddyfileTest.test_every_api_answer_carries_the_sandbox_policy)
+docs/review/upload-safety-1.md: the API's JSON and the stored bytes it serves are data, never a page. ... ok
+test_fingerprinted_files_are_kept_a_year (test_config.CaddyfileTest.test_fingerprinted_files_are_kept_a_year)
+docs/review/perf-1.md: names with a hash of their bytes (tools/assets.py, whose pattern the matcher repeats) are ... ok
+test_no_access_log_and_filtered_errors (test_config.CaddyfileTest.test_no_access_log_and_filtered_errors) ... ok
+test_old_pages_answer_301_to_their_new_place (test_config.CaddyfileTest.test_old_pages_answer_301_to_their_new_place)
+14-ghost-design §17 step 4: the pages the ghost folded together redirect, with or without a ... ok
+test_pages_and_files_take_only_get_and_head (test_config.CaddyfileTest.test_pages_and_files_take_only_get_and_head)
+Security review: a TRACE or PUT on a page answered 200 with the page. ... ok
+test_previews_and_crawlers (test_config.CaddyfileTest.test_previews_and_crawlers)
+docs/review/seo-1.md: the share cards and icons (headers_spec.CARDS) are kept a day and loadable from any ... ok
+test_the_home_page_gets_the_app_policy (test_config.CaddyfileTest.test_the_home_page_gets_the_app_policy) ... ok
+test_the_loops_preview_is_gone (test_config.CaddyfileTest.test_the_loops_preview_is_gone)
+/v2, the home with the product loops (docs/review/home-v2.md), left with its loops (docs/review/perf-1.md): no ... ok
+test_the_v3_preview_became_the_home (test_config.CaddyfileTest.test_the_v3_preview_became_the_home)
+/v3 (docs/review/home-v3.md) became the home (docs/review/promote-v3.md): no route serves it any more, /v3 and ... ok
+test_example_parses_with_the_server_config (test_config.ConfigExampleTest.test_example_parses_with_the_server_config) ... ok
+test_every_copy_of_the_pinned_hash_agrees (test_config.PinnedWasmTest.test_every_copy_of_the_pinned_hash_agrees) ... ok
+test_caddy_runs_in_a_sandbox (test_config.UnitsTest.test_caddy_runs_in_a_sandbox) ... ok
+test_every_timer_has_its_service (test_config.UnitsTest.test_every_timer_has_its_service) ... ok
+test_every_unit_is_licensed (test_config.UnitsTest.test_every_unit_is_licensed) ... ok
+test_jit_only_where_needed (test_config.UnitsTest.test_jit_only_where_needed) ... ok
+test_kernel_settings (test_config.UnitsTest.test_kernel_settings) ... ok
+test_nothing_a_unit_can_write_is_executable (test_config.UnitsTest.test_nothing_a_unit_can_write_is_executable)
+NoExecPaths names the private /tmp, /var/tmp and /dev/shm and every path the unit may write; no ExecPaths ... ok
+test_root_runs_only_the_backup_prune (test_config.UnitsTest.test_root_runs_only_the_backup_prune)
+Claims review item 22: the one "+" (full privileges) step deletes root's database copies ... ok
+test_services_are_hardened_and_never_root (test_config.UnitsTest.test_services_are_hardened_and_never_root) ... ok
+test_the_data_mount_is_noexec_nosuid_nodev (test_config.UnitsTest.test_the_data_mount_is_noexec_nosuid_nodev) ... ok
+test_the_status_directory_follows_no_symlink (test_config.UnitsTest.test_the_status_directory_follows_no_symlink)
+security-audit-1: Caddy serves /srv/mutis/status and mutis, drive and root write it; mounted ... ok
+test_the_upgrade_drill_tries_walletd_under_its_unit_sandbox (test_config.UnitsTest.test_the_upgrade_drill_tries_walletd_under_its_unit_sandbox)
+deploy/ootle/upgrade-drill.md §3 runs a new walletd on a copy of the wallet under walletd.service's own ... ok
+test_units_that_use_the_data_directory_need_its_noexec_mount (test_config.UnitsTest.test_units_that_use_the_data_directory_need_its_noexec_mount)
+Every unit that reads the database or the blobs starts only once the noexec mount is up. ... ok
+test_walletd_password_never_on_the_command_line (test_config.UnitsTest.test_walletd_password_never_on_the_command_line) ... ok
+test_write_access_only_where_needed (test_config.UnitsTest.test_write_access_only_where_needed) ... ok
+test_clean_tree_passes (test_lint.LintTest.test_clean_tree_passes) ... ok
+test_css_remote_resource (test_lint.LintTest.test_css_remote_resource) ... ok
+test_forbidden_js (test_lint.LintTest.test_forbidden_js) ... ok
+test_headers_todos_attribution (test_lint.LintTest.test_headers_todos_attribution) ... ok
+test_html_rules (test_lint.LintTest.test_html_rules) ... ok
+test_public_addresses (test_lint.LintTest.test_public_addresses)
+An evidence log once named the operator's own machine (security review, finding 1). ... ok
+test_python_third_party_import (test_lint.LintTest.test_python_third_party_import) ... ok
+test_test_files_may_use_urls_but_not_sinks (test_lint.LintTest.test_test_files_may_use_urls_but_not_sinks) ... ok
+test_urls_in_served_js (test_lint.LintTest.test_urls_in_served_js) ... ok
+test_db_backup_restores_and_is_one_file (test_ops.BackupTest.test_db_backup_restores_and_is_one_file) ... ok
+test_every_copy_goes_after_keep_days (test_ops.BackupTest.test_every_copy_goes_after_keep_days) ... ok
+test_never_more_than_keep_days_copies (test_ops.BackupTest.test_never_more_than_keep_days_copies) ... ok
+test_roots_database_copies_go_at_the_same_age_and_nothing_else (test_ops.BackupTest.test_roots_database_copies_go_at_the_same_age_and_nothing_else)
+Claims review item 22: the go-live and pre-migrate copies under /var/backups/mutis keep the ... ok
+test_only_a_share_id (test_ops.DemoGone.test_only_a_share_id) ... ok
+test_the_key_lands_at_the_top_level_and_reads_back (test_ops.DemoGone.test_the_key_lands_at_the_top_level_and_reads_back) ... ok
+test_without_repo_url_it_goes_before_the_first_table (test_ops.DemoGone.test_without_repo_url_it_goes_before_the_first_table) ... ok
+test_write_keeps_owner_and_mode (test_ops.DemoGone.test_write_keeps_owner_and_mode) ... ok
+test_only_evidence_jobs_are_published (test_ops.EvidenceTest.test_only_evidence_jobs_are_published) ... ok
+test_seallog_names_the_live_log_its_chain_index_and_the_retired_ones (test_ops.EvidenceTest.test_seallog_names_the_live_log_its_chain_index_and_the_retired_ones) ... ok
+test_a_budget_slice_at_90_is_amber (test_ops.HealthTest.test_a_budget_slice_at_90_is_amber) ... ok
+test_all_green (test_ops.HealthTest.test_all_green) ... ok
+test_budget_slice_at_half_raises_attention (test_ops.HealthTest.test_budget_slice_at_half_raises_attention) ... ok
+test_check_names_are_the_ones_status_labels (test_ops.HealthTest.test_check_names_are_the_ones_status_labels) ... ok
+test_each_simulated_failure_turns_red (test_ops.HealthTest.test_each_simulated_failure_turns_red) ... ok
+test_packs_turn_amber_when_the_public_slice_is_80_percent_taken_or_the_ceiling_is_hit (test_ops.HealthTest.test_packs_turn_amber_when_the_public_slice_is_80_percent_taken_or_the_ceiling_is_hit) ... ok
+test_payments_the_indexers_cant_confirm_are_amber (test_ops.HealthTest.test_payments_the_indexers_cant_confirm_are_amber) ... ok
+test_phase (test_ops.HealthTest.test_phase) ... ok
+test_unverified_canary_is_amber_then_red (test_ops.HealthTest.test_unverified_canary_is_amber_then_red) ... ok
+test_a_password_with_unexpected_characters_is_refused (test_ops.RunWalletdTest.test_a_password_with_unexpected_characters_is_refused) ... ok
+test_password_reaches_walletd_only_through_a_private_config (test_ops.RunWalletdTest.test_password_reaches_walletd_only_through_a_private_config) ... ok
+test_deploy_and_the_e2e_harness_read_the_alias_with_a_neutral_default (test_ops.SshHostTest.test_deploy_and_the_e2e_harness_read_the_alias_with_a_neutral_default) ... ok
+test_every_host_option_defaults_to_that_alias (test_ops.SshHostTest.test_every_host_option_defaults_to_that_alias) ... ok
+test_no_writer_follows_a_planted_link (test_ops.StatusWritersTest.test_no_writer_follows_a_planted_link) ... ok
+test_a_component_that_isnt_an_address_is_a_difference (test_verify_deploy.BuildConfigTest.test_a_component_that_isnt_an_address_is_a_difference) ... ok
+test_a_manifest_cannot_add_keys_or_tables (test_verify_deploy.BuildConfigTest.test_a_manifest_cannot_add_keys_or_tables) ... ok
+test_config_values_that_could_add_markup_are_refused (test_verify_deploy.BuildConfigTest.test_config_values_that_could_add_markup_are_refused)
+security-audit-1: the deployment being verified supplies repo_url and security_drop; a value that ... ok
+test_no_seallog_no_check (test_verify_deploy.BuildConfigTest.test_no_seallog_no_check) ... ok
+test_the_variant_tables_of_the_live_build_are_used (test_verify_deploy.BuildConfigTest.test_the_variant_tables_of_the_live_build_are_used) ... ok
+test_no_live_component_is_a_difference (test_verify_deploy.SealLogTemplateTest.test_no_live_component_is_a_difference) ... ok
+test_the_live_logs_template_is_checked_in_either_shape (test_verify_deploy.SealLogTemplateTest.test_the_live_logs_template_is_checked_in_either_shape) ... ok
+test_compressed_paths_come_from_the_builds_gz_copies (test_verify_deploy.VerifyDeployTest.test_compressed_paths_come_from_the_builds_gz_copies) ... ok
+test_identical (test_verify_deploy.VerifyDeployTest.test_identical) ... ok
+test_lying_manifest_is_caught (test_verify_deploy.VerifyDeployTest.test_lying_manifest_is_caught) ... ok
+test_missing_and_extra_files_and_commit (test_verify_deploy.VerifyDeployTest.test_missing_and_extra_files_and_commit) ... ok
+test_precompressed_copies_are_checked (test_verify_deploy.VerifyDeployTest.test_precompressed_copies_are_checked)
+A browser that takes gzip gets app/a.js.gz: it must decode to the built file. ... ok
+test_served_bytes_differ (test_verify_deploy.VerifyDeployTest.test_served_bytes_differ) ... ok
+test_wasm_check_reads_the_template_in_either_shape (test_verify_deploy.WasmCheckTest.test_wasm_check_reads_the_template_in_either_shape)
+The live template holds dist/seal_log.wasm, published by the service key (setup-accounts.md §4). ... ok
+
+----------------------------------------------------------------------
+Ran 113 tests in 12.777s
+
+OK
+SealLog: this deployment names no log

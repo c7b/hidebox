@@ -1,0 +1,8 @@
+lint exit 0
+copy exit 0
+build exit 0
+deploy exit 0
+site exit 0
+ui exit 0
+core exit 0
+ALLDONE

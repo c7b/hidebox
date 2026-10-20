@@ -1,0 +1,5 @@
+# Mutants for the site suite's fingerprint check (static_checks.check_fingerprints): scene.js and drive-start.js put back as they were on main (460a389), building the sprite's and the still's addresses at run time; python3 -I web/site/tests/run.py --static
+FAIL fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time
+     app/ui/drive-start.js: '/site/media/v3/hero-' is the start of a fingerprinted file's name (name the file in one string)
+     app/ui/scene.js: a template builds /shared/ui/icons.svg at run time (name the file in one string)
+PASS llms-full.txt matches /how, /made and /fine-print

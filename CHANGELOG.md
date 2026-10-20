@@ -1,6 +1,22 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- perf 1 -->
+## 2026-10-20: faster repeat visits, lighter pictures
+
+- **A second visit fetches almost nothing.** Every stylesheet, script, picture, font and sprite now has a hash of its
+  content in its name (`site.b6680ac0f9.css`), so browsers keep it for a year and never ask again; a new release
+  changes the names of what changed, and the pages, which are always checked, point to them. Coming back to the home
+  page used to send 30 requests (28 of them answered "not modified"); now it sends 3 (the page and two calls to our
+  API). After a release it used to download about 100 KB again even when nothing had changed; now about 10 KB.
+- **Smaller downloads.** Text (pages, styles, scripts, the wasm) is served from copies compressed ahead of time with
+  Brotli and gzip instead of on the fly: 7 to 12 % less on a first visit, page by page. The share cards and app icons
+  shrank without changing a pixel (og-s.png by half, the icons by 44 %).
+- **Removed:** the `/v2` preview with its four videos (11.2 MB in the repository), which no page linked; `/v2` now
+  goes to the home page. Old screenshots no test makes any more went too.
+- Nothing moved to another host or CDN. Review: `docs/review/perf-1.md`.
+<!-- /perf 1 -->
+
 <!-- security-audit-1 -->
 ## 2026-10-20: security audit 1
 

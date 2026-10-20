@@ -1,0 +1,107 @@
+PASS GET / → 200
+PASS GET /s/AAAAAAAAAAAAAAAAAAAAAA → 200
+PASS GET /t → 200
+PASS GET /p/AAAAAAAAAAAAAAAAAAAAAA → 200
+PASS GET /d/7kq2x9mdh4 → 200
+PASS GET /send → 200
+PASS GET /watch → 200
+PASS GET /drive → 200
+PASS GET /drive/storage → 200
+PASS GET /drive/received → 200
+PASS GET /drive/earnings → 200
+PASS GET /drive/activity → 200
+PASS GET /verify/tx/0000000000000000000000000000000000000000000000000000000000000000 → 200
+PASS GET /app/drive.html → 200
+PASS GET /app/view.html → 200
+PASS GET /how → 200
+PASS GET /made → 200
+PASS GET /judges → 200
+PASS GET /fine-print → 200
+PASS GET /.well-known/security.txt → 200
+PASS GET /.well-known/mutis-manifest.json → 200
+PASS GET /this-page-does-not-exist → 404
+PASS GET /security → 301 /made#locks (an old page, folded into a new one)
+PASS GET /security/ → 301 /made#locks (an old page, folded into a new one)
+PASS GET /privacy → 301 /fine-print#privacy (an old page, folded into a new one)
+PASS GET /privacy/ → 301 /fine-print#privacy (an old page, folded into a new one)
+PASS GET /terms → 301 /fine-print#terms (an old page, folded into a new one)
+PASS GET /terms/ → 301 /fine-print#terms (an old page, folded into a new one)
+PASS GET /abuse → 301 /fine-print#report (an old page, folded into a new one)
+PASS GET /abuse/ → 301 /fine-print#report (an old page, folded into a new one)
+PASS GET /pricing → 301 /made#limits (an old page, folded into a new one)
+PASS GET /pricing/ → 301 /made#limits (an old page, folded into a new one)
+PASS GET /faq → 301 /made (an old page, folded into a new one)
+PASS GET /faq/ → 301 /made (an old page, folded into a new one)
+PASS GET /status → 301 /made#check (an old page, folded into a new one)
+PASS GET /status/ → 301 /made#check (an old page, folded into a new one)
+PASS GET /locker → 301 /drive (an old page, folded into a new one)
+PASS GET /locker/ → 301 /drive (an old page, folded into a new one)
+PASS GET /inbox → 301 /drive/received (an old page, folded into a new one)
+PASS GET /inbox/ → 301 /drive/received (an old page, folded into a new one)
+PASS GET /upgrade → 301 /drive/storage#more (an old page, folded into a new one)
+PASS GET /upgrade/ → 301 /drive/storage#more (an old page, folded into a new one)
+PASS GET /v3 → 301 / (an old page, folded into a new one)
+PASS GET /v3/ → 301 / (an old page, folded into a new one)
+PASS GET /v2 → 301 / (an old page, folded into a new one)
+PASS GET /v2/ → 301 / (an old page, folded into a new one)
+PASS GET /status.json → 404
+PASS GET /evidence.json → 404
+PASS GET /releases.json → 404
+PASS GET /evidence-archive-x.json → 404 (an error page through another route)
+PASS GET /shared/fonts/x.woff2 → 404 (an error page through another route)
+PASS GET /shared/fonts/MutisScript-Regular.woff2 → 404 (an error page through another route)
+PASS GET /app/nope.js → 404 (an error page through another route)
+PASS GET /es/ → 404 (an error page through another route)
+PASS GET /es/how → 404 (an error page through another route)
+PASS GET /api/v1/health → 200 (security headers on API responses, noindex, the API's sandbox)
+PASS GET /api/v1/canary/raw → 404 (stored bytes: an octet-stream attachment, nosniff, the sandbox)
+PASS GET /api/v1/blobs/<unknown ticket> → 404 (the download route's answer carries the sandbox)
+PASS HEAD /site/media/v3/hero-1024.avif is image/avif, in byte ranges, kept a day (its plain name)
+PASS HEAD /site/media/v3/hero-1024.webp is image/webp, in byte ranges, kept a day (its plain name)
+PASS HEAD /site/media/404/box-zero-480.avif is image/avif, in byte ranges, kept a day (its plain name)
+PASS HEAD /og.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /og-s.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /favicon.ico is image/vnd.microsoft.icon, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /favicon.svg is image/svg+xml, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /favicon-32.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /apple-touch-icon.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /icon-192.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /icon-512.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS HEAD /icon-maskable-512.png is image/png, kept a day, loadable from any origin (a link preview's card or icon)
+PASS GET /robots.txt is text/plain; charset=utf-8, kept an hour
+PASS GET /sitemap.xml is application/xml; charset=utf-8, kept an hour
+PASS HEAD /app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm is application/wasm
+PASS HEAD /shared/tokens.f54dfd3a92.css: text/css; charset=utf-8, kept a year, immutable, the site policy
+PASS HEAD /site/css/site.b6680ac0f9.css: text/css; charset=utf-8, kept a year, immutable, the site policy
+PASS HEAD /site/js/site.0410bc9813.js: text/javascript; charset=utf-8, kept a year, immutable, the site policy
+PASS HEAD /shared/theme.e707163600.js: text/javascript; charset=utf-8, kept a year, immutable, the site policy
+PASS HEAD /app/drop-widget.ff5982cb55.js: text/javascript; charset=utf-8, kept a year, immutable, the app policy
+PASS HEAD /app/css/widget.1efa652bdd.css: text/css; charset=utf-8, kept a year, immutable, the app policy
+PASS HEAD /app/lib/pow-worker.109211319a.js: text/javascript; charset=utf-8, kept a year, immutable, the app policy
+PASS HEAD /app/i18n/widget-en.6920a26378.json: application/json, kept a year, immutable, the app policy
+PASS HEAD /shared/ui/icons.6387e30e24.svg: image/svg+xml, kept a year, immutable, the site policy
+PASS HEAD /shared/fonts/geist/Geist-Latin.7e1491511d.woff2: font/woff2, kept a year, immutable, the site policy
+PASS HEAD /site/media/v3/hero-480.7a279628f9.avif: image/avif, kept a year, immutable, the site policy
+PASS HEAD /site/media/v3/hero-480.1d4b5aa993.webp: image/webp, kept a year, immutable, the site policy
+PASS HEAD /site/media/404/box-zero-480.72e8b81fba.avif: image/avif, kept a year, immutable, the site policy
+PASS HEAD /favicon-32.d44f3efb27.png: image/png, kept a year, immutable, the site policy
+PASS HEAD /icon-512.a8e97164d9.png: image/png, kept a year, immutable, the site policy
+PASS HEAD /app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.2856d86b68.wasm: application/wasm, kept a year, immutable, the app policy
+PASS GET /site/css/site.0000000000.css → 404 (a hashed name no build made: the 404 page, never stored)
+PASS GET /app/ui/app.0000000000.js → 404 (a hashed name no build made: the 404 page, never stored)
+PASS GET /site/css/site.b6680ac0f9.css: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /site/js/site.0410bc9813.js: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /shared/ui/icons.6387e30e24.svg: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /app/i18n/en.6b714e47e5.json: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.2856d86b68.wasm: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /how: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /manifest.webmanifest: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS GET /this-page-does-not-exist: br, gzip or the file, as the browser accepts (Vary: Accept-Encoding)
+PASS PUT 6 MB to /api/v1/uploads/…/chunks/0 → 413 (413 in the API's error shape, not a bare 502)
+PASS TRACE /how → 405 (405 with Allow: GET, HEAD, the headers, no body)
+PASS PUT /how → 405 (405 with Allow: GET, HEAD, the headers, no body)
+PASS http://127.0.0.1:18445/how?x=1 → 308 https://127.0.0.1/how?x=1
+PASS http://127.0.0.1:18444/how with Host: not-this-site.example → 421 (421, the security headers, nothing reflected)
+PASS http://127.0.0.1:18445/how with Host: not-this-site.example → 421 (421, the security headers, nothing reflected)
+test_headers: PASS

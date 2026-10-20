@@ -1,0 +1,4 @@
+# tools/verify-deploy.py <the throwaway stack> HEAD, the stack serving a clean build of HEAD (3d35967) behind the production Caddyfile (tests/e2e/localstack.py); each text file also asked for as gzip and br and decoded
+SealLog: this deployment names no log
+compressed answers checked: 288 gzip, 286 br
+verify-deploy: 0 differences across 374 files (HEAD = 3d3596786074, http://127.0.0.1:18444)

@@ -1,0 +1,24 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 18 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (86 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- budget A-06: what the home page loads for the widget, before and after a drop (phone; computer with the code to scan)
+PASS budget: no ootle-wasm on the home page before a locker action
+PASS budget: phone: widget payload compressed: 25013 B at load, 40510 B after a drop (≤ 40 KB), no code encoder
+PASS budget: still no ootle-wasm after an anonymous drop
+PASS budget: computer: 43477 B after a drop with the code to scan (≤ 43520 B, the QR waiver)
+  A-06 measured: computer 43477 B gzip -9, files: /app/css/widget.css, /app/drop-widget.js, /app/i18n/widget-en.json, /app/lib/api.js, /app/lib/b64.js, /app/lib/bytes.js, /app/lib/crypto.js, /app/lib/dom.js, /app/lib/format.js, /app/lib/i18n.js, /app/lib/pow-worker.js, /app/lib/pow.js, /app/lib/seal.js, /app/lib/sha256sync.js, /app/lib/share.js, /app/lib/store.js, /app/ui/card.js, /app/ui/core.js, /app/ui/more.js, /app/ui/qr.js, /app/ui/sealing.js, /app/ui/widget.js, /app/ui/zone.js
+PASS budget: phone, after a photo: 45548 B (≤ 49152 B; A-06 waiver: the file-type check and the metadata stripper load for files, P-14 and §4.13)
+PASS budget: no CSP or Trusted Types violation ([])
+--- drive-budget A-06d: what /drive loads until the file table renders for 20 items (phone); no ootle-wasm before it
+PASS drive-budget: a drive of 20 items
+PASS drive-budget: no ootle-wasm before the file table renders
+PASS drive-budget: at most 2 font files (['shared/fonts/geist/Geist-Latin.woff2'])
+PASS drive-budget: A-06d: 126662 B compressed until the table renders, 38 files (≤ 131072 B)
+  A-06d measured: 126662 B gzip -9, files: app/css/drive.css, app/css/flow.css, app/i18n/en.json, app/lib/api-drive.js, app/lib/api-locker.js, app/lib/api.js, app/lib/b64.js, app/lib/bytes.js, app/lib/crypto.js, app/lib/dom.js, app/lib/drive.js, app/lib/entries.js, app/lib/folder.js, app/lib/format.js, app/lib/i18n.js, app/lib/idb.js, app/lib/identity.js, app/lib/links.js, app/lib/password.js, app/lib/pow.js, app/lib/session.js, app/lib/sha256sync.js, app/lib/share.js, app/lib/store.js, app/ui/behaviors.js, app/ui/core.js, app/ui/drive-list.js, app/ui/drive-parts.js, app/ui/drive-shell.js, app/ui/drive-upload.js, app/ui/drive.js, app/ui/errors.js, app/ui/lines.js, shared/ghost.js, shared/theme.js, shared/ui/components.css, shared/ui/icons.svg, shared/ui/tokens.css
+PASS drive-budget: no CSP or Trusted Types violation ([])
+
+UI PASS 18/18
