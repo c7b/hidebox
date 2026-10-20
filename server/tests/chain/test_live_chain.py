@@ -61,6 +61,7 @@ class LiveChain(unittest.TestCase):
         status, data, _ = self.indexers.call("GET", f"/substates/{indexer.utxo_id(out['commitment'])}?include_proof=true")
         self.assertEqual(status, 200)
         self.assertIs(json.loads(data)["verified"], True)
+        self.assertEqual(indexer.substate_output(json.loads(data)), (out["auth_key"], out["nonce"]))
 
     def test_committed_outcomes(self):
         """Review H3 against the real indexers: a live UTXO is `ok` on each, an unknown id is `missing`."""
@@ -114,7 +115,7 @@ class LiveChain(unittest.TestCase):
                 status, data, _ = self.indexers.call("GET", f"/substates/{utxo_id}")
                 if status != 200:
                     continue
-                o = json.loads(data)["substate"]["Utxo"]["output"]["output"]
+                o = indexer.substate_value(json.loads(data))["Utxo"]["output"]["output"]
                 found += self.sidecar.request("scan", view_sk=robot["view_sk"], utxos=[
                     {"id": utxo_id, "nonce": o["public_nonce"], "enc": o["encrypted_data"]}])["found"]
             time.sleep(5)
