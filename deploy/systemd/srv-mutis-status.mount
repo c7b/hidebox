@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MIT
+# /srv/mutis/status (status.json, evidence.json and its archives, releases.json) mounted onto itself with
+# nosymfollow, noexec, nosuid and nodev. Caddy serves this directory, and mutis and drive both write it
+# (group mutis): with nosymfollow the kernel follows no symlink placed in it, for any process, root and
+# Caddy included, so a service user can't make Caddy publish a file only Caddy can read (its TLS key) or
+# make another writer open a file elsewhere (docs/review/security-audit-1.md). Installed and started by
+# deploy/scripts/provision.sh; it comes up with local-fs.target, before the services.
+[Unit]
+Description=mutis status directory (nosymfollow, noexec, nosuid, nodev)
+ConditionPathIsDirectory=/srv/mutis/status
+
+[Mount]
+What=/srv/mutis/status
+Where=/srv/mutis/status
+Type=none
+Options=bind,nosymfollow,noexec,nosuid,nodev
+
+[Install]
+WantedBy=local-fs.target

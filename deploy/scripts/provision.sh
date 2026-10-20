@@ -146,6 +146,17 @@ data_mount() {
   echo "ok: $(findmnt -n -o TARGET,OPTIONS --target /srv/mutis/data)"
 }
 
+status_mount() {
+  step "the status directory: nosymfollow, noexec, nosuid, nodev (srv-mutis-status.mount)"
+  systemctl enable --now srv-mutis-status.mount >/dev/null 2>&1 || die "srv-mutis-status.mount did not start (journalctl -u srv-mutis-status.mount)"
+  local opts
+  opts=$(findmnt -n -o OPTIONS --target /srv/mutis/status)
+  for flag in nosymfollow noexec nosuid nodev; do
+    [[ ,$opts, == *,$flag,* ]] || die "/srv/mutis/status is mounted without $flag ($opts)"
+  done
+  echo "ok: $(findmnt -n -o TARGET,OPTIONS --target /srv/mutis/status)"
+}
+
 kernel_settings() {
   step "kernel settings (/etc/sysctl.d/90-mutis.conf)"
   local target=/etc/sysctl.d/90-mutis.conf
@@ -318,6 +329,7 @@ users_and_dirs
 config_and_secrets
 install_files
 data_mount
+status_mount
 kernel_settings
 firewall
 caddy_site

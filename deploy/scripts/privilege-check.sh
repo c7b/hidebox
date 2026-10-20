@@ -97,6 +97,16 @@ check "mutis cannot run it through the dynamic loader either" denied as mutis "$
 rm -f "$probe.sh" "$probe.elf"
 check "drive (group mutis) cannot add a file to /srv/mutis/data itself (only to db/)" denied as drive touch /srv/mutis/data/.privilege-check-probe
 rm -f /srv/mutis/data/.privilege-check-probe
+# The status directory Caddy serves is written by mutis and drive (group mutis), and root writes releases.json
+# there: mounted nosymfollow, so no process follows a link placed in it (docs/review/security-audit-1.md).
+status_flags() { local o; o=$(findmnt -n -o OPTIONS --target /srv/mutis/status); [[ ,$o, == *,nosymfollow,* && ,$o, == *,noexec,* ]]; }
+check "/srv/mutis/status is mounted nosymfollow,noexec" ok status_flags
+check "srv-mutis-status.mount is enabled (it comes back at boot)" ok systemctl is-enabled --quiet srv-mutis-status.mount
+link=/srv/mutis/status/.privilege-check-link-$$
+ln -s /etc/hostname "$link"
+check "a link in /srv/mutis/status is not followed, even by root" denied cat "$link"
+check "Caddy doesn't follow it either" denied as caddy cat "$link"
+rm -f "$link"
 blob_modes() { find /srv/mutis/data/blobs -mindepth 1 \( -type d -perm /0077 -o -type f ! -perm 0600 \) | grep -q .; }
 check "every directory under blobs/ is 0700 and every stored file 0600" denied blob_modes
 level=$(find /srv/mutis/data/blobs -mindepth 1 -maxdepth 1 -type d -print -quit)

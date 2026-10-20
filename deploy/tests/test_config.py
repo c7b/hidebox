@@ -283,6 +283,21 @@ class UnitsTest(unittest.TestCase):
         check = (ROOT / "deploy" / "scripts" / "privilege-check.sh").read_text()
         self.assertIn("mounted noexec,nosuid,nodev", check)
 
+    def test_the_status_directory_follows_no_symlink(self):
+        """security-audit-1: Caddy serves /srv/mutis/status and mutis, drive and root write it; mounted
+        nosymfollow, a link placed there is followed by no process (Caddy can't be made to publish its key)."""
+        mount = unit("srv-mutis-status.mount")
+        status = "/srv/mutis/status"
+        self.assertEqual((mount["Mount"]["What"], mount["Mount"]["Where"]), (status, status))
+        self.assertEqual(set(mount["Mount"]["Options"].split(",")), {"bind", "nosymfollow", "noexec", "nosuid", "nodev"})
+        self.assertEqual(mount["Install"]["WantedBy"], "local-fs.target")
+        provision = (ROOT / "deploy" / "scripts" / "provision.sh").read_text()
+        self.assertIn("systemctl enable --now srv-mutis-status.mount", provision)
+        self.assertRegex(provision, r"\ndata_mount\nstatus_mount\n")
+        check = (ROOT / "deploy" / "scripts" / "privilege-check.sh").read_text()
+        self.assertIn("mounted nosymfollow,noexec", check)
+        self.assertIn("a link in /srv/mutis/status is not followed, even by root", check)
+
     def test_write_access_only_where_needed(self):
         rw = {name: unit(name)["Service"]["ReadWritePaths"].split() for name in
               ("mutis-api.service", "mutis-cleanup.service", "mutis-backup.service", "mutis-chain.service",
