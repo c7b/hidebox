@@ -4,6 +4,7 @@ no path built from user input, header limits, Origin checks, trusted X-Real-IP o
 import http.client
 import json
 import re
+import socket
 import unittest
 from pathlib import Path
 
@@ -96,6 +97,22 @@ class InputSafety(unittest.TestCase):
         self.assertEqual(resp.status, 400)
         resp.read()
         conn.close()
+
+    def test_a_chunked_body_closes_the_connection_with_one_answer(self):
+        """security-audit-1: the API reads bodies by Content-Length only; a chunked one (Caddy forwards it
+        as chunked) must not stay on the connection to be answered as a second request."""
+        for method, path, status in (("POST", "/api/v1/pow", 400), ("GET", "/api/v1/health", 200)):
+            with self.subTest(method=method), socket.create_connection(("127.0.0.1", self.s.port), timeout=10) as sock:
+                sock.sendall(f"{method} {path} HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n"
+                             "14\r\n{\"purpose\":\"upload\"}\r\n0\r\n\r\n".encode())
+                data = b""
+                while chunk := sock.recv(65536):
+                    data += chunk
+                head, _, rest = data.partition(b"\r\n\r\n")
+                self.assertTrue(head.startswith(f"HTTP/1.1 {status} ".encode()), head[:40])
+                self.assertIn(b"\r\nConnection: close", head)
+                length = int(re.search(rb"Content-Length: (\d+)", head).group(1))
+                self.assertEqual(len(rest), length, "nothing after the one answer")
 
     def test_bad_query_values(self):
         for query in ("after=-1", "after=x", "limit=0", "limit=99999"):

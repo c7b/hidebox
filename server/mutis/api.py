@@ -344,7 +344,12 @@ class Handler(BaseHTTPRequestHandler):
             resp = error_response(ApiError(500, "internal", "Something went wrong on our side."))
         finally:
             ctx.close()
-        if not req.body_read and req.content_length:
+        if req.headers.get("Transfer-Encoding") or req.content_length < 0:
+            # A body framed by anything but a Content-Length is never read here: left on a kept-alive
+            # connection, its chunk lines would be parsed as a second request and answered on Caddy's pooled
+            # connection (security-audit-1). The connection closes instead.
+            self.close_connection = True
+        elif not req.body_read and req.content_length:
             self._drain(req)
         try:
             self._write(resp)
