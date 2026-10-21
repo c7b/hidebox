@@ -52,6 +52,7 @@ FONT = "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"              # the pla
 NIGHT, MOON, MOON_DIM = "0x0A0A0A", "0xFAFAFA", "0xA3A3A3"            # web/shared/ui/tokens.css, dark
 DESK_BOX, PHONE_BOX = (95, 70, 1280, 800), (1455, 70, 370, 800)       # x, y, width, height on 1920×1080
 END_CARD_S = 3
+END_Y = (600, 668, 744)       # the end card's lines under the wordmark: the h1, the third line, the testnet line
 MAX_BYTES = 25 * 1024 * 1024
 LENGTH = (60, 90)                                                      # seconds, the story (not --demo)
 
@@ -68,7 +69,8 @@ TEST = "Our demo wallet pays the owner for you, with test money."      # C33
 OPENS = "It opens on the phone."
 PAID = "Checked on the chain, not a wallet's word."                    # C11 short form
 CHAIN_SEES = "The chain shows a payment with a hidden amount and a hidden owner. The fee is public."   # C36
-TAGLINE = "Your private cloud storage. Files lock in your browser first."   # the home's headline (copy-1)
+TAGLINE = "Your private cloud storage. Store, send, and sell files privately."   # the home's h1 (tagline-2)
+TAGLINE_3 = "Built on Tari. No KYC. No email."                        # the hero's third line, smaller and dimmer
 # The home as served (the v3 design, docs/review/promote-v3.md): motion.js has started (html.mo, or no motion at all),
 # the hero's arrival has finished, and the drive slice has decoded if the camera sees it. The slice sits under the
 # hero's still: on the computer its top is on the first screen and decodes at load (motion.js decodes it once 30 % of it
@@ -89,7 +91,7 @@ def end_lines(cfg: dict) -> tuple:
         mainnet = f"{day:%b} {day.day}, {day.year}"
     except ValueError:
         pass
-    return ((TAGLINE, 44, MOON),
+    return ((TAGLINE, 44, MOON), (TAGLINE_3, 34, MOON_DIM),
             (f"{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet}.", 30, MOON_DIM))
 
 
@@ -350,7 +352,7 @@ def render_script(shots: list[Shot], end: tuple = end_lines({})) -> tuple[str, d
     end_texts = []
     for i, (line, size, color) in enumerate(end):
         files[f"end{i}.txt"] = line
-        end_texts.append(drawtext(f"end{i}.txt", size, color, str((600, 690)[i] if i < 2 else 690 + 60 * (i - 1))))
+        end_texts.append(drawtext(f"end{i}.txt", size, color, str(END_Y[i] if i < len(END_Y) else END_Y[-1] + 60 * (i - len(END_Y) + 1))))
     dx, dy, dw, dh = DESK_BOX
     px, py, pw, ph = PHONE_BOX
     graph = ";".join([
