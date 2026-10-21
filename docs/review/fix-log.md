@@ -7,6 +7,10 @@ sentence against the shipped code and config). This log takes each finding, says
 against the code, what changed, and where the evidence is. Times are CST (UTC−6). Nothing here is a
 secret: no owner key, no judge pass, no transaction id of a test send.
 
+The raw evidence and screenshots of the passes before 2026-10-19 were pruned on 2026-10-20: `docs/evidence/README.md`
+says which folders stay and which commit still holds the rest. A path marked "pruned" below is no longer in
+the tree; the result it recorded stays in this log.
+
 The reviews' own blind spots stand: every browser ran on the server itself (no real network latency),
 real devices were emulated, and the claims pass read only the lines it cited.
 
@@ -182,16 +186,16 @@ garbage collection: an owner item below.
 
 | # | Finding (severity) | Verdict | What changed | Evidence |
 |---|---|---|---|---|
-| A1 | The three reference tables on `/how` and `/security` are clipped on a phone (high) | **Confirmed.** | Below 640 px each row stacks and every cell carries its column's name (`data-cue`, as the home page's "What we store" table does), in both languages. | `web/site/css/pages.css`, `how.html`, `security.html` and the `es/` twins; `docs/review/antislop/how-390-tables-cut.webp` (before) |
+| A1 | The three reference tables on `/how` and `/security` are clipped on a phone (high) | **Confirmed.** | Below 640 px each row stacks and every cell carries its column's name (`data-cue`, as the home page's "What we store" table does), in both languages. | `web/site/css/pages.css`, `how.html`, `security.html` and the `es/` twins; the before screenshot pruned on 2026-10-20 |
 | A2 | The Spanish app formats with Spain's conventions ("1,9 GB", "10.000") next to the site's Mexican ones (high) | **Confirmed.** | The app's number, date and relative-time formats use `es-MX` and `en-US`, as `site.js` does. | `web/app/lib/i18n.js` |
 | A3 | The Spanish hero's two-line H1 touches the "FUNDIDO DE ENTRADA:" line at 390 px (medium) | **Confirmed.** | The hero keeps a row gap on phones. | `web/site/css/home.css` |
-| A4 | A wall label that wraps lifts its keyhole; the promise's forced break makes four ragged lines on phones (medium) | **Confirmed.** | Every label reserves two lines, text at the bottom, so keyholes stay level; on phones the promise's `<br>` is hidden and the line balances. | `web/site/css/home.css`; `docs/review/antislop/home-1440-wall-label-wrap.webp`, `home-390-wall-promise-wrap.webp` (before) |
+| A4 | A wall label that wraps lifts its keyhole; the promise's forced break makes four ragged lines on phones (medium) | **Confirmed.** | Every label reserves two lines, text at the bottom, so keyholes stay level; on phones the promise's `<br>` is hidden and the line balances. | `web/site/css/home.css`; the before screenshots pruned on 2026-10-20 |
 | A5 | Four word-pairs for four things: drop / dead drop, sealed to / locked to, view / open, room / space (medium) | **Partly accepted.** | "Locked to your locker" on `/faq`, `/how`, `/security` and `/judges` ("sealed" stays only for the key inside a payment, 11-brand §7.2); the count is "open" (the viewer's burn line, the bad-key and wrong-key bodies, the FAQ, `/how`, `/privacy`); the device list is "Your recent links". Kept: "dead drop" on the site and in the docs (the feature's name in the spec, the API and the threat model; the app's "drop" is its short form, and "Drop a file" is the hero's verb), and "Get more room" (the brand's own CTA; "space" is the noun for the quota, and Spanish says "espacio" for both). | `web/app/i18n/en.json`, pages listed |
 | A6 | Spanish gender and verb drift in the app, two Spanish words for "checkpoint" on the site, and a wrong preposition for "sealed to" (medium) | **Confirmed.** | The inbox row's open button, the `/verify` lines about encryption, and the locker phrases took the right gender and verb; the Spanish site used the app's one word for "checkpoint" everywhere, and `/judges` B4 quoted the corrected button. (The Spanish localization was removed on 2026-10-12; these files are in the git history.) | `web/app/i18n/es.json`, `es/faq.html`, `es/how.html`, `es/judges.html`, `es/security.html`, `es/privacy.html`, `es/index.html` |
 | A7 | Fourteen Spanish sentences that read as translated (medium) | **Confirmed.** | Every rewrite in the review applied: three lines on the home page, one each on `/privacy`, `/security`, `/abuse`, the FAQ and the 404, and four in the app (the password hint, the drop's wait line, the exit line, the recent-links heading). The home page's skip link named the file zone; the other pages kept one wording, the same on all ten. (The Spanish localization was removed on 2026-10-12.) | `es/*.html`, `web/app/i18n/es.json` |
-| A8 | `/status` says "Something needs our attention" while every check is green (medium) | **Confirmed** (`attention` is the operator's signal). | The line shows only when a check isn't green, and under it the reasons in words (a budget's kind, slice and share; new abuse reports), in both languages. | `web/site/js/status.js`, `status.html`, `es/status.html`, `pages.css`; `docs/review/antislop/status-390-attention-all-green.webp` (before) |
-| A9 | The three pack cards on `/upgrade` don't align (medium) | **Confirmed.** | A pack's title reserves two lines, so every price and Buy sit level. The cards stay: the page offers a choice between three packs and a free plan, which a table of prices would not make clearer. | `web/app/css/app.css`; `docs/review/antislop/upgrade-1440-pack-cards-misaligned.webp` (before) |
-| A10 | An unknown app path borrows the gone-link copy; "No drop here." offers no way out (medium) | **Confirmed.** | An unknown app path shows the site's 404 scene (INT. NOWHERE — NIGHT) with its button sized to its words; a closed or unknown drop lists "What is mutis?" and "Lock a file of your own". | `web/app/ui/app.js`, `droppage.js`, `app.css`, `i18n/*.json`; `docs/review/antislop/app-notfound-1440.webp` (before) |
+| A8 | `/status` says "Something needs our attention" while every check is green (medium) | **Confirmed** (`attention` is the operator's signal). | The line shows only when a check isn't green, and under it the reasons in words (a budget's kind, slice and share; new abuse reports), in both languages. | `web/site/js/status.js`, `status.html`, `es/status.html`, `pages.css`; the before screenshot pruned on 2026-10-20 |
+| A9 | The three pack cards on `/upgrade` don't align (medium) | **Confirmed.** | A pack's title reserves two lines, so every price and Buy sit level. The cards stay: the page offers a choice between three packs and a free plan, which a table of prices would not make clearer. | `web/app/css/app.css`; the before screenshot pruned on 2026-10-20 |
+| A10 | An unknown app path borrows the gone-link copy; "No drop here." offers no way out (medium) | **Confirmed.** | An unknown app path shows the site's 404 scene (INT. NOWHERE — NIGHT) with its button sized to its words; a closed or unknown drop lists "What is mutis?" and "Lock a file of your own". | `web/app/ui/app.js`, `droppage.js`, `app.css`, `i18n/*.json`; the before screenshot pruned on 2026-10-20 |
 | A11 | "About a minute" for the sponsor grant is tighter than what was measured (medium) | **Confirmed** (cold start 60 s, spendable within 3:15). | "A minute or two" on the home page, `/security`, `/judges` B3, the README and the threat model, in both languages; the app's send screen already said so. | pages listed |
 | A12 | The whole "Do this" column of `/judges` is bold (low) | **Confirmed.** | Only the UI names it already marks with `<strong>` are bold. | `web/site/css/pages.css` |
 | A13 | Straight quotes in one home footnote (low) | **Confirmed.** | “sent by mutis”. | `index.html` |
@@ -471,8 +475,8 @@ the security drop `/d/3w7m8k2v5t` active, no `e2e_expiry_s` in `/config` or `/et
 A devil's-advocate run followed `/judges` literally on release `abc5d71` (headless Chromium on the
 server, phone 390×844 and desktop 1440×900, no judge pass, 03:09–03:45 UTC): track A passed in 88 s
 and track B passed every step but B6; it also crawled every link, ran the README's test table from a
-clean clone and read the architecture against the code. Its screenshots are in
-`docs/review/function/` (`893066a`). Each finding was checked against the code first; times below are
+clean clone and read the architecture against the code. Its screenshots (`docs/review/function/`, `893066a`)
+were pruned on 2026-10-20. Each finding was checked against the code first; times below are
 UTC.
 
 | # | Finding (review's severity) | Verdict | What changed |
@@ -723,7 +727,7 @@ now shows its steps from the click (measured at 5 ms, limit 300), and Stop shari
 the row menu and the share result. `design/site-v2` followed (merge `059763e`, no conflicts): the
 redesigned site, a sticky header shared with the app's link pages, A-06h, and claims C50 to C56. The
 integration devil checked the designer's twelve points on the real pages, at 390 and 1440, in light and
-dark (`docs/review/site-v2.md`, "Integration devil"; evidence in `docs/evidence/2026-10-16/site-v2/`).
+dark (`docs/review/site-v2.md`, "Integration devil", pruned on 2026-10-20; evidence in `docs/evidence/2026-10-16/site-v2/`).
 
 | # | Finding | What changed |
 |---|---|---|
@@ -785,7 +789,7 @@ UTC day's drive brake had reset); 3 items and 1 drop purged by id; `/status.json
 
 ## Ninth pass (site v4): the owner's four changes (2026-10-17)
 
-The owner's notes with the coordinator's decisions, no devil's-advocate pass: `docs/review/site-v4.md` has each
+The owner's notes with the coordinator's decisions, no devil's-advocate pass: `docs/review/site-v4.md` (pruned on 2026-10-20) had each
 change, the drive's states and their one lime, how one sentence a line is done, the skills' findings and the
 numbers; `research/17-brand.md` v3 (kept outside this repository) and DESIGN.md carry the rules.
 

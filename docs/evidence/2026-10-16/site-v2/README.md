@@ -5,8 +5,8 @@
 selling in the row menu and the share result) and `design/site-v2` (the redesigned site: a hero over the
 ripple field, the comparison table, the tTARI box, Who sees what as cards, a short /judges, /made renamed
 Under the hood, the sticky header, the home in a Geist subset, A-06h, claims C50 to C56). The integration
-devil then checked the merged result on the real pages and fixed five defects. Its verdicts are in
-`docs/review/site-v2.md` ("Integration devil") and `docs/review/fix-log.md` ("Seventh pass").
+devil then checked the merged result on the real pages and fixed five defects. Its verdicts were in
+`docs/review/site-v2.md` ("Integration devil", pruned on 2026-10-20); `docs/review/fix-log.md` ("Seventh pass") keeps them.
 
 Live and tagged: `410f21098fa34a594c2acf33594501088078f228`, release `410f2109…-c0a7e1276`. Its manifest,
 `7fbb3811…9ac3`, is notarized through SealLog in tx `481f40e3…615c` (22:44 UTC).

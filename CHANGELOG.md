@@ -300,7 +300,7 @@ A full audit of the repository and the deployment, unit by unit, with an indepen
   product's noun everywhere else. The meta, Open Graph and JSON-LD descriptions, the share card (`og.png`) and
   the film follow it.
 - **One sentence a line** in every paragraph, lede, step, card, table cell, dialog and empty state with two or
-  more sentences, on every page and in the app (`web/app/ui/lines.js`). Review: `docs/review/site-v4.md`.
+  more sentences, on every page and in the app (`web/app/ui/lines.js`). Review: docs/review/site-v4.md (pruned on 2026-10-20).
 <!-- /ninth pass, site v4 -->
 
 <!-- eighth pass, site v3 -->
