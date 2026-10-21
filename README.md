@@ -3,9 +3,8 @@
 
 <h1><img src="docs/media/hidebox-lockup-card.svg" width="268" height="108" alt="hidebox"></h1>
 
-**Your private cloud storage. Files lock in your browser first.**
-
-You pick how each file opens: once, with a word, or for Tari™.
+**Your private cloud storage. Store, send, and sell files privately.**<br>
+Built on Tari™. No KYC. No email.
 
 [**Open your drive**](https://hidebox.app) · [For judges](https://hidebox.app/judges) · [How it works](https://hidebox.app/how) · [Docs](docs/README.md)
 
@@ -15,7 +14,7 @@ You pick how each file opens: once, with a word, or for Tari™.
 
 </div>
 
-<a href="https://hidebox.app"><img src="docs/media/home.webp" alt="The hidebox home page: Your private cloud storage. Files lock in your browser first."></a>
+<a href="https://hidebox.app"><img src="docs/media/home.webp" alt="The hidebox home page: Your private cloud storage. Store, send, and sell files privately. Built on Tari. No KYC. No email."></a>
 
 ## Try it in 2 minutes
 
@@ -26,6 +25,8 @@ You pick how each file opens: once, with a word, or for Tari™.
 Both judge tracks, step by step: [/judges](https://hidebox.app/judges). The long tour: [docs/overview.md](docs/overview.md).
 
 ## How it works
+
+Files lock in your browser first. You pick how each file opens: once, with a word, or for Tari.
 
 <img src="docs/media/how-it-works.svg" alt="Four parts. Your browser locks every file. Our server gets scrambled noise. Never the key. Whoever has the link opens it by its rule. When a file leaves your drive, we write that on the Tari chain, for anyone to check. The key hides in the link, after the # sign.">
 
