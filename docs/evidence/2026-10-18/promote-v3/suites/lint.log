@@ -1,2 +1,0 @@
-== lint: python3 -I tools/lint.py --root .
-lint: PASS (0 problems)

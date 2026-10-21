@@ -4,8 +4,8 @@
 The owner approved `/v3` (docs/review/home-v3.md) as it is, with one mark, the open box, everywhere the brand tile
 appears. This pass makes that page the home, sends `/v3` to it, re-points the home's checks and re-renders the share
 cards and icons. **Prepared on the branch `site/promote-v3`; the coordinator deploys it** (this session ran no
-`deploy.sh`, touched no production file and moved no tag). Evidence:
-[`docs/evidence/2026-10-18/promote-v3/`](../evidence/2026-10-18/promote-v3/).
+`deploy.sh`, touched no production file and moved no tag). The raw evidence
+(`docs/evidence/2026-10-18/promote-v3/`) was pruned on 2026-10-20; the results it recorded are below.
 
 ## The commits
 
@@ -175,19 +175,8 @@ Caddyfile).
 
 ## Screenshots
 
-`docs/evidence/2026-10-18/promote-v3/shots_promote.py`, headless Chromium on the server as `build`, against this tree
-served by `web/site/tests/serve.py` (production's CSP; the API from fixtures, set as the live deployment is: direct
-sends, SealLog, pay to open):
-
-- `home-{1440,390}-{dark,light}.webp`: the first screen; `home-{1440,390}-{dark,light}-full*.webp`: the whole page after
-  scrolling through it (390's in two parts); `home-*-mark.png`: the header's tile.
-- `v2-{1440,390}.webp`, `v2-{1440,390}-full*.webp`: `/v2` with reduced motion; `v2-compare.json`, `v2-tiles.txt`.
-- `v3-redirect-1440.webp`, `redirect.json`: `/v3` and `/v3/` answer 301 with `Location: /`; the browser lands on `/`
-  (title "hidebox: your private drive").
-
-The best four: `home-1440-dark.webp` (the words beside the open box, the open box in the header's tile),
-`home-1440-light.webp` (the still on the gunmetal card, the tile still ink), `home-390-dark.webp` (a phone's first
-screen: the words and Open your drive first, the still under them), `home-1440-dark-full.webp` (the whole page).
+Pruned on 2026-10-20: the promoted home at 1440 and 390 in both themes, first screen and whole page, the header's tile,
+`/v2` with reduced motion, and `/v3` and `/v3/` answering 301 with `Location: /` (the browser landing on `/`).
 
 ## Open, and for the coordinator
 

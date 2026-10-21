@@ -1,6 +1,0 @@
-#!/bin/bash
-# SPDX-License-Identifier: MIT
-. "$(dirname "$0")/_common"
-log "useradd $*"; name=${!#}; uid=$(( $(cut -d: -f2 "$PW" | sort -n | tail -1) + 1 ))
-echo "$name:$uid:$name" >> "$PW"
-case " $* " in *" --create-home "*) mkdir -p "$DRY_ROOT/home/$name" ;; esac

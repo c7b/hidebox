@@ -47,7 +47,7 @@ first pass truncated after item 19).
 ## Suites run after the changes
 
 On the server as `build` with the server's Python 3.13, Node 20 and Chromium 154, from a tarball of the
-tree that became commit `7c9e627` (logs in `docs/evidence/2026-10-11/fix-pass/suites/`):
+tree that became commit `7c9e627` (logs in `docs/evidence/2026-10-11/fix-pass/suites/`, pruned on 2026-10-20):
 
 | Suite | Result |
 |---|---|
@@ -71,7 +71,7 @@ notarized in tx `b9955589…bdfe`); `verify-deploy` 0 differences across 143 fil
 green on that commit, `/status.json` green, D-01 against production PASS, `/config` without
 `e2e_expiry_s`, the wall quiet (`fix-pass/deploy/*-ea20751.txt`).
 
-## Evidence: the production E2E and judge runs (`docs/evidence/2026-10-11/fix-pass/e2e/`)
+## Evidence: the production E2E and judge runs (`docs/evidence/2026-10-11/fix-pass/e2e/`, pruned on 2026-10-20)
 
 Every scenario ran against release `7c9e627…-c9a2957d0` with `run.py --chain --final`, in batches:
 every browser runs on the server, so all actors share one /64, and the API allows five new lockers and
@@ -241,7 +241,7 @@ drop (commit `4888a19`; the lint's `LOCKER_ONLY` list names the new module). Sit
 
 On the server as `build` with the server's Python 3.13, Node 20 and Chromium 154, from fresh tarballs of
 the tree that became `4888a19` and again of `47cfbb0` after the reconcile fix below (the logs in
-`docs/evidence/2026-10-11/fix-2/suites/` are `47cfbb0`'s; both runs were green):
+`docs/evidence/2026-10-11/fix-2/suites/` (pruned on 2026-10-20) are `47cfbb0`'s; both runs were green):
 
 | Suite | Result |
 |---|---|
@@ -261,7 +261,7 @@ in flight after the restart; D-01 against production PASS, the new `TRACE`/`PUT 
 quiet (`fix-2/deploy/*-9e7bc34.txt`). E-J's second attempt (below) found a server fault, fixed in
 `47cfbb0` and deployed at 18:51.
 
-**End to end against production (`docs/evidence/2026-10-11/fix-2/e2e/`).** Every scenario except E-J
+**End to end against production (`docs/evidence/2026-10-11/fix-2/e2e/`, pruned on 2026-10-20).** Every scenario except E-J
 ran on release `9e7bc34…-c47090408`, and E-J's passing run on `47cfbb0…-cf21f0fbd` (the two differ only
 in the server's reconcile and its runbook line), all with `run.py --chain --final`, in batches an hour apart as before, with
 `e2e_expiry_s = 60` in the config for the first batch only (E-05) and removed at 11:04, `mutis-api`
@@ -389,7 +389,7 @@ documentation review's finding and the second pass's open items that are code or
 
 | From | Finding | Verdict now | What changed |
 |---|---|---|---|
-| Docs review | A stranger can't follow `docs/self-host.md`: `provision.sh` created only `mutis`, assumed `drive`, `build` and the owner's login, required a walletd guard set by hand, and couldn't run without walletd | **Fixed.** | `provision.sh` creates `drive` and `build`, takes the operator from the sudo login (or `MUTIS_OPERATOR`), adds all three loopback guards before ufw's loopback `ACCEPT` (and refuses an inactive ufw), skips walletd until it is set up, and restarts a tmux walletd only if it stopped one. `self-host.md` has every step: packages and the firewall, the config before provisioning (the example names our host), provision, walletd's first start (tested with a throwaway wallet as `build` on the server, port 5198, removed after), configure, deploy from a workstation, SealLog, checks. Followed from a clean clone: the local build and dev server for real, provisioning as a dry run with stand-in commands on a simulated Debian 13 root (`docs/evidence/2026-10-12/english/selfhost/`), which also found the tmux restart on a new server. |
+| Docs review | A stranger can't follow `docs/self-host.md`: `provision.sh` created only `mutis`, assumed `drive`, `build` and the owner's login, required a walletd guard set by hand, and couldn't run without walletd | **Fixed.** | `provision.sh` creates `drive` and `build`, takes the operator from the sudo login (or `MUTIS_OPERATOR`), adds all three loopback guards before ufw's loopback `ACCEPT` (and refuses an inactive ufw), skips walletd until it is set up, and restarts a tmux walletd only if it stopped one. `self-host.md` has every step: packages and the firewall, the config before provisioning (the example names our host), provision, walletd's first start (tested with a throwaway wallet as `build` on the server, port 5198, removed after), configure, deploy from a workstation, SealLog, checks. Followed from a clean clone: the local build and dev server for real, provisioning as a dry run with stand-in commands on a simulated Debian 13 root (`docs/evidence/2026-10-12/english/selfhost/`, pruned on 2026-10-20), which also found the tmux restart on a new server. |
 | Docs review | Test counts in the READMEs don't match the suites | **Fixed.** | `server/README.md` (202 tests), `web/site/README.md` (15 file checks), `web/app/tests/README.md` and the `ACCEPTANCE` files carry this pass's runs. |
 | Task (architecture) | The API's in-memory rate limits and daily per-network caps are lost on restart | **Documented; persistence rejected.** | `docs/architecture.md` and `deploy/README.md` say what a restart forgets (rate limits, per-network and per-locker daily caps, PoW escalation, wrong-password counts) and what it keeps (the daily budgets, rows in SQLite, so a restart can't raise what the wallet spends). Persisting the counters would mean writing the day key that hashes visitors' networks, which the privacy design never writes. |
 | Second pass, open item 1 | A judge whose sponsor grant is refused waits silently for a direct send (`ui/locker-ctx.js`) | **Deferred to fix 3**, as the second pass planned. | Not touched here: it is chain-facing UI and needs its own E2E run in direct mode. |
@@ -458,7 +458,7 @@ the security drop `/d/3w7m8k2v5t` active, no `e2e_expiry_s` in `/config` or `/et
    passes, check the Hostinger snapshots, decide on the unlabeled dead drop, and create the contest
    tag after the rebrand.
 3. **walletd's stored dry run.** Harmless; the journal line stays until walletd drops the transaction
-   (`docs/evidence/2026-10-12/english/deploy/walletd-resubmit.txt`). The wallet's store was not touched.
+   (`docs/evidence/2026-10-12/english/deploy/walletd-resubmit.txt`, pruned on 2026-10-20). The wallet's store was not touched.
 4. **A real install from the guide.** `docs/self-host.md` was followed from a clean clone with
    provisioning as a dry run; a run on a throwaway Debian 13 server (a VPS the owner pays for) would
    close it.
@@ -495,7 +495,7 @@ UTC.
 The review's blind spots stand: no judge pass was used in a browser, no real phone or Tor Browser,
 every browser ran on the server's own network, and the self-host server steps were read, not run.
 
-### Suites, deploy, end-to-end runs and the purge (`docs/evidence/2026-10-12/fix-3/`)
+### Suites, deploy, end-to-end runs and the purge (`docs/evidence/2026-10-12/fix-3/`, pruned on 2026-10-20)
 
 On the server as `build` from a `git archive` of `8959c6f`, all green on the first run: server 203
 tests OK (4 opt-in skips; one more for `release-pack`), site 27 of 27, app-ui UI PASS 220/220,
@@ -538,9 +538,9 @@ topics or vulnerability reporting; `security.txt` keeps the security drop as its
 static check still refuses the GitHub line); the clean anonymous clone and the GitHub links' crawl
 wait for the repository. The anonymous crawl of the live site found 63 links: every non-GitHub link
 answers 200, and the 8 GitHub links 404 (`links/crawl.txt`). Recorded in
-`docs/evidence/2026-10-12/README.md`.
+`docs/evidence/2026-10-12/README.md` (pruned on 2026-10-20).
 
-### The public step, done (2026-10-13, 04:46–05:06 UTC; `docs/evidence/2026-10-12/public/`)
+### The public step, done (2026-10-13, 04:46–05:06 UTC; `docs/evidence/2026-10-12/public/`, pruned on 2026-10-20)
 
 **The old commits.** The owner cleared them without GitHub Support: the old repository was renamed
 `c7b/mutis-pre-rewrite-private` (still private; the owner may delete it), a new empty `c7b/mutis` was
@@ -805,7 +805,7 @@ across 162 files, D-01 PASS, the live probe 18/18, the non-chain batch 13/13 (E-
 again on the release (87.97 s, 2.13 MB) and copied to the contest kit (the v3 one kept as `film-17f6c5b.mp4`);
 `/status.json` green. Budgets: A-06 unchanged (25,001 / 40,536 B on a phone, 43,503 B on a computer), A-06d
 115,586 B (was 113,793), M-01 57.9 KB, home.css +2,963 of 3,072 B. No purge by id this pass. Evidence:
-`docs/evidence/2026-10-17/site-v4/`.
+`docs/evidence/2026-10-17/site-v4/` (pruned on 2026-10-20).
 
 ## Tenth pass (home v2): the home with the product loops, at /v2 (2026-10-17)
 
@@ -829,7 +829,7 @@ slice while a loop played) came from an inset highlight beside a large shadow; t
 the cards lost their backdrop blur. Released as `8fa0925` (release `8fa09252…-cd224129f`, 177 files), the tag
 `spooky-secrets-2026-10` left at `0e05f27`; suites lint, copy, server 331, deploy 81, core 9/9, UI 723/723, site 37/37;
 verify-deploy 0 differences across 177 files against the release (18 expected against the tag), D-01 PASS. Evidence:
-`docs/evidence/2026-10-17/home-v2/`.
+`docs/evidence/2026-10-17/home-v2/` (pruned on 2026-10-20).
 
 ## Eleventh pass (home v3): /v2 with stills and the open box, at /v3 (2026-10-18)
 
@@ -853,13 +853,13 @@ meanwhile: `481e626` (the share window in depth, Source code on GitHub, the foot
 window reached `/v3` in `6c25119`; `/v3` went live in their releases `6c640f5` and `b749cdd`. Tag
 `spooky-secrets-2026-10` left at `0e05f27`; suites lint, copy, server 331, deploy 83, core 9/9, UI 731/731, site 39/39;
 verify-deploy 0 differences across 206 files against both live releases, D-01 PASS; /v3 weighs 135,202 B after a full
-scroll on a computer (/v2: 12.4 MB). Evidence: `docs/evidence/2026-10-18/home-v3/`.
+scroll on a computer (/v2: 12.4 MB). Evidence: `docs/evidence/2026-10-18/home-v3/` (pruned on 2026-10-20).
 
 ## Twelfth pass (promote v3): the v3 design becomes the home (2026-10-18)
 
 **Prepared on branch `site/promote-v3`; deployed by the coordinator.** The owner approved `/v3` as it is, with one mark.
 `docs/review/promote-v3.md` has what `/` serves now, every check that was re-pointed and why, the budgets before and
-after, the suites and the screenshots; evidence in `docs/evidence/2026-10-18/promote-v3/`.
+after, the suites and the screenshots; evidence in `docs/evidence/2026-10-18/promote-v3/` (pruned on 2026-10-20).
 
 | # | What | What changed |
 |---|---|---|
@@ -918,7 +918,7 @@ no expectation changed). A-06d 119,760 B at most (117,471 B with the promotion a
 files, notarized in tx `a1290c29…73a6`), `main` pushed `d0f08ed..6e20248`, tag `spooky-secrets-2026-10` left at `d0f08ed`;
 verify-deploy 0 differences across 203 files, D-01 PASS, the live probe 23/23; the app's E2E batch: E-01, E-08, E-18, E-20,
 E-26, E-27, E-03 PASS, E-28 PASS on its rerun (a tap racing the menu's slide-in), E-19 FAIL twice on the Android profile at the
-home's Or write one (the promotion's home; no home file changed here). Evidence: `docs/evidence/2026-10-18/drive-v3/`.
+home's Or write one (the promotion's home; no home file changed here). Evidence: `docs/evidence/2026-10-18/drive-v3/` (pruned on 2026-10-20).
 
 ## E-19 on the v3 home: the drop widget out of the reveals (2026-10-18)
 
@@ -931,14 +931,14 @@ holds it unhidden and unmoved at 1440 and 390 (it fails against the old `motion.
 devices and tap: before 4/12 taps opened the text box, after 12/12. Gate: lint, copy, server 331, deploy 84, core 9/9,
 site 42/42, UI 751/751. Deployed with `deploy.sh` (203 files, smoke PASS, notarized); verify-deploy 0 differences, D-01
 PASS; E-01 PASS, E-19 PASS twice on both profiles. Tag `spooky-secrets-2026-10` left at `d0f08ed`. `docs/review/promote-v3.md`
-("After the release"), evidence in `docs/evidence/2026-10-18/promote-v3/e19/`.
+("After the release"), evidence in `docs/evidence/2026-10-18/promote-v3/e19/` (pruned on 2026-10-20).
 
 ## Copy pass 1: the owner's findings on the words (2026-10-18)
 
 The owner found AI tics and repetition on the home and in the README. Branch `copy/pass-1`, pushed to `main` commit
 by commit; **the coordinator deploys it**. `docs/review/copy-1.md` has every finding (file, before, after, the skill
 that caught it), the headline candidates, the key statements, the word counts and the suites; evidence in
-`docs/evidence/2026-10-18/copy-1/`.
+`docs/evidence/2026-10-18/copy-1/` (pruned on 2026-10-20).
 
 | # | What | What changed |
 |---|---|---|
@@ -953,7 +953,7 @@ Suites on the server as build: lint PASS, check-copy PASS, deploy 84 OK, core 9/
 `drive-delete-account`'s known timeout under another session's load, 15/15 alone. M-01 58.3 KB (58.4 before), home
 words at 390 38 above the fold and 586 in all (46 and 650 before), A-06 unchanged. `/v2` keeps its old words on
 purpose; V-01 no longer compares them with the home's. The site-v4 live probe (`docs/evidence/2026-10-17/site-v4/
-checks/live_probe.py`) still expects the old headline and fails against this release by design.
+checks/live_probe.py`, pruned on 2026-10-20) still expects the old headline and fails against this release by design.
 
 ## Fourteenth pass (ux feedback 1): every wait says what is happening, every result says it worked (2026-10-19)
 
@@ -961,7 +961,7 @@ The owner left a photo at his drop link from another browser: seven seconds with
 result, a result of loose lines around a bare transaction id, and a /verify/tx page of raw fields; he asked whether
 other corners had gone unchecked. `docs/review/ux-feedback-1.md` has the audit of every flow on production (before
 and, with this branch's front end served to the test browser, after), each fixed state, the copy and claims, the
-budgets and the screenshots; evidence in `docs/evidence/2026-10-18/ux-feedback-1/`.
+budgets and the screenshots; evidence in `docs/evidence/2026-10-18/ux-feedback-1/` (pruned on 2026-10-20).
 
 | # | Where | Before (production, longest still) | Now |
 |---|---|---|---|

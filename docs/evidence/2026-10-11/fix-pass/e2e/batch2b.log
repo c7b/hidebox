@@ -1,3 +1,0 @@
-PASS E-13     30.4s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
-e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → reports/batch2b-20261011-234059.json
-exit 0

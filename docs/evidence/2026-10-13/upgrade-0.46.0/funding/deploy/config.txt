@@ -1,8 +1,0 @@
-== config: ootle.wasm_version 0.45.0 → 0.46.0 (deploy/README.md: edit /etc/mutis/mutis.toml, keep a copy in /var/backups/mutis/, check-config) 2026-10-13T22:04:44Z
-copy: /var/backups/mutis/mutis.toml-20261013T220444Z-pre-wasm-0.46.0 root:mutis 640 3785
-live: /etc/mutis/mutis.toml root:mutis 640 3785
-82c82
-< wasm_version = "0.45.0"
----
-> wasm_version = "0.46.0"
-ok

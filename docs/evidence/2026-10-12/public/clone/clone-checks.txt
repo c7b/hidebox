@@ -1,9 +1,0 @@
-# A stranger: empty HOME, no system or global git config, no credential helper, no token, no prompts.
-# env -i HOME=<scratch>/home PATH=/usr/bin:/bin LANG=C.UTF-8 GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0 <command>
-2026-10-13T05:01:55Z
-$ (README, docs/self-host.md) git clone https://github.com/c7b/mutis && cd mutis
-exit 0; HEAD 6fa84fd623b5ab3b7a8baa5e8495debd7b86be8b; commits 87; branches: origin/HEAD->origin/main origin/main 
-$ git -c credential.helper= clone https://github.com/c7b/mutis.git
-exit 0; HEAD 6fa84fd623b5ab3b7a8baa5e8495debd7b86be8b
-$ the repository env has no GH_TOKEN/GITHUB_TOKEN:
-0

@@ -1,6 +1,0 @@
-#!/bin/bash
-# SPDX-License-Identifier: MIT
-. "$(dirname "$0")/_common"
-log "caddy $*"
-[ "caddy" = runuser ] && exit 1
-exit 0

@@ -16,7 +16,8 @@ decision was made from the brief, the stills and the page.
 
 **Live:** <https://srv2052606.hstgr.cloud/v3> (also `/v3/`). The home at `/` and `/v2` are unchanged; `/v3` is in no
 menu, header, footer, sitemap or JSON-LD graph, carries `<meta name="robots" content="noindex">` and Caddy adds
-`X-Robots-Tag: noindex`. Evidence: [`docs/evidence/2026-10-18/home-v3/`](../evidence/2026-10-18/home-v3/).
+`X-Robots-Tag: noindex`. The raw evidence (`docs/evidence/2026-10-18/home-v3/`) was pruned on 2026-10-20; the results it recorded
+are below.
 
 ## What /v3 is
 
@@ -225,18 +226,9 @@ production weighed 12,419,232 B after the same scroll when its review measured i
 
 ## Screenshots
 
-All from production at `6c640f5` (`/v3` is the same at `b749cdd`), headless Chromium on the server as `build`
-(`docs/evidence/2026-10-18/home-v3/shots_v3.py`). The best four:
-
-- `v3-1440-dark.webp`: the hero, dark first, the open box with the files rising beside the words; the open box in the
-  header's tile.
-- `v3-1440-light-different.webp`: What's different in light mode, the locked file on v2's gunmetal card beside the
-  question, the comparison under it.
-- `v3-1440-dark-who.webp`: Who sees what, the four sides beside the box with its four faces.
-- `v3-390-dark.webp`: the phone's first screen, the words and Open your drive first, the hero's picture under them.
-
-Also: both themes' whole pages at 1440 and 390 (a phone's in two parts), every section with a picture at 1440 and 390
-in both themes, the header's tile in both themes (`-mark.png`), and reduced motion.
+Pruned on 2026-10-20: `/v3` from production at `6c640f5` at 1440 and 390 in both themes, every section with a picture,
+the header's tile and reduced motion. `/v3` became the home in promote-v3; the brand kit's evidence
+(`docs/evidence/2026-10-19/brand-kit-1/after/`) has the home after its restyle.
 
 ## Not done, and open
 

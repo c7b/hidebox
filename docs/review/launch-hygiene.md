@@ -73,7 +73,7 @@ checks that every `--host` option uses it. An operator whose alias for the serve
 `MUTIS_SSH_HOST` or adds `Host hidebox` to `~/.ssh/config`.
 
 **Files added during this pass.** The UX lane's review and evidence (`docs/review/ux-feedback-1.md`,
-`docs/evidence/2026-10-18/ux-feedback-1/`), pushed while this pass ran, brought 22 lines back; the last commit
+`docs/evidence/2026-10-18/ux-feedback-1/`, pruned on 2026-10-20), pushed while this pass ran, brought 22 lines back; the last commit
 scrubs them the same way, and its audit script takes `harness.SSH_HOST` like the other E2E tools.
 
 **Other code touched, behavior unchanged:** the local variable `parts` became `url` in

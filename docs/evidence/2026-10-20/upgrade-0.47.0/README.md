@@ -86,7 +86,7 @@ suite, in both answer shapes.
 
 1. **The old locks.** 0.47.0 changes nothing for the 21 transactions of 2026-10-13 that stay `Pending`, or for
    the sponsor's change `3ee453ab…` (8,851.452 tTARI) that walletd holds `LockedUnconfirmed`
-   (`../../2026-10-13/upgrade-0.46.0/`). The sponsor spends its newer output meanwhile (348.30 tTARI).
+   (the 0.46.0 upgrade's evidence, pruned on 2026-10-20; CHANGELOG.md, "2026-10-13: Ootle v0.46.0"). The sponsor spends its newer output meanwhile (348.30 tTARI).
 2. **First-use trust.** walletd 0.47.0 took its indexer's word for its first validator set (anchor
    `FirstUse`, epoch 12506) and verifies everything after it by the handovers. Tari's own design; noted
    because before 0.47.0 walletd trusted the indexer for everything.

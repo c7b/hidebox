@@ -539,11 +539,11 @@ A full audit of the repository and the deployment, unit by unit, with an indepen
   purchases kept on this device; when the chain can't be reached, it says so and keeps what it found.
 <!-- /lane app2 -->
 
-## 2026-10-13: Ootle v0.46.0 (docs/evidence/2026-10-13/upgrade-0.46.0/)
+## 2026-10-13: Ootle v0.46.0 (docs/evidence/2026-10-13/upgrade-0.46.0/, pruned on 2026-10-20)
 
 - walletd 0.46.0 (`tari_ootle_walletd-0.46.0-cc8a83b-linux-x86_64`, SHA-256 `26d4c269…6e05`) runs on
   the server since 18:14 UTC, after Esmeralda's indexers moved to v0.46.0 at about 10:30 and walletd
-  0.45.0 could no longer read a transaction result (docs/evidence/2026-10-13/incident-walletd/). The
+  0.45.0 could no longer read a transaction result (docs/evidence/2026-10-13/incident-walletd/, pruned on 2026-10-20). The
   store took one additive migration; balances are unchanged; the 0.45.0 binary and a pre-upgrade tar
   are kept for a rollback. Checkpoints commit again (#159 on), and #141 to #158, which reached the log
   while walletd couldn't tell, are recorded committed after a check against the log's state on both

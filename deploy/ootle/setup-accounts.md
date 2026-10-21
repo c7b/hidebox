@@ -51,7 +51,7 @@ math (spec §9.5): every slice maxed every day costs about 230 tTARI, so 8,900 l
 worst case and far longer in practice; the healthcheck turns amber below 200 tTARI.
 
 **Refilled 2026-10-13** (the 10:39 send's change stays locked in walletd;
-`docs/evidence/2026-10-13/upgrade-0.46.0/`, "Funding and deploy"): 61.5 tTARI from `service` as above
+the 0.46.0 upgrade's evidence, pruned on 2026-10-20): 61.5 tTARI from `service` as above
 (tx `a70eb538…7403`), then 400 tXTM burned on the L1 straight to the sponsor. In the TUI's Burn tab
 the Claim Public Key is the sponsor's own `owner_public_key` (`rpc call accounts.get
 '{"name_or_address":"sponsor"}'`), not `service`'s: walletd 0.46.0's auto-claimer finds the account by

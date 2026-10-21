@@ -4,7 +4,8 @@
 The owner read the site and the README and found AI tics and repetition. This pass fixes every finding, adds the Say It
 Once rule to DESIGN.md and applies it to the home, the README, /how, /judges, `docs/*.md` and the drive's words.
 Branch `copy/pass-1`, pushed to `main` commit by commit; **the coordinator deploys it** (no `deploy.sh`, no
-production file, no tag moved here). Evidence: [`docs/evidence/2026-10-18/copy-1/`](../evidence/2026-10-18/copy-1/).
+production file, no tag moved here). The raw evidence (`docs/evidence/2026-10-18/copy-1/`) was pruned on 2026-10-20; the results it
+recorded are below.
 `/v2` keeps the copy it was made with, on purpose: only the share card's alt text changed there, because the card did.
 
 ## The skills
@@ -187,8 +188,7 @@ How many times each key statement shows (`statements.json`; the pictures of the 
 
 ## Suites and checks
 
-On the server as `build` (Python 3.13, Chromium, Node 20), on this branch's trees; logs in
-[`suites/`](../evidence/2026-10-18/copy-1/suites/).
+On the server as `build` (Python 3.13, Chromium, Node 20), on this branch's trees; the logs were pruned on 2026-10-20.
 
 | Suite | Result |
 |---|---|
@@ -204,22 +204,15 @@ On the server as `build` (Python 3.13, Chromium, Node 20), on this branch's tree
 
 ## Screenshots
 
-In [`docs/evidence/2026-10-18/copy-1/`](../evidence/2026-10-18/copy-1/), from `shots_copy.py` (headless Chromium
-on the server as `build` over CDP, the method of `promote-v3/shots_promote.py`; the test server set as production):
-
-- The hero with the new headline: `home-390-dark.webp`, `home-1440-dark.webp` (and `-light`); before:
-  `before-home-390-dark.webp`, `before-home-1440-dark.webp` (and `-light`).
-- The whole home: `home-1440-{dark,light}-full.webp`, `home-390-{dark,light}-full-{1,2}.webp`.
-- /how and /judges: `how-{390,1440}.webp`, `judges-{390,1440}.webp` and their `-full`.
-- `headline.json` (the second line: one line at 360, 390, 1280 and 1440; before, two), `statements.json`, `shots.json`;
-  `tagline-candidates.json` from `tagline_candidates.py` (the candidates on the base tree).
-- `docs/media/home.webp` (the README's picture) is `home-1440-dark.webp`.
+Pruned on 2026-10-20, with the measures: the hero with the new headline before and after at 390 and 1440, the whole
+home, /how and /judges, and the headline on one line at 360, 390, 1280 and 1440 (two before). `docs/media/home.webp`
+(the README's picture) is the 1440 dark hero.
 
 ## Left, and for the coordinator
 
 - **Deploy** is the coordinator's: `deploy.sh`, verify-deploy, D-01, the E2E batch, the film, and the tag if it moves.
-- **`docs/evidence/2026-10-17/site-v4/checks/live_probe.py`** asks production for the old headline and the old
-  `og:description`, and for "Files lock in this browser before upload." twice on the home; it fails against this
+- **The site-v4 live probe** (pruned on 2026-10-20) asked production for the old headline and the old
+  `og:description`, and for "Files lock in this browser before upload." twice on the home; it failed against this
   release by design. The drive-v3 probe does not read the home's words.
 - **The film** (`tools/film.py`): its end card and default origin follow this pass; it needs rendering again.
 - **`docs/media/social-preview.png`** still shows the old tagline. GitHub's card is set by hand in the repository's

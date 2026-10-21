@@ -1,5 +1,0 @@
-FAIL E-19     37.3s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
-           timed out after 30 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drop-textarea\"]"); return !!e && e.getClientRects().length > 0; })()
-PASS E-28     14.7s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
-e2e: FAIL {'PASS': 1, 'FAIL': 1, 'SKIP': 0} → e2e/rerun/20261017-211806/report.json
-exit=1

@@ -8,7 +8,8 @@ away); every decision below was made from the brief, the page and the clips, and
 
 **Live:** <https://srv2052606.hstgr.cloud/v2> (also `/v2/`). The home at `/` is unchanged byte for byte; `/v2` is in no
 menu, header, footer, sitemap or JSON-LD graph, carries `<meta name="robots" content="noindex">` and Caddy adds
-`X-Robots-Tag: noindex`. Evidence: [`docs/evidence/2026-10-17/home-v2/`](../evidence/2026-10-17/home-v2/).
+`X-Robots-Tag: noindex`. The raw evidence (`docs/evidence/2026-10-17/home-v2/`) was pruned on 2026-10-20; the results it recorded
+are below.
 
 ## What the page actually has, and where each loop went
 
@@ -229,20 +230,12 @@ the judged surface is unchanged, so it stays at `0e05f27`.
 | D-01 (`test_headers.py`) | PASS on production, `/v2` and `/v2/` included (the app policy, `X-Robots-Tag: noindex`), and the loops' type, ranges and cache |
 | Live probe (production, headless Chromium, cache off) | at load: a computer 2,712,418 B and an Android phone 2,712,369 B (the hero's WebM and poster only), an iPhone 739,779 B (the MP4), reduced motion 331,777 B (the poster only); after scrolling through: 12,419,232 B on a computer with the cache off (the closing fetches the hero's file again), 10,043,206 B with the cache on (it doesn't), 2,615,821 B on an iPhone, 965,789 B with reduced motion; no loop played off screen; no console error |
 
-Evidence: [`docs/evidence/2026-10-17/home-v2/`](../evidence/2026-10-17/home-v2/).
+Raw evidence pruned on 2026-10-20.
 
 ## Screenshots
 
-All from production, headless Chromium on the server as `build` (`docs/evidence/2026-10-17/home-v2/shots_v2.py`). The
-best four:
-
-- `v2-1440-dark.webp`: the hero, dark first, the drive beside the words.
-- `v2-1440-light-who.webp`: Who sees what in light mode, the four sides beside the box on its dark stage.
-- `v2-1440-dark-tari.webp`: Tari does the private parts, the coin held beside the rows and What's tTARI?.
-- `v2-390-dark-full-1.webp`: the phone, the words and the button first, each loop under its section's intro.
-
-Also: both themes' whole pages at 1440 and 390, each loop's section at 1440 in both themes, the iPhone's MP4 in both
-themes, reduced motion, and two frames of the hero a second apart.
+Pruned on 2026-10-20: `/v2` from production at 1440 and 390 in both themes, each loop's section, the iPhone's MP4 and
+reduced motion. `/v2` itself was removed in perf-1 (CHANGELOG.md, "faster repeat visits").
 
 ## Not done, and open
 

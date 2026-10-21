@@ -6,7 +6,7 @@ lime and the open box as the mark. His order for the app, in his words: "update 
 /drive to match the same vibe of v3." This pass is the app's half; another session promoted v3 to the home and swapped
 the site's mark (`site/promote-v3`), and this branch was built on that branch (its mark commit, `408f08f` after its last
 rebase) so the two merge as one.
-Evidence: [`docs/evidence/2026-10-18/drive-v3/`](../evidence/2026-10-18/drive-v3/).
+The raw evidence (`docs/evidence/2026-10-18/drive-v3/`) was pruned on 2026-10-20; the results it recorded are below.
 
 Kept: site v4's rule ([site-v4.md](site-v4.md)): exactly one lime action per view, destructive red, the picked row on
 the lime tint. No copy changed; no font, library or install was added; the Lucide sprite stays.
@@ -155,22 +155,9 @@ second pass: PASS with nits; the last one it raised (a focused and hovered card'
 
 ## Screenshots
 
-In [`docs/evidence/2026-10-18/drive-v3/`](../evidence/2026-10-18/drive-v3/), `after/` from this branch's tree and
-`before/` from `8351f18` (the padlock and shadcn's neutral dark), each state at 1440 and 390, light and dark, taken by
-`shots_drive3.py` (headless Chromium on the server as `build`, the UI suite's test harness: the build, the dev server with
-folders and pay to open, the fake chain for the pay link): `start`, `open` (Open my drive), `empty`, `files` (a folder,
-a Private file, a Once link, a Pay link), `picked` (1440; a phone has no picking column, so `menu` at 390, the row's
-menu), `share-who`, `share-opens`, `share-result`, `key` (Save my key), `link` (a stranger on the Once link), `pay` and
-`pay-open` (the buyer page before and after paying with test money).
-
-The best four:
-
-- `after/files-1440-dark.webp`: the void, the gunmetal rail with the frosted open-box tile, the key reminder, the folder
-  and the file table as glass, the rule chips (Private, Once, Pay 0.1 tTARI in Tari's violet), New the one lime.
-- `after/start-1440-light.webp`: no drive yet, Make my drive beside the home's open box on v3's gunmetal card.
-- `after/share-who-1440-dark.webp`: the share dialog as glass over the dimmed drive, the choices as wells, Tari's tiles
-  violet, Next the one lime.
-- `after/files-390-dark.webp`: a phone's list on the void, the folder card as glass, the floating New in lime.
+Pruned on 2026-10-20: each drive state before (`8351f18`) and after this branch at 1440 and 390, light and dark,
+from the start screen to the share dialog and the pay link. The brand kit's evidence
+(`docs/evidence/2026-10-19/brand-kit-1/after/`) has the drive after its restyle.
 
 ## Release
 

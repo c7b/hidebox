@@ -1,6 +1,0 @@
-PASS E-09     22.8s  Dead drop on chain: phone makes a drop link, desktop leaves a GPS photo, inbox opens it
-PASS E-10     51.8s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
-FAIL E-13    609.8s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
-           direct mode: the browser wallet received its sponsor grant
-e2e: FAIL {'PASS': 2, 'FAIL': 1, 'SKIP': 0} → reports/batch2a-20261011-232802.json
-exit 1

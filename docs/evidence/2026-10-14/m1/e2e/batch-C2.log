@@ -1,7 +1,0 @@
-PASS E-11     21.5s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
-FAIL E-13    611.3s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +2 GiB
-           direct mode: the browser wallet received its sponsor grant
-PASS E-25     62.0s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
-FAIL E-J     662.5s  The judge script (/judges: 6 steps on a computer and a phone with the drive, then 4 for the Tari part), each step timed
-           direct mode: the computer's browser wallet received its sponsor grant
-e2e: FAIL {'PASS': 2, 'FAIL': 2, 'SKIP': 0} → $TMPDIR/integ/e2e-C2/20261013-212100/report.json

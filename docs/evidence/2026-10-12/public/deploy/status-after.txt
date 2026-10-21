@@ -1,4 +1,0 @@
-$ curl -s https://srv2052606.hstgr.cloud/status.json   (overall, reasons, checks that are not green, updated_at)
-{"overall": "amber", "reasons": ["budget.sponsor.evidence.90"], "not_green": {"budgets": "amber"}, "updated_at": "2026-10-13T05:03:22+00:00"}
-$ curl -s https://srv2052606.hstgr.cloud/releases.json   (last entry)
-{"release": "6fa84fd623b5ab3b7a8baa5e8495debd7b86be8b-c9ef33ed0", "manifest_sha256": "26c9f793964e911ac379e3241362b217673ea03315f30834c4a8b3b31232335e", "tx_id": "3ad94f0db0c0563a378006b16c8337ff54ad713497cc3e7912538f9c86022a92", "at": "2026-10-13T05:00:45Z"}

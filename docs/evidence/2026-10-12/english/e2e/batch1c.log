@@ -1,2 +1,0 @@
-PASS E-20     11.0s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
-e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → <scratch>/e2e/batch1c/20261012-210110/report.json

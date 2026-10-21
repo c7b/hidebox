@@ -7,7 +7,7 @@ transaction id, What the chain sees, Leave another) that did not say what had ha
 landed on `/verify/tx` with its record as raw fields: fine for a nerd, no use for anyone else. He asked whether
 other corners of the app had never been checked this way. This pass measures every flow on production, then
 fixes the waits and the results with one component for each, used the same way everywhere.
-Evidence: [`docs/evidence/2026-10-18/ux-feedback-1/`](../evidence/2026-10-18/ux-feedback-1/).
+The raw evidence (`docs/evidence/2026-10-18/ux-feedback-1/`) was pruned on 2026-10-20; the results it recorded are below.
 
 On the branch `ux/feedback-1`, pushed to `main`. **No deploy, no tag move**: the coordinator deploys.
 
@@ -245,22 +245,9 @@ browser can't trust says "soon", a stale selector and an orphaned comment).
 
 ## Screenshots
 
-In [`docs/evidence/2026-10-18/ux-feedback-1/shots/`](../evidence/2026-10-18/ux-feedback-1/shots/),
-`<state>-<width>-<theme>.webp` at 1440 and 390, light and dark, from `shots_ux.py` (the UI suite's test harness on
-the server: the dev server and its fake chain, each state held in the test browser while it is pictured): `drop-upload`
-(Uploading, its clock, the sweep, the photo's chip, Stop), `drop-relay` (the relay's countdown filling the bar),
-`drop-chain` (the chain's line), `drop-failed` (the red step, the alert, Try again), `drop-delivered` and
-`-delivered-full`, `verify-loading` (the dot and clock, the six-second line), `verify` and `verify-full` (Confirmed,
-the two cards, Details open on a computer and closed on a phone), `tari-queued` and `tari-sent` (Send by Tari in the
-share dialog). [`frames/`](../evidence/2026-10-18/ux-feedback-1/frames/): the sending → delivered moment at 1440 in
-light, one frame every ~170 ms (`fNN-<ms since the pick>ms.webp`): the chain step's check, the last check, the
-card turning into the done moment, the box rising, the photo dropping in, the check landing, the words arriving.
-
-The best four:
-- `shots/drop-delivered-390-light.webp`: Delivered on a phone, on one axis.
-- `shots/drop-relay-1440-dark.webp`: the run in the dark v3 look, the relay counting down.
-- `shots/verify-1440-light.webp`: Confirmed, what it proves, what stays hidden, Details open.
-- `shots/drop-failed-390-light.webp`: the failed step, the file still stored, Try again.
+Pruned on 2026-10-20: every wait and result state (uploading, the relay's countdown, the chain's line, the failed step,
+delivered, /verify loading and confirmed, Send by Tari) at 1440 and 390 in both themes, and the sending → delivered
+moment frame by frame. The UI suite's `flows_ux.py` checks the waits and their results.
 
 ## Server signals that do not exist (nothing in `server/` changed)
 

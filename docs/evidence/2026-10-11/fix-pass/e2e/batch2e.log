@@ -1,4 +1,0 @@
-E-J start 00:17:03
-PASS E-J      92.2s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
-e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → reports/batch2e-20261012-001704.json
-exit 0

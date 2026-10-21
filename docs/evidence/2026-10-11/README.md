@@ -39,8 +39,8 @@ fallback: `service` owns and writes the log) · P-18 PASS.
 |---|---|---|
 | E-01, E-02, E-04, E-05, E-06, E-07, E-08, E-11, E-13, E-14, E-15, E-16, E-17, E-18, E-19, E-20, E-21, E-22, E-24, E-25, E-03 | PASS, 21 of 21 | `final.log`, `reports/final-20261011-193727.json` (`run.py --chain --final`) |
 | E-09, E-10, E-12 | PASS | `batch2c.log`, `reports/batch2c-*.json` |
-| E-J, relay mode | PASS, 2.1 min (track A 5 s, track B 123 s) | `batch5.log`, `reports/batch5-*.json`, `shots/batch5-*` |
-| E-J, direct mode | PASS, 1.8 min (track A 5 s, track B 105 s), cold start 82 s, B6 built and submitted by the browser | `direct.log`, `reports/direct-*.json`, `shots/direct-*` |
+| E-J, relay mode | PASS, 2.1 min (track A 5 s, track B 123 s) | `batch5.log`, `reports/batch5-*.json` |
+| E-J, direct mode | PASS, 1.8 min (track A 5 s, track B 105 s), cold start 82 s, B6 built and submitted by the browser | `direct.log`, `reports/direct-*.json` |
 | E-23 griefer | PASS (local stack, never production) | `../deploy/e23-griefer.txt` |
 | E-18, E-21 after the switch to direct | see `post.log` | `reports/post-*.json` |
 
@@ -49,48 +49,30 @@ was root-caused and fixed in the repository before the next batch (git log of 20
 last failure was in the test itself: `needs-locker` is also a `VIEW_END` state, so the wait returned
 before the pasted view key had been used.
 
-## Fix pass (`fix-pass/`, 22:11–00:35)
+## Fix pass (22:11–00:35)
 
-The fix pass after the judge-run and claims reviews (docs/review/fix-log.md) deployed release
-`7c9e627…-c9a2957d0` at 22:11 and, after the tests, the last code change `3cd5622` (tests only) with this
-documentation, the same way (`/api/v1/health` prints the release that is live). `suites/` holds the four suites' logs on the server
-(server 197, site 28/28, app-ui 229/229, app-core ALL PASS) and `deploy/` the deploy log, D-01 on the
-throwaway stack and on production, and D-09. `e2e/` holds the production runs on the new code: every
-scenario and E-J in direct mode (`batch1.log` to `batch2e.log`, `reports/`, a few screenshots as PNG
-in `shots/`); the two E-13 failures and E-J's first attempt were the test and the rate limit, not the
-product (the fix-log's "Evidence" section). The E2E data was purged by id (`deploy/purge.txt`); the wall reads quiet, canary only.
+Raw evidence (`fix-pass/`) pruned on 2026-10-20. It recorded release `7c9e627…-c9a2957d0`, then `3cd5622` (tests only);
+server 197, site 28/28, app-ui 229/229, app-core ALL PASS; D-01 and D-09 PASS; every E2E scenario and E-J in
+direct mode passing on production (the two E-13 failures and E-J's first attempt were the test and the rate
+limit); the E2E data purged by id. The findings are in docs/review/fix-log.md.
 
-## Second pass (`fix-2/`, 2026-10-12, 09:50–19:15)
+## Second pass (2026-10-12, 09:50–19:15)
 
-The second fix pass (the security, anti-slop, SEO and documentation reviews; docs/review/fix-log.md,
-"Second pass") deployed release `9e7bc34…-c47090408` at 10:37 CST and, after E-J found a fault in the
-server's hourly reconcile, release `47cfbb0b7b30c1f947c44da123535fde7e5dae1f-cf21f0fbd` at 18:51, which
-is live at the end of the pass (later commits change only `docs/` and `CHANGELOG.md`).
-
-- `suites/`: the four suites on the server as `build`, from a tarball of `47cfbb0` (server 202 OK, site
-  28/28, app-ui 229/229 with the widget's payload at 40,176 B after a drop, app-core ALL PASS).
-- `deploy/`: for each release, the deploy log, D-09 (`verify-deploy`, 0 differences across 145 files,
-  the SealLog template byte for byte on chain), D-01 against production (the new 405 checks included),
-  the lint, copy check and deploy tests; `post-deploy-9e7bc34.txt`; `credit-freeze-15-37.txt` (the
-  reconcile and health timeline of the freeze, and the indexer probe that caught unverified answers at
-  three epoch changes); `purge.txt` and `post-purge-47cfbb0.txt` (health, status green, config without
-  `e2e_expiry_s`, the wall quiet, 20 judge passes, the security drop active).
-- `e2e/`: `report.json` (the final result of each of the 25 scenarios, all PASS, and every attempt),
-  the batch logs and `reports/`: `batch1` (19 of 20; E-24's check raced a slow `--jitless` page and was
-  fixed in the test), `batch1b` (E-24 PASS), `batch2a` (E-09, E-10, E-12, E-13 PASS), `batch2b` (E-J
-  FAIL: the day's sponsor grants for judge passes were spent, not the product), `batch2c` (E-J FAIL at
-  B6: credits frozen since 15:37, the product, fixed in `47cfbb0`), `batch2d` (E-J PASS in 106 s on
-  `47cfbb0`); a few screenshots in `shots/` (none shows a link with its key or a transaction id).
+Raw evidence (`fix-2/`) pruned on 2026-10-20. It recorded releases `9e7bc34…-c47090408` and
+`47cfbb0b7b30c1f947c44da123535fde7e5dae1f-cf21f0fbd`; server 202 OK, site 28/28, app-ui 229/229, app-core ALL
+PASS; D-09 0 differences across 145 files; all 25 E2E scenarios PASS, E-J PASS in 106 s once the credit freeze
+it found (the hourly reconcile) was fixed in `47cfbb0`; the purge. docs/review/fix-log.md, "Second pass".
 
 ## Third pass (English only, 2026-10-12, 19:40–21:05)
 
-In [`../2026-10-12/english/`](../2026-10-12/english/README.md): Spanish removed, the self-hosting guide followed
-from a clean clone, the suites, release `abc5d71…-cc6fca59c`, E-J and the scenarios without chain
-transactions against production, and the purge.
+Raw evidence pruned on 2026-10-20, except the suite logs `../2026-10-12/english/suites/core.log` and `ui.log` that
+web/app's acceptance files cite. It recorded Spanish removed, the self-hosting guide followed from a clean clone,
+the suites, release `abc5d71…-cc6fca59c`, E-J and the scenarios without chain transactions against production,
+and the purge.
 
 ## Files
 
 - `seallog/`: publish dry run, publish, instantiate, `check --onchain`, the component header from the indexer, the `service` top-up.
 - `deploy/`: the deploy logs, D-01…D-07, D-09 outputs, the reboot drill, the backups and restore drill, the griefer, the fonts check, the purge summary and the post-purge checks (`step7-*.txt`).
-- `e2e/`: batch logs, `reports/*.json` (every scenario's checks and timings), `shots/` (a few screenshots as JPEG; none shows a link with its key or a transaction id).
+- `e2e/`: batch logs and `reports/*.json` (every scenario's checks and timings); the few JPEG screenshots were pruned on 2026-10-20.
 - `public/json/`: `/api/v1/config`, `/api/v1/stats`, `/api/v1/stats/wall`, `/api/v1/canary`, `/api/v1/seallog/checkpoints`, `/evidence.json`, `/releases.json`, `/status.json`, the hash manifest and the SealLog component's substate, as served after the purge; `public/headers/`: response headers of the main routes and the HTTP→HTTPS redirect.

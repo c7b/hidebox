@@ -1,5 +1,0 @@
-E-J start 23:53:05
-FAIL E-J     132.4s  The judge script (/judges, tracks A and B) on a phone and a desktop, each step timed
-           timed out after 120 s waiting for: (() => { const e = document.querySelector('[data-testid="drop-link"]'); const v = e && (e.value || e.textContent || '').trim(); return v && v.includes('/d/') ? 
-e2e: FAIL {'PASS': 0, 'FAIL': 1, 'SKIP': 0} → reports/batch2d-20261011-235305.json
-exit 1

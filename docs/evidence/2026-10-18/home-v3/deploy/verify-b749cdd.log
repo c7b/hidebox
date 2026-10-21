@@ -1,9 +1,0 @@
-SealLog component_b7d212151546338e8e17975f7d8a4fb67023047357fe41308935fbb75604fdf2:
-  template_40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47: SealLog, author 9c686313d4ebe9c442196ccdce78cf802eab4549961cbc69522d967ed8a55420, epoch 12149, indexer verified: True
-  on chain   106770 bytes, sha256 9af71aa23f8ebba749de1154f2da9bc856b0ed3d78fdc7b4c2abb95c430ed6f2
-  the address commits to these bytes
-  seal_log.wasm 106770 bytes, sha256 9af71aa23f8ebba749de1154f2da9bc856b0ed3d78fdc7b4c2abb95c430ed6f2
-  ABI (tari_tdef): equal
-  the chain runs seal_log.wasm byte for byte
-verify-deploy: 0 differences across 206 files (b749cdd = b749cdd89976, https://srv2052606.hstgr.cloud)
-exit=0

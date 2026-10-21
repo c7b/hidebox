@@ -1,9 +1,0 @@
-#!/bin/bash
-# SPDX-License-Identifier: MIT
-. "$(dirname "$0")/_common"
-case "$1" in
-  -u) [ -z "$2" ] && { echo 0; exit 0; }; l=$(grep "^$2:" "$PW") || { echo "id: '$2': no such user" >&2; exit 1; }; echo "$l" | cut -d: -f2 ;;
-  -un) echo root ;;
-  -nG) l=$(grep "^$2:" "$PW") || { echo "id: '$2': no such user" >&2; exit 1; }; echo "$l" | cut -d: -f3 | tr ',' ' ' ;;
-  *) l=$(grep "^$1:" "$PW") || exit 1; echo "uid=$(echo "$l" | cut -d: -f2)($1)" ;;
-esac

@@ -1,8 +1,0 @@
-server:0
-site:1
-ui:1
-core:0
-all-finished
-site2:0
-ui2:0
-all-finished
