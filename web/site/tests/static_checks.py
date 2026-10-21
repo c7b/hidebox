@@ -482,6 +482,22 @@ def contrast(fg, bg):
     return (hi + 0.05) / (lo + 0.05)
 
 
+def theme_tokens(css):
+    """The custom properties a stylesheet sets on :root, light and dark (the dark switch and the OS's dark over light);
+    the more-contrast blocks are left out. A comment may sit between an @media's brace and its :root, and the OS's
+    dark block is :root:not([data-theme="light"]), so that selector counts as dark too."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    blocks = re.findall(r"(:root[^{]*|@media[^{]*\{\s*:root[^{]*)\{([^}]*)\}", css)
+    light, dark = {}, {}
+    for selector, body in blocks:
+        if "contrast" in selector:
+            continue
+        decls = dict(re.findall(r"(--[\w-]+):\s*([^;]+);", body))
+        target = dark if "dark" in selector or 'not([data-theme="light"])' in selector else light
+        target.update(decls)
+    return light, {**light, **dark}
+
+
 def check_contrast():
     """M-03: the 11-brand §13.2 table, recomputed from tokens.css."""
     css = (SHARED / "tokens.css").read_text()
@@ -1218,6 +1234,70 @@ NF_EGG = '<p class="nf-egg" aria-hidden="true">for real, this is a 404, we could
 NF_COMMENT = "<!-- keep looking? man, give up, there is nothing to find -->"
 
 
+# tagline-2 (docs/review/tagline-2.md): the owner's tagline under the headline, said once, by the home's hero.
+HEADLINE, TAGLINE, TAGLINE_3 = "Your private cloud storage.", "Store, send, and sell files privately.", "Built on Tari™. No KYC. No email."
+
+
+def check_tagline():
+    """The home's hero is three lines and the button: the h1 is the headline with the tagline's first line in .h1-2,
+    then .hero-line, then Open your drive, and no other paragraph (the lede and the note under the button left with the
+    old tagline). The third line's --hero-dim (v2.css) is dimmer than --fg-2 and still 4.5:1 on the page in both themes.
+    No other page shows the tagline (the Say It Once Rule); the link previews of the home, the app and the drive quote
+    it, the home's description opens with it, and the manifest and the share card (og/og.html) carry it."""
+    problems = []
+    plain = lambda text: " ".join(text.replace("™", "").split())   # noqa: E731
+    home = (SITE / "pages" / "index.html").read_text()
+    hero = re.search(r'<div class="v2-hero-copy">(.*?)<div class="v2-object">', home, re.S)
+    words = hero[1] if hero else ""
+    h1 = f'<h1 id="hero-h">{HEADLINE} <span class="h1-2">{TAGLINE}</span></h1>'
+    third = f'<p class="hero-line">{TAGLINE_3}</p>'
+    if not (h1 in words and third in words and words.find(h1) < words.find(third) < words.find('<div class="cta-row">')):
+        problems.append(f"pages/index.html: the hero is not {h1}, then {third}, then Open your drive")
+    paragraphs = len(re.findall(r"<p\b", words))
+    if paragraphs != 1:
+        problems.append(f"pages/index.html: the hero has {paragraphs} paragraphs, expected the third line alone")
+    for f in PAGES + PARTIALS:
+        if f.stem == "index":
+            continue
+        text = plain(" ".join(parse(f).text))
+        for line in (TAGLINE, TAGLINE_3):
+            if plain(line) in text:
+                problems.append(f"{f.relative_to(WEB)} shows the tagline ({line!r}); only the home's hero says it")
+    preview = f"{TAGLINE} {plain(TAGLINE_3)}"
+    for f in (SITE / "pages" / "index.html", WEB / "app" / "app.html", WEB / "app" / "drive.html"):
+        d = parse(f)
+        if meta(d, property="og:description") != preview:
+            problems.append(f"{f.relative_to(WEB)}: og:description is {meta(d, property='og:description')!r}, not {preview!r}")
+    if not (meta(parse(SITE / "pages" / "index.html"), name="description") or "").startswith(preview):
+        problems.append("pages/index.html: the description doesn't open with the tagline")
+    manifest = json.loads((SITE / "static" / "manifest.webmanifest").read_text())
+    if manifest.get("description") != f"{HEADLINE} {preview}":
+        problems.append(f"manifest.webmanifest: description {manifest.get('description')!r}")
+    card = plain(" ".join(parse(SITE / "og" / "og.html").text))
+    if not all(plain(line) in card for line in (HEADLINE, TAGLINE, TAGLINE_3)):
+        problems.append("og/og.html: the share card doesn't carry the three lines")
+    # Each :root block of v2.css that sets --hero-dim on its own (light, the dark switch, the OS's dark), so a change to
+    # one dark block can't hide behind the other.
+    light, dark = theme_tokens((SHARED / "tokens.css").read_text())
+    css = re.sub(r"/\*.*?\*/", "", (SITE / "css" / "v2.css").read_text(), flags=re.S)
+    seen = set()
+    for selector, body in re.findall(r"(:root[^{]*|@media[^{]*\{\s*:root[^{]*)\{([^}]*)\}", css):
+        value = dict(re.findall(r"(--[\w-]+):\s*([^;]+);", body)).get("--hero-dim")
+        if "contrast" in selector or not value:
+            continue
+        theme, tokens = ("dark", dark) if "dark" in selector or 'not([data-theme="light"])' in selector else ("light", light)
+        seen.add(theme)
+        back = _rgb(tokens["--bg"], tokens)
+        dim, grey = contrast(_rgb(value, tokens), back), contrast(_rgb(tokens["--fg-2"], tokens), back)
+        where = " ".join(selector.split())
+        NOTES_STATIC.append(f"tagline-2: the third line {value} on {tokens['--bg']} ({where}) {dim:.2f}:1, --fg-2 {grey:.2f}:1")
+        if not 4.5 <= dim < grey:
+            problems.append(f"css/v2.css {where}: --hero-dim is {dim:.2f}:1 on --bg (--fg-2 {grey:.2f}:1); it must be dimmer and at least 4.5:1")
+    if seen != {"light", "dark"}:
+        problems.append(f"css/v2.css: --hero-dim is set for {sorted(seen)}, expected light and dark")
+    return problems
+
+
 def check_not_found():
     """404: noindex (check_seo), the owner's words (the h1's second sentence on its own grey line, the lede one sentence
     a line), one way home (Go home to /, nothing else in main), and the art above the h1: one <picture class="nf-art">,
@@ -1426,4 +1506,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("media: the home's stills and the 404 art only; /v2, its loops and clips.js gone and unnamed; v2.css in budget", check_media),
           ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills),
           ("404: the owner's words, one way home, the art sized from media/404, the three eggs", check_not_found),
+          ("tagline-2: the hero's three lines, the tagline said once, quoted by the previews, the card and the manifest", check_tagline),
           ("fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time", check_fingerprints)]
