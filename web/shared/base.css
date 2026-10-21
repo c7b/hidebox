@@ -13,6 +13,10 @@ body {
 img, svg, canvas, video { display: block; max-width: 100%; }
 [hidden] { display: none !important; }
 input, button, textarea, select { font: inherit; color: inherit; }
+/* A native list's open options are drawn by the browser, on Windows in each option's own colours: set here, never left
+   to the OS (a light list under the dark theme's white words). */
+select option, select optgroup { background-color: var(--bg-raised); color: var(--fg); }
+select option:disabled { color: var(--fg-2); }
 button { cursor: pointer; }
 a { color: inherit; text-underline-offset: .2em; text-decoration-thickness: 1.5px; }
 table { border-collapse: collapse; }

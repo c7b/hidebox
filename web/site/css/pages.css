@@ -22,7 +22,7 @@
   --shadow-sm: 0 1px 3px rgb(0 0 0 / .08), 0 1px 2px -1px rgb(0 0 0 / .08);
 }
 .reading { font: var(--t-body); font-feature-settings: "ss01" off; }
-.reading ::selection { background: color-mix(in srgb, var(--fg) 14%, transparent); }
+.reading ::selection { background: color-mix(in srgb, var(--fg) 14%, transparent); color: var(--fg); }   /* site.css's ink would vanish on the tint in dark */
 .reading :is(h1, h2, h3) { text-wrap: balance; }
 .reading :is(p, li, dd) { text-wrap: pretty; }
 .reading a:not(.btn, .quiet, .btn-brand, .btn-outline, .btn-ghost) { text-underline-offset: .22em; text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
