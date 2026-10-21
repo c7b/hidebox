@@ -824,6 +824,8 @@ def upgrade(t):
     before = int(a.attr("quota-bar", "data-limit"))
     a.goto(t.origin + "/upgrade")
     a.wait_for("pack-s30", 60)
+    plans = a.eval("[...document.querySelectorAll('.a-plan .a-card-h')].map((e) => e.textContent)")
+    t.check(plans[1:] == ["+256 MB for 30 days", "+1 GB for 30 days"], f"the packs read +256 MB and +1 GB for 30 days ({plans})")
     t.shot(a, "upgrade-390-plans", full_page=True)
     a.click("pack-s30")
     a.wait_for("invoice-address", 60)
@@ -835,7 +837,7 @@ def upgrade(t):
     t.shot(a, "upgrade-390-credited", full_page=True)
     a.goto(t.origin + "/locker")
     a.wait_for("quota-bar", 60)
-    t.check(int(a.attr("quota-bar", "data-limit")) >= before + 2 * 1024 ** 3, "the quota grew by the pack's 2 GiB")
+    t.check(int(a.attr("quota-bar", "data-limit")) >= before + 256 * 1024 ** 2, "the quota grew by the pack's 256 MiB")
 
     # After Nov 11 the testnet line changes by itself, in step with the footer (D13).
     p = t.actor()

@@ -108,14 +108,14 @@ class CheckCopyTest(unittest.TestCase):
 
     def test_config_numbers_in_site_pages(self):
         config = {"limits": {"anon": {"max_file_bytes": 26214400, "max_expiry_s": 86400, "max_views": 10}},
-                  "pricing": {"packs": [{"price_ut": "500000", "bytes": 2147483648, "days": 30}]}}
-        self.page("<p>Files up to 25 MB, gone in 24 hours, 0.5 tTARI for 2 GB over 30 days.</p>"
+                  "pricing": {"packs": [{"price_ut": "500000", "bytes": 268435456, "days": 30}]}}
+        self.page("<p>Files up to 25 MB, gone in 24 hours, 0.5 tTARI for 256 MB over 30 days.</p>"
                   '<p>Up to <span data-v="anon_max_file">25 MB</span>.</p><ul><li data-cue="views">10 views</li></ul>'
                   "<p>Nov 11, 2026. 404. Cut into 4 MB chunks.</p>")
         config["chunk_size"] = 4194304
         fails = check_copy.hardcoded_config_numbers(self.root, config, ["4 MB chunks"])
         found = sorted(f.split("'")[1] for f in fails)
-        self.assertEqual(found, ["0.5 tTARI", "2 GB", "24 hours", "25 MB", "30 days"])
+        self.assertEqual(found, ["0.5 tTARI", "24 hours", "25 MB", "256 MB", "30 days"])
 
 
 if __name__ == "__main__":

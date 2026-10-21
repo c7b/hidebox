@@ -29,7 +29,7 @@ Against production (there is no staging; 12-integration §7.7):
   don't take down their own items (only E-17's reported link and drop); a later run leaves them on
   the home page's wall until they leave by their rule, unless taken down
   (`sudo mutis-admin takedown item -- <id>`; a taken-down item leaves the wall at once).
-- **Packs:** E-13 and E-J buy a real 2 GiB pack for 30 days and end it as their last step
+- **Packs:** E-13 and E-J buy a real 256 MiB pack for 30 days and end it as their last step
   (`sudo mutis-admin release-pack -- <locker id>`). Paid space is capped at 40 % of the pool, so test
   packs left running would make `/upgrade` answer "sold out" for everyone, judges included.
 - **Pace:** every browser runs on the server, so all actors share one network, and the API allows 5 new

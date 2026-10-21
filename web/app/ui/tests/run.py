@@ -253,7 +253,7 @@ def main():
     r = Results()
     static_checks(r)
     # /var/tmp is disk-backed on Debian (/tmp is a small tmpfs): the dev server sizes its lanes and the
-    # paid capacity from the disk its data sits on, and a pack needs room for 2 GiB.
+    # paid capacity from the disk its data sits on, and the big pack needs room for 1 GiB.
     work = tempfile.mkdtemp(prefix="mutis-ui-run-", dir="/var/tmp" if os.path.isdir("/var/tmp") else None)
     port = free_port()
     dist = build(work, f"http://127.0.0.1:{port}")

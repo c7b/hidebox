@@ -110,7 +110,7 @@ drives and fill free space until uploads pause for everyone. Sixth pass
   another pack, or its hour over) and is paid later anyway credits only if its slice has room again; until
   then the payment waits, within the 7-day grace (`docs/review/security-audit-1.md`).
 - **One pack per drive.** Buying again is refused until the pack's last 3 days; then the same pack adds
-  days, not bytes. The big pack is 5 GiB, so one purchase is a small part of the slice.
+  days, not bytes. Packs are 256 MiB and 1 GiB, so one purchase, or a whole day's, is a small part of the slice.
 - **Sales brakes:** 1 pack a UTC day per IPv6 /64 or IPv4 address (with a judge pass, 2 per network and 2
   per pass), held in the API's memory; 3 public packs a UTC day for the whole deployment, and 10 bought with judge passes, counted
   from the invoices table (which holds no network), so a restart doesn't reset them. An unpaid invoice
