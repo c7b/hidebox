@@ -247,6 +247,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 ::selection { background: var(--primary); color: var(--primary-foreground); }
+select option, select optgroup { background-color: var(--popover); color: var(--popover-foreground); }   /* an open native list: never the OS's colours */
+select option:disabled { color: var(--muted-foreground); }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 h1, h2, h3, h4, p, ul, ol, figure, dl, dd { margin: 0; }
 ul[role="list"], ol[role="list"] { list-style: none; padding: 0; }

@@ -11,13 +11,16 @@ bytes. run.py adds the CSP and Trusted Types check for every page.
 
 With MUTIS_PREVIEW_SHOTS=<dir> in the environment the flows also write their screenshots there (WebP,
 <where>-<width>-<what>[-dark].webp); docs/evidence/2026-10-19/preview-1/ holds the ones in the review."""
+import base64
 import json
 import os
 import re
 import shutil
+import struct
+import zlib
 
-from flows import VIEW_ASK, VIEW_END, downloaded, home, no_hscroll, open_link, scenario, wait_link
-from flows_drive import make_drive, upload_files
+from flows import VIEW_ASK, VIEW_END, _png, downloaded, home, no_hscroll, open_link, scenario, seal_text, wait_link
+from flows_drive import make_drive, row_menu, upload_files
 from flows_pay import PAY_LINK, PayFake, buyer, seller, sell, wait_pay
 from flows_share import close_dialog, drive_page, into, make_link, new_folder, open_share, stranger, to_opens
 
@@ -234,6 +237,248 @@ def preview_drive(t):
     judge(t, p, last, got, pnav, "phone")
     shot(t, p, f"drive-390-{got['kind']}")
     t.check(p.ax_unnamed() == [] and p.errors == [], f"phone: every control named, no console error ({p.errors[:2]})")
+
+
+# --- the drive's own files: Share and Rename from the preview; selected text that reads ---------------------------
+
+def png_pixels(data):
+    """(width, height, rows of (r, g, b)) of a PNG as Chromium writes it (8-bit RGB or RGBA). Python stdlib only."""
+    pos, idat, w, h, bpp = 8, b"", 0, 0, 3
+    while pos < len(data):
+        n, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + n]
+        if kind == b"IHDR":
+            w, h, depth, ctype = struct.unpack(">IIBB", body[:10])
+            assert depth == 8 and ctype in (2, 6), (depth, ctype)
+            bpp = 3 if ctype == 2 else 4
+        elif kind == b"IDAT":
+            idat += body
+        pos += 12 + n
+    raw, stride, rows, prev, k = zlib.decompress(idat), w * bpp, [], bytearray(w * bpp), 0
+    for _ in range(h):
+        f, line = raw[k], bytearray(raw[k + 1:k + 1 + stride])
+        k += 1 + stride
+        for x in range(stride):
+            a, b, c = (line[x - bpp] if x >= bpp else 0), prev[x], (prev[x - bpp] if x >= bpp else 0)
+            if f == 1:
+                line[x] = (line[x] + a) & 255
+            elif f == 2:
+                line[x] = (line[x] + b) & 255
+            elif f == 3:
+                line[x] = (line[x] + (a + b) // 2) & 255
+            elif f == 4:
+                p_ = a + b - c
+                pa, pb, pc = abs(p_ - a), abs(p_ - b), abs(p_ - c)
+                line[x] = (line[x] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        rows.append([tuple(line[x:x + 3]) for x in range(0, stride, bpp)])
+        prev = line
+    return w, h, rows
+
+
+def contrast(c1, c2):
+    def lum(c):
+        ch = [v / 255 for v in c]
+        r, g, b = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in ch]
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    hi, lo = sorted((lum(c1), lum(c2)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def selected_pixels(page, text_js):
+    """Selects the text of the element `text_js` names, then reads the pixels of its first selected line: the
+    highlight is the most common colour there, the glyphs the colour furthest from it; the page is read just inside
+    the text's box. -> {text, highlight, paper, glyphs (contrast), shows (highlight against the page), css}"""
+    r = page.eval(f"""(() => {{ const el = {text_js}; const range = document.createRange(); range.selectNodeContents(el);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(range);
+      const line = range.getClientRects()[0], box = el.getBoundingClientRect(), cs = getComputedStyle(el, '::selection');
+      return {{ x: line.x, y: line.y, width: Math.min(line.width, 400), height: line.height, px: box.right - 6, py: box.bottom - 6,
+        color: cs.color, background: cs.backgroundColor }}; }})()""")
+    page.b.drain(0.3)
+
+    def grab(x, y, w, h):
+        return png_pixels(base64.b64decode(page.cmd("Page.captureScreenshot", {"format": "png", "clip": {"x": x, "y": y, "width": w, "height": h, "scale": 1}})["data"]))[2]
+    counts = {}
+    for row in grab(r["x"], r["y"], r["width"], r["height"]):
+        for c in row:
+            counts[c] = counts.get(c, 0) + 1
+    hl = max(counts, key=counts.get)
+    glyph = max(counts, key=lambda c: contrast(c, hl))
+    paper = grab(r["px"], r["py"], 2, 2)[0][0]
+    return {"highlight": hl, "paper": paper, "glyphs": round(contrast(hl, glyph), 2), "shows": round(contrast(hl, paper), 2),
+            "css": (r["color"], r["background"])}
+
+
+def selection_reads(t, page, where):
+    """Selected text in the preview: the glyphs read on the highlight (4.5:1 and more) and the highlight shows on the
+    page under it, in both themes; the selection's colour and background differ; and Copy copies the words."""
+    for theme in ("light", "dark"):
+        page.eval(f"document.documentElement.dataset.theme = '{theme}'")
+        page.b.drain(0.3)
+        got = selected_pixels(page, "document.querySelector('#lightbox [data-testid=\"view-text\"]')")
+        t.check(got["glyphs"] >= 4.5 and got["shows"] >= 1.3 and got["css"][0] != got["css"][1],
+                f"{where}, {theme}: selected text reads ({got['glyphs']}:1 on the highlight {got['highlight']}) and the highlight shows "
+                f"({got['shows']}:1 on the page {got['paper']}; ::selection {got['css'][0]} on {got['css'][1]})")
+    page.eval("delete document.documentElement.dataset.theme")
+    copied = page.eval("""(async () => { document.execCommand('copy'); return navigator.clipboard.readText().catch(() => null); })()""")
+    text = page.eval("document.querySelector('#lightbox [data-testid=\"view-text\"]').textContent")
+    t.check(copied is not None and copied.strip() == text.strip(), f"{where}: Copy copies the selected words ({copied!r})")
+
+
+def bar_fits(page):
+    return page.eval("""(() => { const r = (x) => document.querySelector(`[data-testid="${x}"]`).getBoundingClientRect();
+      const ok = (b) => b.left >= 0 && b.right <= innerWidth + 0.5 && b.top >= 0 && b.bottom <= innerHeight + 0.5;
+      const all = ['lightbox-share', 'lightbox-download', 'lightbox-close', 'lightbox-rename'].map(r);
+      return all.every(ok) && all.slice(0, 3).every((b) => b.width >= 44 && b.height >= 44) && r('lightbox-name').width >= 40; })()""")
+
+
+def chip_name(page):
+    return page.eval("document.querySelector('#lightbox [data-testid=\"lightbox-name\"]')?.textContent ?? ''")
+
+
+def rename_field(page):
+    """The preview's name field: (value, selectionStart, selectionEnd), or None when it is closed."""
+    return page.eval("(() => { const i = document.querySelector('[data-testid=\"lightbox-rename-input\"]');"
+                     " return i ? [i.value, i.selectionStart, i.selectionEnd] : null; })()")
+
+
+def listed(page, name):
+    return page.eval(f"[...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === {json.dumps(name)})")
+
+
+@scenario("preview-actions", "The preview of the drive's own files: Share opens the share dialog over it (Esc puts the preview back); "
+          "the name renames in place with the part before its extension selected, Enter, Esc, an empty name, a new extension "
+          "asked first; the menu's Rename selects the same way; selected text reads in both themes and copies; a link's "
+          "preview has neither; a phone at 390", features=("folders",))
+def preview_actions(t):
+    with open(t.fixture("image.png"), "wb") as f:
+        f.write(_png(64, 48))
+    a, _ = make_drive(t)
+    a.wait_for("drive-empty", 30)
+    upload(t, a, ["image.png", "notes.txt"])
+    a.errors.clear()
+    a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'image.png').querySelector('[data-testid=\"file-open\"]').click()")
+    shown(a, "image.png")
+    t.check(a.visible("lightbox-share") and a.visible("lightbox-rename")
+            and a.eval("[...document.querySelectorAll('#lightbox .btn:not([data-variant])')].map((b) => b.dataset.testid).join()") == "lightbox-download",
+            "the drive's preview: Share and Rename in its bar; Download stays its one lime button")
+
+    # Share: the dialog the menu opens, over the preview; Esc closes only it.
+    a.click("lightbox-share")
+    a.wait("document.getElementById('share-dialog')?.dataset.step === 'who' && !document.getElementById('share-dialog').hidden", 20)
+    top = a.eval("""(() => { const d = document.getElementById('share-dialog').getBoundingClientRect();
+      return document.getElementById('share-dialog').contains(document.elementFromPoint(d.x + d.width / 2, d.y + 20)); })()""")
+    t.check(top and "image.png" in a.eval("document.querySelector('#share-dialog .dialog-title')?.textContent ?? ''"),
+            "Share opens the share dialog for the file shown, on top of the preview")
+    a.key("ArrowRight")
+    t.check(chip_name(a) == "image.png", "an arrow in the share dialog doesn't move the preview behind it")
+    a.key("Escape")
+    a.wait("!document.getElementById('share-dialog') || document.getElementById('share-dialog').hidden", 10)
+    t.check(a.exists("lightbox") and a.eval("document.getElementById('lightbox').dataset.state") == "open" and a.focused() == "lightbox-share",
+            "Esc closes the share dialog; the preview stays, focus back on Share")
+
+    # Rename in place: the base name selected, typing keeps the extension; Enter saves; the list behind shows it.
+    a.click("lightbox-rename")
+    a.wait_for("lightbox-rename-input", 5)
+    t.check(rename_field(a) == ["image.png", 0, 5], f"Rename on image.png selects image, not .png ({rename_field(a)})")
+    a.type_text("ABC")
+    t.check(rename_field(a)[0] == "ABC.png", f"typing ABC gives ABC.png ({rename_field(a)})")
+    a.key("ArrowRight")
+    t.check(rename_field(a) is not None and chip_name(a) == "image.png", "an arrow in the field moves the caret, not the preview")
+    a.key("Enter", text="\r")
+    a.wait("document.querySelector('#lightbox [data-testid=\"lightbox-name\"]').textContent === 'ABC.png' && !document.querySelector('[data-testid=\"lightbox-rename-input\"]')", 30)
+    a.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === 'ABC.png')", 30)
+    t.check(a.focused() == "lightbox-rename" and not listed(a, "image.png"), "Enter saves: the name and the list behind show ABC.png, focus on the pencil")
+
+    # Esc puts the name back; an empty name saves nothing; the name itself opens the field too.
+    patches = lambda: sum(1 for r in a.requests if r["method"] == "PATCH")  # noqa: E731
+    before = patches()
+    a.click("lightbox-rename")
+    a.wait_for("lightbox-rename-input", 5)
+    a.type_text("zzz")
+    a.key("Escape")
+    t.check(rename_field(a) is None and chip_name(a) == "ABC.png" and a.eval("document.getElementById('lightbox').dataset.state") == "open",
+            "Esc in the field puts the name back and keeps the preview open")
+    a.click("lightbox-name")
+    a.wait_for("lightbox-rename-input", 5)
+    a.eval("(() => { const i = document.querySelector('[data-testid=\"lightbox-rename-input\"]'); i.value = '   '; i.dispatchEvent(new Event('input')); })()")
+    a.key("Enter", text="\r")
+    a.b.drain(0.5)
+    t.check(rename_field(a) is None and chip_name(a) == "ABC.png" and patches() == before, "an empty name saves nothing: the old name stays")
+
+    # A new extension asks first: Keep keeps it, Use takes the new one; what shows still follows the bytes.
+    for typed, choice, want in (("photo.txt", "keep", "photo.png"), ("photo.txt", "use", "photo.txt")):
+        a.click("lightbox-rename")
+        a.wait_for("lightbox-rename-input", 5)
+        a.eval("document.querySelector('[data-testid=\"lightbox-rename-input\"]').select()")
+        a.type_text(typed)
+        a.key("Enter", text="\r")
+        a.wait_for("rename-ext", 5)
+        ask = a.text("rename-ext")
+        if choice == "keep":
+            t.check("Change .png to .txt? The file may open differently." in ask and "Use .txt" in ask and "Keep .png" in ask
+                    and a.focused() == "rename-ext-keep", f"photo.txt: the preview asks before it changes .png to .txt, on Keep ({ask!r})")
+        a.click(f"rename-ext-{choice}")
+        a.wait(f"document.querySelector('#lightbox [data-testid=\"lightbox-name\"]').textContent === {json.dumps(want)}", 30)
+        t.check(bool(a.wait(f"[...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === {json.dumps(want)})", 30)),
+                f"{choice.title()}: {want}, in the preview and the list")
+    t.check(a.eval(f"{STAGE}.dataset.kind") == "image", "renamed to .txt, the picture still shows as a picture: the bytes pick the kind, not the name")
+    shot(t, a, "actions-1440-renamed")
+    close(a)
+
+    # The menu's Rename: the same selection; a folder's whole name.
+    row_menu(a, "notes.txt", "rename")
+    a.wait_for("rename-dialog", 10)
+    a.wait("document.activeElement?.dataset.testid === 'rename-input'", 5)
+    a.b.drain(0.2)
+    sel = a.eval("(() => { const i = document.querySelector('[data-testid=\"rename-input\"]'); return [i.value, i.selectionStart, i.selectionEnd]; })()")
+    t.check(sel == ["notes.txt", 0, 5], f"the menu's Rename selects notes, not .txt ({sel})")
+    a.type_text("ABC")
+    a.click("rename-go")
+    a.wait("[...document.querySelectorAll('[data-testid=\"file-row\"]')].some((e) => e.dataset.name === 'ABC.txt')", 30)
+    t.check(True, "the menu's Rename: typing ABC gives ABC.txt")
+    new_folder(a, "Trip.2026")
+    row_menu(a, "Trip.2026", "rename")
+    a.wait_for("rename-dialog", 10)
+    a.wait("document.activeElement?.dataset.testid === 'rename-input' && document.activeElement.value === 'Trip.2026'", 5)
+    a.b.drain(0.2)
+    sel = a.eval("(() => { const i = document.querySelector('[data-testid=\"rename-input\"]'); return [i.selectionStart, i.selectionEnd]; })()")
+    t.check(sel == [0, 9], f"a folder's Rename selects its whole name ({sel})")
+    a.key("Escape")
+
+    # Selected words in a text file's preview: they read, in both themes, and Copy works.
+    a.eval("[...document.querySelectorAll('[data-testid=\"file-row\"]')].find((e) => e.dataset.name === 'ABC.txt').querySelector('[data-testid=\"file-open\"]').click()")
+    shown(a, "ABC.txt")
+    selection_reads(t, a, "drive")
+    shot(t, a, "actions-1440-selected")
+    shot(t, a, "actions-1440-selected", dark=True)
+    close(a)
+    t.check(a.errors == [], f"drive: no console error ({a.errors[:2]})")
+
+    # A note on a link (/s/), opened by a stranger: no Share, no Rename there; its selected words read too.
+    maker = t.actor()
+    home(t, maker)
+    url = seal_text(maker, "Meet at the north gate at 9.")
+    v = t.actor()
+    t.check(open_link(v, url) == "opened", "/s/: the note opens")
+    shown(v, "A note")
+    t.check(not v.exists("lightbox-share") and not v.exists("lightbox-rename") and not v.eval("!!document.querySelector('#lightbox .lb-file[data-rename]')"),
+            "a link's preview has no Share and no Rename")
+    selection_reads(t, v, "/s/ note")
+
+    # A phone: the bar fits at 390 with Share and Download as icons (named), the field doesn't zoom.
+    p, _ = make_drive(t, "iphone")
+    p.wait_for("drive-empty", 30)
+    upload(t, p, ["image.png"])
+    p.eval("document.querySelector('[data-testid=\"file-open\"]').click()")
+    shown(p, "image.png")
+    t.check(bar_fits(p) and no_hscroll(p) and p.ax_unnamed() == [],
+            "phone: Share, Download, Close and the pencil fit at 390 (44 px targets, the name keeps room), every control named, no sideways scroll")
+    shot(t, p, "actions-390-bar")
+    p.click("lightbox-rename")
+    p.wait_for("lightbox-rename-input", 5)
+    size = p.eval("parseFloat(getComputedStyle(document.querySelector('[data-testid=\"lightbox-rename-input\"]')).fontSize)")
+    t.check(rename_field(p) == ["image.png", 0, 5] and size >= 16, f"phone: the field selects image and is 16 px (no zoom; {size})")
+    shot(t, p, "actions-390-rename")
 
 
 # --- a folder link: the visit's files ----------------------------------------------------------------------

@@ -8,6 +8,7 @@
 import { formatDate, t } from '../lib/i18n.js';
 import { h, icon, init, lines, openModal, closeModal, toast } from './behaviors.js';
 import { button, dialogBox, errorAlert, itemName, turning } from './drive-parts.js';
+import { extensionAsk, extensionChange, selectName } from './rename.js';
 
 const api = () => import('../lib/api-drive.js');
 
@@ -57,44 +58,88 @@ async function download(drive, items) {
 
 // A file's name opens it in the preview (ui/lightbox.js): what it shows comes from the decrypted bytes, never the name,
 // and Download is always there. The arrows move through the files listed beside it, as shown (search hides some).
+// (A share made meanwhile reloads the drive's index: the item is looked up again by its id.)
 async function open(drive, item, trigger) {
+  const fresh = (f) => drive.index.get(f.it.id) ?? f.it;
+  const saveName = (it) => (it.meta.kind === 'text' ? 'note.txt' : it.meta.name);
   const rows = [...(trigger?.closest('tbody')?.querySelectorAll('tr[data-id]') ?? [])].filter((tr) => !tr.hidden);
   let list = rows.map((tr) => drive.index.get(tr.dataset.id)).filter((x) => x && !x.folder);
   if (!list.includes(item)) list = [item];
   const [{ openLightbox }, { openKept, fetchContent }] = await Promise.all([import('./lightbox.js'), import('../lib/open.js')]);
   return openLightbox({
-    files: list.map((it) => ({ name: itemName(it), saveAs: it.meta.kind === 'text' ? 'note.txt' : it.meta.name, size: it.meta.size ?? 0, it })),
+    files: list.map((it) => ({ name: itemName(it), editName: it.name, saveAs: saveName(it), size: it.meta.size ?? 0, it })),
     at: list.indexOf(item),
     read: async (f, onProgress) => fetchContent(await openKept(drive.identity, f.it.row, drive.headers()), { onProgress }),
     problem: (e) => errorAlert(e),
     returnFocus: trigger,
     refocus: (f) => document.querySelector(`[data-testid="file-row"][data-id="${CSS.escape(f.it.id)}"] [data-testid="file-open"]`),
+    // What the row's menu has, from the preview's bar: Share (the dialog opens over it) and, where folders are on, Rename.
+    share: (f, button) => import('./share-dialog.js').then((m) => m.openShare(drive, fresh(f), { trigger: button }))
+      .catch((e) => toast(t('drive.oops'), { type: 'error', description: e?.message })),
+    rename: drive.folders ? async (f, name) => {
+      const it = fresh(f);
+      try {
+        await renameItem(drive, it, name);
+      } catch (e) {
+        toast(t('drive.oops'), { type: 'error', description: e?.message });
+        throw e;
+      }
+      toast(t('drive.toast.renamed'), { type: 'success' });
+      drive.render();   // the list behind the preview shows the new name too
+      Object.assign(f, { it, editName: it.name, saveAs: saveName(it) });
+      return itemName(it);
+    } : null,
   });
 }
 
+// A new name: new ciphertext for the item's meta, never the name in the clear (the menu's Rename and the preview's name).
+async function renameItem(drive, item, name) {
+  const [{ renamedMeta }, { patchItem }] = await Promise.all([import('../lib/folder.js'), api()]);
+  const metaCt = await renamedMeta(item, name);
+  await patchItem(item.id, { meta_ct: metaCt }, drive.headers());
+  item.meta = { ...item.meta, name };
+  item.name = name;
+  item.row = { ...item.row, meta_ct: metaCt };
+}
+
+// The field opens with the name before its extension selected (ui/rename.js); a new extension asks under it first.
 function rename(drive, item) {
   const errors = h('div', {});
+  const ask = h('div', {});
   const input = h('input', { class: 'input', type: 'text', id: 'rename-in', value: item.name, maxlength: '255', autocomplete: 'off', spellcheck: 'false', 'data-testid': 'rename-input', 'data-autofocus': '' });
-  const go = primary(t('drive.rename.go'), async () => {
-    const name = input.value.trim();
-    if (!name || name === item.name) return closeModal('rename');
-    const [{ renamedMeta }, { patchItem }] = await Promise.all([import('../lib/folder.js'), api()]);
-    const metaCt = await renamedMeta(item, name);
-    await patchItem(item.id, { meta_ct: metaCt }, drive.headers());
-    item.meta = { ...item.meta, name };
-    item.name = name;
-    item.row = { ...item.row, meta_ct: metaCt };
+  const save = async (name) => {
+    await renameItem(drive, item, name);
     closeModal('rename');
     toast(t('drive.toast.renamed'), { type: 'success' });
     drive.render();
+  };
+  const answer = (name) => async () => {
+    ask.replaceChildren();
+    errors.replaceChildren();
+    try {
+      await save(name);
+    } catch (e) {
+      errors.replaceChildren(errorAlert(e));
+    }
+  };
+  const go = primary(t('drive.rename.go'), async () => {
+    const name = input.value.trim();
+    if (!name || name === item.name) return closeModal('rename');
+    const change = item.folder ? null : extensionChange(item.name, name);
+    if (!change) return save(name);
+    ask.replaceChildren(extensionAsk(change, { use: answer(name), keep: answer(change.keep) }));
+    ask.querySelector('[data-testid="rename-ext-keep"]').focus();
   }, { errors, testid: 'rename-go' });
-  const box = show(dialogBox({
+  const box = dialogBox({
     id: 'rename', title: t('drive.rename.title'), testid: 'rename-dialog',
-    body: [h('div', { class: 'field' }, h('label', { class: 'label', for: 'rename-in' }, t('drive.rename.label')), input), errors],
+    body: [h('div', { class: 'field' }, h('label', { class: 'label', for: 'rename-in' }, t('drive.rename.label')), input), ask, errors],
     footer: [button(t('drive.cancel'), { variant: 'outline', 'data-close': '' }), go],
-  }));
+  });
+  box.querySelector('.dialog-title').removeAttribute('data-autofocus');   // the field takes the focus, at once, with its selection
+  show(box);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go.click(); });
-  requestAnimationFrame(() => input.select());
+  input.addEventListener('input', () => ask.replaceChildren());
+  selectName(input, { folder: item.folder });
   return box;
 }
 

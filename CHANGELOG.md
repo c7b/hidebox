@@ -18,6 +18,18 @@
   and SECURITY.md; URLs stay `/d/…`. `tools/check-copy.py` retires "drop link" and "safety code" in copy.
 <!-- /drop compact -->
 
+<!-- preview share -->
+## 2026-10-21: a preview you can read, share and rename
+
+- **Selected words in a preview stay readable.** A note's or a text file's selection took the page's own colours: white
+  words on a white tint in the drive, ink on gunmetal in dark, so they vanished. The preview now sets both colours, in
+  both themes, and the reading pages' selection keeps the text colour in dark. **The fine print's What's wrong list
+  reads in both themes**: the light switch now sets the browser's colour scheme, and a list's options carry the page's
+  colours, never the OS's. **The drive's preview has Share** (the share dialog, over the preview) **and a name you
+  rename in place** (the pencil or the name, the same Rename as the menu). Every rename field opens with the name before
+  its extension selected, and a new extension asks first ("Change .png to .txt?").
+<!-- /preview share -->
+
 <!-- packs small -->
 ## 2026-10-21: smaller space packs
 
