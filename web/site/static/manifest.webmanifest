@@ -2,7 +2,7 @@
   "id": "/",
   "name": "{{BRAND}}",
   "short_name": "{{BRAND}}",
-  "description": "Your private cloud storage. Files lock in your browser first.",
+  "description": "Your private cloud storage. Store, send, and sell files privately. Built on Tari. No KYC. No email.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",
