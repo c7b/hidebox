@@ -206,6 +206,11 @@
 
 /* ---------- received ---------- */
 .drop-card .card-content { display: grid; gap: 0.75rem; }
+/* on a phone, Make a new hidebox link goes under the card's words, so the title keeps the width */
+@media (max-width: 639px) {
+  .drop-card .card-header:has(.card-action) { grid-template-columns: minmax(0, 1fr); }
+  .drop-card .card-action { grid-column-start: auto; grid-row: auto; justify-self: start; margin-inline-start: -0.625rem; }
+}
 .scanline { display: flex; align-items: center; gap: 0.5rem; font-size: var(--text-xs); color: var(--muted-foreground); }
 .scanline .icon { color: var(--success); }
 
