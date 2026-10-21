@@ -20,9 +20,9 @@
 /* ---------- hero ---------- */
 .hero { position: relative; z-index: 2; isolation: isolate; padding-top: var(--s-8); }
 .hero h1 { font: 650 clamp(34px, 8.6vw, 68px)/1.04 var(--font); letter-spacing: -.045em; }
+/* the tagline under the headline: the h1's grey second line, then a third line smaller and dimmer (--hero-dim, v2.css) */
 .h1-2 { display: block; color: var(--fg-2); }
-.hero .lede { font: var(--t-say); font-size: clamp(17px, 1.6vw, 20px); max-width: 40rem; margin-top: var(--s-5); }
-.hero-note { margin-top: var(--s-3); font: var(--t-small); color: var(--fg-2); }
+.hero-line { margin-top: var(--s-4); font: 500 clamp(15px, 3.9vw, 18px)/1.45 var(--font); letter-spacing: -.005em; color: var(--hero-dim, var(--fg-2)); }
 @media (min-width: 1024px) { .hero { padding-top: var(--s-9); } }
 
 /* Open your drive (site v3): one big lime button, the page's only action. Two links share the label, and
@@ -49,9 +49,8 @@
 @keyframes dc-wait { from { opacity: 0; } }
 .motion .hero h1 { animation: rise .7s var(--ease-out) both; }
 .motion .h1-2 { animation: rise .7s 60ms var(--ease-out) both; }
-.motion .hero .lede { animation: rise .7s 120ms var(--ease-out) both; }
+.motion .hero-line { animation: rise .7s 120ms var(--ease-out) both; }
 .motion .hero .cta-row { animation: pop .7s 180ms var(--ease-out) both; }
-.motion .hero-note { animation: rise .7s 240ms var(--ease-out) both; }
 .motion .slice { animation: lift .7s 300ms var(--ease-out) both; }
 .motion:not(.mo) .slice :is(.slice-tile, .slice-title, .slice-cols span, li > .icon, .name, .badge, .state) { animation: dc-wait .2s 3s backwards; }
 .dc-run :is(.slice-tile, .slice-title, .slice-cols span, li > .icon, .name, .badge, .state) { opacity: 0; }
