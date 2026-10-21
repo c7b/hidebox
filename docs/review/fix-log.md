@@ -737,8 +737,8 @@ dark (`docs/review/site-v2.md`, "Integration devil", pruned on 2026-10-20; evide
 | 4 | `nav.my_locker` was left unused, which failed the UI's static check (665 of 666) | Removed (`7646442`) |
 | 5 | The home's first tTARI (in the share picture) didn't link to What's tTARI? (point 3) | It does now (`faf93da`) |
 
-All twelve points are ok, three of them after these fixes. The ones rejected, with the reason, are in
-site-v2.md. Released as `410f210`, with the tag `spooky-secrets-2026-10` moved there; verify-deploy found 0
+All twelve points are ok, three of them after these fixes. The ones rejected, with the reason, were in
+site-v2.md (pruned on 2026-10-20). Released as `410f210`, with the tag `spooky-secrets-2026-10` moved there; verify-deploy found 0
 differences, D-01 passed, and the non-chain batch passed 13/13. **E-J with its judge pass failed at step 5:**
 the Once link's "Delete it from my drive after" never reached the server, so the file stayed. It could not
 be reproduced: two probes on production (four shares) applied it, and so did E-J itself run without a pass,

@@ -40,10 +40,11 @@ hosted CI: each pass's suite runs are saved under [evidence/](evidence/).
 
 Our own test transactions only, never a user's: the hourly canary delivery and the daily demo payment
 in [`/evidence.json`](https://hidebox.app/evidence.json), the SealLog checkpoints, and the
-go-live record in [evidence/](evidence/). The contest release (the tag `spooky-secrets-2026-10`: suites,
+go-live record in [evidence/](evidence/). The release the tag `spooky-secrets-2026-10` first pointed at (suites,
 deploys, end-to-end runs, the film's check, a stranger's clone and crawl, the purge) is in
-[evidence/2026-10-14/release](evidence/2026-10-14/release). Each later pass has its own dated folder and a
-review under [review/](review/).
+[evidence/2026-10-14/release](evidence/2026-10-14/release); the tag has moved to later releases since. Each later
+pass has its own dated folder and a review under [review/](review/);
+[evidence/README.md](evidence/README.md) says what each kept folder proves.
 
 ## How it's built
 

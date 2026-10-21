@@ -1,6 +1,19 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- prune evidence -->
+## 2026-10-20: leaner evidence
+
+- **The repository keeps the evidence that backs the product as it is, and drops the rest.** It carried 55 MB of raw
+  evidence and screenshots, most of them from passes that later passes replaced. Pruned: the raw evidence of
+  2026-10-11 to 2026-10-18 that no live document, test or the contest entry cites (the fix passes, the 2026-10-12 and
+  2026-10-13 lanes, home v2, site v4 and every 2026-10-18 design lane), the review screenshots of those designs, the
+  site v2 and v4 reviews, and the curated screenshots no document names (26 in `web/app/shots/`, the 29 site v2 shots
+  in `web/site/shots/`). `docs/evidence/` went from 34.4 MB to 9.6 MB, `docs/review/` from 12.0 MB to 0.5 MB. The new
+  `docs/evidence/README.md` says what each kept folder proves; the kept reviews mark every pruned path and keep the
+  result it recorded; commit `8bcd889` still holds every pruned file.
+<!-- /prune evidence -->
+
 <!-- perf 1 -->
 ## 2026-10-20: faster repeat visits, lighter pictures
 

@@ -8,7 +8,7 @@ the site's mark (`site/promote-v3`), and this branch was built on that branch (i
 rebase) so the two merge as one.
 The raw evidence (`docs/evidence/2026-10-18/drive-v3/`) was pruned on 2026-10-20; the results it recorded are below.
 
-Kept: site v4's rule ([site-v4.md](site-v4.md)): exactly one lime action per view, destructive red, the picked row on
+Kept: site v4's rule (DESIGN.md; the site v4 review was pruned on 2026-10-20): exactly one lime action per view, destructive red, the picked row on
 the lime tint. No copy changed; no font, library or install was added; the Lucide sprite stays.
 
 ## The mark
