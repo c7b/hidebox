@@ -1,0 +1,830 @@
+[
+ {
+  "width": 360,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 36,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 18,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    16,
+    191,
+    328,
+    22
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 15,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    16,
+    228,
+    224,
+    22
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 338,
+  "fold": 740,
+  "overflow": false
+ },
+ {
+  "width": 360,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 36,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 18,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    16,
+    191,
+    328,
+    22
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 15,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    16,
+    228,
+    224,
+    22
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 338,
+  "fold": 740,
+  "overflow": false
+ },
+ {
+  "width": 390,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 39,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 19.5,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    16,
+    197,
+    358,
+    24
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 15.21,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    16,
+    237,
+    227,
+    22
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 347,
+  "fold": 844,
+  "overflow": false
+ },
+ {
+  "width": 390,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 39,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 19.5,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    16,
+    197,
+    358,
+    24
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 15.21,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    16,
+    237,
+    227,
+    22
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 347,
+  "fold": 844,
+  "overflow": false
+ },
+ {
+  "width": 768,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    28,
+    263,
+    712,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    28,
+    320,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 435,
+  "fold": 1024,
+  "overflow": false
+ },
+ {
+  "width": 768,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    28,
+    263,
+    712,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    28,
+    320,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 435,
+  "fold": 1024,
+  "overflow": false
+ },
+ {
+  "width": 960,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 27.84,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    28,
+    332,
+    452,
+    34
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    28,
+    382,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 497,
+  "fold": 720,
+  "overflow": false
+ },
+ {
+  "width": 960,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 27.84,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    28,
+    320,
+    452,
+    34
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    28,
+    370,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 485,
+  "fold": 720,
+  "overflow": false
+ },
+ {
+  "width": 1024,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 29.696,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    28,
+    347,
+    486,
+    36
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    28,
+    399,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 513,
+  "fold": 768,
+  "overflow": false
+ },
+ {
+  "width": 1024,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 29.696,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    28,
+    335,
+    486,
+    36
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    28,
+    387,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 501,
+  "fold": 768,
+  "overflow": false
+ },
+ {
+  "width": 1100,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 31.9,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    28,
+    364,
+    526,
+    39
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    28,
+    419,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 533,
+  "fold": 800,
+  "overflow": false
+ },
+ {
+  "width": 1100,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 31.9,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    28,
+    352,
+    526,
+    39
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    28,
+    407,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 521,
+  "fold": 800,
+  "overflow": false
+ },
+ {
+  "width": 1180,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    46,
+    374,
+    549,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    46,
+    431,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 545,
+  "fold": 820,
+  "overflow": false
+ },
+ {
+  "width": 1180,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    46,
+    362,
+    549,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    46,
+    419,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 533,
+  "fold": 820,
+  "overflow": false
+ },
+ {
+  "width": 1280,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    96,
+    374,
+    549,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    96,
+    431,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 545,
+  "fold": 800,
+  "overflow": false
+ },
+ {
+  "width": 1280,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    96,
+    362,
+    549,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    96,
+    419,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 533,
+  "fold": 800,
+  "overflow": false
+ },
+ {
+  "width": 1440,
+  "theme": "dark",
+  "page": "rgb(10, 10, 10)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(250, 250, 250)",
+   "contrast": 18.97,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(163, 163, 163)",
+   "contrast": 7.85,
+   "lines": 1,
+   "box": [
+    176,
+    374,
+    549,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(133, 133, 133)",
+   "contrast": 5.37,
+   "lines": 1,
+   "box": [
+    176,
+    431,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 545,
+  "fold": 900,
+  "overflow": false
+ },
+ {
+  "width": 1440,
+  "theme": "light",
+  "page": "rgb(255, 255, 255)",
+  "headline": {
+   "text": "Your private cloud storage.",
+   "size": 68,
+   "weight": "650",
+   "color": "rgb(10, 10, 10)",
+   "contrast": 19.8,
+   "lines": 2
+  },
+  "subline": {
+   "text": "Store, send, and sell files privately.",
+   "size": 34,
+   "weight": "650",
+   "color": "rgb(102, 102, 102)",
+   "contrast": 5.74,
+   "lines": 1,
+   "box": [
+    176,
+    362,
+    549,
+    41
+   ]
+  },
+  "third": {
+   "text": "Built on Tari\u2122. No KYC. No email.",
+   "size": 18,
+   "weight": "500",
+   "color": "rgb(115, 115, 115)",
+   "contrast": 4.74,
+   "lines": 1,
+   "box": [
+    176,
+    419,
+    269,
+    26
+   ]
+  },
+  "lede": null,
+  "note": null,
+  "cta_bottom": 533,
+  "fold": 900,
+  "overflow": false
+ }
+]

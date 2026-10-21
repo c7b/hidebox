@@ -1,6 +1,18 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- tagline 2 -->
+## 2026-10-21: a tagline that says what hidebox is
+
+- **The home's hero is three lines and the button.** "Your private cloud storage." with "Store, send, and sell files
+  privately." under it in grey, then "Built on Tari™. No KYC. No email." smaller and dimmer, then Open your drive. The
+  line under the button and the line about how each file opens left the hero: the drive's start screen, one tap later,
+  says "No email, no password. Your key is the account.", and Share it your way shows the rules. The same three lines
+  are on the share card (`og.png`, now with the brand kit's mark and wordmark), the repository's social card, the link
+  previews, the web manifest, the README and the film's end card. "Files lock in your browser first." stays a fact in
+  the README and the home's description. Review: `docs/review/tagline-2.md`.
+<!-- /tagline 2 -->
+
 <!-- prune evidence -->
 ## 2026-10-20: leaner evidence
 

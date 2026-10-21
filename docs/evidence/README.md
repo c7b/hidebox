@@ -28,6 +28,7 @@ pass, no transaction id of a visitor's send.
 | [`2026-10-20/perf-1/`](2026-10-20/perf-1/) | Hashed, precompressed assets: every page's bytes at a first visit, a repeat visit and after a release, before and after; verify-deploy and D-01 |
 | [`2026-10-20/security-audit-1/`](2026-10-20/security-audit-1/) | Security audit 1: the findings, the coverage ledger, the check behind each fix, and the suites |
 | [`2026-10-20/upgrade-0.47.0/`](2026-10-20/upgrade-0.47.0/) | The 0.47.0 outage and the walletd upgrade drill: the same balances, checkpoints and notarizations committing again, E-13, E-25 and E-29 passing |
+| [`2026-10-21/tagline-2/`](2026-10-21/tagline-2/) | The new tagline as served: the hero before and after at 1440 and 390, its lines measured from 360 to 1440 px, the two cards and the film's end card |
 
 Elsewhere: [`../../deploy/evidence/`](../../deploy/evidence/) (the deploy lane's first, fix and integration passes,
 cited by `deploy/ACCEPTANCE.md`) and [`../../web/app/tests/evidence/`](../../web/app/tests/evidence/) (the app

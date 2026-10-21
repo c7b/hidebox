@@ -1,0 +1,71 @@
+PASS SPDX headers
+PASS no HTML/script sinks in JS
+PASS markup: CSP-safe, includes, placeholders, JSON-LD
+PASS banned words
+PASS no typed /config numbers (P-20)
+PASS variables and conditions
+PASS SEO metadata (M-04)
+PASS trademark and mandatory lines (M-05)
+PASS partials in sync
+PASS no page shows the ghost
+PASS privacy inventory covers the schema (M-06)
+PASS contrast table (M-03)
+PASS static files (M-04)
+PASS security.txt contacts answer a stranger (needs the network)
+PASS copy variants set at build time (M11)
+PASS /judges quotes the app's words, 6 + 6 steps
+PASS old pages redirect to pages and anchors that exist
+PASS A-06h: motion.js 4 KB, stills.js 2 KB gzip at most, each only from site.js; no WebGL field; home.css 3.25 KB more, the home's stylesheets 8.5 KB
+PASS /how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch
+PASS the four sides and What's tTARI? are the same on / and /how
+PASS links to site pages and anchors land on something
+PASS media: the home's stills and the 404 art only; /v2, its loops and clips.js gone and unnamed; v2.css in budget
+PASS V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video
+PASS 404: the owner's words, one way home, the art sized from media/404, the three eggs
+PASS tagline-2: the hero's three lines, the tagline said once, quoted by the previews, the card and the manifest
+PASS fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time
+PASS llms-full.txt matches /how, /made and /fine-print
+PASS dates.js in two time zones (M-08)
+PASS fonts: the pinned Geist subset on the home, pinned Geist on reading pages
+PASS every page, desktop, 390 and 360 px; /v3 lands on the home
+PASS home page budget (M-01)
+PASS live numbers and their failure (M-07)
+PASS home words: 120 above the fold, 800 in all, Open your drive first
+PASS A-06h: no WebGL field on the home (the v3 design), nor on /how and /judges
+PASS header: Open your drive always on, to /drive?make or /drive
+PASS motion: reveals, the decode as the slice comes into view; reduced motion and no JavaScript
+PASS copy variants from /config
+PASS status line phase (M-08)
+PASS abuse form: key stripped, never sent without JavaScript
+PASS /made as docs: the contents follow the part being read, links open their disclosure, On this page
+PASS canary reveal (P1)
+PASS theme, judge pass
+PASS V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box
+PASS /how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled
+PASS 404: the art above the words, one way home, the hidden line, the comment, the console's ghost
+PASS fingerprints: the built pages ask only for fingerprinted files and entry points, and get every one
+note A-06h: motion.js 3,204 B (at most 4,096); stills.js 1,793 B (at most 2,048), gzip -9; home.css 4,212 B (was 1,770, +2,442 of 3,328); the home's stylesheets 7,637 B (home.css 4,212, v2.css 2,465, v3.css 960; at most 8,704)
+note media: media/v3, media/404; css/v2.css 2,465 B gzip -9
+note V-02 files: 5 stills on the home, web/site/media/v3 480,262 B in 24 files (at most 524,288); css/v3.css 960 B gzip -9
+note 404 files: web/site/media/404 89,238 B in 6 files (at most 131,072); js/egg.js 483 B gzip -9
+note tagline-2: the third line #737373 on #FFFFFF (:root) 4.74:1, --fg-2 5.74:1
+note tagline-2: the third line #858585 on #0A0A0A (:root[data-theme="dark"]) 5.37:1, --fg-2 7.85:1
+note tagline-2: the third line #858585 on #0A0A0A (@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])) 5.37:1, --fg-2 7.85:1
+note fingerprints: 170 assets, 111 scripts, 17 stylesheets, the same names from two builds
+note fonts: the pinned Geist subset on /, the pinned Geist on /how (0 problems)
+note budget on /: 38 requests, HTML+CSS+JS 58.3 KB gzip, other 85.4 KB, total 143.7 KB, 1 font files, third-party 0 (with the drop widget's first load)
+note API blocked: /made hides 28 [data-needs] blocks, shows 0
+note home words at 390: 26 above the fold, 572 in all
+note home words at 1440: 41 above the fold, 588 in all
+note A-06h @1440: no field.js or pixel.js asked for, 0 canvases on /
+note A-06h @390: no field.js or pixel.js asked for, 0 canvases on /
+note motion @1440: motion.js at 393 ms (load event 274 ms), decode seen: True
+note motion @390: motion.js at 238 ms (load event 168 ms), decode seen: True
+note canary reveal: First line: mutis canary #788. Sealed 2025-10-08T09:00:00Z. If you can read this without t; 3 test files missed (#789 to #791): the verifier restarted. Test file #787 missed: the verifier restarted.
+note status line, all green with misses: 4 test files missed their key in the last 24 hours. Every other check is working. Checked Oct 9, 2025, 2:53 AM.
+note V-02 / @1440: 264,654 B at load (the hero's still hero-720.avif), 278,981 B after scrolling through, uncached; stills asked for: hero-720.avif, different-640.avif, who-480.avif, gem-480.avif
+note V-02 / @390: 251,428 B at load (the hero's still hero-480.avif), 272,878 B after scrolling through, uncached; stills asked for: hero-480.avif, different-640.avif, who-480.avif, gem-480.avif
+note /how loops: stills.js at 162 ms (load event 125 ms) at 390; the upload loop went through 9 states
+note 404 @1440 dark: 206,075 B at load, the art from box-zero-480.avif
+note fingerprints in the browser: 51 files asked for across 6 pages at 1440 and 390, 48 of them fingerprinted, the rest entry points
+46 of 46 checks without failures, 381 s

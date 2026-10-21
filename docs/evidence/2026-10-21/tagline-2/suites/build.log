@@ -1,0 +1,1 @@
+build: OK {"br": 287, "brotli": "node v20.19.2, brotli 1.1.0", "content_id": "1a696bce", "files": 374, "fingerprinted": 170, "git_sha": "4f71353", "gzip": 287, "holding": false, "origin": "https://hidebox.app", "pages": 6, "vendored_checked": 6, "version": "copy/tagline-2"}
