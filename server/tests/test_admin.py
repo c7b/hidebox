@@ -173,12 +173,12 @@ class Admin(unittest.TestCase):
         locker, other = s.register(), s.register()
         until = codec.now() + 30 * 86400
         with db.tx(s.conn):
-            s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ?", (2 << 30, until))
+            s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ?, paid_pack = 's30'", (256 << 20, until))
         paid = lambda: s.conn.execute("SELECT id, paid_bytes FROM identities WHERE paid_until > ? ORDER BY id",
                                       (codec.now(),)).fetchall()
         self.assertEqual(len(paid()), 2)
         self.assertEqual(self.run_admin("release-pack", "--", locker["id"]).strip(), "released")
-        self.assertEqual([tuple(r) for r in paid()], [(other["id"], 2 << 30)])     # only that locker's
+        self.assertEqual([tuple(r) for r in paid()], [(other["id"], 256 << 20)])   # only that locker's
         with self.assertRaises(SystemExit):                                       # nothing left to end
             self.run_admin("release-pack", "--", locker["id"])
 

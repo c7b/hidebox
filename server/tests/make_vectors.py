@@ -87,7 +87,8 @@ def quota_vectors() -> dict:
         ("same disk, N=300", 99 * gb, 79 * gb, 0, 0, 300),
         ("same disk, N=1000 hits the 256 MiB floor", 99 * gb, 79 * gb, 0, 0, 1000),
         ("2 TB disk, N=100 hits the 5 GiB ceiling", 2000 * gb, 1900 * gb, 0, 0, 0),
-        ("99 GB disk with 10 GB stored and 4 GiB rented", 99 * gb, 69 * gb, 10 * gb, 4 << 30, 150),
+        ("99 GB disk with 10 GB stored and 1.5 GiB rented (a big pack, two small)", 99 * gb, 69 * gb, 10 * gb,
+         quota.PACKS["m30"]["bytes"] + 2 * quota.PACKS["s30"]["bytes"], 150),
     ]:
         p = quota.compute(d_total, d_avail, stored, paid, n_active, LIMITS)
         cases.append({"name": name, "in": {"d_total": d_total, "d_avail": d_avail, "stored": stored, "paid": paid,

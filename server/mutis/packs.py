@@ -83,8 +83,8 @@ def sold_today(conn: sqlite3.Connection, now: int, judge: bool) -> int:
 
 
 def held(identity, now: int, renew_days: int) -> dict | None:
-    """The pack a drive holds: its id (inferred from its size for packs bought before schema 6), bytes,
-    end, and when renewing opens."""
+    """The pack a drive holds: its id (for packs bought before schema 6, the pack of that size today, else
+    None), bytes, end, and when renewing opens."""
     if not (identity["paid_until"] and identity["paid_until"] > now and identity["paid_bytes"] > 0):
         return None
     pack = identity["paid_pack"] or next((pid for pid, p in quota.PACKS.items()

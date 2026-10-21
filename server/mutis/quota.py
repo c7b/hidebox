@@ -27,7 +27,8 @@ ANON_FRACTION = 0.08
 FREEZE_FREE_MARGIN = 2 * GiB
 FREEZE_ALL_MARGIN = 256 * MiB
 
-# Spec §9.4. Durations in seconds.
+# Spec §9.4. Durations in seconds. max_file_bytes caps one file; the file must also fit the drive's room
+# (locker_limit: the free quota, plus the pack a paid drive holds), so a paid drive's 2 GiB file needs both.
 CLASSES = {
     "anon": {"max_file_bytes": 25 * MiB, "small_lane_max_bytes": SMALL_PLAINTEXT_MAX, "max_expiry_s": 86400,
              "default_expiry_s": 86400, "max_views": 10, "links_per_item": 3},
@@ -45,9 +46,10 @@ CANARY_MAX_EXPIRY_S = 2 * 86400
 SEND_VIEWS = 3
 SEND_EXPIRY_S = 30 * 86400
 
-# Against griefing: the big pack is 5 GiB, so a few purchases can't take the paid share at once.
-PACKS = {"s30": {"bytes": 2 * GiB, "days": 30, "price_ut": 500_000},
-         "m30": {"bytes": 5 * GiB, "days": 30, "price_ut": 1_000_000}}
+# Against griefing: packs are small next to the paid share (256 MiB and 1 GiB, a few sold a day), so a run
+# of purchases can't take it at once. The ids stay: invoices name them.
+PACKS = {"s30": {"bytes": 256 * MiB, "days": 30, "price_ut": 500_000},
+         "m30": {"bytes": 1 * GiB, "days": 30, "price_ut": 1_000_000}}
 
 
 def padme(length: int) -> int:

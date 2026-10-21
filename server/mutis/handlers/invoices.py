@@ -55,7 +55,8 @@ def create(ctx):
     swapped = bool(replaced)
     holding = packs.held(identity, now, cfg["renew_days"])
     if holding and (now < holding["renew_from"] or holding["id"] not in (None, pack_id)):
-        size = f"{holding['bytes'] / quota.GiB:g} GiB"
+        n = holding["bytes"]
+        size = f"{n / quota.GiB:g} GiB" if n >= quota.GiB else f"{n / quota.MiB:g} MiB"
         until = time.strftime("%b %d", time.gmtime(holding["until"]))
         raise ApiError(409, "pack_active", f"You already have {size} until {until}.",
                        details={"pack": holding["id"], "bytes": holding["bytes"], "until": holding["until"],

@@ -119,7 +119,7 @@ class Cleanup(unittest.TestCase):
             db.set_meta(s.conn, "free_quota_bytes", str(q))
             db.set_meta(s.conn, "cleanup_hour", str(s.now - s.now % 3600))
             s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ? WHERE id = ?",
-                           (2 * GiB, s.now - 31 * 86400, locker["id"]))
+                           (quota.PACKS["s30"]["bytes"], s.now - 31 * 86400, locker["id"]))
         s.run_cleanup()
         states = [self.item_state(k["item_id"]) for k in kept]
         self.assertEqual(states, ["deleted", "deleted", "ready"])

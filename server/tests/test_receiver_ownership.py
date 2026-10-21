@@ -76,7 +76,7 @@ class ReceiverOwnership(unittest.TestCase):
         self.ticks()
         got = self.get(inv)
         self.assertEqual((got["status"], got["received_ut"]), ("credited", "500000"))
-        self.assertEqual(self.paid_bytes(), 2 << 30)
+        self.assertEqual(self.paid_bytes(), 256 << 20)
         statuses = sorted(r[0] for r in self.s.conn.execute("SELECT status FROM payments"))
         self.assertEqual(statuses, ["credited", "rejected"])
 

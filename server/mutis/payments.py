@@ -218,7 +218,8 @@ def credit(conn: sqlite3.Connection, utxo_id: str, now: int, room=None) -> bool:
 def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int, judge: bool = False) -> None:
     """A drive holds one pack at a time (packs.py): a new pack sets its bytes and days from now;
     a payment while one is active (a renewal in its last days, or a second invoice paid anyway) adds the
-    days from the old end and never stacks bytes. The slice (judges' or public) is the first purchase's."""
+    days from the old end and keeps the larger of the two sizes: bytes never stack, and a pack bought when
+    packs were bigger doesn't shrink. The slice (judges' or public) is the first purchase's."""
     pack = quota.PACKS[pack_id]
     row = conn.execute("SELECT paid_bytes, paid_until, paid_pack FROM identities WHERE id = ?", (identity_id,)).fetchone()
     if row is None:

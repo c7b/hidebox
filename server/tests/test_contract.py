@@ -56,8 +56,8 @@ class System(unittest.TestCase):
         self.assertEqual(c["limits"]["paid"]["max_file_bytes"], 2 << 30)
         self.assertEqual(c["kdf"], {"alg": "PBKDF2-SHA256", "min_iter": 600000, "max_iter": 5000000})
         packs = {p["id"]: p for p in c["pricing"]["packs"]}
-        self.assertEqual(packs["s30"], {"id": "s30", "bytes": 2 << 30, "days": 30, "price_ut": "500000"})
-        self.assertEqual(packs["m30"], {"id": "m30", "bytes": 5 << 30, "days": 30, "price_ut": "1000000"})
+        self.assertEqual(packs["s30"], {"id": "s30", "bytes": 256 << 20, "days": 30, "price_ut": "500000"})
+        self.assertEqual(packs["m30"], {"id": "m30", "bytes": 1 << 30, "days": 30, "price_ut": "1000000"})
         self.assertEqual((c["pricing"]["one_per_drive"], c["pricing"]["renew_days"]), (True, 3))
         self.assertTrue(c["features"]["packs"])
         self.assertEqual(c["courier"], {"amount_ut": "1000", "max_fee_ut": "30000", "jitter_s": [5, 45]})
@@ -727,7 +727,7 @@ class Payments(unittest.TestCase):
     def test_sold_out_and_sponsor_disabled(self):
         s = self.s
         locker = s.register()
-        s.disk.total, s.disk.avail = 20 * (1 << 30), 11 * (1 << 30)
+        s.disk.total, s.disk.avail = 20 * (1 << 30), (10 << 30) + (512 << 20)    # a 0.14 GiB public slice
         status, _, body = s.request("POST", f"{V}/invoices", {"pack": "s30"}, headers=locker["auth"])
         self.assertEqual((status, body["error"]["code"]), (409, "sold_out"))
         status, _, body = s.request("POST", f"{V}/sponsor", {"wallet_address": fake_keys()["address"]},

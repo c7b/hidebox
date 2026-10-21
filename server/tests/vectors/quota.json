@@ -77,16 +77,16 @@
     "d_avail": 69000000000,
     "d_total": 99000000000,
     "n_active": 150,
-    "paid": 4294967296,
+    "paid": 1610612736,
     "stored": 10000000000
    },
-   "name": "99 GB disk with 10 GB stored and 4 GiB rented",
+   "name": "99 GB disk with 10 GB stored and 1.5 GiB rented (a big pack, two small)",
    "out": {
     "anon": 5461006540,
-    "free_pool": 55285382452,
+    "free_pool": 57969737012,
     "n": 150,
     "pool": 68262581760,
-    "q_target": 1409286144,
+    "q_target": 1543503872,
     "reserve": 10737418240
    }
   }

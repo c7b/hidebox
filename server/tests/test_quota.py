@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from harness import GiB, Stack
-from mutis import codec, db, quota
+from mutis import codec, db, lanes, quota
 
 VECTORS = json.loads((Path(__file__).parent / "vectors" / "quota.json").read_text())
 MiB = 1 << 20
@@ -126,16 +126,52 @@ class Lanes(unittest.TestCase):
         self.assertEqual(pool.n, 300)
 
     def test_paid_locker_limits(self):
+        """Even the small pack lifts a drive's largest file past a free drive's 512 MiB."""
         self.s = Stack()
         locker = self.s.register()
         self.s.graduate(locker)
         status, body = self.s.start_upload(600 * MiB, headers=locker["auth"])
         self.assertEqual((status, body["error"]["details"]["class"]), (413, "locker"))
         with db.tx(self.s.conn):
-            self.s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ? WHERE id = ?",
-                                (2 * GiB, self.s.now + 86400, locker["id"]))
+            self.s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ?, paid_pack = 's30' WHERE id = ?",
+                                (quota.PACKS["s30"]["bytes"], self.s.now + 86400, locker["id"]))
         status, body = self.s.start_upload(600 * MiB, headers=locker["auth"])
         self.assertEqual(status, 201)
+
+    def test_a_paid_drive_s_largest_file_must_also_fit_its_room(self):
+        """The paid class takes files up to 2 GiB, more than either pack (256 MiB, 1 GiB). That cap is per
+        file, like a free drive's 512 MiB under a free quota that can be 256 MiB: the file must also fit the
+        drive's room, the free quota plus its pack. With the small pack, a 2 GiB file fits while the free
+        quota is 2 GiB (the deployment's today) and is refused when it is 1 GiB, with 507 quota_exceeded and
+        the room, not 413 too_large, before any byte is reserved. /config and /me say both numbers."""
+        self.s = Stack()
+        locker = self.s.register()
+        self.s.graduate(locker)
+        small = quota.PACKS["s30"]["bytes"]
+        self.assertLess(max(p["bytes"] for p in quota.PACKS.values()), quota.CLASSES["paid"]["max_file_bytes"])
+        with db.tx(self.s.conn):
+            self.s.conn.execute("UPDATE identities SET paid_bytes = ?, paid_until = ?, paid_pack = 's30' WHERE id = ?",
+                                (small, self.s.now + 86400, locker["id"]))
+            db.set_meta(self.s.conn, "free_quota_bytes", str(GiB))
+        status, body = self.s.start_upload(2 * GiB, headers=locker["auth"])
+        self.assertEqual((status, body["error"]["code"], body["error"]["details"]), (507, "quota_exceeded",
+                                                                                     {"limit_bytes": GiB + small}))
+        me = self.s.request("GET", "/api/v1/me", headers=locker["auth"])[2]
+        self.assertEqual((me["plan"], me["limits"]["max_file_bytes"], me["quota"]["limit_bytes"], me["quota"]["reserved_bytes"]),
+                         ("paid", 2 * GiB, GiB + small, 0))
+        config = self.s.request("GET", "/api/v1/config")[2]
+        self.assertEqual(config["limits"]["paid"]["max_file_bytes"], 2 * GiB)
+        status, body = self.s.start_upload(2 * GiB + 1, headers=locker["auth"])     # past the cap: too large
+        self.assertEqual((status, body["error"]["code"], body["error"]["details"]["class"]), (413, "too_large", "paid"))
+        # With a 2 GiB free quota there is room: admitted (checked here without allocating a 2 GiB file).
+        with db.tx(self.s.conn):
+            db.set_meta(self.s.conn, "free_quota_bytes", str(2 * GiB))
+        _, size = self.s.layout(2 * GiB)
+        identity = self.s.conn.execute("SELECT * FROM identities WHERE id = ?", (locker["id"],)).fetchone()
+        pool = quota.measure(self.s.conn, self.s.disk, ".", self.s.cfg["limits"], self.s.now)
+        lanes.check_file_size("paid", size)
+        lanes.admit_locker(self.s.conn, pool, identity, size, "none", self.s.now)
+        self.assertLessEqual(size, 2 * GiB + small)
 
 
 if __name__ == "__main__":

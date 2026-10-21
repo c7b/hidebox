@@ -59,7 +59,7 @@ class Payments(unittest.TestCase):
         self.s.chain.transfer("service", address, amount, None, 30000)
 
     def test_demo_pay_end_to_end(self):
-        """The judge path: demo-pay → sponsor sends → mirror → sidecar proves → indexer confirms → +2 GiB."""
+        """The judge path: demo-pay → sponsor sends → mirror → sidecar proves → indexer confirms → +256 MiB."""
         inv = self.invoice()
         status = self.s.request("POST", f"/api/v1/invoices/{inv['invoice_id']}/demo-pay",
                                 {"pow": self.s.solve("demo_pay")}, headers=self.locker["auth"])[0]
@@ -68,17 +68,17 @@ class Payments(unittest.TestCase):
         got = self.get(inv)
         self.assertEqual(got["status"], "credited")
         self.assertEqual(got["payments"][0]["checks"], {"amount_proven": True, "committed_on_chain": True})
-        self.assertEqual(got["credited"]["bytes"], 2 << 30)
+        self.assertEqual(got["credited"]["bytes"], 256 << 20)
         me = self.s.request("GET", "/api/v1/me", headers=self.locker["auth"])[2]
-        self.assertEqual((me["plan"], me["quota"]["paid_bytes"]), ("paid", 2 << 30))
+        self.assertEqual((me["plan"], me["quota"]["paid_bytes"]), ("paid", 256 << 20))
         transfer = next(t for t in self.s.chain.transfers if t["destination"] == inv["address"])
         self.assertEqual((transfer["account"], transfer["value"]), ("sponsor", 500000))
 
     def test_a_late_payment_for_a_lapsed_invoice_credits_only_with_room(self):
         """security-audit-1: an invoice gives its bytes back when it is swapped (or expires); a payment that
         arrives for it later credits only once the slice has room again, so paid space never goes over its
-        cap. Public slice here: 7.28 GiB."""
-        disk = Disk(total=100 * GiB, avail=36 * GiB)
+        cap. Public slice here: 1.33 GiB (a pool of 4.75)."""
+        disk = Disk(total=100 * GiB, avail=10 * GiB + 19 * GiB // 4)
         self.s.app.statvfs = disk
         a, b = self.s.register(ip="198.18.0.1"), self.s.register(ip="198.18.1.1")
 
@@ -88,7 +88,7 @@ class Payments(unittest.TestCase):
             return inv
 
         late = buy(a, "m30", "198.18.0.1")
-        buy(a, "s30", "198.18.0.1")                               # the swap: `late` gives its 5 GiB back
+        buy(a, "s30", "198.18.0.1")                               # the swap: `late` gives its 1 GiB back
         taken = buy(b, "m30", "198.18.1.1")                       # someone else takes them
         for inv in (late, taken):
             self.pay(inv["address"], int(inv["amount_ut"]))
