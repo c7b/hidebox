@@ -36,6 +36,11 @@
 .lightbox .icon { width: 1rem; height: 1rem; flex-shrink: 0; pointer-events: none; }
 .lightbox .spinner { animation: lb-spin 1s linear infinite; }
 
+/* Selected words name both colours: the page's own ::selection colour (white words in the drive's light theme, ink in
+   its dark one and on the site) would vanish on the preview's grounds, white on the white page, ink on gunmetal. The
+   chrome takes the drive's dark selection; a text file's page its own ink on a tint of it (below). */
+.lightbox ::selection { background: oklch(0.922 0 0); color: oklch(0.205 0 0); }
+
 /* --- the glass: the drive's dark recipe, here in both themes ---------------------------------------------------- */
 .lb-glass {
   background-color: var(--lb-base); background-image: var(--lb-light);
@@ -62,6 +67,30 @@
 .lightbox .lb-icon { width: var(--lb-target); padding: 0; background: transparent; color: var(--lb-fg); border-color: transparent; }
 .lightbox .lb-icon:hover, .lightbox .lb-icon:active { background: var(--lb-hover); color: var(--lb-fg); }
 .lightbox .btn:focus-visible { outline: 2px solid var(--lb-fg); outline-offset: 2px; }
+
+/* --- the drive's own files: Share beside Download (a secondary: white on the glass, never lime), and the name to rename
+   in place (a pencil at the chip's edge, the name itself; then a field, and a new extension's question under it) --- */
+.lightbox .lb-share, .lightbox .lb-ask .ext-ask .btn { background: rgb(255 255 255 / 0.08); color: var(--lb-fg); border-color: rgb(255 255 255 / 0.12); box-shadow: none; }
+.lightbox .lb-share:hover, .lightbox .lb-ask .ext-ask .btn:hover { background: rgb(255 255 255 / 0.14); color: var(--lb-fg); }
+.lb-file { position: relative; }
+.lb-file[data-rename] { padding-right: 0.375rem; }
+.lb-file[data-rename] .lb-name { cursor: text; }
+.lb-file[data-editing] { flex: 1 1 auto; }
+.lightbox .lb-file .lb-pencil { width: 2rem; height: 2rem; margin-left: -0.5rem; color: var(--lb-muted); }
+.lightbox .lb-file .lb-pencil:hover { color: var(--lb-fg); }
+.lightbox .lb-rename {
+  display: block; width: 100%; min-width: 0; height: 1.75rem; margin: 0; padding: 0 0.5rem; border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: var(--radius-sm, 0.375rem); background: rgb(0 0 0 / 0.3); color: var(--lb-fg); caret-color: var(--lb-fg); outline: none;
+  font: 600 0.875rem/1.3 var(--font-sans, Geist, ui-sans-serif, system-ui, sans-serif); letter-spacing: -0.01em;
+}
+.lightbox .lb-rename:focus { border-color: rgb(255 255 255 / 0.55); box-shadow: 0 0 0 3px rgb(255 255 255 / 0.14); }
+.lightbox .lb-rename::placeholder { color: var(--lb-muted); }
+.lb-file[data-saving] .lb-rename { opacity: 0.6; }
+.lb-ask { position: absolute; top: calc(100% + 0.5rem); left: 0; z-index: 1; width: max(100%, 20rem); max-width: calc(100vw - 1.5rem); padding: 0.875rem; }
+.lb-ask[hidden] { display: none; }
+.lb-ask .ext-ask { display: block; padding: 0; border: 0; background: none; }   /* the glass is its box */
+.lb-ask .ext-ask p { margin: 0 0 0.75rem; font-size: 0.8125rem; line-height: 1.25rem; color: var(--lb-fg); text-wrap: pretty; }
+.lb-ask .ext-ask-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 /* --- a program's name: the viewer's warning, in amber because it qualifies the words -------------------------- */
 .lb-warn {
@@ -105,7 +134,7 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
   animation: lb-in 0.34s var(--lb-ease) both;
 }
 .lb-sheet:focus-visible { outline: 2px solid var(--lb-fg); outline-offset: 3px; }
-.lb-sheet ::selection { background: color-mix(in oklab, currentColor 18%, transparent); }
+.lb-sheet ::selection { background: color-mix(in oklab, var(--lb-ink) 24%, var(--lb-paper)); color: var(--lb-ink); }
 .lb-text {
   margin: 0; padding: 1.5rem 1.75rem 2rem; font: 400 0.8125rem/1.7 var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
   white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; font-variant-ligatures: none;
@@ -133,6 +162,12 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
 .lb-prev .icon { transform: scaleX(-1); }
 
 @media (max-width: 399px) { .lb-tile { display: none; } .lb-file { padding-left: 0.875rem; } }
+@media (max-width: 479px) { .lb-file[data-rename] .lb-tile { display: none; } .lb-file[data-rename] { padding-left: 0.875rem; } }
+@media (max-width: 639px) { .lightbox .lb-share { width: var(--lb-target); padding: 0; } .lb-share .lb-label { display: none; } }   /* its icon, its name kept */
+@media (max-width: 479px) {   /* a phone with Share too: Download's icon alone as well, so the name keeps its room */
+  .lightbox .lb-actions:has(.lb-share) .lb-download { width: var(--lb-target); padding: 0; }
+  .lb-actions:has(.lb-share) .lb-download .lb-label { display: none; }
+}
 @media (min-width: 768px) {
   .lb-top { padding: 1rem 1.25rem 0.75rem; }
   .lb-stage { padding: 0.25rem 1.5rem 1.5rem; }
@@ -151,7 +186,11 @@ canvas.lb-media { width: var(--lb-w); height: var(--lb-h); }
   .lb-next { grid-area: next; }
 }
 
-@media (pointer: coarse) { .lightbox { --lb-target: 2.75rem; } }
+@media (pointer: coarse) {
+  .lightbox { --lb-target: 2.75rem; }
+  .lightbox .lb-file .lb-pencil { width: 2.25rem; height: 2.25rem; }
+  .lightbox .lb-rename { height: 2.25rem; font-size: 1rem; }   /* 16 px: a phone doesn't zoom into it */
+}
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .lightbox { --lb-paper: #131417; --lb-ink: #FAFAFA; --lb-paper-muted: #A1A1A1; --lb-paper-line: rgb(255 255 255 / 0.085); --lb-paper-light: var(--lb-light); --lb-paper-top: rgb(255 255 255 / 0.16); }
 }

@@ -74,4 +74,29 @@ export default [
     saveJudgePass(null);
     eq(savedJudgePass(), null);
   }],
+  ['rename (ui/rename.js): the part a new name replaces ends at the last dot; a leading dot, a trailing one and a folder select it all; a new extension asks', browserOnly(async () => {
+    const { extensionChange, extensionOf, selectName } = await import('../ui/rename.js');
+    const same = (actual, expected) => eq(JSON.stringify(actual), JSON.stringify(expected));
+    const picked = (value, opts) => {
+      const input = h('input', { type: 'text', value });
+      document.body.append(input);
+      selectName(input, opts);
+      const out = [input.selectionStart, input.selectionEnd];
+      input.remove();
+      return out;
+    };
+    same(picked('image.png'), [0, 5]);
+    same(picked('archive.tar.gz'), [0, 11]);
+    same(picked('README'), [0, 6]);
+    same(picked('.env'), [0, 4]);
+    same(picked('name.'), [0, 5]);
+    same(picked('Trip.2026', { folder: true }), [0, 9]);
+    eq(extensionOf('image.PNG'), '.PNG');
+    same(extensionChange('image.png', 'ABC.png'), null);
+    same(extensionChange('image.png', 'ABC.PNG'), null);
+    same(extensionChange('README', 'README.md'), null);
+    same(extensionChange('image.png', 'photo.txt'), { from: '.png', to: '.txt', keep: 'photo.png' });
+    same(extensionChange('image.png', 'photo'), { from: '.png', to: '', keep: 'photo.png' });
+    same(extensionChange('image.png', 'photo.'), { from: '.png', to: '', keep: 'photo.png' });
+  })],
 ];

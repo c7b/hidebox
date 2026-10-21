@@ -10,6 +10,8 @@
 //   - anything else: a note.
 // Download is always there and always saves (lib/download.js: application/octet-stream through a download link);
 // nothing here opens a window or navigates. This module and its stylesheet load the first time a file opens.
+// The drive's own files also get Share (the share dialog, over the preview) and their name to rename in place: the
+// caller passes what its menu does, so neither shows where the menu has no such entry (a link, Received).
 import { formatBytes, t } from '../lib/i18n.js';
 import { SNIFF_BYTES, checkRisky } from '../lib/filetype.js';
 import { saveFile } from '../lib/download.js';
@@ -17,6 +19,7 @@ import { setVar } from '../lib/dom.js';
 import { HEAD, TEXT_CAP, headOf, sniff } from '../lib/sniff.js';
 import { closeModal, h, icon, openModal } from './behaviors.js';
 import { stylesheet } from './more.js';
+import { extensionAsk, extensionChange, selectName } from './rename.js';
 
 const SHEET = '/app/css/lightbox.css';
 const CANVAS_MAX = 4096;    // an SVG's longest side in device pixels
@@ -66,10 +69,12 @@ async function rasterize(bytes, room, label) {
   }
 }
 
-// files: [{name, size, saveAs?, …}] (what read() needs rides along); at: the one shown first; read(file, onProgress)
-// -> its decrypted parts; problem(e) -> an element for a read that failed; returnFocus: where focus goes on close,
-// unless refocus(file) finds the control of the file last shown (its row may have been drawn again meanwhile).
-export async function openLightbox({ files, at = 0, read, problem = null, returnFocus = document.activeElement, refocus = null }) {
+// files: [{name, size, saveAs?, editName?, …}] (what read() needs rides along); at: the one shown first; read(file,
+// onProgress) -> its decrypted parts; problem(e) -> an element for a read that failed; returnFocus: where focus goes on
+// close, unless refocus(file) finds the control of the file last shown (its row may have been drawn again meanwhile).
+// share(file, button): opens the share dialog for it; rename(file, name) -> its new name once saved (throws when it
+// wasn't; the field stays). editName is the name the field starts from (an unnamed note's is empty).
+export async function openLightbox({ files, at = 0, read, problem = null, returnFocus = document.activeElement, refocus = null, share = null, rename = null }) {
   // One at a time: a second open while one is loading or showing (a double click) does nothing.
   if (opening || document.getElementById('lightbox')?.dataset.state === 'open') return null;
   opening = true;
@@ -82,14 +87,23 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
   let index = -1;
   let seq = 0;           // each show() takes a number; a slower one that finishes late changes nothing
   let shown = null;      // {parts, name, revoke}
+  let editing = null;    // the name's field while it is open: {f, input, saving}
 
   const name = h('h2', { class: 'lb-name dialog-title', tabindex: '-1', 'data-autofocus': '', 'data-testid': 'lightbox-name' });
   const meta = h('span', { class: 'lb-meta', 'data-testid': 'lightbox-meta' });
   const tile = h('span', { class: 'lb-tile', 'aria-hidden': 'true' });
-  const download = h('button', { class: 'btn lb-download', type: 'button', disabled: true, 'data-testid': 'lightbox-download',
-    onclick: () => shown && saveFile(shown.parts, shown.name) }, icon('download'), h('span', {}, t('drive.menu.download')));
+  const download = h('button', { class: 'btn lb-download', type: 'button', disabled: true, 'aria-label': t('drive.menu.download'), 'data-testid': 'lightbox-download',
+    onclick: () => shown && saveFile(shown.parts, shown.name) }, icon('download'), h('span', { class: 'lb-label' }, t('drive.menu.download')));
   const close = h('button', { class: 'btn lb-icon', type: 'button', 'data-variant': 'ghost', 'data-size': 'icon', 'data-close': '',
     'aria-label': t('drive.close'), 'data-testid': 'lightbox-close' }, icon('x'));
+  // Share: the secondary beside Download; on a phone its icon alone, its name kept for assistive technology.
+  const shareButton = share ? h('button', { class: 'btn lb-share', type: 'button', 'data-variant': 'secondary', 'aria-label': t('drive.share'), 'data-testid': 'lightbox-share',
+    onclick: (e) => share(files[index], e.currentTarget) }, icon('share-2'), h('span', { class: 'lb-label' }, t('drive.share'))) : null;
+  const pencil = rename ? h('button', { class: 'btn lb-icon lb-pencil', type: 'button', 'data-variant': 'ghost',
+    'aria-label': t('drive.menu.rename'), 'data-testid': 'lightbox-rename', onclick: () => edit() }, icon('pencil')) : null;
+  const title = h('div', { class: 'lb-title' }, name, meta);
+  const ask = h('div', { class: 'lb-ask lb-glass', hidden: true });   // a new extension's question, under the name
+  const chip = h('div', { class: 'lb-file lb-glass', 'data-rename': rename ? '' : null }, tile, title, pencil, rename ? ask : null);
   const warn = h('p', { class: 'lb-warn', hidden: true, 'data-testid': 'lightbox-program' }, icon('triangle-alert'), h('span', {}, t('fv.program')));
   const stage = h('div', { class: 'lb-stage', 'data-testid': 'lightbox-stage' });
   const step = (dir, key, testid) => h('button', { class: `btn lb-icon lb-step lb-${testid}`, type: 'button', 'data-variant': 'ghost', 'data-size': 'icon',
@@ -97,8 +111,8 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
   const said = h('span', { class: 'sr-only', 'aria-live': 'polite' });
   const box = h('div', { class: 'lightbox', id: 'lightbox', role: 'dialog', hidden: true, 'data-list': many ? 'many' : 'one', 'data-testid': 'lightbox' },
     h('div', { class: 'lb-top' },
-      h('div', { class: 'lb-file lb-glass' }, tile, h('div', { class: 'lb-title' }, name, meta)),
-      h('div', { class: 'lb-actions lb-glass' }, download, close)),
+      chip,
+      h('div', { class: 'lb-actions lb-glass' }, shareButton, download, close)),
     warn, stage,
     many ? h('div', { class: 'lb-nav lb-glass' }, step(-1, 'pv.prev', 'prev'), step(1, 'pv.next', 'next')) : null,
     said);
@@ -106,6 +120,95 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
   function leave() {
     shown?.revoke?.();
     shown = null;
+  }
+
+  // Renaming in place (ui/rename.js, as the menu's Rename does): the name becomes a field with the part before its
+  // extension selected; Enter or leaving the field saves, Esc puts the name back, and a new extension asks first, under
+  // the name. The save is the caller's; a failed one keeps the field and what was typed.
+  if (rename) name.addEventListener('click', () => edit());
+  const onEscape = (e) => {   // before the dialog's own Esc (which would close the preview): Esc steps out of the field
+    if (e.key !== 'Escape' || !editing || !chip.contains(e.target)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (ask.hidden) return stopEditing(true);
+    ask.hidden = true;
+    editing.input.focus();
+  };
+
+  function edit() {
+    if (!rename || editing) return;
+    const f = files[index];
+    const input = h('input', { class: 'lb-rename', type: 'text', value: f.editName ?? f.name, placeholder: f.name, maxlength: '255',
+      autocomplete: 'off', spellcheck: 'false', 'aria-label': t('drive.rename.label'), 'data-testid': 'lightbox-rename-input' });
+    editing = { f, input, saving: false };
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      commit(true);
+    });
+    input.addEventListener('input', () => { ask.hidden = true; });
+    input.addEventListener('blur', () => { if (editing?.input === input && ask.hidden) commit(false); });
+    addEventListener('keydown', onEscape, true);
+    chip.dataset.editing = '';
+    name.hidden = true;
+    if (pencil) pencil.hidden = true;
+    title.prepend(input);
+    selectName(input);
+  }
+
+  function stopEditing(refocus) {
+    if (!editing) return;
+    const { input } = editing;
+    editing = null;
+    removeEventListener('keydown', onEscape, true);
+    delete chip.dataset.editing;
+    ask.hidden = true;
+    ask.replaceChildren();
+    name.hidden = false;
+    if (pencil) pencil.hidden = false;
+    input.remove();
+    if (refocus && box.dataset.state === 'open') (pencil ?? name).focus({ preventScroll: true });
+  }
+
+  // Enter, or the field left: nothing typed (or the same name) puts the name back; a changed extension asks first.
+  function commit(refocus) {
+    const now = editing;
+    if (!now || now.saving) return;
+    const before = now.f.editName ?? now.f.name;
+    const value = now.input.value.trim();
+    if (!value || value === before) return stopEditing(refocus);
+    const change = extensionChange(before, value);
+    if (!change) return save(now, value, refocus);
+    ask.replaceChildren(extensionAsk(change, { use: () => save(now, value, true), keep: () => save(now, change.keep, true) }));
+    ask.hidden = false;
+    ask.querySelector('[data-testid="rename-ext-keep"]').focus();
+  }
+
+  async function save(now, value, refocus) {
+    if (editing !== now || now.saving) return;
+    const { f, input } = now;
+    now.saving = true;
+    input.readOnly = true;
+    ask.hidden = true;
+    chip.dataset.saving = '';
+    try {
+      const named = await rename(f, value);
+      f.name = named || value;
+      f.editName = value;
+      if (files[index] === f) {
+        name.textContent = f.name;
+        if (shown) shown.name = f.saveAs ?? f.name;
+      }
+      if (editing === now) stopEditing(refocus);
+    } catch {
+      if (editing !== now) return;
+      now.saving = false;
+      input.readOnly = false;
+      if (files[index] === f) input.focus();
+      else stopEditing(false);
+    } finally {
+      delete chip.dataset.saving;
+    }
   }
 
   function note(why, glyph = 'file') {
@@ -122,6 +225,7 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
 
   async function show(i) {
     const mine = ++seq;
+    stopEditing(false);   // moving on puts the name back (a save already under way still lands on its own file)
     leave();
     index = (i + files.length) % files.length;
     const f = files[index];
@@ -187,9 +291,12 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
     show(index + dir).then(() => { said.textContent = files[index].name; }, () => null);
   }
 
-  // Arrows move through the list (while this lightbox is the top layer and nothing has taken the key).
+  // Arrows move through the list (while this lightbox is the top layer and nothing has taken the key): not while a
+  // field has the caret (the name's, or one in the share dialog over it), not while a dialog sits on top.
   const onKey = (e) => {
     if (box.hidden || box.dataset.state !== 'open' || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target?.closest?.('input, textarea, select, [contenteditable]')) return;
+    if ([...document.querySelectorAll('[aria-modal="true"][data-state="open"]')].at(-1) !== box) return;
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       go(e.key === 'ArrowLeft' ? -1 : 1);
@@ -214,6 +321,7 @@ export async function openLightbox({ files, at = 0, read, problem = null, return
     returnFocus,
     onClose: () => {
       seq++;
+      stopEditing(false);
       leave();
       document.removeEventListener('keydown', onKey);
       const back = refocus?.(files[index]);
