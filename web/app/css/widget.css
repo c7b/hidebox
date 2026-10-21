@@ -43,12 +43,23 @@
 }
 .md-zone.md-drag { border-style: solid; border-color: var(--fg); background: var(--bg-sunken); }
 .md-idle { display: grid; justify-items: center; gap: var(--s-3); text-align: center; }
-.md-hint { font: var(--t-body); color: var(--fg-2); }
+/* Two buttons side by side: Choose a file and Write a secret, each with its sprite icon; stacked only when they can't fit. */
+.md-pick { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2) var(--s-3); }
+.md-pick > .a-btn { white-space: nowrap; }
+.md-glyph { width: 18px; height: 18px; flex: none; }
+.md-hint { font: var(--t-small); color: var(--fg-2); }
 .md-choose, .md-choose-alt { position: relative; }
 .md-choose:focus-within, .md-choose-alt:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
-/* The file input stays focusable for the keyboard where its label is the visible control. */
-.md-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
-@media (pointer: coarse) { .md-idle { width: 100%; } .md-choose { width: 100%; } }
+/* The file input stays focusable for the keyboard where its label is the visible control, and is never drawn:
+   no browser's own "No file chosen" (in any language) shows anywhere. */
+.md-file {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; opacity: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; font-size: 0;
+}
+@media (pointer: coarse) {
+  .md-idle, .md-pick { width: 100%; }
+  .md-pick > .a-btn { flex: 1 1 0; padding-inline: var(--s-3); }
+}
 
 .md-compose { width: 100%; display: grid; gap: var(--s-3); }
 .md-say { font: var(--t-say); text-wrap: balance; white-space: pre-line; }

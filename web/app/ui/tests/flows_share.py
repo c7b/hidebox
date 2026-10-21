@@ -432,7 +432,8 @@ def share_send_tari(t):
     t.check(not a.visible("send-safety") and a.attr("send-submit", "disabled") is not None, "a wrong address is explained and Send waits")
     a.fill("send-recipient", address)
     a.wait_for("send-safety", 60)
-    t.check(len(safety_emoji(a, "send-safety")) == 12 and "Compare all 12 with them." in a.text("share-step-tari"), "their safety code: twelve symbols to compare")
+    t.check(len(safety_emoji(a, "send-safety")) == 12 and "Compare all 12 with them, out loud or on a call." in a.text("share-step-tari")
+            and "Their drive ID" in a.text("share-step-tari"), "their drive ID: twelve symbols to compare")
     t.check(a.attr("send-path", "data-path") == "relay" and "Our relay sends it for you, so we learn the address, never the key." in a.text("send-path"),
             "the C8 line says who sends it")
     t.check("The fee is public." in a.text("share-step-tari"), "What the chain shows (C9-d)")
@@ -515,9 +516,9 @@ def received_list(t):
     b.wait_for("drop-create", 60)
     b.click("drop-create")
     b.wait_for("drop-link", 120)
-    t.check(re.fullmatch(re.escape(t.origin) + r"/d/[A-Za-z0-9_-]+", b.value("drop-link") or "") is not None, "Make my drop link: a link anyone can leave a file at")
+    t.check(re.fullmatch(re.escape(t.origin) + r"/d/[A-Za-z0-9_-]+", b.value("drop-link") or "") is not None, "Make my hidebox link: a link anyone can leave a file at")
     b.click("drop-copy")
-    t.check(b.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(b.value('drop-link'))})", 10), "Copy puts the drop link on the clipboard")
+    t.check(b.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(b.value('drop-link'))})", 10), "Copy puts the hidebox link on the clipboard")
     # A purchase this browser made (pay to open's buyer page keeps it on the device): listed with its price.
     b.eval("""(async () => {
       const { loadIdentity } = await import('/app/lib/identity.js');
@@ -537,8 +538,8 @@ def received_list(t):
     c.wait_for("drive-root", 90)
     c.goto(t.origin + "/drive/received")
     c.wait_for("received-offline", 120)
-    t.check("We can't reach the chain right now." in c.text("received-offline") and "Your drop link still works." in c.text("received-offline"),
-            "offline: the chain can't be reached, and the drop link still works")
+    t.check("We can't reach the chain right now." in c.text("received-offline") and "Your hidebox link still works." in c.text("received-offline"),
+            "offline: the chain can't be reached, and the hidebox link still works")
     t.check(no_hscroll(c), "no horizontal scroll in Received at 390")
     t.shot(c, "received-390-offline", full_page=True)
 

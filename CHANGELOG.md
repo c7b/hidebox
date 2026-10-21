@@ -1,6 +1,23 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- drop compact -->
+## 2026-10-21: a compact hidebox link page, one name for the 12 emoji
+
+- **The page of a hidebox link (`/d/…`) fits the first screen** at 1440 × 900 and on a 390 px phone: the head in one
+  row, then two buttons side by side, **Choose a file** and **Write a secret** (the sprite's file-up and pencil; the
+  browser's own file input is never drawn, so no "No file chosen" in any language), "Or drop a file here." with a
+  mouse, the limits, then **Whose drive is this?** and the fine print. The home's widget and the old app pages use
+  the same two buttons.
+- **The 12 emoji are the "drive ID" everywhere**: Settings' "Your drive ID" (its own row: "12 emoji only your drive
+  has. It's not a secret: share it, so people can check that a hidebox link or Tari address is yours."), the link's
+  page ("Drive ID", "Ask the owner for their drive ID. If all 12 match, it's theirs."), the send step and the share
+  dialog ("Their drive ID", "Compare all 12 with them, out loud or on a call."), screen readers ("Drive ID …") and
+  `/made`. The key file's "Safety code:" line stays, as the format's vectors pin it.
+- **"drop link" is now "hidebox link"** in the app, Received ("…or left at your hidebox link."), `/made`, `/fine-print`
+  and SECURITY.md; URLs stay `/d/…`. `tools/check-copy.py` retires "drop link" and "safety code" in copy.
+<!-- /drop compact -->
+
 <!-- packs small -->
 ## 2026-10-21: smaller space packs
 

@@ -9,11 +9,11 @@ can be worth, not how seriously it is read.
 
 Please tell us privately before you tell anyone else.
 
-1. **Our drop link** (the channel [`/.well-known/security.txt`](https://hidebox.app/.well-known/security.txt)
-   names, RFC 9116): open the drop link it lists and leave a file or a note. Your browser encrypts it
+1. **Our hidebox link** (the channel [`/.well-known/security.txt`](https://hidebox.app/.well-known/security.txt)
+   names, RFC 9116): open the hidebox link it lists and leave a file or a note. Your browser encrypts it
    before upload and its key travels to our drive inside a stealth payment on the Ootle, so the
    report is readable by us alone, and nothing on our server or on the chain says who left it. A
-   drop takes a fixed number of files a day (`DROP_FILES_PER_DAY` in `server/mutis/handlers/uploads.py`);
+   hidebox link takes a fixed number of files a day (`DROP_FILES_PER_DAY` in `server/mutis/handlers/uploads.py`);
    if it answers "took all it can today", try again after midnight UTC, or use the next channel.
 2. **A GitHub private security advisory** on `c7b/hidebox`:
    [Report a vulnerability](https://github.com/c7b/hidebox/security/advisories/new) (*Security →
@@ -29,7 +29,7 @@ against production, since the limits are documented and can be read in the sourc
 ## What to expect
 
 - An acknowledgement within 3 days, by the channel you used (leave a way to reach you in the report
-  if you want one: a drop link of your own, a Tari address, an email).
+  if you want one: a hidebox link of your own, a Tari address, an email).
 - A fix or a documented decision within 14 days for anything that affects a visitor's files, keys,
   identity or IP address; longer for availability findings, which are weighed against the published
   limits.
@@ -60,6 +60,6 @@ against the live site, their findings and what each one changed are in
 No key material is committed: the owner's drive key, judge passes, the server's `secret.key`, the
 wallet's keyring password and the sidecar's keys live only on the server or on the owner's machine,
 and the lint refuses any public IP address but the server's own. If you believe a secret has reached
-this repository or the site, that is the most urgent report there is; use the drop link.
+this repository or the site, that is the most urgent report there is; use the hidebox link.
 
 The short tour of the project is the [README](README.md); the long docs start at [docs/README.md](docs/README.md).

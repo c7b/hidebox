@@ -640,14 +640,29 @@ def deaddrop(t):
     b = t.actor()
     b.goto(drop)
     t.check(b.wait_state("dd-root", ("ready", "closed", "not-found", "error"), 60) == "ready", "the drop page is ready")
-    t.check(safety_emoji(b, "dd-safety") == safety, "it shows the owner's 12-emoji safety code")
+    t.check(safety_emoji(b, "dd-safety") == safety, "it shows the owner's drive ID, the same 12 emoji as their Settings")
+    t.check("Whose drive is this?" in b.text("dd-root") and b.attr("dd-safety", "aria-label").startswith("Drive ID "),
+            "the drive ID, by that name (Whose drive is this?; the grid is named Drive ID for screen readers)")
     t.check(b.eval("document.querySelector('[data-testid=\"dd-label\"] bdi')?.textContent") == "Council",
             "the drop's label, isolated in a <bdi> inside the quotes")
-    t.check("We don't check it" in b.text("dd-root"), "the page says the link's maker wrote the label and we don't check it")
+    t.check("The server doesn't check it" in b.text("dd-root"), "the page says the link's owner wrote the label and the server doesn't check it")
     report = b.attr("dd-report", "href") or ""
     t.check(b.eval("!!document.querySelector('main [data-testid=\"dd-report\"]')") and report.startswith("/fine-print#link=")
-            and urllib.parse.unquote(report) == f"/fine-print#link={drop}", f"a Report this drop link in the page, filled in ({report[:60]})")
+            and urllib.parse.unquote(report) == f"/fine-print#link={drop}", f"a Report this link in the page, filled in ({report[:60]})")
     t.shot(b, "drop-1440-ready")
+    # Compact (the owner's "I have to scroll just to find stuff"): Choose a file and Write a secret, side by side,
+    # in the first screen on a computer and on a phone; the native input is never drawn.
+    zone = """(() => { const p = document.querySelector('.md-pick').getBoundingClientRect(); const i = document.querySelector('[data-testid="dd-input"]').getBoundingClientRect();
+      const [c, w] = document.querySelectorAll('.md-pick > .a-btn');
+      return [c.textContent.trim(), w.textContent.trim(), Math.round(c.getBoundingClientRect().top) === Math.round(w.getBoundingClientRect().top),
+              p.bottom <= innerHeight, i.width <= 1 && i.height <= 1]; })()"""
+    t.check(b.eval(zone) == ["Choose a file", "Write a secret", True, True, True], f"1440: the two buttons side by side, above the fold ({b.eval(zone)})")
+    ph = t.actor("iphone")
+    ph.goto(drop)
+    t.check(ph.wait_state("dd-root", ("ready", "closed", "not-found", "error"), 60) == "ready", "the drop page is ready on a phone")
+    t.check(ph.eval(zone) == ["Choose a file", "Write a secret", True, True, True] and no_hscroll(ph),
+            f"390: the two buttons side by side, above the fold, no horizontal scroll ({ph.eval(zone)})")
+    t.shot(ph, "drop-390-ready")
     b.set_files("dd-input", [t.fixture("setup.exe")])
     b.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'program_drop'", 30)
     t.check(not [r for r in b.requests if r["url"].endswith("/api/v1/uploads")], "a program can't be left in a drop; nothing was uploaded")
@@ -939,7 +954,7 @@ def keyboard(t):
     a = t.actor()
     home(t, a)
     t.check(not a.ax_unnamed(), f"home: every control has an accessible name ({a.ax_unnamed()[:5]})")
-    t.check(a.tab_to("a.dataset.testid === 'drop-write'"), "Tab reaches 'or paste text'")
+    t.check(a.tab_to("a.dataset.testid === 'drop-write'"), "Tab reaches Write a secret")
     a.key("Enter", text="\r")
     a.wait_for("drop-textarea")
     a.type_text("typed with the keyboard")
@@ -980,7 +995,7 @@ def keyboard(t):
     s.goto(drop)
     s.wait_state("dd-root", ("ready",), 60)
     t.check(not s.ax_unnamed(), f"the drop page: every control named ({s.ax_unnamed()[:5]})")
-    t.check(s.tab_to("a.dataset.testid === 'drop-write'"), "Tab reaches 'or paste text' on the drop page")
+    t.check(s.tab_to("a.dataset.testid === 'drop-write'"), "Tab reaches Write a secret on the drop page")
     s.key("Enter", text="\r")
     s.wait_for("drop-textarea")
     s.type_text("left with the keyboard")

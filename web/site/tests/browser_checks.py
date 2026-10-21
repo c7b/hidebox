@@ -422,10 +422,15 @@ def check_interactions(browser):
     home's widget opens the note and comes back from it."""
     problems = []
     with server() as origin:
-        # The drive's home (16-drive-design §11): the anonymous widget sits in its card; Or write one opens
+        # The drive's home (16-drive-design §11): the anonymous widget sits in its card; Write a secret opens
         # the note and Cancel brings the zone back (the drop itself is the app's UI flow home-text).
         page = browser.page()
         page.goto(origin + "/", settle=1.5)
+        zone = page.eval("""(() => { const z = document.querySelector('.md-zone'); const r = z.querySelector('input[type=file]').getBoundingClientRect();
+          return [[...z.querySelectorAll('.md-pick > .a-btn')].map((b) => b.textContent.trim()),
+                  [...z.querySelectorAll('.md-pick use')].map((u) => u.getAttribute('href').split('#')[1]), r.width <= 1 && r.height <= 1]; })()""")
+        if zone != [["Choose a file", "Write a secret"], ["i-file-up", "i-pencil"], True]:
+            problems.append(f"the home's widget: two buttons, Choose a file and Write a secret, with the sprite's icons, the file input never drawn ({zone})")
         page.eval("document.querySelector('[data-testid=\"drop-write\"]').click()")
         page.b.pump(0.3)
         wrote = page.eval("document.activeElement?.dataset?.testid")
@@ -433,7 +438,7 @@ def check_interactions(browser):
         page.b.pump(0.3)
         back = page.eval("!!document.querySelector('[data-testid=\"drop-write\"]')")
         if (wrote, back) != ("drop-textarea", True):
-            problems.append(f"the home's widget: Or write one focuses the note ({wrote}); Cancel brings the zone back ({back})")
+            problems.append(f"the home's widget: Write a secret focuses the note ({wrote}); Cancel brings the zone back ({back})")
         page = browser.page()
         page.goto(origin + "/how")
         switch = "document.querySelector('[data-theme-toggle]')"

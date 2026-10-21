@@ -69,7 +69,7 @@ Your browser encrypts each file with AES-256-GCM before upload. We store ciphert
 
 ## Your key is the account
 No email, no password. Your key is the account. Keep it like a house key: lose it and nobody, including us, can let you back in.
-We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.
+We store a random id and a hash of your login key. No email and no public key; a {{BRAND}} link stores its own address, by design.
 Make my drive makes the key in this browser at once. Save it as a key file, locked with a passphrase if you like, and Open my drive takes it back on any device. Your drive's Tari keys come from the same key, the first time a Tari feature needs them.
 
 ## The locks
@@ -88,7 +88,7 @@ Everything that touches a file or a key runs in your browser, with your browser'
 - Passwords: PBKDF2-SHA256, combined with the link's secret by default (link + password), so a copy of our database isn't enough to guess it.
 - Your drive: one 32-byte seed made in your browser, kept in its storage, and backed up as your key file (locked with a passphrase if you choose) or written down. Everything else is derived from it: the login key (we store its SHA-256), the drive's Tari keys (made only when a Tari feature first needs them), a separate wallet key, and the dead-drop tags. There is no email and no password with us.
 - Folders: every folder has its own random key. A file's key is wrapped under its folder's key, and a folder's under its parent's, up to your drive's root key. A folder link carries one folder key, so it opens what is below that folder and nothing above it.
-- Safety code: 12 emoji (96 bits) derived from a Tari address's public keys, so two people can compare an address out loud.
+- Drive ID: 12 emoji (96 bits) derived from a Tari address's public keys, so two people can compare an address out loud. Settings shows yours; the page of a {{BRAND}} link shows its owner's.
 - Proof of work: SHA-256 with a number of leading zero bits, instead of a captcha. Your browser solves it in a background worker.
 - Photos: location and camera data are removed from JPEG, PNG and WebP files before encryption, unless you choose to keep the original.
 
@@ -170,11 +170,11 @@ Every party, fact by fact
 
 ### Our server, in detail
 - Sees and stores
-Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking drive id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; drop links: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
+Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; {{BRAND}} links: each one's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).
 - Sees, never stores
 Every uploader's and every opener's IP address, live (so at the moment it happens we could link who uploaded a link with who opened it); the login key at sign-in; access tokens (hashed on arrival); which drop a file was left in, and the submitter's IP; the destination Tari address of every send, the sealed 125-byte blob, which drive sent it, and by timing which link it carries, kept in the job until sent and then scrubbed.
 - Never sees
-File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your drive's Tari address, unless you make a drop or a relay send goes to it; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (a link is the only way a file leaves your drive, and we never learn who holds it).
+File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your drive's Tari address, unless you make a {{BRAND}} link or a relay send goes to it; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (a link is the only way a file leaves your drive, and we never learn who holds it).
 
 ### Everyone else
 - A network observer
@@ -235,7 +235,7 @@ Check: our wallet sees it and a Tari-run public indexer confirms it exists on th
 ### Keys, not accounts
 - Your drive
 No email, no password: a key that lives in your browser, and its Tari address.
-We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.
+We store a random id and a hash of your login key. No email and no public key; a {{BRAND}} link stores its own address, by design.
 Why not an escrow template? On the Ootle, TARI held by a template reveals its amount. Native stealth outputs keep it hidden, so that's what we use.
 
 ### How payments are checked
@@ -342,7 +342,7 @@ This is the complete list, from our schema. Each link also has a “What we know
 | tickets | A download in progress: the SHA-256 of its token, the link and file, a byte cap. | Until the download ends.
 | identities | One row per drive: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; which pack it holds, when that ends, and whether a judge pass bought it; today's send count. | Until you delete your drive.
 | sessions | The SHA-256 of a sign-in token, its drive, when it was made and expires, the last day it was used. | Until it expires.
-| drops | One row per drop link: its id; its Tari address and tag (public by design); its label; a hash of its manage token; its state; the day it opened and closed; today's file and byte counts. | While it's open, then after you close it or it's removed.
+| drops | One row per {{BRAND}} link: its id; its Tari address and tag (public by design); its label; a hash of its manage token; its state; the day it opened and closed; today's file and byte counts. | While it's open, then after you close it or it's removed.
 | jobs | Deliveries and payments waiting to go out on the Ootle. While a relay send waits, it holds the destination address and the sealed 125-byte blob. | The address and blob are erased once it's sent; the job is deleted a day after it ends. Our own test jobs are kept as evidence.
 | invoices | For rented space: the pack, its price, our receiving address with the invoice's reference inside it, status, amount received, times, the drive it's for, and whether a judge pass made it. | For our books.
 | payments | Each chain output that paid an invoice: its id, the invoice, its value, when we saw it, and the results of our checks. | For our books.
@@ -398,7 +398,7 @@ Plain English, for a service on the Tari™ Ootle testnet. Last changed in Octob
 You may use {{BRAND}} to share files and notes you have the right to share. You may not use it to:
 - share child sexual abuse material, in any form. We remove it and report it to the authorities;
 - spread malware, or host pages or files meant to steal passwords, money or identities;
-- harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or drop link;
+- harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or {{BRAND}} link;
 - share anything illegal where you or the recipient are, or anything that infringes someone else's rights;
 - attack {{BRAND}}, its users or the Tari testnet, or get around our limits with many networks, drives or scripts.
 We can't see inside files, so we rely on reports. Anyone can report a link.

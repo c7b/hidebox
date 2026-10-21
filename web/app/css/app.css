@@ -167,10 +167,25 @@ button.a-filecard:active { translate: 0 0.5px; }
 .a-pw-form .a-btn { justify-self: start; }
 .a-view .a-pw-form .a-btn { justify-self: center; }
 
-/* --- /d/<id>: the open bag -------------------------------------------------------------------- */
-.a-droppage { display: grid; gap: var(--s-5); width: 100%; max-width: 720px; justify-self: center; }
+/* --- /d/<id>: the open bag, one compact column (the head in a row, the two buttons, whose drive, the fine print) -- */
+.a-droppage { display: grid; gap: var(--s-4); width: 100%; max-width: 720px; justify-self: center; }
 .a-droppage .md-root { margin-inline: 0; }
-.a-dd-safety { display: grid; gap: var(--s-2); justify-items: start; padding: var(--s-4) var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.a-droppage > .a-scene--row .a-figure { align-self: start; margin-top: 2px; }   /* beside the title, however long the sentence */
+.a-droppage .a-dd-leave { gap: var(--s-2); }
+.a-droppage .md-zone { padding: var(--s-5) var(--s-4); }
+.a-dd-limits { padding-inline: var(--s-1); }
+/* Whose drive is this? Its drive ID: the 12 emoji in Settings' 6 × 2 grid, under the same name. */
+.a-dd-id { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-5) var(--s-4); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
+.a-dd-id-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s-4); }
+.a-dd-id-h { font: var(--t-ui); font-weight: 600; }
+.a-dd-id-top > .a-more { font: var(--t-small); }
+.a-dd-id-body { display: grid; gap: var(--s-3); align-items: center; }
+.a-dd-id-code { display: grid; gap: var(--s-1); min-width: 0; }
+.a-dd-id-label { font: var(--t-small); font-weight: 600; color: var(--fg-2); }
+.a-page .a-dd-id .a-safety { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; max-width: 20rem; font-size: 20px; line-height: 1.2; }
+.a-dd-id .a-safety > span { padding: 6px 0; border-radius: var(--r-input); background: color-mix(in srgb, var(--fg) 6%, transparent); }   /* a tile in both themes */
+.a-dd-id-say { display: grid; gap: var(--s-1); min-width: 0; }
+@media (min-width: 640px) { .a-dd-id-body { grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); column-gap: var(--s-5); } }
 /* ux-feedback-1: the run (ui/progress.js's steps) and the done moment, each on one card in the column */
 .a-dd-run { display: grid; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-panel); background: var(--bg-raised); box-shadow: var(--shadow); }
 .a-dd-run > .a-linkbtn { justify-self: start; min-height: 32px; }
@@ -182,8 +197,9 @@ button.a-filecard:active { translate: 0 0.5px; }
 /* the photo's chip: the words wrap beside the tick on a phone, Keep the photo as it was goes under them */
 :is(.a-dd-run, .done) .md-chip { border-radius: var(--r-input); }
 :is(.a-dd-run, .done) .md-chip > span { flex: 1 1 14ch; min-width: 0; }
-.a-droppage > .done .a-dd-foot { justify-self: stretch; margin-top: var(--s-3); text-align: left; max-width: none; }
-.a-dd-foot { padding-top: var(--s-3); border-top: 1px solid var(--hair); }
+.a-droppage > .done .a-dd-foot { justify-self: stretch; margin-top: var(--s-3); text-align: left; }
+.a-dd-foot { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 1px solid var(--hair); }
+.a-dd-foot > .a-caption { max-width: none; }
 .a-droppage > .a-btn, .a-droppage > .a-more { justify-self: center; }
 
 /* --- /inbox, /send, /watch, /upgrade, /verify: the ghost's head over one centred column --------- */

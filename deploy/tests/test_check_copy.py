@@ -46,6 +46,12 @@ class CheckCopyTest(unittest.TestCase):
         fails, _ = check_copy.banned_words(self.root)
         self.assertEqual(len(fails), 2)
 
+    def test_drop_link_and_safety_code_are_retired(self):
+        """The link anyone leaves a file at is a hidebox link; its owner's 12 emoji are the drive ID."""
+        self.page("<p>Share your drop link. Two drop links. Check the safety code.</p><p>Your hidebox link. Your drive ID.</p>")
+        fails, _ = check_copy.banned_words(self.root)
+        self.assertEqual(sorted(f.split("'")[1].lower() for f in fails), ["drop link", "drop links", "safety code"])
+
     def test_the_ghost_is_retired_and_gone_forever_stays_banned(self):
         """The ghost, the locker and goodbye are retired words in copy (not in the docs)."""
         self.page("<p>Give the ghost a secret. A ghostly wave. Two ghosts.</p><p>It vanished. Gone forever.</p>")
@@ -93,7 +99,7 @@ class CheckCopyTest(unittest.TestCase):
     def test_public_keys_are_never_stored(self):
         reg = self.registry()
         self.assertEqual(len(check_copy.claim_problems("p", "We store a random id and public keys.", reg, page=True)), 1)
-        for fine in ("We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design.",
+        for fine in ("We store a random id and a hash of your login key. No email and no public key; a {{BRAND}} link stores its own address, by design.",
                      "Your fingerprint is 12 emoji (96 bits) from your public keys.", "No public keys are stored for logins."):
             with self.subTest(fine):
                 self.assertEqual(check_copy.claim_problems("p", fine, reg, page=True), [])

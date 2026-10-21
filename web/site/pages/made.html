@@ -76,7 +76,7 @@
     <section id="key" aria-labelledby="key-h">
       <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg></span><h2 id="key-h">Your key is the account</h2></div>
       <p>No email, no password. <br>Your key is the account. <br>Keep it like a house key: lose it and nobody, including us, can let you back in.</p>
-      <p>We store a random id and a hash of your login key. <br>No email and no public key; a drop link stores its own address, by design.</p>
+      <p>We store a random id and a hash of your login key. <br>No email and no public key; a {{BRAND}} link stores its own address, by design.</p>
       <p><b class="ui">Make my drive</b> makes the key in this browser at once. <br>Save it as a key file, locked with a passphrase if you like, and <b class="ui">Open my drive</b> takes it back on any device. <br>Your drive's Tari keys come from the same key, the first time a Tari feature needs them.</p>
     </section>
 
@@ -103,7 +103,7 @@
     <li><strong>Passwords:</strong> PBKDF2-SHA256<span data-needs="config" hidden>, <span data-v="pbkdf2_iter"></span> rounds</span>, combined with the link's secret by default (link + password), so a copy of our database isn't enough to guess it.</li>
     <li><strong>Your drive:</strong> one 32-byte seed made in your browser, kept in its storage, and backed up as your key file (locked with a passphrase if you choose) or written down. <br>Everything else is derived from it: the login key (we store its SHA-256), the drive's Tari keys (made only when a Tari feature first needs them), a separate wallet key, and the dead-drop tags. <br>There is no email and no password with us.</li>
     <li><strong>Folders:</strong> every folder has its own random key. <br>A file's key is wrapped under its folder's key, and a folder's under its parent's, up to your drive's root key. <br>A folder link carries one folder key, so it opens what is below that folder and nothing above it.</li>
-    <li><strong>Safety code:</strong> 12 emoji (96 bits) derived from a Tari address's public keys, so two people can compare an address out loud.</li>
+    <li><strong>Drive ID:</strong> 12 emoji (96 bits) derived from a Tari address's public keys, so two people can compare an address out loud. <br>Settings shows yours; the page of a {{BRAND}} link shows its owner's.</li>
     <li><strong>Proof of work:</strong> SHA-256 with a number of leading zero bits, instead of a captcha. <br>Your browser solves it in a background worker.</li>
     <li><strong>Photos:</strong> location and camera data are removed from JPEG, PNG and WebP files before encryption, unless you choose to keep the original.</li>
   </ul>
@@ -219,11 +219,11 @@
           <h3>Our server, in detail</h3>
             <dl class="detail">
     <dt>Sees and stores</dt>
-    <dd>Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking drive id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; drop links: the drop's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).</dd>
+    <dd>Ciphertext and its padded size; the hour an item arrived and when it left; expiry and view counts, and the time of a link's first open (shown only to its owner); the exit rule (link or password); for drives: a random-looking id, a hash of its login key, the first and last active day, how many distinct days it was active, quota and packs bought; for folders: which items share a folder and how many levels down it sits, never a name; per link, how many times it opened in each hour; whether a file is in the trash, and when it is set to leave; invoices (pack, amount, status) and the chain outputs that paid them; {{BRAND}} links: each one's Tari address, its label, its tag and daily counters; abuse reports; notes about ended links (state and day).</dd>
     <dt>Sees, never stores</dt>
     <dd>Every uploader's and every opener's IP address, live (so at the moment it happens we could link who uploaded a link with who opened it); the login key at sign-in; access tokens (hashed on arrival); which drop a file was left in, and the submitter's IP<span data-when="send_mode=relay">; the destination Tari address of every send, the sealed 125-byte blob, which drive sent it, and by timing which link it carries, kept in the job until sent and then scrubbed</span><span data-when="send_mode=direct" hidden>; that your drive submitted a transaction, not to whom; for dead-drop deliveries, the drop's address while the delivery is sent</span>.</dd>
     <dt>Never sees</dt>
-    <dd>File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your drive's Tari address, unless you make a drop or a relay send goes to it<span data-when="send_mode=direct" hidden>; who you send a file to, when your browser's wallet sends it (until its grant arrives, our relay sends it and learns the address while it's sent)</span>; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (a link is the only way a file leaves your drive, and we never learn who holds it).</dd>
+    <dd>File names, types, contents and real sizes; file keys, link secrets, passwords, seeds or any private key; your drive's Tari address, unless you make a {{BRAND}} link or a relay send goes to it<span data-when="send_mode=direct" hidden>; who you send a file to, when your browser's wallet sends it (until its grant arrives, our relay sends it and learns the address while it's sent)</span>; which chain outputs your browser can open (everyone downloads the same copy of the chain); who shares with whom (a link is the only way a file leaves your drive, and we never learn who holds it).</dd>
   </dl>
           <h3>Everyone else</h3>
             <dl class="detail">
@@ -258,7 +258,7 @@
 </div>
       <p data-needs="config" hidden><strong>The largest file</strong> also has to fit in the drive: even with more space, a <span data-v="paid_max_file"></span> file needs that much room in its free share today plus its pack.</p>
       <p data-needs="config" hidden><strong>A drive's first day</strong> is smaller, so a burst of new drives can't take the disk (and new uploads pause before it fills): files up to <span data-v="probation_max_file"></span>, <span data-v="probation_quota"></span> in total, links up to <span data-v="probation_max_expiry"></span>, <span data-v="probation_sends"></span> sends to a Tari address. <br>From its second active day, the free share applies.</p>
-      <p data-needs="config" hidden><strong>Files left in a drop link</strong> can be up to <span data-v="drop_max_file"></span> and open up to <span data-v="drop_views"></span> times within <span data-v="drop_expiry"></span>.</p>
+      <p data-needs="config" hidden><strong>Files left at a {{BRAND}} link</strong> can be up to <span data-v="drop_max_file"></span> and open up to <span data-v="drop_views"></span> times within <span data-v="drop_expiry"></span>.</p>
       <div class="boxes">
       <details class="more-box">
         <summary><h3 id="free">Free space, and when files go</h3></summary>
@@ -355,7 +355,7 @@
         <div class="band">
           <h3><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg>Keys, not accounts</h3>
           <dl>
-            <div><dt>Your drive</dt><dd>No email, no password: a key that lives in your browser, and its Tari address.</dd><dd class="proof-line">We store a random id and a hash of your login key. <br>No email and no public key; a drop link stores its own address, by design.</dd></div>
+            <div><dt>Your drive</dt><dd>No email, no password: a key that lives in your browser, and its Tari address.</dd><dd class="proof-line">We store a random id and a hash of your login key. <br>No email and no public key; a {{BRAND}} link stores its own address, by design.</dd></div>
           </dl>
         </div>
       </div>
@@ -455,7 +455,7 @@
         <div class="prose">
           <p>Please tell us privately before you tell anyone else. <br>We'll answer, fix what's real, and credit you if you want.</p>
   <ul class="link-list">
-    <li data-when="security_drop=on" hidden><a class="more" data-href="security_drop" href="/fine-print#report">Leave us a file through our own drop link<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></li>
+    <li data-when="security_drop=on" hidden><a class="more" data-href="security_drop" href="/fine-print#report">Leave us a file at our own {{BRAND}} link<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></li>
     <li><a class="more" href="{{REPO_URL}}/security/advisories/new">Open a private security advisory on GitHub<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a></li>
     <li><a class="more" href="/fine-print#report">Report a link that hosts something harmful<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-arrow-right"/></svg></a></li>
   </ul>

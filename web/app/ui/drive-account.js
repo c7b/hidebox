@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // The account menu (16-drive-design §2 "Drive anatomy"): Copy my Tari address, Save my key, Settings
-// (key, Tari address with its code and safety code, view key, delete my drive) and Lock my drive. The
+// (key, Tari address with its code, drive ID, view key, delete my drive) and Lock my drive. The
 // key file is locked with a passphrase unless the owner unticks it (P-15); saving it is the only way
 // back in (C17-k). Loaded the first time one of these is asked for.
 import { hex } from '../lib/b64.js';
@@ -100,10 +100,11 @@ function settingRow(glyph, title, desc, ...actions) {
     h('div', { class: 'choice-body' }, h('span', { class: 'choice-title' }, title), desc ? h('span', { class: 'choice-desc' }, desc) : null, ...actions));
 }
 
-// Settings: the key, the drive's Tari address (with the code a phone scans, and the safety code), the view
-// key (C15), and deleting the drive.
+// Settings: the key, the drive's Tari address (with the code a phone scans), its drive ID (the 12 emoji the drop
+// page shows under the same name), the view key (C15), and deleting the drive.
 export async function openSettings(drive) {
   const addressSlot = h('div', { class: 'stack' }, h('p', { class: 'small muted' }, t('drive.acct.loading')));
+  const idSlot = h('div', { class: 'stack' }, h('p', { class: 'small muted' }, t('drive.acct.loading')));
   const viewSlot = h('div', { class: 'stack' });
   const showView = button(t('drive.set.view_show'), { variant: 'outline', size: 'sm', testid: 'export-view-key', 'aria-expanded': 'false' });
   showView.addEventListener('click', async () => {
@@ -125,6 +126,7 @@ export async function openSettings(drive) {
       settingRow('key-round', t('drive.set.key'), t('drive.set.key_d'),
         h('div', { class: 'row wrap' }, button(t('drive.make.file'), { size: 'sm', glyph: 'download', onclick: () => { closeModal('settings'); setTimeout(() => openKeyDialog(drive), 160); } }))),
       settingRow('wallet', t('drive.make.address'), t('drive.make.address_hint'), addressSlot),
+      settingRow('shield-check', t('drive.set.safety'), null, idSlot),
       settingRow('eye', t('drive.set.view'), t('drive.set.view_d'), h('div', { class: 'row' }, showView), viewSlot),
       settingRow('trash', t('drive.set.delete'), t('drive.set.delete_d'),
         h('div', { class: 'row' }, button(t('drive.set.delete'), { variant: 'destructive', size: 'sm', testid: 'delete-locker', onclick: () => deleteDialog(drive) }))))],
@@ -139,12 +141,13 @@ export async function openSettings(drive) {
     addressSlot.replaceChildren(
       h('p', { class: 'mono small address-full', 'data-testid': 'locker-address' }, identity.locker.address),
       h('div', { class: 'row' }, copy),
-      h('div', { class: 'qr-wrap' }, qrFigure(`${cfg.origin}/#to=${identity.locker.address}`, { label: t('drive.set.qr_label'), caption: t('drive.set.qr'), testid: 'locker-qr' })),
-      h('p', { class: 'label' }, t('drive.set.safety')),
+      h('div', { class: 'qr-wrap' }, qrFigure(`${cfg.origin}/#to=${identity.locker.address}`, { label: t('drive.set.qr_label'), caption: t('drive.set.qr'), testid: 'locker-qr' })));
+    idSlot.replaceChildren(
       safetyGrid(identity.safetyCode, 'locker-safety'),
       h('p', { class: 'small muted' }, t('drive.set.safety_d', { count: identity.safetyCode.emoji.length })));
   } catch (e) {
     addressSlot.replaceChildren(errorAlert(e));
+    idSlot.replaceChildren();
   }
   return box;
 }
