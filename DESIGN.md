@@ -57,6 +57,8 @@ colors:
   brand-border-dark: "oklch(0.381 0.08 126)"
   brand-tile-dark: "oklch(0.3 0.061 126.2)"
   brand-field-dark: "oklch(0.75 0.18 125.9)"
+  hero-dim: "#737373"                       # the home hero's third line (tagline-2): dimmer than fg-2, 4.74:1 on white
+  hero-dim-dark: "#858585"                  # 5.37:1 on #0A0A0A
 typography:
   display:
     fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif"
@@ -301,10 +303,14 @@ check-copy); the app's `ui/lines.js` does it for `<p>`, `<dd>` and the alert and
 drop widget breaks its two card sentences with a newline under `white-space: pre-line` (A-06 unchanged).
 Headings and the status pill stay one line. One exception, the owner's (owner-5): `/verify/tx`'s two facts (what it
 proves, with its link to Tari's own indexer, and what stays hidden) each read as one line.
-**The Say It Once Rule (copy-1, the owner's).** hidebox has eight key statements. Each is said once per page, in its
-best place and in its registered words (`tools/claim-registry.json`); anywhere else on that page it is a short answer
-(a comparison cell: "In your browser.") or a link to where it is said, never the sentence again:
-1. The lock: "Files lock in your browser first." (the home's headline; C32 "Files lock in this browser before upload." elsewhere).
+**The Say It Once Rule (copy-1, the owner's).** hidebox has a tagline and eight key statements. The tagline (tagline-2,
+the owner's words) is "Store, send, and sell files privately." (C58) under the headline "Your private cloud storage.",
+then "Built on Tari. No KYC. No email." (C59). The home's hero says it once; no other page shows it. The share cards,
+the metas, the manifest, the README and the film's end card carry it as the home's words. Each key statement is said
+once per page, in its best place and in its registered words (`tools/claim-registry.json`); anywhere else on that page
+it is a short answer (a comparison cell: "In your browser.") or a link to where it is said, never the sentence again:
+1. The lock: "Files lock in your browser first." (C32; "Files lock in this browser before upload." in the app). A fact
+   for explanatory copy (the README, the home's description), not the tagline.
 2. The server: "Our server gets scrambled noise. Never the key." (C1-n)
 3. The names: "Search runs in this browser. Our server can't read your file names." (C43)
 4. The exit rules: "Each file or folder gets its own rule. You can stop a link any time."
@@ -314,8 +320,9 @@ best place and in its registered words (`tools/claim-registry.json`); anywhere e
 7. The account: "No email, no password. Your key is the account."
 8. Losing the key: "Save your key. If this browser forgets it, nobody can let you back in, not even us." (C17-k)
 
-On the home: 1 in the hero, 7 under Open your drive, 4 in Share it your way, 2, 3 and 8 in the comparison, 5 and 6 in
-Tari does the private parts. The testnet line is the footer's, on every page; no block repeats it. /judges' What to
+On the home: the tagline in the hero, where "No KYC. No email." is 7's short answer; 1 as the comparison's short answer
+("In your browser."); 4 in Share it your way, 2, 3 and 8 in the comparison, 5 and 6 in Tari does the private parts.
+The testnet line is the footer's, on every page; no block repeats it. /judges' What to
 check table is the one place a page lists the claims, word for word with where each shows; its steps say what the
 app shows at that step. Pictures of the app (/how's stills) show the app's own words.
 **The One Breath Rule.** Product strings read at Flesch-Kincaid grade 5 or lower (measured with
@@ -345,9 +352,12 @@ app shows at that step. Pictures of the app (/how's stills) show the app's own w
   files rising out of it, `web/site/media/v3/hero-*`) right on a computer and under the words on a phone; on the void in
   dark, on v3's gunmetal card through `lighten` in light.
 - **Home (the v3 design since the twelfth pass, docs/review/promote-v3.md; its words from site v4):** dark first.
-  The hero's words on the left (the headline "Your private cloud storage." with "Files lock in your browser first."
-  below it in grey, on one line at 390 px and 1440 px; the 56px lime Open your drive, the site's one action)
-  and its still on the right: the open box with the files rising out of it in its light. Under them the slice of a
+  The hero's words on the left, three lines and the button (tagline-2: the headline "Your private cloud storage.";
+  under it in the h1, in grey, "Store, send, and sell files privately." (`.h1-2`, half the headline's size, balanced if
+  it wraps); then "Built on Tari™. No KYC. No email." smaller and dimmer (`.hero-line`, 500, 15 to 18px, `--hero-dim`:
+  #737373 on white at 4.74:1, #858585 on the ink at 5.37:1, `--fg-2` with more contrast); the 56px lime Open your drive,
+  the site's one action, with nothing under it), and its still on the right: the open box with the files rising out
+  of it in its light. Under them the slice of a
   drive hanging 56px into Just share one thing (its words decode from hex noise as it comes into view), then Share it
   your way (the rules grouped, the share window as the picture, tilted, with a line under it), What's different from
   a usual drive? (its still beside the question, hidebox beside one popular cloud drive under them), Who sees what
