@@ -1,0 +1,11 @@
+$ python3 -I tools/build.py --out <scratch>/dist
+build: OK {"br": 288, "brotli": "node v26.7.0, brotli 1.2.0", "content_id": "99040879", "files": 374, "fingerprinted": 170, "git_sha": "f5d2ffa024ee52e9d0bc908ef6a94a94fa2e4ac3", "gzip": 288, "holding": false, "origin": "<default>", "pages": 6, "vendored_checked": 6, "version": "spooky-secrets-2026-10-3-gf5d2ffa"}
+
+$ python3 -I tools/lint.py
+lint: PASS (0 problems)
+
+$ python3 -I tools/check-copy.py
+check-copy: PASS (0 problems, 15 to read, (3) skipped: no --config)
+
+$ python3 -I tools/check-copy.py --config web/site/tests/fixtures/config.json
+check-copy: PASS (0 problems, 15 to read)

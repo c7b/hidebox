@@ -1,0 +1,23 @@
+$ python3 -I web/app/ui/tests/run.py --only upgrade upgrade-wallet   (on the server, as build)
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 15 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (86 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- upgrade Upgrade: s30 with demo tTARI; Waiting → Seen on chain → Amount proven → Added
+PASS upgrade: a drop link asks nothing before it exists
+PASS upgrade: the packs read +256 MB and +1 GB for 30 days (['Free', '+256 MB for 30 days', '+1 GB for 30 days'])
+PASS upgrade: the invoice has a Tari address
+PASS upgrade: the stepper reaches Added (['waiting:true', 'seen:true', 'proven:true', 'added:true'])
+PASS upgrade: the quota grew by the pack's 256 MiB
+PASS upgrade: on Nov 12 the testnet line says the mainnet is live, like the footer (Esmeralda testnet: tTARI is test money, worth nothing. The Ootle mainnet is live)
+PASS upgrade: no CSP or Trusted Types violation ([])
+--- upgrade-wallet Upgrade in production's payment mode (amount_proof = wallet): Waiting → Seen by our wallet → Exists on chain → Added
+PASS upgrade-wallet: a drop link asks nothing before it exists
+PASS upgrade-wallet: the stepper names the checks this mode runs (['Waiting', 'Seen by our wallet', 'Exists on chain', 'Added'])
+PASS upgrade-wallet: the claim under it is the wallet variant (C11)
+PASS upgrade-wallet: paid with demo tTARI, every step is reached (['waiting:true', 'seen_wallet:true', 'exists:true', 'added:true'])
+PASS upgrade-wallet: no CSP or Trusted Types violation ([])
+UI PASS 19/19

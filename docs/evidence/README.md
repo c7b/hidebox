@@ -29,6 +29,7 @@ pass, no transaction id of a visitor's send.
 | [`2026-10-20/security-audit-1/`](2026-10-20/security-audit-1/) | Security audit 1: the findings, the coverage ledger, the check behind each fix, and the suites |
 | [`2026-10-20/upgrade-0.47.0/`](2026-10-20/upgrade-0.47.0/) | The 0.47.0 outage and the walletd upgrade drill: the same balances, checkpoints and notarizations committing again, E-13, E-25 and E-29 passing |
 | [`2026-10-21/tagline-2/`](2026-10-21/tagline-2/) | The new tagline as served: the hero before and after at 1440 and 390, its lines measured from 360 to 1440 px, the two cards and the film's end card |
+| [`2026-10-21/packs-small/`](2026-10-21/packs-small/) | Packs of 256 MiB and 1 GiB: the drive's Get more space at 1440 and the suites ([`../review/packs-small.md`](../review/packs-small.md)) |
 
 Elsewhere: [`../../deploy/evidence/`](../../deploy/evidence/) (the deploy lane's first, fix and integration passes,
 cited by `deploy/ACCEPTANCE.md`) and [`../../web/app/tests/evidence/`](../../web/app/tests/evidence/) (the app

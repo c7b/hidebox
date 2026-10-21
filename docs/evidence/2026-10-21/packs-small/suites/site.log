@@ -1,0 +1,46 @@
+$ python3 -I web/site/tests/run.py   (on the server, as build)
+PASS markup: CSP-safe, includes, placeholders, JSON-LD
+PASS banned words
+PASS no typed /config numbers (P-20)
+PASS variables and conditions
+PASS SEO metadata (M-04)
+PASS trademark and mandatory lines (M-05)
+PASS partials in sync
+PASS no page shows the ghost
+PASS privacy inventory covers the schema (M-06)
+PASS contrast table (M-03)
+PASS static files (M-04)
+PASS security.txt contacts answer a stranger (needs the network)
+PASS copy variants set at build time (M11)
+PASS /judges quotes the app's words, 6 + 6 steps
+PASS old pages redirect to pages and anchors that exist
+PASS A-06h: motion.js 4 KB, stills.js 2 KB gzip at most, each only from site.js; no WebGL field; home.css 3.25 KB more, the home's stylesheets 8.5 KB
+PASS /how's loops: aria-hidden pictures, 4 to 7 s with a rest, the app's words, one Pause motion switch
+PASS the four sides and What's tTARI? are the same on / and /how
+PASS links to site pages and anchors land on something
+PASS media: the home's stills and the 404 art only; /v2, its loops and clips.js gone and unnamed; v2.css in budget
+PASS V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video
+PASS 404: the owner's words, one way home, the art sized from media/404, the three eggs
+PASS tagline-2: the hero's three lines, the tagline said once, quoted by the previews, the card and the manifest
+PASS fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time
+PASS llms-full.txt matches /how, /made and /fine-print
+PASS dates.js in two time zones (M-08)
+PASS fonts: the pinned Geist subset on the home, pinned Geist on reading pages
+PASS every page, desktop, 390 and 360 px; /v3 lands on the home
+PASS home page budget (M-01)
+PASS live numbers and their failure (M-07)
+PASS home words: 120 above the fold, 800 in all, Open your drive first
+PASS A-06h: no WebGL field on the home (the v3 design), nor on /how and /judges
+PASS header: Open your drive always on, to /drive?make or /drive
+PASS motion: reveals, the decode as the slice comes into view; reduced motion and no JavaScript
+PASS copy variants from /config
+PASS status line phase (M-08)
+PASS abuse form: key stripped, never sent without JavaScript
+PASS /made as docs: the contents follow the part being read, links open their disclosure, On this page
+PASS canary reveal (P1)
+PASS theme, judge pass
+PASS V-02: the home's stills, the hero's first, the rest lazy, AVIF, on the gunmetal card in light mode; the open box
+PASS /how's loops: after the load event, only on screen, Pause motion kept; reduced motion and no JavaScript settled
+PASS 404: the art above the words, one way home, the hidden line, the comment, the console's ghost
+PASS fingerprints: the built pages ask only for fingerprinted files and entry points, and get every one
+46 of 46 checks without failures, 382 s

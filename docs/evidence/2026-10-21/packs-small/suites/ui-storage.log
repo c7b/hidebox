@@ -1,0 +1,48 @@
+$ python3 -I web/app/ui/tests/run.py --only drive-shell storage-meter   (on the server, as build)
+PASS static: tools/lint.py: lint: PASS (0 problems)
+PASS static: tools/check-copy.py: check-copy: PASS (0 problems, 15 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (86 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+--- drive-shell The drive's shell (step 3): sidebar, header, search, Upgrade, the look; Geist only, pinned; no ootle-wasm before the list
+PASS drive-shell: the drive's first screen renders before ootle-wasm loads (A-06d: lazy Tari keys)
+PASS drive-shell: the sidebar names its six places (['My drive', 'Received', 'Shared', 'Activity', 'Trash', 'Storage'])
+PASS drive-shell: My drive is the current page
+PASS drive-shell: the header has search and Upgrade; the sidebar has New
+PASS drive-shell: the storage meter shows the drive's limit
+PASS drive-shell: one filled primary on the screen (the empty drive's Upload a folder)
+PASS drive-shell: a computer: Upload a folder first, Upload files beside it
+PASS drive-shell: the Tari address row fills in once the Tari keys load, after the list
+PASS drive-shell: Copy puts the address on the clipboard
+PASS drive-shell: the drive is set in Geist
+PASS drive-shell: one font file, the pinned Geist's 18 KB Latin subset (['/shared/fonts/geist/Geist-Latin.woff2'])
+PASS drive-shell: no third-party request ([])
+PASS drive-shell: every control has a name ([])
+PASS drive-shell: Ctrl+B folds the sidebar
+PASS drive-shell: the look: dark, remembered in this browser
+PASS drive-shell: dark paints the page
+PASS drive-shell: /drive/shared in the page, its place marked
+PASS drive-shell: /drive/trash in the page, its place marked
+PASS drive-shell: /drive/activity in the page, its place marked
+PASS drive-shell: the back button walks the drive's places
+PASS drive-shell: an unknown drive address says so inside the drive
+PASS drive-shell: no CSP or Trusted Types violation ([])
+--- storage-meter Storage (step 5): the meter in padded sizes, Get more space with test money, the rules of space
+PASS storage-meter: Upgrade opens Storage at Get more space
+PASS storage-meter: the meter counts the padded sizes the server counts (2080 B)
+PASS storage-meter: the rules of space, with their numbers from /config
+PASS storage-meter: the packs from /config (2)
+PASS storage-meter: the packs read +256 MB and +1 GB for 30 days (['+256 MB for 30 days', '+1 GB for 30 days'])
+PASS storage-meter: the invoice: our address with its reference inside
+PASS storage-meter: the testnet line on the money screen (C19-k)
+PASS storage-meter: one primary: Pay with test money
+PASS storage-meter: the steps reach Added, naming this mode's checks (['waiting:true', 'seen:true', 'proven:true', 'added:true'])
+PASS storage-meter: the sidebar meter grows by the pack
+PASS storage-meter: the dialog says what the pack added ('Added: 256 MB until Nov 20, 2026.')
+PASS storage-meter: the legend names the paid space (violet only for space paid with tTARI)
+PASS storage-meter: one pack at a time: the pack held says until when, the other waits
+PASS storage-meter: the rule and the renewal date, in words
+PASS storage-meter: no CSP or Trusted Types violation ([])
+UI PASS 44/44

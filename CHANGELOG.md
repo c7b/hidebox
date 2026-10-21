@@ -1,6 +1,16 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- packs small -->
+## 2026-10-21: smaller space packs
+
+- **The small pack is 256 MiB and the big one 1 GiB** (were 2 GiB and 5 GiB), each for 30 days at the same
+  prices (0.5 and 1 tTARI) and with the same ids (`s30`, `m30`). The Upgrade dialog reads "+256 MB for 30 days"
+  and "+1 GB for 30 days"; packs already sold keep their size to their end, renewals included. A paid drive's
+  largest file stays 2 GB, and `/made` now says it also has to fit the free share plus the pack. Review:
+  `docs/review/packs-small.md`.
+<!-- /packs small -->
+
 <!-- tagline 2 -->
 ## 2026-10-21: a tagline that says what hidebox is
 

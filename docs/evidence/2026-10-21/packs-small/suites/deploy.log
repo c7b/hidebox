@@ -1,0 +1,4 @@
+$ python3 -I -m unittest discover -s deploy/tests
+
+OK
+SealLog: this deployment names no log

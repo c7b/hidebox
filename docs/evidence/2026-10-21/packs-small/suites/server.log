@@ -1,0 +1,5 @@
+$ TMPDIR=<disk-backed dir> python3 -I -m unittest discover -s server/tests
+----------------------------------------------------------------------
+Ran 367 tests in 115.753s
+
+OK (skipped=5)

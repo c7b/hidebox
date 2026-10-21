@@ -1,0 +1,16 @@
+$ python3 -I web/app/tests/run_all.py   (on the server, as build)
+PASS contract: inbox scan and /watch over the mirror: cursor saved; /watch starts at the epoch about 7 days back  [head=10 watch from seq 0, 6 rows]
+CONTRACT PASS 12/12 (node v20.19.2)
+
+== summary
+PASS  lint (A-08)                                             0.1s  LINT PASS 1031/1031 checks, 95 files
+PASS  vectors, independent Python cross-check                 0.1s  crosscheck: 97/97 checks passed
+PASS  KATs under Node 20 (A-01)                              17.7s  NODE PASS 158/158 (node v20.19.2)
+PASS  KATs in headless Chromium, app CSP (A-01, A-05)        28.4s  title: TESTS PASS 158/158  (27.3s)
+PASS  no WebAssembly, V8 --jitless (A-09)                    30.1s  title: TESTS PASS 91/91  (29.3s, jitless)
+PASS  sidecar protocol, permissions, G4 (A-12)                5.6s  SIDECAR PASS 20/20
+PASS  18-bit PoW at 6x CPU throttling (A-13)                  7.1s  title: BENCH PASS  (6.5s, 6.0x CPU)
+PASS  in-browser scan, phone emulation at 4x (report)        50.5s  title: BENCH PASS  (49.7s, 4.0x CPU)
+PASS  contract: the library against mutis-api --dev          86.5s  CONTRACT PASS 12/12 (node v20.19.2)
+
+ALL PASS (9 steps)
