@@ -421,7 +421,7 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
   defaulted line **It ends** (Tomorrow / In a week / When I stop it), the switch "Ask for a secret word" and,
   on files, the switch "Delete it from my drive after". Pay to open shows the three prices from `/config` as
   "0.1 tTARI" (no adjectives), the switch "Show the name before they pay" and, the first time, the sealed
-  sales-view-key notice; Send by Tari asks the address, shows the safety code, the switch "They use another
+  sales-view-key notice; Send by Tari asks the address, shows their drive ID (the 12 emoji), the switch "They use another
   Ootle wallet" and the relay-or-direct line. The result shows the rule sentence, the link with Copy, the QR
   on computers, and the key note (pay links: the split-key sentence and its boundary).
 - A file that already has a link opens on two tabs: New link and Links (state, Copy, Stop this link).

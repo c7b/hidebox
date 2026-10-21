@@ -85,7 +85,7 @@
       <tr><th scope="row"><code>tickets</code></th><td>A download in progress: the SHA-256 of its token, the link and file, a byte cap.</td><td>Until the download ends<span data-needs="config" hidden> (at most <span data-v="ticket"></span>)</span>.</td></tr>
       <tr><th scope="row"><code>identities</code></th><td>One row per drive: a random-looking id; the SHA-256 of its login key; the first and last day it was active and on how many days; bytes used, reserved and rented; which pack it holds, when that ends, and whether a judge pass bought it; today's send count.</td><td>Until you delete your drive.</td></tr>
       <tr><th scope="row"><code>sessions</code></th><td>The SHA-256 of a sign-in token, its drive, when it was made and expires, the last day it was used.</td><td>Until it expires.</td></tr>
-      <tr><th scope="row"><code>drops</code></th><td>One row per drop link: its id; its Tari address and tag (public by design); its label; a hash of its manage token; its state; the day it opened and closed; today's file and byte counts.</td><td>While it's open, then<span data-needs="config" hidden> <span data-v="tombstone_days"></span></span> after you close it or it's removed.</td></tr>
+      <tr><th scope="row"><code>drops</code></th><td>One row per {{BRAND}} link: its id; its Tari address and tag (public by design); its label; a hash of its manage token; its state; the day it opened and closed; today's file and byte counts.</td><td>While it's open, then<span data-needs="config" hidden> <span data-v="tombstone_days"></span></span> after you close it or it's removed.</td></tr>
       <tr><th scope="row"><code>jobs</code></th><td>Deliveries and payments waiting to go out on the Ootle. <br>While a relay send waits, it holds the destination address and the sealed 125-byte blob.</td><td>The address and blob are erased once it's sent; the job is deleted a day after it ends. <br>Our own test jobs are kept<span data-needs="config" hidden> for <span data-v="tombstone_days"></span></span> as evidence.</td></tr>
       <tr><th scope="row"><code>invoices</code></th><td>For rented space: the pack, its price, our receiving address with the invoice's reference inside it, status, amount received, times, the drive it's for, and whether a judge pass made it.</td><td>For our books.</td></tr>
       <tr><th scope="row"><code>payments</code></th><td>Each chain output that paid an invoice: its id, the invoice, its value, when we saw it, and the results of our checks.</td><td>For our books.</td></tr>
@@ -153,7 +153,7 @@
   <ul>
     <li>share child sexual abuse material, in any form. <br>We remove it and report it to the authorities;</li>
     <li>spread malware, or host pages or files meant to steal passwords, money or identities;</li>
-    <li>harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or drop link;</li>
+    <li>harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or {{BRAND}} link;</li>
     <li>share anything illegal where you or the recipient are, or anything that infringes someone else's rights;</li>
     <li>attack <b class="brand">{{BRAND}}</b>, its users or the Tari testnet, or get around our limits with many networks, drives or scripts.</li>
   </ul>
@@ -195,7 +195,7 @@
     <div class="field">
       <label for="abuse-link">Link</label>
       <input type="url" id="abuse-link" name="link" required autocomplete="off" spellcheck="false" aria-describedby="abuse-link-hint abuse-status">
-      <p class="hint" id="abuse-link-hint">A link to a file (<code>/s/…</code>) or to a drop (<code>/d/…</code>).</p>
+      <p class="hint" id="abuse-link-hint">A link to a file (<code>/s/…</code>) or to a {{BRAND}} link (<code>/d/…</code>).</p>
     </div>
     <div class="field">
       <label for="abuse-category">What's wrong</label>
@@ -239,7 +239,7 @@
     <h3 id="report-legal">Legal requests</h3>
     <p>If compelled, we can hand over what we have: ciphertext, the columns on our <a href="#inventory">privacy page</a>, invoices. <br>Not contents. <br>Not keys.</p>
 
-    <p data-when="security_drop=on" hidden><strong>Something confidential?</strong> <a data-href="security_drop" href="#report">Leave us a file in our own drop link</a>: it's encrypted in your browser and reaches only our drive.</p>
+    <p data-when="security_drop=on" hidden><strong>Something confidential?</strong> <a data-href="security_drop" href="#report">Leave us a file at our own {{BRAND}} link</a>: it's encrypted in your browser and reaches only our drive.</p>
   </div>
 </div>
     </section>

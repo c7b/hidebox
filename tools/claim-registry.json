@@ -128,7 +128,7 @@
   },
   {
    "id": "C15-k",
-   "condition": "kind 3 only (the default send and every drop link); kind 4 files open with that wallet's view key, so C15 sits on every view-key screen; deleted if only kind 4 ships (spec G2)",
+   "condition": "kind 3 only (the default send and every hidebox link's delivery); kind 4 files open with that wallet's view key, so C15 sits on every view-key screen; deleted if only kind 4 ships (spec G2)",
    "backed_by": "spec §4.9.1, §4.9.2, G2",
    "markers": [
     "for files sent to",
@@ -151,7 +151,7 @@
     "hash of your login key"
    ],
    "sentences": [
-    "We store a random id and a hash of your login key. No email and no public key; a drop link stores its own address, by design."
+    "We store a random id and a hash of your login key. No email and no public key; a {brand} link stores its own address, by design."
    ]
   },
   {

@@ -54,7 +54,9 @@ BANNED = [
 ]
 # Retired nouns stay out of what people read on the pages and in the app's strings,
 # meta and og:* included. The codename lives in code, paths and services (and the llms.txt note), not copy.
-RETIRED = [r"lockers?", r"dead drops?", r"ghosts?", r"goodbyes?", r"said bye", r"mutis"]
+# The link anyone can leave a file at is a "hidebox link" ({brand} link), and its 12 emoji are a "drive ID"
+# (not "safety code", and never Tari's own "Emoji ID", which spells a whole address; that one is banned above).
+RETIRED = [r"lockers?", r"dead drops?", r"ghosts?", r"goodbyes?", r"said bye", r"mutis", r"drop links?", r"safety codes?"]
 RETIRED_RX = re.compile(r"(?<![\w-])(" + "|".join(RETIRED) + r")(?![\w-])", re.I)
 WATCH = [r"simply", r"just", r"anonymous(ly)?"]
 BANNED_RX = re.compile(r"(?<![\w-])(" + "|".join(BANNED) + r")(?![\w-])", re.I)

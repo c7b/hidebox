@@ -25,7 +25,8 @@ export function shortAddress(address) {
   return a.length > prefix + 16 ? `${a.slice(0, prefix + 6)}…${a.slice(-6)}` : a;
 }
 
-// The 12-emoji safety code in a 3×4 grid; screen readers get the hex groups instead.
+// The 12-emoji safety code, shown to people as the drive ID, in a 3×4 grid (the drop page sets it 6 × 2, as Settings
+// does); screen readers get the hex groups instead.
 export function safetyGrid(code, props = {}) {
   return h('p', {
     class: ['a-safety', props.class], role: 'img', 'data-testid': props.testid,

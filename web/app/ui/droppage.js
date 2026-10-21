@@ -51,21 +51,25 @@ export async function render(main, { dropId }) {
   }
   prefetchPow('upload');
   const code = await safetyCodeForAddress(drop.address);
-  // The open bag: anyone can drop a file in; only the locker behind this link can open it.
-  const { head: top } = scene({ state: 'bag', title: drop.label ? labelled(drop.label) : t('drop.page_h_plain'), say: t('drop.page_say') });
+  // The open bag: anyone can drop a file in; only the drive behind this link can open it. One compact column (the
+  // owner's "I have to scroll just to find stuff"): the head in a row, the two buttons, then whose drive it is
+  // (its drive ID, the same 12 emoji and the same name as the owner's Settings), then the fine print.
+  const { head: top } = scene({ state: 'bag', title: drop.label ? labelled(drop.label) : t('drop.page_h_plain'), say: t('drop.page_say'), cls: 'a-scene--row' });
   top.querySelector('.a-scene-h').dataset.testid = 'dd-label';
-  const intro = [
-    top,
-    drop.label ? h('p', { class: 'a-caption a-center' }, t('drop.label_note')) : null,
-    h('p', { class: 'a-caption a-center' }, t('drop.page_body')),
-    h('div', { class: 'a-dd-safety' },
-      h('p', { class: 'a-label' }, t('drop.safety_h')),
-      safetyGrid(code, { testid: 'dd-safety' }),
-      h('p', { class: 'a-caption' }, t('drop.safety_check')),
+  const whose = h('section', { class: 'a-dd-id', 'aria-labelledby': 'dd-id-h' },
+    h('div', { class: 'a-dd-id-top' },
+      h('h2', { class: 'a-dd-id-h', id: 'dd-id-h' }, t('drop.safety_h')),
       h('a', { class: 'a-more', 'data-testid': 'dd-report', href: abuseHref(`${cfg.origin}/d/${drop.drop_id}`) }, icon('report'), h('span', {}, t('drop.report')))),
-  ];
-  const limits = h('p', { class: 'a-caption' }, t('drop.limits', { max: formatBytes(drop.limits.max_file_bytes), count: drop.limits.views, dur: formatDuration(drop.limits.expiry_s) }));
-  const footNote = h('p', { class: 'a-caption a-dd-foot' }, t('drop.foot'));
+    h('div', { class: 'a-dd-id-body' },
+      h('div', { class: 'a-dd-id-code' },
+        h('span', { class: 'a-dd-id-label', 'aria-hidden': 'true' }, t('drop.id_label')),   // the grid's own name says it
+        safetyGrid(code, { testid: 'dd-safety' })),
+      h('div', { class: 'a-dd-id-say' },
+        h('p', { class: 'a-caption' }, t('drop.safety_check', { count: code.emoji.length })),
+        drop.label ? h('p', { class: 'a-caption' }, t('drop.label_note')) : null)));
+  const limits = h('p', { class: 'a-caption a-dd-limits' }, t('drop.limits', { max: formatBytes(drop.limits.max_file_bytes), count: drop.limits.views, dur: formatDuration(drop.limits.expiry_s) }));
+  // a function: the done moment takes the note into its card, and Leave another needs one again
+  const footNote = () => h('p', { class: 'a-caption' }, t('drop.foot'));
   const banner = h('div', {});
 
   const zone = createZone({
@@ -78,7 +82,8 @@ export async function render(main, { dropId }) {
   function ready() {
     banner.replaceChildren();
     zone.idle();
-    set('ready', intro, banner, h('div', { class: 'md-root' }, zone.el), limits, footNote);
+    set('ready', top, banner, h('div', { class: 'md-root a-dd-leave' }, zone.el, limits), whose,
+      h('div', { class: 'a-dd-foot' }, h('p', { class: 'a-caption' }, t('drop.page_body')), footNote()));
   }
 
   let run = 0; // a newer attempt (Keep original) makes an older one moot
@@ -98,7 +103,7 @@ export async function render(main, { dropId }) {
     const progress = runSteps();
     const chipSlot = h('div', { class: 'md-exif-slot' });
     const stop = h('button', { type: 'button', class: 'a-linkbtn', onclick: () => ctl.abort() }, t('seal.stop'));
-    set('sealing', intro, runCard(progress, chipSlot, stop));
+    set('sealing', top, runCard(progress, chipSlot, stop), whose);
     progress.at('lock');
     // sealItem's phases, forward only (a later chunk is still encrypting while an earlier one uploads); the bar fills
     // with the first chunk's encryption, then with what reached our server, and sweeps while one chunk is on its way.
@@ -143,7 +148,7 @@ export async function render(main, { dropId }) {
   async function send(link, meta, chip, progress = null) {
     progress?.stop();
     const steps2 = progress && progress.el.isConnected ? progress : runSteps();
-    set('sending', intro, runCard(steps2, chip));
+    set('sending', top, runCard(steps2, chip), whose);
     steps2.at('chain', { note: t('drop.sending') });
     const again = { label: t('send.retry'), onClick: () => send(link, meta, chip) };
     let job;
@@ -156,12 +161,12 @@ export async function render(main, { dropId }) {
       unsure = courier.unconfirmed(job);
     } catch (e) {
       steps2.fail();
-      return set('error', intro, runCard(steps2, chip, errorBanner(e, { action: again })));
+      return set('error', top, runCard(steps2, chip, errorBanner(e, { action: again })), whose);
     }
     if (job.state !== 'done') {
       steps2.fail();
-      return set('error', intro, runCard(steps2, chip,
-        errorBanner({ code: 'chain_unavailable' }, { key: unsure ? 'drop.unsure' : 'drop.failed', action: again })));
+      return set('error', top, runCard(steps2, chip,
+        errorBanner({ code: 'chain_unavailable' }, { key: unsure ? 'drop.unsure' : 'drop.failed', action: again })), whose);
     }
     const tx = job.result?.tx_id ?? '';
     steps2.finish();
@@ -176,7 +181,7 @@ export async function render(main, { dropId }) {
       receipt: tx ? { href: `/verify/tx/${tx}`, tx, label: t('drop.receipt'), testid: 'dd-chain-link', txTestid: 'dd-tx' } : null,
       more: chip ? [chip] : [],
       actions: [h('button', { type: 'button', class: 'a-btn', onclick: ready }, t('drop.another'))],
-      foot: footNote,
+      foot: h('div', { class: 'a-dd-foot' }, footNote()),
     });
     set('delivered', moment);
     moment.querySelector('.done-title').focus({ preventScroll: true });

@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 // The drop zone (14-ghost-design §5, §6.2): it only collects. On the home page (`windowDrops`) the
 // window takes a drop at every moment but while busy, a paste brings a file in (or opens the note,
-// written, Lock it focused), and typing starts a note. Elsewhere: a box with a real file input.
-import { h } from '../lib/dom.js';
+// written, Lock it focused), and typing starts a note. Elsewhere: a box with two buttons, Choose a file
+// (a label around the real file input, which stays in the page for the keyboard and screen readers but is
+// never drawn, so no browser's own "No file chosen" shows) and Write a secret; a file can also be dropped on it.
+import { h, svg } from '../lib/dom.js';
 import { t } from '../lib/i18n.js';
 
 const fine = () => !matchMedia('(pointer: coarse)').matches;
+// One string, so the build can fingerprint it (tools/assets.py).
+const SPRITE = '/shared/ui/icons.svg';
+const glyph = (name) => svg('svg', { class: 'md-glyph', 'aria-hidden': 'true', focusable: 'false' }, svg('use', { href: `${SPRITE}#i-${name}` }));
 
 function dropped(dataTransfer) {
   const items = [...(dataTransfer?.items ?? [])].filter((i) => i.kind === 'file');
@@ -36,9 +41,10 @@ export function createZone(opts) {
   function idle() {
     root.dataset.state = 'idle';
     show(h('div', { class: 'md-idle' },
-      opts.hint && fine() ? h('p', { class: 'md-hint' }, t('zone.hint')) : null,
-      big ? null : h('label', { class: 'a-btn a-btn--primary md-choose' }, input, h('span', {}, t('hero.choose'))),
-      h('button', { type: 'button', class: 'a-linkbtn', 'data-testid': 'drop-write', onclick: () => compose() }, t('hero.paste'))));
+      h('div', { class: 'md-pick' },
+        big ? null : h('label', { class: 'a-btn a-btn--primary md-choose' }, input, glyph('file-up'), h('span', {}, t('hero.choose'))),
+        h('button', { type: 'button', class: 'a-btn md-write', 'data-testid': 'drop-write', onclick: () => compose() }, glyph('pencil'), h('span', {}, t('hero.paste')))),
+      opts.hint && fine() ? h('p', { class: 'md-hint' }, t('zone.hint')) : null));
     opts.onState?.('idle');
   }
 

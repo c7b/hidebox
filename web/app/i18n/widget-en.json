@@ -1,8 +1,8 @@
 {
  "hero.choose": "Choose a file",
- "hero.paste": "Or write one",
+ "hero.paste": "Write a secret",
  "hero.drag": "Let go anywhere.",
- "zone.hint": "Drop a file here, or",
+ "zone.hint": "Or drop a file here.",
  "compose.label": "Write your secret.",
  "compose.count": "{used} of {max} characters",
  "compose.lock": "Lock it",
