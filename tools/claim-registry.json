@@ -563,6 +563,29 @@
    "sentences": [
     "Your browser picks how to show a file from its bytes, never its name. Pictures show as pictures, an SVG as pixels, text as plain text. Anything else only downloads, so nothing in a file runs on this site."
    ]
+  },
+  {
+   "id": "C58",
+   "condition": "the tagline (tagline-2, the owner's words): store is the drive, send is a link or Send by Tari, sell is pay to open (features.pay_to_open, on at hidebox.app), privately is C32 (files lock in the browser before upload) and C1-n",
+   "backed_by": "C32, C1-n, C25, C33 to C36; /api/v1/config features.pay_to_open",
+   "markers": [
+    "sell files privately",
+    "send, and sell"
+   ],
+   "sentences": [
+    "Store, send, and sell files privately."
+   ]
+  },
+  {
+   "id": "C59",
+   "condition": "always: a drive is a key made in the browser; we ask for no name, no ID document, no email and no password, and store a random id and a hash of the login key (C29); payments go between Tari addresses",
+   "backed_by": "server/mutis/handlers/auth.py register (identity_id, auth_verifier, proof of work); C29; spec D6, §4.8.4",
+   "markers": [
+    "no kyc"
+   ],
+   "sentences": [
+    "Built on Tari. No KYC. No email."
+   ]
   }
  ],
  "labels": [
