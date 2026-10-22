@@ -5,7 +5,8 @@
   python3 -I web/app/ui/tests/run.py [--only ID ...] [--shots] [--keep]
 
 1. Static checks: repository lint and copy checks for web/app, both dictionaries complete, every
-   string the UI asks for exists, the data-testid contract of spec §3.4.9 present in the sources.
+   string the UI asks for exists, the data-testid contract of spec §3.4.9 present in the sources, and the
+   QR codes with the mark read back without a phone (qr_logo.py, node and qrread.py).
 2. Builds dist/ with tools/build.py (dev origin) into a fresh directory under /var/tmp.
 3. Starts `server/bin/mutis-api --dev` on it: the real API, fakes for the chain (and, for the flows
    that ask for production's payment mode, a second one through ui/tests/devserver.py).
@@ -90,7 +91,8 @@ class Results:
 
 def static_checks(r):
     r.current = "static"
-    for cmd in (["tools/lint.py", "--only", "web/app"], ["tools/check-copy.py", "--quiet"], ["web/app/i18n/subset.py", "--check"]):
+    for cmd in (["tools/lint.py", "--only", "web/app"], ["tools/check-copy.py", "--quiet"], ["web/app/i18n/subset.py", "--check"],
+                ["web/app/ui/tests/qr_logo.py"]):
         res = subprocess.run([sys.executable, "-I", *cmd], cwd=ROOT, capture_output=True, text=True)
         r.check(res.returncode == 0, f"{cmd[0]}: {res.stdout.strip().splitlines()[-1] if res.stdout.strip() else res.stderr[-200:]}")
     en = json.load(open(os.path.join(APP, "i18n", "en.json"), encoding="utf-8"))

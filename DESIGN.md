@@ -270,7 +270,8 @@ something.
 violet. Nothing decorative is ever violet.
 **The Colour Is A Word Rule.** Green, amber and red appear only next to the word they qualify (Paid,
 Full, Delete); never as decoration, dots or backgrounds of whole sections.
-**The QR Is Ink On White Rule.** QR codes stay dark on white in both themes so every camera reads them.
+**The QR Is Ink On White Rule.** QR codes stay dark on white in both themes so every camera reads them. The mark sits
+in the centre on a white pad (share-simple), at level Q, where every block corrects well past what it covers.
 **The Lime Is Yours Rule.** Lime marks your side of hidebox: Open your drive, the open box (the mark), the You card,
 the hidebox column, and in the drive the one thing to do next. If it is not yours, it is not lime; one lime a view (the tint of a picked row or of the part being read is not a second lime). Open your drive is always on in the sticky header (site v3:
 the owner's call; it no longer steps aside while the page's own is in view).
