@@ -69,7 +69,7 @@ def build_config(ctx) -> dict:
         "retention": {"ticket_s": items.TICKET_S, "tombstone_days": cleanup.TOMBSTONE_DAYS,
                       "db_backup_days": cleanup.DB_BACKUP_DAYS, "inactive_days": cleanup.INACTIVE_DAYS,
                       "lapse_grace_days": cleanup.LAPSE_GRACE_DAYS, "session_s": SESSION_TTL_S,
-                      "trash_days": cleanup.TRASH_DAYS},
+                      "trash_days": cleanup.TRASH_DAYS, "count_days": cleanup.COUNT_DAYS},
         # The drive (16-drive-design §15 step 1): published before the routes, behind features.folders and
         # features.pay_to_open, so the app and the copy deck read their numbers from here.
         "folders": tree.config_block(),

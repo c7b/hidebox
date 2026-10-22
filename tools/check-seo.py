@@ -14,7 +14,9 @@ the Open Graph card (type, site name, title, description, an absolute image with
 alt) and the same Twitter card, JSON-LD that parses (the home's WebSite and SoftwareApplication, a BreadcrumbList that
 ends on the page elsewhere; no rating or review), theme colours for light and dark, the app title, the icons, every
 image with alt text and a size, link text that says where it goes, and at least three links into the site. Then the
-share cards (PNG, 1200 x 630 for summary_large_image, under WhatsApp's 300 KB), the icons and the manifest; robots.txt
+share cards (PNG, 1200 x 630 for summary_large_image, under WhatsApp's 300 KB), the icons and the manifest; one card per
+kind of link (viral-1: a secret, a paid link, a drop link), each with its own title, description and picture, the same
+head for two made-up links of a kind and no part of the link's address in it; robots.txt
 (its Sitemap line, the public pages allowed, the private paths blocked) and sitemap.xml (it parses, the public pages
 with a lastmod); every private route noindex; and an unknown page answers 404, noindex.
 
@@ -52,7 +54,21 @@ ROBOTS_BLOCKED = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAA
 # Private routes: never in an index. They answer X-Robots-Tag (Caddy); the HTML ones also carry a robots meta.
 PRIVATE = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t", "/d/7kq2x9mdh4",
            "/send", "/watch", "/verify/tx/" + "0" * 64, "/app/drive.html", "/app/view.html", "/app/app.html",
-           "/api/v1/config")
+           "/app/pay.html", "/app/drop.html", "/api/v1/config")
+# One preview card per kind of link (viral-1), as a chat draws it under a pasted link: a static head for every link of the
+# kind, nothing of the link in it. Through Caddy, made-up links of each kind (the page answers before it asks the API);
+# without Caddy (--dist), the page the kind's route serves.
+LINK_CARDS = {
+    "secret": {"paths": ("/s/Qx7kP2mZ9vLr4TbW1nC8eA", "/s/hD3fJ8sY1uN6wE0qT5rVbK", "/t"), "file": "/app/view.html",
+               "title": "Someone sent you a secret.", "description": "Open it before it's gone. No account needed.",
+               "image": "/og-s.png"},
+    "paid": {"paths": ("/p/Lm4nB7vC1xZ9aS2dF6gHqR", "/p/wE5rT8yU3iO0pA6sD1fGjM"), "file": "/app/pay.html",
+             "title": f"A locked file on {BRAND}.", "description": "Pay with Tari test money to open it. No account needed.",
+             "image": "/og-p.png"},
+    "drop": {"paths": ("/d/7kq2x9mdh4", "/d/3vbn8w2xqp"), "file": "/app/drop.html",
+             "title": f"Leave a file on {BRAND}.", "description": "It locks in your browser before it leaves. No account needed.",
+             "image": "/og-d.png"},
+}
 # The bots that draw a pasted link's card (robots.txt's second group): they may read a shared link's page.
 PREVIEW_BOTS = ("Twitterbot", "facebookexternalhit", "Slackbot-LinkExpanding", "LinkedInBot", "Discordbot", "TelegramBot",
                 "WhatsApp")
@@ -475,6 +491,54 @@ class Checker:
             problems.append(f"Cache-Control {headers.get('cache-control')!r}")
         self.add("sitemap.xml", problems, [f"{len(locs)} URLs, lastmod {', '.join(sorted(dates))}"])
 
+    def link_cards(self) -> None:
+        """viral-1: each kind of link has its own card (title, description, an absolute 1200 x 630 PNG with its alt, the
+        same Twitter card), noindex and no address (no og:url, no canonical); two links of a kind get the same head, and
+        no segment of the address asked for appears in it. The pictures are checked with the other cards."""
+        for kind, c in LINK_CARDS.items():
+            problems, heads = [], {}
+            for path in c["paths"] if self.caddy else (c["file"],):
+                status, headers, body = fetch(self.origin + path)
+                if status != 200 or not headers.get("content-type", "").startswith("text/html"):
+                    problems.append(f"{path}: status {status}, content-type {headers.get('content-type')!r}")
+                    continue
+                head = body.split(b"</head>", 1)[0]
+                heads[path] = head
+                p = parse(head)
+                image = self.expect + c["image"]
+                want = {"og:type": "website", "og:site_name": BRAND, "og:title": c["title"], "og:description": c["description"],
+                        "og:image": image, "og:image:secure_url": image, "og:image:type": "image/png",
+                        "og:image:width": str(CARD_SIZE[0]), "og:image:height": str(CARD_SIZE[1])}
+                problems += [f"{path}: {prop} {p.meta(property=prop)!r}, expected {value!r}" for prop, value in want.items()
+                             if p.meta(property=prop) != value]
+                if not p.meta(property="og:image:alt"):
+                    problems.append(f"{path}: no og:image:alt")
+                if p.meta(name="description") != c["description"]:
+                    problems.append(f"{path}: description {p.meta(name='description')!r}")
+                title = " ".join(p.title.split())
+                if not title.endswith(f" · {BRAND}") or len(title) > TITLE_MAX:
+                    problems.append(f"{path}: title {title!r}")
+                tw = {k: p.meta(name=f"twitter:{k}") for k in ("card", "title", "description", "image", "image:alt")}
+                if tw["card"] != "summary_large_image":
+                    problems.append(f"{path}: twitter:card {tw['card']!r}")
+                problems += [f"{path}: twitter:{k} {tw[k]!r} differs from og:{k}" for k in ("title", "description", "image", "image:alt")
+                             if tw[k] != p.meta(property=f"og:{k}")]
+                if p.meta(property="og:url") or p.rel("canonical"):
+                    problems.append(f"{path}: og:url or a canonical (a preview must not name the link)")
+                if "noindex" not in robots_tokens(p.meta(name="robots") or "", headers.get("x-robots-tag", "")):
+                    problems.append(f"{path}: not noindex")
+                for segment in path.strip("/").split("/")[1:]:   # the link's own part (its id), never the kind's prefix
+                    if segment.encode() in head or segment.lower().encode() in head.lower():
+                        problems.append(f"{path}: the head names {segment!r}, a part of the link")
+                if image not in self.images:
+                    self.images[image] = []
+                if (want["og:image:width"], want["og:image:height"]) not in self.images[image]:
+                    self.images[image].append((want["og:image:width"], want["og:image:height"]))
+            if len(set(heads.values())) > 1:
+                problems.append(f"the links of a kind got different heads: {', '.join(heads)}")
+            self.add(f"link card: {kind} ({', '.join(heads) or c['file']})", problems,
+                     [f"{c['title']} / {c['description']} / {c['image']}"])
+
     def private(self) -> None:
         """noindex on every private route; a private page's card (a shared link's og-s.png) is checked with the others,
         and names no address (no og:url, no canonical: one page answers for every link)."""
@@ -523,6 +587,7 @@ class Checker:
         dupes = sorted({t for t in titles if titles.count(t) > 1} | {d for d in descs if descs.count(d) > 1})
         self.add("titles and descriptions are unique", [f"used twice: {d!r}" for d in dupes])
         self.private()
+        self.link_cards()
         self.cards()
         self.icons_and_manifest()
         self.robots(public)

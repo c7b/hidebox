@@ -52,7 +52,8 @@ viewer, is the product code unchanged.
 | Path | What |
 |---|---|
 | `drop-widget.js` | the home page's entry: mounts the widget into `#mutis-drop` (spec §3.4.4) with its first dictionary and stylesheet; at `#share` it loads `ui/arrive.js` (the box in view, its lime ring, its first button focused) |
-| `app.html`, `view.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`) |
+| `app.html`, `view.html`, `drop.html`, `pay.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`); `drop.html` (`/d/`) and `pay.html` (`/p/`) are `app.html` and `view.html` with their kind's own preview card (viral-1) |
+| `ui/invite.js` | after the value (viral-1): the one quiet line under an opened secret, folder or bought file and a delivered drop |
 | `ui/widget.js`, `zone.js`, `sealing.js`, `card.js`, `rules.js`, `noise.js`, `recent.js` | the drop widget: zone, sealing progress (the ¡ mark), the locked card with its noise strip, the Change panel, recent drops |
 | `ui/scene.js` | the head of every app screen: the ghost in the pose of its rule (cloned from the page's `#ghost-tpl`), the screen's line and the ghost's sentence; Tari™ words in Tari purple |
 | `ui/lightbox.js`, `css/lightbox.css`, `lib/sniff.js` | the file preview (docs/review/preview-1.md): one lightbox for a drive file's name, a folder visit's files, a paid file, a single-file link (`/s/`, `/t`) and a single file in Received, each shown as soon as it opens; the kind comes from the decrypted bytes (`sniff.js`: png, jpeg, gif, webp, avif in an `<img>`; SVG drawn into a canvas; UTF-8 text as text nodes; the rest download only), Download always there; loaded the first time a file opens |

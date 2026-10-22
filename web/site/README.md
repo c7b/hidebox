@@ -87,7 +87,7 @@ as served.
 | Command | Does |
 |---|---|
 | `sh web/site/tools/subset-fonts.sh` | subsets Debian's Courier Prime and Courier Prime Code, renames them Mutis Script / Mutis Script Code (OFL condition 3), writes WOFF2, `OFL.txt` and `NOTICE`; deterministic |
-| `python3 -I web/site/tools/render-images.py [FILE ...]` | renders `og/*.html` to `og.png` and `og-s.png`, and the app icons and favicons from `static/favicon.svg` and `og/icon*.svg`; only the files named, if any; fails on a card over 150 KB or an OTS error |
+| `python3 -I web/site/tools/render-images.py [FILE ...]` | renders `og/*.html` to `og.png` and the link cards `og-s.png`, `og-p.png` and `og-d.png`, and the app icons and favicons from `static/favicon.svg` and `og/icon*.svg`; only the files named, if any; fails on a card over 150 KB or an OTS error |
 | `python3 -I web/site/tools/png_shrink.py FILE ...` | rewrites PNGs (and the PNGs in an ICO) smaller with the same pixels: RGB, palette or grey where nothing is lost, the best filter and zlib 9; checks every pixel before it writes; `render-images.py` runs it on what it renders |
 | `python3 -I web/site/tools/llms_full.py` | writes `static/llms-full.txt` from `/how`, `/made` and `/fine-print` as a reader without JavaScript sees them (`--check` is part of the tests) |
 | `python3 -I web/site/tools/variants.py --config mutis.toml dist` | sets a deployment's copy variants into its built pages and writes its `llms-full.txt` (for `tools/build.py`, before includes and placeholders) |

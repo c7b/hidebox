@@ -45,7 +45,9 @@ PREPARE = """((font, name) => {
     .then(() => Promise.all([...document.images].map((i) => i.decode()))).then(() => true);
 })"""
 OG_MAX_BYTES = 150 * 1024   # 11-brand §13.10
-CARDS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630))
+# The site's card and one per kind of link (viral-1): a secret (/s/), a paid link (/p/), a drop link (/d/).
+CARDS = (("og.html", "og.png", 1200, 630), ("og-s.html", "og-s.png", 1200, 630), ("og-p.html", "og-p.png", 1200, 630),
+         ("og-d.html", "og-d.png", 1200, 630))
 ICONS = (("static/favicon.svg", "favicon-32.png", 32), ("static/favicon.svg", "icon-192.png", 192),
          ("static/favicon.svg", "icon-512.png", 512), ("og/icon.svg", "apple-touch-icon.png", 180),
          ("og/icon-maskable.svg", "icon-maskable-512.png", 512))

@@ -251,6 +251,7 @@ def main():
     import flows_pay  # noqa: E402,F401 (pay to open, the seller, the buyer page and the owner check)
     import flows_ux  # noqa: E402,F401 (ux-feedback-1: the waits and the done moment)
     import flows_preview  # noqa: E402,F401 (the file preview: the lightbox and its hostile fixtures)
+    import flows_viral  # noqa: E402,F401 (viral-1: the line after the value, the share link's two counts)
 
     r = Results()
     static_checks(r)

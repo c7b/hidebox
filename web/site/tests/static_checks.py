@@ -351,9 +351,11 @@ def check_seo():
     public = sorted(indexable_paths())
     if public != sorted(public_pages()):
         problems.append(f"the indexable pages are {public}, tests/e2e/headers_spec.py INDEXABLE says {sorted(public_pages())}")
-    # The app's pages (a shared link, a drop, the drive): noindex, and a preview card with no address in it (no
-    # og:url, no canonical: one page serves every link, and a link's id is no business of a preview).
-    cards = {"view": "{{ORIGIN}}/og-s.png", "app": "{{ORIGIN}}/og.png", "drive": "{{ORIGIN}}/og.png"}
+    # The app's pages (a shared link, a paid link, a drop link, the task pages, the drive): noindex, and a preview card
+    # with no address in it (no og:url, no canonical: one page serves every link, and a link's id is no business of a
+    # preview). Each kind of link has its own card (viral-1).
+    cards = {"view": "{{ORIGIN}}/og-s.png", "pay": "{{ORIGIN}}/og-p.png", "drop": "{{ORIGIN}}/og-d.png",
+             "app": "{{ORIGIN}}/og.png", "drive": "{{ORIGIN}}/og.png"}
     for page, card in cards.items():
         f = WEB / "app" / f"{page}.html"
         d, name = parse(f), f.relative_to(WEB)
@@ -443,6 +445,28 @@ def check_ghost():
         for needle in ("/shared/ghost.css", "<!--#include ghost-templates-->", "<!--#include ghost.svg-->", "data-ghost="):
             if needle in text:
                 problems.append(f"{f.relative_to(WEB)}: shows the ghost ({needle})")
+    return problems
+
+
+# The head lines a link card is made of (viral-1): the title, the description and the og:* and twitter:* tags.
+CARD_LINE = re.compile(r'^<(title>|meta (name="description"|property="og:|name="twitter:))')
+TWINS = (("pay.html", "view.html"), ("drop.html", "app.html"))
+
+
+def check_link_cards():
+    """viral-1: one preview card per kind of link. pay.html (/p/) is view.html (/s/, /t) and drop.html (/d/) is app.html with
+    only their card lines and the note above <html> changed, so a change to one page that misses its twin fails here;
+    each card names its own picture, which render-images.py draws from og/<card>.html."""
+    problems = []
+    for twin, base in TWINS:
+        a, b = ((WEB / "app" / f).read_text().splitlines() for f in (twin, base))
+        strip = lambda lines: [x for x in lines[lines.index('<html lang="en">'):] if not CARD_LINE.match(x)]   # noqa: E731
+        if strip(a) != strip(b):
+            diff = [x for x in strip(a) if x not in strip(b)] + [x for x in strip(b) if x not in strip(a)]
+            problems.append(f"app/{twin} differs from app/{base} outside its card: {diff[:3]}")
+    for page, card in (("view", "og-s"), ("pay", "og-p"), ("drop", "og-d")):
+        if not (SITE / "og" / f"{card}.html").is_file():
+            problems.append(f"og/{card}.html: the source of app/{page}.html's card is missing")
     return problems
 
 
@@ -601,6 +625,7 @@ def check_static():
     if not any(i == {"src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"} for i in manifest["icons"]):
         problems.append("manifest: no maskable icon (/icon-maskable-512.png, 512x512, purpose maskable)")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
+                              ("og-p.png", (1200, 630), 150 * 1024), ("og-d.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
                               ("icon-maskable-512.png", (512, 512), None),
                               ("apple-touch-icon.png", (180, 180), None), ("favicon-32.png", (32, 32), None)):
@@ -1493,6 +1518,7 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("SEO metadata (M-04)", check_seo),
           ("trademark and mandatory lines (M-05)", check_trademark), ("partials in sync", check_partials),
           ("no page shows the ghost", check_ghost),
+          ("viral-1: a card per kind of link; pay.html and drop.html are view.html and app.html but for it", check_link_cards),
           ("privacy inventory covers the schema (M-06)", check_privacy_inventory),
           ("contrast table (M-03)", check_contrast), ("static files (M-04)", check_static),
           ("security.txt contacts answer a stranger (needs the network)", check_security_contacts),

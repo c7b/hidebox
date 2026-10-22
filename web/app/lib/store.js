@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // The app's only shared state: a small in-memory store with subscriptions and per-device conveniences
-// in localStorage (recent drops, the judge pass, the day's sponsor-grant answer); every storage call
-// survives blocked storage. The locker's IndexedDB records live in idb.js.
+// in localStorage (recent drops, the judge pass, the day's sponsor-grant answer) and sessionStorage (C60); every
+// storage call survives blocked storage. The locker's IndexedDB records live in idb.js.
 
 const state = new Map();
 const watchers = new Map();
@@ -74,3 +74,19 @@ export function savedJudgePass(now = Date.now()) {
 export function saveJudgePass(code) {
   localSet(JUDGE, code === null ? null : { code, until: Date.now() + JUDGE_MS });
 }
+
+// --- this tab's sessionStorage: ?from=share, said once with its next link or drive (C60) ---
+
+const FROM = 'mutis.from_share';
+const session = (fn) => { try { return fn(globalThis.sessionStorage); } catch { return null; } };
+
+export function noteFromShare() {
+  const q = location.search.slice(1).split('&');
+  if (!q.includes('from=share')) return;
+  session((s) => s.setItem(FROM, '1'));
+  const rest = q.filter((x) => x && x !== 'from=share').join('&');
+  history.replaceState(history.state, '', location.pathname + (rest && `?${rest}`) + location.hash);
+}
+
+export const fromShare = () => session((s) => s.getItem(FROM)) === '1';
+export const fromShareSent = () => session((s) => s.removeItem(FROM));

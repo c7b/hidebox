@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT — the OG cards, rendered to PNG by tools/render-images.py: the shared-link
-   card in the drive's light look (DESIGN.md: neutral ink on white, violet only for Tari), the site's card (og.html) dark
-   like the home (the v3 design, docs/review/promote-v3.md), with the home's hero still; set in Geist, which the
-   tool loads from web/shared/fonts/geist/ (the pinned file) before it takes the picture. Lucide symbols inline, and
-   hidebox's own marks on both cards: the open box in the kit's lime and the wordmark (docs/review/brand-kit-1.md). The
-   app icons are SVGs of their own (icon.svg, icon-maskable.svg, ../static/favicon.svg). */
+/* SPDX-License-Identifier: MIT — the OG cards, rendered to PNG by tools/render-images.py: the site's card (og.html) dark
+   like the home (the v3 design, docs/review/promote-v3.md), with the home's hero still, and one card per kind of link
+   (viral-1: og-s.html a secret, og-p.html a paid link, og-d.html a drop link), dark the same way, each the same for every
+   link of its kind; set in Geist, which the tool loads from web/shared/fonts/geist/ (the pinned file) before it takes the
+   picture. Lucide symbols inline, and hidebox's own marks on every card: the open box in the kit's lime and the wordmark
+   (docs/review/brand-kit-1.md). The app icons are SVGs of their own (icon.svg, icon-maskable.svg, ../static/favicon.svg). */
 * { margin: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; }
 body { background: #FFFFFF; color: #0A0A0A; font-family: "Geist", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -35,16 +35,6 @@ h1 { text-wrap: balance; font-size: 64px; line-height: 1.0; font-weight: 600; le
 .badge .i { font-size: 17px; }
 .badge.outline { background: #FFFFFF; border-color: #E5E5E5; }
 .badge.chain { background: rgb(112 8 231 / .08); color: #7008E7; }
-.viewer .copy { gap: 26px; }
-.viewer { grid-template-columns: 620px 1fr; }
-.viewer h1 { font-size: 66px; }
-.viewer .locked { width: 500px; }
-.locked { width: 560px; display: grid; gap: 22px; padding: 32px; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 18px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / .08), 0 24px 48px -24px rgb(0 0 0 / .25); }
-.locked .file { display: flex; align-items: center; gap: 18px; font-size: 28px; font-weight: 600; letter-spacing: -.02em; }
-.locked .file .tile { width: 64px; height: 64px; border-radius: 14px; background: #F5F5F5; color: #0A0A0A; font-size: 32px; }
-.locked p { font-size: 23px; line-height: 1.45; color: #525252; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 64px; border-radius: 10px; background: #171717; color: #FAFAFA; font-size: 25px; font-weight: 500; }
 /* the site's card (og.html): the home's first screen, dark first. The lockup, then the hero's three lines as the home
    sets them (the headline, its grey second line, a third line smaller and dimmer), on the ink; the hero's still (opaque
    on the same #0A0A0A, so its frame disappears) in the right column, its floor faded into the ink as the home fades it.
@@ -57,3 +47,28 @@ h1 { text-wrap: balance; font-size: 64px; line-height: 1.0; font-weight: 600; le
 .night .still { display: grid; place-items: center; padding-right: 40px; }
 .night .still img { display: block; width: 420px; height: 420px;
   -webkit-mask: linear-gradient(to bottom, #000 86%, transparent); mask: linear-gradient(to bottom, #000 86%, transparent); }
+/* The link cards (viral-1): what a chat shows under a pasted link, the same for every link of its kind, nothing of the
+   link in it. The home card's ink, lockup and three lines (the title, the description's first sentence in grey, No account
+   needed. in lime); on the right, on the drive's gunmetal, the first thing the page shows: a secret with Open it, a locked
+   file with Pay to open, or the place to choose a file. One lime line per card; the button is the dark theme's light ink. */
+.link { grid-template-columns: 650px 1fr; }
+.link .copy { gap: 30px; padding-right: 24px; }
+.link h1 { font-size: 66px; }
+.link .sub { font-size: 31px; line-height: 1.25; text-wrap: balance; }
+.link .stage { display: grid; place-items: center; padding: 0 56px 0 48px; background: #101113; border-left: 1px solid rgb(255 255 255 / .08); }
+.panel { width: 100%; display: grid; gap: 26px; padding: 34px; background: #17191C; border: 1px solid rgb(255 255 255 / .1);
+  border-radius: 20px; box-shadow: inset 0 1px 0 rgb(255 255 255 / .06), 0 32px 64px -32px rgb(0 0 0 / .9); }
+.panel .file { display: flex; align-items: center; gap: 18px; font-size: 30px; font-weight: 600; letter-spacing: -.02em; color: #FAFAFA; }
+.panel .tile { width: 68px; height: 68px; border-radius: 16px; background: #1F2226; color: #FAFAFA; font-size: 34px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
+.panel .badge { justify-self: start; gap: 9px; padding: 6px 16px; font-size: 21px; }
+.panel .badge.pay { background: rgb(166 132 255 / .14); color: #A684FF; }
+.panel .badge .i { font-size: 19px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 12px; height: 66px; border-radius: 12px;
+  background: #FAFAFA; color: #0A0A0A; font-size: 26px; font-weight: 500; letter-spacing: -.01em; }
+.btn .i { font-size: 26px; }
+/* the drop link's place to choose a file: the drop zone's dashed edge around its icon and button */
+.panel.zone { justify-items: center; gap: 28px; padding: 54px 34px 40px; background: #131417;
+  border: 2px dashed rgb(255 255 255 / .22); box-shadow: none; }
+.panel.zone .tile { width: 84px; height: 84px; border-radius: 20px; font-size: 42px; }
+.panel.zone .btn { padding: 0 34px; }

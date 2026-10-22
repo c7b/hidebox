@@ -4,10 +4,11 @@
 // it over: the figure picks a file, the whole window takes a drop, and the page's phase (body[data-phase])
 // follows the widget. The widget owns its stylesheet, strings, live region and events.
 import { setJudgePass } from './lib/pow.js';
-import { savedJudgePass } from './lib/store.js';
+import { noteFromShare, savedJudgePass } from './lib/store.js';
 import { stylesheet, widgetStrings } from './ui/more.js';
 import { mountWidget } from './ui/widget.js';
 
+noteFromShare();   // /?from=share#share, a link page's Make your own secret (C60)
 const root = document.getElementById('mutis-drop');
 if (root) {
   await Promise.all([stylesheet('/app/css/widget.css'), widgetStrings()]);

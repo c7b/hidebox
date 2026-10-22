@@ -25,6 +25,7 @@ import { h, icon, init, toast } from './behaviors.js';
 import { alert, button, driveErrorText, errorAlert, formatTari } from './drive-parts.js';
 import { describe } from './errors.js';
 import { driveLook, folderPanel, ownDrive } from './folder-view.js';
+import { invite } from './invite.js';
 import { testnetLine } from './marks.js';
 import { steps as runOf, waiting } from './progress.js';
 
@@ -121,6 +122,7 @@ export async function payPage(root, cfg, shareId) {
     cfg, shareId, sA: pay.parsePayFragment(location.hash), info: null, teaser: null, claim: pay.savedClaim(shareId),
     status: null, error: null, busy: null, other: false, identity: null, funded: false, have: null, need: null, access: null, opened: null,
     used: false, timer: null, panel: null, driveError: null, late: false, checking: false, qr: null, drawn: null,
+    inviteClosed: false,
   };
   // A payment from this drive that never reached the chain (the tab closed while it was built) spent nothing.
   if (P.claim?.how === 'drive' && !P.claim.tx) P.claim = pay.keepClaim(shareId, { how: null });
@@ -521,8 +523,11 @@ export async function payPage(root, cfg, shareId) {
       content.append(button(t('buy.again'), { variant: 'outline', glyph: 'rotate-ccw', testid: 'pay-again', onclick: restart }));
     }
     if (P.error) content.append(errorAlert(P.error));
-    // Once it's open, the card is a short summary; the claims were read before paying.
+    // Once it's open, the card is a short summary; the claims were read before paying. Under it, the one quiet line
+    // that invites (ui/invite.js, viral-1): a buyer can sell their own; its × keeps it away for this page view.
     if (phase === 'opened') {
+      const line = P.inviteClosed ? null : invite('sell', { drive: true, onClose: () => { P.inviteClosed = true; draw(); } });
+      if (line) content.append(line);
       return h('div', { class: 'buyer-pay stack' }, h('section', { class: 'card', 'aria-labelledby': 'pay-h' },
         h('div', { class: 'card-header' }, h('h2', { class: 'card-title', id: 'pay-h' }, t('buy.amount')),
           h('p', { class: 'card-description', 'data-testid': 'pay-status', role: 'status' }, desc)),

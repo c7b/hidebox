@@ -207,7 +207,7 @@ export async function mountWidget(root, opts) {
         onPhase: (p, f) => view.phase(p, f), signal: ctl.signal, resume: sel.resume,
       });
       const { createLink } = await import('../lib/seal.js');
-      const link = opts.makeLink === false ? null : await createLink(item, { mode: 'link', maxViews: 1, expiresAt: nowS + limits.default_expiry_s });
+      const link = opts.makeLink === false ? null : await createLink(item, { mode: 'link', maxViews: 1, expiresAt: nowS + limits.default_expiry_s, oneOff: !ctx });
       if (mine !== run) return;
       // "Copied" only if this goes through (Safari and Firefox refuse a write without a tap).
       const copied = link && !to ? copyText(link.url).then(() => true, () => false) : null;

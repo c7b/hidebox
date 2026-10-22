@@ -7,7 +7,7 @@ import { sha256 } from './crypto.js';
 import { ApiError } from './api.js';
 import { deleteMe, register, signIn, signOut } from './api-locker.js';
 import { withPow } from './pow.js';
-import { get, set } from './store.js';
+import { fromShare, fromShareSent, get, set } from './store.js';
 
 // -> {token, probation}. Registers the locker on first use (18-bit PoW or a judge pass), otherwise signs in.
 export async function ensureSession(identity, { signal, onProgress } = {}) {
@@ -19,7 +19,9 @@ export async function ensureSession(identity, { signal, onProgress } = {}) {
   } catch (e) {
     if (!(e instanceof ApiError) || e.code !== 'unknown_identity') throw e;
     const body = { identity_id: identity.id, auth_verifier: b64uEncode(await sha256(identity.authKey)) };
+    if (fromShare()) body.from_share = true;   // C60: this tab came through a link page's invitation; said once
     res = await withPow('register', (pow, judge) => register({ ...body, pow }, judge), { signal, onProgress });
+    if (body.from_share) fromShareSent();
   }
   const session = { identityId: identity.id, token: res.token, probation: res.probation, expiresAt: res.expires_at };
   set('session', session);

@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<!-- A drop link's page (/d/): app.html with the drop link's own preview card (viral-1), the same for every drop link,
+     nothing of the link in it. Everything outside the card stays app.html's (web/site/tests/static_checks.py). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Leave a file · {{BRAND}}</title>
+<meta name="description" content="It locks in your browser before it leaves. No account needed.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{BRAND}}">
+<meta property="og:title" content="Leave a file on {{BRAND}}.">
+<meta property="og:description" content="It locks in your browser before it leaves. No account needed.">
+<meta property="og:image" content="{{ORIGIN}}/og-d.png">
+<meta property="og:image:secure_url" content="{{ORIGIN}}/og-d.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The {{BRAND}} logo over: Leave a file on {{BRAND}}. It locks in your browser before it leaves. No account needed. Beside it, a place to choose a file.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Leave a file on {{BRAND}}.">
+<meta name="twitter:description" content="It locks in your browser before it leaves. No account needed.">
+<meta name="twitter:image" content="{{ORIGIN}}/og-d.png">
+<meta name="twitter:image:alt" content="The {{BRAND}} logo over: Leave a file on {{BRAND}}. It locks in your browser before it leaves. No account needed. Beside it, a place to choose a file.">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="{{BRAND}}">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/parts.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/app.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/look.css" integrity="{{SRI}}">
+<link rel="stylesheet" href="/app/css/flow.css" integrity="{{SRI}}">
+<script src="/shared/theme.js" integrity="{{SRI}}"></script>
+<script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
+<script type="module" src="/app/ui/app.js" integrity="{{SRI}}"></script>
+</head>
+<body class="a-page">
+<a class="skip-link" href="#main">Skip to the content</a>
+<!--#include header-->
+<main id="main" class="container a-main" tabindex="-1"><p class="a-working mono" aria-hidden="true">…</p></main>
+<noscript><p class="container noscript">{{BRAND}} locks and opens files in this browser, so it needs JavaScript.</p></noscript>
+<!--#include footer-->
+</body>
+</html>

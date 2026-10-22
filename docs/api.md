@@ -40,7 +40,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | Route | Who | What |
 |---|---|---|
 | `GET /health` | anyone | `{"ok", "version", "time"}` |
-| `GET /config` | anyone | origins, network, `send_mode`, `amount_proof`, limits (with `links_per_item`), KDF bounds, pricing (with `one_per_drive` and `renew_days`), `features` (`folders` and `pay_to_open` are off until the drive's routes ship), courier and SealLog settings (`seal_log.checkpoint_interval_s`, `seal_log.component`), retention (with `trash_days`), the security drop, and the drive's numbers: `folders` (`max_depth`, `max_children`, `max_tree`, `max_items`, `max_upload_files`, `zip_max_bytes`, `zip_max_bytes_phone`), `items.max_delete_after_days`, `send` (`views`, `expiry_s` of a link sent by Tari™), `pay_to_open` (`prices_ut`, `fee_ut`, `buyer_views`, `buyer_window_s`, `claim_ttl_s`, `late_grace_s`, `demo_max_ut`, `watch_address`, `max_open_claims_per_share`). Copy variants follow it |
+| `GET /config` | anyone | origins, network, `send_mode`, `amount_proof`, limits (with `links_per_item`), KDF bounds, pricing (with `one_per_drive` and `renew_days`), `features` (`folders` and `pay_to_open` are off until the drive's routes ship), courier and SealLog settings (`seal_log.checkpoint_interval_s`, `seal_log.component`), retention (with `trash_days` and `count_days`, how long the two daily counts are kept), the security drop, and the drive's numbers: `folders` (`max_depth`, `max_children`, `max_tree`, `max_items`, `max_upload_files`, `zip_max_bytes`, `zip_max_bytes_phone`), `items.max_delete_after_days`, `send` (`views`, `expiry_s` of a link sent by Tari™), `pay_to_open` (`prices_ut`, `fee_ut`, `buyer_views`, `buyer_window_s`, `claim_ttl_s`, `late_grace_s`, `demo_max_ut`, `watch_address`, `max_open_claims_per_share`). Copy variants follow it |
 | `POST /pow` | anyone | a proof-of-work challenge for one purpose |
 | `GET /stats` | anyone | free quota, minutes since the last upload, disk use, `uploads_frozen`, `chain_ok`, the latest SealLog tree size and epoch, `packs_sold_public` and `packs_cap_public` (the public slice of paid space, whole GiB) |
 | `GET /stats/wall` | anyone | up to 24 recent items as `{size, exit}` classes (none until 8 exist), and the latest canary's age and size |
@@ -48,7 +48,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `PUT /uploads/{id}/chunks/{n}` | the uploader | one chunk's ciphertext (`X-Mutis-Chunk-SHA256`); idempotent |
 | `POST /uploads/{id}/complete` | the uploader | → `item_id`, `ct_hash`, `size_stored` |
 | `DELETE /uploads/{id}` | the uploader | abandon it and release the reservation |
-| `POST /items/{id}/shares` | owner or manage token | a link: mode (`link`, `link_password`, `password`), wrapped key, access verifier, link verifier, KDF, views, expiry |
+| `POST /items/{id}/shares` | owner or manage token | a link: mode (`link`, `link_password`, `password`), wrapped key, access verifier, link verifier, KDF, views, expiry; `from_share` (optional, a boolean): `true` on a file without a drive adds one to the day's `secret_from_share` count (C60), and anything but a boolean is 422 |
 | `GET /s/{id}` | anyone with the path | state, mode, whether it needs a password (410 `gone` with the reason and the day once it has left; never the open count) |
 | `POST /s/{id}/peek` | `X-Mutis-Access` | what the server knows about the link, without using a view (the "What we know" panel) |
 | `POST /s/{id}/open` | `X-Mutis-Access` | uses a view; returns the wrapped key, the header and metadata, and the ciphertext inline (small files) or a short-lived download ticket |
@@ -58,7 +58,7 @@ holds the shapes the app relies on, and `web/app/lib/api.js` and `api-locker.js`
 | `GET /s/{id}/stored` | `X-Mutis-Access` | the link's file exactly as the disk holds it, without using a view (the key is released only by `/open`) |
 | `DELETE /items/{id}` | owner or manage token | delete the file and every link to it |
 | `POST /items/{id}/adopt` | a locker and the item's manage token | move a file locked without a locker into the locker |
-| `POST /auth/register` | anyone (PoW) | a new locker: id and login-key verifier → session. 429 `drives_limited` past 5 new drives a UTC day per /64 or IPv4 address, 20 per /48 or /24 (a judge pass skips both) |
+| `POST /auth/register` | anyone (PoW) | a new locker: id and login-key verifier → session; `from_share` (optional, a boolean): `true` adds one to the day's `drive_from_share` count (C60), anything but a boolean is 422. 429 `drives_limited` past 5 new drives a UTC day per /64 or IPv4 address, 20 per /48 or /24 (a judge pass skips both) |
 | `POST /auth/session`, `DELETE /auth/session` | the locker | sign in with the login key; sign out |
 | `GET /me`, `DELETE /me` | the locker | quota, packs (`pack`: `id`, `bytes`, `until`, `renew_from`, or null), probation; delete the locker and its files |
 | `GET /me/items`, `POST /me/items/{id}/open` | the locker | the locker's files and their links, newest first; read one without using a link's views |

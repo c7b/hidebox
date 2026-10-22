@@ -146,8 +146,9 @@ deploy/README.md "Turning the app on".
 7. E-11: the `/t#4…` "Use a view key instead" paste field and its button as `t-viewkey` and
    `t-viewkey-submit` (not in §3.4.9); without them E-11 opens everything except that last step and
    reports SKIP.
-8. Caddy rewrites only these app routes to `app.html`: `/d/*`, `/locker*`, `/inbox*`, `/send*`,
-   `/watch*`, `/upgrade*`, `/verify*` (and `/s/*`, `/t` to `view.html`). If the app uses another path
+8. Caddy rewrites only these app routes to `app.html`: `/locker*`, `/inbox*`, `/send*`,
+   `/watch*`, `/upgrade*`, `/verify*` (and `/s/*`, `/t` to `view.html`; since viral-1 `/p/*` to `pay.html` and `/d/*`
+   to `drop.html`, the twins of `view.html` and `app.html` with their own preview cards). If the app uses another path
    (11-brand §10.4 mentions `/key`), tell me or the integrator so the Caddyfile and
    `headers_spec.ROUTES` add it.
 

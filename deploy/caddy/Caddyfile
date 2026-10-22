@@ -155,9 +155,12 @@ http://{$MUTIS_HOST} {
 	header @notice Content-Type "text/plain; charset=utf-8"
 
 	@api path /api/*
-	# /p/*: the buyer page of a paid link
-	@viewer path /s/* /t /p/*
-	@approute path /d/* /send /send/* /watch /watch/* /verify /verify/*
+	# A link's page answers with its kind's own preview card (viral-1): a secret (/s/*, /t) view.html, a paid link's buyer
+	# page (/p/*) pay.html, a drop link (/d/*) drop.html; the same head for every link of a kind, nothing of the link in it.
+	@viewer path /s/* /t
+	@paylink path /p/*
+	@droplink path /d/*
+	@approute path /send /send/* /watch /watch/* /verify /verify/*
 	# The drive (16-drive-design §12) has its own page
 	@drive path /drive /drive/*
 	@appfiles path /app/* /vendor/*
@@ -165,7 +168,7 @@ http://{$MUTIS_HOST} {
 	@fonts path /shared/fonts/*
 	# What other products show beside a link to us: the share cards (og:image) and the icons. Their names stay put
 	# when their pictures change, so a day, not immutable.
-	@cards path /og.png /og-s.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png /icon-maskable-512.png
+	@cards path /og.png /og-s.png /og-p.png /og-d.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png /icon-maskable-512.png
 	@crawl path /robots.txt /sitemap.xml
 
 	handle @api {
@@ -236,6 +239,22 @@ http://{$MUTIS_HOST} {
 		import revalidate
 		header X-Robots-Tag "noindex, nofollow"
 		rewrite * /app/view.html
+		import files
+	}
+
+	handle @paylink {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/pay.html
+		import files
+	}
+
+	handle @droplink {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/drop.html
 		import files
 	}
 

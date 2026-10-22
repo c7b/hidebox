@@ -181,6 +181,17 @@
    ]
   },
   {
+   "id": "C19-p",
+   "condition": "the paid link's share card (/p/, viral-1; web/app/pay.html): pay to open asks for tTARI, the Esmeralda testnet's test money (C19-k on the page itself); no drive or other account is needed to pay (Pay with test money, or another Ootle wallet) or to open",
+   "backed_by": "ui/paypage.js (No drive needed), lib/pay.js; C19-k",
+   "markers": [
+    "tari test money"
+   ],
+   "sentences": [
+    "Pay with Tari test money to open it. No account needed."
+   ]
+  },
+  {
    "id": "C17-k",
    "condition": "locker onboarding (child form of C17)",
    "backed_by": "spec §4.8",
@@ -207,19 +218,21 @@
   },
   {
    "id": "C32",
-   "condition": "always",
+   "condition": "always; the drop link's share card (/d/, viral-1): a visitor's file is locked to the drive's key in the browser before upload",
    "backed_by": "spec §4.4, §4.14 (16-drive-design §9.3)",
    "markers": [
     "lock in this browser before",
     "lock here, in your browser",
-    "lock in your browser first"
+    "lock in your browser first",
+    "locks in your browser before"
    ],
    "sentences": [
     "Files lock in this browser before upload.",
     "They lock in this browser before they upload.",
     "Your files lock here, in your browser.",
     "Files lock in your browser first.",
-    "In your browser."
+    "In your browser.",
+    "It locks in your browser before it leaves."
    ]
   },
   {
@@ -580,13 +593,28 @@
   },
   {
    "id": "C59",
-   "condition": "always: a drive is a key made in the browser; we ask for no name, no ID document, no email and no password, and store a random id and a hash of the login key (C29); payments go between Tari addresses",
+   "condition": "always: a drive is a key made in the browser; we ask for no name, no ID document, no email and no password, and store a random id and a hash of the login key (C29); payments go between Tari addresses; the link pages' invitation after the value (viral-1, ui/invite.js) says it as Private drive. No email. No KYC.",
    "backed_by": "server/mutis/handlers/auth.py register (identity_id, auth_verifier, proof of work); C29; spec D6, §4.8.4",
    "markers": [
     "no kyc"
    ],
    "sentences": [
-    "Built on Tari. No KYC. No email."
+    "Built on Tari. No KYC. No email.",
+    "Want your own? Private drive. No email. No KYC."
+   ]
+  },
+  {
+   "id": "C60",
+   "condition": "always (viral-1): a tab that came through a link page's Make your own secret or Sell your own files (?from=share, one flag in that tab's sessionStorage, the query cleared at once) says from_share: true once, with the next one-off link it makes without a drive or the next drive it makes; the create handler adds one to that UTC day's row of daily_counts (day, kind, n) in the same transaction. Nothing else is stored: no id, no link to the link or drive, no network, no time finer than the day. Kept {count_days} days; read only by the operator (mutis-admin counts), never published",
+   "backed_by": "server/mutis/counts.py, migrations/007_daily_counts.sql, handlers/shares.py create, handlers/auth.py register, cleanup.COUNT_DAYS; web/app/lib/store.js noteFromShare; server/tests/test_counts.py",
+   "markers": [
+    "after someone tapped make your own secret",
+    "nothing about who"
+   ],
+   "sentences": [
+    "The server counts how many links and drives were made after someone tapped Make your own secret or Sell your own files: one number per day for each, nothing about who.",
+    "How many one-off links and how many drives were made each day after someone tapped Make your own secret or Sell your own files: the day, which of the two, and a count. Nothing about who.",
+    "how many links and drives were made each day after someone tapped Make your own secret or Sell your own files, never who"
    ]
   }
  ],

@@ -9,7 +9,7 @@ import json
 import re
 import time
 
-from flows import home, no_hscroll, owner_with_drop, scenario
+from flows import home, invite_check, no_hscroll, owner_with_drop, scenario
 from flows_drive import fixture_files
 from flows_share import FEATURES, drive_page
 
@@ -146,6 +146,7 @@ def ux_drop(t):
             and b.eval("getComputedStyle(document.querySelector('.done-file')).opacity") == "0",
             "after its 1.2 s the moment rests: the words in full, the file inside the box")
     t.shot(b, "ux-drop-1440-delivered")
+    invite_check(t, b, "secret", "/d/ delivered, 1440", shot="viral-drop-1440", secrets=("Council", "photo-gps.jpg"))
     # /verify/tx: the summary first, the record under Details
     mode(b, "hold-tx")
     b.click("dd-chain-link")
@@ -197,6 +198,7 @@ def ux_drop_phone(t):
     t.check(p.eval("document.querySelector('[data-testid=\"dd-done\"]').getBoundingClientRect().top >= 0"), "the moment starts in view")
     t.check(no_hscroll(p), "the done moment fits a phone")
     t.shot(p, "ux-drop-390-delivered")
+    invite_check(t, p, "secret", "/d/ delivered, 390", shot="viral-drop-390", secrets=("Council", "photo-gps.jpg"))
     p.click("dd-chain-link")
     p.wait_for("tx-summary", 90)
     t.check(p.eval("!document.querySelector('[data-testid=\"tx-details\"]').open && !document.querySelector('[data-testid=\"tx-check\"]').open"),

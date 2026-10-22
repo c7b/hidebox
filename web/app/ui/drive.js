@@ -7,7 +7,7 @@
 import { loadStrings, t, BRAND } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { setJudgePass } from '../lib/pow.js';
-import { savedJudgePass } from '../lib/store.js';
+import { noteFromShare, savedJudgePass } from '../lib/store.js';
 import { DriveIndex } from '../lib/drive.js';
 import { knownLinks } from '../lib/links.js';
 import { h, icon, toast } from './behaviors.js';
@@ -220,6 +220,7 @@ async function boot(identity, { made }) {
   });
 }
 
+noteFromShare();   // a link page's Sell your own files (/drive?make&from=share): the new drive says so once (C60)
 await loadStrings();
 try {
   setJudgePass(savedJudgePass());

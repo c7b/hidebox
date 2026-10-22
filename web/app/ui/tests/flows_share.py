@@ -19,7 +19,7 @@ import sqlite3
 import time
 import zipfile
 
-from flows import FAKE_SHARE, VIEW_ASK, VIEW_END, Intercept, api_error, downloaded, no_hscroll, safety_emoji, scan_code, scenario
+from flows import FAKE_SHARE, Intercept, VIEW_ASK, VIEW_END, api_error, downloaded, invite_check, no_hscroll, safety_emoji, scan_code, scenario
 from flows_drive import fixture_files, row_menu, table_names, upload_files
 
 FEATURES = ("folders",)
@@ -603,6 +603,7 @@ def folder_zip(t):
     t.check(v.attr("view-views-left", "data-left") == "0" and "last open" in v.text("view-views-left"), "a Once folder: this was its open")
     t.check(not any("Trip" in r["url"] or "map.txt" in r["url"] for r in v.requests), "no name in any request")
     t.shot(v, "folder-1440-open")
+    invite_check(t, v, "secret", "a folder opened, 1440", shot="viral-folder-1440", secrets=("Trip", "map.txt"))
     v.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === 'Day one').querySelector('[data-testid=\"fv-open\"]').click()")
     v.wait("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].map((e) => e.dataset.name).join() === 'notes.txt'", 10)
     t.check(v.text("fv-crumbs").replace("\n", "") == "TripDay one", f"breadcrumbs inside the folder ({v.text('fv-crumbs')})")
@@ -652,6 +653,7 @@ def folder_viewer(t):
     t.check("2 visits left." in p.text("view-views-left"), "visits left after this one")
     t.check(no_hscroll(p), "no horizontal scroll at 390 (open)")
     t.shot(p, "folder-390-open", full_page=True)
+    invite_check(t, p, "secret", "a folder opened, 390", shot="viral-folder-390", secrets=("Trip", "map.txt"))
     p.eval("[...document.querySelectorAll('[data-testid=\"fv-row\"]')].find((e) => e.dataset.name === 'photo-gps.jpg').querySelector('[data-testid=\"fv-open\"]').click()")
     p.wait("document.querySelector('#lightbox [data-testid=\"lightbox-stage\"]')?.dataset.view === 'open'", 60)
     t.check(p.attr("view-image", "data-type") == "image/jpeg" and p.exists("lightbox-download"), "a picture opens here, with Download")

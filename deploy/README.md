@@ -210,6 +210,7 @@ day key, which the privacy design rules out.
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |
 | Features, budgets | `sudo mutis-admin feature <name> on|off|clear` (at once for the app and for pages read with JavaScript; the built pages follow the TOML at the next deploy); `sudo mutis-admin budget show` |
 | Canary, evidence | `sudo mutis-admin canary-now`; `sudo systemctl start mutis-evidence` |
+| The share link's two counts | `sudo mutis-admin counts [--days N]`: per UTC day, how many one-off links (`secret_from_share`) and drives (`drive_from_share`) were made by a tab that came through a link page's Make your own secret or Sell your own files (C60); nothing else is stored; rows older than `cleanup.COUNT_DAYS` go |
 | Credits frozen (`credits` red, `credit_freeze_on`) | the hourly reconcile found a mismatch twice in a row, five minutes apart (a single one only holds credits until that second check); it keeps running while frozen, so a later `event=chain.reconcile_ok` in `journalctl -u mutis-chain` means every credited output is proven and committed again. Find out what changed, then `sudo mutis-admin unfreeze-credits` |
 | walletd | `systemctl status walletd`; `journalctl -u walletd` (warnings only); restart `sudo systemctl restart walletd` |
 | Balances | `cd /tmp && sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py balances [--refresh]` |

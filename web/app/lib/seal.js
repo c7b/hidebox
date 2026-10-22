@@ -9,6 +9,7 @@ import { ctHash, encryptFile, encryptMeta, deriveItemKeys } from './format.js';
 import { linkFragment, linkProof, newShareSecret, shareKeys, shareUrl, wrapFileKey } from './share.js';
 import { ApiError, completeUpload, createShare, createUpload, deleteUpload, putChunk } from './api.js';
 import { judgeHeaders, withPow } from './pow.js';
+import { fromShare, fromShareSent } from './store.js';
 
 // The same number /config serves as text_max_chars (spec §9.4).
 export const TEXT_MAX_CHARS = 10000;
@@ -124,9 +125,12 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
 // mode: 'link' (key after #), 'link_password' (link + password, the default with a password) or
 // 'password' (password only; no fragment). expiresAt defaults to the item's own expiry (the server
 // applies the same default; a kept item's link then has none). `url` is null without an origin
-// (the sidecar never shows one). -> {shareId, url, fragment, s, state, maxViews, expiresAt}
-export async function createLink(item, { mode = 'link', password, maxViews = 1, expiresAt, origin = globalThis.location?.origin } = {}) {
+// (the sidecar never shows one). oneOff: the home's share box without a drive; its link says from_share once when
+// this tab came through a link page's invitation (store.js fromShare; C60). -> {shareId, url, fragment, s, state,
+// maxViews, expiresAt}
+export async function createLink(item, { mode = 'link', password, maxViews = 1, expiresAt, origin = globalThis.location?.origin, oneOff = false } = {}) {
   const body = { mode, link_verifier: null, kdf: null, max_views: maxViews, expires_at: expiresAt ?? item.expiresAt ?? null };
+  if (oneOff && fromShare()) body.from_share = true;
   let s;
   let fragment = null;
   if (mode === 'link') {
@@ -151,6 +155,7 @@ export async function createLink(item, { mode = 'link', password, maxViews = 1, 
   body.wrapped_key = b64uEncode(await wrapFileKey(wrapKey, item.headerHash, item.fk));
   body.access_verifier = b64uEncode(accessVerifier);
   const res = await createShare(item.itemId, body, item.headers);
+  if (body.from_share) fromShareSent();
   return {
     shareId: res.share_id, url: origin ? shareUrl(origin, res.share_id, fragment) : null, fragment, s,
     state: res.state, maxViews: res.max_views, expiresAt: res.expires_at,

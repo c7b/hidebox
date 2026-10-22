@@ -9,7 +9,11 @@ is on [`/made#cant`](https://hidebox.app/made#cant) and in [threat-model.md](thr
 
 Encryption hides contents, not everything. The server stores ciphertext, padded sizes, arrival hours,
 expiries (rounded up to the hour when an hour or more away), exit rules and open counts. It sees IP addresses
-while you are connected and never writes them to a log. The send mode is `send_mode` in
+while you are connected and never writes them to a log. The server counts how many links and drives were made after
+someone tapped Make your own secret or Sell your own files: one number per day for each, nothing about who. A tab that
+came through one of those buttons keeps that in its own sessionStorage until it makes a link or a drive, and says so
+once with that request (`from_share`); the `daily_counts` table holds the day, which of the two, and a count, for
+`retention.count_days` days. The send mode is `send_mode` in
 [`/api/v1/config`](https://hidebox.app/api/v1/config), and the site's copy follows it:
 
 - **Direct** (this deployment's setting): once the browser wallet holds the testnet grant our sponsor
