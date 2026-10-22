@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
-// The result (14-ghost-design §5): the ghost holds the rule, the card the link. "Copied" only after a
-// write went through; Share leads on touch screens; one live region speaks. The word, More rules and
-// the Tari way load with their first tap (card-more.js).
+// The result (14-ghost-design §5): the ghost holds the rule, the card the link. Copy link is always there
+// (share-simple): it says Copied for two seconds after a write went through (the automatic one too), then
+// Copy link again; Share opens the device's share sheet with the link alone wherever there is one, and leads
+// on touch screens; one live region speaks. The word, More rules and the Tari way load with their first tap
+// (card-more.js).
 import { announce, copyText, h } from '../lib/dom.js';
 import { t } from '../lib/i18n.js';
 import { manageShare, patchShare } from '../lib/api.js';
 import { cloneGhost, glide, gulp, setGhost, unroll } from '/shared/ghost.js';
-import { fill, formatDuration, icon, toast } from './core.js';
+import { fill, formatDuration, icon, lucide, toast } from './core.js';
 import { more } from './more.js';
 import { exifChip } from './sealing.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const FINE = matchMedia('(hover: hover) and (pointer: fine), (min-width: 900px) and (not (pointer: coarse))').matches;
+const COPIED_MS = 2000;
 
 // result: the sealed file ({source, meta, item, link, noise, exif, locker, copied: Promise<bool>}).
 export function renderCard(result, { cfg, live, lockerContext, onAnother, to = null }) {
@@ -30,11 +33,12 @@ export function renderCard(result, { cfg, live, lockerContext, onAnother, to = n
     'aria-label': t('card.link'), 'data-testid': 'sealed-link', oncopy: () => { st.left = true; },
   });
   const label = h('span', {}, t('card.copy'));
-  const copy = h('button', { type: 'button', class: 'a-btn md-copy', 'data-testid': 'copy-link', onclick: copyNow }, icon('tick'), label);
-  const share = navigator.share && matchMedia('(pointer: coarse)').matches
-    ? h('button', { type: 'button', class: 'a-btn md-share', 'data-testid': 'share-link', onclick: shareNow }, icon('share'), h('span', {}, t('card.share')))
+  const glyph = lucide('copy');
+  const copy = h('button', { type: 'button', class: 'a-btn md-copy', 'data-testid': 'copy-link', onclick: copyNow }, glyph, label);
+  const share = typeof navigator.share === 'function'
+    ? h('button', { type: 'button', class: 'a-btn md-share', 'data-testid': 'share-link', onclick: shareNow }, lucide('share-2'), h('span', {}, t('card.share')))
     : null;
-  (share ?? copy).classList.add('a-btn--primary');
+  (share && matchMedia('(pointer: coarse)').matches ? share : copy).classList.add('a-btn--primary');
   const row = h('div', { class: 'md-link-row' }, field, h('div', { class: 'md-acts' }, share, copy));
   const exif = st.exif && (st.exif.removed || st.exif.notice) ? exifChip(st.exif, null) : null;
   const confirm = h('div', { class: 'md-confirm', role: 'group', 'aria-labelledby': 'md-ask', hidden: true });
@@ -56,10 +60,19 @@ export function renderCard(result, { cfg, live, lockerContext, onAnother, to = n
   // The figure holds the count and the word for a plain link; other rules belong to More rules.
   const simple = () => Boolean(st.link?.maxViews && st.link.expiresAt && (st.link.mode === 'link' || st.word));
 
+  // Copied for two seconds, then Copy link again: the button is always there to copy once more.
+  let copiedTimer = 0;
+  function showCopied(on) {
+    clearTimeout(copiedTimer);
+    label.textContent = t(on ? 'card.copied' : 'card.copy');
+    glyph.firstChild.setAttribute('href', glyph.firstChild.getAttribute('href').replace(/#i-[a-z0-9-]+$/, on ? '#i-check' : '#i-copy'));
+    copy.classList.toggle('md-done', on);
+    if (on) copiedTimer = setTimeout(() => showCopied(false), COPIED_MS);
+  }
+
   function setCopied(ok) {
     st.copied = ok;
-    label.textContent = t(ok ? 'card.copied' : 'card.copy');
-    copy.classList.toggle('md-done', ok === true);
+    showCopied(ok === true);
     if (ok) st.left = true;
   }
 

@@ -124,9 +124,7 @@
 .md-link::selection { background: var(--mark); color: var(--on-mark); }
 .md-acts { display: flex; gap: var(--s-2); }
 .md-acts .a-btn { flex: 1; white-space: nowrap; }
-.md-copy { min-width: 9.2em; }
-.md-copy svg { display: none; }
-.md-copy.md-done svg { display: block; }
+.md-copy { min-width: 9.2em; }   /* Copy link and Copied keep one width */
 .md-copy.md-done { animation: md-pop var(--dur-3) var(--ease-out); }
 @keyframes md-pop { from { scale: .8; } }
 /* the code to scan: ink on white in both themes, so every camera reads it (DESIGN.md) */

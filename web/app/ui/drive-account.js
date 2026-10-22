@@ -8,7 +8,7 @@ import { utf8 } from '../lib/bytes.js';
 import { saveFile } from '../lib/download.js';
 import { t } from '../lib/i18n.js';
 import { h, icon, init, lines, openModal, closeModal, toast } from './behaviors.js';
-import { alert, button, dialogBox, errorAlert, fileIcon, itemName, safetyGrid } from './drive-parts.js';
+import { alert, button, copyButton, dialogBox, errorAlert, fileIcon, itemName, safetyGrid } from './drive-parts.js';
 
 const identityLib = () => import('../lib/identity.js');
 
@@ -136,8 +136,7 @@ export async function openSettings(drive) {
     const identity = await tari(drive);
     const { qrFigure } = await import('./qr.js');
     const cfg = drive.cfg;
-    const copy = button(t('drive.copy'), { variant: 'outline', size: 'sm', glyph: 'copy', testid: 'copy-address' });
-    copy.addEventListener('click', () => copyAddress(drive));
+    const copy = copyButton(t('drive.copy'), { text: () => identity.locker.address, done: t('drive.toast.addr'), variant: 'outline', size: 'sm', testid: 'copy-address' });
     addressSlot.replaceChildren(
       h('p', { class: 'mono small address-full', 'data-testid': 'locker-address' }, identity.locker.address),
       h('div', { class: 'row' }, copy),
