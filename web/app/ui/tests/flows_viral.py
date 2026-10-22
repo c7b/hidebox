@@ -58,10 +58,11 @@ def viral_invite(t):
         t.check(v.wait_state("view-root", VIEW_END, 60) == "opened", f"{w}: opened")
         close_preview(v)
         t.check(v.eval("!!(document.querySelector('.a-intact').compareDocumentPosition(document.querySelector('[data-testid=\"invite\"]'))"
-                       " & Node.DOCUMENT_POSITION_FOLLOWING)") and v.exists("view-own"),
-                f"{w}: the line comes after the secret and its Save, before the foot, which keeps Make your own secret")
+                       " & Node.DOCUMENT_POSITION_FOLLOWING)") and v.exists("view-own") and not v.visible("view-own"),
+                f"{w}: the line comes after the secret and its Save, before the foot; while it shows, the foot's Make your own secret steps aside")
         invite_check(t, v, "secret", f"/s/ opened, {w}", shot=f"viral-secret-{w}", secrets=(sid, url.split("#")[1], "Stage door"))
-        t.check(v.exists("view-own") and v.attr("view-root", "data-state") == "opened", f"{w}: after ×, the page and its foot stay")
+        t.check(v.visible("view-own") and v.attr("view-root", "data-state") == "opened",
+                f"{w}: after ×, the page stays and the foot's Make your own secret comes back")
 
 
 @scenario("viral-count", "viral-1 (C60): ?from=share leaves the address bar at once and the #share arrival still glows; the tab keeps "
@@ -69,7 +70,7 @@ def viral_invite(t):
           "never again; the same for a new drive from Sell your own files; the server adds one to that day's number")
 def viral_count(t):
     before = counts(t)
-    # From a link page's foot: Make your own secret, in the same tab.
+    # From the line after the value: Make your own secret, in the same tab (the foot's own one steps aside while it shows).
     m = t.actor()
     home(t, m)
     url = seal_text(m, "The office key is under the plant.")
@@ -77,7 +78,7 @@ def viral_count(t):
     a.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": POSTS})
     t.check(open_link(a, url) == "opened", "a stranger opens a secret")
     close_preview(a)
-    a.click("view-own")
+    a.click("invite-go")
     a.wait("!!document.querySelector('#mutis-drop.share-glow .md-zone')", 60)
     t.check(a.eval("location.pathname + location.search + location.hash") == "/#share",
             f"the home at /#share: ?from=share left the address bar ({a.eval('location.href')})")

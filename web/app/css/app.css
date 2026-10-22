@@ -131,6 +131,8 @@
 }
 .a-page .a-view-links :is(a, .a-linkbtn):hover { color: var(--fg); }
 .a-view-foot .a-known { justify-self: stretch; text-align: left; }
+/* while the line after the value shows (ui/invite.js), its button is the one Make your own secret; its × brings this one back */
+.a-view:has(.invite) .a-view-own { display: none; }
 /* one line under the rule: the server can't scan what it can't see */
 .a-scan { display: flex; gap: var(--s-2); align-items: flex-start; justify-self: center; max-width: 72ch; font: var(--t-small); color: var(--fg-2); text-wrap: balance; }
 .a-scan .a-icon { flex: none; width: 16px; height: 16px; margin-top: 2px; }

@@ -9,7 +9,7 @@
   button, **Make your own secret** (to `/?from=share#share`) or, on `/p/`, **Sell your own files** (to
   `/drive?make&from=share`), and a × that hides it for that page view. Never before the value, never in a browser
   that holds a drive, and nothing of the link in it. The link page's foot keeps its Make your own secret, now with
-  `?from=share` too.
+  `?from=share` too; while the line shows, the foot's button steps aside, so the page has one, and the × brings it back.
 - **A preview card per kind of link**: a secret ("Someone sent you a secret."), a paid link ("A locked file on
   hidebox.") and a drop link ("Leave a file on hidebox.") each have their own title, description and dark 1200 × 630
   card (`og-s.png`, `og-p.png`, `og-d.png`), the same for every link of a kind. Caddy serves `/p/` from `pay.html` and
