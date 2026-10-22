@@ -43,7 +43,7 @@ def posts(page, kind):
 
 @scenario("viral-invite", "viral-1: the link page's one quiet line comes only after the value (an opened secret), at 390 and "
           "1440: Make your own secret to /?from=share#share, nothing of the link in it, × hides it for the page view; the foot "
-          "keeps Make your own secret, with ?from=share; a browser that holds a drive gets no line")
+          "keeps Make your own secret, with ?from=share")
 def viral_invite(t):
     for device, w in (("iphone", 390), ("desktop", 1440)):
         m = t.actor()
@@ -62,16 +62,6 @@ def viral_invite(t):
                 f"{w}: the line comes after the secret and its Save, before the foot, which keeps Make your own secret")
         invite_check(t, v, "secret", f"/s/ opened, {w}", shot=f"viral-secret-{w}", secrets=(sid, url.split("#")[1], "Stage door"))
         t.check(v.exists("view-own") and v.attr("view-root", "data-state") == "opened", f"{w}: after ×, the page and its foot stay")
-    # A browser that holds a drive already has its own: no line.
-    m = t.actor()
-    home(t, m)
-    url = seal_text(m, "for a drive owner")
-    d = t.actor()
-    d.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": "try { localStorage.setItem('mutis.drive', '1'); } catch {}"})
-    t.check(open_link(d, url) == "opened", "a browser with a drive opens it")
-    close_preview(d)
-    t.check(d.eval("document.documentElement.hasAttribute('data-has-drive')") and not d.exists("invite") and d.exists("view-own"),
-            "a browser that holds a drive: no line (the foot stays)")
 
 
 @scenario("viral-count", "viral-1 (C60): ?from=share leaves the address bar at once and the #share arrival still glows; the tab keeps "
@@ -111,7 +101,7 @@ def viral_count(t):
 
 @scenario("viral-count-drive", "viral-1 (C60): Sell your own files (/drive?make&from=share) makes a drive at once, from=share "
           "out of the address bar; its register says from_share: true once and the server counts one drive for the day; a drive "
-          "made without the invitation says nothing", features=FEATURES)
+          "made without the invitation says nothing; a browser that holds a drive gets no line after the value", features=FEATURES)
 def viral_count_drive(t):
     data = "data-sidecar-" + "-".join(FEATURES)
     before = counts(t, data)
@@ -134,3 +124,11 @@ def viral_count_drive(t):
     t.check(len(reg) == 1 and "from_share" not in reg[0], "a drive made without the invitation says nothing")
     t.check(counts(t, data).get("drive_from_share", 0) - before.get("drive_from_share", 0) == 1, "and isn't counted")
     t.check(no_hscroll(d), "no horizontal scroll")
+    # A browser that holds a drive (d now does) has its own: no line after the value; the link page's foot stays.
+    m = t.actor()
+    home(t, m)
+    url = seal_text(m, "for a drive owner")
+    t.check(open_link(d, url) == "opened", "the browser with the new drive opens a secret")
+    close_preview(d)
+    t.check(d.eval("document.documentElement.hasAttribute('data-has-drive')") and not d.exists("invite") and d.exists("view-own"),
+            "a browser that holds a drive: no line after the value (the foot stays)")
