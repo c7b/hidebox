@@ -44,7 +44,7 @@ export async function render(main, { dropId }) {
   try {
     drop = await getDrop(dropId);
   } catch (e) {
-    const ways = () => h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'));
+    const ways = () => h('a', { class: 'a-btn a-btn--primary', href: '/#share' }, t('gone.own'));
     if (e?.code === 'drop_closed') return set('closed', scene({ state: 'gone', title: t('drop.closed') }).head, ways());
     if (e?.code === 'drop_not_found') return set('not-found', scene({ state: 'oops', title: t('drop.not_found') }).head, ways());
     return set('error', errorBanner(e, { action: { label: t('viewer.retry'), onClick: () => render(main, { dropId }) } }));

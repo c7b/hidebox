@@ -44,7 +44,7 @@ async function withPasswordPow(call, opts) {
   }
 }
 
-// "What we know about this link": uses no view. opts: {signal, onProgress} for a password PoW.
+// "What the server knows" (the glass box): uses no view. opts: {signal, onProgress} for a password PoW.
 export async function peek(shareId, access, opts = {}) {
   return withPasswordPow((body) => peekShare(shareId, access.headers, body), opts);
 }

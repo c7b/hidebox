@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-// "What we know about this link" (spec §12.3.5, 11-brand §10.9): the glass box. Every value the
-// server holds for the link and its file, under its real column name, printed from the API's own
-// answer (peek for a link holder, manage for the uploader); then what is stored nowhere.
+// "What the server knows" (spec §12.3.5, 11-brand §10.9): the glass box. Every value the server holds
+// for the link and its file, under its real column name, printed from the API's own answer (peek for a
+// link holder, manage for the uploader); then what is stored nowhere.
 import { h } from './lines.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, b64uEncode, hex } from '../lib/b64.js';

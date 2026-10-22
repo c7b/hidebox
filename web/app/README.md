@@ -57,7 +57,7 @@ viewer, is the product code unchanged.
 | `ui/scene.js` | the head of every app screen: the ghost in the pose of its rule (cloned from the page's `#ghost-tpl`), the screen's line and the ghost's sentence; Tari™ words in Tari purple |
 | `ui/lightbox.js`, `css/lightbox.css`, `lib/sniff.js` | the file preview (docs/review/preview-1.md): one lightbox for a drive file's name, a folder visit's files, a paid file, a single-file link (`/s/`, `/t`) and a single file in Received, each shown as soon as it opens; the kind comes from the decrypted bytes (`sniff.js`: png, jpeg, gif, webp, avif in an `<img>`; SVG drawn into a canvas; UTF-8 text as text nodes; the rest download only), Download always there; loaded the first time a file opens |
 | `ui/view.js` | the viewer and the gone page: every state of spec §12.3.2 on the ghost, the goodbye receipt (on chain or pending), the opened file in the preview (ui/lightbox.js), the program warning, `/t` deliveries |
-| `ui/known.js` | "What we know about this link", the glass box |
+| `ui/known.js` | "What the server knows", the glass box |
 | `ui/locker.js`, `keyflow.js`, `locker-ctx.js` | `/locker` (first screen: its three things by name; a drop link asks nothing first), the key (save, restore one tap away, the one-time prompt with Later), opening a locker only when something needs it |
 | `ui/droppage.js`, `inbox.js`, `send.js`, `watch.js`, `upgrade.js`, `verify.js` | the other app pages |
 | `drive.html`, `ui/drive.js` | the drive (16-drive-design §2): `/drive`, `/drive/folders/<id>`, `/drive/shared`, `/drive/activity`, `/drive/trash`, `/drive/storage`, `/drive/received`, `/drive/earnings` (where pay to open is on), one page that moves between them; `?make` makes a drive at once, `?open` opens the key dialog |
