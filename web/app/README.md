@@ -51,7 +51,7 @@ viewer, is the product code unchanged.
 
 | Path | What |
 |---|---|
-| `drop-widget.js` | the home page's entry: mounts the widget into `#mutis-drop` (spec §3.4.4) with its first dictionary and stylesheet |
+| `drop-widget.js` | the home page's entry: mounts the widget into `#mutis-drop` (spec §3.4.4) with its first dictionary and stylesheet; at `#share` it loads `ui/arrive.js` (the box in view, its lime ring, its first button focused) |
 | `app.html`, `view.html` | the shells Caddy rewrites app routes and links to (`ui/app.js`, `ui/view-page.js`) |
 | `ui/widget.js`, `zone.js`, `sealing.js`, `card.js`, `rules.js`, `noise.js`, `recent.js` | the drop widget: zone, sealing progress (the ¡ mark), the locked card with its noise strip, the Change panel, recent drops |
 | `ui/scene.js` | the head of every app screen: the ghost in the pose of its rule (cloned from the page's `#ghost-tpl`), the screen's line and the ghost's sentence; Tari™ words in Tari purple |
