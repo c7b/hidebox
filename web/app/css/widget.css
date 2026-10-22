@@ -125,14 +125,12 @@
 .md-acts { display: flex; gap: var(--s-2); }
 .md-acts .a-btn { flex: 1; white-space: nowrap; }
 .md-copy { min-width: 9.2em; }
-.md-copy svg { display: none; }
-.md-copy.md-done svg { display: block; }
 .md-copy.md-done { animation: md-pop var(--dur-3) var(--ease-out); }
 @keyframes md-pop { from { scale: .8; } }
 /* the code to scan: ink on white in both themes, so every camera reads it (DESIGN.md) */
 .md-qr { display: grid; justify-items: center; gap: var(--s-2); margin: 0; text-align: center; }
 .md-qr svg { width: 200px; height: 200px; border-radius: 14px; background: #fff; }
-.md-qr path { fill: #151A3B; }
+.md-qr svg > path { fill: #151A3B; }   /* the modules; the mark keeps its own colours */
 .md-qr figcaption { font: var(--t-small); color: var(--fg-2); max-width: 22ch; white-space: pre-line; }
 /* its place is kept from the first frame, so nothing under the card moves when the code is drawn */
 .md-qr-slot { justify-self: center; width: 200px; min-height: 276px; }

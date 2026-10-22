@@ -266,7 +266,7 @@ def home_text(t):
             f"localStorage holds no key and no text, only the recent-drops list ({sorted(json.loads(stored))})")
     b = t.actor("android")
     t.check(open_link(b, url, open_it=False) == "ready", "B sees the ready state, nothing used yet")
-    t.check(b.text("view-views-left") == "It opens one time. When you open it, the link ends.", "the sentence says the rule: once")
+    t.check(re.fullmatch(ONCE_UNTIL, b.text("view-views-left")) is not None, f"the sentence says the rule and its time: once ({b.text('view-views-left')!r})")
     t.check(b.attr("view-root", "data-state") == "ready" and b.eval("document.querySelector('.a-figure')?.dataset.pose") == "once"
             and b.eval("!document.querySelector('svg.ghost')"), "a tile for Once, and no ghost")
     t.shot(b, "view-412-ready")
@@ -1322,8 +1322,14 @@ def wow_times(p):
             "anims": sorted({(a["cls"].split()[0], a["dur"]) for a in tl["anims"]})}
 
 
+# The viewer's rule with its time (share-simple): "Opens one time, until Oct 22, 9:00 PM. Then it's gone."
+WHEN = r"[A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2}\s[AP]M"
+ONCE_UNTIL = rf"Opens one time, until {WHEN}\. Then it's gone\."
+
+
 def scan_code(p, testid):
-    """Reads the code the page drew (testid on its <figure>) the way a phone would: (payload, px per module, the read-back)."""
+    """Reads the code the page drew (testid on its <figure>) the way a phone would, correcting what Reed-Solomon
+    corrects (the modules under the mark): (payload, px per module, the read-back)."""
     d, view, px = p.wait(f"(() => {{ const s = document.querySelector('[data-testid=\"{testid}\"] svg'); return s ? [s.querySelector('path').getAttribute('d'),"
                          " s.viewBox.baseVal.width, s.getBoundingClientRect().width] : null; })()", 30)
     got = qrread.scan(d, view)
@@ -1382,7 +1388,7 @@ def ghost_screens(t):
         v = t.actor(device)
         t.check(open_link(v, url, open_it=False) == "ready", f"{w}: the viewer is ready")
         pose = v.eval("document.querySelector('.a-figure')?.dataset.pose")
-        t.check(pose == "once" and v.text("view-views-left") == "It opens one time. When you open it, the link ends."
+        t.check(pose == "once" and re.fullmatch(ONCE_UNTIL, v.text("view-views-left")) is not None
                 and "Someone shared something with you." in v.text("view-root") and v.eval("document.activeElement?.dataset?.testid") == "view-open",
                 f"{w}: the viewer's first screen: the Once tile, one sentence, C18, Open it focused ({pose})")
         t.shot(v, f"viewer-{w}-ready", full_page=True)
@@ -1396,8 +1402,8 @@ def ghost_screens(t):
             t.check(g.wait_state("view-root", VIEW_ASK, 60) == "burned", f"{w}: the gone page ({receipt})")
             g.wait(f"document.querySelector('[data-testid=\"gone-receipt\"]')?.dataset.receipt === {json.dumps(receipt)}", 30)
             text, href = g.text("view-root"), g.attr("gone-see", "href")
-            want = ("The file left our server. We wrote that on the Tari™ chain.", "Check it in this browser", f"/verify#{sid}") if receipt == "done" else \
-                   ("The file left our server. That goes on the Tari™ chain within 15 minutes.", "Check one we already wrote", "/verify#latest")
+            want = ("The file left the server, which wrote that on the Tari™ chain.", "Check it in this browser", f"/verify#{sid}") if receipt == "done" else \
+                   ("The file left the server. That goes on the Tari™ chain within 15 minutes.", "Check an older one", "/verify#latest")
             t.check("This link has ended." in text and "Someone opened it already." in text and want[0] in text
                     and g.text("gone-see") == want[1] and href == want[2] and g.eval("document.querySelector('.a-figure')?.dataset.pose") == "gone",
                     f"{w}: ended, {receipt}: the receipt says {want[0]!r} and links {href}")
@@ -1449,3 +1455,144 @@ def ghost_screens(t):
         t.check("Exit: included at checkpoint" in line and "Its exit on the Tari™ chain, checked by your browser." in vf.eval("document.querySelector('main').textContent"),
                 f"{w}: See the goodbye: /verify checks this link's exit ({line[:60]})")
         t.shot(vf, f"verify-{w}", full_page=True)
+
+
+# --- share-simple: the link page says less, Make your own secret, the box at #share, Copy, the mark ----------
+
+FEW_UNTIL = rf"Opens 3 more times, until {WHEN}\. Then it's gone\."
+SCAN = "The server can't see inside to scan it, so open only what you expected."
+SHARE_BOX = """(() => { const z = document.querySelector('#mutis-drop .md-zone'); if (!z) return null; const b = z.getBoundingClientRect();
+  const s = getComputedStyle(z); const root = document.getElementById('mutis-drop');
+  return { top: b.top, bottom: b.bottom, head: document.querySelector('.site-header').getBoundingClientRect().bottom, vh: innerHeight,
+           glow: root.classList.contains('share-glow'), anim: s.animationName, ring: s.boxShadow,
+           focus: document.activeElement?.dataset?.testid ?? document.activeElement?.tagName }; })()"""
+LIME = "rgb(188, 254, 0)"   # --brand-solid, #BCFE00
+EDGE = "rgb(89, 128, 11)"   # --brand-edge on light pages, #59800B
+
+
+@scenario("share-simple-link", "share-simple: the link page in few lines (rule and time in one, the scan line, Open it), "
+          "Make your own secret to /#share in the foot of every state, What the server knows, no we or our")
+def share_simple_link(t):
+    m = t.actor()
+    home(t, m)
+    few = seal_text(m, "The office key is under the plant.")
+    m.click("count", "few")
+    m.wait("document.querySelector('.md-card').dataset.maxViews === '3'", 30)
+    o = t.actor()
+    home(t, o)
+    once = seal_text(o, "Stage door, nine o'clock.")
+    for device, w in (("iphone", 390), ("desktop", 1440)):
+        v = t.actor(device)
+        t.check(open_link(v, few, open_it=False) == "ready", f"{w}: ready")
+        shown = v.eval("document.querySelector('[data-testid=\"view-root\"]').innerText")
+        rows = [r.strip() for r in shown.split("\n") if r.strip()]
+        rule = v.text("view-views-left").split(". ", 1)
+        t.check(re.fullmatch(FEW_UNTIL, v.text("view-views-left")) is not None,
+                f"{w}: the opens left and the time in one sentence, then Then it's gone ({v.text('view-views-left')!r})")
+        t.check(v.text("view-scan") == SCAN, f"{w}: the warning is one line: the server can't scan it, open only what you expected")
+        t.check(rows == ["Someone shared something with you.", rule[0] + ".", rule[-1], SCAN, "Open it", "Make your own secret",
+                         "What the server knows", "Report this link"], f"{w}: eight lines, in this order ({rows})")
+        t.check(not re.search(r"\b(we|our|us)\b", shown, re.I) and "Not now" not in shown, f"{w}: no we, our or us; no Not now")
+        t.check(v.attr("view-own", "href") == "/#share" and v.text("view-own") == "Make your own secret"
+                and v.eval("!document.querySelector('[data-testid=\"view-own\"]').classList.contains('a-btn--primary')")
+                and v.eval("!!(document.querySelector('[data-testid=\"view-open\"]').compareDocumentPosition("
+                           "document.querySelector('[data-testid=\"view-own\"]')) & Node.DOCUMENT_POSITION_FOLLOWING)"),
+                f"{w}: Make your own secret goes to /#share, an outline button after Open it")
+        t.check(v.eval("document.querySelectorAll('[data-testid=\"view-root\"] .a-btn--primary').length") == 1
+                and v.eval("document.activeElement?.dataset?.testid") == "view-open", f"{w}: Open it is the one primary, and it has the focus")
+        t.check(no_hscroll(v), f"{w}: no horizontal scroll")
+        v.click("view-known")
+        v.wait("(document.querySelector('[data-testid=\"known-panel\"]')?.textContent || '').includes('wrapped_key')", 30)
+        t.check(v.text("view-known") == "What the server knows" and v.eval("!!document.querySelector('.a-view-foot [data-testid=\"known-panel\"]')"),
+                f"{w}: What the server knows opens the glass box under the foot's links")
+        t.shot(v, f"view-{w}-ready-few", full_page=True)
+    v = t.actor("iphone")
+    open_link(v, once, open_it=False)
+    t.check(re.fullmatch(ONCE_UNTIL, v.text("view-views-left")) is not None, f"Once: {v.text('view-views-left')!r} (C26)")
+    v.click("view-open")
+    t.check(v.wait_state("view-root", VIEW_END, 60) == "opened" and v.attr("view-own", "href") == "/#share", "opened: the foot has Make your own secret")
+    v.reload()
+    t.check(v.wait_state("view-root", VIEW_ASK, 60) == "burned", "burned")
+    t.check(v.attr("view-own", "href") == "/#share" and v.eval("!document.querySelector('[data-testid=\"view-root\"] .a-btn--primary')")
+            and "Someone opened it already." in v.text("view-root"), "the ended page: Make your own secret in the foot, nothing primary")
+    t.shot(v, "view-390-burned")
+    sid = few.split("/s/")[1].split("#")[0]
+    e = t.actor("iphone")
+    gone = {"error": {"code": "gone", "message": "This link has ended.", "details": {"reason": "removed", "ended_day": "2026-10-31", "views": 0}}}
+    Intercept(e).add(f"*/api/v1/s/{sid}", "Request", lambda _params: (410, gone))
+    t.check(open_link(e, few) == "removed" and "It was taken down after a report." in e.text("view-root")
+            and e.attr("view-own", "href") == "/#share", "taken down: It was taken down after a report, and Make your own secret")
+    n = t.actor()
+    t.check(open_link(n, t.origin + "/s/" + "A" * 22 + "#1" + "A" * 43) == "not-found", "not found")
+    shown = n.eval("document.querySelector('[data-testid=\"view-root\"]').innerText")
+    t.check("This link isn't here." in shown and "The server remembers an ended link for 30 days." in shown
+            and not re.search(r"\b(we|our|us)\b", shown, re.I), f"not found, in the server's words ({shown[:120]!r})")
+
+
+@scenario("share-simple-home", "share-simple: /#share brings the box fully under the header, a lime ring breathes and settles, "
+          "the first button takes the focus; in-page too; still with reduced motion; the first use ends it")
+def share_simple_home(t):
+    for device, w in (("desktop", 1440), ("iphone", 390)):
+        for dark in (False, True):
+            p = t.actor(device, dark=dark)
+            if not dark:   # the home is dark first: light is the switch's choice
+                p.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": "try { localStorage.setItem('mutis.theme', 'light'); } catch {}"})
+            p.goto(t.origin + "/#share")
+            p.wait("!!document.querySelector('#mutis-drop.share-glow .md-zone')", 60)
+            p.b.drain(0.6)
+            box = p.eval(SHARE_BOX)
+            theme = p.eval("document.documentElement.dataset.theme")
+            t.check(theme == ("dark" if dark else "light") and box["glow"] and box["anim"] == "share-breathe" and LIME in box["ring"]
+                    and (dark or EDGE in box["ring"]), f"{w} {theme}: the box glows in lime{'' if dark else ', its darker edge outside'} ({box['ring'][:90]})")
+            t.check(box["head"] <= box["top"] and box["bottom"] <= box["vh"], f"{w}: the whole box under the sticky header ({box})")
+            t.check(box["focus"] == "drop-input", f"{w}: Choose a file has the focus ({box['focus']})")
+            t.shot(p, f"home-{w}-{'dark' if dark else 'light'}-share")
+    r = t.actor("desktop", reduced_motion=True)
+    r.goto(t.origin + "/#share")
+    r.wait("!!document.querySelector('#mutis-drop.share-glow .md-zone')", 60)
+    box = r.eval(SHARE_BOX)
+    t.check(box["anim"] == "none" and LIME in box["ring"], f"reduced motion: the ring, still ({box['anim']})")
+    q = t.actor()
+    home(t, q)
+    t.check(not q.eval("document.getElementById('mutis-drop').classList.contains('share-glow')"), "the home without #share: no glow")
+    q.eval("location.hash = '#share'")
+    q.wait("document.getElementById('mutis-drop').classList.contains('share-glow')", 10)
+    t.check(q.eval(SHARE_BOX)["top"] >= q.eval(SHARE_BOX)["head"], "in-page navigation to #share: the glow, the box in view")
+    q.click("drop-write")
+    q.wait_for("drop-textarea")
+    t.check(not q.eval("document.getElementById('mutis-drop').classList.contains('share-glow')"), "writing a secret ends the glow")
+
+
+@scenario("share-simple-result", "share-simple: Copy link is always there (Copied for two seconds, then Copy link), Share with the "
+          "link alone where the browser has one, the mark in the code (level Q) and the code still reads back")
+def share_simple_result(t):
+    label = "document.querySelector('[data-testid=\"copy-link\"]').textContent.trim()"
+    glyph = "document.querySelector('[data-testid=\"copy-link\"] use').getAttribute('href').split('#')[1]"
+    for device, w in (("desktop", 1440), ("iphone", 390)):
+        a = t.actor(device)
+        a.cmd("Page.addScriptToEvaluateOnNewDocument", {"source": FAKE_SHARE})
+        home(t, a)
+        url = seal_text(a, "The office key is under the plant.")
+        t.check(a.eval(label) == "Copied" and a.eval(glyph) == "i-check", f"{w}: the copy made at once says Copied, with a check")
+        t.check(a.wait(f"{label} === 'Copy link'", 4) and a.eval(glyph) == "i-copy", f"{w}: two seconds later it says Copy link again, with the copy icon")
+        a.eval("navigator.clipboard.writeText('something else')")
+        a.click("copy-link")
+        t.check(a.wait(f"{label} === 'Copied'", 3) and a.wait("navigator.clipboard.readText()", 10) == url, f"{w}: Copy link copies again and says Copied")
+        t.check(a.wait(f"{label} === 'Copy link'", 4), f"{w}: and back to Copy link")
+        primary = a.eval("document.querySelector('.md-acts .a-btn--primary')?.dataset.testid")
+        t.check(primary == ("copy-link" if device == "desktop" else "share-link"), f"{w}: one primary: {primary}")
+        a.click("share-link")
+        t.check(json.loads(a.eval("JSON.stringify(window.__shared ?? null)")) == {"url": url}, f"{w}: Share hands the share sheet the link alone")
+        t.check(no_hscroll(a), f"{w}: no horizontal scroll")
+        t.shot(a, f"home-{w}-result-copy")
+        if device == "desktop":
+            a.wait_for("link-qr", 30)
+            payload, px, got = scan_code(a, "link-qr")
+            mark = a.eval("!!document.querySelector('[data-testid=\"link-qr\"] [data-testid=\"qr-mark\"]')")
+            t.check(mark and a.attr("link-qr", "data-level") == "Q" and got["ecl"] == "Q", f"the code carries the mark, at level {got['ecl']}")
+            t.check(payload == url and not got["clean"] and all(e is not None and e <= 9 for e in got["errors_per_block"]),
+                    f"read back as drawn, correcting the modules under the mark ({got['errors_per_block']} per block, version {got['version']})")
+    b = t.actor()
+    home(t, b)
+    seal_text(b, "no share sheet here")
+    t.check(not b.exists("share-link") and b.exists("copy-link"), "a browser without a share sheet: Copy link alone")

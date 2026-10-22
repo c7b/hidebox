@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // The home page's drop widget (spec §3.4.4; 16-drive-design §11, "Just share one thing"): mounts into
-// #mutis-drop. A page with a figure (#drop) hands it over: the figure picks a file, the whole window
-// takes a drop, and the page's phase (body[data-phase]) follows the widget. The widget owns its stylesheet,
-// strings, live region and events.
+// #mutis-drop, and shows where to start when the page is reached at #share. A page with a figure (#drop) hands
+// it over: the figure picks a file, the whole window takes a drop, and the page's phase (body[data-phase])
+// follows the widget. The widget owns its stylesheet, strings, live region and events.
 import { setJudgePass } from './lib/pow.js';
 import { savedJudgePass } from './lib/store.js';
 import { stylesheet, widgetStrings } from './ui/more.js';
@@ -19,4 +19,8 @@ if (root) {
   // A page with a figure (#drop) lets the whole window take a drop; the drive's home seats the zone in a card.
   const figure = document.getElementById('drop');
   await mountWidget(root, { variant: root.dataset.variant || 'hero', windowDrops: Boolean(figure), figure });
+  // #share (share-simple): ui/arrive.js shows where to start; it loads only for that fragment.
+  const arrive = () => (location.hash === '#share' ? import('./ui/arrive.js').then((m) => m.arrive(root)) : root.classList.remove('share-glow'));
+  arrive();
+  addEventListener('hashchange', arrive);
 }

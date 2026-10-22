@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // The viewer (spec §12.3.2, 14-ghost-design §4.3 and §10.2): a link (/s/<id>#…) or a delivery (/t#3…,
 // /t#4…) becomes a file in this tab. Nothing uses a view until the visitor presses Open it (the reveal
-// gate); the key leaves the address bar only after a successful open; every state carries the
-// report link. Each screen starts with an icon tile for its state; an ended link says "This link has
-// ended", the reason, and (C42) only when the file left our server, that we wrote so on the Tari chain
-// (or when it lands there). The file shows in the shared preview (ui/lightbox.js), which picks what to show from
-// the decrypted bytes alone.
+// gate); the key leaves the address bar only after a successful open; every state ends with the same
+// foot: Make your own secret, then the report link. Each screen starts with an icon tile for its state; an
+// ended link says "This link has ended", the reason, and (C42) only when the file left the server, that the
+// server wrote so on the Tari chain (or when it lands there). The file shows in the shared preview
+// (ui/lightbox.js), which picks what to show from the decrypted bytes alone.
 import { h, lines } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
@@ -25,12 +25,16 @@ import { waiting } from './progress.js';
 
 const REASON_STATE = { burned: 'burned', expired: 'expired', revoked: 'revoked', owner_deleted: 'revoked', removed: 'removed' };
 
-// Under every state: report this link (`link`, without its key, fills in the form) and, unless the
-// screen already offers it, "Make your own".
-function footer(link = null, own = true) {
-  return h('p', { class: 'a-view-foot' },
-    h('a', { href: abuseHref(link) }, icon('report'), h('span', {}, t('viewer.report'))),
-    own ? h('a', { href: '/' }, t('viewer.own')) : null);
+// Under every state (share-simple): Make your own secret, an outline button to the home's quick share that
+// never stands in the way of the state's own action; then the quiet links, What the server knows (the ready
+// screen's glass box, which opens under them) and Report this link (`link`, without its key, fills in the form).
+function footer(link = null, known = null) {
+  return h('div', { class: 'a-view-foot' },
+    h('a', { class: 'a-btn a-view-own', href: '/#share', 'data-testid': 'view-own' }, t('viewer.own')),
+    h('div', { class: 'a-view-links' },
+      known?.toggle,
+      h('a', { href: abuseHref(link) }, icon('report'), h('span', {}, t('viewer.report')))),
+    known?.panel);
 }
 
 function head(parts) {
@@ -44,9 +48,9 @@ function head(parts) {
   return concat(...out);
 }
 
-// The receipt of an ended link (C42): once the file's exit is in a SealLog checkpoint, "We wrote that on
-// the Tari chain" and a check in this browser (/verify); before that, when it lands, and one we already
-// wrote. A kept file: "The file stays with its owner", no chain line. Nothing when receipts are off.
+// The receipt of an ended link (C42): once the file's exit is in a SealLog checkpoint, that the server wrote
+// so on the Tari chain, and a check in this browser (/verify); before that, when it lands, and an older one
+// to check. A kept file: "The file stays with its owner", no chain line. Nothing when receipts are off.
 function receiptPanel(cfg, shareId) {
   if (!cfg.features?.seallog) return null;
   const box = h('div', { class: 'a-receipt', 'data-testid': 'gone-receipt', 'aria-live': 'polite' });
@@ -78,9 +82,9 @@ export function viewer(root, opts) {
   root.setAttribute('data-testid', 'view-root');
   root.classList.add('a-view');
 
-  function set(state, children, own = true) {
+  function set(state, children, known = null) {
     root.dataset.state = state;
-    root.replaceChildren(...[children].flat(Infinity).filter(Boolean), small ? null : footer(`${location.origin}/s/${shareId}`, own));
+    root.replaceChildren(...[children].flat(Infinity).filter(Boolean), small ? null : footer(`${location.origin}/s/${shareId}`, known));
     if (!small) root.querySelector('.a-scene-h')?.focus({ preventScroll: true });
   }
 
@@ -95,10 +99,9 @@ export function viewer(root, opts) {
       errorBanner(e, { action: { label: t('viewer.retry'), testid: 'view-retry', onClick: start } })]);
   }
 
-  // A link that can't be opened here (lost key, unknown id, a check that failed): the worried ghost.
+  // A link that can't be opened here (lost key, unknown id, a check that failed): the warning tile.
   function oops(state, titleKey, bodyKey, params = {}) {
-    set(state, [sceneOf('oops', t(titleKey), t(bodyKey, params)).head,
-      h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'))], false);
+    set(state, sceneOf('oops', t(titleKey), t(bodyKey, params)).head);
   }
 
   // An ended link: one line, one reason, the receipt (C42) or that the file stays.
@@ -107,7 +110,7 @@ export function viewer(root, opts) {
     opts.onEnded?.(reason);
     const date = details.ended_day ? formatDate(Date.parse(`${details.ended_day}T12:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' }) : '';
     const { head: top } = sceneOf('gone', t('gone.h'), t(`gone.${state}`, { date }));
-    set(state, [top, receiptPanel(cfg, shareId), h('a', { class: 'a-btn a-btn--primary', href: '/' }, t('gone.own'))], false);
+    set(state, [top, receiptPanel(cfg, shareId)]);
   }
 
   function locked(e) {
@@ -169,8 +172,9 @@ export function viewer(root, opts) {
     field.focus();
   }
 
-  // The first screen: the rule in the ghost's hands and in one sentence, C18, and Open it. The glass
-  // box, the report link and "Make your own" wait under the button.
+  // The first screen (share-simple): the rule and its time in one line, then Then it's gone; one line on
+  // why only what you expected (C18); Open it. The foot holds Make your own secret, the glass box and the
+  // report link.
   async function ready(info = null) {
     if (!info) {
       try {
@@ -190,17 +194,16 @@ export function viewer(root, opts) {
     const { share } = info;
     const left = share.views_left;
     const once = left === 1 && share.max_views === 1;
-    const until = share.expires_at ? formatDate(share.expires_at * 1000, { dateStyle: 'medium', timeStyle: 'short' }) : null;
-    const rule = once ? t('viewer.once') : left !== null ? t('viewer.few', { count: left })
-      : until ? t('viewer.until', { date: until }) : t('viewer.until_taken');
+    const until = share.expires_at ? formatDate(share.expires_at * 1000, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null;
+    const opens = once ? (until ? 'viewer.once_until' : 'viewer.once') : until ? 'viewer.few_until' : 'viewer.few';
+    const rule = left === null ? (until ? t('viewer.until', { date: until }) : t('viewer.until_taken')) : t(opens, { count: left, date: until });
     const known = knownPanel({ cfg, load: async () => peek(shareId, access), access: async () => access.headers, kdf: status.kdf, toggleTestid: 'view-known', id: 'a-view-known' });
     const { head: top } = sceneOf(once ? 'once' : left !== null ? 'few' : 'keep', t('viewer.h'),
       h('span', { 'data-testid': 'view-views-left', 'data-left': left ?? '' }, lines(rule)));
     set('ready', [top,
-      h('p', { class: 'a-scan' }, icon('warning'), h('span', {}, lines(t('viewer.scan')))),
-      h('div', { class: 'a-row a-row--center' }, h('button', { type: 'button', class: 'a-btn a-btn--primary a-btn--big', 'data-testid': 'view-open', onclick: open }, t('viewer.open'))),
-      until && left !== null ? h('p', { class: 'a-caption a-center' }, t('viewer.not_now', { date: until })) : null,
-      h('div', { class: 'a-view-more' }, known.toggle), known.panel]);
+      h('p', { class: 'a-scan', 'data-testid': 'view-scan' }, icon('warning'), h('span', {}, t('viewer.scan'))),
+      h('div', { class: 'a-row a-row--center' }, h('button', { type: 'button', class: 'a-btn a-btn--primary a-btn--big', 'data-testid': 'view-open', onclick: open }, t('viewer.open')))],
+    known);
     root.querySelector('[data-testid="view-open"]').focus({ preventScroll: true });
   }
 

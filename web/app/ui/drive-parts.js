@@ -5,7 +5,7 @@
 import { formatBytes, formatDate, formatRelative, t } from '../lib/i18n.js';
 import { leavesAt, ruleOf } from '../lib/drive.js';
 import { SENT } from '../lib/links.js';
-import { h, icon } from './behaviors.js';
+import { h, icon, toast } from './behaviors.js';
 import { describe, errorText } from './errors.js';
 
 export { formatBytes };
@@ -127,6 +127,38 @@ export function sheetBox({ id, title, description = null, head = null, body = []
 export const button = (label, { variant = null, size = null, glyph = null, testid = null, onclick = null, type = 'button', ...rest } = {}) =>
   h('button', { class: 'btn', type, 'data-variant': variant, 'data-size': size, 'data-testid': testid, onclick, ...rest },
     glyph ? icon(glyph) : null, label);
+
+// Copy for a link or an address (share-simple, the same wherever a result shows one): Copied with a check for two
+// seconds once the write went through, then Copy again, so it can always copy once more; the toast says it for
+// screen readers. Refused: `field` is selected for a manual copy.
+export function copyButton(label, { text, field = null, done = t('drive.toast.copied'), ...opts }) {
+  const b = button(label, { glyph: 'copy', ...opts });
+  let timer = 0;
+  b.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(text());
+    } catch {
+      field?.focus();
+      field?.select();
+      toast(t('error.clipboard'), { type: 'error' });
+      return;
+    }
+    clearTimeout(timer);
+    b.dataset.copied = '';
+    b.replaceChildren(icon('check'), t('share.copied'));
+    timer = setTimeout(() => {
+      delete b.dataset.copied;
+      b.replaceChildren(icon('copy'), label);
+    }, 2000);
+    toast(done, { type: 'success' });
+  });
+  return b;
+}
+
+// Share: the device's share sheet with the link alone (no name, nothing else), where the browser has one.
+export const shareButton = (url, opts = {}) => (typeof navigator.share === 'function'
+  ? button(t('share.native'), { glyph: 'share-2', onclick: () => navigator.share({ url: url() }).catch(() => null), ...opts })
+  : null);
 
 // A button that waits on the network: past 300 ms its glyph turns into the turning one (or one is added), so a slow
 // phone never shows a pressed button doing nothing (ux-feedback-1). -> stop(), which puts the glyph back.

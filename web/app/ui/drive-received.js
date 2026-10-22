@@ -11,7 +11,7 @@ import { ApiError } from '../lib/api.js';
 import { FLAG_FOLDER } from '../lib/links.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import { h, icon, init, openModal, toast } from './behaviors.js';
-import { alert, button, errorAlert, formatBytes, formatTari } from './drive-parts.js';
+import { alert, button, copyButton, errorAlert, formatBytes, formatTari, shareButton } from './drive-parts.js';
 import { tariRow } from './drive-list.js';
 
 const RESCAN_MS = 15000;
@@ -65,19 +65,12 @@ function dropCard(drive) {
       return;
     }
     const url = `${drive.cfg.origin || location.origin}/d/${active.drop_id}`;
-    const copy = button(t('share.copy'), { glyph: 'copy', testid: 'drop-copy' });
-    copy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast(t('drive.toast.copied'), { type: 'success' });
-      } catch {
-        toast(t('error.clipboard'), { type: 'error' });
-      }
-    });
+    const field = h('input', { class: 'input', readonly: true, value: url, 'aria-label': t('rec.drop'), 'data-testid': 'drop-link' });
+    const copy = copyButton(t('share.copy'), { text: () => url, field, testid: 'drop-copy' });
     head.append(h('div', { class: 'card-action' },
       button(t('rec.drop_new'), { variant: 'ghost', size: 'sm', glyph: 'plus', onclick: run((lib) => lib.rotateDrop(identity, active.i), 'rec.drop_making') })));
     card.replaceChildren(head, h('div', { class: 'card-content' },
-      h('div', { class: 'link-row' }, h('input', { class: 'input', readonly: true, value: url, 'aria-label': t('rec.drop'), 'data-testid': 'drop-link' }), copy),
+      h('div', { class: 'link-row' }, field, copy, shareButton(() => url, { variant: 'outline', testid: 'drop-share' })),
       active.label ? h('p', { class: 'small muted' }, t('rec.drop_named', { label: active.label })) : null,
       errors));
   };

@@ -15,7 +15,7 @@ import { formatDate, t } from '../lib/i18n.js';
 import { activeShares, ruleOf } from '../lib/drive.js';
 import { FEW, FLAG_FOLDER, knownLinks, makeLink, rememberLink, stopLink } from '../lib/links.js';
 import { h, icon, id, init, lines, openModal, closeModal, toast } from './behaviors.js';
-import { alert, button, closeX, endsText, errorAlert, formatTari, itemName, opensText, ruleBadge, safetyGrid, shortAddress } from './drive-parts.js';
+import { alert, button, closeX, copyButton, endsText, errorAlert, formatTari, itemName, opensText, ruleBadge, safetyGrid, shareButton, shortAddress } from './drive-parts.js';
 import { patchShare } from '../lib/api.js';
 import { done, relayWait, steps } from './progress.js';
 
@@ -534,15 +534,9 @@ function resultStep(body, footer) {
   const touch = coarse() && typeof navigator.share === 'function';
   const input = h('input', { class: 'input', readonly: true, value: link.url, id: 'share-link-out', 'data-testid': 'share-link', 'aria-label': t('share.link') });
   input.addEventListener('focus', () => input.select());
-  const copyBtn = button(t('share.copy'), { variant: touch ? 'outline' : null, glyph: 'copy', testid: 'share-copy', 'data-autofocus': touch ? null : '' });
-  copyBtn.addEventListener('click', async () => {
-    if (await copy(link.url)) {
-      copyBtn.replaceChildren(icon('check'), t('share.copied'));
-      toast(t('drive.toast.copied'), { type: 'success' });
-    } else {
-      input.focus();
-    }
-  });
+  // Copy link (Copied for two seconds, then again); Share beside it where a computer's browser has a share sheet.
+  const copyBtn = copyButton(t('share.copy'), { text: () => link.url, field: input, variant: touch ? 'outline' : null, testid: 'share-copy', 'data-autofocus': touch ? null : '' });
+  const shareBtn = touch ? null : shareButton(() => link.url, { variant: 'outline', testid: 'share-native' });
   const pay = Boolean(link.rule.pay);
   const extra = pay ? [] : [
     item.folder ? t('share.say.visit', { ticket_min: ctx.ticketMin }) : null,
@@ -552,7 +546,7 @@ function resultStep(body, footer) {
     h('div', { class: 'row' }, h('span', { class: 'badge', 'data-variant': 'success' }, icon('check'), t('share.ready'))),
     h('p', { class: 'say', 'data-testid': 'share-say' }, pay ? t('sell.say', { price: formatTari(link.priceUt) }) : sentence(link, ctx, item)),
     extra.length ? h('p', { class: 'small', 'data-testid': 'share-say-more' }, extra.join(' ')) : null,
-    h('div', { class: 'field' }, h('label', { class: 'label', for: 'share-link-out' }, t('share.link')), h('div', { class: 'link-row' }, input, copyBtn)),
+    h('div', { class: 'field' }, h('label', { class: 'label', for: 'share-link-out' }, t('share.link')), h('div', { class: 'link-row' }, input, copyBtn, shareBtn)),
     link.word ? h('div', { class: 'stack' },
       h('div', { class: 'word-box', 'data-testid': 'share-word-box' }, icon('key-round'),
         h('div', { class: 'stack' }, h('span', { class: 'small muted' }, t('share.say.word')), h('strong', {}, link.word))),
@@ -570,7 +564,7 @@ function resultStep(body, footer) {
   // Phones: the share sheet is the primary action; Done stays quiet.
   footer.append(button(t('drive.done'), { variant: touch ? 'ghost' : 'outline', 'data-close': '' }));
   if (touch) {
-    footer.append(button(t('share.native'), { glyph: 'share-2', testid: 'share-native', 'data-autofocus': '', onclick: () => navigator.share({ url: link.url }).catch(() => null) }));
+    footer.append(shareButton(() => link.url, { testid: 'share-native', 'data-autofocus': '' }));
   }
 }
 

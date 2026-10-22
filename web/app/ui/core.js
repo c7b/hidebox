@@ -10,12 +10,19 @@ export function fill(el, ...children) {
   return el;
 }
 
-// One string, so the build can fingerprint it (tools/assets.py).
+// One string each, so the build can fingerprint them (tools/assets.py).
 const SPRITE = '/shared/icons.svg';
+const LUCIDE = '/shared/ui/icons.svg';
 
 export function icon(name, cls = 'a-icon') {
   return svg('svg', { class: cls, 'aria-hidden': 'true', focusable: 'false' },
     svg('use', { href: `${SPRITE}#${name}` }));
+}
+
+// A Lucide icon from the drive's sprite (i-copy, i-check, i-share-2), the same glyphs the drive's buttons wear.
+export function lucide(name, cls = 'a-icon') {
+  return svg('svg', { class: cls, 'aria-hidden': 'true', focusable: 'false' },
+    svg('use', { href: `${LUCIDE}#i-${name}` }));
 }
 
 // "10 minutes", "24 hours", "7 days" (11-brand §8.3): days from two days up, hours from one hour up.

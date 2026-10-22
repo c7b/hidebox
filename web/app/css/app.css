@@ -121,12 +121,19 @@
 .a-view { display: grid; gap: var(--s-5); width: 100%; max-width: 640px; justify-self: center; }
 .a-view > .a-btn { justify-self: center; }
 .a-view > .a-working { text-align: center; color: var(--fg-2); }
-.a-view-foot { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-4); font: var(--t-small); }
-.a-view-foot a { display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); color: var(--fg-2); }
-.a-view-more { display: flex; justify-content: center; }
-.a-view .a-known { justify-self: stretch; }
-.a-scan { display: flex; gap: var(--s-2); align-items: flex-start; justify-self: center; max-width: 44ch; font: var(--t-small); color: var(--fg-2); }
-.a-scan .a-icon { flex: none; margin-top: 2px; }
+/* the foot of every state (share-simple): Make your own secret, an outline button after the state's own action, then
+   the quiet links (What the server knows, whose glass box opens under them, and Report this link) */
+.a-view-foot { display: grid; justify-items: center; gap: var(--s-2); margin-top: var(--s-5); }
+.a-view-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--s-5); }
+.a-page .a-view-links :is(a, .a-linkbtn) {
+  display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); color: var(--fg-2); font: var(--t-small);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em;
+}
+.a-page .a-view-links :is(a, .a-linkbtn):hover { color: var(--fg); }
+.a-view-foot .a-known { justify-self: stretch; text-align: left; }
+/* one line under the rule: the server can't scan what it can't see */
+.a-scan { display: flex; gap: var(--s-2); align-items: flex-start; justify-self: center; max-width: 72ch; font: var(--t-small); color: var(--fg-2); text-wrap: balance; }
+.a-scan .a-icon { flex: none; width: 16px; height: 16px; margin-top: 2px; }
 .a-opening { font-variant-numeric: tabular-nums; }
 .a-opened-h { font: var(--t-h2); letter-spacing: -.015em; outline: none; }
 .a-view[data-state="opened"] { max-width: 760px; }

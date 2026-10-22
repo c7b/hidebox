@@ -109,6 +109,8 @@
     "It opens one time. When you open it, the link ends.",
     "It opens one time, until {date}. Then the link ends.",
     "It opens one time. Then the link ends.",
+    "Opens one time. Then it's gone.",
+    "Opens one time, until {date}. Then it's gone.",
     "Yes, by default."
    ]
   },
@@ -362,7 +364,7 @@
     "It left your drive. We wrote that on the Tari chain.",
     "That goes on the Tari chain within {checkpoint_min} minutes.",
     "After that, it leaves your drive. We write that on the Tari chain.",
-    "The file left our server. We wrote that on the Tari chain.",
+    "The file left the server, which wrote that on the Tari chain.",
     "We write that on the Tari chain.",
     "We wrote that on the Tari chain.",
     "That goes on the Tari chain within {checkpoint}.",
@@ -590,7 +592,7 @@
  ],
  "labels": [
   "Check it in this browser",
-  "Check one we already wrote",
+  "Check an older one",
   "The exit record",
   "Pay with test money",
   "Test money"
