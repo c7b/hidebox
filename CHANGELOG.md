@@ -1,6 +1,26 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- viral 1 -->
+## 2026-10-22: a line after the value, a card per kind of link, two numbers a day
+
+- **After the value, one quiet line**: under an opened secret (`/s/`, `/t`), an opened shared folder, a bought file
+  once it opens (`/p/`) and a delivered drop (`/d/`), "Want your own? Private drive. No email. No KYC." with one outline
+  button, **Make your own secret** (to `/?from=share#share`) or, on `/p/`, **Sell your own files** (to
+  `/drive?make&from=share`), and a × that hides it for that page view. Never before the value, never in a browser
+  that holds a drive, and nothing of the link in it. The link page's foot keeps its Make your own secret, now with
+  `?from=share` too.
+- **A preview card per kind of link**: a secret ("Someone sent you a secret."), a paid link ("A locked file on
+  hidebox.") and a drop link ("Leave a file on hidebox.") each have their own title, description and dark 1200 × 630
+  card (`og-s.png`, `og-p.png`, `og-d.png`), the same for every link of a kind. Caddy serves `/p/` from `pay.html` and
+  `/d/` from `drop.html`, the twins of `view.html` and `app.html` but for their cards; `tools/check-seo.py` checks each
+  card and that no part of a link's address is in it.
+- **Two numbers a day (C60)**: a tab that came through one of those buttons says so once, with its next one-off link
+  or new drive (`from_share: true`), and the server adds one to that UTC day's `secret_from_share` or
+  `drive_from_share` (`daily_counts`, migration 007), kept 400 days; nothing about who. `mutis-admin counts [--days N]`
+  prints them; `/fine-print` lists the table.
+<!-- /viral 1 -->
+
 <!-- share simple -->
 ## 2026-10-21: a link page that says less, Copy that stays, the mark in the code
 

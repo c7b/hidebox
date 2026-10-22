@@ -144,7 +144,7 @@ class CaddyfileTest(unittest.TestCase):
         for path, ctype in headers_spec.CRAWL.items():
             self.assertTrue(any(fnmatch.fnmatchcase(ctype, p) for p in patterns), f"{path} ({ctype}) is compressed")
         noindex = f'header X-Robots-Tag "{headers_spec.NOINDEX["x-robots-tag"]}"'
-        for route in ("@api", "@appfiles", "@viewer", "@approute", "@drive"):
+        for route in ("@api", "@appfiles", "@viewer", "@paylink", "@droplink", "@approute", "@drive"):
             body = re.search(rf"(?ms)^\thandle {route} \{{\n(.*?)^\t\}}", self.text).group(1)
             self.assertIn(noindex, body, route)
         for path in headers_spec.INDEXABLE:
@@ -197,7 +197,7 @@ class CaddyfileTest(unittest.TestCase):
         order = [m for m in re.findall(r"(?m)^\thandle (@\w+) \{", site)]
         self.assertEqual(order[:4], ["@api", "@notread", "@hashed_app", "@hashed"], "ahead of every file route")
         self.assertRegex(self.text, r"(?s)\(files\) \{\s*file_server \{\s*precompressed br gzip\s*\}\s*\}")
-        for matcher in ("@viewer", "@approute", "@drive", "@appfiles", "@cards", "@crawl", "@home"):
+        for matcher in ("@viewer", "@paylink", "@droplink", "@approute", "@drive", "@appfiles", "@cards", "@crawl", "@home"):
             self.assertIn("import files", bodies[matcher], matcher)
         self.assertIn("import files", re.search(r"(?ms)^\thandle \{\n(.*?)^\t\}", site).group(1), "the catch-all")
         self.assertRegex(site.split("handle_errors {", 1)[1], r"(?s)rewrite \* /404\.html\s*file_server \{\s*status 404\s*precompressed br gzip")

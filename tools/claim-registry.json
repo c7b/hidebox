@@ -181,6 +181,17 @@
    ]
   },
   {
+   "id": "C19-p",
+   "condition": "the paid link's share card (/p/, viral-1; web/app/pay.html): pay to open asks for tTARI, the Esmeralda testnet's test money (C19-k on the page itself); no drive or other account is needed to pay (Pay with test money, or another Ootle wallet) or to open",
+   "backed_by": "ui/paypage.js (No drive needed), lib/pay.js; C19-k",
+   "markers": [
+    "tari test money"
+   ],
+   "sentences": [
+    "Pay with Tari test money to open it. No account needed."
+   ]
+  },
+  {
    "id": "C17-k",
    "condition": "locker onboarding (child form of C17)",
    "backed_by": "spec §4.8",
@@ -207,19 +218,21 @@
   },
   {
    "id": "C32",
-   "condition": "always",
+   "condition": "always; the drop link's share card (/d/, viral-1): a visitor's file is locked to the drive's key in the browser before upload",
    "backed_by": "spec §4.4, §4.14 (16-drive-design §9.3)",
    "markers": [
     "lock in this browser before",
     "lock here, in your browser",
-    "lock in your browser first"
+    "lock in your browser first",
+    "locks in your browser before"
    ],
    "sentences": [
     "Files lock in this browser before upload.",
     "They lock in this browser before they upload.",
     "Your files lock here, in your browser.",
     "Files lock in your browser first.",
-    "In your browser."
+    "In your browser.",
+    "It locks in your browser before it leaves."
    ]
   },
   {

@@ -12,8 +12,8 @@ import mimetypes
 import urllib.parse
 from pathlib import Path
 
-# Caddy's rewrites (deploy/caddy/Caddyfile: @viewer, @approute, @drive): a route and the page it serves.
-PAGES = (("/s/", "app/view.html"), ("/p/", "app/view.html"), ("/t", "app/view.html"), ("/d/", "app/app.html"),
+# Caddy's rewrites (deploy/caddy/Caddyfile: @viewer, @paylink, @droplink, @approute, @drive): a route and the page it serves.
+PAGES = (("/s/", "app/view.html"), ("/p/", "app/pay.html"), ("/t", "app/view.html"), ("/d/", "app/drop.html"),
          ("/send", "app/app.html"), ("/watch", "app/app.html"), ("/verify", "app/app.html"), ("/drive", "app/drive.html"))
 TYPES = {".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json",
          ".svg": "image/svg+xml", ".woff2": "font/woff2", ".wasm": "application/wasm"}
