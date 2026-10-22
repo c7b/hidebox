@@ -1,7 +1,8 @@
 -- SPDX-License-Identifier: MIT
--- mutis database, schema version 5 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
--- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 to 005:
--- the drive's folders, Trash, opens per hour, the pay-to-open tables and the owner's check of sales).
+-- mutis database, schema version 7 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
+-- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 to 007:
+-- the drive's folders, Trash, opens per hour, the pay-to-open tables, the owner's check of sales, packs and the
+-- two daily counts).
 -- Deliberately absent: email, name, IP address, user agent, any login public key, a user's locker address,
 -- file or folder name, MIME type, plaintext size, any secret key in clear, any grant or recipient table, the
 -- drop an item came from, who opened a link, a buyer's identity. Kept on purpose, opt-in and for sales only:
@@ -265,3 +266,13 @@ CREATE TABLE sale_payments (                     -- one row per UTXO ever; apart
   status     TEXT NOT NULL CHECK (status IN ('pending_check','counted','extra')),
   owner_ok   INTEGER CHECK (owner_ok IN (0,1))       -- the seller's drive: 1 its to spend, 0 the payer kept it
 ) STRICT;
+
+-- Two numbers a day (viral-1, C60; schema 7): how many one-off links and how many drives were made by a browser tab
+-- that arrived through Make your own secret or Sell your own files. The UTC day, which of the two, a count; never
+-- who, which link or drive, a network or a time finer than the day. Kept cleanup.COUNT_DAYS days.
+CREATE TABLE daily_counts (
+  day  TEXT NOT NULL,                             -- 'YYYY-MM-DD', UTC
+  kind TEXT NOT NULL CHECK (kind IN ('secret_from_share','drive_from_share')),
+  n    INTEGER NOT NULL CHECK (n > 0),
+  PRIMARY KEY (day, kind)
+) STRICT, WITHOUT ROWID;

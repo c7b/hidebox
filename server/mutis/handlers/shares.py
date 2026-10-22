@@ -16,7 +16,7 @@ rule, and the sender's ciphertext still leaves.
 import json
 import secrets
 
-from .. import codec, db, items, lanes, quota, sales, tree
+from .. import codec, counts, db, items, lanes, quota, sales, tree
 from ..http_util import ApiError, Response, get_b64, get_bool, get_enum, get_int, invalid, json_response
 from .blobs import ranged
 
@@ -295,6 +295,9 @@ def create(ctx, item_id: str):
     max_views = get_int(body, "max_views", 1, 1_000_000, optional=True)
     expires_at = get_int(body, "expires_at", 0, 2 ** 40, optional=True)
     then_delete = get_bool(body, "then_delete")
+    # viral-1 (C60): a tab that arrived through Make your own secret says so once; only a one-off link from the
+    # home's share box (an item without a drive) adds to the day's number
+    from_share = get_bool(body, "from_share")
     cls = class_of_item(conn, item, ctx.now)
     if cls == "drop" and mode != "link":
         raise invalid("mode", "Drop deliveries use a plain link.")
@@ -330,6 +333,8 @@ def create(ctx, item_id: str):
                          "buyer_window_s) VALUES (?, ?, ?, ?, ?, ?)",
                          (share_id, paid["price_ut"], paid["server_half"], paid["teaser_ct"], sales.BUYER_VIEWS,
                           sales.BUYER_WINDOW_S))
+        if from_share and cls == "anon":
+            counts.add(conn, "secret_from_share", ctx.now)
         if then_delete:
             # "Delete it from my drive after" (16-drive-design §3): the file leaves with its last link, at
             # the latest when this one expires, and gets its exit receipt (C42).

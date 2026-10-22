@@ -8,7 +8,7 @@ or, while a download ticket is still open, when that download finishes (at most 
 import sqlite3
 import time
 
-from . import codec, db, items, packs, payments, quota, sales
+from . import codec, counts, db, items, packs, payments, quota, sales
 from .storage import Blobs
 
 TOMBSTONE_DAYS = 30
@@ -16,6 +16,7 @@ INACTIVE_DAYS = 180
 LAPSE_GRACE_DAYS = 30
 TRASH_DAYS = 30             # the Trash empties itself after this (16-drive-design §7, C47)
 DB_BACKUP_DAYS = 7          # kept by deploy/scripts/backup.py; published in /config
+COUNT_DAYS = 400            # the two daily counts (viral-1, C60); published in /config
 UNSHARED_GRACE_S = 2 * 3600
 JOB_KEEP_S = 86400          # finished jobs (tx ids of user deliveries) are forgotten after a day
 EVIDENCE_JOB_KEEP_S = TOMBSTONE_DAYS * 86400
@@ -103,6 +104,7 @@ def purge_expired(conn: sqlite3.Connection, now: int) -> None:
                      (now - JOB_KEEP_S,))
         conn.execute("DELETE FROM jobs WHERE state IN ('done','failed') AND evidence = 1 AND updated_at <= ?",
                      (now - EVIDENCE_JOB_KEEP_S,))
+        counts.purge(conn, COUNT_DAYS, now)
 
 
 def purge_tombstones(conn: sqlite3.Connection, now: int) -> None:

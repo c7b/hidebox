@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import auth, budgets, codec, config, db, indexer, items, jobs, logsafe, packs, quota
+from . import auth, budgets, codec, config, counts, db, indexer, items, jobs, logsafe, packs, quota
 from .chain_worker import notarize_manifest
 from .storage import Blobs
 from .walletd import Walletd
@@ -153,6 +153,14 @@ def cmd_budget(cfg, conn, args) -> None:
         print(f"{row['kind']:9} {row['slice']:8} {row['used']:>12} / {row['limit']}")
 
 
+def cmd_counts(cfg, conn, args) -> None:
+    """The two daily counts (viral-1, C60): one line per UTC day and kind that has any, newest first."""
+    if args.days < 1:
+        sys.exit("--days must be 1 or more")
+    for row in counts.recent(conn, args.days, codec.now()):
+        print(f"{row['day']}  {row['kind']:17}  {row['n']}")
+
+
 def cmd_unfreeze_credits(cfg, conn, args) -> None:
     with db.tx(conn):
         db.del_meta(conn, "credit_freeze")
@@ -286,6 +294,9 @@ def parser() -> argparse.ArgumentParser:
     b.add_argument("slice", nargs="?")
     b.add_argument("value", nargs="?", type=int)
     b.set_defaults(fn=cmd_budget)
+    c = sub.add_parser("counts", help="links and drives made after a link page's invitation, per UTC day (C60)")
+    c.add_argument("--days", type=int, default=30, help="the last N UTC days, today included (default 30)")
+    c.set_defaults(fn=cmd_counts)
     sub.add_parser("unfreeze-credits").set_defaults(fn=cmd_unfreeze_credits)
     for name, flag in (("canary-now", "canary"), ("evidence-pay-now", "evidence_pay"), ("seal-now", "seal")):
         sub.add_parser(name).set_defaults(fn=lambda cfg, conn, args, flag=flag: _force(conn, flag))
