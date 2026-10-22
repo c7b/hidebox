@@ -73,6 +73,7 @@ const VARIABLES = {
   ticket: ['config', (c) => c.retention.ticket_s, formatDuration],
   tombstone_days: ['config', (c) => days(c.retention.tombstone_days), formatDuration],
   db_backup_days: ['config', (c) => days(c.retention.db_backup_days), formatDuration],
+  count_days: ['config', (c) => c.retention.count_days && days(c.retention.count_days), formatDuration],
   inactive_days: ['config', (c) => days(c.retention.inactive_days), formatDuration],
   lapse_grace_days: ['config', (c) => days(c.retention.lapse_grace_days), formatDuration],
   // the drive's rules (16-drive-design §9: C45, C46, C47 say "{n} days" with the unit in the sentence)

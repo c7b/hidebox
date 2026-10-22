@@ -10,6 +10,7 @@ import { checkRisky, sanitizeFileName } from '../lib/filetype.js';
 import { saveFile } from '../lib/download.js';
 import { filesBelow, pathTo, readNode } from '../lib/folder-open.js';
 import { h, icon, init, wordmark } from './behaviors.js';
+import { invite } from './invite.js';
 
 const MiB = 1024 * 1024;
 const TICK_MS = 15000;
@@ -311,12 +312,12 @@ export function folderReady(root, { cfg, info, onOpen }) {
   open.focus({ preventScroll: true });
 }
 
-// After the open: the folder, on the whole page.
+// After the open: the folder, on the whole page; under it the one quiet line that invites (ui/invite.js, viral-1).
 export function folderOpened(root, opened, { cfg }) {
   const panel = folderPanel(opened, { cfg, heading: 'h1' });
   root.dataset.state = 'opened';
   root.dataset.kind = 'folder';
-  root.replaceChildren(panel.el);
+  root.replaceChildren(...[panel.el, invite('secret', { drive: true })].filter(Boolean));
   init(root);
   root.querySelector('#fv-title')?.focus({ preventScroll: true });
   return panel;

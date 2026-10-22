@@ -63,6 +63,7 @@
   <ul>
     <li><strong>We collect</strong> ciphertext, padded sizes, hours, rules, open counts, your drive's random id and a hash of its login key (if you use one), and invoices for space you rent. <br>The full list is below.</li>
     <li><strong>We don't collect</strong> names, emails, phone numbers, file names, file contents, keys, passwords, analytics or tracking cookies.</li>
+    <li><strong>Two numbers a day:</strong> The server counts how many links and drives were made after someone tapped Make your own secret or Sell your own files: one number per day for each, nothing about who.</li>
     <li><strong>Your IP:</strong> our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. <br>Our web server keeps no access logs.</li>
     <li><strong>Third parties:</strong> our host, Hostinger, which can see what our server stores; Let's Encrypt, for our certificate; Tari's indexer, only when you press “Check it on Tari's indexer”. <br>No analytics, no trackers, no third-party scripts or fonts.</li>
   </ul>
@@ -92,6 +93,7 @@
       <tr><th scope="row"><code>chain_utxos</code></th><td>A copy of the public TARI outputs on the Ootle, so your browser can look for its own deliveries without telling us which.</td><td>Public data; kept while useful.</td></tr>
       <tr><th scope="row"><code>abuse_reports</code></th><td>A report: the reported link's id, the category, your details, a contact if you gave one, and the link's key only if you chose to include it.</td><td>Kept with what we did about it, as our record of what we removed and why.</td></tr>
       <tr><th scope="row"><code>budgets</code></th><td>Daily totals per kind of action (sends, demo payments). <br>Nothing per person.</td><td>Daily.</td></tr>
+      <tr><th scope="row"><code>daily_counts</code></th><td>How many one-off links and how many drives were made each day after someone tapped Make your own secret or Sell your own files: the day, which of the two, and a count. <br>Nothing about who.</td><td>Kept<span data-needs="config" hidden> for <span data-v="count_days"></span></span>, then deleted.</td></tr>
       <tr><th scope="row"><code>used_nonces</code></th><td>The SHA-256 of each spent anti-bot challenge, so it can't be reused.</td><td>Five minutes.</td></tr>
       <tr><th scope="row"><code>seal_leaves</code>, <code>seal_checkpoints</code></th><td>SealLog: hashes of stored files and exits, and the checkpoints written to the Ootle.</td><td>Permanent, like the chain.</td></tr>
       <tr><th scope="row"><code>judge_passes</code></th><td>The SHA-256 of each one-time pass we gave the Council, and its uses left.</td><td>For the contest. <br>They hold nothing about a person.</td></tr>

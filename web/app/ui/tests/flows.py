@@ -82,6 +82,39 @@ def open_link(page, url, password=None, open_it=True):
     return state
 
 
+# viral-1: the one quiet line after the value (ui/invite.js), its words and where its one button goes.
+INVITE = "Want your own? Private drive. No email. No KYC."
+INVITE_TO = {"secret": ("Make your own secret", "/?from=share#share"), "sell": ("Sell your own files", "/drive?make&from=share")}
+
+
+def invite_check(t, page, kind, where, shot=None, secrets=()):
+    """viral-1: after the value, one quiet line: its words, one outline button to where it goes, and a ×; nothing of the
+    link in it (`secrets`: the link's id, its file's name or text, its label); nothing sideways. Then × hides it for the
+    page view and the focus stays on the page. `shot`: a picture of it first, in view."""
+    label, href = INVITE_TO[kind]
+    got = page.eval("""(() => { const e = document.querySelector('[data-testid="invite"]'); if (!e) return null;
+      const go = e.querySelector('[data-testid="invite-go"]'), x = e.querySelector('[data-testid="invite-x"]');
+      return { text: e.innerText.replace(/\\s+/g, ' ').trim(), html: e.outerHTML, say: e.querySelector('.invite-say')?.textContent,
+        go: go?.textContent, href: go?.getAttribute('href'), kind: e.dataset.kind, x: x?.getAttribute('aria-label'),
+        primary: !!e.querySelector('.a-btn--primary, .btn:not([data-variant])'), links: e.querySelectorAll('a').length,
+        buttons: e.querySelectorAll('button').length }; })()""")
+    t.check(got is not None and got["say"] == INVITE and got["go"] == label and got["href"] == href and got["kind"] == kind
+            and got["x"] == "Close" and got["links"] == 1 and got["buttons"] == 1 and not got["primary"],
+            f"{where}: after the value, one quiet line, one outline button {label!r} to {href}, and a × "
+            f"({got and {k: got[k] for k in ('say', 'go', 'href', 'x', 'primary')}})")
+    if got:
+        leaked = [s for s in secrets if s and s in got["html"]]
+        t.check(got["text"] == f"{INVITE} {label}" and not leaked, f"{where}: nothing of the link in it ({got['text']!r}, {leaked})")
+    t.check(no_hscroll(page), f"{where}: no horizontal scroll with the line")
+    if shot:
+        page.eval("document.querySelector('[data-testid=\"invite\"]')?.scrollIntoView({ block: 'center' })")
+        page.b.drain(0.8)   # its fade-in
+        t.shot(page, shot)
+    page.click("invite-x")
+    page.wait("!document.querySelector('[data-testid=\"invite\"]')", 5)
+    t.check(page.eval("document.activeElement?.id") == "main", f"{where}: × hides it for this page view; the focus stays on the page")
+
+
 def close_preview(page):
     """An opened file shows in the preview (ui/lightbox.js) over the page; Esc puts the page's own controls back."""
     if page.exists("lightbox"):
@@ -1471,7 +1504,7 @@ EDGE = "rgb(89, 128, 11)"   # --brand-edge on light pages, #59800B
 
 
 @scenario("share-simple-link", "share-simple: the link page in few lines (rule and time in one, the scan line, Open it), "
-          "Make your own secret to /#share in the foot of every state, What the server knows, no we or our")
+          "Make your own secret to /?from=share#share in the foot of every state, What the server knows, no we or our")
 def share_simple_link(t):
     m = t.actor()
     home(t, m)
@@ -1493,11 +1526,11 @@ def share_simple_link(t):
         t.check(rows == ["Someone shared something with you.", rule[0] + ".", rule[-1], SCAN, "Open it", "Make your own secret",
                          "What the server knows", "Report this link"], f"{w}: eight lines, in this order ({rows})")
         t.check(not re.search(r"\b(we|our|us)\b", shown, re.I) and "Not now" not in shown, f"{w}: no we, our or us; no Not now")
-        t.check(v.attr("view-own", "href") == "/#share" and v.text("view-own") == "Make your own secret"
+        t.check(v.attr("view-own", "href") == "/?from=share#share" and v.text("view-own") == "Make your own secret"
                 and v.eval("!document.querySelector('[data-testid=\"view-own\"]').classList.contains('a-btn--primary')")
                 and v.eval("!!(document.querySelector('[data-testid=\"view-open\"]').compareDocumentPosition("
                            "document.querySelector('[data-testid=\"view-own\"]')) & Node.DOCUMENT_POSITION_FOLLOWING)"),
-                f"{w}: Make your own secret goes to /#share, an outline button after Open it")
+                f"{w}: Make your own secret goes to /?from=share#share, an outline button after Open it")
         t.check(v.eval("document.querySelectorAll('[data-testid=\"view-root\"] .a-btn--primary').length") == 1
                 and v.eval("document.activeElement?.dataset?.testid") == "view-open", f"{w}: Open it is the one primary, and it has the focus")
         t.check(no_hscroll(v), f"{w}: no horizontal scroll")
@@ -1510,10 +1543,10 @@ def share_simple_link(t):
     open_link(v, once, open_it=False)
     t.check(re.fullmatch(ONCE_UNTIL, v.text("view-views-left")) is not None, f"Once: {v.text('view-views-left')!r} (C26)")
     v.click("view-open")
-    t.check(v.wait_state("view-root", VIEW_END, 60) == "opened" and v.attr("view-own", "href") == "/#share", "opened: the foot has Make your own secret")
+    t.check(v.wait_state("view-root", VIEW_END, 60) == "opened" and v.attr("view-own", "href") == "/?from=share#share", "opened: the foot has Make your own secret")
     v.reload()
     t.check(v.wait_state("view-root", VIEW_ASK, 60) == "burned", "burned")
-    t.check(v.attr("view-own", "href") == "/#share" and v.eval("!document.querySelector('[data-testid=\"view-root\"] .a-btn--primary')")
+    t.check(v.attr("view-own", "href") == "/?from=share#share" and v.eval("!document.querySelector('[data-testid=\"view-root\"] .a-btn--primary')")
             and "Someone opened it already." in v.text("view-root"), "the ended page: Make your own secret in the foot, nothing primary")
     t.shot(v, "view-390-burned")
     sid = few.split("/s/")[1].split("#")[0]
@@ -1521,7 +1554,7 @@ def share_simple_link(t):
     gone = {"error": {"code": "gone", "message": "This link has ended.", "details": {"reason": "removed", "ended_day": "2026-10-31", "views": 0}}}
     Intercept(e).add(f"*/api/v1/s/{sid}", "Request", lambda _params: (410, gone))
     t.check(open_link(e, few) == "removed" and "It was taken down after a report." in e.text("view-root")
-            and e.attr("view-own", "href") == "/#share", "taken down: It was taken down after a report, and Make your own secret")
+            and e.attr("view-own", "href") == "/?from=share#share", "taken down: It was taken down after a report, and Make your own secret")
     n = t.actor()
     t.check(open_link(n, t.origin + "/s/" + "A" * 22 + "#1" + "A" * 43) == "not-found", "not found")
     shown = n.eval("document.querySelector('[data-testid=\"view-root\"]').innerText")

@@ -89,6 +89,31 @@
 .done > :nth-child(3) { animation-delay: .62s; }
 .done > :nth-child(n + 4) { animation-delay: .7s; }
 
+/* --- after the value (viral-1, ui/invite.js): one quiet line, one way to make your own, and its × ----------------------
+   In both looks: under the opened secret, folder or bought file, and the delivered drop. Muted words, an outline button,
+   a hairline box; it settles in after what the visitor came for. A narrow box (a phone, the buyer's card) puts the
+   button under the words and keeps the × beside them. */
+.invite { container-type: inline-size; min-width: 0; animation: fl-up .45s .4s var(--fl-ease, ease-out) both; }
+.invite-in {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "say go x"; align-items: center;
+  gap: .5rem .75rem; padding: .5rem .5rem .5rem 1rem; border: 1px solid var(--border, var(--hair)); border-radius: .75rem;
+  color: var(--muted-foreground, var(--fg-2)); font-size: .875rem; line-height: 1.25rem; text-align: left;
+}
+.invite-say { grid-area: say; min-width: 0; text-wrap: pretty; }
+.invite-in > a { grid-area: go; justify-self: start; white-space: nowrap; }
+.invite-x {
+  grid-area: x; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; margin: 0; padding: 0;
+  border: 0; border-radius: .5rem; background: transparent; color: inherit; cursor: pointer;
+  transition: background-color .15s ease-out, color .15s ease-out;
+}
+.invite-x:hover { background: var(--muted, var(--hair)); color: var(--foreground, var(--fg)); }
+.invite-x:focus-visible { outline: 2px solid var(--ring, var(--focus)); outline-offset: 2px; }
+.invite-x .invite-x-icon { width: 1rem; height: 1rem; }
+@media (pointer: coarse) { .invite-x { width: 2.75rem; height: 2.75rem; } }
+@container (max-width: 30rem) {
+  .invite-in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "say x" "go go"; padding-block: .5rem .75rem; }
+}
+
 /* --- before the scripts run: a turning ring where the page will be (the link and task pages' "…", the drive's boot) --- */
 .a-main > .a-working[aria-hidden="true"]:only-child, .drive-boot { display: grid; place-items: center; font-size: 0; color: var(--muted-foreground, var(--fg-2)); }
 .a-main > .a-working[aria-hidden="true"]:only-child { min-height: 40vh; }
@@ -115,5 +140,5 @@
 @media (prefers-reduced-motion: reduce) {
   .flow-bar[data-mode="busy"] > span { width: 100%; transform: none; opacity: .3; animation: none; }
   .done-file { display: none; }
-  .done > :not(.done-art), .done-box, .done-check { animation: none; }
+  .done > :not(.done-art), .done-box, .done-check, .invite { animation: none; }
 }

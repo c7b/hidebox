@@ -302,8 +302,11 @@ cell, dialog or empty state with two or more sentences, each sentence starts on 
 `<br>` after each sentence's end (the space stays, so the text reads the same to search, screen readers and
 check-copy); the app's `ui/lines.js` does it for `<p>`, `<dd>` and the alert and choice text it builds; the home's
 drop widget breaks its two card sentences with a newline under `white-space: pre-line` (A-06 unchanged).
-Headings and the status pill stay one line. One exception, the owner's (owner-5): `/verify/tx`'s two facts (what it
-proves, with its link to Tari's own indexer, and what stays hidden) each read as one line.
+Headings and the status pill stay one line. Two exceptions, the owner's: `/verify/tx`'s two facts (owner-5: what it
+proves, with its link to Tari's own indexer, and what stays hidden) each read as one line, and so does the invitation
+after the value (viral-1, `ui/invite.js`): "Want your own? Private drive. No email. No KYC." beside one outline button
+(Make your own secret, or Sell your own files on `/p/`) and a ×, muted in a hairline box, only once the secret, folder
+or bought file is open or the drop delivered, never in a browser that holds a drive; × hides it for that page view.
 **The Say It Once Rule (copy-1, the owner's).** hidebox has a tagline and eight key statements. The tagline (tagline-2,
 the owner's words) is "Store, send, and sell files privately." (C58) under the headline "Your private cloud storage.",
 then "Built on Tari. No KYC. No email." (C59). The home's hero says it once; no other page shows it. The share cards,

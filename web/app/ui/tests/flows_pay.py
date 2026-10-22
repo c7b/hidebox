@@ -27,7 +27,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from flows import Intercept, no_hscroll, scenario
+from flows import Intercept, invite_check, no_hscroll, scenario
 from flows_drive import row_menu, set_device, theme_shots, upload_files
 from flows_share import LIMES, LINES
 
@@ -624,6 +624,9 @@ def pay_page_states(t):
     b.click("pay-open")
     b.wait_for("pay-file", 60)
     t.check(b.text("pay-file").startswith("notes.txt") and fake.claims[cid]["opened"] == 1, "Open it: the real open, with the claim's token, decrypts here")
+    invite_check(t, b, "sell", "/p/ opened, 1440", shot="viral-pay-1440", secrets=(sid, "notes.txt"))
+    hold(b, 3.5)
+    t.check(not b.exists("invite"), "the buyer page's next draws keep it closed for this page view")
     t.check(b.text("pay-left").startswith("2 opens left"), f"one open used ({b.text('pay-left')})")
     b.reload()
     t.check(wait_pay(b, ("open",), 60) == "open", "a reload resumes the claim kept in this browser")
@@ -642,6 +645,10 @@ def pay_page_states(t):
     t.shot(p, "pay-check-390")
     fake.claims[cid2]["owner_check"] = "ok"
     t.check(wait_pay(p, ("open",), 30) == "open", "after the owner's drive confirms, it opens")
+    t.check(not p.exists("invite"), "before the open: no line")
+    p.click("pay-open")
+    p.wait_for("pay-file", 60)
+    invite_check(t, p, "sell", "/p/ opened, 390", shot="viral-pay-390", secrets=(sid, "notes.txt"))
 
     # Expired, paused, gone, no key.
     e = buyer(t, fake, url)

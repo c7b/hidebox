@@ -21,16 +21,18 @@ import { errorBanner, mmss } from './errors.js';
 import { knownPanel } from './known.js';
 import { scene, tariText } from './scene.js';
 import { abuseHref, setTitle, startPage } from './shell.js';
+import { invite } from './invite.js';
 import { waiting } from './progress.js';
 
 const REASON_STATE = { burned: 'burned', expired: 'expired', revoked: 'revoked', owner_deleted: 'revoked', removed: 'removed' };
 
 // Under every state (share-simple): Make your own secret, an outline button to the home's quick share that
-// never stands in the way of the state's own action; then the quiet links, What the server knows (the ready
-// screen's glass box, which opens under them) and Report this link (`link`, without its key, fills in the form).
+// never stands in the way of the state's own action (?from=share: the tab's next link says so once, C60); then the
+// quiet links, What the server knows (the ready screen's glass box, which opens under them) and Report this link
+// (`link`, without its key, fills in the form).
 function footer(link = null, known = null) {
   return h('div', { class: 'a-view-foot' },
-    h('a', { class: 'a-btn a-view-own', href: '/#share', 'data-testid': 'view-own' }, t('viewer.own')),
+    h('a', { class: 'a-btn a-view-own', href: '/?from=share#share', 'data-testid': 'view-own' }, t('viewer.own')),
     h('div', { class: 'a-view-links' },
       known?.toggle,
       h('a', { href: abuseHref(link) }, icon('report'), h('span', {}, t('viewer.report')))),
@@ -299,7 +301,7 @@ export function viewer(root, opts) {
   }
 
   // The secret itself: it shows at once in the preview; under it the card that opens it again, then Save; under the
-  // rule Once, "This was its only look".
+  // rule Once, "This was its only look"; then, on the link page, the one quiet line that invites (ui/invite.js).
   async function openedState(opened, name, parts, risk) {
     const { meta } = opened;
     const label = meta.kind === 'text' ? t('viewer.note_label') : name;
@@ -327,7 +329,8 @@ export function viewer(root, opts) {
         meta.kind === 'text' ? copyButton({ label: t('viewer.copy'), getText: () => new TextDecoder().decode(concat(...parts)), cls: 'a-btn' }) : null,
         keepButton(opened, name, parts)),
       after ? h('p', { class: ['a-after', once ? 'a-after--once' : null] }, after) : null,
-      h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { count: opened.chunkCount })))]);
+      h('p', { class: 'a-intact' }, icon('check'), h('span', {}, t('viewer.intact', { count: opened.chunkCount }))),
+      small ? null : invite('secret')]);   // after the value (viral-1), on the link page only
     if (!small && !document.getElementById('lightbox')) root.querySelector('.a-opened-h')?.focus({ preventScroll: true });
   }
 

@@ -14,6 +14,7 @@ import { done, relayWait, steps, waiting } from './progress.js';
 import { wasmOk } from './locker-ctx.js';
 import { scene } from './scene.js';
 import { abuseHref, setTitle } from './shell.js';
+import { invite } from './invite.js';
 import { createZone } from './zone.js';
 
 // "Leave a file for “{label}”." with the label in a <bdi>, so its direction can't reorder our words.
@@ -44,7 +45,7 @@ export async function render(main, { dropId }) {
   try {
     drop = await getDrop(dropId);
   } catch (e) {
-    const ways = () => h('a', { class: 'a-btn a-btn--primary', href: '/#share' }, t('gone.own'));
+    const ways = () => h('a', { class: 'a-btn a-btn--primary', href: '/?from=share#share' }, t('gone.own'));   // C60
     if (e?.code === 'drop_closed') return set('closed', scene({ state: 'gone', title: t('drop.closed') }).head, ways());
     if (e?.code === 'drop_not_found') return set('not-found', scene({ state: 'oops', title: t('drop.not_found') }).head, ways());
     return set('error', errorBanner(e, { action: { label: t('viewer.retry'), onClick: () => render(main, { dropId }) } }));
@@ -183,7 +184,7 @@ export async function render(main, { dropId }) {
       actions: [h('button', { type: 'button', class: 'a-btn', onclick: ready }, t('drop.another'))],
       foot: h('div', { class: 'a-dd-foot' }, footNote()),
     });
-    set('delivered', moment);
+    set('delivered', moment, invite('secret'));   // after the value (viral-1): the one quiet line that invites
     moment.querySelector('.done-title').focus({ preventScroll: true });
     if (root.getBoundingClientRect().top < 0) scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
   }
