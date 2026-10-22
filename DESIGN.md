@@ -371,7 +371,9 @@ app shows at that step. Pictures of the app (/how's stills) show the app's own w
 
 Flat, with shadcn's four shadows: `xs` on outline buttons and inputs, `sm` on cards and the active tab,
 `md` on menus, `lg` on dialogs, sheets, the upload panel and the hero's drive slice. Overlays dim the
-page with black at 50%. Nothing glows. **Drive v3, dark only:** cards, the file table, folder cards, dialogs, sheets,
+page with black at 50%. Nothing glows, but one thing, the owner's (share-simple): reached at `/#share` (the link
+page's Make your own secret lands there), the home's share box wears a 1px lime ring and a soft lime light that
+breathes three times and settles to a faint ring (still, with reduced motion). **Drive v3, dark only:** cards, the file table, folder cards, dialogs, sheets,
 menus, toasts and alerts are frosted glass (a white light from above, 5% to 1.5%, inside an 8.5% hairline whose top
 edge is 16%) on an opaque gunmetal base, so no backdrop blur sits under text; icon tiles and the mark's tile are small
 frosted tiles (a 6% wash, the same lit edge); the drive's header is the one blur (it is sticky, the list passes under
@@ -476,7 +478,7 @@ mirroring shadcn's `data-slot` / `data-variant` / `data-size` / `data-state` att
 - **Don't** bring back a mascot or any illustration beyond Lucide line icons in empty states (the empty
   drive's tile with two file icons is the one composed moment).
 - **Don't** say a link's end goes on the chain: only a file that leaves gets a receipt.
-- **Don't** add gradients, glows, glass panels or coloured bands. The home's light lives in its stills (and v2's
+- **Don't** add gradients, glows (but the share box's at `/#share`), glass panels or coloured bands. The home's light lives in its stills (and v2's
   gunmetal card under them in light mode), never under a word; the static grid stays /judges' one field. The drive's exceptions are v3's too, by the owner's
   choice: its frosted glass in dark mode and the gunmetal card under the start screen's still in light mode
   (Elevation & Depth).

@@ -90,6 +90,17 @@
 .quick-body .md-stage { min-height: 0; }
 .quick-body .md-zone { min-height: 168px; padding: var(--s-5); border-width: 1px; }
 .quick-body :is(.a-btn, .md-chip, .md-word-btn) { border-radius: var(--r-input); }
+/* share-simple: reached at #share (drop-widget.js adds .share-glow), the box says "start here": a 1px ring in the brand's
+   lime (on light pages with its darker edge, as the fill has) and a soft lime light that breathes three times and
+   settles to a faint ring. With reduced motion, the ring alone. The owner's one glow (DESIGN.md, Elevation & Depth). */
+@keyframes share-breathe {
+  50% { box-shadow: 0 0 0 1px var(--brand-solid), 0 0 0 2px var(--brand-edge), 0 0 36px 8px color-mix(in srgb, var(--brand-solid) 55%, transparent); }
+}
+#mutis-drop.share-glow :is(.md-zone, .md-card) {
+  box-shadow: 0 0 0 1px var(--brand-solid), 0 0 0 2px var(--brand-edge), 0 0 12px 0 color-mix(in srgb, var(--brand-solid) 22%, transparent);
+  animation: share-breathe 1.6s ease-in-out 3;
+}
+@media (prefers-reduced-motion: reduce) { #mutis-drop.share-glow :is(.md-zone, .md-card) { animation: none; } }
 @media (min-width: 900px) {
   .quick { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--s-8); }
   /* in the right column the widget's result is one column, the code beside the words */

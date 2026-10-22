@@ -1,6 +1,23 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- share simple -->
+## 2026-10-21: a link page that says less, Copy that stays, the mark in the code
+
+- **The link page (`/s/…`) says less**: "Someone shared something with you.", the opens left and the time in one line
+  ("Opens 2 more times, until Oct 22, 8:00 PM. Then it's gone."), "The server can't see inside to scan it, so open only
+  what you expected.", **Open it**. Its foot, in every state (opened, ended, not found): **Make your own secret**, an
+  outline button to `/#share`, then **What the server knows** and **Report this link**. The ended and not-found lines
+  say "the server", never "we".
+- **Reached at `/#share`**, the home's share box comes fully under the header, wears a lime ring that breathes three
+  times and settles (still, with reduced motion), and **Choose a file** takes the focus.
+- **Copy link is always there** after a link is made (home, the share dialog, a pay link, the hidebox link, Settings'
+  address): Copied for two seconds, then Copy again; **Share** sends the link alone to the device's share sheet.
+- **Every QR code carries the mark** in its centre, at level Q (the encoder now has levels Q and H): the codewords
+  under it stay at least two below what each block corrects (4 of 11 on a `/s/` link), or the code goes without it.
+  `web/app/ui/tests/qr_logo.py` checks that, and that each code still reads back, without a phone.
+<!-- /share simple -->
+
 <!-- drop compact -->
 ## 2026-10-21: a compact hidebox link page, one name for the 12 emoji
 
