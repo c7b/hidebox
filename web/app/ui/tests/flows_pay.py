@@ -624,7 +624,8 @@ def pay_page_states(t):
     b.click("pay-open")
     b.wait_for("pay-file", 60)
     t.check(b.text("pay-file").startswith("notes.txt") and fake.claims[cid]["opened"] == 1, "Open it: the real open, with the claim's token, decrypts here")
-    close_preview(b)   # the paid file shows itself in the preview, over the page
+    b.wait("!!document.getElementById('lightbox')", 30)   # the paid file shows itself in the preview, over the page
+    close_preview(b)
     invite_check(t, b, "sell", "/p/ opened, 1440", shot="viral-pay-1440", secrets=(sid, "notes.txt"))
     hold(b, 3.5)
     t.check(not b.exists("invite"), "the buyer page's next draws keep it closed for this page view")
@@ -649,6 +650,7 @@ def pay_page_states(t):
     t.check(not p.exists("invite"), "before the open: no line")
     p.click("pay-open")
     p.wait_for("pay-file", 60)
+    p.wait("!!document.getElementById('lightbox')", 30)
     close_preview(p)
     invite_check(t, p, "sell", "/p/ opened, 390", shot="viral-pay-390", secrets=(sid, "notes.txt"))
 
