@@ -37,7 +37,23 @@ This keeps `/srv/mutis/status/evidence-archive-YYYYMMDD.json` (served at `/evide
 Tell the integrator: it goes into `docs/evidence/<date>/` with screenshots, because the transactions
 it names will no longer resolve on the indexers.
 
+## 2b. When the reset comes with a new Ootle release (as on 2026-11-02, 0.47 → 0.49.2)
+
+New walletd first, then reset its chain state: back up the whole wallet (`/home/drive/wallet` and
+`/home/drive/.local/share/tari`), stop walletd, install the binary (checksum against the release's
+`.sha256` and its `sha256-unsigned.txt`), and run `tari_ootle_walletd reset --confirm` under walletd's own
+sandbox (the run script with `reset --confirm` in place of `run`). The reset moves `wallet.sqlite` to a
+`.bak` file. **Our seed lived in that database** (`config.cipher_seed`), not in an OS keyring, so the
+wallet came back with a **new seed**: new account keys, a new SealLog author, a new template address.
+The old seed stays in the `.bak` and the backup. Then create the accounts again in the same order
+(`service`, `buyer-demo`, `sponsor`, `operator`: key indexes 0 to 3). The code side is
+[upgrade-drill.md](upgrade-drill.md) §1–§2 (the 2026-11-02 row).
+
 ## 3. Funds (human step; the burn is never automated)
+
+First try the L2 faucet: `rpc call accounts.create_free_test_coins '{"account":{"Name":"service"},"max_fee":"2000000"}'`
+(1,000 tTARI a claim). Right after the 2026-11-02 reset it held nothing ("Claim tTARI by burning on L1
+instead"), so the burn below was the way.
 
 The L1 console wallet (`/home/drive/l1wallet`, tmux session `l1`, ~1,000 tXTM reserve) burns tXTM
 into tTARI. Follow 03-ootle-integration §5.1 exactly, in the TUI, with the capture check:
@@ -46,10 +62,19 @@ into tTARI. Follow 03-ootle-integration §5.1 exactly, in the TUI, with the capt
 u -t 'sudo -iu drive tmux attach -t l1'     # detach with Ctrl-b d; never Ctrl-c
 ```
 
-If the L1 wallet is empty, ask the L1 faucet for tXTM first. walletd claims the burn proof by itself
-(it watches `/home/drive/.local/share/tari/esmeralda/burn_proofs`); check with
-`rpc call burn_proofs.list '{"filter_by_public_key":null}'` and, if it didn't, claim it with
-`accounts.claim_burn`. Wait for the claim (about an hour, 03 §5).
+If the L1 wallet is empty, ask the L1 faucet for tXTM first. Type the TUI's fields one step at a time
+with a capture after each: keys typed outside an edit field are commands (the claim key's hex has `d`,
+"delete the selected proof"). The L1 wallet writes the proof a few minutes after the burn to
+`/home/drive/.local/share/tari/esmeralda/burn_proofs` (drive's: list it with sudo); check with
+`rpc call burn_proofs.list '{"filter_by_public_key":null}'`. A claim is valid only once the L2 has passed
+the burn's epoch (`mined_in_epoch` in the file; an epoch is 80 L1 blocks, and the L2 reads L1 about 100
+blocks behind), and then walletd 0.49.2 claims it by itself and moves the file to `claimed/` (on
+2026-11-02, about 80 and 115 minutes after the two burns). A claim by hand (`accounts.claim_burn` with
+`"claim_proof": {"FromFile": {"file_name": "<that file>"}}`) before that is rejected `NotYetValid`,
+though its dry run accepts it; it costs nothing and leaves the file for walletd's retry. On 0.49 the claim lands
+as a stealth output, not in the account's public vault; what pays fees with `account.pay_fee` (the
+template publish, the log, its checkpoints) needs a stealth transfer from `service` to its own address
+with a `revealed_output_amount`, which goes to its public vault.
 
 ## 4. Accounts and keys (10 minutes)
 
@@ -70,9 +95,11 @@ u 'sudo -u drive bash /srv/mutis/app/current/deploy/scripts/init-keys.sh'
 
 ## 5. The mirror (2 minutes)
 
-The UTXO mirror's per-shard cursors point into the old chain, and epochs start again from zero after
-a reset, so the old `ootle.mirror_start_epoch` would hide the new chain. Set it to the new chain's
-current epoch and forget the cursors so the worker starts over:
+The UTXO mirror's per-shard cursors point into the old chain. Set `ootle.mirror_start_epoch` to the new
+chain's first epoch (12812 on 2026-11-02: epochs follow L1 and didn't start again from zero). The hourly
+payment reconcile checks only payments from that epoch on: the outputs credited on the old chain are gone,
+and checking them freezes credits every hour (`credit_freeze`; then `mutis-admin unfreeze-credits` once the
+setting is in). Then forget the cursors so the worker starts over:
 
 ```sh
 curl -s https://ootle-indexer-b.tari.com/epoch-manager/stats      # {"current_epoch": N, …}

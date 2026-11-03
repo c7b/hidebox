@@ -16,6 +16,25 @@ Dry run first, always: every transfer below was sent with `"dry_run": true`, its
 The parameters name only our own accounts and addresses, never a user's, so they may sit on a
 command line (sudo logs it).
 
+## 0. After the Esmeralda reset (2026-11-02, Ootle 0.49.2)
+
+walletd 0.49.2, reset; it came back with a new seed (reset-playbook §2b), so every key below is new. The
+tables in §1–§4 are the chain before the reset, kept as the record of how it was done.
+
+| Holder | Key index, owner public key | Component | Funded with |
+|---|---|---|---|
+| `service` (default) | 0, `78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06` | `component_453538fd…d6e8` | an L1 burn of 150 tXTM (claim landed as a stealth output); 100 tTARI then revealed into its public vault with a stealth transfer to itself (tx `72b45851…4f81`), for `pay_fee` |
+| `buyer-demo` | 1, `bc5b3dae…8974` | `component_bb1017a0…7b2b` | — |
+| `sponsor` | 2, `50f56f64eabc3e84ef3e50a766f3b1ac45748358384e9076bb56bb6fbdb10b3d` | `component_e9489a5f…98f4` | an L1 burn of 4,000 tXTM |
+| `operator` | 3, `3e1a4eaa…0519` | `component_fadaea01…07b3` | — |
+
+| SealLog 2.0.0 (tari_template_lib 0.37) | Address | Transaction |
+|---|---|---|
+| template, author `service`, exactly `dist/seal_log.wasm` (sha256 `9a276b30…4c84`, 107,162 bytes) | `template_5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c` | `44637f53…6924`, 842,994 µT |
+| the live log: owner_rule `None`, upgrade_rule `Locked`, `append_root` only for the `service` key's badge | `component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65` | `5aeec60b…63e6`, 2,403 µT |
+
+A checkpoint (the worker's manifest) dry-runs at 2,428 µT. The receiver and robot keys didn't change.
+
 ## 1. What exists (2026-10-11)
 
 | Holder | Kind | Holds | Used for |

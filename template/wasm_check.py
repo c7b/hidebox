@@ -88,9 +88,21 @@ def describe(module: bytes) -> str:
     return f"{len(module)} bytes, sha256 {hashlib.sha256(module).hexdigest()}"
 
 
+def decoder():
+    """server/mutis/cbor.py, loaded by path (this script needs only Python): the reader for the Encoded values
+    (base64 CBOR) tari_indexer 0.48+ serves, held to the official decoder by server/tests/test_cbor.py."""
+    import importlib.util
+    path = Path(__file__).resolve().parents[1] / "server" / "mutis" / "cbor.py"
+    spec = importlib.util.spec_from_file_location("mutis_cbor", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def substate_value(body) -> dict | None:
-    """The substate value of a GET /substates answer: `state.up.substate` (tari_indexer 0.47.0) or `substate`
-    (earlier indexers); None for anything else, a spent version (`state.down`) included."""
+    """The substate value of a GET /substates answer: `state.up.substate` (tari_indexer 0.47.0; an Encoded
+    value from 0.48) or `substate` (earlier indexers); None for anything else, a spent version (`state.down`)
+    included."""
     if not isinstance(body, dict):
         return None
     if "state" in body:
@@ -98,6 +110,12 @@ def substate_value(body) -> dict | None:
         value = up.get("substate") if isinstance(up, dict) else None
     else:
         value = body.get("substate")
+    if isinstance(value, str):
+        cbor = decoder()
+        try:
+            value = cbor.substate_value(cbor.b64(value))
+        except cbor.CborError:
+            return None
     return value if isinstance(value, dict) else None
 
 

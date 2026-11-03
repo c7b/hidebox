@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 APP = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 NODE = shutil.which("node") or "/usr/bin/node"
 FLAGS = ["--experimental-permission", "--disallow-code-generation-from-strings"]
-WASM_SHA256 = "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2"
+WASM_SHA256 = "26d6531c98866aeefd5b9fb44af3d5dd4f18deb1334e0d81315d53088d1c8eeb"
 results = []
 SHARE_ID = base64.urlsafe_b64encode(bytes(range(16))).rstrip(b"=").decode()  # ids are b64u of 16 bytes
 
@@ -136,11 +136,12 @@ def main():
           "; ".join(f"{c['name'][:48]}={'ok' if c['passed'] else 'NO'}" for c in st.get("cases", [])))
 
     own = json.load(open(os.path.join(APP, "sidecar", "selftest.json"), encoding="utf-8"))["ownership"]
-    otk = {n: sc.ask("oneTimeKey", owner_sk=own["owner_sk"], nonce=own[n]["nonce"]) for n in ("genuine", "not_ours")}
+    otk = {n: sc.ask("oneTimeKey", owner_sk=own["owner_sk"], view_sk=own["view_sk"], nonce=own[n]["nonce"])
+           for n in ("genuine", "not_ours")}
     check("oneTimeKey (R1): our owner key derives the genuine output's one-time key, not the other one's",
           otk["genuine"].get("public_key") == own["genuine"]["auth_key"]
           and otk["not_ours"]["ok"] and otk["not_ours"].get("public_key") != own["not_ours"]["auth_key"])
-    bad = sc.ask("oneTimeKey", owner_sk=own["owner_sk"], nonce="ff" * 32)
+    bad = sc.ask("oneTimeKey", owner_sk=own["owner_sk"], view_sk=own["view_sk"], nonce="ff" * 32)
     check("oneTimeKey: a nonce that isn't a point is refused", not bad["ok"] and bad["error"] == "bad_point", bad.get("error", ""))
 
     wallet_rows = [r for r in wrap["real_outputs"] if r["owner"] == "gate wallet"]
@@ -229,7 +230,7 @@ def main():
         tampered = os.path.join(tmp, "app")
         for d in ("lib", "sidecar", "vendor"):
             shutil.copytree(os.path.join(APP, d), os.path.join(tampered, d))
-        wasm = os.path.join(tampered, "vendor", "ootle-wasm-0.46.0", "ootle_wasm_bg.wasm")
+        wasm = os.path.join(tampered, "vendor", "ootle-wasm-0.49.2", "ootle_wasm_bg.wasm")
         data = bytearray(open(wasm, "rb").read())
         data[len(data) // 2] ^= 1
         open(wasm, "wb").write(bytes(data))

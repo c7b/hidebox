@@ -156,6 +156,15 @@ def build_tag(tag: str, config: str, holding: bool, work: Path) -> tuple[str, di
     return sha, local, src
 
 
+def substate_reader(src: Path):
+    """The tag's server/mutis/cbor.py, loaded by path: it reads the Encoded values tari_indexer 0.48+ serves."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("mutis_cbor", src / "server" / "mutis" / "cbor.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def seallog_check(cfg: dict, src: Path) -> list[str]:
     """The template behind the deployment's SealLog is the tag's template/dist/seal_log.wasm."""
     component = (cfg.get("seal_log") or {}).get("component")
@@ -167,7 +176,10 @@ def seallog_check(cfg: dict, src: Path) -> list[str]:
     try:
         body = json.loads(fetch(f"{INDEXER}/substates/{component}"))
         live = body["state"]["up"] if "state" in body else body     # tari_indexer 0.47.0, or an earlier one
-        template = live["substate"]["Component"]["header"]["template_address"]
+        value = live["substate"]
+        if isinstance(value, str):   # 0.48+: an Encoded value (base64 CBOR), read with the tag's own reader
+            value = substate_reader(src).substate_value(substate_reader(src).b64(value))
+        template = value["Component"]["header"]["template_address"]
     except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError) as e:
         return [f"SealLog {component}: could not read its template from {INDEXER} ({e})"]
     if not ADDRESS.fullmatch(str(template)):

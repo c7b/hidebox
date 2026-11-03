@@ -37,7 +37,8 @@ _CLAIM = re.compile(r"^clm_[a-z2-7]{20}$")
 
 
 def pay_ref(memo) -> str | None:
-    """The invoice id carried by a memo: PayRefAndBytes `[len u8][pay_ref][bytes]`, or a bare Message."""
+    """The invoice id carried by a memo: DestinationTagAndBytes (PayRefAndBytes before Ootle 0.48)
+    `[len u8][pay_ref][bytes]`, or a bare Message."""
     ref = memo_ref(memo)
     return ref if ref and _INVOICE.match(ref) else None
 
@@ -49,12 +50,14 @@ def claim_ref(memo) -> str | None:
 
 
 def memo_ref(memo) -> str | None:
-    """The reference a memo carries, unchecked: PayRefAndBytes' pay-ref, or the whole Message."""
+    """The reference a memo carries, unchecked: DestinationTagAndBytes' (or PayRefAndBytes') tag, or the whole
+    Message."""
     if not isinstance(memo, dict):
         return None
-    if isinstance(memo.get("PayRefAndBytes"), str):
+    tagged = memo.get("DestinationTagAndBytes", memo.get("PayRefAndBytes"))
+    if isinstance(tagged, str):
         try:
-            raw = bytes.fromhex(memo["PayRefAndBytes"])
+            raw = bytes.fromhex(tagged)
         except ValueError:
             return None
         if not raw or raw[0] + 1 > len(raw):
@@ -233,16 +236,21 @@ def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: in
                  (pack["bytes"], now + pack["days"] * 86400, pack_id, int(judge), identity_id))
 
 
-def reconcile(conn: sqlite3.Connection, rescan, committed, now: int) -> str:
+def reconcile(conn: sqlite3.Connection, rescan, committed, now: int, since_epoch: int = 0) -> str:
     """Hourly check independent of walletd: every credited UTXO is still in our mirror, the sidecar
     still proves the same value for it, and it is still committed.
+
+    `since_epoch` (`ootle.mirror_start_epoch`): only UTXOs of the chain the mirror follows. After a testnet
+    reset the outputs credited on the old chain are gone for good, and checking them would freeze credits
+    every hour (reset-playbook §5 moves the setting to the new chain's first epoch).
 
     `rescan(rows)` returns {utxo_id: value_ut} for the mirror rows it can open with the receiver key;
     `committed(utxo_id)` → ok | missing | unknown (`committed_anywhere`). A mismatch holds credits until
     the next round, five minutes later, and a second one in a row freezes them (`_finish_reconcile`);
     an indexer that can't answer only skips the round. Returns `ok`, `mismatch` or `unknown`.
     """
-    credited = conn.execute("SELECT utxo_id, value_ut FROM payments WHERE status = 'credited'").fetchall()
+    credited = conn.execute("SELECT utxo_id, value_ut FROM payments WHERE status = 'credited' "
+                            "AND (epoch IS NULL OR epoch >= ?)", (since_epoch,)).fetchall()
     ids = [r["utxo_id"] for r in credited]
     rows = []
     for i in range(0, len(ids), 500):

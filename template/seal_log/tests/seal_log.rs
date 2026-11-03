@@ -232,7 +232,7 @@ fn the_writer_appends_and_anyone_reads() {
     log.append(h(8), 128);
 
     let (proof, _, key) = log.stranger();
-    let result = log.test.execute_expect_success(
+    log.test.execute_expect_success(
         log.test
             .transaction()
             .call_method(log.address, "latest", args![])
@@ -241,10 +241,10 @@ fn the_writer_appends_and_anyone_reads() {
             .build_and_seal(&key),
         vec![proof],
     );
-    let outputs = &result.finalize.execution_results;
-    let latest: Option<Checkpoint> = outputs[0].decode().unwrap();
-    let first: Option<Checkpoint> = outputs[1].decode().unwrap();
-    let count: u64 = outputs[2].decode().unwrap();
+    // tari_template_test_tooling 0.49: what each instruction returned, from the harness
+    let latest: Option<Checkpoint> = log.test.expect_return(0);
+    let first: Option<Checkpoint> = log.test.expect_return(1);
+    let count: u64 = log.test.expect_return(2);
     assert_eq!(latest, Some((0, h(8), 128)));
     assert_eq!(first, Some((0, h(7), 64)));
     assert_eq!(count, 2);
@@ -269,10 +269,10 @@ fn only_the_creating_key_can_append() {
     assert_eq!(log.latest(), Some((0, h(1), 64)));
 }
 
-/// The log has no owner, so the engine refuses to point it at other code, even for the key that
-/// created it. With an owner, one transaction could swap in a template that rewrites the state
-/// and swap SealLog back. Swapping to SealLog itself is enough to show the refusal: the engine
-/// checks ownership before it looks at the new template.
+/// The log's upgrade rule is Locked (and it has no owner), so the engine refuses to point it at other
+/// code, even for the key that created it. Otherwise one transaction could swap in a template that
+/// rewrites the state and swap SealLog back. Swapping to SealLog itself is enough to show the
+/// refusal: the engine checks the rule before it looks at the new template.
 #[test]
 fn nobody_can_swap_the_code_under_the_log() {
     let mut log = Log::new();
@@ -287,12 +287,9 @@ fn nobody_can_swap_the_code_under_the_log() {
         vec![log.writer_proof.clone()],
     );
 
-    let (code, message) = failure(&reason);
-    assert_eq!(code, &ExecutionFailureCode::AccessDenied);
-    assert!(
-        message.contains("native.component.update_template"),
-        "{message}"
-    );
+    let (_, message) = failure(&reason);
+    // Ootle 0.49: "Component … cannot be upgraded: its upgrade rule is Locked"
+    assert!(message.contains("its upgrade rule is Locked"), "{message}");
     assert_eq!(log.latest(), Some((0, h(1), 64)));
 }
 

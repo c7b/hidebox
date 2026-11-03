@@ -59,7 +59,8 @@ transaction = {"V1": {
     "fee_instructions": [{"CallMethod": {"call": {"Address": owner}, "method": "pay_fee",
                                          "args": [{"Literal": fee.hex()}]}}],
     "instructions": [{"PublishTemplate": {"binary": 0, "metadata_hash": None}}],
-    "inputs": [], "min_epoch": None, "max_epoch": epoch + 2, "is_seal_signer_authorized": True, "dry_run": dry,
+    # Ootle 0.48+: the seal signer (the account's key) is the main signer, so it authors the template
+    "inputs": [], "min_epoch": None, "max_epoch": epoch + 2, "main_signer": "SealSigner", "dry_run": dry,
     "blobs": [base64.b64encode(open(wasm, "rb").read()).decode()],
     "nonce": str(secrets.randbits(64)),
 }}
@@ -79,18 +80,23 @@ print(json.dumps({"manifest": manifest, "variables": {"account": owner}, "max_fe
 }
 
 dry_run_outcome() {  # the dry run's verdict, fee and template, and whether the chain would hold our bytes
-  python3 -I -c 'import hashlib, json, sys
+  python3 -I -c 'import hashlib, importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("cbor", sys.argv[2])
+cbor = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(cbor)
 f = json.load(sys.stdin)["result"]["finalize"]
 verdict = next(iter(f["result"]))
 ups = f["result"].get("Accept", {}).get("up_substates", [])
 for sid, up in ups:
     if sid.startswith("template_"):
-        same = hashlib.sha256(bytes.fromhex(up["substate"]["Template"]["binary"])).hexdigest() == sys.argv[1]
+        value = up["substate"]
+        value = cbor.substate_value(cbor.b64(value)) if isinstance(value, str) else value   # Encoded<…> since 0.48
+        same = hashlib.sha256(bytes.fromhex(value["Template"]["binary"])).hexdigest() == sys.argv[1]
         print(verdict, "fee", f["fee_receipt"]["total_fees_paid"], "µT", sid,
               "holding seal_log.wasm byte for byte" if same else "holding OTHER bytes")
         break
 else:
-    print(verdict, json.dumps(f["result"])[:300])' "$expected"
+    print(verdict, json.dumps(f["result"])[:300])' "$expected" "$repo/server/mutis/cbor.py"
 }
 
 wait_for() {  # prints the finalized result of transaction $1

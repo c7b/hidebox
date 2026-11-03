@@ -75,7 +75,7 @@ class FakeChain:
         if spender is not None:
             owner_pk = ootle_addr.parse_testnet(spender)[0]
         if memo is None and pay_ref:
-            memo = {"PayRefAndBytes": (bytes([len(pay_ref)]) + pay_ref).hex()}
+            memo = {"DestinationTagAndBytes": (bytes([len(pay_ref)]) + pay_ref).hex()}
         nonce = secrets.token_bytes(32)
         commitment = fake_commitment(value, nonce)
         shard = 1 + commitment[0]

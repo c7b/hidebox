@@ -3,6 +3,7 @@
 precompressed copy that decodes to other bytes are each reported. A local HTTP server plays the live site (serving
 NAME.gz with Content-Encoding: gzip to a client that takes it, as Caddy does). The rebuild's config: the variant tables
 the live manifest records, and nothing else a manifest could smuggle in."""
+import base64
 import gzip
 import hashlib
 import http.server
@@ -32,8 +33,11 @@ if WASM_CHECK.is_file():          # deploy.sh's gate copies only server, tools, 
 # GET /substates answers of tari_indexer 0.47.0, recorded from both Esmeralda indexers (the live SealLog among them).
 RECORDED = json.loads((ROOT / "server" / "tests" / "fixtures" / "indexer-substates-0.47.0.json").read_text())
 SEALLOG = RECORDED["seallog_component"]
-SEALLOG_TEMPLATE = "40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47"
-SERVICE_KEY = "9c686313d4ebe9c442196ccdce78cf802eab4549961cbc69522d967ed8a55420"
+SEALLOG_TEMPLATE = "5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c"   # since the 2026-11-02 reset
+RECORDED_047_TEMPLATE = "40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47"   # the log before it
+# the live log after the reset, as tari_indexer 0.49.1 serves it (an Encoded value)
+LIVE_049 = json.loads((ROOT / "server" / "tests" / "fixtures" / "indexer-0.49.json").read_text())
+SERVICE_KEY = "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -186,7 +190,11 @@ class SealLogTemplateTest(unittest.TestCase):
         for body in (SEALLOG["body"], older):
             diffs, runs = self.check(body)
             self.assertEqual(diffs, [])
-            self.assertEqual(runs[0][-2:], ["onchain", f"template_{SEALLOG_TEMPLATE}"])
+            self.assertEqual(runs[0][-2:], ["onchain", f"template_{RECORDED_047_TEMPLATE}"])
+        # 0.48+: an Encoded component, read with the tag's server/mutis/cbor.py
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"])
+        self.assertEqual(diffs, [])
+        self.assertEqual(runs[0][-2:], ["onchain", f"template_{SEALLOG_TEMPLATE}"])
 
     def test_no_live_component_is_a_difference(self):
         for body in (RECORDED["spent_utxo_at_version"]["body"], {"state": {"up": {"substate": {"Utxo": {}}}}},
@@ -194,6 +202,32 @@ class SealLogTemplateTest(unittest.TestCase):
             diffs, runs = self.check(body)
             self.assertEqual((len(diffs), runs), (1, []), body if isinstance(body, list) else list(body))
             self.assertIn("could not read its template", diffs[0])
+
+
+def cbor_array(*items) -> bytes:
+    """Just enough CBOR for the test: definite arrays of unsigned ints, text and bytes."""
+    def head(major: int, n: int) -> bytes:
+        if n < 24:
+            return bytes([major << 5 | n])
+        for info, size in ((24, 1), (25, 2), (26, 4), (27, 8)):
+            if n < 1 << (8 * size):
+                return bytes([major << 5 | info]) + n.to_bytes(size, "big")
+        raise ValueError(n)
+    out = head(4, len(items))
+    for item in items:
+        if isinstance(item, int):
+            out += head(0, item)
+        elif isinstance(item, str):
+            out += head(3, len(item.encode())) + item.encode()
+        elif isinstance(item, CborArray):
+            out += bytes(item)
+        else:
+            out += head(2, len(item)) + item
+    return CborArray(out)
+
+
+class CborArray(bytes):
+    """An already encoded array, nested as is."""
 
 
 @unittest.skipUnless(wasm_check, "template/ is not in this tree")
@@ -219,6 +253,10 @@ class WasmCheckTest(unittest.TestCase):
         self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": other}}, "verified": True}), 1)
         self.assertEqual(self.onchain({"version": 0, "state": {"down": {}}, "verified": True}), 1)
         self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": {"Component": {}}}}}), 1)
+        # tari_indexer 0.48+: the value is an Encoded<SubstateValue> (base64 CBOR), here written by hand as
+        # minicbor writes a PublishedTemplate: [6, [[name, author, binary, at_epoch]]]
+        encoded = base64.b64encode(cbor_array(6, cbor_array(cbor_array("SealLog", bytes.fromhex(SERVICE_KEY), wasm, 12814)))).decode()
+        self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": encoded}}, "verified": True}), 0)
 
 
 if __name__ == "__main__":

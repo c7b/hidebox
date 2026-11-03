@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Loads the browser library and the vendored ootle-wasm into Node 20 for the sidecar. Works in the
+// Loads the browser library and the vendored ootle-wasm (and ootle-wasm-bor) into Node 20 for the sidecar. Works in the
 // source tree (web/app/sidecar/ next to web/app/lib/) and in the release layout, where lib/ and
 // vendor/ are copied next to this file. The shim refuses wasm bytes whose SHA-256 isn't the pinned one.
 import { existsSync, readFileSync } from 'node:fs';
@@ -13,7 +13,9 @@ export async function loadLib() {
     ['ootle', 'api', 'api-locker', 'b64', 'courier', 'crypto', 'seal', 'share', 'format'].map(mod),
   );
   const shim = await import(new URL('vendor/ootle-wasm-shim.js', appRoot).href);
-  await ootle.initWithBytes(readFileSync(new URL('vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm', appRoot)));
+  await ootle.initWithBytes(readFileSync(new URL('vendor/ootle-wasm-0.49.2/ootle_wasm_bg.wasm', appRoot)));
+  // the indexers' CBOR values (0.48+), for library code that reads a substate
+  await ootle.initBorWithBytes(readFileSync(new URL('vendor/ootle-wasm-bor-0.49.2/ootle_wasm_bor_bg.wasm', appRoot)));
   return { ootle, api, apiLocker, b64, courier, crypto, seal, share, format, wasmSha256: shim.WASM_SHA256 };
 }
 

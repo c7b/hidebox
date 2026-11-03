@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
-"""JSON-RPC client for tari_ootle_walletd 0.47.0 (written against 0.45.0; the calls and shapes it uses are
-the same in 0.46.0 and 0.47.0, whose client types only add `validator_set.get_status`; spec §10.1, §10.3;
+"""JSON-RPC client for tari_ootle_walletd 0.49.2 (written against 0.45.0; the calls and request shapes it uses
+are the same through 0.49.2: 0.46.0 and 0.47.0 only add `validator_set.get_status`, and the Esmeralda reset
+releases 0.48.0 and 0.49.x drop `transactions.get_all`, which mutis never called; spec §10.1, §10.3;
 03-ootle-integration §4.3–§4.4).
 
 walletd runs with `--authentication none` behind a uid firewall; a JWT from `auth.request` is

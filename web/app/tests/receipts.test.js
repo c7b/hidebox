@@ -44,18 +44,21 @@ export default [
   ['SealLog: the 2.0.0 state reads as checkpoints with their index in the log, the writer key and the template', async () => {
     const state = await loadOptionalJson('../../../template/seal_log/tests/vectors/seallog-state-v1.json');
     if (!state) return;
-    const log = readSealLog(state);
+    const log = await readSealLog(state);
     eq(log.writer, 'd884dd886cc7464402a04920485aebe6dd657b98072de655c46ec6179a52cd0d');
-    eq(log.template, '64f405276891730adbeeeb3b5fafe93c0a19453c1b21abeaaa2004c9a783e432');
+    eq(log.template, 'c9d54e7fd4c32d086c35cb8b3df12254fab57fc5ad6c581e6aa1675345be4f47');
+    const swappable = structuredClone(state);
+    swappable.substate.Component.header.upgrade_rule = 'Owner';
+    await rejects(async () => readSealLog(swappable), TypeError, 'Ootle 0.49: a log whose code could be swapped');
     eq(JSON.stringify(log.checkpoints.map((c) => [c.index, c.epoch, c.leafCount])), '[[0,12127,64],[1,12128,128]]');
     const later = structuredClone(state);
     later.substate.Component.body.state[1] = 40;
-    eq(readSealLog(later).checkpoints[1].index, 41, 'the state keeps the newest 64 after first_index');
+    eq((await readSealLog(later)).checkpoints[1].index, 41, 'the state keeps the newest 64 after first_index');
   }],
   ['SealLog: the generator\'s stored and exit leaves verify against the roots the component holds', async () => {
     const [state, v] = await Promise.all(['seallog-state-v1.json', 'seallog-v1.json'].map((f) => loadOptionalJson(`../../../template/seal_log/tests/vectors/${f}`)));
     if (!state || !v) return;
-    const { checkpoints } = readSealLog(state);
+    const { checkpoints } = await readSealLog(state);
     const leaves = new Map(v.leaves.map((l) => [Number(l.index), l]));
     let checked = 0;
     for (const c of checkpoints) {
@@ -78,20 +81,27 @@ export default [
   ['SealLog: the live 2.0.0 log as tari_indexer 0.47.0 answers it (state.up.substate, recorded from both indexers)', async () => {
     const v = await loadJson('vectors/indexer-substates-0.47.0.json');
     const live = v.seallog_component.body;
-    const log = readSealLog(live);
+    const log = await readSealLog(live);
     eq(log.template, '40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47');
     eq(log.writer, '9c686313d4ebe9c442196ccdce78cf802eab4549961cbc69522d967ed8a55420', 'the service key');
     eq(log.checkpoints.length, 64);
     const last = log.checkpoints.at(-1);
     eq(JSON.stringify([log.checkpoints[0].index, last.index, last.epoch, last.leafCount]), '[712,775,12502,49664]');
     eq(hex(last.root), '68495021d20c499403222c9e9aac96e6d851eb5da1822c07051a17375bd33064');
-    eq(readSealLog({ verified: true, substate: live.state.up.substate }).checkpoints.length, 64, 'the earlier shape');
+    eq((await readSealLog({ verified: true, substate: live.state.up.substate })).checkpoints.length, 64, 'the earlier shape');
     for (const body of [v.spent_utxo_at_version.body, { ...live, state: { ...live.state, down: {} } }, v.live_utxo.body]) {
       await rejects(async () => readSealLog(body), TypeError);
     }
     const owned = structuredClone(live);
     owned.state.up.substate.Component.header.owner_rule = { ByPublicKey: 'ab'.repeat(32) };
     await rejects(async () => readSealLog(owned), TypeError, 'an owner could rewrite it');
+  }],
+  ['SealLog: the live log after the 2026-11-02 reset, an Encoded value read with the official decoder', async () => {
+    const v = await loadJson('vectors/indexer-0.49.json');
+    const log = await readSealLog(v.seallog_component_answer);
+    eq(log.template, '5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c');
+    eq(log.writer, '78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06', 'the service key');
+    eq(log.checkpoints.length, 0);
   }],
   ['SealLog: a log that could be rewritten is refused (the research log on Esmeralda has an owner)', async () => {
     const research = await loadJson('vectors/seallog-component.json');

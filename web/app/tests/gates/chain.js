@@ -26,7 +26,7 @@ async function testIdentity() {
 
 async function fetchRow(id) {
   const sub = await chainIx('GET', `substates/${id}`);
-  const o = substateValue(sub).Utxo.output.output;
+  const o = (await substateValue(sub)).Utxo.output.output;
   return { id, nonce: o.public_nonce, enc: o.encrypted_data, verified: sub.verified, version: sub.version };
 }
 

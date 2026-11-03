@@ -128,7 +128,7 @@ class FakeWalletd(ThreadingHTTPServer):
                 memo = t["memo"]
                 if memo is None:
                     ref = ootle_addr.parse_testnet(t["destination"])[2]
-                    memo = {"PayRefAndBytes": (bytes([len(ref)]) + ref).hex()} if ref else None
+                    memo = {"DestinationTagAndBytes": (bytes([len(ref)]) + ref).hex()} if ref else None
                 out.append({"address": {"id": commitment, "resource_address": "resource_" + TARI_HEX},
                             "value": str(t["value"]), "status": "Unspent", "memo": memo, "is_on_chain": True,
                             "is_burnt": False, "is_frozen": False, "sender_address": None})

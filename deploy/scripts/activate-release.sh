@@ -14,7 +14,7 @@ app=/srv/mutis/app
 releases=$app/releases
 new=$releases/$id.new
 dir=$releases/$id
-pinned=2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2   # spec §3.3 step 7
+pinned=26d6531c98866aeefd5b9fb44af3d5dd4f18deb1334e0d81315d53088d1c8eeb   # spec §3.3 step 7
 
 die() { echo "activate: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"

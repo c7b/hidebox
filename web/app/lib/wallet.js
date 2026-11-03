@@ -62,7 +62,7 @@ async function loadInput(identity, utxoId) {
     if (e instanceof ApiError && e.status === 404) throw new WalletError('input_gone', utxoId);
     throw e;
   }
-  const utxo = substateValue(sub)?.Utxo;
+  const utxo = (await substateValue(sub))?.Utxo;
   const body = utxo?.output?.output;
   if (!body || utxo.is_frozen) throw new WalletError('input_gone', utxoId);
   const mine = await tryDecryptUtxo(identity.wallet.viewSk, { id: utxoId, nonce: body.public_nonce, enc: body.encrypted_data });
@@ -85,7 +85,7 @@ function unsignedTx(statement, inputs, maxEpoch) {
     + `{"StealthTransfer":{"resource_address_ref":{"Address":"${TARI_RESOURCE}"},"statement":${statement},"revealed_input_bucket":null}},`
     + '{"PutLastInstructionOutputOnWorkspace":{"key":0}},{"PayFeeFromBucket":{"bucket":{"id":0,"offset":null}}}],'
     + `"instructions":[],"inputs":[${substates.join(',')}],"min_epoch":null,"max_epoch":${maxEpoch},`
-    + '"dry_run":false,"is_seal_signer_authorized":true,"blobs":[],"nonce":0}';
+    + '"main_signer":"SealSigner","dry_run":false,"blobs":[],"nonce":0}';
 }
 
 async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
@@ -145,8 +145,9 @@ export async function send(identity, { to, amountUt, memo = null, signal, onSubm
   const { current_epoch: epoch } = await chainIx('GET', 'epoch-manager/stats');
   if (!Number.isSafeInteger(epoch) || epoch < 0) throw new WalletError('rejected', 'bad epoch from the indexer');
   let tx = unsignedTx(statement, inputs, epoch + VALIDITY_EPOCHS);
-  // Each input is authorised by its one-time key c + k (the receiver side of the stealth DH).
-  for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(NETWORK_BYTE, identity.wallet.ownerSk, i.nonce), sealPk);
+  // Each input is authorised by its one-time key c + k (the receiver side of the stealth DH; Ootle 0.48+:
+  // c = H(network || v·R), so the wallet's view secret takes part).
+  for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(NETWORK_BYTE, identity.wallet.ownerSk, identity.wallet.viewSk, i.nonce), sealPk);
   const envelope = w.borEncodeTransaction(w.sealTransaction(tx, sealSk));
 
   // Submitting takes the locker session: the proxy relays sends of our lockers, not anyone's transactions.

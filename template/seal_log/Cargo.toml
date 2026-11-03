@@ -20,15 +20,15 @@ supersedes = "b571909e116776fa8cd8b22ddf9890554323a848a36ca9d35efb1a6a859a15bb"
 crate-type = ["cdylib"]
 
 [dependencies]
-tari_template_lib = "=0.34.0"
+tari_template_lib = "=0.37.0"
 
 [dev-dependencies]
-tari_template_test_tooling = "=0.45.0"
+tari_template_test_tooling = "=0.49.2"
 # Already in the tree through the test tooling; the tests read and write the JSON vectors with it.
 serde_json = "=1.0.152"
 
 [build-dependencies]
-tari_ootle_template_build = "=0.14.0"
+tari_ootle_template_build = "=0.17.1"
 
 # The flags `tari build` passes, so `cargo build --release` and the test harness
 # produce the same WASM bytes as `tari build`.

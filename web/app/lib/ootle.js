@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Everything that touches Tari Ootle keys: addresses, deterministic locker/wallet keys, sealing a
 // link secret to an address (kind 3: owner + view key; kind 4: view key only) and trial-decrypting
-// stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.46.0, loaded on demand.
+// stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.49.2, loaded on demand; the
+// indexers' CBOR values (0.48+) are read with the official ootle-wasm-bor, loaded when one is first needed.
 import { ALPHABET, safetyCode } from './emoji.js';
 import { concat, equal, utf8 } from './bytes.js';
 import { hex, unhex } from './b64.js';
 import { IntegrityError, aesGcmDecrypt, aesGcmEncrypt, hkdf, randomBytes } from './crypto.js';
-import { WASM_URL, instantiate, wasm as glue } from '../vendor/ootle-wasm-shim.js';
+import { BOR_URL, WASM_URL, bor, instantiate, instantiateBor, wasm as glue } from '../vendor/ootle-wasm-shim.js';
 
 export const NETWORK_BYTE = 0x26; // Esmeralda
 export const TESTNET_HRP = 'otl_esm_';
@@ -54,6 +55,33 @@ export function ready() {
 export function initWithBytes(wasmBytes) {
   loading = instantiate(wasmBytes);
   return loading;
+}
+
+let borLoading = null;
+
+function borReady() {
+  if (!borLoading) {
+    borLoading = (async () => {
+      const res = await fetch(BOR_URL, { signal: AbortSignal.timeout(60000) });
+      if (!res.ok) throw new Error('could not load ootle-wasm-bor');
+      await instantiateBor(new Uint8Array(await res.arrayBuffer()));
+    })();
+    borLoading.catch(() => { borLoading = null; });
+  }
+  return borLoading;
+}
+
+// Node (the sidecar and the tests) hands the bytes over, as with initWithBytes.
+export function initBorWithBytes(wasmBytes) {
+  borLoading = instantiateBor(wasmBytes);
+  return borLoading;
+}
+
+// An indexer's `Encoded<SubstateValue>` (base64 CBOR, tari_indexer 0.48+) -> {Utxo: …}, {Component: …}, … as
+// the JSON earlier indexers served. Throws for anything the official decoder refuses.
+export async function decodeSubstateValue(encoded) {
+  await borReady();
+  return JSON.parse(bor.decodeSubstateValue(encoded));
 }
 
 // The raw official bindings (wallet.js, the sidecar). Callers must have awaited ready() or initWithBytes().
@@ -189,13 +217,13 @@ export async function parseAddress(str) {
   await ready();
   let p;
   try {
-    p = take(glue.parseOotleAddress(String(str).trim()), ['network', 'owner_key', 'view_key', 'memo']);
+    p = take(glue.parseOotleAddress(String(str).trim()), ['network', 'owner_key', 'view_key', 'destination_tag']);
   } catch {
     throw new AddressError('bad_address');
   }
   if (p.network !== NETWORK_BYTE) throw new AddressError('mainnet_address');
   if (!equal(p.owner_key, local.ownerPk) || !equal(p.view_key, local.viewPk)) throw new AddressError('bad_address');
-  return { network: p.network, ownerPk: p.owner_key, viewPk: p.view_key, payRef: p.memo ?? null };
+  return { network: p.network, ownerPk: p.owner_key, viewPk: p.view_key, payRef: p.destination_tag ?? null };
 }
 
 // --- keys ------------------------------------------------------------------------------------------
@@ -252,14 +280,15 @@ export async function viewPublicKey(viewSk) {
 }
 
 // R1 (16-drive-architecture §1.9): the one-time public key (c + k)·G of a stealth output paid to
-// this owner key, from the output's public nonce (hex). It equals the output's `auth.Key` only when this
-// owner key can spend it; a view key proves the amount and the memo, never that. Same as the sidecar's
-// `oneTimeKey`. -> hex, or null when the nonce isn't a point.
-export async function oneTimeKey(ownerSk, nonceHex) {
+// this owner key, from the output's public nonce (hex); since Ootle 0.48, c = H(network || v·R) takes the
+// address's view secret too. It equals the output's `auth.Key` only when this owner key can spend it; a
+// view key proves the amount and the memo, never that. Same as the sidecar's `oneTimeKey`. -> hex, or null
+// when the nonce isn't a point.
+export async function oneTimeKey(ownerSk, viewSk, nonceHex) {
   await ready();
   let secret;
   try {
-    secret = glue.stealthDhSecret(NETWORK_BYTE, ownerSk, unhex(nonceHex));
+    secret = glue.stealthDhSecret(NETWORK_BYTE, ownerSk, viewSk, unhex(nonceHex));
     return hex(glue.publicKeyFromSecretKey(secret));
   } catch {
     return null;

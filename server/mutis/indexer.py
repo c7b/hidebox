@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: MIT
-"""Client for the public Ootle indexers (tari_indexer 0.47.0 REST API), spec §10.5–§10.7.
+"""Client for the public Ootle indexers (tari_indexer 0.49 REST API), spec §10.5–§10.7.
 
 Framing of the UTXO stream was pinned by gate G3 (server/NOTES-for-integrator.md): POST /utxos/stream
 with `Accept: application/json` answers NDJSON lines {"sos","update","eos"}; an Unspent update carries
-only (tag, public_nonce), so full outputs come from POST /utxos/fetch by (tag, nonce) pairs.
+only (tag, public_nonce), so full outputs come from POST /utxos/fetch by (tag, nonce) pairs, which answers
+`{"utxos": [[id, Encoded<Utxo>], …], "spent", "next_cursor"}` since 0.48.
 
 GET /substates/{id} answers `{"version", "state": {"up": {"substate": {...}}}, "verified", "proof"}` for a
 live substate and, asked for a named version with `include_proof=true`, `{"state": {"down": {}}, …}` with a
 down proof for a spent one; an unversioned read of a spent substate is a 404 "… is down". Indexers before
-0.47.0 put the value at `substate`; `substate_value` reads both.
+0.47.0 put the value at `substate`; `substate_value` reads both. Since 0.48 the value is an `Encoded<…>`
+(base64 CBOR), which `cbor.py` turns back into the JSON earlier indexers served.
 """
 import json
 import re
@@ -17,6 +19,8 @@ import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
+
+from . import cbor
 
 TARI = "resource_" + "01" * 32
 SHARDS = range(1, 257)                   # shard 0 is the global shard; the indexer rejects it
@@ -214,9 +218,12 @@ def parse_stream(data: bytes) -> list[dict]:
 
 def parse_fetched(entry) -> dict | None:
     """[commitment_hex, {"output": {"output": {"public_nonce", "encrypted_data", …}, "auth", "tag"}, …}] →
-    {"commitment", "nonce", "enc", "tag"} plus what the output reveals (`reveals`)."""
+    {"commitment", "nonce", "enc", "tag"} plus what the output reveals (`reveals`). The Utxo may be the
+    `Encoded<Utxo>` (base64 CBOR) a 0.48+ indexer sends."""
     try:
         commitment, body = entry
+        if isinstance(body, str):
+            body = cbor.utxo(cbor.b64(body))
         output = body["output"]
         inner = output["output"]
         nonce, enc, tag = inner["public_nonce"], inner["encrypted_data"], int(output["tag"])
@@ -269,6 +276,11 @@ def substate_value(obj) -> dict | None:
         value = up.get("substate") if isinstance(up, dict) else None
     else:
         value = obj.get("substate")
+    if isinstance(value, str):
+        try:
+            value = cbor.substate_value(cbor.b64(value))
+        except cbor.CborError:
+            return None
     return value if isinstance(value, dict) else None
 
 

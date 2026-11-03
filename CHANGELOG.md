@@ -1,6 +1,36 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- reset 0.49 -->
+## 2026-11-02: the Esmeralda reset, Ootle 0.49.2
+
+Esmeralda was reset on 2026-11-02 with Ootle 0.48.0 and 0.49.x. The organizers asked every entry to
+republish its templates and change nothing else, so this release changes only what the new network needs.
+The contest tag `spooky-secrets-2026-10` stays where it was; this release has its own tag.
+
+- **The official libraries, 0.49.2**: `ootle-wasm` 0.49.2 replaces 0.46.0, and `ootle-wasm-bor` 0.49.2, the
+  official decoder for the values indexers now serve as base64 CBOR, joins it (both from tag v0.49.2, commit
+  `aa7b0c8`, the walletd 0.49.2 the server runs; provenance in each folder). Keys and addresses derive as
+  before: a drive keeps its `otl_esm_…` address.
+- **What the new network changed, and where**: a stealth output's one-time key now takes the address's view
+  key (`stealthDhSecret(network, k, v, R)`) in the browser wallet, the sales check and the sidecar; memos
+  read `DestinationTagAndBytes` (the old `PayRefAndBytes` layout under a new name); a transaction names its
+  `main_signer` (`"SealSigner"`) instead of `is_seal_signer_authorized`; indexer values are `Encoded<…>`,
+  read in the browser with the official decoder and on the server with `server/mutis/cbor.py` (the strict
+  reader the proxy already used for envelopes, now also reading indexer values), held to the official
+  decoder on real Esmeralda answers (`server/tests/test_cbor.py`).
+- **SealLog**: the same template, rebuilt against `tari_template_lib` 0.37 under 0.49's authorization model,
+  with its upgrade rule `Locked` written out: nobody, us included, can swap the code under the log. The
+  browser's receipt check now also requires `Locked`. It is published again, by the reset wallet's new
+  `service` key, so the template and log addresses are new.
+- **What the reset left behind**: the transaction view ("What the chain sees") reads the indexers' encoded
+  receipts and results; the hourly payment reconcile checks only payments from `ootle.mirror_start_epoch` on,
+  so the outputs credited on the old chain, gone with it, don't freeze credits.
+- **The wallet**: walletd 0.49.2, reset (`tari_ootle_walletd reset --confirm`); because its seed lived in
+  the database the reset sets aside, it came back with a new seed, so the accounts have new keys. The
+  receiver and robot keys are separate files and didn't change.
+<!-- /reset 0.49 -->
+
 <!-- viral 1 -->
 ## 2026-10-22: a line after the value, a card per kind of link, two numbers a day
 

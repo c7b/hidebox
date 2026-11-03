@@ -5,7 +5,7 @@
 // (run_all.py starts `server/bin/mutis-api --dev --pow-bits 8` for it):
 //   node web/app/tests/node-run.mjs --api <origin of mutis-api --dev>
 import { readFileSync } from 'node:fs';
-import { initWithBytes } from '../lib/ootle.js';
+import { initBorWithBytes, initWithBytes } from '../lib/ootle.js';
 import { configureApi } from '../lib/api.js';
 import { searchNonce } from '../lib/pow.js';
 import { SUITES } from './suites.js';
@@ -28,7 +28,8 @@ globalThis.Worker ??= class {
 const apiAt = process.argv.indexOf('--api');
 const contractOrigin = apiAt > 0 ? process.argv[apiAt + 1] : null;
 
-await initWithBytes(readFileSync(new URL('../vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm', import.meta.url)));
+await initWithBytes(readFileSync(new URL('../vendor/ootle-wasm-0.49.2/ootle_wasm_bg.wasm', import.meta.url)));
+await initBorWithBytes(readFileSync(new URL('../vendor/ootle-wasm-bor-0.49.2/ootle_wasm_bor_bg.wasm', import.meta.url)));
 let passed = 0;
 let total = 0;
 for (const name of contractOrigin ? ['contract'] : SUITES) {

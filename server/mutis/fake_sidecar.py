@@ -138,8 +138,8 @@ def handle(req: dict) -> dict:
     if cmd == "scan":
         return {"found": scan(req["view_sk"], req["utxos"])}
     if cmd == "oneTimeKey":                  # R1: the key only this owner key can spend with
-        owner_sk, nonce = bytes.fromhex(req["owner_sk"]), bytes.fromhex(req["nonce"])
-        if len(owner_sk) != 32 or len(nonce) != 32:
+        owner_sk, view_sk, nonce = (bytes.fromhex(req[k]) for k in ("owner_sk", "view_sk", "nonce"))
+        if len(owner_sk) != 32 or len(view_sk) != 32 or len(nonce) != 32:   # 0.48+: the view key takes part
             raise ValueError("bad_request")
         return {"public_key": fake_one_time_key(fake_pk(owner_sk), nonce).hex()}
     if cmd == "openWatchKey":                # pay to open: a seller's sales view key, sealed to our receiver

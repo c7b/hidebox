@@ -24,7 +24,7 @@ export RUSTFLAGS="--remap-path-prefix=$cargo_home=/cargo"
 abi_expected=b4b4134be0d1a58ac7c224de2cf599e6f0d5e8c2ad484476e904bbc6c0dde494
 max_bytes=$((110 * 1024))
 wasm=target/wasm32-unknown-unknown/release/seal_log.wasm
-tested=target/default/wasm32-unknown-unknown/release/seal_log.wasm
+tested=target/templates/default/wasm32-unknown-unknown/release/seal_log.wasm   # tari_template_test_tooling 0.49
 
 step() { printf '\n== %s\n' "$*"; }
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }

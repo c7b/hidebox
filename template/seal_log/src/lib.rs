@@ -49,8 +49,11 @@ mod seal_log {
                     .method("get", rule!(allow_all))
                     .default(rule!(deny_all)),
             )
-            // The engine lets only an owner change a component's rules or swap its template.
+            // The engine lets only an owner change a component's rules, and nobody swap its template
+            // while the upgrade rule is Locked (Ootle 0.49: upgrades are opt-in; Locked is the default,
+            // written out so the rule can be read here).
             .with_owner_rule(OwnerRule::None)
+            .with_upgrade_rule(UpdateRule::Locked)
             .create()
         }
 

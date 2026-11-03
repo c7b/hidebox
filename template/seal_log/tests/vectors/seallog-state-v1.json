@@ -49,9 +49,10 @@
             "notarize": "AllowAll"
           }
         },
-        "entity_id": "fd",
+        "entity_id": "41",
         "owner_rule": "None",
-        "template_address": "64f405276891730adbeeeb3b5fafe93c0a19453c1b21abeaaa2004c9a783e432"
+        "template_address": "c9d54e7fd4c32d086c35cb8b3df12254fab57fc5ad6c581e6aa1675345be4f47",
+        "upgrade_rule": "Locked"
       }
     }
   }

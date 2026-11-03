@@ -74,7 +74,7 @@ async function selftest() {
   for (const [name, row, ours] of [['genuine', own.genuine, true], ['not ours', own.not_ours, false]]) {
     const d = await ootle.tryDecryptUtxo(unhex(own.view_sk), row);
     cases.push({ name: `ownership KAT: ${name} output opens with our view key`, passed: d !== null && d.value.toString() === row.value_ut });
-    cases.push({ name: `ownership KAT: ${name} output ${ours ? 'is' : 'is not'} spendable by our owner key`, passed: (oneTimeKeyHex(ownerSk, unhex(row.nonce)) === row.auth_key) === ours });
+    cases.push({ name: `ownership KAT: ${name} output ${ours ? 'is' : 'is not'} spendable by our owner key`, passed: (oneTimeKeyHex(ownerSk, unhex(own.view_sk), unhex(row.nonce)) === row.auth_key) === ours });
   }
   const other = await ootle.newRandomKeys();
   const fake = JSON.parse(w.createStealthOutputWitness(ootle.NETWORK_BYTE, other.ownerPk, k.viewPk, 7000n, ootle.TARI_RESOURCE, null, null, null, 0n));
@@ -82,7 +82,7 @@ async function selftest() {
   const [f] = JSON.parse(st2.statement_json).outputs;
   st2.free();
   const opened = await ootle.tryDecryptUtxo(k.viewSk, { id: id(f.output), nonce: f.output.sender_public_nonce, enc: f.output.encrypted_data });
-  cases.push({ name: 'fresh output for another owner opens with our view key but is not ours', passed: opened?.value === 7000n && oneTimeKeyHex(k.ownerSk, unhex(f.output.sender_public_nonce)) !== f.auth.Key });
+  cases.push({ name: 'fresh output for another owner opens with our view key but is not ours', passed: opened?.value === 7000n && oneTimeKeyHex(k.ownerSk, k.viewSk, unhex(f.output.sender_public_nonce)) !== f.auth.Key });
   // Pay to open: a sales view key sealed to our receiver opens only with the watch flag, the reference of
   // exactly that address and a key that is the address's view key.
   const seller = await ootle.newRandomKeys();
@@ -100,11 +100,12 @@ async function selftest() {
   return { passed: cases.every((c) => c.passed), cases };
 }
 
-// R1: the one-time public key (c + k)·G of a stealth output, from the receiver's owner key and the
-// output's public nonce. It equals the output's `auth.Key` only when that owner key can spend it.
-function oneTimeKeyHex(ownerSk, nonce) {
+// R1: the one-time public key (c + k)·G of a stealth output, from the receiver's owner key, its view key
+// (Ootle 0.48+: c = H(network || v·R)) and the output's public nonce. It equals the output's `auth.Key` only
+// when that owner key can spend it.
+function oneTimeKeyHex(ownerSk, viewSk, nonce) {
   const w = ootle.bindings();
-  const secret = w.stealthDhSecret(ootle.NETWORK_BYTE, ownerSk, nonce);
+  const secret = w.stealthDhSecret(ootle.NETWORK_BYTE, ownerSk, viewSk, nonce);
   try {
     return hex(w.publicKeyFromSecretKey(secret));
   } finally {
@@ -247,14 +248,16 @@ const handlers = {
   // R1: the chain worker compares this with the indexer's `auth.Key` before it credits a payment.
   oneTimeKey: async (r) => {
     const ownerSk = hexField(r.owner_sk, 32);
+    const viewSk = hexField(r.view_sk, 32);
     const nonce = hexField(r.nonce, 32);
     let key;
     try {
-      key = oneTimeKeyHex(ownerSk, nonce);
+      key = oneTimeKeyHex(ownerSk, viewSk, nonce);
     } catch {
       throw new RequestError('bad_point');
     } finally {
       ownerSk.fill(0);
+      viewSk.fill(0);
     }
     return { public_key: key };
   },

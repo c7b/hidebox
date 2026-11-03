@@ -75,18 +75,22 @@ export default [
     const v = await loadJson('vectors/indexer-substates-0.47.0.json');
     const live = v.live_utxo.body;
     const utxo = live.state.up.substate.Utxo;
-    eq(substateValue(live).Utxo, utxo);
-    eq(substateValue({ verified: true, substate: { Utxo: utxo } }).Utxo, utxo, 'the earlier shape');
-    eq(substateValue(live).Utxo.output.auth.Key, '6892417fe10f69cc21abd98b963160d872e03fe9a8882d9f531e7bb3efde7a06');
-    for (const name of ['live_utxo_without_proof', 'live_utxo_at_version']) ok(substateValue(v[name].body)?.Utxo, name);
+    eq((await substateValue(live)).Utxo, utxo);
+    eq((await substateValue({ verified: true, substate: { Utxo: utxo } })).Utxo, utxo, 'the earlier shape');
+    eq((await substateValue(live)).Utxo.output.auth.Key, '6892417fe10f69cc21abd98b963160d872e03fe9a8882d9f531e7bb3efde7a06');
+    for (const name of ['live_utxo_without_proof', 'live_utxo_at_version']) ok((await substateValue(v[name].body))?.Utxo, name);
     ok('down_proof' in v.spent_utxo_at_version.body.proof);
     for (const [name, body] of [['a proven down', v.spent_utxo_at_version.body], ['the 404 for a spent output', v.spent_utxo.body],
       ['up and down at once', { state: { up: live.state.up, down: {} } }], ['a state beside a substate', { state: { down: {} }, substate: { Utxo: utxo } }],
       ['a state that is not an object', { state: 'up', substate: { Utxo: utxo } }], ['an empty state', { state: {} }],
       ['null', null], ['an array', [live]], ['a substate that is not an object', { state: { up: { substate: [utxo] } } }]]) {
-      eq(substateValue(body), null, name);
+      eq(await substateValue(body), null, name);
     }
-    ok(substateValue(v.seallog_component.body).Component, 'the SealLog component');
+    ok((await substateValue(v.seallog_component.body)).Component, 'the SealLog component');
+    // Ootle 0.48+: the value is an Encoded<SubstateValue> (base64 CBOR), read with the official decoder
+    const e = await loadJson('vectors/indexer-0.49.json');
+    eq(JSON.stringify((await substateValue(e.live_utxo)).Utxo), JSON.stringify(e.official.Utxo), 'an Encoded value');
+    eq(await substateValue({ state: { up: { substate: 'not base64 cbor' } } }), null, 'an Encoded value the decoder refuses');
   }],
   ['direct send reads its input in either indexer shape; a proven down or a frozen output is gone', async () => {
     const to = (await newRandomKeys()).address;

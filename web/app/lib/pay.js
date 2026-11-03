@@ -251,13 +251,15 @@ export async function paidAccess(sA, serverHalf, claim) {
 
 // ---------- the owner check ----------
 
-// The claim a sales output pays: its memo's pay-ref (PayRefAndBytes) or a Message that is a claim id.
+// The claim a sales output pays: its memo's pay-ref (DestinationTagAndBytes since Ootle 0.48, PayRefAndBytes
+// before) or a Message that is a claim id.
 export function claimRef(memo) {
   if (!memo || typeof memo !== 'object') return null;
   let ref = null;
-  if (typeof memo.PayRefAndBytes === 'string') {
+  const tagged = memo.DestinationTagAndBytes ?? memo.PayRefAndBytes;
+  if (typeof tagged === 'string') {
     try {
-      const raw = unhex(memo.PayRefAndBytes);
+      const raw = unhex(tagged);
       if (raw.length && raw[0] + 1 <= raw.length) ref = String.fromCharCode(...raw.subarray(1, 1 + raw[0]));
     } catch {
       ref = null;
@@ -280,12 +282,12 @@ export async function auditOutput(keys, output) {
   } catch (e) {
     return e instanceof ApiError && e.status === 404 ? 'bad' : null;
   }
-  const out = substateValue(sub)?.Utxo?.output;
+  const out = (await substateValue(sub))?.Utxo?.output;
   const key = out?.auth?.Key;
   const nonce = out?.output?.public_nonce ?? output.nonce;
   if (typeof key !== 'string' || !/^[0-9a-f]{64}$/.test(key) || typeof nonce !== 'string') return 'bad';
   if (output.nonce && nonce !== output.nonce) return 'bad';
-  return (await oneTimeKey(keys.ownerSk, nonce)) === key ? 'ok' : 'bad';
+  return (await oneTimeKey(keys.ownerSk, keys.viewSk, nonce)) === key ? 'ok' : 'bad';
 }
 
 // The seller's drive, each time it opens: find new sales outputs, check each one, tell our server.

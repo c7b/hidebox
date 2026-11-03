@@ -1,7 +1,7 @@
 {
  "network": "esmeralda",
  "ootle_version": "0.46.0",
- "wasm_sha256": "2856d86b688959fc6620ac8cf2cb4629ee554c94bd81a6baaa2a71a7e7a393f2",
+ "wasm_sha256": "26d6531c98866aeefd5b9fb44af3d5dd4f18deb1334e0d81315d53088d1c8eeb",
  "receiver_address": "otl_esm_1q9fixturereceiveraddressxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
  "robot_address": "otl_esm_1q9fixturerobotaddressxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
  "deliveries": [

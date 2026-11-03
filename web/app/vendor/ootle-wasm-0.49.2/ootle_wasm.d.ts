@@ -13,12 +13,12 @@ export class DecryptedOutputResult {
      */
     mask: Uint8Array;
     /**
-     * JSON-encoded `Memo` (variants: `U256` / `Message` / `Bytes` / `PayRefAndBytes`), or `null` if
+     * JSON-encoded `Memo` (variants: `U256` / `Message` / `Bytes` / `DestinationTagAndBytes`), or `null` if
      * the payload carried no memo or `skipMemo` was set.
      */
     get memo_json(): string | undefined;
     /**
-     * JSON-encoded `Memo` (variants: `U256` / `Message` / `Bytes` / `PayRefAndBytes`), or `null` if
+     * JSON-encoded `Memo` (variants: `U256` / `Message` / `Bytes` / `DestinationTagAndBytes`), or `null` if
      * the payload carried no memo or `skipMemo` was set.
      */
     set memo_json(value: string | null | undefined);
@@ -81,13 +81,13 @@ export class ParsedOotleAddress {
     free(): void;
     [Symbol.dispose](): void;
     /**
-     * Optional pay reference / memo bytes.
+     * Optional destination tag bytes.
      */
-    get memo(): Uint8Array | undefined;
+    get destination_tag(): Uint8Array | undefined;
     /**
-     * Optional pay reference / memo bytes.
+     * Optional destination tag bytes.
      */
-    set memo(value: Uint8Array | null | undefined);
+    set destination_tag(value: Uint8Array | null | undefined);
     /**
      * The network byte.
      */
@@ -153,6 +153,27 @@ export function addTransactionSigner(tx_json: string, signer_secret_key: Uint8Ar
 export function aggregateInputMasks(masks_concat: Uint8Array): Uint8Array;
 
 /**
+ * Seal a transaction (unsigned or unsealed JSON) with a signature from an external signer (HSM, MPC).
+ *
+ * `signature` is the 64-byte sr25519 signature (scheme in the NPM README) over the hash from
+ * `hashUnsealedTransaction`, made by the key for `seal_signer_public_key`. The seal and any
+ * authorization signatures are verified.
+ * Returns the sealed `Transaction` as a JSON string.
+ */
+export function attachSealSignature(tx_json: string, seal_signer_public_key: Uint8Array, signature: Uint8Array): string;
+
+/**
+ * Add an authorization signature from an external signer (HSM, MPC) to a transaction (unsigned or
+ * unsealed JSON).
+ *
+ * `signature` is the 64-byte sr25519 signature (scheme in the NPM README) over the hash from
+ * `hashUnsignedTransaction` for `seal_signer_public_key`, made by the key for
+ * `signer_public_key`. It is verified before it is appended.
+ * Returns the `UnsealedTransactionV1` (with the new signature appended) as a JSON string.
+ */
+export function attachTransactionSignature(tx_json: string, signer_public_key: Uint8Array, signature: Uint8Array, seal_signer_public_key: Uint8Array): string;
+
+/**
  * BOR-encode a Transaction (JSON string) → base64 string (TransactionEnvelope format).
  */
 export function borEncodeTransaction(transaction_json: string): string;
@@ -192,10 +213,9 @@ export function buildStealthInputsStatement(input_commitments: Uint8Array, revea
  * this accepts a caller-supplied `witness` per input -- the only way to spend an output committed with
  * `PayTo::Conditions` (e.g. claiming or refunding an HTLC-style hashlock/timelock output). Build each
  * script-path input's witness with `buildScriptPathWitness` first; a plain key-path input can still be
- * included in the same call, either with `"witness":"KeyPath"` or by omitting `witness` entirely
- * (defaults to key path).
+ * included in the same call with `"witness":"KeyPath"`.
  *
- * `inputs_json` shape: `[{ "commitment": <hex 32 bytes>, "witness"?: <SpendWitness> }, ...]`.
+ * `inputs_json` shape: `[{ "commitment": <hex 32 bytes>, "witness": <SpendWitness> }, ...]`.
  */
 export function buildStealthInputsStatementFromInputs(inputs_json: string, revealed_amount_microtari: bigint): string;
 
@@ -306,9 +326,9 @@ export function generateKeypair(): KeypairResult;
  * Generate an Ootle address (bech32m string) from public keys.
  *
  * `network` is the network byte (0x00 = MainNet, 0x10 = LocalNet, 0x26 = Esmeralda, etc.).
- * `memo` is an optional pay reference (max 64 bytes).
+ * `destination_tag` is optional (max 64 bytes).
  */
-export function generateOotleAddress(owner_public_key: Uint8Array, view_public_key: Uint8Array, network: number, memo?: Uint8Array | null): string;
+export function generateOotleAddress(owner_public_key: Uint8Array, view_public_key: Uint8Array, network: number, destination_tag?: Uint8Array | null): string;
 
 /**
  * Generate a new random pair of Ootle secret keys (owner + view).
@@ -352,8 +372,18 @@ export function generateStealthBalanceProofSignature(aggregated_input_mask: Uint
 export function generateStealthOutputsStatement(witnesses_json: string, revealed_output_amount_microtari: bigint, revealed_receiver: Uint8Array): StealthOutputsResult;
 
 /**
- * Hash an UnsignedTransactionV1 (JSON string) for signing.
- * Returns the 64-byte signing message that must be Schnorr-signed.
+ * Hash a transaction (unsigned or unsealed JSON) for sealing.
+ * Returns the 64-byte seal message that the seal signer must sign.
+ *
+ * The seal message covers every authorization signature, so attach all of them before hashing.
+ */
+export function hashUnsealedTransaction(tx_json: string): Uint8Array;
+
+/**
+ * Hash a transaction (unsigned or unsealed JSON) for an authorization signature.
+ * Returns the 64-byte signing message that must be sr25519-signed.
+ *
+ * The message excludes attached signatures, so it is the same before and after `attachTransactionSignature`.
  *
  * `seal_signer_public_key` is the raw bytes of the seal signer's public key (account owner).
  */
@@ -372,7 +402,7 @@ export function ootlePublicKeyFromSecretKey(owner_key: Uint8Array, view_key: Uin
 
 /**
  * Parse a bech32m Ootle address string into its components.
- * Returns { owner_key: Uint8Array, view_key: Uint8Array, network: number, memo: Uint8Array | undefined }.
+ * Returns { owner_key: Uint8Array, view_key: Uint8Array, network: number, destination_tag: Uint8Array | undefined }.
  */
 export function parseOotleAddress(address: string): ParsedOotleAddress;
 
@@ -380,12 +410,6 @@ export function parseOotleAddress(address: string): ParsedOotleAddress;
  * Derive the public key from a secret key (both raw bytes).
  */
 export function publicKeyFromSecretKey(secret_key: Uint8Array): Uint8Array;
-
-/**
- * Schnorr-sign a message with a secret key.
- * Returns { public_nonce: Uint8Array, signature: Uint8Array }.
- */
-export function schnorrSign(secret_key: Uint8Array, message: Uint8Array): SchnorrSignatureResult;
 
 /**
  * Seal a transaction (unsigned or unsealed JSON) with the seal signer's secret key.
@@ -396,13 +420,13 @@ export function schnorrSign(secret_key: Uint8Array, message: Uint8Array): Schnor
 export function sealTransaction(tx_json: string, seal_signer_secret_key: Uint8Array): string;
 
 /**
- * Derive the recipient's stealth spending scalar `c + k`, where `c = H(network || k.G * r)`. The
- * receiver runs this with their account secret key (`private_key`) and the sender-provided public
- * nonce to obtain the one-time secret that controls the stealth output.
+ * Derive the recipient's stealth spending scalar `c + k`, where `c = H(network || v·R)`. The
+ * receiver runs this with their account secret key `k`, view secret key `v` and the sender-provided
+ * public nonce `R` to obtain the one-time secret that controls the stealth output.
  *
  * `network` is the network byte (0x00 = MainNet, 0x10 = LocalNet, 0x26 = Esmeralda, ...).
  */
-export function stealthDhSecret(network: number, private_key: Uint8Array, public_nonce: Uint8Array): Uint8Array;
+export function stealthDhSecret(network: number, account_secret: Uint8Array, view_secret: Uint8Array, public_nonce: Uint8Array): Uint8Array;
 
 /**
  * Decrypt and verify the AEAD payload of an inbound stealth UTXO.

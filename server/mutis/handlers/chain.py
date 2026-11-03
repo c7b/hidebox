@@ -192,8 +192,14 @@ def _ask_each(ctx, path: str, parse):
 
 
 def _from_receipt(obj: dict) -> dict | None:
-    """GET /transaction-receipts/{id}: kept indefinitely, but filled in minutes after the commit."""
+    """GET /transaction-receipts/{id}: kept indefinitely, but filled in minutes after the commit. Since 0.48 the
+    receipt is an Encoded<TransactionReceipt> (base64 CBOR)."""
     receipt = obj.get("receipt")
+    if isinstance(receipt, str):
+        try:
+            receipt = cbor.transaction_receipt(cbor.b64(receipt))
+        except cbor.CborError:
+            return None
     if not isinstance(receipt, dict):
         return None
     diff = receipt.get("diff_summary") or {}
@@ -207,6 +213,11 @@ def _from_result(obj: dict) -> dict | None:
     """GET /transactions/{id}/result: there as soon as the transaction is final, forgotten after 50 epochs."""
     final = (obj.get("result") or {}).get("Finalized") if isinstance(obj.get("result"), dict) else None
     execution = final.get("execution_result") if isinstance(final, dict) else None
+    if isinstance(execution, str):       # 0.48+: an Encoded<ExecuteResult> (base64 CBOR)
+        try:
+            execution = cbor.execute_result(cbor.b64(execution))
+        except cbor.CborError:
+            return None
     finalize = execution.get("finalize") if isinstance(execution, dict) else None
     if not isinstance(finalize, dict):
         return None

@@ -215,6 +215,21 @@ class Payments(unittest.TestCase):
         self.w.reconcile(self.s.now)
         self.assertIsNone(self.s.meta("credit_freeze"))
 
+    def test_reconcile_skips_payments_from_before_a_reset(self):
+        """After a testnet reset, outputs credited on the old chain are gone for good: the reconcile checks only
+        payments from `ootle.mirror_start_epoch` on (reset-playbook §5), so they don't freeze credits."""
+        old = f"utxo_{'01' * 32}_{'cd' * 32}"
+        with db.tx(self.s.conn):
+            self.s.conn.execute("INSERT INTO payments(utxo_id, value_ut, seen_at, epoch, proven, committed, status) "
+                                "VALUES (?, 500000, 0, 12781, 1, 1, 'credited')", (old,))
+        self.w.cfg["ootle"]["mirror_start_epoch"] = 12812
+        self.w.reconcile(self.s.now)
+        self.w.reconcile(self.s.now + RECONCILE_RECHECK_S)
+        self.assertEqual((self.s.meta("credit_freeze"), self.s.meta("reconcile_mismatch")), (None, None))
+        self.w.cfg["ootle"]["mirror_start_epoch"] = 12140      # the same row on the chain the mirror follows
+        self.w.reconcile(self.s.now)
+        self.assertEqual(self.s.meta("reconcile_mismatch"), str(self.s.now))
+
     def credited_invoice(self) -> dict:
         self.locker = self.s.register()          # a drive holds one pack at a time: each purchase is a new drive
         inv = self.invoice()
@@ -470,6 +485,8 @@ class PayRef(unittest.TestCase):
     def test_memo_forms(self):
         ref = "inv_abcdefghijklmnopqrst"
         self.assertEqual(payments.pay_ref({"PayRefAndBytes": (bytes([len(ref)]) + ref.encode() + b"tail").hex()}), ref)
+        # Ootle 0.48+ names the same [len][tag][bytes] layout DestinationTagAndBytes
+        self.assertEqual(payments.pay_ref({"DestinationTagAndBytes": (bytes([len(ref)]) + ref.encode()).hex()}), ref)
         self.assertEqual(payments.pay_ref({"Message": ref}), ref)
         self.assertIsNone(payments.pay_ref({"Message": ref + " "}))
         self.assertIsNone(payments.pay_ref({"PayRefAndBytes": "ff00"}))

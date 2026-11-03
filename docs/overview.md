@@ -88,6 +88,7 @@ More: [architecture.md](architecture.md) Â· [threat-model.md](threat-model.md) Â
 |---|---|
 | **Now** | Live on the Esmeralda testnet. tTARI is the coin on Tari's test network. It is worth nothing. |
 | **October 2026** | Built for the Tari Ootle contest "Spooky Secrets"; the judged release is the tag `spooky-secrets-2026-10`. |
+| **2 November 2026** | Esmeralda was reset with Ootle 0.48/0.49; the organizers asked entries to republish their templates and change nothing else. The tag `spooky-secrets-2026-10-reset` is that release: the same hidebox on Ootle 0.49.2, SealLog published again (CHANGELOG, 2026-11-02). |
 | **Nov 11, 2026** | The Ootle mainnet launches. hidebox stays on the testnet until its code is reviewed. |
 | **After review** | Paid features open only after that review. |
 

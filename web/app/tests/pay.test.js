@@ -52,6 +52,7 @@ export default [
     eq(claimRef({ Message: id }), id);
     const ref = Array.from(new TextEncoder().encode(id));
     eq(claimRef({ PayRefAndBytes: hex(Uint8Array.from([ref.length, ...ref, 1, 2])) }), id);
+    eq(claimRef({ DestinationTagAndBytes: hex(Uint8Array.from([ref.length, ...ref])) }), id, 'the Ootle 0.48+ name');
     for (const bad of [null, {}, { Message: id + ' ' }, { Message: 'inv_abcdefghijklmnopqrst' }, { PayRefAndBytes: 'zz' }, { PayRefAndBytes: '40' + hex(Uint8Array.from(ref)) }]) {
       eq(claimRef(bad), null, JSON.stringify(bad));
     }
@@ -71,9 +72,9 @@ export default [
     const own = v.ownership;
     for (const [row, ours] of [[own.genuine, true], [own.not_ours, false]]) {
       ok(await tryDecryptUtxo(unhex(own.view_sk), row), 'the view key opens both (amount and memo)');
-      eq((await oneTimeKey(unhex(own.owner_sk), row.nonce)) === row.auth_key, ours);
+      eq((await oneTimeKey(unhex(own.owner_sk), unhex(own.view_sk), row.nonce)) === row.auth_key, ours);
     }
-    eq(await oneTimeKey(unhex(own.owner_sk), 'ff'.repeat(32)), null);
+    eq(await oneTimeKey(unhex(own.owner_sk), unhex(own.view_sk), 'ff'.repeat(32)), null);
     ok(b64uDecode(b64uEncode(unhex(own.owner_sk))).length === 32);
   }],
 ];

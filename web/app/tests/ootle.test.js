@@ -113,7 +113,7 @@ export default [
     const d = await tryDecryptUtxo(k.viewSk, { id: `utxo_${'01'.repeat(32)}_${out.output.commitment}`, nonce: out.output.sender_public_nonce, enc: out.output.encrypted_data });
     eq(d.value, 4242n);
     eq(d.memo.Message, 'hi');
-    eq(hex(w.publicKeyFromSecretKey(w.stealthDhSecret(NETWORK_BYTE, k.ownerSk, unhex(out.output.sender_public_nonce)))), out.auth.Key);
+    eq(hex(w.publicKeyFromSecretKey(w.stealthDhSecret(NETWORK_BYTE, k.ownerSk, k.viewSk, unhex(out.output.sender_public_nonce)))), out.auth.Key);
   }],
   ['wrap v2: kind 3 and kind 4 blobs with fixed r are byte-identical to the vectors and open', async () => {
     const w = await loadJson('vectors/wrap-v2.json');

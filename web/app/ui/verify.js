@@ -143,7 +143,7 @@ export async function renderVerify(main) {
   const [{ chainIx, sealProof }, seallog] = await Promise.all([import('../lib/api-locker.js'), import('../lib/seallog.js')]);
   let log;
   try {
-    log = seallog.readSealLog(await chainIx('GET', `substates/${cfg.seal_log.component}`));
+    log = await seallog.readSealLog(await chainIx('GET', `substates/${cfg.seal_log.component}`));
   } catch (e) {
     return root.replaceChildren(errorBanner(e, e instanceof TypeError ? { key: 'verify.untrusted' } : {}));
   }

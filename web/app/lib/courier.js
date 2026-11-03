@@ -58,9 +58,10 @@ export function parseMemo(memoObj, allowedOrigins) {
 export function memoPlainText(memoObj) {
   if (!memoObj) return null;
   if (typeof memoObj.Message === 'string') return memoObj.Message;
-  if (typeof memoObj.PayRefAndBytes === 'string') {
+  const tagged = memoObj.DestinationTagAndBytes ?? memoObj.PayRefAndBytes;   // Ootle 0.48+, and the old name
+  if (typeof tagged === 'string') {
     try {
-      const b = unhex(memoObj.PayRefAndBytes);
+      const b = unhex(tagged);
       const rest = b.subarray(1 + b[0]);
       return fromUtf8(b.subarray(1, 1 + b[0])) + (rest.length ? ' ' + fromUtf8(rest) : '');
     } catch {

@@ -109,7 +109,7 @@ HASHED = ("shared/tokens.css", "site/css/site.css", "site/js/site.js", "shared/t
           "app/css/widget.css", "app/lib/pow-worker.js", "app/i18n/widget-en.json", "shared/ui/icons.svg",
           "shared/fonts/geist/Geist-Latin.woff2", "site/media/v3/hero-480.avif", "site/media/v3/hero-480.webp",
           "site/media/404/box-zero-480.avif", "favicon-32.png", "icon-512.png",
-          "app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm")
+          "app/vendor/ootle-wasm-0.49.2/ootle_wasm_bg.wasm")
 # A hashed name that no build made: the 404 page, never stored, through both hashed routes.
 HASHED_MISSING = ("/site/css/site.0000000000.css", "/app/ui/app.0000000000.js")
 # The text a browser gets compressed from the .br and .gz copies the build and the activation make
@@ -117,7 +117,7 @@ HASHED_MISSING = ("/site/css/site.0000000000.css", "/app/ui/app.0000000000.js")
 # to the file's bytes; with neither, the file. Each with Vary: Accept-Encoding. A hashed asset of each text type, and
 # pages (whose names never change: they keep revalidating, compressed the same way).
 PRECOMPRESSED_ASSETS = ("site/css/site.css", "site/js/site.js", "shared/ui/icons.svg", "app/i18n/en.json",
-                        "app/vendor/ootle-wasm-0.46.0/ootle_wasm_bg.wasm")
+                        "app/vendor/ootle-wasm-0.49.2/ootle_wasm_bg.wasm")
 PRECOMPRESSED_PAGES = ("/", "/how", "/manifest.webmanifest", "/this-page-does-not-exist")
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
 STATUS_FILES = ("/status.json", "/evidence.json", "/releases.json")

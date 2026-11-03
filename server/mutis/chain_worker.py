@@ -312,7 +312,8 @@ class Worker:
         if nonce is None:
             return None
         try:
-            reply = self.sidecar.request("oneTimeKey", owner_sk=self.receiver["owner_sk"], nonce=nonce)
+            reply = self.sidecar.request("oneTimeKey", owner_sk=self.receiver["owner_sk"],
+                                         view_sk=self.receiver["view_sk"], nonce=nonce)
         except SidecarError as e:
             if e.code in TRANSPORT_ERRORS:
                 raise                     # the step stops; the payment waits for a working sidecar
@@ -373,7 +374,8 @@ class Worker:
         elif self.receiver is not None:
             view_sk = self.receiver["view_sk"]
             payments.reconcile(self.conn, lambda rows: {f["id"]: f["value_ut"] for f in self._scan(view_sk, rows)},
-                               lambda uid: payments.committed_anywhere(self.indexers, uid), now)
+                               lambda uid: payments.committed_anywhere(self.indexers, uid), now,
+                               self.cfg["ootle"]["mirror_start_epoch"])
 
     # --- sends (spec §10.3, §10.4) -----------------------------------------------------------------
 

@@ -1,0 +1,701 @@
+{
+ "about": "Answers of the public Esmeralda indexers (tari_indexer 0.49.1) on 2026-11-02, after the reset, with what the official decoder (@tari-project/ootle-wasm-bor 0.49.2, decodeUtxo / decodeSubstateValue) makes of each Encoded value. server/tests/test_cbor.py holds server/mutis/cbor.py to it. Outputs of other people, public on the chain; nothing here can be opened without their keys. seallog_component_*: the live SealLog log made on 2026-11-02 (component_6a3eae19\u2026bd65, template_5932ee9b\u2026145c), empty. transactions: two of hidebox's own, with their receipt and result answers and the official decodings.",
+ "utxos_fetch": [
+  [
+   "0abb8dc1a494846283bccd69e07b2a2c318e4965785a4350e7d57ad87c996010",
+   "goODWCCOn+3yYYjaETBwnXNZMDafBlykJWxoj8308G3sjjhRCFhwAtFY5aJ/mfQejz2PIRxC43/v82IlEPKmAFI5H5KbOGtbSpCSXShUEOn2hRNwskOFz1GvbG/wcI54M3AlmzGb3yYJfTV3Ac/uLwX0/B30IoVE83JxLCWHA8fYMs42qA5FBa5sUaxJadjyi8RO4BOhQwCCAIFYIBim+j6XJFTjAnqkdL8ay2QBGxva0V2SJE1ReROAp+RLGr+cc+j0"
+  ],
+  [
+   "3c47a7b1c935daaa9fc2bb3102948647d39997f96813d8c03c917ac10cf8fb18",
+   "goODWCDsAMi/Z0X4c5Gbz/cIbJuzY2a7n6cvVzB9+Ft7EUj5cFhw+F4l3qFAAug34QDSh3XEXM3CvFTPeZfzP1fX03naoJ/fjvzsw3S1KIB9XmtNwcrfdGro63P/YGVDmCGF0dZFiky1wcZgJxypvzr8daYm8UWnquTk+th9lK45UynaHZsxd0eiNlXf1krFAxj7TJ0nsACCAIFYIHJ0JyUXKguJ21FlTx6WMSzIVu7bRSi65mEaiFPzRvF1GlCWwiD0"
+  ],
+  [
+   "a0cbf4b65bc7fc4a5a52dd3310e01b01be840755bbbed5a4b4ab8eba62c7a728",
+   "goODWCDuxW4zcn4sybr+WzYDIKUmVUFkshCO3PSzB+e2kERsKVhQ+VWLd+MZyksSs9uaYq/cvEULxhDfPCCbWWMXkVLfvaw6nBLOc7alydtdGHBc0/J7yfgBPtMFhHgjA3/pU313Qaa9dXuaRuGHOA/4Ed8rPXgAggCBWCCUdblE8zydarC3GNOw2Add5JX8IhkcgUBL2p484fiQWBqax3UZ9A=="
+  ]
+ ],
+ "utxos_official": [
+  {
+   "output": {
+    "output": {
+     "public_nonce": "8e9fedf26188da1130709d735930369f065ca4256c688fcdf4f06dec8e385108",
+     "encrypted_data": "02d158e5a27f99f41e8f3d8f211c42e37feff3622510f2a60052391f929b386b5b4a90925d285410e9f6851370b24385cf51af6c6ff0708e783370259b319bdf26097d357701cfee2f05f4fc1df4228544f372712c258703c7d832ce36a80e4505ae6c51ac4969d8f28bc44ee013a143",
+     "minimum_value_promise": 0,
+     "viewable_balance": null
+    },
+    "auth": {
+     "Key": "18a6fa3e972454e3027aa474bf1acb64011b1bdad15d92244d51791380a7e44b"
+    },
+    "tag": 3214701544
+   },
+   "is_frozen": false
+  },
+  {
+   "output": {
+    "output": {
+     "public_nonce": "ec00c8bf6745f873919bcff7086c9bb36366bb9fa72f57307df85b7b1148f970",
+     "encrypted_data": "f85e25dea14002e837e100d28775c45ccdc2bc54cf7997f33f57d7d379daa09fdf8efcecc374b528807d5e6b4dc1cadf746ae8eb73ff606543982185d1d6458a4cb5c1c660271ca9bf3afc75a626f145a7aae4e4fad87d94ae395329da1d9b317747a23655dfd64ac50318fb4c9d27b0",
+     "minimum_value_promise": 0,
+     "viewable_balance": null
+    },
+    "auth": {
+     "Key": "72742725172a0b89db51654f1e96312cc856eedb4528bae6611a8853f346f175"
+    },
+    "tag": 1352057376
+   },
+   "is_frozen": false
+  },
+  {
+   "output": {
+    "output": {
+     "public_nonce": "eec56e33727e2cc9bafe5b360320a526554164b2108edcf4b307e7b690446c29",
+     "encrypted_data": "f9558b77e319ca4b12b3db9a62afdcbc450bc610df3c209b5963179152dfbdac3a9c12ce73b6a5c9db5d18705cd3f27bc9f8013ed305847823037fe9537d7741a6bd757b9a46e187380ff811df2b3d78",
+     "minimum_value_promise": 0,
+     "viewable_balance": null
+    },
+    "auth": {
+     "Key": "9475b944f33c9d6ab0b718d3b0d8075de495fc22191c81404bda9e3ce1f89058"
+    },
+    "tag": 2596762905
+   },
+   "is_frozen": false
+  }
+ ],
+ "utxo_substate_answer": {
+  "version": 0,
+  "state": {
+   "up": {
+    "substate": "ggiBgoODWCCOn+3yYYjaETBwnXNZMDafBlykJWxoj8308G3sjjhRCFhwAtFY5aJ/mfQejz2PIRxC43/v82IlEPKmAFI5H5KbOGtbSpCSXShUEOn2hRNwskOFz1GvbG/wcI54M3AlmzGb3yYJfTV3Ac/uLwX0/B30IoVE83JxLCWHA8fYMs42qA5FBa5sUaxJadjyi8RO4BOhQwCCAIFYIBim+j6XJFTjAnqkdL8ay2QBGxva0V2SJE1ReROAp+RLGr+cc+j0"
+   }
+  },
+  "verified": true,
+  "proof": {
+   "anchor": {
+    "epoch": 12812,
+    "shard_group": {
+     "start": 1,
+     "end_inclusive": 256
+    },
+    "height": 386,
+    "block_id": "34eb68a53b847ad894e4a3481981f2c770af08533b1d5a8808472b819525fdf4",
+    "state_merkle_root": "d99f264fb3460e6272a8636e44555150c0fd9bb15a8c9048a6c30b0140b52b5f"
+   },
+   "commit_proof": "omZoZWFkZXKvZ25ldHdvcmsYJnBwcm90b2NvbF92ZXJzaW9uAGlwYXJlbnRfaWRYIGJWyEXJdS79SJ4OpPGyXSqs/p7R7dxLL0OuCcWk95icamp1c3RpZnlfaWRYIMrYtUebm+LSq+yCcchsdhhwqiSIQbwqve5r/rYwx04SZmhlaWdodBkBgmVlcG9jaBkyDGplcG9jaF9oYXNoWCDZyXVwTmeQ/gIJK9NiEWldC/N3rI3U/yX/Y7LV0in6I2tzaGFyZF9ncm91cKJlc3RhcnQBbWVuZF9pbmNsdXNpdmUZAQBrcHJvcG9zZWRfYnlYIFaK2t0nRMe7OuTFjiboOkmlta8zgO381rXXrzFVgFUvcXN0YXRlX21lcmtsZV9yb290WCDZnyZPs0YOYnKoY25EVVFQwP2bsVqMkEimwwsBQLUrX3Njb21tYW5kX21lcmtsZV9yb290WCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHd0cmFuc2FjdGlvbl9tZXJrbGVfcm9vdFggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABpc2lnbmF0dXJlomxwdWJsaWNfbm9uY2VYINxzmMxwdoqyAUZaG7gQrGXOywC/vH0OyUuNQG5Xjy1xaXNpZ25hdHVyZVgg56B3g10/GsY4NvkeeflA7X2gRTTw5/tXTGmsCL4fKwVwYWNjdW11bGF0ZWRfZGF0YaFydG90YWxfZXhoYXVzdF9idXJuAG1tZXRhZGF0YV9oYXNoWCAjqf6ZcKOR1OPIHp/a0LkLaQrKES0oEgLh9qrxKckkbW5wcm9vZl9lbGVtZW50c4OhcVF1b3J1bUNlcnRpZmljYXRlp2toZWFkZXJfaGFzaFggKac+4RJCkxR5iqTIJxspFC55xRRMcnTc8X3ZLMXIiWBpcGFyZW50X2lkWCAKS6QPkKl79z3mUeU8fe9CRhDZSrY5j/FEghK36w83E3Bwcm90b2NvbF92ZXJzaW9uAGVlcG9jaBkyDGZoZWlnaHQZAYRqc2lnbmF0dXJlc6FnU2Nobm9ycqJnc2lnbmVyc0ELanNpZ25hdHVyZXODomxwdWJsaWNfbm9uY2VYIHaGDFOamwuxELI9lf2pOvYnaVymnbgZwM7Uy6Uuow43aXNpZ25hdHVyZVggz2Lex/B8UjctMB3JuIt1m1ivWeL+1O85yVOWCKMtwgGibHB1YmxpY19ub25jZVggbHbwm5jOfbJzbdfGTDUdU8VXyb+wxMbc4kjtFY8imT1pc2lnbmF0dXJlWCCR5GyhZWh7vM0jXsiJd+4vI5p2dQcxfUztQLumwwatDaJscHVibGljX25vbmNlWCAe4xX2KMDJaPtJY2KlKwaT+AK+1dGdtVkVjJv2YOaxa2lzaWduYXR1cmVYIGjXNgMghw5zpjHdPvN2RO4VrYuMea7fB959nnpo3/cIaGRlY2lzaW9uZkFjY2VwdKFxUXVvcnVtQ2VydGlmaWNhdGWna2hlYWRlcl9oYXNoWCCF3UK/KMFzj7/S70uN4QqcgBYl8yVlpBNOErsDCAGhOWlwYXJlbnRfaWRYIDTraKU7hHrYlOSjSBmB8sdwrwhTOx1aiAhHK4GVJf30cHByb3RvY29sX3ZlcnNpb24AZWVwb2NoGTIMZmhlaWdodBkBg2pzaWduYXR1cmVzoWdTY2hub3JyomdzaWduZXJzQQtqc2lnbmF0dXJlc4OibHB1YmxpY19ub25jZVggPvx6J5v3bQ7j0htry1b/bLiYFWduXZyIZtUsbsyNw1hpc2lnbmF0dXJlWCCGsPOa65NBZhNKGysNcMsKPk2O+A70tdp8I3n3sm1uDKJscHVibGljX25vbmNlWCDwrn0fuCTJoH4/7qFI15gCZOirT9gF6nQRgkdaRTGJNWlzaWduYXR1cmVYIPdbJziVmhSnAAV9hJkPkk1MOH4FR/kWOb6tZlcqiZ0ComxwdWJsaWNfbm9uY2VYIJx6wndMMnr+9tmOg6WNAuPc07kJEFzXQhseW+Mmo+BIaXNpZ25hdHVyZVggli/hRbtKLWSwp7kDvc7wJcBvmAB78yWyKhaUBolQ/A5oZGVjaXNpb25mQWNjZXB0oXFRdW9ydW1DZXJ0aWZpY2F0ZadraGVhZGVyX2hhc2hYIMOQeGb0i/mzCrkd0ZnWMqfpLWcGfmF/XMDIY2+LStkOaXBhcmVudF9pZFggYlbIRcl1Lv1Ing6k8bJdKqz+ntHt3EsvQ64JxaT3mJxwcHJvdG9jb2xfdmVyc2lvbgBlZXBvY2gZMgxmaGVpZ2h0GQGCanNpZ25hdHVyZXOhZ1NjaG5vcnKiZ3NpZ25lcnNBDmpzaWduYXR1cmVzg6JscHVibGljX25vbmNlWCA0RbnaVg5U1xlUivk+JkHk93P70sMd/6x3D4bPRz3fAWlzaWduYXR1cmVYIC7MKy6XcJ7lnQSkx6yC3dtbGM+syz+V4+YamVG/JsoDomxwdWJsaWNfbm9uY2VYIOAHmA9K+7VeMisfdF0Xplwrpy2IVGEdLR1Xu9zxmKoeaXNpZ25hdHVyZVggcgu3XZa3gmsCSSS527oQH0XspGAZpIR1L7MxFYo94QyibHB1YmxpY19ub25jZVggOOpOcn7jt0s4/NL2SyVZyCLTnYJAoVZHa+Fwgu/r7HNpc2lnbmF0dXJlWCCOp6L2H8rpq0YaSaahGo2IJIwz1ZPb1+Oz9guNrdn4A2hkZWNpc2lvbmZBY2NlcHQ=",
+   "value_proof": "pWpzaGFyZF9yb290mCASGM4YNBhvFBiDGLMYKBhdGLQYIRhWGJ4YqhjxGOIYQhjVGE4Y4hh/GMkYPximGOUYUhilGFkYIhjSGCEYm3BzaGFyZF9yb290X3Byb29momRsZWFmomNrZXmhZWJ5dGVzmCAYPhiDGNkYixg1GPQY6hiTGBsYbxj9GIgYzhi2GHoYXhgfGBkYixjqGK0YZhjJGKoYzxjXGN0YLwgY2RikGHVqdmFsdWVfaGFzaJggGOQKGPcY7BhEGHcYGBiCGHQYMxj/GE4Y2BiYGLoYHxi9GD4YkhjtGEEYohhcGEYYohg1GHUYlBi4GCkY+xhkaHNpYmxpbmdzhqFlT3RoZXKYIBjPGCcYVhjAGPkY7RgnDBh2GFEXGD8YHxjYGCUYXBidGFgYfxj6GCQYyRhnGPsYIxijGGIYxRjbGB0YcRgsoWVPdGhlcpggGDsYSRj+GCkYcBiXGJMYYAcYnxgcGEQYVxjoGDEYIhiaGIcYuRjGGLwYURg7GEUBGCAY7hjIGBwYqxi2B6FlT3RoZXKYIBj9GG8YRBg2GOsXDxilFxYYnxIYzBjrGIIYyhg9GM4YhRjoGM8YdxIYqRi5GLgYdhh/GPYYwhhzGEShZU90aGVymCAYhRikGJ0EGIkYiRinGNoY9wAY/hj6GCkYzxitGFUYiBhBGNEYJRhyGPwY2hikGKEYkRj0GPEYehi/GDMY8KFlT3RoZXKYIBjhGGkYchh4GNUYjxg9GKoNGHcYmhj8GEAYbRiXBxjhGPcBGFAY1hhvGDEYwRj7Dhh4GDAYNxiZGDYIoWVPdGhlcpggGNkYoRgpGDcY0xjyGPsY8wEYohjNGDUYqBgrGDYY5Bh6GGoY2hirGOUYdRiQGCEY+Bj/GDQYuRicBxgnGFZqbGVhZl9wcm9vZqJkbGVhZqJja2V5oWVieXRlc5ggGN0YsQAOGIkYixhpGN4IGHwYQxhUGEUYdRhaGNYYQRj2GNsYcBhyGHcYXBgtEhjUGEoY9hh9BRhmGEdqdmFsdWVfaGFzaJggGMAYXRicGOIYuBiUGMkYTxiTGPoYmhggGMUY8hhHGG0YTBjHGBkYTAEYnhhkGOUYYBhCGN8YdRjkCBj7GMdoc2libGluZ3OAc3NoYXJkX3N0YXRlX3ZlcnNpb24BdHNoYXJkX3RyYW5zaXRpb25fYWNjmCAYPQYVGBsYNhhQGHgKGDEY4hh6BBhyGJUY6xjlCRhWGOMWGMwYRhh+GIkYbRh4BBhUGJYY+BikGG0=",
+   "value_hash_epoch": 12805
+  }
+ },
+ "utxo_substate_official": {
+  "Utxo": {
+   "output": {
+    "output": {
+     "public_nonce": "8e9fedf26188da1130709d735930369f065ca4256c688fcdf4f06dec8e385108",
+     "encrypted_data": "02d158e5a27f99f41e8f3d8f211c42e37feff3622510f2a60052391f929b386b5b4a90925d285410e9f6851370b24385cf51af6c6ff0708e783370259b319bdf26097d357701cfee2f05f4fc1df4228544f372712c258703c7d832ce36a80e4505ae6c51ac4969d8f28bc44ee013a143",
+     "minimum_value_promise": 0,
+     "viewable_balance": null
+    },
+    "auth": {
+     "Key": "18a6fa3e972454e3027aa474bf1acb64011b1bdad15d92244d51791380a7e44b"
+    },
+    "tag": 3214701544
+   },
+   "is_frozen": false
+  }
+ },
+ "seallog_component_answer": {
+  "version": 0,
+  "state": {
+   "up": {
+    "substate": "ggCBgoVYIFky7pulqWn1nqwM3cj65xErIt/IWr2qdRkR0RzlMxRcggCAgqVrYXBwZW5kX3Jvb3SCAoGCAIGCAIGCAYHYgoLYg1ggAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCAIFYIHjCFfh9tq/MkWyyDLAy+Zicz39UkFvfXp5kzKaSYKwGcGNoZWNrcG9pbnRfY291bnSCAIBjZ2V0ggCAZmxhdGVzdIIAgGhub3Rhcml6ZYIAgIIBgEFqggCAgYKAAA=="
+   }
+  },
+  "verified": true,
+  "proof": {
+   "anchor": {
+    "epoch": 12814,
+    "shard_group": {
+     "start": 1,
+     "end_inclusive": 256
+    },
+    "height": 37,
+    "block_id": "9d85b84a8810b437a0728d26a0dfa23ff4ac22001ccacaf8d803b894d104b222",
+    "state_merkle_root": "e2b401304c9775fb91e0f4939ebf1ad9c67ef9a237442ca8ca81f0595eca8e29"
+   },
+   "commit_proof": "omZoZWFkZXKvZ25ldHdvcmsYJnBwcm90b2NvbF92ZXJzaW9uAGlwYXJlbnRfaWRYIPxgXW2YTWuXH/FPx5SkrPLiAX0um0XhI2faRqSvw8MWamp1c3RpZnlfaWRYIHiQ+Jeaqf5ivYd63Mp6zv5dqbQd4Eq7sGunPH/iJjRLZmhlaWdodBglZWVwb2NoGTIOamVwb2NoX2hhc2hYIANw75slA+IL+YLG33rmGW6hK8HxeMzoMPIpnmg5rqw+a3NoYXJkX2dyb3VwomVzdGFydAFtZW5kX2luY2x1c2l2ZRkBAGtwcm9wb3NlZF9ieVggEHgP4bTTH4NQ5LiB3M2PghDOBWBQrG3YzKiMoWcQsERxc3RhdGVfbWVya2xlX3Jvb3RYIOK0ATBMl3X7keD0k56/GtnGfvmiN0QsqMqB8Fleyo4pc2NvbW1hbmRfbWVya2xlX3Jvb3RYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd3RyYW5zYWN0aW9uX21lcmtsZV9yb290WCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGlzaWduYXR1cmWibHB1YmxpY19ub25jZVggXCwIMWQld6ytrAJc8ezcvFDYX9km4sCE4mE2Ir+x80Fpc2lnbmF0dXJlWCDbhj64GXXk6OjOGlbMeG9IWwV1bK6OWpRN1HxGGxLtB3BhY2N1bXVsYXRlZF9kYXRhoXJ0b3RhbF9leGhhdXN0X2J1cm4ZrXttbWV0YWRhdGFfaGFzaFggTgI7vIwUuEMK9Y/Kidcwo4Gam4hTPT930LT1cXqd6VducHJvb2ZfZWxlbWVudHODoXFRdW9ydW1DZXJ0aWZpY2F0ZadraGVhZGVyX2hhc2hYIPiN2K1q6xc5r7R96eN35dhF5ztCRFEjDHn/CoRUthqEaXBhcmVudF9pZFggeYrDV9D3ijZMc9t6Tx8KchHYKa/+QFSlU9NmZG513OpwcHJvdG9jb2xfdmVyc2lvbgBlZXBvY2gZMg5maGVpZ2h0GCdqc2lnbmF0dXJlc6FnU2Nobm9ycqJnc2lnbmVyc0ENanNpZ25hdHVyZXODomxwdWJsaWNfbm9uY2VYIJhHXVs1BBTZgTMPnxHSqlU5pB234MvEPe0i5XXb3yYSaXNpZ25hdHVyZVggkvb0icU4Lx7h8OBWSw2u1344tCu1SAL/erSxoYjsnwaibHB1YmxpY19ub25jZVggIH8UKhNjVImVAFRkca3AvN/HxwsF0zCtQD5LibaHbztpc2lnbmF0dXJlWCARoJEaRtmgTCGeoaeQ3QJJ7F4WnLs0VgJtBKk0xD5wAqJscHVibGljX25vbmNlWCBI+PALfcR/VSWjwxZjj/jWW4S9SVB551kEeXtE/4lJc2lzaWduYXR1cmVYIIRZpQsATEgKGJwrDsFhgU4j9M1YCrQjl9S/bHz31zgIaGRlY2lzaW9uZkFjY2VwdKFxUXVvcnVtQ2VydGlmaWNhdGWna2hlYWRlcl9oYXNoWCBOUeEAX/WhJJgkzZTeKAg1mxdTOpdN+msV7usaFi+3/2lwYXJlbnRfaWRYIJ2FuEqIELQ3oHKNJqDfoj/0rCIAHMrK+NgDuJTRBLIicHByb3RvY29sX3ZlcnNpb24AZWVwb2NoGTIOZmhlaWdodBgmanNpZ25hdHVyZXOhZ1NjaG5vcnKiZ3NpZ25lcnNBB2pzaWduYXR1cmVzg6JscHVibGljX25vbmNlWCB0jGH654kpKavzlFQhloJtSv8x+BrFODQEXMqVQXk4LGlzaWduYXR1cmVYIJe5fLTsvKnBg0pH1c/chjfRbhrWsf2ZtjxNLIysR9gPomxwdWJsaWNfbm9uY2VYIP7tMy+Ib2r9j10xWxmnYthenT85OZTK+burmTahoAYOaXNpZ25hdHVyZVggQB130oYvyiz3GQJbPREmzbYEF/G4CgLbQL75bN1VkA2ibHB1YmxpY19ub25jZVggouvDHCHE5fL2N9uNEliPVc/nwX+ZPCMHksOwxxVb0Alpc2lnbmF0dXJlWCBcvuV3YNrDSMdnifhuWCNQThqhrt28kkp+r5Xmxi+yB2hkZWNpc2lvbmZBY2NlcHShcVF1b3J1bUNlcnRpZmljYXRlp2toZWFkZXJfaGFzaFggpPtICGTQFMa436IqryN4JcM3FteTSGeajJx1J7XzC8RpcGFyZW50X2lkWCD8YF1tmE1rlx/xT8eUpKzy4gF9LptF4SNn2kakr8PDFnBwcm90b2NvbF92ZXJzaW9uAGVlcG9jaBkyDmZoZWlnaHQYJWpzaWduYXR1cmVzoWdTY2hub3JyomdzaWduZXJzQQdqc2lnbmF0dXJlc4OibHB1YmxpY19ub25jZVggxHypP+kggIv2vdcRt1h7kDBk7llLP7bwQJYqg6/9rG5pc2lnbmF0dXJlWCCXD/DGodFB0aN7qkKByQKLmUa+GSZ1grgxTkCzHleyBKJscHVibGljX25vbmNlWCCGWJRFBikF9mYK+FA11AjYPJkHX49OAFYYnwZ9funldmlzaWduYXR1cmVYIGEvO9WWEF3wCxb4gfODOvJJBk3MzbuKKtfO+kARryMBomxwdWJsaWNfbm9uY2VYIJgTUlu0+ADntVpFOH4P8DC9+sSRYYFn0GpKkd5Tg2AXaXNpZ25hdHVyZVgg1M30rkoEoSq36LZ1Q42OQComAASpS7I+oZtGOKfOsAhoZGVjaXNpb25mQWNjZXB0",
+   "value_proof": "pWpzaGFyZF9yb290mCAYqRitGJQYmxgzGOAYdBhxGOUYShiZGBwYZxgrGCkXGHAYUwoYshg5GBkY8RgxGG4Y5hixGOgYchj/GNMYwXBzaGFyZF9yb290X3Byb29momRsZWFmomNrZXmhZWJ5dGVzmCAYlhgkGMsYYhjNGPoY3hg4DhieGPkYohgtGN4YRBgrGHIY3xi8GCkYWBhkCRikGEkYVxjUGPAYnRhLFQxqdmFsdWVfaGFzaJggGEoYkRjzGEgYjBjKGE4QGCkYexiTGEQYqBhkGOcYTxiuGJ8Y4hj8BhhPGNYY9BifDBi0GEUYzBivGKUY82hzaWJsaW5nc4ehZExlYWaiY2tleaFlYnl0ZXOYIBiUGMgRGDwYohj8FxQYjRjDGHQYyhhSGK8Y2xhLGCQYlhjLGMUAGMsKGNYY+BjKGEgY7xicGGYYaRh3anZhbHVlX2hhc2iYIBhrGOIYsxhMARh+AxgsGGcYvhjJGOUY4xhgGP8YRxjdGHYY0Ri8GBwY/Ri9GEYYRxikGNoYhxjmGDIYQBi4oWVPdGhlcpggGBwYJhiHGDcYKBgkGIIYshhUGMEY9BjdGJEYShi/GDYOGPkY4BjQGHUYdRifGL0YqBj5GHEYaxhoGOsY5Bg1oWVPdGhlcpggGJAYXBheGLkYXRjVGDkYGhieGJkYeBhMGFUYsBhTGC0Y6xjnGDgY/xjSGGQY8hgfGGMYLRjfGOIYIhjbGPMYgaFkTGVhZqJja2V5oWVieXRlc5ggGI8Ywhh4GPkYeRjWGNsYsRjdGEUYkxjFGGYYzRiyGH8YJhiIGHQY2xgwGJsYGhhnGOYYQRigGB8YTxAYuxiXanZhbHVlX2hhc2iYIBifGBkY9hg9GG4YXxjzGJkYehhpGP4YrBjbBxg4GKIYqBjvGOwYIhgdGL0YrxhcGB4YcBjuGL8Y2g8YaRi5oWVPdGhlcpggGJkYxhMYohglGOsY/BifGIAY9BhXGEQYhBgwGDIYZBhBGD8Y0BjfDRi/GGcYvRYYtRjEGIwYyRUYPhjJoWVPdGhlcpggGHAY4RhPBxhIGDEYnRhqGDAYMBhgGDEYwhh6GLoQGOQYohjrGFcUGEkY7RilGB8YfxjwGPMYYRjKGMoYZaFlT3RoZXKYIBhhGIQKGGMYsRjlGDQY3RhyGFsYhBjNGGMY3hhyGOoYLhjXGDQYrxh2GLoYnhizGJEY9BhiGMEYRRgsARjnamxlYWZfcHJvb2aiZGxlYWaiY2tleaFlYnl0ZXOYIBi6GLYYdRj0GEYYuxiCGGIYcRjZGEkY7hiPGGIYTBjcFBjgBBj0GFoYtBioGFsYvhizGOAY7Bg4GCYYzBh2anZhbHVlX2hhc2iYIBiMGPoKGJ8YoQoYlhgcGLYYuhiaGEUYUxjwGI0YQhiwGC0YSRjoGBgYTRi2GEgY5xi/GLMY0RhmGDEY3hi1aHNpYmxpbmdzgHNzaGFyZF9zdGF0ZV92ZXJzaW9uAXRzaGFyZF90cmFuc2l0aW9uX2FjY5ggGGMYZRiSGFsYPRjNGHMYbxhtGIAY4BiwGKMY8hj+GM8Yqhi3GCQYLxhxGKEY7BgZGJMYcAsY1wEJGPEYtA==",
+   "value_hash_epoch": 12814
+  }
+ },
+ "seallog_component_official": {
+  "Component": {
+   "header": {
+    "template_address": "5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c",
+    "owner_rule": "None",
+    "access_rules": {
+     "method_access": {
+      "append_root": {
+       "Restricted": {
+        "Require": {
+         "Require": {
+          "NonFungibleAddress": {
+           "resource_address": "resource_0100000000000000000000000000000000000000000000000000000000000000",
+           "id": {
+            "U256": "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
+           }
+          }
+         }
+        }
+       }
+      },
+      "checkpoint_count": "AllowAll",
+      "get": "AllowAll",
+      "latest": "AllowAll",
+      "notarize": "AllowAll"
+     },
+     "default": "DenyAll"
+    },
+    "entity_id": "6a",
+    "upgrade_rule": "Locked"
+   },
+   "body": {
+    "state": [
+     [],
+     0
+    ]
+   }
+  }
+ },
+ "transactions": [
+  {
+   "note": "a notarization (SealLog.notarize), tx a07b5a21\u2026",
+   "receipt_answer": {
+    "receipt": "h4IAgIKBg4ICgdiEWCBFdh2REMVviTTco+oai7X4FG3uPZsECpcayM9c1WKrrANYIKWyR4DdrAVBbK74FU9TPPoq2C0qgoU2oLwUlxKSnFC8gICChIICgdiEWCBFdh2REMVviTTco+oai7X4FG3uPZsECpcayM9c1WKrrFggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABxc3RkLnZhdWx0LnBheV9mZWXYgaFmYW1vdW50GgAPQkCEggCB2IBYIGo+rhmO1INWWr+Xj3xSiSY/E7Lt8+85AKmSTdQRQb1lWCBZMu6bpalp9Z6sDN3I+ucRKyLfyFq9qnUZEdEc5TMUXHBTZWFsTG9nLm5vdGFyaXpl2IGjamNvbW1pdG1lbnR4QDU1ZGRlZWJhZjFjYTczYjYwZDI2NDg5NWU5NDU3Zjc5ZGVkZjBiNjA5ZTNmN2ZkMTA5MDNlODBlZGZhYWFjMDllZXBvY2hlMTI4MTRmc2lnbmVyeEA3OGMyMTVmODdkYjZhZmNjOTE2Y2IyMGNiMDMyZjk5ODljY2Y3ZjU0OTA1YmRmNWU5ZTY0Y2NhNjkyNjBhYzA2hRoAD0JAGQfhAIGoggGAC4ICgBkCzYIDgBhaggSAGQFeggWAGPqCBoAYR4IIgBkCCIIJgAgYZBkyDlggoa+8YX5+vd0GYVy+DhpjwpEnXy3HKPtbx1bkzN68qvI="
+   },
+   "receipt_official": {
+    "outcome": "Commit",
+    "diff_summary": {
+     "upped": [
+      {
+       "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+       "version": 3,
+       "value_hash": "a5b24780ddac05416caef8154f533cfa2ad82d2a828536a0bc149712929c50bc"
+      }
+     ],
+     "downed": []
+    },
+    "fee_withdrawals": [],
+    "events": [
+     {
+      "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+      "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+      "topic": "std.vault.pay_fee",
+      "payload": {
+       "amount": 1000000
+      }
+     },
+     {
+      "substate_id": "component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65",
+      "template_address": "5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c",
+      "topic": "SealLog.notarize",
+      "payload": {
+       "commitment": "55ddeebaf1ca73b60d264895e9457f79dedf0b609e3f7fd10903e80edfaaac09",
+       "epoch": "12814",
+       "signer": "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
+      }
+     }
+    ],
+    "fee_receipt": {
+     "total_fee_payment": 1000000,
+     "total_fees_paid": 2017,
+     "total_fee_overcharge": 0,
+     "cost_breakdown": {
+      "breakdown": {
+       "RuntimeCall": 11,
+       "Storage": 717,
+       "TransactionWeight": 90,
+       "TemplateLoad": 350,
+       "SubstateCreate": 250,
+       "WasmExecution": 71,
+       "NativeExecution": 520,
+       "InputLoad": 8
+      }
+     },
+     "exhaust_burn": 100
+    },
+    "epoch": 12814,
+    "intent_commitment": "a1afbc617e7ebddd06615cbe0e1a63c291275f2dc728fb5bc756e4ccdebcaaf2"
+   },
+   "result_answer": {
+    "result": {
+     "Finalized": {
+      "final_decision": "Commit",
+      "execution_result": "hYZYIKB7WiHVga+IUWbYk2baneMmbeHhiu6O2HTAFkJFxJkVgoSCAoHYhFggRXYdkRDFb4k03KPqGou1+BRt7j2bBAqXGsjPXNViq6xYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcXN0ZC52YXVsdC5wYXlfZmVl2IGhZmFtb3VudBoAD0JAhIIAgdiAWCBqPq4ZjtSDVlq/l498UokmPxOy7fPvOQCpkk3UEUG9ZVggWTLum6WpafWerAzdyPrnESsi38havap1GRHRHOUzFFxwU2VhbExvZy5ub3Rhcml6ZdiBo2pjb21taXRtZW50eEA1NWRkZWViYWYxY2E3M2I2MGQyNjQ4OTVlOTQ1N2Y3OWRlZGYwYjYwOWUzZjdmZDEwOTAzZTgwZWRmYWFhYzA5ZWVwb2NoZTEyODE0ZnNpZ25lcnhANzhjMjE1Zjg3ZGI2YWZjYzkxNmNiMjBjYjAzMmY5OTg5Y2NmN2Y1NDkwNWJkZjVlOWU2NGNjYTY5MjYwYWMwNoCCAIGDgoKCAoHYhFggRXYdkRDFb4k03KPqGou1+BRt7j2bBAqXGsjPXNViq6yCggKBgoIDg9iDWCABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBARoF6PLKAAADgoIFgdiGWCCge1oh1YGviFFm2JNm2p3jJm3h4Yrujth0wBZCRcSZFYKCBYGHggCAgoGDggKB2IRYIEV2HZEQxW+JNNyj6hqLtfgUbe49mwQKlxrIz1zVYqusA1ggpbJHgN2sBUFsrvgVT1M8+irYLSqChTagvBSXEpKcULyAgIKEggKB2IRYIEV2HZEQxW+JNNyj6hqLtfgUbe49mwQKlxrIz1zVYqusWCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHFzdGQudmF1bHQucGF5X2ZlZdiBoWZhbW91bnQaAA9CQISCAIHYgFggaj6uGY7Ug1Zav5ePfFKJJj8Tsu3z7zkAqZJN1BFBvWVYIFky7pulqWn1nqwM3cj65xErIt/IWr2qdRkR0RzlMxRccFNlYWxMb2cubm90YXJpemXYgaNqY29tbWl0bWVudHhANTVkZGVlYmFmMWNhNzNiNjBkMjY0ODk1ZTk0NTdmNzlkZWRmMGI2MDllM2Y3ZmQxMDkwM2U4MGVkZmFhYWMwOWVlcG9jaGUxMjgxNGZzaWduZXJ4QDc4YzIxNWY4N2RiNmFmY2M5MTZjYjIwY2IwMzJmOTk4OWNjZjdmNTQ5MDViZGY1ZTllNjRjY2E2OTI2MGFjMDaFGgAPQkAZB+EAgaiCAYALggKAGQLNggOAGFqCBIAZAV6CBYAY+oIGgBhHggiAGQIIggmACBhkGTIOWCChr7xhfn693QZhXL4OGmPCkSdfLcco+1vHVuTM3ryq8gCBgoICgdiEWCBFdh2REMVviTTco+oai7X4FG3uPZsECpcayM9c1WKrrAKAhRoAD0JAGQfhAIGoggGAC4ICgBkCzYIDgBhaggSAGQFeggWAGPqCBoAYR4IIgBkCCIIJgAgYZBkH4aJkc2VjcwBlbmFub3MaADe30BkyDhoAARbZGgAH8EY=",
+      "execution_time": {
+       "secs": 0,
+       "nanos": 3651000
+      },
+      "finalized_time": "2026-11-02 22:26:35.0",
+      "abort_details": null
+     }
+    }
+   },
+   "result_official": {
+    "finalize": {
+     "transaction_hash": "a07b5a21d581af885166d89366da9de3266de1e18aee8ed874c0164245c49915",
+     "events": [
+      {
+       "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+       "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+       "topic": "std.vault.pay_fee",
+       "payload": {
+        "amount": 1000000
+       }
+      },
+      {
+       "substate_id": "component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65",
+       "template_address": "5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c",
+       "topic": "SealLog.notarize",
+       "payload": {
+        "commitment": "55ddeebaf1ca73b60d264895e9457f79dedf0b609e3f7fd10903e80edfaaac09",
+        "epoch": "12814",
+        "signer": "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
+       }
+      }
+     ],
+     "logs": [],
+     "result": {
+      "Accept": {
+       "up_substates": [
+        [
+         "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+         {
+          "substate": {
+           "Vault": {
+            "resource_container": {
+             "Stealth": {
+              "address": "resource_0101010101010101010101010101010101010101010101010101010101010101",
+              "revealed_amount": "99152586",
+              "locked_amount": "0"
+             }
+            },
+            "freeze_flags": 0
+           }
+          },
+          "version": 3
+         }
+        ],
+        [
+         "txreceipt_a07b5a21d581af885166d89366da9de3266de1e18aee8ed874c0164245c49915",
+         {
+          "substate": {
+           "TransactionReceipt": {
+            "outcome": "Commit",
+            "diff_summary": {
+             "upped": [
+              {
+               "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+               "version": 3,
+               "value_hash": "a5b24780ddac05416caef8154f533cfa2ad82d2a828536a0bc149712929c50bc"
+              }
+             ],
+             "downed": []
+            },
+            "fee_withdrawals": [],
+            "events": [
+             {
+              "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+              "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+              "topic": "std.vault.pay_fee",
+              "payload": {
+               "amount": 1000000
+              }
+             },
+             {
+              "substate_id": "component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65",
+              "template_address": "5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c",
+              "topic": "SealLog.notarize",
+              "payload": {
+               "commitment": "55ddeebaf1ca73b60d264895e9457f79dedf0b609e3f7fd10903e80edfaaac09",
+               "epoch": "12814",
+               "signer": "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
+              }
+             }
+            ],
+            "fee_receipt": {
+             "total_fee_payment": 1000000,
+             "total_fees_paid": 2017,
+             "total_fee_overcharge": 0,
+             "cost_breakdown": {
+              "breakdown": {
+               "RuntimeCall": 11,
+               "Storage": 717,
+               "TransactionWeight": 90,
+               "TemplateLoad": 350,
+               "SubstateCreate": 250,
+               "WasmExecution": 71,
+               "NativeExecution": 520,
+               "InputLoad": 8
+              }
+             },
+             "exhaust_burn": 100
+            },
+            "epoch": 12814,
+            "intent_commitment": "a1afbc617e7ebddd06615cbe0e1a63c291275f2dc728fb5bc756e4ccdebcaaf2"
+           }
+          },
+          "version": 0
+         }
+        ]
+       ],
+       "down_substates": [
+        [
+         "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+         2
+        ]
+       ],
+       "fee_withdrawals": []
+      }
+     },
+     "fee_receipt": {
+      "total_fee_payment": 1000000,
+      "total_fees_paid": 2017,
+      "total_fee_overcharge": 0,
+      "cost_breakdown": {
+       "breakdown": {
+        "RuntimeCall": 11,
+        "Storage": 717,
+        "TransactionWeight": 90,
+        "TemplateLoad": 350,
+        "SubstateCreate": 250,
+        "WasmExecution": 71,
+        "NativeExecution": 520,
+        "InputLoad": 8
+       }
+      },
+      "exhaust_burn": 100
+     },
+     "total_fees_required": 2017
+    },
+    "execution_time": {
+     "secs": 0,
+     "nanos": 3651536
+    },
+    "execute_epoch": 12814,
+    "wasm_execution_points": 71385,
+    "native_execution_points": 520262
+   }
+  },
+  {
+   "note": "a stealth transfer that spends a UTXO and makes one, tx 72b45851\u2026",
+   "receipt_answer": {
+    "receipt": "h4IAgIKDg4IIgdiNgtiDWCABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAVggluPdwofELhpY9SBGlxqAB0d6laZt//DaPFtSHj/P5zoAWCDycNEXSKSuTzdZKyeVRr6W26PhXysLh6yfeTkfgjdcrIOCAoHYhFggRXYdkRDFb4k03KPqGou1+BRt7j2bBAqXGsjPXNViq6wAWCAHswN/bt4VtS3ygNqrGq6RATHUML/+o1d/c5ZrbB5GLoOCAIHYgFggRTU4/V1lLWgiAeVOnegKbP5erf34+rNH+eswvftq1ugAWCCXd/FNrT7b8UFHTiA7Ej0cz+1ybhz1TT3MiH23rhLG84GCggiB2I2C2INYIAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBWCAEfK0iTHNCW6de9XFJcyFSSTN5GUOJxO2NHIzEz576dACAgoSCAoHYhFggRXYdkRDFb4k03KPqGou1+BRt7j2bBAqXGsjPXNViq6xYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcXN0ZC52YXVsdC5kZXBvc2l02IGhZmFtb3VudBoF9eEAhIIAgdiAWCBFNTj9XWUtaCIB5U6d6Aps/l6t/fj6s0f56zC9+2rW6FggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RkLmNvbXBvbmVudC5jcmVhdGVk2IGghRk6mBk6mBkPkIGnggGAD4ICgBkE0IIDgBifggWAGQPoggaAGCuCCIAZIXOCCYAEGQLuGTIOWCAqJjAbmt4WNS73E7psQcxhDavLvJBbAQd6XQUtAW+ZUQ=="
+   },
+   "receipt_official": {
+    "outcome": "Commit",
+    "diff_summary": {
+     "upped": [
+      {
+       "substate_id": "utxo_0101010101010101010101010101010101010101010101010101010101010101_96e3ddc287c42e1a58f52046971a8007477a95a66dfff0da3c5b521e3fcfe73a",
+       "version": 0,
+       "value_hash": "f270d11748a4ae4f37592b279546be96dba3e15f2b0b87ac9f79391f82375cac"
+      },
+      {
+       "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+       "version": 0,
+       "value_hash": "07b3037f6ede15b52df280daab1aae910131d430bffea3577f73966b6c1e462e"
+      },
+      {
+       "substate_id": "component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8",
+       "version": 0,
+       "value_hash": "9777f14dad3edbf141474e203b123d1ccfed726e1cf54d3dcc887db7ae12c6f3"
+      }
+     ],
+     "downed": [
+      {
+       "substate_id": "utxo_0101010101010101010101010101010101010101010101010101010101010101_047cad224c73425ba75ef57149732152493379194389c4ed8d1c8cc4cf9efa74",
+       "version": 0
+      }
+     ]
+    },
+    "fee_withdrawals": [],
+    "events": [
+     {
+      "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+      "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+      "topic": "std.vault.deposit",
+      "payload": {
+       "amount": 100000000
+      }
+     },
+     {
+      "substate_id": "component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8",
+      "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+      "topic": "std.component.created",
+      "payload": {}
+     }
+    ],
+    "fee_receipt": {
+     "total_fee_payment": 15000,
+     "total_fees_paid": 15000,
+     "total_fee_overcharge": 3984,
+     "cost_breakdown": {
+      "breakdown": {
+       "RuntimeCall": 15,
+       "Storage": 1232,
+       "TransactionWeight": 159,
+       "SubstateCreate": 1000,
+       "WasmExecution": 43,
+       "NativeExecution": 8563,
+       "InputLoad": 4
+      }
+     },
+     "exhaust_burn": 750
+    },
+    "epoch": 12814,
+    "intent_commitment": "2a26301b9ade16352ef713ba6c41cc610dabcbbc905b01077a5d052d016f9951"
+   },
+   "result_answer": {
+    "result": {
+     "Finalized": {
+      "final_decision": "Commit",
+      "execution_result": "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",
+      "execution_time": {
+       "secs": 0,
+       "nanos": 5069000
+      },
+      "finalized_time": "2026-11-02 22:13:55.0",
+      "abort_details": null
+     }
+    }
+   },
+   "result_official": {
+    "finalize": {
+     "transaction_hash": "72b458510686fbe43dbebd93d1ce5610eb13c87f0782ccbd408ab6e858214f81",
+     "events": [
+      {
+       "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+       "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+       "topic": "std.vault.deposit",
+       "payload": {
+        "amount": 100000000
+       }
+      },
+      {
+       "substate_id": "component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8",
+       "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+       "topic": "std.component.created",
+       "payload": {}
+      }
+     ],
+     "logs": [],
+     "result": {
+      "Accept": {
+       "up_substates": [
+        [
+         "utxo_0101010101010101010101010101010101010101010101010101010101010101_96e3ddc287c42e1a58f52046971a8007477a95a66dfff0da3c5b521e3fcfe73a",
+         {
+          "substate": {
+           "Utxo": {
+            "output": {
+             "output": {
+              "public_nonce": "107c32f16b501d681231c7da9402c8688648dbb1a27eadff7aeb2df8d38f0930",
+              "encrypted_data": "1bf6d15eccd683de9100fa998c447f6223835a38c33a8e182d5bc0040c2ab9c56d84d0d6f9a89554b5fbcc162af16540153ad091a44e4530f6ff3d72f19eafe4e8c10b0acc5cd7c9ed026a07cad81b1e",
+              "minimum_value_promise": 0,
+              "viewable_balance": null
+             },
+             "auth": {
+              "Key": "a2c437350686b7823fb8e5576a5bb0cc6a5a2e05361c7fd5a6203e6148fbf948"
+             },
+             "tag": 2992005710
+            },
+            "is_frozen": false
+           }
+          },
+          "version": 0
+         }
+        ],
+        [
+         "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+         {
+          "substate": {
+           "Vault": {
+            "resource_container": {
+             "Stealth": {
+              "address": "resource_0101010101010101010101010101010101010101010101010101010101010101",
+              "revealed_amount": "100000000",
+              "locked_amount": "0"
+             }
+            },
+            "freeze_flags": 0
+           }
+          },
+          "version": 0
+         }
+        ],
+        [
+         "component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8",
+         {
+          "substate": {
+           "Component": {
+            "header": {
+             "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+             "owner_rule": {
+              "ByPublicKey": "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
+             },
+             "access_rules": {
+              "method_access": {
+               "balance": "AllowAll",
+               "deposit": "AllowAll",
+               "get_balances": "AllowAll",
+               "withdraw_approved": "AllowAll"
+              },
+              "default": "DenyAll"
+             },
+             "entity_id": "45",
+             "upgrade_rule": "Locked"
+            },
+            "body": {
+             "state": [
+              {
+               "@cbor": "map",
+               "entries": [
+                [
+                 {
+                  "@cbor": "tag",
+                  "tag": 131,
+                  "value": {
+                   "@cbor": "bytes",
+                   "hex": "0101010101010101010101010101010101010101010101010101010101010101"
+                  }
+                 },
+                 {
+                  "@cbor": "tag",
+                  "tag": 132,
+                  "value": {
+                   "@cbor": "bytes",
+                   "hex": "45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac"
+                  }
+                 }
+                ]
+               ]
+              },
+              {}
+             ]
+            }
+           }
+          },
+          "version": 0
+         }
+        ],
+        [
+         "txreceipt_72b458510686fbe43dbebd93d1ce5610eb13c87f0782ccbd408ab6e858214f81",
+         {
+          "substate": {
+           "TransactionReceipt": {
+            "outcome": "Commit",
+            "diff_summary": {
+             "upped": [
+              {
+               "substate_id": "utxo_0101010101010101010101010101010101010101010101010101010101010101_96e3ddc287c42e1a58f52046971a8007477a95a66dfff0da3c5b521e3fcfe73a",
+               "version": 0,
+               "value_hash": "f270d11748a4ae4f37592b279546be96dba3e15f2b0b87ac9f79391f82375cac"
+              },
+              {
+               "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+               "version": 0,
+               "value_hash": "07b3037f6ede15b52df280daab1aae910131d430bffea3577f73966b6c1e462e"
+              },
+              {
+               "substate_id": "component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8",
+               "version": 0,
+               "value_hash": "9777f14dad3edbf141474e203b123d1ccfed726e1cf54d3dcc887db7ae12c6f3"
+              }
+             ],
+             "downed": [
+              {
+               "substate_id": "utxo_0101010101010101010101010101010101010101010101010101010101010101_047cad224c73425ba75ef57149732152493379194389c4ed8d1c8cc4cf9efa74",
+               "version": 0
+              }
+             ]
+            },
+            "fee_withdrawals": [],
+            "events": [
+             {
+              "substate_id": "vault_45761d9110c56f8934dca3ea1a8bb5f8146dee3d9b040a971ac8cf5cd562abac",
+              "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+              "topic": "std.vault.deposit",
+              "payload": {
+               "amount": 100000000
+              }
+             },
+             {
+              "substate_id": "component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8",
+              "template_address": "0000000000000000000000000000000000000000000000000000000000000000",
+              "topic": "std.component.created",
+              "payload": {}
+             }
+            ],
+            "fee_receipt": {
+             "total_fee_payment": 15000,
+             "total_fees_paid": 15000,
+             "total_fee_overcharge": 3984,
+             "cost_breakdown": {
+              "breakdown": {
+               "RuntimeCall": 15,
+               "Storage": 1232,
+               "TransactionWeight": 159,
+               "SubstateCreate": 1000,
+               "WasmExecution": 43,
+               "NativeExecution": 8563,
+               "InputLoad": 4
+              }
+             },
+             "exhaust_burn": 750
+            },
+            "epoch": 12814,
+            "intent_commitment": "2a26301b9ade16352ef713ba6c41cc610dabcbbc905b01077a5d052d016f9951"
+           }
+          },
+          "version": 0
+         }
+        ]
+       ],
+       "down_substates": [
+        [
+         "utxo_0101010101010101010101010101010101010101010101010101010101010101_047cad224c73425ba75ef57149732152493379194389c4ed8d1c8cc4cf9efa74",
+         0
+        ]
+       ],
+       "fee_withdrawals": []
+      }
+     },
+     "fee_receipt": {
+      "total_fee_payment": 15000,
+      "total_fees_paid": 15000,
+      "total_fee_overcharge": 3984,
+      "cost_breakdown": {
+       "breakdown": {
+        "RuntimeCall": 15,
+        "Storage": 1232,
+        "TransactionWeight": 159,
+        "SubstateCreate": 1000,
+        "WasmExecution": 43,
+        "NativeExecution": 8563,
+        "InputLoad": 4
+       }
+      },
+      "exhaust_burn": 750
+     },
+     "total_fees_required": 11016
+    },
+    "execution_time": {
+     "secs": 0,
+     "nanos": 5069436
+    },
+    "execute_epoch": 12814,
+    "wasm_execution_points": 43231,
+    "native_execution_points": 8563828
+   }
+  }
+ ]
+}
