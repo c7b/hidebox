@@ -33,9 +33,9 @@ engine's metering and the wallet store.
 | Template definition V2 (`FunctionKind`); V1 definitions keep working | nothing in mutis reads a definition (the `templates/` proxy path passes JSON through and the app never asks it); SealLog stays as published | do not republish |
 | `CallFunction` only for functions, `CallMethod` only for methods | the checkpoint and notarize manifests call `log.append_root(…)` and `log.notarize(…)` on the component (CallMethod; `&mut self` and `&self` in the V1 definition become methods), `account.pay_fee(…)` likewise; `SealLog::new` is a function | none |
 | One active element segment; `table.init` refused at compile; cached templates are recompiled | `template/dist/seal_log.wasm` (the published bytes) has one active segment, a fixed 45-slot table and no table-writing operator | none |
-| Metering: literal and blob call arguments charged as decoded; a table slot costs 24 points (was 16); 1,000 points = 1 µT; no activation epoch (from the fleet upgrade on) | checkpoint #288 (epoch 12889) cost 5,981 µT against `pay_fee(1000000)`; 0.50 adds a few µT (its three small arguments, 45 × 8 points). A stealth transfer has no call arguments: a delivery cost 16,157 µT of its 30,000 (`max_fee_transfer_ut`, `FEE_UT` in wallet.js; the rest is the non-refundable overcharge). Claims run at `max_fee` 2,000,000 | none; §7 checks the first receipts |
+| Metering: literal and blob call arguments charged as decoded; a table slot costs 24 points (was 16); 1,000 points = 1 µT; no activation epoch (from the fleet upgrade on) | checkpoint #288 (epoch 12889) cost 5,981 µT against `pay_fee(1000000)`; 0.50 adds a few µT (its three small arguments, 45 × 8 points). A stealth transfer has no call arguments: a delivery cost 16,157 µT of its 30,000 (`max_fee_transfer_ut`, `FEE_UT` in wallet.js; the rest is the non-refundable overcharge). The faucet claim of reset-playbook.md §3 offers `max_fee` 2,000,000; walletd's own burn claims price themselves | none; §7 checks the first receipts |
 | Account `approve` is compare-and-set; empty `any_of`/`all_of` refused when stored; a vault in one component only | mutis never approves; SealLog's rules are `public_key`, `allow_all`, `deny_all`; SealLog holds no vault | none |
-| `ootle-wasm` / `ootle-wasm-bor` 0.50.0 | `crates/ootle_wasm` is the same source as v0.49.2 bar its version; the transaction, stealth statement and value layouts the browser builds and reads are unchanged, so 0.49.2 keeps working on the 0.50 network | vendor 0.50.0 when it is on npm (§2), deploy it after the walletd upgrade, not with it |
+| `ootle-wasm` / `ootle-wasm-bor` 0.50.0 | `crates/ootle_wasm` is the same source as v0.49.2 bar its version, and no third-party crate moves in `Cargo.lock` (the same wasm-bindgen, so the glue the shim loads by hand keeps its shape); the transaction, stealth statement and value layouts the browser builds and reads are unchanged, so 0.49.2 keeps working on the 0.50 network | vendor 0.50.0 when it is on npm (§2), deploy it after the walletd upgrade, not with it |
 
 ## 2. ootle-wasm 0.50.0 (as `build`, once npm has it)
 
@@ -108,7 +108,9 @@ u 'sudo install -m 0755 -o root -g root <dir>/<n> /opt/tari/bin/tari_ootle_walle
 
 `deploy/ootle/build-walletd-src.sh` builds the binary as `build` at the release commit, in
 `/home/build/work/ootle-0.50`, with no package installed (the headers it needs are Debian's own packages, unpacked
-into a private sysroot) and capped so the live services keep their CPU and memory (`nproc` is 2: one job):
+into a private sysroot) and capped so the live services keep their CPU and memory (`nproc` is 2: one job).
+It was started on 2026-11-05 (rehearsal log): when `$W/logs/build.log` already ends with `done` and the binary's
+sha256, take that binary and skip to the install. Otherwise:
 
 ```sh
 W=/home/build/work/ootle-0.50; C=a5ea91cca53c01967184755f07918471e70bbc03
@@ -120,8 +122,17 @@ u "sudo tail -3 $W/logs/build.log"                                  # done …, 
 ```
 
 It differs from a release binary in two ways: no web UI (the release builds it with pnpm; JSON-RPC is the same)
-and other bytes. Install it as `tari_ootle_walletd-0.50.0-a5ea91c-src` (the `-src` says where it came from), and
-replace it with the release binary once one exists (this §3–§6 again, the store already migrated).
+and other bytes. The 2026-11-05 build: `tari_ootle_walletd 0.50.0`, 63,123,664 bytes, sha256
+`881e61e5b64c4e4963d2fd74847e42b467c8ab58b2cd85c0c473b11c4aacea81`, linking the same 13 libraries as the 0.49.2
+release binary (`ldd`: libssl, libcrypto and libdbus-1 among them). Install it with its origin in the name, and check it is
+those bytes:
+
+```sh
+u "sudo install -m 0755 -o root -g root $W/target/x86_64-unknown-linux-gnu/release/tari_ootle_walletd \
+   /opt/tari/bin/tari_ootle_walletd-0.50.0-a5ea91c-src && sha256sum /opt/tari/bin/tari_ootle_walletd-0.50.0-a5ea91c-src"
+```
+
+Replace it with the release binary once one exists (§3a, §5 again; the store is already migrated).
 
 ### 3c. Either binary, before it goes live
 
@@ -129,7 +140,8 @@ replace it with the release binary once one exists (this §3–§6 again, the st
 u 'diff <(/opt/tari/bin/tari_ootle_walletd-0.49.2-aa7b0c8 --help) <(/opt/tari/bin/tari_ootle_walletd-0.50.0-<suffix> --help)'
 ```
 
-Only the program name may differ, or `run-walletd.sh` needs a look. Then upgrade-drill.md §3 on a copy of the
+New options are fine; every one `run-walletd.sh` passes (`--network`, `--base-path`, `--config`, `--log-config`,
+`--listen-on`, `--authentication`, the `run` subcommand) must still be there. Then upgrade-drill.md §3 on a copy of the
 wallet with `NEW=/opt/tari/bin/tari_ootle_walletd-0.50.0-<suffix>`: one migration
 (`2026-11-03-120000_locks_many_per_transaction`: an index, not data), the same accounts and balances as `rpc balances`
 on the live wallet, nothing refused by the sandbox.
@@ -142,7 +154,7 @@ proven by the sidecar, so they keep working while walletd is down. Pause the Tar
 
 ```sh
 for f in relay_send direct_send drops demo_pay sponsor decoys seallog; do admin feature $f off; done
-u 'cd /tmp && sudo -u mutis python3 -I -' <<'EOF'
+u "cd /tmp && sudo -u mutis sh -c 'umask 007; exec python3 -I -'" <<'EOF'
 import sqlite3
 c = sqlite3.connect("file:/srv/mutis/data/db/mutis.sqlite3?mode=ro", uri=True)
 for what, sql in (("jobs sending (must be 0)", "SELECT count(*) FROM jobs WHERE state = 'sending'"),
@@ -158,7 +170,7 @@ rpc call transactions.list "'{\"status\":\"Pending\",\"account\":null}'"       #
 ```
 
 Run it until the first two lines and walletd's list are empty (a send settles within `SEND_TIMEOUT_S`, 15
-minutes). Open invoices and claims are fine; note them, and look again after §6 that each one moved on. Keep clear
+minutes). Open invoices and claims are fine; note them, and look again after §7 that each one moved on. Keep clear
 of 12:00 UTC, when the daily evidence payment is queued.
 
 ## 5. Back up, install, restart (walletd is down for seconds)
@@ -194,7 +206,7 @@ cached token is refused after walletd restarts, error 401, and it asks for a new
 this step: the code on `ootle/0.50` reads 0.49.2 and 0.50.0 alike, and ootle-wasm moves later (§2).
 
 ```sh
-u 'journalctl -u walletd --since "-5 min" --no-pager | grep -iE "migrat|deserialize|error" | tail -20'
+u 'sudo journalctl -u walletd --since "-5 min" --no-pager | grep -iE "migrat|deserialize|error" | tail -20'
 rpc call validator_set.get_status "'{}'"                              # indexer_trust, anchored, walk not failing
 for f in relay_send direct_send drops demo_pay sponsor decoys seallog; do admin feature $f clear; done
 ```
@@ -220,7 +232,8 @@ The notarize names the live release's manifest again (the same hash `notarize-re
 so it says nothing new about it. E-10 and E-13 send transactions the browser builds with ootle-wasm; E-25 is the
 canary; E-29 and E-30 pay to open; E-J is the judge script.
 
-Then the first receipts' fees against their caps (fee checks are the one thing 0.50 changes without an epoch):
+Then the first receipts' fees against their caps (metering is the one thing 0.50 changes without an epoch), from
+the repository's root:
 
 ```sh
 python3 -I - <tx id> <<'EOF'
@@ -236,8 +249,28 @@ For a checkpoint (from `/evidence.json`, `seallog.latest_checkpoint.tx_id`) `cos
 1,000,000 it pays; for a delivery (`deliveries[0].tx_id`) near 16,000 of 30,000. A cost above 25,000 for a
 delivery means `max_fee_transfer_ut` and wallet.js `FEE_UT` must rise together (every send pays the same fee).
 
+## 8. If walletd is still 0.49.2 at epoch 12951
+
+What doesn't depend on walletd keeps working whatever its version: links and files, the mirror, payments and
+claims (found by the mirror, proven by the sidecar), the canary's opening, and every transaction the browser builds
+with ootle-wasm 0.49.2 (same transaction and value layouts). Before the epoch, walletd 0.49.2 reads 0.50 indexers
+as it reads 0.49 ones (same paths and shapes). After it, walletd 0.49.2 verifies no proof and recomputes no hash
+(`IndexerTrust::Trust`), so it may well keep working, but nobody upstream says so: a 0.49 node forks off, and any
+answer it parses that carries something only V1 writes (for instance a protocol version of 1: 0.49 knows only 0)
+would stop it reading. Watch from the
+epoch on:
+
+```sh
+u 'sudo journalctl -u walletd --since "-10 min" --no-pager | grep -iE "deserialize|error" | tail'
+u 'sudo journalctl -u mutis-chain --since "-10 min" --no-pager | grep -E "walletd_down|seal_failed|job_failed" | tail'
+```
+
+At the first "Failed to deserialize response", pause the Tari features (reset-playbook.md §1) before anything else:
+a send submitted then stays `Pending` with its inputs and change locked until a walletd that can read its result
+sees it, and results age out after one or two epochs (upgrade-drill.md §4). Then §3 to §7.
+
 ## Rehearsal log
 
 | Date | What | Result |
 |---|---|---|
-| 2026-11-05 | §1 read in v0.49.2..a5ea91cc; §2 `check` run on the 0.49.2 downloads gives back both vendored folders byte for byte, with the run and Rekor entries their PROVENANCE files list, and a `repin` of a copy of the tree passes deploy/tests; §3b started on the server at 23:07 UTC | see the branch `ootle/0.50` |
+| 2026-11-05 | §1 read in v0.49.2..a5ea91cc. §2: `check` on the 0.49.2 downloads gives back both vendored folders byte for byte, with the run and Rekor entries their PROVENANCE files list; a `repin` of a copy of the tree passes deploy/tests. §3b: built on the server as `build`, 23:07 to 23:45 UTC (38 min, 32 min of CPU, 1.8 GB peak, with two other lanes building), the API answering in under 10 ms throughout; §3c: `--help` and `run --help` equal to 0.49.2's but for the name. A throwaway wallet (its own data dir, port 5219, as `build`): made by the 0.49.2 release binary, opened by the build, which ran the one migration at start (`20261103120000`, index `locks_transaction_id`) and kept both accounts' keys and addresses; mutis's client (`info`, `account`, `stealth_balance_ut`, `stealth_utxos`) and `walletd-rpc.py` work against it. Not run: a send, a checkpoint or a dry run (walletd 0.50 dry-runs only from an account on chain, and the faucet was empty) | pass, so far as run |
