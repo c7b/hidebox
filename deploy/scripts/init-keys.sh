@@ -10,6 +10,7 @@ set -euo pipefail
 
 dir=${1:-/srv/mutis/app/current/sidecar}
 keys=/home/drive/mutis
+# ARTIFACT-PIN(ootle-0.50): 0.49.2 until the official 0.50.0 artifacts exist; deploy/ootle/upgrade-0.50.md §2 moves it.
 pinned=26d6531c98866aeefd5b9fb44af3d5dd4f18deb1334e0d81315d53088d1c8eeb   # spec §3.3 step 7
 
 [ "$(id -un)" = drive ] || { echo "init-keys: run as drive" >&2; exit 1; }

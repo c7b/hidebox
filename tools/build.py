@@ -38,6 +38,7 @@ DEFAULT_CONFIG = ROOT / "deploy" / "config" / "mutis.toml.example"
 HOLDING = ROOT / "deploy" / "holding"
 
 # spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.49.2 build, and of ootle-wasm-bor.
+# ARTIFACT-PIN(ootle-0.50): 0.49.2 until the official 0.50.0 artifacts exist; deploy/ootle/upgrade-0.50.md §2 moves it (npm-provenance.py repin).
 PINNED = {
     "ootle-wasm-0.49.2/ootle_wasm_bg.wasm": "26d6531c98866aeefd5b9fb44af3d5dd4f18deb1334e0d81315d53088d1c8eeb",
     "ootle-wasm-0.49.2/ootle_wasm_bg.js": "1b5933930f06b0be346a5bcb2e679a7a486512e61a4f9d1f40dfb94320a9f044",

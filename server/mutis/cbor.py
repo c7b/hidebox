@@ -12,7 +12,11 @@ header and `Template` (verify-deploy and template/wasm_check.py load this file b
 only Python), a `TransactionReceipt` and an `ExecuteResult` (the transaction view). The official decoder for
 every type is `@tari-project/ootle-wasm-bor`, vendored for the browser; server/tests/test_cbor.py holds this
 one to its answers for real values. minicbor writes a struct as an array in field order (`#[n(i)]`),
-leaving off trailing fields that are None."""
+leaving off trailing fields that are None.
+
+Ootle 0.50 changes none of these layouts. Its nodes now decode substates, metadata and manifest arguments exactly
+(trailing bytes are an error), which `loads` already required of everything it reads; protocol V1 hashes a value
+over this CBOR instead of borsh, and mutis reads values, never their hashes."""
 import base64
 import binascii
 import struct
