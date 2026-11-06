@@ -146,9 +146,10 @@ class BuildConfigTest(unittest.TestCase):
                   "repo_url": "https://github.com/c7b/hidebox"}
         self.assertEqual(verify.unsafe_settings(honest), [])
         self.assertEqual(verify.unsafe_settings({}), [])
+        self.assertEqual(verify.unsafe_settings({**honest, "network": "mainnet"}), [])
         for key, value in (("repo_url", 'https://github.com/c7b/hidebox"><script src="/x.js"></script>'),
                            ("security_drop", "https://h.example/<svg onload=x>"), ("repo_url", "http://code.example"),
-                           ("network", "esmeralda\"><script>"), ("repo_url", ["https://x.example"])):
+                           ("network", "esmeralda\"><script>"), ("network", "stagenet"), ("repo_url", ["https://x.example"])):
             with self.subTest(key=key):
                 self.assertEqual(len(verify.unsafe_settings({**honest, key: value})), 1)
         evil = {**honest, "repo_url": 'https://github.com/c7b/hidebox"><script src="/x.js"></script>'}
@@ -174,33 +175,69 @@ class SealLogTemplateTest(unittest.TestCase):
     """The SealLog check reads the log's template from the indexer in tari_indexer 0.47.0's shape
     (`state.up.substate`) and the earlier one (`substate`), and runs wasm_check.py on exactly that address."""
 
-    def check(self, body) -> tuple[list[str], list]:
-        runs = []
+    def check(self, body, network: str | None = None, matches: str | None = "dist") -> tuple[list[str], list]:
+        """`matches`: the tag's build (template/<matches>/seal_log.wasm) the stand-in wasm_check.py says the chain
+        runs; None for none. Returns the differences and every wasm_check.py command line, with the URLs fetched."""
+        runs, urls = [], []
 
         def run(cmd, **kwargs):
             runs.append(cmd)
-            return subprocess.CompletedProcess(cmd, 0, "the chain runs seal_log.wasm byte for byte\n", "")
-        with mock.patch.object(verify, "fetch", return_value=json.dumps(body).encode()), \
+            same = matches is not None and cmd[cmd.index("--wasm") + 1].endswith(f"/{matches}/seal_log.wasm")
+            return subprocess.CompletedProcess(cmd, 0 if same else 1, "the chain runs seal_log.wasm byte for byte\n"
+                                               if same else "FAIL: the chain runs different bytes\n", "")
+
+        def fetch(url):
+            urls.append(url)
+            return json.dumps(body).encode()
+        cfg = {"seal_log": {"component": SEALLOG["id"]}, **({"network": network} if network else {})}
+        with mock.patch.object(verify, "fetch", fetch), \
                 mock.patch.object(verify.subprocess, "run", run), mock.patch("builtins.print"):
-            diffs = verify.seallog_check({"seal_log": {"component": SEALLOG["id"]}}, ROOT)
-        return diffs, runs
+            diffs = verify.seallog_check(cfg, ROOT)
+        return diffs, runs + [urls]
+
+    @staticmethod
+    def onchain_args(cmd: list) -> list:
+        """What a wasm_check.py command line asks: the address, the indexer and the local build."""
+        at = cmd.index("onchain")
+        return [cmd[at + 1], cmd[cmd.index("--indexer") + 1], Path(cmd[cmd.index("--wasm") + 1]).parent.name]
 
     def test_the_live_logs_template_is_checked_in_either_shape(self):
         older = {"verified": True, "substate": SEALLOG["body"]["state"]["up"]["substate"]}
         for body in (SEALLOG["body"], older):
             diffs, runs = self.check(body)
             self.assertEqual(diffs, [])
-            self.assertEqual(runs[0][-2:], ["onchain", f"template_{RECORDED_047_TEMPLATE}"])
+            self.assertEqual(self.onchain_args(runs[0]),
+                             [f"template_{RECORDED_047_TEMPLATE}", "https://ootle-indexer-a.tari.com", "dist"])
         # 0.48+: an Encoded component, read with the tag's server/mutis/cbor.py
         diffs, runs = self.check(LIVE_049["seallog_component_answer"])
         self.assertEqual(diffs, [])
-        self.assertEqual(runs[0][-2:], ["onchain", f"template_{SEALLOG_TEMPLATE}"])
+        self.assertEqual(self.onchain_args(runs[0]), [f"template_{SEALLOG_TEMPLATE}", "https://ootle-indexer-a.tari.com", "dist"])
+
+    @unittest.skipUnless((ROOT / "template" / "dist-v2" / "seal_log.wasm").is_file(), "template/ is not in this tree")
+    def test_a_mainnet_log_is_read_from_a_mainnet_indexer_and_checked_against_the_v2_build_first(self):
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches="dist-v2")
+        self.assertEqual(diffs, [])
+        self.assertEqual(runs[-1], [f"https://indexer-a.ootle.tari.com/substates/{SEALLOG['id']}"])
+        self.assertEqual(self.onchain_args(runs[0]), [f"template_{SEALLOG_TEMPLATE}", "https://indexer-a.ootle.tari.com", "dist-v2"])
+        self.assertEqual(len(runs), 2, "one wasm_check.py run, then the URLs")
+        # Esmeralda after its move to Ootle 0.50 may run the v2 build: the 0.37 one is tried first, then it.
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "esmeralda", matches="dist-v2")
+        self.assertEqual(diffs, [])
+        self.assertEqual([self.onchain_args(r)[2] for r in runs[:-1]], ["dist", "dist-v2"])
+        # Neither build: one difference naming both.
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches=None)
+        self.assertEqual(len(diffs), 1)
+        self.assertIn("template/dist-v2 or template/dist", diffs[0])
+
+    def test_an_unknown_network_is_refused_before_any_request(self):
+        diffs, runs = self.check(SEALLOG["body"], "stagenet")
+        self.assertEqual((len(diffs), runs), (1, [[]]))
 
     def test_no_live_component_is_a_difference(self):
         for body in (RECORDED["spent_utxo_at_version"]["body"], {"state": {"up": {"substate": {"Utxo": {}}}}},
                      RECORDED["spent_utxo"]["body"], []):
             diffs, runs = self.check(body)
-            self.assertEqual((len(diffs), runs), (1, []), body if isinstance(body, list) else list(body))
+            self.assertEqual((len(diffs), runs[:-1]), (1, []), body if isinstance(body, list) else list(body))
             self.assertIn("could not read its template", diffs[0])
 
 
@@ -257,6 +294,22 @@ class WasmCheckTest(unittest.TestCase):
         # minicbor writes a PublishedTemplate: [6, [[name, author, binary, at_epoch]]]
         encoded = base64.b64encode(cbor_array(6, cbor_array(cbor_array("SealLog", bytes.fromhex(SERVICE_KEY), wasm, 12814)))).decode()
         self.assertEqual(self.onchain({"version": 0, "state": {"up": {"substate": encoded}}, "verified": True}), 0)
+
+    @unittest.skipUnless((ROOT / "template" / "dist-v2" / "seal_log.wasm").is_file(), "no template/dist-v2 in this tree")
+    def test_the_mainnet_build_is_checked_against_dist_v2(self):
+        """dist-v2/seal_log.wasm (tari_template_lib 0.38, V2 definitions): the address a publish by a key creates, and
+        the chain's copy compared with it, as Ootle 0.50 encodes a PublishedTemplate (the same layout as 0.49)."""
+        v2 = ROOT / "template" / "dist-v2" / "seal_log.wasm"
+        wasm = v2.read_bytes()
+        address = wasm_check.template_address(SERVICE_KEY, wasm)
+        self.assertNotEqual(address, SEALLOG_TEMPLATE)
+        self.assertNotEqual(wasm_check.abi_hash(wasm), wasm_check.abi_hash((ROOT / "template" / "dist" / "seal_log.wasm").read_bytes()))
+        encoded = base64.b64encode(cbor_array(6, cbor_array(cbor_array("SealLog", bytes.fromhex(SERVICE_KEY), wasm, 12951)))).decode()
+        body = {"version": 0, "state": {"up": {"substate": encoded}}, "verified": True}
+        for local, expected in ((v2, 0), (ROOT / "template" / "dist" / "seal_log.wasm", 1)):
+            with mock.patch.object(wasm_check.urllib.request, "urlopen", return_value=io.BytesIO(json.dumps(body).encode())), \
+                    mock.patch("builtins.print"):
+                self.assertEqual(wasm_check.onchain(address, wasm_check.INDEXERS["mainnet"], local, None), expected, local.parent.name)
 
 
 if __name__ == "__main__":

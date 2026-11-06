@@ -65,3 +65,23 @@ And three changes so the copy stays true:
 - `wasm_abi.py` is gone; `wasm_check.py abi` replaces it. Nothing outside `template/` used it.
 - `Cargo.toml` metadata (`repository`, `homepage`, `documentation`) uses `https://github.com/c7b/mutis`. Those fields feed only the metadata hash, not the WASM.
 - After any edit to `src/lib.rs`, `Cargo.toml`, `Cargo.lock` or `build.rs`, run `./check.sh --dist` once so `BUILD-INFO.txt` lists the final input hashes. Doc-comment edits change the metadata hash, not the WASM.
+
+## 8. The mainnet build (2026-11-05, Ootle 0.50)
+
+- `seal_log_v2/` builds the unchanged 2.0.0 source (`seal_log/src/lib.rs`, `seal_log/tests/seal_log.rs`) against
+  tari_template_lib 0.38, tari_template_test_tooling 0.50 and tari_ootle_template_build 0.18, all pinned to the
+  tari-ootle v0.50.0 release commit `a5ea91cca53c01967184755f07918471e70bbc03` (by `rev` and exact `version`)
+  until they reach crates.io. No source change was needed; the 14 tests pass under the 0.50 engine.
+- `dist-v2/` is that build (`./check.sh --v2 --dist`); `dist/` (0.37) stays the Esmeralda artifact. The two differ
+  in the `tari_tdef` section (V2 template definitions record how each function is called) and the bytes around
+  it; check.sh holds each build to its own ABI hash.
+- The component header the engine writes is the same JSON shape on 0.50 (`seal_log_v2/tests/vectors/
+  seallog-state-v1.json` differs from the 0.37 one only in the test engine's template address and entity id), and
+  `seallog-encoded-v2.json` holds the 0.50 CBOR of the component and of a PublishedTemplate; `server/mutis/cbor.py`
+  reads both unchanged (`server/tests/test_cbor.py`). (On lane `launch/mainnet` the app's check also refuses, on
+  the mainnet, a header with no upgrade rule; this lane serves Esmeralda only and leaves `lib/seallog.js` as it was.)
+- The template address is computed as before (`wasm_check.py address <author key> dist-v2/seal_log.wasm`); the
+  hashing in tari_engine_types did not change.
+- Publishing: the same `PublishTemplate` transaction as `deploy/ootle/publish-template.sh`, with
+  `dist-v2/seal_log.wasm` and the mainnet network byte (0). Check after: `./check.sh --v2 --onchain <template>
+  --network mainnet`.

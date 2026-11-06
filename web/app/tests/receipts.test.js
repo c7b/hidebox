@@ -103,6 +103,19 @@ export default [
     eq(log.writer, '78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06', 'the service key');
     eq(log.checkpoints.length, 0);
   }],
+  // The mainnet build (template/seal_log_v2: the same source against tari_template_lib 0.38, V2 template
+  // definitions, Ootle 0.50), when its vectors are in the tree: its state reads the same, as JSON and as the Encoded
+  // value a 0.50 indexer serves (read with the vendored official decoder).
+  ['SealLog: the mainnet build\'s log (Ootle 0.50, V2 definitions) reads the same, as JSON and Encoded', async () => {
+    const [state, encoded] = await Promise.all(['seallog-state-v1.json', 'seallog-encoded-v2.json']
+      .map((f) => loadOptionalJson(`../../../template/seal_log_v2/tests/vectors/${f}`)));
+    if (!state || !encoded) return;
+    const shape = (log) => JSON.stringify([log.template, log.writer, log.checkpoints.map((c) => [c.index, c.epoch, c.leafCount, hex(c.root)])]);
+    const log = await readSealLog(state);
+    eq(JSON.stringify(log.checkpoints.map((c) => [c.index, c.epoch, c.leafCount])), '[[0,12127,64],[1,12128,128]]');
+    eq(shape(await readSealLog({ version: 0, state: { up: { substate: encoded.component } } })), shape(log), 'Encoded');
+    eq(shape(await readSealLog({ substate: encoded.component_json })), shape(log), 'its serde JSON');
+  }],
   ['SealLog: a log that could be rewritten is refused (the research log on Esmeralda has an owner)', async () => {
     const research = await loadJson('vectors/seallog-component.json');
     await rejects(async () => readSealLog(research), TypeError);

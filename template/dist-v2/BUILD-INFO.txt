@@ -1,0 +1,16 @@
+seal_log 2.1.0, written by template/check.sh --dist
+built      2026-11-06T00:24:10Z on <server> as build
+toolchain  rustc 1.99.0 (b940084d7 2026-09-28); cargo 1.99.0 (5f94df478 2026-08-27); tari-ootle-cli 0.30.0
+command    RUSTFLAGS="--remap-path-prefix=$CARGO_HOME=/cargo" tari build
+           (release profile in Cargo.toml: opt-level s, lto, codegen-units 1, panic abort, strip)
+wasm       seal_log.wasm, 107030 bytes, sha256 443bbe61e2b4bd4d86da8da711ce42ef7b5db9a6f7b6e394b50165d0f4908555
+abi        tari_tdef sha256 2e0303562dcae9babcb2d59bf72abcb4460c3ee6fab08ee527c67baf43b699b5 (the expected value of check.sh --v2)
+metadata   12208a2aafc845b3469b4a326ad628ef401be608b8aba7924e3290e99654af5dfb18 (TEMPLATE_METADATA_HASH; not part of the WASM)
+inputs     Cargo.lock b9e12c610a46c246dadb0961212e4333266d8212e28b490a6ff05f8b95fbb5c9, Cargo.toml b87799f1dce22d4d68636aeaf8700c60c498da4a8b98bc938f6ed775b36d68ce, build.rs 255343891654eb5d68dbc03d3fe3c2daacdd58325044c2c45cc2e456d9431437, src/lib.rs 1439ab3590ddd766a383383c059a81374f8784d2f64fd8ac7549a64ac482a9ae
+git pins   tari_ootle_template_build 0.18.0, tari_template_lib 0.38.0, tari_template_test_tooling 0.50.0, tari-ootle commit a5ea91cca53c01967184755f07918471e70bbc03
+
+To rebuild: the same toolchain, then template/check.sh --v2 (it sets RUSTFLAGS, so the bytes don't
+depend on the user, the directory or CARGO_HOME).
+Publish these exact bytes with a PublishTemplate instruction. walletd's transactions.publish_template
+runs wasm-opt first and stores different bytes. template/check.sh --v2 --onchain <template address> says
+whether a published template holds this file.

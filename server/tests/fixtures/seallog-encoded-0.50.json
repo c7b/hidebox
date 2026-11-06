@@ -1,0 +1,70 @@
+{
+  "about": "The SealLog component after two appends (as seallog-state-v1.json) and a PublishedTemplate with an 8-byte stand-in binary, as Encoded<SubstateValue> values: the base64 of their CBOR, which an Ootle 0.50 indexer serves in `state.up.substate` of GET /substates/<id>. Written by tests/encoded.rs from tari_engine_types 0.50 at the pinned commit; do not edit. The JSON beside each is the same value through serde.",
+  "component": "ggCBgoVYIGVos+oT+4FrZaCF0aWpC3a/7nC/kpZaE0FalOFclwAPggCAgqVrYXBwZW5kX3Jvb3SCAoGCAIGCAIGCAYHYgoLYg1ggAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCAIFYINiE3Yhsx0ZEAqBJIEha6+bdZXuYBy3mVcRuxheaUs0NcGNoZWNrcG9pbnRfY291bnSCAIBjZ2V0ggCAZmxhdGVzdIIAgGhub3Rhcml6ZYIAgIIBgEEzggCAgYKCgxkvX1ggURSUEYspLUcd1hQcsp3erp3iyuhKTN32nlopCa+wC3QYQIMZL2BYIPkKxGzrR8tgrc0sVFaIT8YMGRDAaPLojPEHMfSMmD+9GIAA",
+  "component_json": {
+    "Component": {
+      "body": {
+        "state": [
+          [
+            [
+              12127,
+              {
+                "@cbor": "bytes",
+                "hex": "511494118b292d471dd6141cb29ddeae9de2cae84a4cddf69e5a2909afb00b74"
+              },
+              64
+            ],
+            [
+              12128,
+              {
+                "@cbor": "bytes",
+                "hex": "f90ac46ceb47cb60adcd2c5456884fc60c1910c068f2e88cf10731f48c983fbd"
+              },
+              128
+            ]
+          ],
+          0
+        ]
+      },
+      "header": {
+        "access_rules": {
+          "default": "DenyAll",
+          "method_access": {
+            "append_root": {
+              "Restricted": {
+                "Require": {
+                  "Require": {
+                    "NonFungibleAddress": {
+                      "id": {
+                        "U256": "d884dd886cc7464402a04920485aebe6dd657b98072de655c46ec6179a52cd0d"
+                      },
+                      "resource_address": "resource_0100000000000000000000000000000000000000000000000000000000000000"
+                    }
+                  }
+                }
+              }
+            },
+            "checkpoint_count": "AllowAll",
+            "get": "AllowAll",
+            "latest": "AllowAll",
+            "notarize": "AllowAll"
+          }
+        },
+        "entity_id": "33",
+        "owner_rule": "None",
+        "template_address": "6568b3ea13fb816b65a085d1a5a90b76bfee70bf92965a13415a94e15c97000f",
+        "upgrade_rule": "Locked"
+      }
+    }
+  },
+  "template": "ggaBhGdTZWFsTG9nWCDYhN2IbMdGRAKgSSBIWuvm3WV7mAct5lXEbsYXmlLNDUgAYXNtAQAAABkylw==",
+  "template_json": {
+    "Template": {
+      "at_epoch": 12951,
+      "author": "d884dd886cc7464402a04920485aebe6dd657b98072de655c46ec6179a52cd0d",
+      "binary": "0061736d01000000",
+      "metadata_hash": null,
+      "template_name": "SealLog"
+    }
+  }
+}

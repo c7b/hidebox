@@ -15,8 +15,11 @@
    each answer decodes to must be the same file (gzip with Python's zlib; br with Node's built-in zlib when
    `node` is on the PATH, else counted as not decoded). A browser gets those copies, so they are checked too.
 4. When the deployment names a SealLog (/api/v1/config seal_log.component), read the log's template
-   address from a Tari indexer and check, with the tag's own template/wasm_check.py, that the chain
-   runs the tag's template/dist/seal_log.wasm byte for byte (template/check.sh --onchain).
+   address from a public Tari indexer of the deployment's network (Esmeralda or the mainnet; never one
+   the deployment names) and check, with the tag's own template/wasm_check.py, that the chain runs one
+   of the tag's builds byte for byte: template/dist/seal_log.wasm (tari_template_lib 0.37) or
+   template/dist-v2/seal_log.wasm (0.38, V2 template definitions; the mainnet build), the network's own
+   first (template/check.sh [--v2] --onchain).
 Prints every difference; exit status 0 only when there are none. Python stdlib only.
 
 Needs Python 3.11 or newer (the build reads its config with tomllib) and git. The export is made
@@ -41,7 +44,12 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-INDEXER = "https://ootle-indexer-a.tari.com"
+# A public indexer of each network verify-deploy rebuilds for, and the tag's SealLog builds it compares the live
+# log's template with, the network's own first. The deployment's /config may name other indexers; they are not
+# asked, since a deployment could name one that vouches for anything.
+INDEXERS = {"esmeralda": "https://ootle-indexer-a.tari.com", "mainnet": "https://indexer-a.ootle.tari.com"}
+INDEXER = INDEXERS["esmeralda"]
+SEALLOG_BUILDS = {"esmeralda": ("dist", "dist-v2"), "mainnet": ("dist-v2", "dist")}
 VARIANT_TABLES = ("gates", "features", "hosting")      # tools/build.py records these in the manifest
 NAME = re.compile(r"[a-z_]+")
 ADDRESS = re.compile(r"[0-9a-f]{64}")
@@ -104,8 +112,8 @@ PLAIN_URL = re.compile(r"https://[A-Za-z0-9.-]+(:\d+)?(/[A-Za-z0-9._~%/+-]*)?(#[
 def unsafe_settings(cfg: dict) -> list[str]:
     """The deployment-supplied build values verify-deploy refuses to build with, as differences."""
     out = []
-    if cfg.get("network", "esmeralda") != "esmeralda":
-        out.append(f"/api/v1/config network is not esmeralda: {str(cfg.get('network'))[:80]!r}")
+    if cfg.get("network", "esmeralda") not in INDEXERS:
+        out.append(f"/api/v1/config network is not esmeralda or mainnet: {str(cfg.get('network'))[:80]!r}")
     for key in ("repo_url", "security_drop"):
         value = cfg.get(key)
         if value not in (None, "") and not (isinstance(value, str) and PLAIN_URL.fullmatch(value.rstrip("/"))):
@@ -166,28 +174,40 @@ def substate_reader(src: Path):
 
 
 def seallog_check(cfg: dict, src: Path) -> list[str]:
-    """The template behind the deployment's SealLog is the tag's template/dist/seal_log.wasm."""
+    """The template behind the deployment's SealLog is one of the tag's builds of seal_log.wasm, byte for byte."""
     component = (cfg.get("seal_log") or {}).get("component")
     if not component:
         print("SealLog: this deployment names no log")
         return []
     if not ADDRESS.fullmatch(str(component).removeprefix("component_")):
         return [f"SealLog: /api/v1/config names no valid component ({str(component)[:80]!r})"]
+    network = cfg.get("network", "esmeralda")
+    if network not in INDEXERS:
+        return [f"SealLog {component}: no indexer known for network {str(network)[:40]!r}"]
+    indexer = INDEXERS[network]
     try:
-        body = json.loads(fetch(f"{INDEXER}/substates/{component}"))
+        body = json.loads(fetch(f"{indexer}/substates/{component}"))
         live = body["state"]["up"] if "state" in body else body     # tari_indexer 0.47.0, or an earlier one
         value = live["substate"]
         if isinstance(value, str):   # 0.48+: an Encoded value (base64 CBOR), read with the tag's own reader
             value = substate_reader(src).substate_value(substate_reader(src).b64(value))
         template = value["Component"]["header"]["template_address"]
     except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError) as e:
-        return [f"SealLog {component}: could not read its template from {INDEXER} ({e})"]
+        return [f"SealLog {component}: could not read its template from {indexer} ({e})"]
     if not ADDRESS.fullmatch(str(template)):
         return [f"SealLog {component}: the indexer gave no valid template address"]
-    check = subprocess.run([sys.executable, "-I", str(src / "template" / "wasm_check.py"), "onchain", f"template_{template}"],
-                           capture_output=True, text=True)
-    print(f"SealLog {component}:\n" + "".join(f"  {line}\n" for line in (check.stdout + check.stderr).splitlines()), end="")
-    return [] if check.returncode == 0 else [f"SealLog {component}: template_{template} is not the tag's seal_log.wasm"]
+    builds = [src / "template" / name / "seal_log.wasm" for name in SEALLOG_BUILDS[network]]
+    builds = [wasm for wasm in builds if wasm.is_file()]     # an older tag has template/dist/ only
+    for wasm in builds:
+        check = subprocess.run([sys.executable, "-I", str(src / "template" / "wasm_check.py"), "onchain",
+                                f"template_{template}", "--indexer", indexer, "--wasm", str(wasm)],
+                               capture_output=True, text=True)
+        print(f"SealLog {component} ({network}), against template/{wasm.parent.name}/seal_log.wasm:\n"
+              + "".join(f"  {line}\n" for line in (check.stdout + check.stderr).splitlines()), end="")
+        if check.returncode == 0:
+            return []
+    return [f"SealLog {component}: template_{template} is not the tag's seal_log.wasm "
+            f"({' or '.join('template/' + w.parent.name for w in builds) or 'no build in the tag'})"]
 
 
 def compare(origin: str, local: dict, live: dict, sha: str, compressed: frozenset | set = frozenset(),

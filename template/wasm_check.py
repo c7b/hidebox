@@ -7,6 +7,8 @@
                               <author> (hex public key) creates
   onchain <template address>  fetch the template from an indexer, check the address commits to
                               the bytes it returned, and compare them with dist/seal_log.wasm
+                              (--wasm dist-v2/seal_log.wasm for the mainnet build; --network mainnet
+                              asks a mainnet indexer, --indexer any other)
 
 `abi` and `onchain` fail if a binary carries a custom section other than `tari_tdef`, which the
 engine rejects at publish. `onchain` exits 0 only when the chain holds exactly the --wasm bytes,
@@ -26,9 +28,13 @@ from pathlib import Path
 
 ABI_SECTION = b"tari_tdef"
 DIST = Path(__file__).resolve().parent / "dist" / "seal_log.wasm"
-INDEXER = "https://ootle-indexer-a.tari.com"
-# tari_engine_types 0.45 hashing.rs: a DomainSeparatedBorshHasher over BLAKE2b-256 with the
-# "com.tari.ootle.engine" domain, version 0, label "Template".
+# The mainnet build: the same source against tari_template_lib 0.38 (V2 template definitions, Ootle 0.50).
+DIST_V2 = Path(__file__).resolve().parent / "dist-v2" / "seal_log.wasm"
+# A public indexer of each network (the walletd presets of Ootle 0.50); --indexer names another one.
+INDEXERS = {"esmeralda": "https://ootle-indexer-a.tari.com", "mainnet": "https://indexer-a.ootle.tari.com"}
+INDEXER = INDEXERS["esmeralda"]
+# tari_engine_types 0.45 to 0.50 hashing.rs: a DomainSeparatedBorshHasher over BLAKE2b-256 with the
+# "com.tari.ootle.engine" domain, version 0, label "Template" (unchanged by the V2 template definitions).
 TEMPLATE_LABEL = b"com.tari.ootle.engine.v0.Template"
 
 
@@ -162,8 +168,11 @@ def main() -> int:
     addr.add_argument("wasm", type=Path)
     chain = commands.add_parser("onchain", help="compare a published template with a local binary")
     chain.add_argument("address", help="template_<hex> or <hex>")
-    chain.add_argument("--indexer", default=INDEXER)
-    chain.add_argument("--wasm", type=Path, default=DIST)
+    chain.add_argument("--network", choices=sorted(INDEXERS), default="esmeralda",
+                       help="the network whose public indexer to ask (default esmeralda)")
+    chain.add_argument("--indexer", help="ask this indexer instead")
+    chain.add_argument("--wasm", type=Path, default=DIST, help=f"the local binary (default dist/; the mainnet build is "
+                       f"{DIST_V2.parent.name}/{DIST_V2.name})")
     chain.add_argument("--out", type=Path, help="also save the on-chain binary here")
     args = parser.parse_args()
     try:
@@ -173,7 +182,7 @@ def main() -> int:
         if args.command == "address":
             print(template_address(args.author, args.wasm.read_bytes()))
             return 0
-        return onchain(args.address, args.indexer, args.wasm, args.out)
+        return onchain(args.address, args.indexer or INDEXERS[args.network], args.wasm, args.out)
     except (ValueError, urllib.error.URLError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
