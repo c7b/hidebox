@@ -49,9 +49,9 @@
             "notarize": "AllowAll"
           }
         },
-        "entity_id": "33",
+        "entity_id": "f0",
         "owner_rule": "None",
-        "template_address": "6568b3ea13fb816b65a085d1a5a90b76bfee70bf92965a13415a94e15c97000f",
+        "template_address": "1162a2b0d79bb31f1139ea9e73ea4463e207a71a403deec67ebebf799d6f8455",
         "upgrade_rule": "Locked"
       }
     }

@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MIT
 # SealLog for the Ootle mainnet: the 2.0.0 source (../seal_log/src/lib.rs and its tests), built against
 # tari_template_lib 0.38, whose template definitions are V2 (Ootle 0.50). The 0.37 build in ../seal_log
-# stays the Esmeralda artifact (../dist/); this one is ../dist-v2/. The Ootle crates are not on crates.io
-# yet, so they come from the v0.50.0 release commit, pinned by revision and version. build.rs is a copy of
-# ../seal_log/build.rs, here because `tari lint` reads the crate's own.
+# stays the Esmeralda artifact (../dist/); this one is ../dist-v2/. The Ootle crates come from crates.io at
+# the exact versions tari-ootle's tag v0.50.0 (commit d3252ef1) published on 2026-11-06; each crate's
+# .cargo_vcs_info.json names that commit, and check.sh writes it into ../dist-v2/BUILD-INFO.txt. build.rs is a
+# copy of ../seal_log/build.rs, here because `tari lint` reads the crate's own.
 [package]
 name = "seal_log"
 version = "2.1.0"
@@ -28,15 +29,15 @@ name = "seal_log"
 path = "../seal_log/tests/seal_log.rs"
 
 [dependencies]
-tari_template_lib = { version = "=0.38.0", git = "https://github.com/tari-project/tari-ootle", rev = "a5ea91cca53c01967184755f07918471e70bbc03" }
+tari_template_lib = "=0.38.0"
 
 [dev-dependencies]
-tari_template_test_tooling = { version = "=0.50.0", git = "https://github.com/tari-project/tari-ootle", rev = "a5ea91cca53c01967184755f07918471e70bbc03" }
+tari_template_test_tooling = "=0.50.0"
 # Already in the tree through the test tooling; the tests read and write the JSON vectors with it.
 serde_json = "=1.0.152"
 
 [build-dependencies]
-tari_ootle_template_build = { version = "=0.18.0", git = "https://github.com/tari-project/tari-ootle", rev = "a5ea91cca53c01967184755f07918471e70bbc03" }
+tari_ootle_template_build = "=0.18.0"
 
 # The flags `tari build` passes, so `cargo build --release` and the test harness
 # produce the same WASM bytes as `tari build`.

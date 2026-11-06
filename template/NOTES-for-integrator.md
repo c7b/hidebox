@@ -69,9 +69,13 @@ And three changes so the copy stays true:
 ## 8. The mainnet build (2026-11-05, Ootle 0.50)
 
 - `seal_log_v2/` builds the unchanged 2.0.0 source (`seal_log/src/lib.rs`, `seal_log/tests/seal_log.rs`) against
-  tari_template_lib 0.38, tari_template_test_tooling 0.50 and tari_ootle_template_build 0.18, all pinned to the
-  tari-ootle v0.50.0 release commit `a5ea91cca53c01967184755f07918471e70bbc03` (by `rev` and exact `version`)
-  until they reach crates.io. No source change was needed; the 14 tests pass under the 0.50 engine.
+  tari_template_lib 0.38.0, tari_template_test_tooling 0.50.0 and tari_ootle_template_build 0.18.0 from crates.io,
+  exact versions. Tag v0.50.0 landed on `d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb`, not on `a5ea91cc` (the first
+  pins), and published those crates from it on 2026-11-06: each `.crate`'s `.cargo_vcs_info.json` names it, and
+  check.sh writes it into `dist-v2/BUILD-INFO.txt`. No source change was needed; the 14 tests pass under the
+  `d3252ef1` engine, which refuses V1 definitions. Rebuilt there, the binary moved (107,030 to 107,038 bytes;
+  the Ootle crates it compiles in moved) but its `tari_tdef` section didn't (ABI `2e030356…99b5`); the vectors moved
+  only in the test engine's template address and entity id.
 - `dist-v2/` is that build (`./check.sh --v2 --dist`); `dist/` (0.37) stays the Esmeralda artifact. The two differ
   in the `tari_tdef` section (V2 template definitions record how each function is called) and the bytes around
   it; check.sh holds each build to its own ABI hash.

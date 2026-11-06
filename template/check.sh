@@ -44,12 +44,22 @@ tested=target/templates/default/wasm32-unknown-unknown/release/seal_log.wasm   #
 step() { printf '\n== %s\n' "$*"; }
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 sha() { sha256sum "$1" | cut -d' ' -f1; }
-# The Ootle crates this build names that come from git (the v2 build, until they are on crates.io), and the commit.
+# The three Ootle crates this build names: from git, with the commit; from crates.io, with the tari-ootle commit
+# the registry's copy was published from (its .cargo_vcs_info.json, in the cargo home this build read).
+ootle_crates='^tari_(template_lib|template_test_tooling|ootle_template_build)$'
 pins() {
-    awk -F'"' '/^name = /{n=$2} /^version = /{v=$2}
-        /^source = "git\+/ && n ~ /^tari_(template_lib|template_test_tooling|ootle_template_build)$/ {
+    awk -F'"' -v want="$ootle_crates" '/^name = /{n=$2} /^version = /{v=$2}
+        /^source = "git\+/ && n ~ want {
             sub(/.*#/, "", $2); list = list (list ? ", " : "") n " " v; commit = $2 }
         END { if (list) printf "\ngit pins   %s, tari-ootle commit %s", list, commit }' Cargo.lock
+    local name version vcs list=
+    while read -r name version; do
+        vcs=$(sed -n 's/.*"sha1": *"\([0-9a-f]\{40\}\)".*/\1/p' "$cargo_home"/registry/src/*/"$name-$version"/.cargo_vcs_info.json \
+            2>/dev/null | head -n 1 || true)
+        list+="${list:+, }$name $version${vcs:+ (tari-ootle $vcs)}"
+    done < <(awk -F'"' -v want="$ootle_crates" '/^name = /{n=$2} /^version = /{v=$2}
+        /^source = "registry\+/ && n ~ want { print n, v }' Cargo.lock)
+    [[ -z $list ]] || printf '\ncrates.io  %s' "$list"
 }
 
 cd "$here/$crate"

@@ -1,6 +1,6 @@
 {
   "about": "The SealLog component after two appends (as seallog-state-v1.json) and a PublishedTemplate with an 8-byte stand-in binary, as Encoded<SubstateValue> values: the base64 of their CBOR, which an Ootle 0.50 indexer serves in `state.up.substate` of GET /substates/<id>. Written by tests/encoded.rs from tari_engine_types 0.50 at the pinned commit; do not edit. The JSON beside each is the same value through serde.",
-  "component": "ggCBgoVYIGVos+oT+4FrZaCF0aWpC3a/7nC/kpZaE0FalOFclwAPggCAgqVrYXBwZW5kX3Jvb3SCAoGCAIGCAIGCAYHYgoLYg1ggAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCAIFYINiE3Yhsx0ZEAqBJIEha6+bdZXuYBy3mVcRuxheaUs0NcGNoZWNrcG9pbnRfY291bnSCAIBjZ2V0ggCAZmxhdGVzdIIAgGhub3Rhcml6ZYIAgIIBgEEzggCAgYKCgxkvX1ggURSUEYspLUcd1hQcsp3erp3iyuhKTN32nlopCa+wC3QYQIMZL2BYIPkKxGzrR8tgrc0sVFaIT8YMGRDAaPLojPEHMfSMmD+9GIAA",
+  "component": "ggCBgoVYIBFiorDXm7MfETnqnnPqRGPiB6caQD3uxn6+v3mdb4RVggCAgqVrYXBwZW5kX3Jvb3SCAoGCAIGCAIGCAYHYgoLYg1ggAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCAIFYINiE3Yhsx0ZEAqBJIEha6+bdZXuYBy3mVcRuxheaUs0NcGNoZWNrcG9pbnRfY291bnSCAIBjZ2V0ggCAZmxhdGVzdIIAgGhub3Rhcml6ZYIAgIIBgEHwggCAgYKCgxkvX1ggURSUEYspLUcd1hQcsp3erp3iyuhKTN32nlopCa+wC3QYQIMZL2BYIPkKxGzrR8tgrc0sVFaIT8YMGRDAaPLojPEHMfSMmD+9GIAA",
   "component_json": {
     "Component": {
       "body": {
@@ -50,9 +50,9 @@
             "notarize": "AllowAll"
           }
         },
-        "entity_id": "33",
+        "entity_id": "f0",
         "owner_rule": "None",
-        "template_address": "6568b3ea13fb816b65a085d1a5a90b76bfee70bf92965a13415a94e15c97000f",
+        "template_address": "1162a2b0d79bb31f1139ea9e73ea4463e207a71a403deec67ebebf799d6f8455",
         "upgrade_rule": "Locked"
       }
     }
