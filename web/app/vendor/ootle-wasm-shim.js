@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
-// Loader for the vendored official @tari-project/ootle-wasm 0.49.2 and ootle-wasm-bor 0.49.2. Their npm entry
+// Loader for the vendored official @tari-project/ootle-wasm 0.50.0 and ootle-wasm-bor 0.50.0. Their npm entry
 // files import the .wasm as an ES module, which neither browsers nor Node can do without a bundler; this performs
 // the same three steps by hand, and refuses any bytes whose SHA-256 differs from the pinned build.
-import * as glue from './ootle-wasm-0.49.2/ootle_wasm_bg.js';
-import * as borGlue from './ootle-wasm-bor-0.49.2/ootle_wasm_bor_bg.js';
+import * as glue from './ootle-wasm-0.50.0/ootle_wasm_bg.js';
+import * as borGlue from './ootle-wasm-bor-0.50.0/ootle_wasm_bor_bg.js';
 
-// ARTIFACT-PIN(ootle-0.50): 0.49.2 until the official 0.50.0 artifacts exist; deploy/ootle/upgrade-0.50.md §2 moves it (npm-provenance.py repin).
-export const WASM_SHA256 = '26d6531c98866aeefd5b9fb44af3d5dd4f18deb1334e0d81315d53088d1c8eeb';
-export const WASM_URL = new URL('./ootle-wasm-0.49.2/ootle_wasm_bg.wasm', import.meta.url);
+export const WASM_SHA256 = 'f01d6e7855d60ec53a7f360eb0df5f02b9456d146904755ee5454293a94bca48';
+export const WASM_URL = new URL('./ootle-wasm-0.50.0/ootle_wasm_bg.wasm', import.meta.url);
 export { glue as wasm };
 // The indexers' CBOR values (Encoded<…>, base64) since 0.48: decodeSubstateValue, decodeUtxo, …
-export const BOR_SHA256 = '95effa09c3e4a7458676269c45229fc687a5a594134e791b5eb5c8d15ca14e89';
-export const BOR_URL = new URL('./ootle-wasm-bor-0.49.2/ootle_wasm_bor_bg.wasm', import.meta.url);
+export const BOR_SHA256 = '98b4e4aa2b0d89de2c8f79ac05b3365bde5ee03273c63ae10549e11aac8690cb';
+export const BOR_URL = new URL('./ootle-wasm-bor-0.50.0/ootle_wasm_bor_bg.wasm', import.meta.url);
 export { borGlue as bor };
 
 let started = null;
