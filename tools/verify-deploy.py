@@ -16,10 +16,11 @@
    `node` is on the PATH, else counted as not decoded). A browser gets those copies, so they are checked too.
 4. When the deployment names a SealLog (/api/v1/config seal_log.component), read the log's template
    address from a public Tari indexer of the deployment's network (Esmeralda or the mainnet; never one
-   the deployment names) and check, with the tag's own template/wasm_check.py, that the chain runs one
-   of the tag's builds byte for byte: template/dist/seal_log.wasm (tari_template_lib 0.37) or
-   template/dist-v2/seal_log.wasm (0.38, V2 template definitions; the mainnet build), the network's own
-   first (template/check.sh [--v2] --onchain).
+   the deployment names) and check, with the tag's own template/wasm_check.py, that the chain runs the
+   tag's template/dist-v2/seal_log.wasm byte for byte (tari_template_lib 0.38: Ootle 0.50 loads only V2
+   template definitions; template/check.sh --v2 --onchain). One log is held to the 0.37 build,
+   template/dist/seal_log.wasm, instead: the Esmeralda log that was live when 0.50 came (V1_LOGS), until
+   /api/v1/config names its successor (deploy/ootle/upgrade-0.50.md §9).
 Prints every difference; exit status 0 only when there are none. Python stdlib only.
 
 Needs Python 3.11 or newer (the build reads its config with tomllib) and git. The export is made
@@ -49,7 +50,12 @@ ROOT = Path(__file__).resolve().parent.parent
 # asked, since a deployment could name one that vouches for anything.
 INDEXERS = {"esmeralda": "https://ootle-indexer-a.tari.com", "mainnet": "https://indexer-a.ootle.tari.com"}
 INDEXER = INDEXERS["esmeralda"]
-SEALLOG_BUILDS = {"esmeralda": ("dist", "dist-v2"), "mainnet": ("dist-v2", "dist")}
+# The tag's SealLog build a log must run: template/dist-v2/ everywhere, since Ootle 0.50 loads only V2 template
+# definitions; and template/dist/ (tari_template_lib 0.37, V1) for the one log in V1_LOGS, Esmeralda's live log
+# since the 2026-11-02 reset, which 0.50 retires and §9 of upgrade-0.50.md replaces. Naming that log, rather than
+# accepting either build, keeps every other log, its successor included, to the V2 build.
+SEALLOG_BUILD = "dist-v2"
+V1_LOGS = {("esmeralda", "6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65"): "dist"}
 VARIANT_TABLES = ("gates", "features", "hosting")      # tools/build.py records these in the manifest
 NAME = re.compile(r"[a-z_]+")
 ADDRESS = re.compile(r"[0-9a-f]{64}")
@@ -174,7 +180,8 @@ def substate_reader(src: Path):
 
 
 def seallog_check(cfg: dict, src: Path) -> list[str]:
-    """The template behind the deployment's SealLog is one of the tag's builds of seal_log.wasm, byte for byte."""
+    """The template behind the deployment's SealLog is the tag's build for that log, byte for byte: template/dist-v2/,
+    or template/dist/ for a log in V1_LOGS."""
     component = (cfg.get("seal_log") or {}).get("component")
     if not component:
         print("SealLog: this deployment names no log")
@@ -196,18 +203,18 @@ def seallog_check(cfg: dict, src: Path) -> list[str]:
         return [f"SealLog {component}: could not read its template from {indexer} ({e})"]
     if not ADDRESS.fullmatch(str(template)):
         return [f"SealLog {component}: the indexer gave no valid template address"]
-    builds = [src / "template" / name / "seal_log.wasm" for name in SEALLOG_BUILDS[network]]
-    builds = [wasm for wasm in builds if wasm.is_file()]     # an older tag has template/dist/ only
-    for wasm in builds:
-        check = subprocess.run([sys.executable, "-I", str(src / "template" / "wasm_check.py"), "onchain",
-                                f"template_{template}", "--indexer", indexer, "--wasm", str(wasm)],
-                               capture_output=True, text=True)
-        print(f"SealLog {component} ({network}), against template/{wasm.parent.name}/seal_log.wasm:\n"
-              + "".join(f"  {line}\n" for line in (check.stdout + check.stderr).splitlines()), end="")
-        if check.returncode == 0:
-            return []
-    return [f"SealLog {component}: template_{template} is not the tag's seal_log.wasm "
-            f"({' or '.join('template/' + w.parent.name for w in builds) or 'no build in the tag'})"]
+    build = V1_LOGS.get((network, str(component).removeprefix("component_")), SEALLOG_BUILD)
+    wasm = src / "template" / build / "seal_log.wasm"
+    if not wasm.is_file():
+        return [f"SealLog {component}: the tag has no template/{build}/seal_log.wasm to compare it with"]
+    check = subprocess.run([sys.executable, "-I", str(src / "template" / "wasm_check.py"), "onchain",
+                            f"template_{template}", "--indexer", indexer, "--wasm", str(wasm)],
+                           capture_output=True, text=True)
+    print(f"SealLog {component} ({network}), against template/{build}/seal_log.wasm:\n"
+          + "".join(f"  {line}\n" for line in (check.stdout + check.stderr).splitlines()), end="")
+    if check.returncode == 0:
+        return []
+    return [f"SealLog {component}: template_{template} is not the tag's template/{build}/seal_log.wasm"]
 
 
 def compare(origin: str, local: dict, live: dict, sha: str, compressed: frozenset | set = frozenset(),

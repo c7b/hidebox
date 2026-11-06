@@ -37,6 +37,9 @@ SEALLOG_TEMPLATE = "5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533
 RECORDED_047_TEMPLATE = "40c5f1cfccf753613ce99245ed49ebef0b308084a52ad0c5cd48959d90fa0a47"   # the log before it
 # the live log after the reset, as tari_indexer 0.49.1 serves it (an Encoded value)
 LIVE_049 = json.loads((ROOT / "server" / "tests" / "fixtures" / "indexer-0.49.json").read_text())
+# Esmeralda's SealLog since the 2026-11-02 reset (the 0.37 build, a V1 definition), and a stand-in for its successor.
+LIVE_LOG = "component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65"
+NEXT_LOG = "component_" + "5e" * 32
 SERVICE_KEY = "78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06"
 
 
@@ -173,9 +176,12 @@ class BuildConfigTest(unittest.TestCase):
 
 class SealLogTemplateTest(unittest.TestCase):
     """The SealLog check reads the log's template from the indexer in tari_indexer 0.47.0's shape
-    (`state.up.substate`) and the earlier one (`substate`), and runs wasm_check.py on exactly that address."""
+    (`state.up.substate`), the earlier one (`substate`) and 0.48's Encoded value, and runs wasm_check.py on exactly
+    that address against one build: template/dist-v2/, or template/dist/ for the one V1 log (Esmeralda's since the
+    2026-11-02 reset, until /api/v1/config names its successor)."""
 
-    def check(self, body, network: str | None = None, matches: str | None = "dist") -> tuple[list[str], list]:
+    def check(self, body, network: str | None = None, matches: str | None = "dist", component: str = LIVE_LOG,
+              src: Path = ROOT) -> tuple[list[str], list]:
         """`matches`: the tag's build (template/<matches>/seal_log.wasm) the stand-in wasm_check.py says the chain
         runs; None for none. Returns the differences and every wasm_check.py command line, with the URLs fetched."""
         runs, urls = [], []
@@ -189,10 +195,10 @@ class SealLogTemplateTest(unittest.TestCase):
         def fetch(url):
             urls.append(url)
             return json.dumps(body).encode()
-        cfg = {"seal_log": {"component": SEALLOG["id"]}, **({"network": network} if network else {})}
+        cfg = {"seal_log": {"component": component}, **({"network": network} if network else {})}
         with mock.patch.object(verify, "fetch", fetch), \
                 mock.patch.object(verify.subprocess, "run", run), mock.patch("builtins.print"):
-            diffs = verify.seallog_check(cfg, ROOT)
+            diffs = verify.seallog_check(cfg, src)
         return diffs, runs + [urls]
 
     @staticmethod
@@ -212,22 +218,51 @@ class SealLogTemplateTest(unittest.TestCase):
         diffs, runs = self.check(LIVE_049["seallog_component_answer"])
         self.assertEqual(diffs, [])
         self.assertEqual(self.onchain_args(runs[0]), [f"template_{SEALLOG_TEMPLATE}", "https://ootle-indexer-a.tari.com", "dist"])
+        self.assertEqual(runs[-1], [f"https://ootle-indexer-a.tari.com/substates/{LIVE_LOG}"])
+
+    def test_only_the_named_v1_log_may_run_the_v1_build(self):
+        self.assertEqual(verify.V1_LOGS, {("esmeralda", LIVE_LOG.removeprefix("component_")): "dist"})
+        # The live V1 log is held to template/dist/ alone: the V2 bytes under its address are a difference.
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], matches="dist-v2")
+        self.assertEqual([self.onchain_args(r)[2] for r in runs[:-1]], ["dist"])
+        self.assertEqual(len(diffs), 1)
+        self.assertIn("template/dist/seal_log.wasm", diffs[0])
+        # Any other log, its successor included, must run template/dist-v2/; the V1 build is not tried for it.
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], matches="dist-v2", component=NEXT_LOG)
+        self.assertEqual(diffs, [])
+        self.assertEqual([self.onchain_args(r)[2] for r in runs[:-1]], ["dist-v2"])
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], matches="dist", component=NEXT_LOG)
+        self.assertEqual([self.onchain_args(r)[2] for r in runs[:-1]], ["dist-v2"])
+        self.assertEqual(len(diffs), 1)
+        self.assertIn("template/dist-v2/seal_log.wasm", diffs[0])
+        # The exception is Esmeralda's: the same address on the mainnet is held to the V2 build.
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches="dist")
+        self.assertEqual([self.onchain_args(r)[2] for r in runs[:-1]], ["dist-v2"])
+        self.assertEqual(len(diffs), 1)
+
+    def test_a_tag_without_the_logs_build_is_a_difference_and_nothing_is_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp)
+            (src / "template" / "dist").mkdir(parents=True)
+            (src / "template" / "dist" / "seal_log.wasm").write_bytes(b"\0asm\x01\0\0\0")
+            older = {"verified": True, "substate": SEALLOG["body"]["state"]["up"]["substate"]}
+            diffs, runs = self.check(older, component=NEXT_LOG, src=src)
+            self.assertEqual(runs[:-1], [])
+            self.assertEqual(len(diffs), 1)
+            self.assertIn("no template/dist-v2/seal_log.wasm", diffs[0])
+            diffs, runs = self.check(older, src=src)       # the V1 log in an older tag: template/dist/ is there
+            self.assertEqual((diffs, [self.onchain_args(r)[2] for r in runs[:-1]]), ([], ["dist"]))
 
     @unittest.skipUnless((ROOT / "template" / "dist-v2" / "seal_log.wasm").is_file(), "template/ is not in this tree")
-    def test_a_mainnet_log_is_read_from_a_mainnet_indexer_and_checked_against_the_v2_build_first(self):
-        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches="dist-v2")
+    def test_a_mainnet_log_is_read_from_a_mainnet_indexer_and_checked_against_the_v2_build(self):
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches="dist-v2", component=NEXT_LOG)
         self.assertEqual(diffs, [])
-        self.assertEqual(runs[-1], [f"https://indexer-a.ootle.tari.com/substates/{SEALLOG['id']}"])
+        self.assertEqual(runs[-1], [f"https://indexer-a.ootle.tari.com/substates/{NEXT_LOG}"])
         self.assertEqual(self.onchain_args(runs[0]), [f"template_{SEALLOG_TEMPLATE}", "https://indexer-a.ootle.tari.com", "dist-v2"])
         self.assertEqual(len(runs), 2, "one wasm_check.py run, then the URLs")
-        # Esmeralda after its move to Ootle 0.50 may run the v2 build: the 0.37 one is tried first, then it.
-        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "esmeralda", matches="dist-v2")
-        self.assertEqual(diffs, [])
-        self.assertEqual([self.onchain_args(r)[2] for r in runs[:-1]], ["dist", "dist-v2"])
-        # Neither build: one difference naming both.
-        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches=None)
+        diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches=None, component=NEXT_LOG)
         self.assertEqual(len(diffs), 1)
-        self.assertIn("template/dist-v2 or template/dist", diffs[0])
+        self.assertIn("template/dist-v2", diffs[0])
 
     def test_an_unknown_network_is_refused_before_any_request(self):
         diffs, runs = self.check(SEALLOG["body"], "stagenet")
