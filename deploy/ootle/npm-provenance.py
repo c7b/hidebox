@@ -26,7 +26,9 @@ Python standard library only. Exit status 1 on any failure.
 """
 import argparse
 import base64
+import binascii
 import hashlib
+import io
 import json
 import re
 import sys
@@ -37,6 +39,8 @@ REPO = "https://github.com/tari-project/tari-ootle"
 SLSA = "https://slsa.dev/provenance/v1"
 NPM_PUBLISH = "https://github.com/npm/attestation/tree/main/specs/publish/v0.1"
 MAX_FILE = 16 * 1024 * 1024
+VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+")
+RESERVED = {"SHA256SUMS", "LICENSE", "PROVENANCE.md"}     # files this script or a person writes, never copied
 # What repin rewrites; a path here that no longer holds a pin stops it (the list is stale).
 PIN_FILES = (
     "tools/build.py", "web/app/vendor/ootle-wasm-shim.js", "web/app/sidecar/loader.mjs", "server/mutis/config.py",
@@ -74,9 +78,11 @@ def statement(attestation: dict) -> dict:
     envelope = attestation.get("bundle", {}).get("dsseEnvelope", {})
     need(envelope.get("payloadType") == "application/vnd.in-toto+json", "an attestation is not an in-toto statement")
     try:
-        return json.loads(base64.b64decode(envelope["payload"], validate=True))
+        stmt = json.loads(base64.b64decode(envelope["payload"], validate=True))
     except (KeyError, ValueError) as e:
         raise ProvenanceError(f"an attestation's payload does not decode: {e}") from None
+    need(isinstance(stmt, dict), "an attestation's payload is not a statement")
+    return stmt
 
 
 def rekor(attestation: dict) -> list[str]:
@@ -84,10 +90,11 @@ def rekor(attestation: dict) -> list[str]:
     return [str(e.get("logIndex")) for e in entries if isinstance(e, dict) and str(e.get("logIndex", "")).isdigit()]
 
 
-def check(name: str, version: str, commit: str, downloads: Path) -> dict:
-    """The facts PROVENANCE.md records, once every check holds; ProvenanceError otherwise."""
+def check(name: str, version: str, commit: str, downloads: Path) -> tuple[dict, bytes]:
+    """(The facts PROVENANCE.md records, the tarball's bytes those facts hold for), once every check holds;
+    ProvenanceError otherwise. `extract` reads these bytes, never the file again."""
     pkg = short(name)
-    need(re.fullmatch(r"\d+\.\d+\.\d+", version or "") is not None, f"not a release version: {version!r}")
+    need(VERSION.fullmatch(version or "") is not None, f"not a release version: {version!r}")
     need(re.fullmatch(r"[0-9a-f]{40}", commit or "") is not None, "--commit must be the 40-hex release commit")
     packument = load_json(downloads / f"{pkg}.packument.json")
     need(isinstance(packument, dict) and packument.get("name") == name, "the packument is not this package's")
@@ -98,24 +105,37 @@ def check(name: str, version: str, commit: str, downloads: Path) -> dict:
     need(dist.get("tarball") == f"https://registry.npmjs.org/{name}/-/{pkg}-{version}.tgz",
          f"unexpected dist.tarball: {dist.get('tarball')!r}")
     integrity = dist.get("integrity", "")
-    need(integrity.startswith("sha512-"), "dist.integrity is not sha512")
+    need(isinstance(integrity, str) and integrity.startswith("sha512-"), "dist.integrity is not sha512")
+    try:
+        expected = base64.b64decode(integrity[7:], validate=True)
+    except (binascii.Error, ValueError):
+        raise ProvenanceError("dist.integrity is not base64") from None
     data = tarball.read_bytes()
     digest = hashlib.sha512(data).digest()
-    need(base64.b64decode(integrity[7:]) == digest, "the tarball's sha512 is not dist.integrity")
+    need(expected == digest, "the tarball's sha512 is not dist.integrity")
     attestations = load_json(downloads / f"{pkg}-{version}.attestations.json")
-    by_type = {a.get("predicateType"): a for a in (attestations or {}).get("attestations", []) if isinstance(a, dict)}
+    items = attestations.get("attestations") if isinstance(attestations, dict) else None
+    # Exactly the two the registry publishes, each once: a third, a duplicate or a stray entry is refused, so the
+    # verdict never depends on the order of the list.
+    need(isinstance(items, list) and len(items) == 2 and all(isinstance(a, dict) for a in items),
+         "expected exactly two attestations")
+    by_type = {a.get("predicateType"): a for a in items}
     need(set(by_type) == {SLSA, NPM_PUBLISH}, f"expected the SLSA and npm publish attestations, got {sorted(map(str, by_type))}")
     subject = {"name": f"pkg:npm/%40tari-project/{pkg}@{version}", "digest": {"sha512": digest.hex()}}
-    for kind, attestation in by_type.items():
-        need(statement(attestation).get("subject") == [subject], f"the {kind} attestation names another subject")
-    predicate = statement(by_type[SLSA]).get("predicate", {})
+    statements = {kind: statement(attestation) for kind, attestation in by_type.items()}
+    for kind, stmt in statements.items():
+        need(stmt.get("predicateType") == kind, f"the {kind} attestation's statement is of another type")   # the label is unsigned
+        need(stmt.get("subject") == [subject], f"the {kind} attestation names another subject")
+    predicate = statements[SLSA].get("predicate", {})
     build = predicate.get("buildDefinition", {})
     workflow = build.get("externalParameters", {}).get("workflow", {})
     need(workflow.get("repository") == REPO, f"built from {workflow.get('repository')!r}, not {REPO}")
     need(workflow.get("ref") == f"refs/tags/v{version}", f"built from {workflow.get('ref')!r}, not refs/tags/v{version}")
-    commits = [d.get("digest", {}).get("gitCommit") for d in build.get("resolvedDependencies", [])]
-    need(commits == [commit], f"built from commit {commits}, not {commit}")
-    need(meta.get("gitHead") in (None, commit), f"the registry's gitHead {meta.get('gitHead')!r} is not {commit}")
+    deps = build.get("resolvedDependencies", [])
+    need(isinstance(deps, list) and len(deps) == 1 and isinstance(deps[0], dict), "expected one resolved dependency")
+    need(deps[0].get("uri") == f"git+{REPO}@refs/tags/v{version}", f"built from {deps[0].get('uri')!r}")
+    need(deps[0].get("digest") == {"gitCommit": commit}, f"built from commit {deps[0].get('digest')!r}, not {commit}")
+    need(meta.get("gitHead") == commit, f"the registry's gitHead {meta.get('gitHead')!r} is not {commit}")
     run = predicate.get("runDetails", {}).get("metadata", {}).get("invocationId", "")
     m = re.fullmatch(re.escape(REPO) + r"/actions/runs/(\d+)/attempts/(\d+)", run)
     need(m is not None, f"unexpected invocationId {run!r}")
@@ -123,16 +143,18 @@ def check(name: str, version: str, commit: str, downloads: Path) -> dict:
             "published": packument.get("time", {}).get(version), "latest": packument.get("dist-tags", {}).get("latest"),
             "integrity": integrity, "sha512": digest.hex(), "git_head": meta.get("gitHead"), "commit": commit,
             "workflow": workflow.get("path"), "ref": workflow["ref"], "run": int(m.group(1)), "attempt": int(m.group(2)),
-            "rekor": {"provenance": rekor(by_type[SLSA]), "publish": rekor(by_type[NPM_PUBLISH])}}
+            "rekor": {"provenance": rekor(by_type[SLSA]), "publish": rekor(by_type[NPM_PUBLISH])}}, data
 
 
-def extract(tarball: Path, files: list[str], out: Path, license_file: Path | None) -> dict[str, str]:
-    """Copy package/<file> for each named file (regular files only) into `out`, then write SHA256SUMS."""
+def extract(tarball: bytes, files: list[str], out: Path, license_file: Path | None) -> dict[str, str]:
+    """Copy package/<file> for each named file (regular files only) out of the tarball `check` verified (its
+    bytes, not the file, which could have changed since) into `out`, then write SHA256SUMS."""
     need(not out.exists() or not any(out.iterdir()), f"{out} is not empty")
     wanted = {f"package/{f}": f for f in files}
-    need(all(re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", f) and not f.startswith(".") for f in files), "a bad file name")
+    need(all(re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", f) and not f.startswith(".") and f not in RESERVED for f in files),
+         "a bad file name")
     found = {}
-    with tarfile.open(tarball, "r:gz") as tar:
+    with tarfile.open(fileobj=io.BytesIO(tarball), mode="r:gz") as tar:
         for member in tar:
             if member.name not in wanted:
                 continue
@@ -162,7 +184,10 @@ def read_sums(folder: Path) -> dict[str, str]:
 
 
 def repin(root: Path, old: str, new: str) -> dict[str, int]:
-    """{file: replacements}. Old and new hashes are paired by file name through the two SHA256SUMS."""
+    """{file: replacements}. Old and new hashes are paired by file name through the two SHA256SUMS. Every file is
+    rewritten in memory first, so a stale PIN_FILES stops it before it writes anything."""
+    need(VERSION.fullmatch(old or "") is not None and VERSION.fullmatch(new or "") is not None and old != new,
+         f"versions must be two different X.Y.Z: {old!r} {new!r}")
     vendor = root / "web" / "app" / "vendor"
     pairs = [(f"{p}-{old}/", f"{p}-{new}/") for p in PACKAGES] + [(f"{p}-{old}\"", f"{p}-{new}\"") for p in PACKAGES]
     for pkg in PACKAGES:
@@ -173,10 +198,10 @@ def repin(root: Path, old: str, new: str) -> dict[str, int]:
                 pairs.append((before[name], after[name]))     # an unchanged hash is still a pin (of the new file)
     # `wasm_version = "…"`, `"wasm_version": "…"`, `["wasm_version"], "…"`, `get("wasm_version", "…"`
     version_pin = re.compile(r"""(wasm_version["'\]\s=:,]{1,8})""" + re.escape(old) + r"""(?=["'])""")
-    counts = {}
+    counts, texts = {}, {}
     for rel in PIN_FILES:
-        path = root / rel
-        text = path.read_text(encoding="utf-8")
+        with open(root / rel, encoding="utf-8", newline="") as f:
+            text = f.read()
         n = 0
         for a, b in pairs:
             n += text.count(a)
@@ -184,8 +209,10 @@ def repin(root: Path, old: str, new: str) -> dict[str, int]:
         text, k = version_pin.subn(lambda m: m.group(1) + new, text)
         n += k
         need(n > 0, f"{rel}: holds no pin of {old} (PIN_FILES is stale)")
-        path.write_text(text, encoding="utf-8")
-        counts[rel] = n
+        texts[rel], counts[rel] = text, n
+    for rel, text in texts.items():
+        with open(root / rel, "w", encoding="utf-8", newline="") as f:
+            f.write(text)
     return counts
 
 
@@ -224,18 +251,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "check":
-            facts = check(args.name, args.version, args.commit, args.downloads)
+            facts, tarball = check(args.name, args.version, args.commit, args.downloads)
             sums = None
             if args.out:
                 need(bool(args.file), "--out needs at least one --file")
-                tarball = args.downloads / f"{short(args.name)}-{args.version}.tgz"
                 sums = extract(tarball, args.file, args.out, args.license)
             print(json.dumps({**facts, "sha256": sums}, indent=1))
             print(markdown(facts, sums), file=sys.stderr)
         else:
             for rel, n in repin(args.root, args.old, args.new).items():
                 print(f"{n:3d}  {rel}")
-    except (ProvenanceError, OSError, tarfile.TarError) as e:
+    except (ProvenanceError, OSError, tarfile.TarError, ValueError, KeyError, TypeError, AttributeError) as e:
         print(f"npm-provenance: {e}", file=sys.stderr)
         return 1
     return 0

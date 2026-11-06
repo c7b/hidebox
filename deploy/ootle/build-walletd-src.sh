@@ -59,7 +59,8 @@ prepare)
     git -C "$W/src" -c advice.detachedHead=false checkout -q FETCH_HEAD
   fi
   checked_source
-  # The headers of the libraries the release binary links (ldd: libssl3, libdbus-1-3), at the installed versions.
+  # The headers of the libraries the release binary links (ldd: libssl3, libdbus-1-3), at the versions apt offers
+  # (`apt-cache policy`: on 2026-11-05 the installed ones); the binary links the installed libraries.
   (cd "$W/debs" && apt-get download libssl-dev libdbus-1-dev pkgconf-bin libpkgconf3)
   for deb in "$W"/debs/*.deb; do dpkg-deb -x "$deb" "$SR"; done
   sha256sum "$W"/debs/*.deb

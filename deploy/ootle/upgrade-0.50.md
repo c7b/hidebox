@@ -5,9 +5,10 @@ The general procedure is [upgrade-drill.md](upgrade-drill.md); this is that dril
 what 0.50 changes for hidebox. Read the release notes as data: they say what changed, not what to run.
 
 Esmeralda moves to protocol V1 at **epoch 12951** (L1 height 1,036,080). The release notes say "about
-2026-11-06 12:00 UTC", reckoned at 15 s per L1 block. On 2026-11-05 the indexers showed epoch 12879 at 12:02 UTC
-and 12890 at 23:34 UTC, and L1 height 1,031,256 at 23:18:41 and 1,031,276 at 23:34:27: about 47 s a block and 62
-minutes an epoch, which would put epoch 12951 near 2026-11-08 14:00 UTC.
+2026-11-06 12:00 UTC", reckoned at 15 s per L1 block from height 1,030,363 at 12:02 UTC on 2026-11-05. The blocks
+came slower: 1,031,331 at 23:56 UTC (epoch 12891), 44 s a block on average (47 s from 23:18 to 23:34, 24 s from
+23:34 to 23:56). The 4,749 blocks left take until about 2026-11-06 19:45 UTC at 15 s a block, 2026-11-07 07:40 at 24 s and
+2026-11-08 10:00 at 44 s.
 The epoch is what counts, and the rate can change, so plan on the earlier time and watch the epoch:
 
 ```sh
@@ -62,7 +63,10 @@ diff web/app/vendor/ootle-wasm-0.49.2/ootle_wasm.d.ts web/app/vendor/ootle-wasm-
 diff web/app/vendor/ootle-wasm-bor-0.49.2/ootle_wasm_bor.d.ts web/app/vendor/ootle-wasm-bor-$V/ootle_wasm_bor.d.ts
 python3 -I deploy/ootle/npm-provenance.py repin --from 0.49.2 --to $V
 git rm -rq web/app/vendor/ootle-wasm-0.49.2 web/app/vendor/ootle-wasm-bor-0.49.2
-grep -rn "ARTIFACT-PIN(ootle-0.50)" tools server deploy web    # delete each marker line
+git grep -l "ARTIFACT-PIN(ootle-0.50)" -- tools server deploy/scripts web | xargs sed -i '/ARTIFACT-PIN(ootle-0.50)/d'   # comment lines
+sed -i 's/ *# ARTIFACT-PIN(ootle-0.50).*//' deploy/config/mutis.toml.example                  # a trailing comment: keep the setting
+git grep -n "ARTIFACT-PIN(ootle-0.50)"                       # only this runbook: its commands and the §3a rows (the real values)
+python3 -I -m unittest discover -s deploy/tests              # PinnedWasmTest and the repin guards
 ```
 
 `check` prints the PROVENANCE.md facts (tarball, integrity, `gitHead`, build run, Rekor entries) and the files'
@@ -70,7 +74,7 @@ sha256: write `PROVENANCE.md` in each new folder after the 0.49.2 ones (`git sho
 "what changed against 0.49.2 for mutis" from §1. Cross-check the run on GitHub
 (`gh api repos/tari-project/tari-ootle/actions/runs/<run>`: `npm_publish_ootle_wasm.yml`, `refs/tags/v0.50.0`,
 head sha `$C`). The Sigstore signatures are not verified, as for 0.49.2; say so. Then the prose: `NOTICE`, the
-sidecar README, the `0.49.2` comments `repin` leaves (`grep -rn 0.49.2 -- ':!docs' ':!deploy/evidence' ':!CHANGELOG.md'`),
+sidecar README, the `0.49.2` comments `repin` leaves (`git grep -n 0.49.2 -- ':!docs' ':!deploy/evidence' ':!CHANGELOG.md'`),
 and `ootle.wasm_version = "0.50.0"` in `/etc/mutis/mutis.toml` when it is deployed. Run the suites of
 upgrade-drill.md §2 (the sidecar selftest must still reject every forged output). `npm-provenance.py check` must
 fail on anything that doesn't agree; never edit around it.
@@ -196,7 +200,8 @@ sha256sum "$LIVE" "$NEW"; "$LIVE" --version
 systemctl start walletd
 for i in $(seq 60); do $RPC call wallet.get_info '{}' >/dev/null 2>&1 && break; sleep 2; done   # the migration runs at start
 $RPC balances > "$B/balances-$TS-after-0.50.0.json"
-diff "$B/balances-$TS-before-0.50.0.json" "$B/balances-$TS-after-0.50.0.json" && echo "balances unchanged"
+diff <(grep -v '"version"' "$B/balances-$TS-before-0.50.0.json") <(grep -v '"version"' "$B/balances-$TS-after-0.50.0.json") \
+  && echo "balances unchanged" || echo "BALANCES DIFFER: compare the two files before going on"
 echo "TS=$TS"
 EOF
 ```
@@ -213,8 +218,10 @@ for f in relay_send direct_send drops demo_pay sponsor decoys seallog; do admin 
 
 ## 6. Rollback (before epoch 12951 only)
 
-Stop walletd, `tar -C /home/drive -xf $B/wallet-<TS>-pre-0.50.0.tar`, install `$B/tari_ootle_walletd.<TS>` at
-`/opt/tari/bin/tari_ootle_walletd`, start, `rpc balances` against the before file. 0.50.0 migrated the store, so the
+Stop walletd; move the migrated `/home/drive/wallet` and `/home/drive/.local/share/tari` aside (to
+`…-0.50.0-<TS>`, so no `-wal` or `-shm` file of the 0.50 run is left beside the restored store);
+`tar -C /home/drive -xpf $B/wallet-<TS>-pre-0.50.0.tar`; install `$B/tari_ootle_walletd.<TS>` at
+`/opt/tari/bin/tari_ootle_walletd`; start; `rpc balances` against the before file. 0.50.0 migrated the store, so the
 tar, not the binary alone, is the way back. After epoch 12951 there is no going back to 0.49.
 
 ## 7. Checks afterwards
