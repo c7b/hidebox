@@ -25,10 +25,13 @@ from pathlib import Path
 
 STATUS = Path("/srv/mutis/status")
 # SealLog components we wrote to before the live one (template NOTES §1.5): the 1.0.0 log, never
-# appended to, and the research log, with one test checkpoint. Listed so that a reader who finds
-# them on chain knows they are ours and retired; /api/v1/config names the live one.
+# appended to, and the research log, with one test checkpoint; and the 2.0.0 log of the 0.37 build, live from
+# the 2026-11-02 reset until Ootle 0.50 stopped loading its V1 template (deploy/ootle/upgrade-0.50.md §9). Listed
+# so that a reader who finds them on chain knows they are ours and retired; /api/v1/config names the live one,
+# which is never listed here (the 0.37 log is listed only once mutis.toml names its successor).
 RETIRED_LOGS = ("component_0ff7e892de37ee65d60e37a5e55cdfe24b11bd9e84cb5af49831e309f6bd22aa",
-                "component_32dae273fb4c4c63c77cd1c70ef4e53e07cb56aaa378730fabcd228e45a7e36e")
+                "component_32dae273fb4c4c63c77cd1c70ef4e53e07cb56aaa378730fabcd228e45a7e36e",
+                "component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65")
 
 
 def meta(conn: sqlite3.Connection, key: str, default=None):
@@ -65,7 +68,7 @@ def seallog(conn: sqlite3.Connection, cfg: dict) -> dict | None:
     # worker couldn't read it from the append's event), as in the API's checkpoint objects.
     latest = {"index": row[0], "component": component, "tree_size": row[1], "tx_id": row[2], "epoch": row[3]} \
         if row else None
-    return {"component": component, "latest_checkpoint": latest, "retired": list(RETIRED_LOGS)}
+    return {"component": component, "latest_checkpoint": latest, "retired": [c for c in RETIRED_LOGS if c != component]}
 
 
 def collect(cfg: dict, conn: sqlite3.Connection, robot_file: Path, now: datetime.datetime) -> dict:

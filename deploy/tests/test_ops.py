@@ -326,6 +326,17 @@ class EvidenceTest(unittest.TestCase):
         self.assertEqual(doc["retired"], list(evidence.RETIRED_LOGS))
         self.assertNotIn(live, doc["retired"])
 
+    def test_the_v1_log_is_retired_only_once_mutis_toml_names_its_successor(self):
+        v1, v2 = "component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65", "component_" + "5e" * 32
+        self.assertIn(v1, evidence.RETIRED_LOGS)
+        with tempfile.TemporaryDirectory() as tmp:
+            conn = mutis_db(Path(tmp) / "db.sqlite3")
+            now = evidence.seallog(conn, {"features": {"seallog": True}, "ootle": {"seallog_component": v1}})
+            after = evidence.seallog(conn, {"features": {"seallog": True}, "ootle": {"seallog_component": v2}})
+            conn.close()
+        self.assertEqual((now["component"], now["retired"]), (v1, [c for c in evidence.RETIRED_LOGS if c != v1]))
+        self.assertEqual((after["component"], after["retired"]), (v2, list(evidence.RETIRED_LOGS)))
+
 
 class RunWalletdTest(unittest.TestCase):
     def test_password_reaches_walletd_only_through_a_private_config(self):
