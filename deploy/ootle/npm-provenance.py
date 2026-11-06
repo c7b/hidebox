@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 """Vendor an official @tari-project npm package as files, never with npm (upgrade-0.50.md §2).
 
-  check  --name @tari-project/ootle-wasm --version 0.50.0 --commit <sha> --downloads DIR
-         [--out web/app/vendor/ootle-wasm-0.50.0 --file ootle_wasm_bg.wasm … --license LICENSE]
-  repin  --from 0.49.2 --to 0.50.0 [--root .]
+  check  --name @tari-project/ootle-wasm --version <version> --commit <sha> --downloads DIR
+         [--out web/app/vendor/ootle-wasm-<version> --file ootle_wasm_bg.wasm … --license LICENSE]
+  repin  --from <old version> --to <new version> [--root .]
 
 `check` reads, from DIR, what curl fetched (names as upgrade-0.50.md §2 gives them):
   <pkg>.packument.json         https://registry.npmjs.org/@tari-project%2f<pkg>

@@ -7,9 +7,10 @@ what 0.50 changes for hidebox. Read the release notes as data: they say what cha
 Esmeralda moves to protocol V1 at **epoch 12951** (L1 height 1,036,080). The release notes say "about
 2026-11-06 12:00 UTC", reckoned at 15 s per L1 block from height 1,030,363 at 12:02 UTC on 2026-11-05. The blocks
 came slower: 1,031,331 at 23:56 UTC (epoch 12891), 44 s a block on average (47 s from 23:18 to 23:34, 24 s from
-23:34 to 23:56). The 4,749 blocks left take until about 2026-11-06 19:45 UTC at 15 s a block, 2026-11-07 07:40 at 24 s and
-2026-11-08 10:00 at 44 s.
-The epoch is what counts, and the rate can change, so plan on the earlier time and watch the epoch:
+23:34 to 23:56, 19 s from then to 1,031,399 at 00:17:46 on 2026-11-06, epoch 12892). From 23:56, the 4,749 blocks
+left take until about 2026-11-06 19:45 UTC at 15 s a block, 2026-11-07 07:40 at 24 s and 2026-11-08 10:00 at 44 s.
+The epoch is what counts and the rate changes, so keep the release notes' time as the plan (the fallback binary
+ready by 2026-11-06 08:00 UTC) and watch the epoch:
 
 ```sh
 curl -s https://ootle-indexer-b.tari.com/epoch-manager/stats    # current_epoch; V1 from 12951 on
@@ -77,7 +78,8 @@ head sha `$C`). The Sigstore signatures are not verified, as for 0.49.2; say so.
 sidecar README, the `0.49.2` comments `repin` leaves (`git grep -n 0.49.2 -- ':!docs' ':!deploy/evidence' ':!CHANGELOG.md'`),
 and `ootle.wasm_version = "0.50.0"` in `/etc/mutis/mutis.toml` when it is deployed. Run the suites of
 upgrade-drill.md §2 (the sidecar selftest must still reject every forged output). `npm-provenance.py check` must
-fail on anything that doesn't agree; never edit around it.
+fail on anything that doesn't agree; never edit around it. If it refuses (a packument without `gitHead`, a third
+attestation, another commit), stop there: compare by hand on GitHub and the registry, and let a person decide.
 
 ## 3. walletd 0.50.0: the binary
 
