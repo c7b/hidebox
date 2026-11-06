@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """Operations scripts against temporary data: backups and the restore drill, the healthcheck's
 reaction to every D-07 failure, the evidence collector's privacy rule, the walletd start script."""
+import hashlib
 import importlib.util
 import json
 import os
@@ -440,3 +441,44 @@ class SshHostTest(unittest.TestCase):
         for name, line in options:
             self.assertIn("default=SSH_HOST", line, name)
         self.assertIn("host=${MUTIS_SSH_HOST:-hidebox}", (ROOT / "deploy" / "ootle" / "publish-template.sh").read_text())
+
+
+class PublishTemplateOptionsTest(unittest.TestCase):
+    """publish-template.sh's --wasm (upgrade-0.50.md §9: the V2 build) is read and held to the SHA256SUMS beside the
+    file before anything reaches the server; an unknown option stops it. ssh is a stand-in that records its calls."""
+
+    def run_script(self, *args: str) -> tuple[subprocess.CompletedProcess, list[str]]:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "bin").mkdir()
+            calls = tmp / "ssh-calls"
+            (tmp / "bin" / "ssh").write_text(f'#!/bin/sh\necho "$*" >> {calls}\nexit 99\n')
+            (tmp / "bin" / "ssh").chmod(0o755)
+            wasm = tmp / "build" / "seal_log.wasm"
+            wasm.parent.mkdir()
+            wasm.write_bytes(b"\0asm\x01\0\0\0")
+            (wasm.parent / "SHA256SUMS").write_text("00" * 32 + "  seal_log.wasm\n")
+            argv = [a.replace("{wasm}", str(wasm)) for a in args]
+            run = subprocess.run(["bash", str(ROOT / "deploy" / "ootle" / "publish-template.sh"), *argv],
+                                 env={**os.environ, "PATH": f"{tmp / 'bin'}:{os.environ['PATH']}"},
+                                 capture_output=True, text=True, timeout=60)
+            return run, calls.read_text().splitlines() if calls.exists() else []
+
+    def test_an_unknown_option_stops_it(self):
+        run, calls = self.run_script("check", "--network", "mainnet")
+        self.assertEqual(run.returncode, 2)
+        self.assertIn("unknown option --network", run.stderr)
+        self.assertEqual(calls, [])
+
+    def test_a_wasm_that_does_not_match_its_sha256sums_is_refused_before_any_walletd_call(self):
+        run, calls = self.run_script("publish", "--wasm", "{wasm}")
+        self.assertEqual(run.returncode, 1)
+        self.assertIn("does not match the SHA256SUMS beside it", run.stderr)
+        self.assertFalse([c for c in calls if "walletd-rpc" in c], calls)
+
+    def test_the_v2_build_matches_its_sha256sums(self):
+        dist = ROOT / "template" / "dist-v2"
+        if not (dist / "seal_log.wasm").is_file():
+            self.skipTest("no template/dist-v2 in this tree")
+        expected = (dist / "SHA256SUMS").read_text().split()[0]
+        self.assertEqual(hashlib.sha256((dist / "seal_log.wasm").read_bytes()).hexdigest(), expected)
