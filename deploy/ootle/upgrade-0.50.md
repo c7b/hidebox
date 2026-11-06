@@ -41,7 +41,7 @@ tari-ootle's at `d3252ef1`.
 
 | 0.50 change | What it means here | Action |
 |---|---|---|
-| **V1 template definitions no longer load** (#3398, `00eb501d`). `TemplateDef` decodes only V2 (CBOR index 1); index 0 fails with "the template definition uses the V1 layout, which is not supported. Rebuild the template with tari_template_lib 0.38 or later" (`crates/template_abi/src/template_def.rs:72-84`). The engine decodes a template's `tari_tdef` section each time it loads it, compiled fresh or from its disk cache (`crates/engine/src/wasm/module.rs:144` in `finalize_loaded_module`, `:287-330`), so a call to a V1 template, or to a component of one, fails. No activation epoch: it holds from the fleet upgrade on ("Template authors rebuild and republish…", `CHANGELOG.md:23-26`). 0.49 decodes only index 0 (v0.49.2 `template_def.rs:14-17`), so a V2 template can't be published before the fleet upgrade either | SealLog on Esmeralda (`template_5932ee9b…145c`, tari_template_lib 0.37) has a V1 definition: `template/dist/seal_log.wasm`'s `tari_tdef` reads `82 00` after its length prefix (`[0, …]`, `self` arguments, `is_mut`). From the fleet upgrade on, `log.append_root` (checkpoints), `log.notarize` (deploys, `admin notarize`) and `SealLog::new` fail. The log `component_6a3eae19…bd65` stays readable (reading a substate runs no template), so receipts keep verifying against its last checkpoint. The mainnet SealLog must be the tari_template_lib 0.38 build (§9); the 0.37 build loads nowhere 0.50 runs | §9: build V2 at `d3252ef1` now; at the fleet upgrade pause `seallog`, then publish it and a new log |
+| **V1 template definitions no longer load** (#3398, `00eb501d`). `TemplateDef` decodes only V2 (CBOR index 1); index 0 fails with "the template definition uses the V1 layout, which is not supported. Rebuild the template with tari_template_lib 0.38 or later" (`crates/template_abi/src/template_def.rs:72-84`). The engine decodes a template's `tari_tdef` section each time it loads it, compiled fresh or from its disk cache (`crates/engine/src/wasm/module.rs:144` in `finalize_loaded_module`, `:287-330`), so a call to a V1 template, or to a component of one, fails. No activation epoch: it holds from the fleet upgrade on ("Template authors rebuild and republish…", `CHANGELOG.md:23-26`). 0.49 decodes only index 0 (v0.49.2 `template_def.rs:14-17`), so a V2 template can't be published before the fleet upgrade either | SealLog on Esmeralda (`template_5932ee9b…145c`, tari_template_lib 0.37) has a V1 definition: `template/dist/seal_log.wasm`'s `tari_tdef` reads `82 00` after its length prefix (`[0, …]`, `self` arguments, `is_mut`). From the fleet upgrade on, `log.append_root` (checkpoints), `log.notarize` (deploys, `admin notarize`) and `SealLog::new` fail. The log `component_6a3eae19…bd65` stays readable (reading a substate runs no template), so receipts keep verifying against its last checkpoint. The mainnet SealLog must be the tari_template_lib 0.38 build (§9); the 0.37 build loads nowhere 0.50 runs | §9: the V2 build at `d3252ef1` is in `template/dist-v2/` (2026-11-06); after the fleet upgrade, publish it and a new log ([seallog-v2-cutover.md](seallog-v2-cutover.md)) |
 | Nodes still on 0.49 fork off at epoch 12951; walletd migrates its store on first start | our walletd 0.49.2 must be replaced. At `d3252ef1` it runs two migrations: `2026-11-03-120000_locks_many_per_transaction` (an index) and `2026-11-06-120000_remove_v1_authored_templates` (`DELETE FROM authored_templates WHERE functions LIKE '%"is_mut":%'`: V1 rows go; nothing in mutis reads authored templates) | §3–§6 |
 | walletd JSON-RPC | every call and request shape mutis uses is unchanged; dry-run and `submit_manifest` answers gain `upgradable_components` and `component_upgrades` (serde defaults), which mutis doesn't read; `transactions.list` is unchanged. `applications/tari_walletd` and `clients/wallet_daemon_client` are the same at `d3252ef1` as at `a5ea91cc` | none |
 | Indexer REST and `Encoded<…>` values | same paths and shapes (`applications/tari_indexer` changes only its shard-snapshot sync, `clients/tari_indexer_client` nothing); `Utxo`, `SubstateValue`, `TransactionReceipt`, `ExecuteResult`, `FeeReceipt` and `FeeSource` keep their CBOR layouts, so `server/mutis/cbor.py`, the transaction view (`/api/v1/chain/tx/{id}/view`) and `ootle-wasm-bor` read them as before. A 0.50 indexer's `GET /templates/{address}` fails for a V1 template; nothing in mutis asks it | none |
@@ -128,8 +128,45 @@ u 'sudo install -m 0755 -o root -g root <dir>/<n> /opt/tari/bin/tari_ootle_walle
 
 | Pin still to record | Value |
 |---|---|
-| walletd 0.50.0 linux-x86_64 sha256 (the four sources) | ARTIFACT-PIN(ootle-0.50): when the release exists |
+| walletd 0.50.0 linux-x86_64 sha256 (the four sources) | ARTIFACT-PIN(ootle-0.50): when the release exists. The CI artifact it will carry (§3a'): `282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94`, by the artifact's digest, its `.sha256` and the job log |
 | tag v0.50.0 → commit | `d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb`: tag object `3c0c9700bcc2381c6380d329d5512c2dd5cfb5e9`, annotated, Stan Bondi, 2026-11-06T13:33:15Z, "v0.50.0 — protocol V1 on Esmeralda at epoch 12951, no reset", GitHub `verification.verified` true. 34 commits after `a5ea91cc`, the commit the draft notes named (§1) |
+
+### 3a'. If the release is still a draft when the fleet moves: the CI build itself
+
+The release's binaries come from workflow run `42226426470` ("Build Matrix of Binaries", the push of tag v0.50.0,
+head `d3252ef1`). Its `create-release` job ran at 14:11 UTC on 2026-11-06 and left a **draft**
+(`gh api …/releases/tags/v0.50.0` answers 404 to the public); the run reads `cancelled` because its
+`macos-arm64` job was, while `Building linux-x86_64 on ubuntu-22.04` (job 127921038796) succeeded at 14:08 UTC.
+Its artifact is the file the release will carry, so prefer it to a source build (§3b). Fetched on 2026-11-06 as
+data:
+
+| | |
+|---|---|
+| Artifact | `tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64`, id 13509545739, a 19,676,024-byte zip whose sha256 is GitHub's digest `51126f4933094c584b3c2d6175068f461c68ec63053551de429301f49c12b07c` |
+| Inside | the binary (mode 0755) and its `.sha256` |
+| Binary | 65,665,568 bytes, sha256 `282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94`: its `.sha256`, and the job log's two `shasum` lines (14:08:10Z, 14:08:26Z) |
+| `--version` | `tari_ootle_walletd 0.50.0` (as `build`, in a unit with no network, a read-only file system and no capabilities) |
+| Libraries | 13, every one found on the server, as for the 0.49.2 release binary |
+| `--help`, `run --help` | equal to 0.49.2's but for the version and the binary's name |
+
+```sh
+d=$(mktemp -d); cd "$d"
+gh api repos/tari-project/tari-ootle/actions/artifacts/13509545739/zip > artifact.zip    # GitHub keeps it for the run's retention
+sha256sum artifact.zip                                                                  # 51126f49…b07c
+python3 -I -c 'import sys, zipfile; z = zipfile.ZipFile(sys.argv[1]); print(z.namelist()); z.extractall(sys.argv[2])' artifact.zip x
+(cd x && sha256sum -c tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64.sha256)
+```
+
+A verified copy is already on the server, owned by `build`: `/home/build/work/walletd-0.50.0-d3252ef-ci/`. To use
+it, install it under a name that says where it came from, then §3c and §5 with that `NEW`:
+
+```sh
+u 'cd /home/build/work/walletd-0.50.0-d3252ef-ci && sha256sum -c tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64.sha256 &&
+   sudo install -m 0755 -o root -g root tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64 /opt/tari/bin/tari_ootle_walletd-0.50.0-d3252ef-ci'
+```
+
+Once the release is published, its asset's sha256 must be `282199b0…7d94`; if it is, the `-ci` binary is the
+release's and nothing needs installing again.
 
 ### 3b. Fallback: built from source (no release by about 2026-11-06 08:00 UTC)
 
@@ -245,8 +282,9 @@ rpc call validator_set.get_status "'{}'"                              # indexer_
 for f in relay_send direct_send drops demo_pay sponsor decoys seallog; do admin feature $f clear; done
 ```
 
-If the fleet already runs 0.50.0 and §9 hasn't published the V2 log yet, leave `seallog` out of that `clear`:
-the live log's template no longer loads, so its checkpoints would only fail.
+If the fleet already runs 0.50.0 and §9 hasn't published the V2 log yet, the live log's checkpoints fail once
+`seallog` is clear again, at a bounded cost and without a word on the site; seallog-v2-cutover.md §0 says why it
+stays on.
 
 ## 6. Rollback (before epoch 12951 only)
 
@@ -318,65 +356,39 @@ gap uploads still get their receipts' leaves in the server's tree, the old log's
 the receipts it covers, and new ones wait for the next checkpoint. Keep the gap short: have the V2 bytes built
 and checked before the fleet moves.
 
-**Before the fleet moves (no production change).** Lane `launch/mainnet` already builds the 2.0.0 source
-(`template/seal_log/src/lib.rs`, unchanged) against tari_template_lib 0.38 as seal_log 2.1.0: `template/seal_log_v2/`
-into `template/dist-v2/` (`check.sh --v2`; 107,030 bytes, sha256 `443bbe61…8555`): a 284-byte `tari_tdef` that
-reads `82 01` after its length prefix, sha256 `2e030356…99b5`, one table of 45 slots and one active element
-segment, as the V1 build. But it is pinned to git `a5ea91cc`, not the release. Pin it to the release and build it again,
-as `build`:
+**Before the fleet moves: done on 2026-11-06** (no production change; the build ran as `build` in capped units
+under `/home/build/work/`). `template/seal_log_v2/` (lane `launch/mainnet`, brought here) builds the unchanged 2.0.0
+source against `tari_template_lib = "=0.38.0"`, `tari_template_test_tooling = "=0.50.0"` and
+`tari_ootle_template_build = "=0.18.0"`, all from crates.io: each was published on 2026-11-06 between 13:38 and
+13:52 UTC from `d3252ef1`, as its `.crate`'s `.cargo_vcs_info.json` says and BUILD-INFO.txt records. Against the
+`a5ea91cc` pins only the sources move in `Cargo.lock`, plus tari_bor 0.16.6 → 0.17.0 and ootle_serde 0.6.2 → 0.7.0;
+no other third-party crate. `check.sh --v2 --dist` passed: vectors, rustfmt, clippy, tari lint, the 14 tests and
+the encoded-vector test under the `d3252ef1` engine (which refuses a V1 definition and any table-writing
+operator), the ABI and the build-path checks. The two vectors moved only in the test engine's template address and
+entity id (the binary moved); they were blessed, and `server/tests/fixtures/seallog-encoded-0.50.json` is again
+their copy. `template/dist-v2/seal_log.wasm`: 107,038 bytes, sha256
+`00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f`; by hand, `tari_tdef` reads `82 01` after its
+length prefix and is byte-identical to the `a5ea91cc` build's (sha256 `2e030356…99b5`), one table of 45 slots,
+one active element segment, under 110 KiB. The same bytes serve the mainnet's SealLog.
 
-- `tari_template_lib = "=0.38.0"` and `tari_ootle_template_build = "=0.18.0"` from crates.io, no git: both were
-  published on 2026-11-06 between 13:38 and 13:43 UTC from `d3252ef1` (each `.crate`'s `.cargo_vcs_info.json`
-  says so, as do those of tari_template_macros 0.27.0, tari_template_abi 0.23.0, tari_template_lib_types 0.37.0
-  and tari_bor 0.17.0 that come with them). `tari_template_test_tooling` 0.50.0 isn't on crates.io yet (0.49.2
-  is the latest at 14:00 UTC): git, `rev = "d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb"`. Regenerate
-  `seal_log_v2/Cargo.lock` (tari_bor 0.17.0, minicbor 2.3.1).
-- `check.sh --v2 --dist`: the 14 tests run the compiled WASM in the `d3252ef1` engine, which refuses a V1
-  definition and any table-writing operator at compile, so their passing is the load check. Then by hand:
-  `tari_tdef` still reads `82 01` with the sha256 `2e030356…99b5` (tari_template_macros is the same at both
-  commits), still one active element segment, under the 110 KiB budget. The code bytes may differ from the
-  `a5ea91cc` build (tari_bor, minicbor and template_lib_types moved). BUILD-INFO.txt names the crates.io versions
-  and the commit.
-- Bring onto `ootle/0.50` (or merge from `launch/mainnet`): `template/seal_log_v2/`, `template/dist-v2/`, the
-  `--v2` parts of `check.sh` and `wasm_check.py`, and `publish-template.sh --wasm`; point `tools/verify-deploy.py`
-  (`:169-190`, which compares the log's template with the tag's `template/dist/seal_log.wasm` today) at
-  `template/dist-v2/`. The same bytes are the mainnet's SealLog (`launch/mainnet`, after the 2026-11-11 launch):
-  on any network that runs 0.50, only a tari_template_lib 0.38 build loads. (publish-template.sh sends no
-  `metadata_hash`, so the crate's metadata, `supersedes` included, isn't on chain and doesn't tie the bytes to one
-  network.)
-- `service` pays the publish from its public vault: 842,994 µT for the 107,162-byte V1 build on 2026-11-02, so
-  about 1 tTARI with the cap at 3,000,000 µT; the log's creation about 2,400 µT (setup-accounts.md §0).
+`tools/verify-deploy.py` now holds every log to `template/dist-v2/`, except the one it names in `V1_LOGS`:
+Esmeralda's live log (`component_6a3eae19…bd65`), held to `template/dist/` until `ootle.seallog_component` names
+its successor. So this lane can deploy before the V2 log exists, and no other log can pass on the V1 build.
+`publish-template.sh check | publish` take `--wasm`.
 
-**When the fleet moves** (the indexers' `/info` says 0.50.0, or the first `seal_failed`, whichever comes first):
-
-```sh
-admin feature seallog off
-u 'sudo journalctl -u mutis-chain --since "-30 min" --no-pager | grep -E "seal_failed" | tail -3'
-```
-
-A deploy in the gap goes live without its notarization (deploy.sh says so and goes on); it is notarized at the
-end below. **Then, with walletd 0.50.0 in place** (§3–§5; a publish through walletd 0.49.2 against 0.50
-validators was never tried), as setup-accounts.md §4, the author staying `service`:
-
-```sh
-W=template/dist-v2/seal_log.wasm
-deploy/ootle/publish-template.sh check --wasm $W        # dry run Accept, and the predicted template_…
-deploy/ootle/publish-template.sh publish --wasm $W      # then wasm_check.py onchain: the chain holds $W byte for byte
-deploy/ootle/publish-template.sh instantiate <template> # the new log: owner_rule None, upgrade rule Locked
-u 'sudo editor /etc/mutis/mutis.toml'                   # [ootle] seallog_component = "component_…"
-admin check-config
-admin feature seallog clear
-admin seal-now                                          # checkpoint 0 of the new log: the whole tree so far
-admin notarize "$(curl -fsS https://hidebox.app/.well-known/mutis-manifest.json | sha256sum | cut -d' ' -f1)"
-u 'sudo python3 -I /srv/mutis/app/current/deploy/scripts/notarize-release.py'   # a release deployed in the gap
-python3 -I tools/verify-deploy.py https://hidebox.app <tag>   # 0 differences, once the live tag carries dist-v2
-```
+**When the fleet moves, and then:** the commands, in order, are
+[seallog-v2-cutover.md](seallog-v2-cutover.md). In short: a checkpoint against the V1 log after the fleet upgrade
+is `AcceptFeeRejectRest` (the fee intent runs, the call fails, `service` pays the cost of what ran and keeps the
+rest of `pay_fee`), retried every 10 minutes (`SEAL_RETRY_S`): at most about 0.9 tTARI a day. Turning `seallog`
+off stops that, but then `/made` and `/verify` say there is no public record, which isn't true of a log with over 350
+checkpoints; `/status.json` has no SealLog check and `/evidence.json` reads `mutis.toml`, so neither changes
+either way. So `seallog` stays on through the gap unless the first failed attempt costs far more than a checkpoint.
+Then, with walletd 0.50.0: publish the V2 build and a new log, point `ootle.seallog_component` at it, restart
+mutis-chain and mutis-api, take a checkpoint, notarize the live release again, verify-deploy.
 
 The worker records each checkpoint's component and that log's own index (migration 003), so the new log starts
-at index 0 beside the old rows, as after the 2026-11-02 reset. Then the record: the new template (superseding
-`template_5932ee9b…145c`), log and transactions with their fees in setup-accounts.md §0, `SEALLOG_TEMPLATE` in
-`deploy/tests/test_verify_deploy.py`, the CHANGELOG; the 2026-11-02 vectors (`indexer-0.49.json`) stay as the
-record of that log.
+at index 0 beside the old rows, as after the 2026-11-02 reset. `/evidence.json` then lists the V1 log under
+`seallog.retired` (`RETIRED_LOGS`, shown only once it is no longer the configured log).
 
 ## Rehearsal log
 
@@ -384,3 +396,4 @@ record of that log.
 |---|---|---|
 | 2026-11-05 | §1 read in v0.49.2..a5ea91cc. §2: `check` on the 0.49.2 downloads gives back both vendored folders byte for byte, with the run and Rekor entries their PROVENANCE files list; a `repin` of a copy of the tree passes deploy/tests. §3b: built on the server as `build`, 23:07 to 23:45 UTC (38 min, 32 min of CPU, 1.8 GB peak, with two other lanes building), the API answering in under 10 ms throughout; §3c: `--help` and `run --help` equal to 0.49.2's but for the name. A throwaway wallet (its own data dir, port 5219, as `build`): made by the 0.49.2 release binary, opened by the build, which ran the one migration at start (`20261103120000`, index `locks_transaction_id`) and kept both accounts' keys and addresses; mutis's client (`info`, `account`, `stealth_balance_ut`, `stealth_utxos`) and `walletd-rpc.py` work against it. Not run: a send, a checkpoint or a dry run (walletd 0.50 dry-runs only from an account on chain, and the faucet was empty) | pass, so far as run |
 | 2026-11-06 | Tag v0.50.0 came at 13:33 UTC on `d3252ef1`, not `a5ea91cc`. §1 read again in `a5ea91cc..d3252ef1` (34 commits): #3398 breaks the live SealLog (V1 definition), the rest needs nothing (first row and §9). §2 with `C=d3252ef1…`, both packages on npm (published 13:38 and 13:39 UTC): `check` passes for each (dist.integrity = the tarball's sha512, gitHead and the provenance's commit `d3252ef1`, `refs/tags/v0.50.0`, run 42226426467, which GitHub shows as "Publish ootle-wasm to npmjs", a push of v0.50.0 at head sha `d3252ef1`, success; Rekor 3717962360/3717988059 and 3717966527/3717982009); the `.d.ts` diffs are empty and the glue is byte-identical; `repin`, the 0.49.2 folders and the markers removed, PROVENANCE.md, NOTICE and the comments. deploy/tests 123 OK, server/tests 384 OK (5 skipped); app lint 1031/1031, vectors 97/97, KATs under Node 160/160 (the 2026-11-02 indexer vectors decode as 0.49.2 did), contract 12/12; sidecar 19/20 under Node 22 (selftest G4: every forged output rejected; a tampered wasm refused; the one failure is the test's Node 20 check), test_real_sidecar 4/4; the live SealLog component decodes to the same JSON with ootle-wasm-bor 0.49.2 and 0.50.0. Not run: the headless Chromium steps (A-01 in the browser, A-05, A-09, A-13, the scan bench) and the chain gate page, for want of a Chromium where this ran; anything on the server | pass, so far as run; SealLog's V2 build and republish open (§9) |
+| 2026-11-06 (later) | §9's first step, as `build` on the server in capped units (MemoryMax 4500M, CPUWeight and IOWeight 10) under `/home/build/work/`: `seal_log_v2` re-pinned to the crates.io releases from `d3252ef1`, `check.sh --v2 --dist` passed (14 tests and the encoded vector under the 0.50 engine; vectors re-blessed for the new test-engine template address), `dist-v2/seal_log.wasm` 107,038 bytes, sha256 `00ca5f34…878f`, ABI `2e030356…99b5`; a second build from clean in another directory gave the same bytes. Brought onto this lane with verify-deploy's `V1_LOGS` exception and `publish-template.sh --wasm`; deploy/tests 132 OK, server/tests 385 OK (5 skipped), Node KATs 161/161. §3a': the CI artifact of run 42226426470 fetched (zip = GitHub's digest `51126f49…b07c`; binary `282199b0…7d94` = its `.sha256` = the job log), `--version` 0.50.0, `--help` and `run --help` equal to 0.49.2's but for the name, in a unit with no network; staged, not installed. seallog-v2-cutover.md written: why `seallog` stays on through the gap | pass; nothing on chain, no service touched |
