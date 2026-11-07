@@ -1,0 +1,61 @@
+The release spooky-secrets-2026-10-ootle-0.50 on hidebox.app, 2026-11-07, times UTC.
+
+== before
+04:10  /etc/mutis has no threshold for service; the healthcheck's sponsor threshold is 200 tTARI. service held
+       95.92 tTARI public and 4.94 stealth (100.86 in all), the sponsor 13.81 spendable: no top-up of 186 tTARI
+       was possible, so sponsor_balance stays amber until walletd releases the held output (epoch 12929).
+04:12  the privacy scan of main..ootle/0.50 (files, history with git log -p, messages, authors): host names
+       from journal lines, private machine and session names, tailnet names and addresses, home paths, scratch
+       paths, e-mail addresses (authors and committers are the GitHub noreply address), secrets and seed
+       words. Found and changed: the build host in template/dist-v2/BUILD-INFO.txt (now <server>, as earlier
+       evidence writes it; rewritten in the two unpushed commits that carried it), and one workflow word in
+       chain.txt. Nothing in a commit message.
+04:14:42  main fast-forwarded to the lane and pushed with the annotated tag (unsigned, as
+       spooky-secrets-2026-10-reset). spooky-secrets-2026-10 (f78379db → c696c546) and
+       spooky-secrets-2026-10-reset (23588624 → 0b7e341a) unchanged, here and on origin.
+04:14:55  [ootle] wasm_version = "0.50.0" in /etc/mutis/mutis.toml (copied first to
+       /var/backups/mutis/mutis.toml.20261107T041455Z.before-wasm-0.50.0); check-config ok
+
+== the deploy (deploy/scripts/deploy.sh spooky-secrets-2026-10-ootle-0.50)
+04:15:03 to 04:16:43  stopped at the gate on the server: four of the new tests needed template/ or a git
+       checkout, which the gate doesn't copy. Nothing built or uploaded; the live release untouched.
+       Fixed in the tests (95017df), the tag (not yet deployed) moved to it and pushed again at 04:18:54.
+04:19:04 to 04:21:01  the gate (server 382 OK, deploy 132 OK, lint, copy), the build (398 files, content id
+       e24541ee), upload, activation: the sidecar's hello with the pinned ootle-wasm, schema 7 (no migration),
+       current → releases/95017df7d9f0c35a11352ca350a747cc50f6471d-ce24541ee at 04:20:57, mutis-api and
+       mutis-chain restarted, init-keys: receiver.json and robot.json exist; the smoke test (home, manifest,
+       health, chain) passed; notarized.
+       Rollback, if needed: sudo bash /srv/mutis/app/current/deploy/scripts/rollback.sh
+       0b7e341a1616d8ef602dc590d219eb19cc8335fc-c56ee8974 (still on disk), and wasm_version back to 0.49.2.
+
+== after, on the live site
+manifest   version spooky-secrets-2026-10-ootle-0.50, git_sha 95017df7d9f0c35a11352ca350a747cc50f6471d, built 04:20:48
+notarized  manifest a515abaeed1388ed9c1cf7c7bb0542b46df6466ec7f40302259f1ad24c8c8bfa in the V2 log at 04:21:01,
+           tx 8180a2e60cdb3d97f2d372b24658f448538120d4218740c90528c5416344de49, cost 2,049 µT (/releases.json)
+config     ootle.wasm_version 0.50.0; features.seallog true; seal_log.component component_f8820af0…4fbe
+evidence   (run by hand at 04:21:40) ootle_version 0.50.0, the sidecar's wasm f01d6e78…ca48, the V2 log and its
+           latest checkpoint, and under retired the 1.0.0 log, the research log and the V1 log component_6a3eae19…bd65
+verify-deploy, 04:21:22 to 04:25:14:
+  SealLog component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe (esmeralda), against template/dist-v2/seal_log.wasm:
+    template_7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f: SealLog, author 78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06, epoch 12922, indexer verified: True
+    on chain   107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+    the address commits to these bytes
+    seal_log.wasm 107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+    ABI (tari_tdef): equal
+    the chain runs seal_log.wasm byte for byte
+  compressed answers checked: 301 gzip, 299 br
+  verify-deploy: 0 differences across 398 files (spooky-secrets-2026-10-ootle-0.50 = 95017df7d9f0, https://hidebox.app)
+e2e        E-09, E-10, E-13, E-25, E-29, E-30, E-J: 7 PASS, 04:21:25 to 04:27:12 (the tag's tree;
+           e2e/report-0421-after-deploy.json); E-10, E-13, E-29 and E-30 build their transactions in the browser
+           with ootle-wasm 0.50.0
+headers    tests/e2e/test_headers.py --origin https://hidebox.app: PASS (04:27:33)
+receipt    a fresh upload at 04:21:52, covered by checkpoint #2557 (chain index 3, 04:30:06, tx 2db245b7…), checked
+           with the release's own lib/seallog.js and ootle-wasm-bor 0.50.0 against the log read from
+           ootle-indexer-b: verified
+judges     the security drop /d/3w7m8k2v5t: page 200, its API state active (read-only); the 78 judge passes all
+           within their 30 days (the first lapses 2026-11-13 03:21), unchanged (read-only, from the database);
+           demo-gone.py check: the judges' goodbye is in checkpoint #2 of the V2 log, exit 0
+keys       receiver.json and robot.json unchanged (drive 0600, 2026-10-11)
+canary     green: #638 verified at 03:38; E-25's forced canary passed at 04:24
+status     amber at 04:30: sponsor_balance (the held output, as above) and budgets: the sponsor's evidence slice
+           spent (10 of 10 tTARI) by today's three e2e runs, until 00:00 UTC; everything else green

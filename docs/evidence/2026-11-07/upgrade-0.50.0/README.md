@@ -60,6 +60,7 @@ this one (upgrade-0.50.md §9).
 | `seallog-v2.txt` | §9: the V1 log's first failure and its fee, the publish, the new log, the config change and restart, its first checkpoints, the lost payment and the sponsor's refill |
 | `receipt.txt` | the fresh receipt checked end to end against the V2 log |
 | `verify-deploy.txt` | `tools/verify-deploy.py` against the live tag after the switch, with the live release's tools and with this lane's |
+| `deploy.txt` | the release `spooky-secrets-2026-10-ootle-0.50`: the privacy scan, the tag, the deploy, verify-deploy with 0 differences, the notarization and the checks after |
 | `status/` | `/status.json` at 03:43 (after the swap) and 04:06 (after the V2 log) |
 | `e2e/` | the chain scenarios against production after the swap, from the deployed commit's tree |
 | `scripts/` | `drill.sh` (§3c), `swap.sh` (§5), `wsum.py` (read-only walletd summary), `inflight.py` (§4, read-only) |
