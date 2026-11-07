@@ -1,6 +1,28 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- ootle 0.50 -->
+## 2026-11-07: Ootle 0.50.0 on Esmeralda
+
+Esmeralda moved to Ootle 0.50.0 on 2026-11-07, without a reset, ahead of protocol V1 at epoch 12951. This
+release changes only what the upgrade needed. The tags `spooky-secrets-2026-10` and
+`spooky-secrets-2026-10-reset` stay where they were; this release has its own tag.
+
+- **walletd 0.50.0**: the release binary (tag v0.50.0, commit `d3252ef`), checked against four sources and
+  rehearsed on a copy of the wallet first; live since 03:34 UTC. The calls mutis makes are unchanged.
+- **The official libraries, 0.50.0**: `ootle-wasm` and `ootle-wasm-bor` 0.50.0, from the npm tarballs that tag
+  published (provenance in each folder). Only their `.wasm` changed; the API, the glue and the layouts the
+  browser builds and reads did not.
+- **SealLog, published again**: Ootle 0.50 no longer loads a template whose definition is in the V1 layout
+  (tari-ootle #3398), and the 0.37 build was. The same source, rebuilt against `tari_template_lib` 0.38 (V2
+  definitions) as seal_log 2.1.0 (`template/dist-v2/`), runs as
+  `template_7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f`, with a new log,
+  `component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe`: no owner, upgrade rule `Locked`,
+  only the `service` key appends. Its first checkpoint holds the whole tree, so every receipt checks against
+  it. The previous log (`component_6a3eae19…bd65`) is listed as retired in `/evidence.json`, and
+  `verify-deploy` holds every log but that one to the V2 build.
+<!-- /ootle 0.50 -->
+
 <!-- reset 0.49 -->
 ## 2026-11-02: the Esmeralda reset, Ootle 0.49.2
 
