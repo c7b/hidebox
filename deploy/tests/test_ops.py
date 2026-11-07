@@ -454,6 +454,7 @@ class SshHostTest(unittest.TestCase):
         self.assertIn("host=${MUTIS_SSH_HOST:-hidebox}", (ROOT / "deploy" / "ootle" / "publish-template.sh").read_text())
 
 
+@unittest.skipUnless((ROOT / ".git").exists(), "publish-template.sh runs from a git checkout (the deploy gate has none)")
 class PublishTemplateOptionsTest(unittest.TestCase):
     """publish-template.sh's --wasm (upgrade-0.50.md §9: the V2 build) is read and held to the SHA256SUMS beside the
     file before anything reaches the server; an unknown option stops it. ssh is a stand-in that records its calls."""

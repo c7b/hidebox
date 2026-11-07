@@ -180,10 +180,28 @@ class SealLogTemplateTest(unittest.TestCase):
     that address against one build: template/dist-v2/, or template/dist/ for the one V1 log (Esmeralda's since the
     2026-11-02 reset, until /api/v1/config names its successor)."""
 
+    @classmethod
+    def setUpClass(cls):
+        """A tag's tree as the check reads it: both builds (stand-in bytes; wasm_check.py is replaced below) and the
+        tag's own server/mutis/cbor.py, so the tests don't depend on template/ being in this tree (the deploy gate
+        copies server, tools, web, deploy and tests only)."""
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.src = Path(cls._tmp.name)
+        for build in ("dist", "dist-v2"):
+            (cls.src / "template" / build).mkdir(parents=True)
+            (cls.src / "template" / build / "seal_log.wasm").write_bytes(b"\0asm\x01\0\0\0")
+        (cls.src / "server" / "mutis").mkdir(parents=True)
+        shutil.copy(ROOT / "server" / "mutis" / "cbor.py", cls.src / "server" / "mutis" / "cbor.py")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
     def check(self, body, network: str | None = None, matches: str | None = "dist", component: str = LIVE_LOG,
-              src: Path = ROOT) -> tuple[list[str], list]:
+              src: Path | None = None) -> tuple[list[str], list]:
         """`matches`: the tag's build (template/<matches>/seal_log.wasm) the stand-in wasm_check.py says the chain
         runs; None for none. Returns the differences and every wasm_check.py command line, with the URLs fetched."""
+        src = self.src if src is None else src
         runs, urls = [], []
 
         def run(cmd, **kwargs):
@@ -253,7 +271,6 @@ class SealLogTemplateTest(unittest.TestCase):
             diffs, runs = self.check(older, src=src)       # the V1 log in an older tag: template/dist/ is there
             self.assertEqual((diffs, [self.onchain_args(r)[2] for r in runs[:-1]]), ([], ["dist"]))
 
-    @unittest.skipUnless((ROOT / "template" / "dist-v2" / "seal_log.wasm").is_file(), "template/ is not in this tree")
     def test_a_mainnet_log_is_read_from_a_mainnet_indexer_and_checked_against_the_v2_build(self):
         diffs, runs = self.check(LIVE_049["seallog_component_answer"], "mainnet", matches="dist-v2", component=NEXT_LOG)
         self.assertEqual(diffs, [])
