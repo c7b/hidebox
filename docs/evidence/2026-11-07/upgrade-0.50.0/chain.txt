@@ -16,6 +16,6 @@ script: payment, paid, overcharge, cost = the sum of the fee breakdown).
           ran 0.49.1)
 /status.json: overall green at 03:37:19 (canary, walletd, chain_worker, mirror, credits green).
 
-The fleet moved during the checks: at 03:28 (the coordinator's reading) both indexers said 0.49.1; at 03:43:19
+The fleet moved during the checks: at 03:28 both indexers still said 0.49.1; at 03:43:19
 `GET /info` on ootle-indexer-a and ootle-indexer-b both said "version": "0.50.0", epoch 12922. Everything above
 committed before that reading.
