@@ -1,0 +1,58 @@
+upgrade-0.50.md §9 on 2026-11-07 (deploy/ootle/seallog-v2-cutover.md), times UTC. The fleet moved to 0.50.0
+between 03:28 and 03:43 (both indexers' /info said "version": "0.50.0" at 03:43:19, epoch 12922). seallog
+stayed on throughout, as the checklist says.
+
+== the V1 log's first failed checkpoint
+03:49:50  #2553 against component_6a3eae19…bd65 (template_5932ee9b…145c, V1): failed, as expected
+          tx 7be1f011c1f440a5…: final_decision Commit, AcceptFeeRejectRest (the fee intent ran, the call didn't)
+          fee: payment 1,000,000, paid 1,208, overcharge 0, cost 1,208 µT   (a committed checkpoint: 5,982)
+          The checklist's bound held with room: a failed attempt costs a fifth of a checkpoint, so seallog stayed on.
+
+== publish (deploy/ootle/publish-template.sh, from the ootle/0.50 checkout, author service)
+03:47:30  check --wasm template/dist-v2/seal_log.wasm
+          seal_log.wasm sha256 ok; service = component_453538fd…d6e8, author key 78c215f8…ac06
+          a publish creates template_7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f
+          publish dry run: Accept fee 842962 µT, holding seal_log.wasm byte for byte
+03:50:10  publish --wasm template/dist-v2/seal_log.wasm
+          tx f8d84734d43fc12ff27e0409942339185721b4e595ba152975c3c1d309f72efd, status Accepted, fee 842,962 µT
+          (payment 3,000,000, paid 842,962, overcharge 0)
+          template_7441d162…869f: SealLog, author 78c215f8…ac06, epoch 12922, indexer verified: True
+          on chain 107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+          the address commits to these bytes; ABI (tari_tdef): equal; the chain runs seal_log.wasm byte for byte
+03:50:45  instantiate template_7441d162…869f
+          tx 5c0ef36891cebf5274fd8f38a851be674ada9aa678b45673ba6d85aa0c559c1d, status Accepted, fee 2,412 µT
+          component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe
+          its header, read from ootle-indexer-b with the app's own check (lib/seallog.js readSealLog), with both
+          the vendored decoder of the live release (ootle-wasm-bor 0.49.2) and 0.50.0: owner_rule None,
+          upgrade_rule Locked, default DenyAll, append_root only for the badge of 78c215f8…ac06 (service);
+          trusted; 0 checkpoints
+
+== mutis pointed at it
+03:51:27  /etc/mutis/mutis.toml copied to /var/backups/mutis/mutis.toml.20261107T035127Z.before-seallog-v2, then
+          one line changed (written to a new file, root:mutis 0640, renamed over it):
+          [ootle] seallog_component = "component_f8820af0…4fbe"   (was component_6a3eae19…bd65)
+          mutis-admin check-config: ok
+03:51:38  systemctl restart mutis-chain mutis-api   (both active again within 3 s)
+03:51:42  mutis-admin seal-now; /api/v1/config: features.seallog true, seal_log.component component_f8820af0…4fbe
+03:55:04  checkpoint #2554 submitted to the new log, committed: chain index 0, epoch 12922, tree size 163,648
+          (the whole tree so far), tx 4e43ad1461e9bb987fecf8b8473ae489c05ac7fc3d6b674828dad449a006ccd0
+          fee: payment 1,000,000, paid 2,432, overcharge 0, cost 2,432 µT (the state is empty; it grows to 64
+          checkpoints and the cost with it, as seal_log/README.md's table shows)
+03:55:22  mutis-admin notarize 95ec8bc6…  (the live release's manifest), {"committed": true}
+          tx 9ffb488e873558e9700fd0ed78d626ce4d1a4c48646bb521106099ab4d691728, cost 2,036 µT
+
+== the sponsor, and the payment the fleet's restart lost
+E-J's demo payment (03:40:36, a demo_pay job: walletd's stealth transfer from sponsor) was submitted by walletd at
+03:40:43, while the fleet restarted. No indexer has heard of it (657d758afe7566c2…: "not found" on both), so it
+won't commit; walletd keeps it Pending, with the sponsor's one output (3,958,150,062 µT, LockedForSpend) and its
+change (LockedUnconfirmed). The sponsor had nothing else to send from, so the canary, decoys, demo payments and
+sponsor grants would have failed until walletd lets go. walletd 0.50.0 does let go by itself: a transaction the
+network reports no outcome for is marked invalid and its inputs released once the epoch is more than
+TRANSACTION_EXPIRY_GRACE_EPOCHS (3) past its max_epoch (12925), so from epoch 12929
+(crates/wallet/sdk/src/apis/transaction.rs:44, :402-437 at d3252ef1); 0.49.2 never did.
+03:53:51  dry run, then 03:54:02 the refill, as on 2026-10-13 (setup-accounts.md §2): 15 tTARI from service's
+          stealth outputs to the sponsor, tx ff236c60e0d933b233738c0d14f59c171a2874f8b3239a721c7d2e721747ea92,
+          Accept; fee 30,000 (stealth-funded fees aren't refunded; cost 15,933, overcharge 14,067)
+          sponsor afterwards: Unspent 15,000,000 µT (on chain), and the two locked outputs above
+/status.json stays amber (sponsor_balance: below the 200 tTARI threshold) until the 3,958 tTARI come back at epoch
+12929; the canary and every other check green.

@@ -1,0 +1,14 @@
+python3 -I tests/e2e/run.py --host hidebox --chain --only E-09,E-10,E-13,E-25,E-29,E-30,E-J   (the live commit 0b7e341's tree; 03:35:30 to 03:47:38 UTC)
+PASS E-09     63.1s  Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it
+PASS E-10     40.8s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-13     35.3s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +256 MiB
+PASS E-25     41.8s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+PASS E-29     37.6s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+PASS E-30     51.8s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+FAIL E-J     452.3s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+           timed out after 420 s waiting for: ["open", "expired", "void", "error"].includes(document.querySelector('[data-testid="pay-page"]')?.dataset.state)
+e2e: FAIL {'PASS': 6, 'FAIL': 1, 'SKIP': 0} → report-0335.json
+
+python3 -I tests/e2e/run.py --host hidebox --chain --only E-J   (04:05:13 to 04:06:11 UTC, the sponsor refilled, the V2 log live)
+PASS E-J      54.0s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+e2e: PASS {'PASS': 1, 'FAIL': 0, 'SKIP': 0} → report-0405-E-J.json

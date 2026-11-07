@@ -1,0 +1,14 @@
+A fresh SealLog receipt checked end to end on 2026-11-07, times UTC, after the switch to the V2 log.
+
+03:56:29  one synthetic upload to https://hidebox.app (the e2e API client of the live commit's tree: a v1 header,
+          random ciphertext, a real proof of work; it expires in 2 hours and nothing in it can be opened).
+          The ciphertext hash recomputed here from the chunk hashes we sent equals the one the server returned.
+          GET /api/v1/seallog/proof/<item>: pending, next checkpoint at 04:10:04 (the schedule)
+04:04:49  mutis-admin seal-now; checkpoint #2555 (chain index 1 of the V2 log) committed at 04:05:05, tx fec4a898…,
+          cost 2,488 µT
+04:05:20  the check, with the live release's own lib/seallog.js and its vendored decoder (ootle-wasm-bor 0.49.2),
+          as /verify does it but with the log read straight from ootle-indexer-b:
+          config component component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe | proof checkpoint {"index":1,"component":"component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe","tree_size":163712,"root":"1ff381d0f42cc7f880e876e70192ce10b5b6bd0288d0dc62bff5986c237e9b3f","epoch":12922,"tx_id":"fec4a8989f8570ae383e6713fd97c42a1f49d2aa8e5bc9632cd9be930b6ad087","created_at":1794024305} | leaf_index 163671
+          leaf recomputed here 7d96109bb958f30a58e62da7d75b5533cb66f6786e7763887c5343e47eb97a4b = the server's
+          log (indexer-b): template 7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f writer 78c215f8 checkpoints kept 2 | checkpoint 1 root 1ff381d0f42cc7f880e876e70192ce10b5b6bd0288d0dc62bff5986c237e9b3f leafCount 163712
+          RECEIPT VERIFIED: the item is in the tree whose root the V2 log holds

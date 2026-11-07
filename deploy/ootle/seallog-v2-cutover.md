@@ -40,6 +40,10 @@ substate read runs no template), new uploads show as pending, and the cost is at
 only if the first failed attempt costs far more than a checkpoint (below), or fails in a way that holds walletd's
 inputs.
 
+**As it ran on 2026-11-07** (`docs/evidence/2026-11-07/upgrade-0.50.0/seallog-v2.txt`): the first failed attempt
+(#2553) cost 1,208 µT, a fifth of a checkpoint, and `seallog` stayed on; a demo payment submitted while the fleet
+restarted was lost and held the sponsor's one output, so the sponsor was refilled from `service` (setup-accounts.md §0).
+
 ## 1. When the fleet moves
 
 ```sh

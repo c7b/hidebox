@@ -1,0 +1,27 @@
+tools/verify-deploy.py https://hidebox.app spooky-secrets-2026-10-reset (the live tag, 0b7e341) on 2026-11-07,
+after ootle.seallog_component named the V2 log (03:51:38), times UTC. Each run rebuilt the tag with its own
+tools/build.py and compared every file the live manifest lists (398), the precompressed copies too.
+
+== with the live release's tools (a worktree of the tag), about 03:58 to 04:01
+SealLog component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe:
+  template_7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f: SealLog, author 78c215f87db6afcc916cb20cb032f9989ccf7f54905bdf5e9e64cca69260ac06, epoch 12922, indexer verified: True
+  on chain   107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+  the address commits to these bytes
+  seal_log.wasm 107162 bytes, sha256 9a276b307d7804f2e8f448506e865129f48cc9bcb72eb1be516ff58df3d04c84
+  ABI (tari_tdef): DIFFERENT
+  FAIL: the chain runs different bytes from seal_log.wasm
+compressed answers checked: 301 gzip, 299 br
+DIFF SealLog component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe: template_7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f is not the tag's seal_log.wasm
+verify-deploy: 1 differences across 398 files (spooky-secrets-2026-10-reset = 0b7e341a1616, https://hidebox.app)
+exit 1
+
+== with this lane's tools (ootle/0.50: every log against template/dist-v2, the V1 log alone against template/dist), 04:01 to 04:05
+compressed answers checked: 301 gzip, 299 br
+DIFF SealLog component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe: the tag has no template/dist-v2/seal_log.wasm to compare it with
+verify-deploy: 1 differences across 398 files (spooky-secrets-2026-10-reset = 0b7e341a1616, https://hidebox.app)
+exit 1
+
+Every file matches; the one difference is SealLog's, and it is the expected one: the live tag carries only the
+0.37 build (template/dist/), and the log now runs the V2 build (template/dist-v2/ on ootle/0.50 and
+launch/mainnet). It clears when a tag with template/dist-v2/ is deployed (verify-deploy of ootle/0.50 then
+compares the log with it).
