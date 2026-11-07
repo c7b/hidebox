@@ -1,0 +1,21 @@
+upgrade-0.50.md §7 on 2026-11-07 after the swap, times UTC: the chain worker's first transactions through walletd
+0.50.0 and their fees against their caps (the receipts read from ootle-indexer-b with server/mutis/cbor.py, §7's
+script: payment, paid, overcharge, cost = the sum of the fee breakdown).
+
+03:34:49  mutis-admin canary-now; mutis-admin seal-now   ("requested: … the chain worker runs it on its next tick")
+03:34:49  checkpoint #2552 submitted (the V1 log component_6a3eae19…bd65), committed by 03:34:56:
+          chain index 405, epoch 12922, tx dbdcf7755302e4e8…
+          fee: payment 1,000,000 (pay_fee), paid 5,982, overcharge 0, cost 5,982 µT   (#288 on 0.49.2: 5,981)
+03:35:04  mutis-admin notarize 95ec8bc6149ac3c5…  (the sha256 of the live /.well-known/mutis-manifest.json,
+          release 0b7e341…-c56ee8974, first notarized on 2026-11-03 in tx 914d43b6…)
+          {"committed": true}, tx 3d88e2384787b627…
+          fee: payment 1,000,000, paid 2,388, overcharge 0, cost 2,388 µT
+03:35:21  canary #637 delivered (a courier job: walletd's accounts.stealth_transfer), tx 3ce0ab61d21fa901…
+          fee: payment 30,000, paid 30,000, overcharge 13,843, cost 16,157 µT
+          (max_fee_transfer_ut 30,000; the same cost as on 2026-11-05: metering hasn't moved, the validators
+          ran 0.49.1)
+/status.json: overall green at 03:37:19 (canary, walletd, chain_worker, mirror, credits green).
+
+The fleet moved during the checks: at 03:28 (the coordinator's reading) both indexers said 0.49.1; at 03:43:19
+`GET /info` on ootle-indexer-a and ootle-indexer-b both said "version": "0.50.0", epoch 12922. Everything above
+committed before that reading.
