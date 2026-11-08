@@ -6,13 +6,31 @@
 #   ./check.sh --costs           print fee, WASM points and state size as the log grows
 #   ./check.sh --onchain <addr>  check that a published template holds exactly dist/seal_log.wasm
 #                                (needs only python3 and the network; runs anywhere)
+# --v2 first, before any of these, runs them for the mainnet build instead: the same source built by
+# seal_log_v2/ against tari_template_lib 0.38 (V2 template definitions, Ootle 0.50), written to dist-v2/:
+#   ./check.sh --v2 [--dist | --costs]
+#   ./check.sh --v2 --onchain <addr> [--network mainnet]
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
+crate=seal_log
 dist=$here/dist
+# The ABI section of every 0.37 SealLog build so far (template_e064f38d…, template_b571909e…).
+abi_expected=b4b4134be0d1a58ac7c224de2cf599e6f0d5e8c2ad484476e904bbc6c0dde494
+max_bytes=$((110 * 1024))
+flag=
+if [[ ${1:-} == --v2 ]]; then
+    shift
+    flag=' --v2'
+    crate=seal_log_v2
+    dist=$here/dist-v2
+    # The V2 template definition of the same functions (tari_template_lib 0.38): it also records how each
+    # function is called, so it differs from the 0.37 ABI above.
+    abi_expected=2e0303562dcae9babcb2d59bf72abcb4460c3ee6fab08ee527c67baf43b699b5
+fi
 
 if [[ ${1:-} == --onchain ]]; then
-    exec python3 -I "$here/wasm_check.py" onchain "${2:?give the template address}" "${@:3}"
+    exec python3 -I "$here/wasm_check.py" onchain "${2:?give the template address}" --wasm "$dist/seal_log.wasm" "${@:3}"
 fi
 
 export PATH=/opt/tari/bin:$HOME/.cargo/bin:$PATH
@@ -20,28 +38,44 @@ cargo_home=${CARGO_HOME:-$HOME/.cargo}
 # rustc writes dependency source paths into panic messages; name them the same on every machine.
 export RUSTFLAGS="--remap-path-prefix=$cargo_home=/cargo"
 
-# The ABI section of every SealLog build so far (template_e064f38d…, template_b571909e…).
-abi_expected=b4b4134be0d1a58ac7c224de2cf599e6f0d5e8c2ad484476e904bbc6c0dde494
-max_bytes=$((110 * 1024))
 wasm=target/wasm32-unknown-unknown/release/seal_log.wasm
-tested=target/templates/default/wasm32-unknown-unknown/release/seal_log.wasm   # tari_template_test_tooling 0.49
+tested=target/templates/default/wasm32-unknown-unknown/release/seal_log.wasm   # tari_template_test_tooling 0.49 and 0.50
 
 step() { printf '\n== %s\n' "$*"; }
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 sha() { sha256sum "$1" | cut -d' ' -f1; }
+# The three Ootle crates this build names: from git, with the commit; from crates.io, with the tari-ootle commit
+# the registry's copy was published from (its .cargo_vcs_info.json, in the cargo home this build read).
+ootle_crates='^tari_(template_lib|template_test_tooling|ootle_template_build)$'
+pins() {
+    awk -F'"' -v want="$ootle_crates" '/^name = /{n=$2} /^version = /{v=$2}
+        /^source = "git\+/ && n ~ want {
+            sub(/.*#/, "", $2); list = list (list ? ", " : "") n " " v; commit = $2 }
+        END { if (list) printf "\ngit pins   %s, tari-ootle commit %s", list, commit }' Cargo.lock
+    local name version vcs list=
+    while read -r name version; do
+        vcs=$(sed -n 's/.*"sha1": *"\([0-9a-f]\{40\}\)".*/\1/p' "$cargo_home"/registry/src/*/"$name-$version"/.cargo_vcs_info.json \
+            2>/dev/null | head -n 1 || true)
+        list+="${list:+, }$name $version${vcs:+ (tari-ootle $vcs)}"
+    done < <(awk -F'"' -v want="$ootle_crates" '/^name = /{n=$2} /^version = /{v=$2}
+        /^source = "registry\+/ && n ~ want { print n, v }' Cargo.lock)
+    [[ -z $list ]] || printf '\ncrates.io  %s' "$list"
+}
 
-cd "$here/seal_log"
+cd "$here/$crate"
+# The 2.0.0 source, which seal_log_v2/ builds by path.
+src=$here/seal_log
 
 if [[ ${1:-} == --costs ]]; then
     log=target/costs.log
     cargo test --locked --test seal_log costs_as_the_log_grows -- --ignored --nocapture >"$log" 2>&1 ||
-        { tail -n 20 "$log"; fail "the cost run failed (full output in seal_log/$log)"; }
+        { tail -n 20 "$log"; fail "the cost run failed (full output in $crate/$log)"; }
     grep '^COST' "$log"
     exit
 fi
 
 step "test vectors"
-python3 -I tests/vectors/gen.py --check
+python3 -I "$src/tests/vectors/gen.py" --check
 
 step "rustfmt"
 cargo fmt --check
@@ -63,13 +97,14 @@ abi=$(python3 -I "$here/wasm_check.py" abi "$wasm")
 echo "seal_log.wasm  $size bytes  sha256 $(sha "$wasm")"
 echo "ABI (tari_tdef) sha256 $abi"
 ((size <= max_bytes)) || fail "$size bytes is over the $max_bytes-byte budget"
-[[ $abi == "$abi_expected" ]] || fail "the ABI differs from the published SealLog builds'"
+[[ $abi == "$abi_expected" ]] || fail "the ABI differs from the published SealLog builds' ($abi_expected)"
 ! grep -qaF "$cargo_home" "$wasm" || fail "the build embeds $cargo_home"
 [[ $(sha "$tested") == $(sha "$wasm") ]] || fail "the tests ran different bytes than tari build produced"
-echo "ABI unchanged; no build paths inside; the tests ran these exact bytes"
+echo "ABI as expected; no build paths inside; the tests ran these exact bytes"
 
 if [[ ${1:-} == --dist ]]; then
     step "dist"
+    install -d "$dist"
     install -m 0644 "$wasm" "$dist/seal_log.wasm"
     (cd "$dist" && sha256sum seal_log.wasm > SHA256SUMS)
     metadata=$(ls -t target/wasm32-unknown-unknown/release/build/seal_log-*/output | head -n 1)
@@ -80,20 +115,20 @@ toolchain  $(rustc -V); $(cargo -V); $(tari --version)
 command    RUSTFLAGS="--remap-path-prefix=\$CARGO_HOME=/cargo" tari build
            (release profile in Cargo.toml: opt-level s, lto, codegen-units 1, panic abort, strip)
 wasm       seal_log.wasm, $size bytes, sha256 $(sha "$wasm")
-abi        tari_tdef sha256 $abi (unchanged since the first SealLog build)
+abi        tari_tdef sha256 $abi (the expected value of check.sh$flag)
 metadata   $(sed -n 's/^cargo::metadata=TEMPLATE_METADATA_HASH=//p' "$metadata") (TEMPLATE_METADATA_HASH; not part of the WASM)
-inputs     Cargo.lock $(sha Cargo.lock), Cargo.toml $(sha Cargo.toml), build.rs $(sha build.rs), src/lib.rs $(sha src/lib.rs)
+inputs     Cargo.lock $(sha Cargo.lock), Cargo.toml $(sha Cargo.toml), build.rs $(sha build.rs), src/lib.rs $(sha "$src/src/lib.rs")$(pins)
 
-To rebuild: the same toolchain, then template/check.sh (it sets RUSTFLAGS, so the bytes don't
+To rebuild: the same toolchain, then template/check.sh$flag (it sets RUSTFLAGS, so the bytes don't
 depend on the user, the directory or CARGO_HOME).
 Publish these exact bytes with a PublishTemplate instruction. walletd's transactions.publish_template
-runs wasm-opt first and stores different bytes. template/check.sh --onchain <template address> says
+runs wasm-opt first and stores different bytes. template/check.sh$flag --onchain <template address> says
 whether a published template holds this file.
 INFO
     cat "$dist/SHA256SUMS"
 else
     step "dist"
-    cmp "$wasm" "$dist/seal_log.wasm" || fail "this build differs from dist/seal_log.wasm"
+    cmp "$wasm" "$dist/seal_log.wasm" || fail "this build differs from ${dist##*/}/seal_log.wasm"
     (cd "$dist" && sha256sum --check SHA256SUMS)
 fi
 

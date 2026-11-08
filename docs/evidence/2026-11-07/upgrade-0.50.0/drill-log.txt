@@ -1,0 +1,60 @@
+§3c of upgrade-0.50.md (upgrade-drill.md §3) as run on 2026-11-07, times UTC. Commands ran over a multiplexed
+ssh connection as the operator with sudo; walletd's RPC as root on the loopback port of the drill's own network
+namespace. scripts/drill.sh: the drill with NEW=/opt/tari/bin/tari_ootle_walletd-0.50.0-d3252ef, every directive
+of deploy/systemd/walletd.service plus PrivateNetwork=yes, an exit trap that deletes the copy on every path
+(`systemctl stop … || true; rm -rf`). Read-only additions: the copy's diesel migrations and authored templates
+before and after, scripts/wsum.py's summary, the unit's journal.
+
+== §3c the new walletd on a copy of the wallet, with no network   03:32:50 to 03:32:56
+copy before: migrations (1, '20230208122514') | authored_templates (all, V1 layout) (1, 1)
+drill start 2026-11-07T03:32:50Z
+Running as unit: walletd-drill.service; invocation ID: a828fab366114ca4b016710f2337967b
+active
+wallet.get_info: {'network': 'esmeralda', 'version': '0.50.0'}
+validator_set.get_status: indexer_trust trust | trusted epoch None anchor epoch None | walk_failing_since None
+  buyer-demo  no TARI balance listed
+  operator    no TARI balance listed
+  service     revealed 96780703, confidential 19971062 µT
+  sponsor     revealed 0, confidential 3964584062 µT
+transactions.list Pending: 0
+copy after: migrations (3, '20261106120000') | authored_templates (all, V1 layout) (0, 0)
+sandbox denials in the drill's journal: 0
+migration lines: 0
+drill copy vs live balances (version aside): SAME
+drill-balances.json: "version": "0.50.0"
+live-balances.json: "version": "0.49.2"
+drill copy removed: /var/lib/walletd-drill no longer exists
+
+Two migrations: the store went from one applied migration (the 0.49.2 store's, 20230208122514) to three,
+the newest 20261106120000. They are 2026-11-03-120000_locks_many_per_transaction (an index) and
+2026-11-06-120000_remove_v1_authored_templates, which deleted the one authored template the wallet held in the
+V1 layout (the row wasn't read; the only template this wallet has published is SealLog, template_5932ee9b…145c,
+on 2026-11-02). Nothing in mutis
+reads authored templates; walletd records them for its own UI. The same accounts and balances as the live
+wallet read a moment later (only the version line differs). Under the full production sandbox walletd 0.50.0
+started, migrated, answered RPC and logged only what a network-less copy should: it can't reach an indexer, so
+its account refreshes, UTXO scans and the finalization stream fail and retry. No EPERM, no denied path, no
+read-only file system, nothing about the sandbox: no directive of walletd.service needs loosening. The copy was
+deleted by the exit trap ("drill copy removed").
+
+walletd-drill's journal (warnings and errors only, as the log config sets; hostname and keyring lines left out,
+account components cut):
+2026-11-07T03:32:51.219864+00:00 run-walletd.sh[541180]: Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+2026-11-07T03:32:51.235016+00:00 run-walletd.sh[541180]: WARNING: The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with
+2026-11-07T03:32:51.235016+00:00 run-walletd.sh[541180]: WARNING: The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /
+2026-11-07T03:32:51.235016+00:00 run-walletd.sh[541180]: WARN common::config ⚠️  The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its con
+2026-11-07T03:32:51.235016+00:00 run-walletd.sh[541180]: WARN common::config ⚠️  The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix wit
+2026-11-07T03:32:51.505671+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::transaction_service::finalized_watch Failed to subscribe to transaction finalization stream, retrying in 5s: Indexer client erro
+2026-11-07T03:32:51.506058+00:00 run-walletd.sh[541180]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account service (component_453538fd…): Substate API error: Network interface error: Indexer
+2026-11-07T03:32:51.508280+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::indexer_rest_api Indexer https://ootle-indexer-b.tari.com/ was unavailable for 3 consecutive requests, switching to https://ootl
+2026-11-07T03:32:51.508280+00:00 run-walletd.sh[541180]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account buyer-demo (component_bb1017a0…): Substate API error: Network interface error: Inde
+2026-11-07T03:32:51.508280+00:00 run-walletd.sh[541180]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account sponsor (component_e9489a5f…): Substate API error: Network interface error: Indexer
+2026-11-07T03:32:51.510402+00:00 run-walletd.sh[541180]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account operator (component_fadaea01…): Substate API error: Network interface error: Indexe
+2026-11-07T03:32:51.513634+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::indexer_rest_api Indexer https://ootle-indexer-a.tari.com/ was unavailable for 3 consecutive requests, switching to https://ootl
+2026-11-07T03:32:51.513634+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_453538fd… (resource_01010101010101010101010101010101010101010101010
+2026-11-07T03:32:51.513814+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_bb1017a0… (resource_01010101010101010101010101010101010101010101010
+2026-11-07T03:32:51.513939+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_e9489a5f… (resource_01010101010101010101010101010101010101010101010
+2026-11-07T03:32:51.514575+00:00 run-walletd.sh[541180]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_fadaea01… (resource_01010101010101010101010101010101010101010101010
+
+The 0.49.2 → 0.50.0 store migration is one-way: a rollback restores the tar the swap made (walletd.txt), not
+the old binary alone.

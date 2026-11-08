@@ -1,0 +1,43 @@
+Checksums for the v0.50.0 walletd upgrade, 2026-11-07 (UTC). GitHub was read as data from the workstation
+(gh api); the binary was downloaded on the server with curl from the release's own URL.
+
+== walletd for the server (Linux x86_64)
+
+$ gh api repos/tari-project/tari-ootle/releases/tags/v0.50.0                       (03:30)
+  v0.50.0, prerelease (not a draft), published 2026-11-07T03:27:28Z, 26 assets
+  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64          65665568 B  digest sha256:282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94
+  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64.sha256        113 B  digest sha256:1a3824fd353bdbbc5876053453a681a15ea6dc6e35d232370f4663e55b0f9053
+  tari_ootle-0.50.0.sha256-unsigned.txt                       1352 B  digest sha256:6616138033bc975898f4e0b8a1977608cb2f2fcc8709eefb5211f3fb1bb7cc07
+$ gh api repos/tari-project/tari-ootle/git/ref/tags/v0.50.0; gh api …/git/tags/3c0c9700…   (2026-11-06)
+  annotated tag 3c0c9700bcc2381c6380d329d5512c2dd5cfb5e9 → commit d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb,
+  tagged 2026-11-06T13:33:15Z by Stan Bondi, GitHub signature verification: verified (reason "valid")
+
+on the server, a new 0700 directory under /var/tmp (the operator), curl --proto =https from
+https://github.com/tari-project/tari-ootle/releases/download/v0.50.0/<name>                  (03:31:02)
+$ ls -l; sha256sum *
+  65665568 tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64
+  282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64          (= GitHub's digest)
+  1a3824fd353bdbbc5876053453a681a15ea6dc6e35d232370f4663e55b0f9053  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64.sha256   (= GitHub's digest)
+  6616138033bc975898f4e0b8a1977608cb2f2fcc8709eefb5211f3fb1bb7cc07  tari_ootle-0.50.0.sha256-unsigned.txt                   (= GitHub's digest)
+$ cat tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64.sha256
+  282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64
+$ sha256sum -c tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64.sha256
+  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64: OK
+$ grep " tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64$" tari_ootle-0.50.0.sha256-unsigned.txt
+  282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94  tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64
+$ cmp <it> /home/build/work/walletd-0.50.0-d3252ef-ci/tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64
+  identical: the CI artifact of run 42226426470 staged on 2026-11-06 (upgrade-0.50.md §3a'), the same 282199b0…7d94
+$ ./tari_ootle_walletd-0.50.0-d3252ef-linux-x86_64 --version; ldd … | grep "not found"
+  tari_ootle_walletd 0.50.0; every library found (13, as for 0.49.2)
+Four sources agree: GitHub's asset digest, the asset's .sha256, the release's checksum list and the hash of
+the bytes on the server; and they are the bytes of the release's CI build, fetched the day before.
+("unsigned": the release publishes no signature over the list; the tag is signed and GitHub verifies it.)
+
+The command line is the same as 0.49.2's (`--help` and `run --help` diffed: only the version and the program
+name differ), so run-walletd.sh is unchanged.
+
+Installed beside the others (03:31:16), then at the unit's path by the swap (03:34):
+  /opt/tari/bin/tari_ootle_walletd-0.50.0-d3252ef   root:root 0755  282199b0…7d94
+  /opt/tari/bin/tari_ootle_walletd                  root:root 0755  282199b0…7d94  ("tari_ootle_walletd 0.50.0", live)
+  /opt/tari/bin/tari_ootle_walletd-0.49.2-aa7b0c8   root:root 0755  57e753dd…914c  (kept for a rollback; also
+                                                    /var/backups/mutis/tari_ootle_walletd.20261107T033353Z, root 0755)

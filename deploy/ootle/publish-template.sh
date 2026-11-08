@@ -22,21 +22,38 @@
 #   deploy/ootle/publish-template.sh instantiate <template> create the log; prints its component address
 # Then put the component in /etc/mutis/mutis.toml (ootle.seallog_component) and, when the server's
 # checkpoints should start, features.seallog = true. setup-accounts.md §4 records what was done.
+#
+# check and publish take --wasm PATH after the command: template/dist-v2/seal_log.wasm, the V2 build that Ootle 0.50
+# loads (upgrade-0.50.md §9); the file must match the SHA256SUMS beside it. With none, template/dist/ as before.
+# (The same option as lane launch/mainnet's, whose version also takes an instance, a network and an account.)
 set -euo pipefail
 
 host=${MUTIS_SSH_HOST:-hidebox}
 indexer=https://ootle-indexer-b.tari.com
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 wasm=$repo/template/dist/seal_log.wasm
+command=${1:-}
+[ $# -gt 0 ] && shift
+template_arg=
+case $command in instantiate) template_arg=${1:-}; [ $# -gt 0 ] && shift ;; esac
+while [ $# -gt 0 ]; do
+  case $1 in
+    --wasm) [ $# -ge 2 ] || { echo "publish-template: --wasm needs a path" >&2; exit 2; }
+            wasm=$(cd "$(dirname "$2")" && pwd)/$(basename "$2"); shift ;;
+    *) echo "publish-template: unknown option $1" >&2; exit 2 ;;
+  esac
+  shift
+done
 control=$(mktemp -d)
-trap 'ssh -o "ControlPath=$control/cm" -O exit "$host" 2>/dev/null; rm -rf "$control"' EXIT
+# set -e holds in the trap too: without `|| true`, an exit before the first ssh (no master to stop) skipped the rm.
+trap 'ssh -o "ControlPath=$control/cm" -O exit "$host" 2>/dev/null || true; rm -rf "$control"' EXIT
 remote() { ssh -o ControlMaster=auto -o "ControlPath=$control/cm" -o ControlPersist=5m -o ClearAllForwardings=yes "$host" "$@"; }
 rpc() { remote "cd /tmp && sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py $*"; }
 field() { python3 -I -c 'import json, sys; print(json.load(sys.stdin)[sys.argv[1]])' "$1"; }
 die() { echo "publish-template: $*" >&2; exit 1; }
 
-expected=$(awk '$2 == "seal_log.wasm" {print $1}' "$repo/template/dist/SHA256SUMS")
-[ "$(sha256sum "$wasm" | cut -d' ' -f1)" = "$expected" ] || die "seal_log.wasm does not match template/dist/SHA256SUMS"
+expected=$(awk '$2 == "seal_log.wasm" {print $1}' "$(dirname "$wasm")/SHA256SUMS")
+[ "$(sha256sum "$wasm" | cut -d' ' -f1)" = "$expected" ] || die "$wasm does not match the SHA256SUMS beside it"
 account=service
 read -r owner author key_id < <(rpc call accounts.list "'{\"offset\":0,\"limit\":100}'" | python3 -I -c '
 import json, sys
@@ -104,7 +121,7 @@ wait_for() {  # prints the finalized result of transaction $1
 }
 
 predicted=template_$(python3 -I "$repo/template/wasm_check.py" address "$author" "$wasm")
-case ${1:-} in
+case $command in
   check)
     echo "seal_log.wasm sha256 ok; $account = $owner, author key $author"
     echo "a publish creates $predicted"
@@ -116,10 +133,10 @@ case ${1:-} in
     wait_for "$tx" | python3 -I -c 'import json, sys
 r = json.load(sys.stdin)
 print("status", r.get("status"), "fee", r.get("final_fee"))'
-    python3 -I "$repo/template/wasm_check.py" onchain "$predicted"   # the chain runs seal_log.wasm byte for byte
+    python3 -I "$repo/template/wasm_check.py" onchain "$predicted" --wasm "$wasm"   # the chain runs $wasm byte for byte
     ;;
   instantiate)
-    template=${2#template_}
+    template=${template_arg#template_}
     [[ $template =~ ^[0-9a-f]{64}$ ]] || die "give the template address"
     manifest_params "$template" true | rpc call transactions.submit_manifest - >/dev/null
     tx=$(manifest_params "$template" false | rpc call transactions.submit_manifest - | field transaction_id)

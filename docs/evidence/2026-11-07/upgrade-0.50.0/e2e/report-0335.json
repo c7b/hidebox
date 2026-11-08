@@ -1,0 +1,147 @@
+{
+ "origin": "https://hidebox.app",
+ "results": [
+  {
+   "id": "E-09",
+   "title": "Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 63.1,
+   "notes": [
+    "ok: the drop page is ready",
+    "ok: the drop page shows the owner's 12-emoji safety code",
+    "ok: the photo chip says location and camera data were removed",
+    "ok: Delivered",
+    "ok: the delivery has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: Received lists a delivery from drop, ready to open",
+    "ok: the row keeps the inbox-item id",
+    "ok: the phone opens the delivery in Received",
+    "ok: the decrypted photo has no GPS",
+    "ok: the decrypted photo keeps its orientation",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-10",
+   "title": "Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 40.8,
+   "notes": [
+    "ok: the send screen shows the recipient's safety code",
+    "ok: Delivered privately",
+    "ok: the send has a transaction id",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: Received lists a delivery from send, ready to open",
+    "ok: the row keeps the inbox-item id",
+    "ok: the recipient's drive opens it in Received",
+    "ok: no secret in any request (E-03)"
+   ]
+  },
+  {
+   "id": "E-13",
+   "title": "Pack purchase on chain: Waiting \u2192 Seen \u2192 Amount proven \u2192 Added; quota +256 MiB",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 35.3,
+   "notes": [
+    "ok: direct mode: the browser wallet received its sponsor grant",
+    "ok: the invoice is credited",
+    "ok: the stepper shows its steps (['waiting', 'seen', 'proven', 'added'])",
+    "ok: the quota grew by 256 MiB",
+    "ok: the test pack is released"
+   ]
+  },
+  {
+   "id": "E-25",
+   "title": "Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 41.8,
+   "notes": [
+    "ok: within 15 minutes the delivery is in the mirror and opens with the robot keys",
+    "ok: /api/v1/canary shows the delivery",
+    "ok: /evidence.json lists the delivery"
+   ]
+  },
+  {
+   "id": "E-29",
+   "title": "Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting \u2192 Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 37.6,
+   "notes": [
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan (jxBdsM8BXL1XnxVTGMPaEQ)",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "ok: the page knows a folder of three (folder, 3)",
+    "ok: the phone: the folder's name, three files, about how big, the price and the fee (3 files, about 1 MB)",
+    "ok: the names inside stay locked; no address before a claim",
+    "ok: Pay with test money: Waiting \u2192 Seen \u2192 On the chain \u2192 Unlocked (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "test money to Unlocked: 8 s",
+    "ok: every step done (['wait:done', 'seen:done', 'chain:done', 'open:done'])",
+    "ok: the folder lists its names (['agenda.txt', 'budget.txt', 'minutes.txt'])",
+    "ok: minutes.txt opens on the phone in the preview, as text, with Download (text)",
+    "ok: a reload keeps the claim (2 opens left until Nov 13.)",
+    "ok: the page links the test money's transaction",
+    "ok: What the chain sees: the transaction, with its fee (public)",
+    "ok: every output amount is hidden (['hidden', 'hidden'])",
+    "ok: no name and not the link's half of the key in any request (E-03)",
+    "ok: a stranger with the same link and no payment: 402 payment_required (402)",
+    "ok: a second stranger sees the price and no files",
+    "ok: the seller's folder wears its price (Pay 0.1 tTARI)"
+   ]
+  },
+  {
+   "id": "E-30",
+   "title": "Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend",
+   "status": "PASS",
+   "detail": "",
+   "seconds": 51.8,
+   "notes": [
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan (Xm2mdy-a_aPvjRQMHteEXw)",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "ok: the phone's drive received its sponsor grant (enough for the price and the fee)",
+    "ok: paid from the drive: it waits for the owner's drive (['build:done', 'chain:done', 'owner:now', 'open:todo'])",
+    "ok: the seller's drive checks the payment: Yours to spend",
+    "ok: the owner's drive confirmed it: the phone can open it",
+    "ok: the file opens on the phone"
+   ]
+  },
+  {
+   "id": "E-J",
+   "title": "The judge script (/judges, 16-drive-design \u00a710): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed",
+   "status": "FAIL",
+   "detail": "timed out after 420 s waiting for: [\"open\", \"expired\", \"void\", \"error\"].includes(document.querySelector('[data-testid=\"pay-page\"]')?.dataset.state)",
+   "seconds": 452.3,
+   "notes": [
+    "ok: 1: Make my drive: the drive opens, its key made in this browser",
+    "1: 1 s",
+    "2: 2 s",
+    "3: the switch is on before Make link",
+    "ok: 3: Share, Once, Delete it from my drive after, Make link: a link and a code to scan",
+    "ok: 3: the result says the file leaves your drive after its open ('Your link is ready.\\n\\nIt opens one time, until Nov 13, 10:00 PM.\\nThen the link ends.\\n\\nAfter that, it leaves your drive.\\nW')",
+    "3: 2 s",
+    "ok: 4: the phone taps Open it and has the file",
+    "ok: 4: the phone reloads: \u201cThis link has ended.\u201d",
+    "4: 4 s",
+    "ok: 5: Activity: Opened, then It left your drive (It left your drive \u00b7 minutes.txt9:00 PMThat goes on the Tari chain within 15 min, opened True)",
+    "5: 1 s",
+    "ok: 6: What our server knows: what it keeps, and what it never stores",
+    "6: 0 s",
+    "ok: T1: the folder's menu ('Share\u2026See activityRenameMoveMove to trash')",
+    "ok: Make pay link: a /p/ link with half of the key after the #, and a code to scan (8h6xJlNDbU37JNZvKf_KPQ)",
+    "ok: the payment checker opened the drive's sealed sales key: the seller is ready",
+    "ok: the pay page's data never carries the seller's address",
+    "T1: 14 s",
+    "ok: T2: the phone scans it: the folder's name, how many files, about how big, the price and the fee (2 files, about 1 MB)",
+    "ok: T2: the names inside stay locked",
+    "T2: 2 s"
+   ]
+  }
+ ]
+}

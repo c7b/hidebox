@@ -31,9 +31,27 @@ tables in §1–§4 are the chain before the reset, kept as the record of how it
 | SealLog 2.0.0 (tari_template_lib 0.37) | Address | Transaction |
 |---|---|---|
 | template, author `service`, exactly `dist/seal_log.wasm` (sha256 `9a276b30…4c84`, 107,162 bytes) | `template_5932ee9ba5a969f59eac0cddc8fae7112b22dfc85abdaa751911d11ce533145c` | `44637f53…6924`, 842,994 µT |
-| the live log: owner_rule `None`, upgrade_rule `Locked`, `append_root` only for the `service` key's badge | `component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65` | `5aeec60b…63e6`, 2,403 µT |
+| the log until 2026-11-07 (retired: Ootle 0.50 loads no V1 definition; 406 checkpoints, chain index 0 to 405, the last #2552, tx `dbdcf775…`): owner_rule `None`, upgrade_rule `Locked`, `append_root` only for the `service` key's badge | `component_6a3eae198ed483565abf978f7c5289263f13b2edf3ef3900a9924dd41141bd65` | `5aeec60b…63e6`, 2,403 µT |
 
 A checkpoint (the worker's manifest) dry-runs at 2,428 µT. The receiver and robot keys didn't change.
+
+**2026-11-07: walletd 0.50.0 and SealLog 2.1.0** (upgrade-0.50.md §5 and §9, seallog-v2-cutover.md;
+`docs/evidence/2026-11-07/upgrade-0.50.0/`). The same accounts and keys; walletd 0.50.0 since 03:34:11 UTC. The
+Esmeralda fleet moved to 0.50.0 between 03:28 and 03:43, after which the V1 log's checkpoints fail (#2553, 03:49:50,
+`AcceptFeeRejectRest`, 1,208 µT).
+
+| SealLog 2.1.0 (tari_template_lib 0.38, V2 definitions) | Address | Transaction |
+|---|---|---|
+| template, author `service`, exactly `dist-v2/seal_log.wasm` (sha256 `00ca5f34…878f`, 107,038 bytes), published 03:50:10 | `template_7441d16299220d821b3b0d091f59d82d4898bac2a21a1df7db606d4c8e5c869f` | `f8d84734d43fc12f…`, 842,962 µT (dry run the same) |
+| the live log since 03:51:38: owner_rule `None`, upgrade_rule `Locked`, `append_root` only for the `service` key's badge, default `DenyAll` | `component_f8820af05feaf4e327e59b3210fe2566e864f5b6631f5e41d6e63d28dd384fbe` | `5c0ef36891cebf52…`, 2,412 µT |
+| its checkpoint 0 (#2554, the whole tree: 163,648 leaves), 03:55:04 | | `4e43ad1461e9bb98…`, 2,432 µT |
+| the live release's manifest (`95ec8bc6…`) notarized in it, 03:55:22 | | `9ffb488e873558e9…`, 2,036 µT |
+
+`sponsor` refilled with 15 tTARI from `service` at 03:54:02 (tx `ff236c60…ea92`, 30,000 µT, cost 15,933): the
+demo payment walletd submitted at 03:40:43, while the fleet restarted, never reached the network (`657d758a…`, on
+no indexer) and holds the sponsor's one output (3,958 tTARI) and its change. walletd 0.50.0 releases them by itself
+once the epoch passes the transaction's `max_epoch` 12925 by more than 3 (`TRANSACTION_EXPIRY_GRACE_EPOCHS`), so
+from epoch 12929.
 
 ## 1. What exists (2026-10-11)
 

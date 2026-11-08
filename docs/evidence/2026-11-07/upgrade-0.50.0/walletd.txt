@@ -1,0 +1,75 @@
+upgrade-0.50.md §4 to §5 on 2026-11-07, times UTC: the Tari sends paused, nothing in flight, the live walletd
+swapped to 0.50.0 by scripts/swap.sh (as root, its exit trap ready to start walletd again), the features cleared.
+The Esmeralda fleet was still on 0.49.1 (the indexers' /info), at epoch 12922; protocol V1 starts at 12951.
+
+== §4 pause and settle   03:33:20
+$ for f in relay_send direct_send drops demo_pay sponsor decoys seallog; do mutis-admin feature $f off; done
+  (no override was set before: meta "features" was {})
+  {"decoys": false, "demo_pay": false, "direct_send": false, "drops": false, "folders": true, "kept": true, "packs": true, "pay_to_open": true, "relay_send": false, "seallog": false, "sponsor": false}
+       0  jobs sending (must be 0)
+       0  checkpoints pending (must be 0)
+       0  jobs queued (wait for the resume)
+       0  invoices open
+       0  pack payments pending_check
+       0  claims open
+       0  sale payments pending_check
+  latest checkpoint (idx, state, chain_index, tx, submitted_at): (2551, 'committed', 404, 'd68d9c78', 1794021799)
+  {
+   "transactions": []
+  }
+  (the last row: checkpoint #2551, submitted 03:23:19, committed; walletd's transactions.list Pending: empty)
+Nothing in flight, so no wait was needed.
+
+== §5 swap   03:33:53 to 03:34:14   (scripts/swap.sh)
+  TS=20261107T033353Z
+  stopped: inactive at 03:33:53.936
+  -rw------- 1 root root 617922560 Nov  6 21:34 /var/backups/mutis/wallet-20261107T033353Z-pre-0.50.0.tar
+  5a9c9179ecb37d3f7dca11c5a89b0d5e0b44654d0da890c4ff890157d8a7fde4  /var/backups/mutis/wallet-20261107T033353Z-pre-0.50.0.tar
+  entries: 58; wallet.sqlite: 2
+  57e753dd30f36405a0e092edbe65abd800d9e9d0718579225975b0969277914c  /var/backups/mutis/tari_ootle_walletd.20261107T033353Z
+  282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94  /opt/tari/bin/tari_ootle_walletd
+  282199b077a2e1388f8ea77d786c4be4a841f7a8a02f46589fba9d0285a07d94  /opt/tari/bin/tari_ootle_walletd-0.50.0-d3252ef
+  tari_ootle_walletd 0.50.0
+  started: active at 03:34:11.661
+  RPC answering at 03:34:14
+  balances unchanged
+  /var/backups/mutis/balances-20261107T033353Z-before-0.50.0.json: "version": "0.49.2"
+  /var/backups/mutis/balances-20261107T033353Z-after-0.50.0.json: "version": "0.50.0"
+  live store: migrations (3, '20261106120000') | authored_templates (0,)
+  -rw------- 1 root root       1011 Nov  6 21:34 balances-20261107T033353Z-after-0.50.0.json
+  -rw------- 1 root root       1011 Nov  6 21:33 balances-20261107T033353Z-before-0.50.0.json
+  -rwxr-xr-x 1 root root   65169488 Nov  2 14:41 tari_ootle_walletd.20261107T033353Z
+  -rw------- 1 root root  617922560 Nov  6 21:34 wallet-20261107T033353Z-pre-0.50.0.tar
+  TS=20261107T033353Z
+  walletd was down from 03:33:53.9 to 03:34:11.7 (17.8 s, most of it the 618 MB tar of the stopped store),
+  and answered RPC at 03:34:14. The backup holds /home/drive/wallet and /home/drive/.local/share/tari, cold
+  (walletd stopped), 58 entries, root 0600: sha256 5a9c9179ecb37d3f7dca11c5a89b0d5e0b44654d0da890c4ff890157d8a7fde4.
+  The live store migrated as the drill's copy did: three applied migrations, the newest 20261106120000; no
+  authored template left. The unit, its config, config.toml and run-walletd.sh are unchanged.
+
+  Balances, before = after (walletd's store, µT; only the version line of the two JSON files differs):
+    buyer-demo  no TARI balance listed
+    operator    no TARI balance listed
+    service     revealed 96780703, confidential 19971062 µT
+    sponsor     revealed 0, confidential 3964584062 µT
+  scripts/wsum.py before and after: indexer_trust "trust" (the default; trusted set null both times), no
+  Pending transaction.
+
+walletd's journal from the start (warnings only, as the log config sets; hostname cut):
+  03:34:11.80 Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+  03:34:11.81 WARNING/WARN common::config: the log config file and /etc/mutis are owned by root (as on 0.49.2)
+  03:34:18.83 WARN json_rpc JSON-RPC error: JWT error: InvalidSignature
+     (the chain worker's token from before the restart, refused once; the client asks for a new one)
+No migration error, no "Failed to deserialize response", nothing else.
+
+== features cleared   03:34:39
+$ for f in relay_send direct_send drops demo_pay sponsor decoys seallog; do mutis-admin feature $f clear; done
+  {"decoys": true, "demo_pay": true, "direct_send": true, "drops": true, "folders": true, "kept": true,
+   "packs": true, "pay_to_open": true, "relay_send": true, "seallog": true, "sponsor": true}; meta "features" {} again
+The Tari sends were paused for 79 s.
+
+== Rollback (§6), if it were needed before epoch 12951
+Stop walletd; move /home/drive/wallet and /home/drive/.local/share/tari aside; tar -C /home/drive -xpf
+/var/backups/mutis/wallet-20261107T033353Z-pre-0.50.0.tar; install /var/backups/mutis/tari_ootle_walletd.20261107T033353Z
+(= tari_ootle_walletd-0.49.2-aa7b0c8) at /opt/tari/bin/tari_ootle_walletd; start; balances against
+/var/backups/mutis/balances-20261107T033353Z-before-0.50.0.json. Not needed: every check passed (chain.txt).

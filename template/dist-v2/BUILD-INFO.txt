@@ -1,0 +1,16 @@
+seal_log 2.1.0, written by template/check.sh --dist
+built      2026-11-06T14:34:19Z on <server> as build
+toolchain  rustc 1.99.0 (b940084d7 2026-09-28); cargo 1.99.0 (5f94df478 2026-08-27); tari-ootle-cli 0.30.0
+command    RUSTFLAGS="--remap-path-prefix=$CARGO_HOME=/cargo" tari build
+           (release profile in Cargo.toml: opt-level s, lto, codegen-units 1, panic abort, strip)
+wasm       seal_log.wasm, 107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+abi        tari_tdef sha256 2e0303562dcae9babcb2d59bf72abcb4460c3ee6fab08ee527c67baf43b699b5 (the expected value of check.sh --v2)
+metadata   12208a2aafc845b3469b4a326ad628ef401be608b8aba7924e3290e99654af5dfb18 (TEMPLATE_METADATA_HASH; not part of the WASM)
+inputs     Cargo.lock cf060095cd49f79a773b4bc02fbbf63a78196bb0beaaca2aa433c7f9d2c5347a, Cargo.toml ae2a76e8ba8296b63b88ce92e2e6bbef4e2ac0fae86d698dc7fd9cd0e6715af8, build.rs 255343891654eb5d68dbc03d3fe3c2daacdd58325044c2c45cc2e456d9431437, src/lib.rs 1439ab3590ddd766a383383c059a81374f8784d2f64fd8ac7549a64ac482a9ae
+crates.io  tari_ootle_template_build 0.18.0 (tari-ootle d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb), tari_template_lib 0.38.0 (tari-ootle d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb), tari_template_test_tooling 0.50.0 (tari-ootle d3252ef11de0a4100fe0eb6c0dc6c47b2502f5cb)
+
+To rebuild: the same toolchain, then template/check.sh --v2 (it sets RUSTFLAGS, so the bytes don't
+depend on the user, the directory or CARGO_HOME).
+Publish these exact bytes with a PublishTemplate instruction. walletd's transactions.publish_template
+runs wasm-opt first and stores different bytes. template/check.sh --v2 --onchain <template address> says
+whether a published template holds this file.

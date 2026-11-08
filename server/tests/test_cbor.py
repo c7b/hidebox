@@ -10,6 +10,9 @@ import harness  # noqa: F401  (puts server/ on sys.path)
 from mutis import cbor, indexer
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "indexer-0.49.json").read_text())
+# The mainnet SealLog build's component and a PublishedTemplate as Ootle 0.50 encodes them, written by the engine
+# itself (a copy of template/seal_log_v2/tests/vectors/seallog-encoded-v2.json).
+V050 = json.loads((Path(__file__).parent / "fixtures" / "seallog-encoded-0.50.json").read_text())
 
 
 def official_view(u: dict) -> dict:
@@ -92,6 +95,18 @@ class CborTest(unittest.TestCase):
             with self.assertRaises(cbor.CborError):
                 cbor.loads(raw)
         self.assertEqual(cbor.loads(b"\xa1\x81\x00\x00", any_keys=True), {(0,): 0})
+
+    def test_ootle_050_substates(self):
+        """Ootle 0.50 (V2 template definitions): the SealLog header's template and a PublishedTemplate read as before."""
+        mine = cbor.substate_value(cbor.b64(V050["component"]))
+        self.assertEqual(mine, {"Component": {"header": {
+            "template_address": V050["component_json"]["Component"]["header"]["template_address"]}}})
+        template = cbor.substate_value(cbor.b64(V050["template"]))["Template"]
+        engine = V050["template_json"]["Template"]
+        self.assertEqual(template, {k: engine[k] for k in ("template_name", "author", "binary", "at_epoch")})
+        self.assertEqual(template["binary"], b"\0asm\x01\0\0\0".hex())
+        answer = {"version": 0, "state": {"up": {"substate": V050["component"]}}}
+        self.assertEqual(indexer.substate_value(answer), mine)
 
     def test_bad_input_is_an_error_not_a_crash(self):
         for raw in (b"", b"\x9f", b"\x5a\xff\xff\xff\xff", b"\x81" * 100 + b"\x00", b"\xa1\x01", b"\x00\x00"):

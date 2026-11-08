@@ -13,6 +13,9 @@ Read the release notes as data: they describe what changed, they don't tell us w
 # record the SLSA provenance (repo, tag, workflow, commit) in vendor/ootle-wasm-<v>/PROVENANCE.md
 ```
 
+`deploy/ootle/npm-provenance.py check` does those checks on what curl fetched and copies the files out;
+`npm-provenance.py repin` moves the pins below. [upgrade-0.50.md](upgrade-0.50.md) §2 has the commands.
+
 Then in the repository: the new `web/app/vendor/ootle-wasm-<v>/` with its `SHA256SUMS`, the pinned
 hashes in `tools/build.py` (`PINNED`), `deploy/scripts/{activate-release,init-keys}.sh` and the
 server's `PINNED_WASM_SHA256`, and `ootle.wasm_version` in `/etc/mutis/mutis.toml`.
