@@ -13,9 +13,9 @@ export async function loadLib() {
     ['ootle', 'api', 'api-locker', 'b64', 'courier', 'crypto', 'seal', 'share', 'format'].map(mod),
   );
   const shim = await import(new URL('vendor/ootle-wasm-shim.js', appRoot).href);
-  await ootle.initWithBytes(readFileSync(new URL('vendor/ootle-wasm-0.50.0/ootle_wasm_bg.wasm', appRoot)));
+  await ootle.initWithBytes(readFileSync(new URL('vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm', appRoot)));
   // the indexers' CBOR values (0.48+), for library code that reads a substate
-  await ootle.initBorWithBytes(readFileSync(new URL('vendor/ootle-wasm-bor-0.50.0/ootle_wasm_bor_bg.wasm', appRoot)));
+  await ootle.initBorWithBytes(readFileSync(new URL('vendor/ootle-wasm-bor-0.52.0/ootle_wasm_bor_bg.wasm', appRoot)));
   return { ootle, api, apiLocker, b64, courier, crypto, seal, share, format, wasmSha256: shim.WASM_SHA256 };
 }
 

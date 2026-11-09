@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
-"""Client for the public Ootle indexers (tari_indexer 0.49 and 0.50 REST API), spec §10.5–§10.7. 0.50 serves the
-same paths and shapes; protocol V1 (Esmeralda epoch 12951) changes how substate hashes are computed, which mutis
-never recomputes (deploy/ootle/upgrade-0.50.md §1).
+"""Client for the public Ootle indexers (tari_indexer 0.49 to 0.52 REST API), spec §10.5–§10.7. 0.50 to 0.52 serve
+the same paths and shapes; protocol V1 (Esmeralda epoch 12951) changes how substate hashes are computed, which mutis
+never recomputes (deploy/ootle/upgrade-0.50.md §1, upgrade-0.52.md §1).
 
 Framing of the UTXO stream was pinned by gate G3 (server/NOTES-for-integrator.md): POST /utxos/stream
 with `Accept: application/json` answers NDJSON lines {"sos","update","eos"}; an Unspent update carries

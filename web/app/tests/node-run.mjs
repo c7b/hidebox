@@ -28,8 +28,8 @@ globalThis.Worker ??= class {
 const apiAt = process.argv.indexOf('--api');
 const contractOrigin = apiAt > 0 ? process.argv[apiAt + 1] : null;
 
-await initWithBytes(readFileSync(new URL('../vendor/ootle-wasm-0.50.0/ootle_wasm_bg.wasm', import.meta.url)));
-await initBorWithBytes(readFileSync(new URL('../vendor/ootle-wasm-bor-0.50.0/ootle_wasm_bor_bg.wasm', import.meta.url)));
+await initWithBytes(readFileSync(new URL('../vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm', import.meta.url)));
+await initBorWithBytes(readFileSync(new URL('../vendor/ootle-wasm-bor-0.52.0/ootle_wasm_bor_bg.wasm', import.meta.url)));
 let passed = 0;
 let total = 0;
 for (const name of contractOrigin ? ['contract'] : SUITES) {

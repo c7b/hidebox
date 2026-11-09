@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MIT
-"""JSON-RPC client for tari_ootle_walletd 0.49.2 and 0.50.0 (written against 0.45.0; the calls and request shapes it
-uses are the same through 0.50.0: 0.46.0 and 0.47.0 only add `validator_set.get_status`, the Esmeralda reset
-releases 0.48.0 and 0.49.x drop `transactions.get_all`, which mutis never called, and 0.50.0 only adds
-`upgradable_components` and `component_upgrades` to dry-run and submit_manifest answers, which mutis doesn't read;
-spec §10.1, §10.3; 03-ootle-integration §4.3–§4.4; deploy/ootle/upgrade-0.50.md §1).
+"""JSON-RPC client for tari_ootle_walletd 0.49.2 to 0.52.0 (written against 0.45.0; the calls and request shapes it
+uses are the same through 0.52.0: 0.46.0 and 0.47.0 only add `validator_set.get_status`, the Esmeralda reset
+releases 0.48.0 and 0.49.x drop `transactions.get_all`, which mutis never called, 0.50.0 only adds
+`upgradable_components` and `component_upgrades` to dry-run and submit_manifest answers, which mutis doesn't read,
+and 0.51.0 and 0.52.0 change only burn claims, which walletd makes by itself;
+spec §10.1, §10.3; 03-ootle-integration §4.3–§4.4; deploy/ootle/upgrade-0.50.md §1, upgrade-0.52.md §1).
 
 walletd runs with `--authentication none` behind a uid firewall; a JWT from `auth.request` is
 valid five minutes, so it is cached for 240 s. Only the chain worker (user drive) can reach it.

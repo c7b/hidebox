@@ -1,0 +1,94 @@
+upgrade-0.52.md §4 and §5 as run on production, 2026-11-09, times UTC. The Esmeralda fleet had moved to 0.52.0
+already (both indexers' /info: "version": "0.52.0" at 18:14 and 18:21; all twelve validators they connect to on
+/tari/validator/0.52.0). Commands over a multiplexed ssh connection as the operator with sudo.
+
+== §4 pause the Tari features, then what is in flight (scripts/inflight.py, read-only, as mutis)   18:16:15 to 18:16:20
+pause start 18:16:15
+relay_send off
+direct_send off
+drops off
+demo_pay off
+sponsor off
+decoys off
+seallog off
+paused 18:16:16
+     0  jobs sending (must be 0)
+     0  checkpoints pending (must be 0)
+     0  jobs queued (wait for the resume)
+     0  invoices open
+     0  pack payments pending_check
+     0  claims open
+     0  sale payments pending_check
+latest checkpoint (idx, state, chain_index, tx, submitted_at): (2804, 'committed', 250, '3773670d', 1794247848)
+{
+ "transactions": []
+}
+(walletd's own transactions.list Pending, above: empty.) Nothing in flight; no feature was overridden before
+(meta "features" was {}), so `clear` brings back the configured values.
+
+== §5 the swap (scripts/swap.sh, as root)   18:16:21 to 18:16:25
+TS=20261109T181621Z
+stopped: inactive at 18:16:21.749
+-rw------- 1 root root 309913600 Nov  9 12:16 /var/backups/mutis/wallet-20261109T181621Z-pre-0.52.0.tar
+190f3741ae7a8fdba3cad455632ad6cd25e0daf75c47487c75eeb338f612a09b  /var/backups/mutis/wallet-20261109T181621Z-pre-0.52.0.tar
+entries: 58; wallet.sqlite: 2
+19a295db26716630c25392c1b32da9b1830d331c295f88bd79a7b89d183effbb  /var/backups/mutis/tari_ootle_walletd.20261109T181621Z   (= tari_ootle_walletd-0.50.1-0b3f364)
+34486747bd76bbac756d6d6d123ace67e1c336c4c983ffa9167587a7b10ad0d2  /opt/tari/bin/tari_ootle_walletd
+34486747bd76bbac756d6d6d123ace67e1c336c4c983ffa9167587a7b10ad0d2  /opt/tari/bin/tari_ootle_walletd-0.52.0-4ee751c
+tari_ootle_walletd 0.52.0
+started: active at 18:16:23.138
+RPC answering at 18:16:25
+balances unchanged
+/var/backups/mutis/balances-20261109T181621Z-before-0.52.0.json: "version": "0.50.1"
+/var/backups/mutis/balances-20261109T181621Z-after-0.52.0.json: "version": "0.52.0"
+live store: migrations (3, '20261106120000') | accounts 4
+-rw------- 1 root root       1010 Nov  9 12:16 balances-20261109T181621Z-after-0.52.0.json
+-rw------- 1 root root       1010 Nov  9 12:16 balances-20261109T181621Z-before-0.52.0.json
+-rwxr-xr-x 1 root root   65651480 Nov  7 19:22 tari_ootle_walletd.20261109T181621Z
+-rw------- 1 root root  309913600 Nov  9 12:16 wallet-20261109T181621Z-pre-0.52.0.tar
+TS=20261109T181621Z
+(`ls -l` prints the server's local time, UTC−6.) walletd was down 1.4 s (stopped 18:16:21.75, started 18:16:23.14, answering 18:16:25). The backup tar and the
+balances files are root 0600 in /var/backups/mutis; nothing in them is copied here.
+
+scripts/wsum.py before and after (walletd's own store, read-only):
+  before  wallet.get_info: {'network': 'esmeralda', 'version': '0.50.1'}
+  before  validator_set.get_status: indexer_trust trust | trusted epoch None anchor epoch None | walk_failing_since None
+  before    buyer-demo  no TARI balance listed
+  before    operator    no TARI balance listed
+  before    service     revealed 94523817, confidential 4941062 µT
+  before    sponsor     revealed 0, confidential 3947256062 µT
+  before  transactions.list Pending: 0
+  after   wallet.get_info: {'network': 'esmeralda', 'version': '0.52.0'}
+  after   validator_set.get_status: indexer_trust trust | trusted epoch None anchor epoch None | walk_failing_since None
+  after     buyer-demo  no TARI balance listed
+  after     operator    no TARI balance listed
+  after     service     revealed 94523817, confidential 4941062 µT
+  after     sponsor     revealed 0, confidential 3947256062 µT
+  after   transactions.list Pending: 0
+
+validator_set.get_status after the swap: indexer_trust "trust", no reanchors (walletd's default; our config sets
+nothing).
+
+== features cleared   18:16:40 (the Tari sends were paused 24 s)
+
+== walletd's journal from the stop to 18:19 (host name replaced, cut at 300 characters)
+The JWT InvalidSignature is the chain worker's cached token, refused once after the restart (walletd signs its
+tokens with a key it makes at start); the worker asked for a new one. "WriteTransaction was not committed or rolled
+back" is not new: walletd 0.50.1 logged it 228 times between 2026-11-08 00:00 and the swap.
+2026-11-09T18:16:21.675711+00:00 <server> systemd[1]: Stopping walletd.service - Ootle wallet daemon for mutis (Esmeralda testnet)...
+2026-11-09T18:16:21.712618+00:00 <server> systemd[1]: walletd.service: Deactivated successfully.
+2026-11-09T18:16:21.714406+00:00 <server> systemd[1]: Stopped walletd.service - Ootle wallet daemon for mutis (Esmeralda testnet).
+2026-11-09T18:16:21.714703+00:00 <server> systemd[1]: walletd.service: Consumed 1min 18.839s CPU time, 50.4M memory peak.
+2026-11-09T18:16:23.126219+00:00 <server> systemd[1]: Started walletd.service - Ootle wallet daemon for mutis (Esmeralda testnet).
+2026-11-09T18:16:23.215260+00:00 <server> walletd[887680]: Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+2026-11-09T18:16:23.218163+00:00 <server> walletd[887680]: WARNING: The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4rs.yml` or use a base path you own.
+2026-11-09T18:16:23.218163+00:00 <server> walletd[887680]: WARNING: The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own.
+2026-11-09T18:16:23.218163+00:00 <server> walletd[887680]: WARN common::config ⚠️  The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4rs.yml` or use a base
+2026-11-09T18:16:23.218163+00:00 <server> walletd[887680]: WARN common::config ⚠️  The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own.
+2026-11-09T18:16:30.202517+00:00 <server> walletd[887680]: WARN tari::ootle::wallet_daemon::json_rpc 🌐 JSON-RPC error: JWT error: InvalidSignature
+2026-11-09T18:17:12.979752+00:00 <server> walletd[887680]: WARN auth::tari::dan::wallet_sdk::storage_sqlite::writer WriteTransaction was not committed or rolled back
+
+== rollback, if needed (upgrade-0.52.md §6): 0.52.0 ran no migration, so the 0.50.1 binary opens the same store
+  systemctl stop walletd; install -m 0755 -o root -g root /opt/tari/bin/tari_ootle_walletd-0.50.1-0b3f364 \
+    /opt/tari/bin/tari_ootle_walletd; systemctl start walletd
+  (the pre-upgrade tar /var/backups/mutis/wallet-20261109T181621Z-pre-0.52.0.tar if the store is in doubt)

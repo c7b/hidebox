@@ -1,0 +1,64 @@
+upgrade-0.52.md §1 and §7 on production, 2026-11-09, times UTC: the fleet's move as hidebox saw it, and the
+chain after walletd 0.52.0. Fees read from ootle-indexer-b's /transaction-receipts/<id> with server/mutis/cbor.py
+(upgrade-0.50.md §7's script): FeeReceipt payment, paid, overcharge, and cost = the sum of the breakdown.
+
+== the fleet: what the indexers say they run (GET /info, GET /network/connections)
+18:21:10 ootle-indexer-a
+{"version":"0.52.0","network":"esmeralda","network_byte":38,"sidechain_id":null,"current_epoch":12975,"transaction_retention_epochs":50,"transaction_receipt_retention_epochs":1000,"event_retention_epochs":1000,"index_gossiped_transactions":true,"verify_substate_proofs":true,"substate_cache_max_serve_lag_secs":300,"indexes_all_events":true,"utxo_tombstone_retention_epochs":504,"utxo_tombstone_horizons":[]}
+connections user_agent: {'/tari/validator/0.52.0': 12}
+18:21:11 ootle-indexer-b
+{"version":"0.52.0","network":"esmeralda","network_byte":38,"sidechain_id":null,"current_epoch":12975,"transaction_retention_epochs":50,"transaction_receipt_retention_epochs":1000,"event_retention_epochs":1000,"index_gossiped_transactions":true,"verify_substate_proofs":true,"substate_cache_max_serve_lag_secs":300,"indexes_all_events":true,"utxo_tombstone_retention_epochs":504,"utxo_tombstone_horizons":[]}
+connections user_agent: {'/tari/validator/0.52.0': 12}
+
+== the move, in walletd's (0.50.1 then) and the chain worker's logs (host name replaced, cut at 240 characters)
+A few seconds of HTTP 521 from the indexers at 13:12 (v0.51.0 was published at 13:02) and 14:39 (v0.52.0 at 14:35);
+nothing else between 13:00 and 18:00 but the routine lines.
+2026-11-09T13:12:30+00:00 <server> walletd[603407]: WARN tari::ootle::wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+2026-11-09T13:12:32+00:00 <server> walletd[603407]: WARN tari::ootle::wallet_daemon::json_rpc 🌐 JSON-RPC error: Substate API error: Network interface error: Indexer client error: Server returned an error: HTTP status server error (521 
+2026-11-09T13:12:33+00:00 <server> mutis-chain[704505]: WARNING event=chain.indexer_error
+2026-11-09T13:12:35+00:00 <server> walletd[603407]: WARN tari::ootle::wallet_services::transaction_service::finalized_watch Failed to subscribe to transaction finalization stream, retrying in 5s: Indexer client error: Server returned an e
+2026-11-09T14:39:18+00:00 <server> walletd[603407]: WARN tari::ootle::wallet_services::transaction_service::finalized_watch Transaction finalization stream failed: Stream decode error: Reqwest error: error decoding response body
+2026-11-09T14:39:19+00:00 <server> mutis-chain[704505]: WARNING event=chain.indexer_error
+2026-11-09T14:39:19+00:00 <server> walletd[603407]: WARN tari::ootle::wallet_daemon::json_rpc 🌐 JSON-RPC error: Substate API error: Network interface error: Indexer client error: Server returned an error: HTTP status server error (521 
+2026-11-09T14:39:21+00:00 <server> mutis-chain[704505]: WARNING event=chain.indexer_error
+
+== SealLog checkpoints across the move (production's seal_checkpoints, walletd 0.50.1 until #2804)
+Every one committed; the cost moved from 5,996 to 5,997 µT between #2784 (13:10) and #2785 (13:25), the first
+after the 0.51 move, and has been 5,997 since but for two at 5,996 (16:10 and 17:25).
+idx  state   submitted  tx        paid  cost  fee sources
+2780 committed 12:10 a9d05261 5996 5996 8
+2781 committed 12:25 2eca491b 5996 5996 8
+2782 committed 12:40 9cf18f7c 5996 5996 8
+2783 committed 12:55 3e6f9fd5 5996 5996 8
+2784 committed 13:10 cfe84b3e 5996 5996 8
+2785 committed 13:25 c6dcbe96 5997 5997 8
+2786 committed 13:40 19dee3c4 5997 5997 8
+2787 committed 13:55 64c968ac 5997 5997 8
+2788 committed 14:10 ababf3c2 5997 5997 8
+2789 committed 14:25 20b147fa 5997 5997 8
+2790 committed 14:40 1c0ae5e4 5997 5997 8
+2791 committed 14:55 eee01607 5997 5997 8
+2792 committed 15:10 de5dcc61 5997 5997 8
+2793 committed 15:25 cac03007 5997 5997 8
+2794 committed 15:40 91d3f96a 5997 5997 8
+2795 committed 15:55 06125dbe 5997 5997 8
+2796 committed 16:10 f5b64fd9 5996 5996 8
+2797 committed 16:25 af9acb57 5997 5997 8
+2798 committed 16:40 e82bf1d6 5997 5997 8
+2799 committed 16:55 6cf16e13 5997 5997 8
+2800 committed 17:10 0683fb96 5997 5997 8
+2801 committed 17:25 34e06dfa 5996 5996 8
+2802 committed 17:40 4501060f 5997 5997 8
+2803 committed 17:55 720b799a 5997 5997 8
+2804 committed 18:10 3773670d 5997 5997 8
+
+== after the swap to walletd 0.52.0 (18:16:23)
+18:16:40  admin canary-now
+18:16:41  chain.canary_sealed; 18:17:12 chain.job_done (the delivery, sent by walletd 0.52.0); 18:17:13 chain.canary_verified
+          delivery tx 3850e728de6884f8c9d5e8da7587943cc28b022b08f1a09f2a068e421926fb94:
+          payment 30000, paid 30000, overcharge 13843, cost 16157 (the same as the last delivery before the swap,
+          01593c59…434f, epoch 12974: cost 16157)
+18:18:31  admin seal-now
+18:20:49  chain.seal_checkpoint: #2805 committed, chain index 251, tx 40c64b8bc0379165134576847fc2d6f92167d3f3294e28b7e399207e1ec9625e
+          (Commit on ootle-indexer-b): payment 1000000, paid 5997, overcharge 0, cost 5997;
+          breakdown {1: 11, 2: 3803, 3: 100, 4: 350, 5: 250, 6: 245, 8: 1187, 9: 51} (FeeSource index: µT)

@@ -3,7 +3,7 @@
 
 A long-lived Node 20 child of the chain worker (`server/mutis/sidecar.py` starts it, as `drive`). It
 runs the **same** `web/app/lib` code and the **same** vendored official `@tari-project/ootle-wasm`
-0.50.0 (and `ootle-wasm-bor` 0.50.0) as the browser, so the server proves payment amounts with the official library instead of
+0.52.0 (and `ootle-wasm-bor` 0.52.0) as the browser, so the server proves payment amounts with the official library instead of
 trusting a wallet (spec D10, gate G4), seals the hourly canary with the real file format, and makes
 decoy addresses.
 
@@ -30,8 +30,8 @@ release/sidecar/
   sidecar.mjs  loader.mjs  selftest.json  README.md     <- web/app/sidecar/*
   lib/*.js  lib/package.json                            <- web/app/lib/
   vendor/package.json  vendor/ootle-wasm-shim.js        <- web/app/vendor/ (those two files)
-  vendor/ootle-wasm-0.50.0/*                            <- web/app/vendor/ootle-wasm-0.50.0/
-  vendor/ootle-wasm-bor-0.50.0/*                        <- web/app/vendor/ootle-wasm-bor-0.50.0/
+  vendor/ootle-wasm-0.52.0/*                            <- web/app/vendor/ootle-wasm-0.52.0/
+  vendor/ootle-wasm-bor-0.52.0/*                        <- web/app/vendor/ootle-wasm-bor-0.52.0/
 ```
 
 `lib/package.json` and `vendor/package.json` contain only `{"type": "module"}`. Node looks up the

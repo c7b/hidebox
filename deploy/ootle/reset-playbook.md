@@ -72,9 +72,13 @@ blocks behind), and then walletd 0.49.2 claims it by itself and moves the file t
 2026-11-02, about 80 and 115 minutes after the two burns). A claim by hand (`accounts.claim_burn` with
 `"claim_proof": {"FromFile": {"file_name": "<that file>"}}`) before that is rejected `NotYetValid`,
 though its dry run accepts it; it costs nothing and leaves the file for walletd's retry. On 0.49 the claim lands
-as a stealth output, not in the account's public vault; what pays fees with `account.pay_fee` (the
-template publish, the log, its checkpoints) needs a stealth transfer from `service` to its own address
-with a `revealed_output_amount`, which goes to its public vault.
+as a stealth output, not in the account's public vault. From 0.52 on (tari-ootle #3633) a claim yields a bucket of
+revealed TARI that walletd passes on as the revealed input of a stealth transfer to the account, so it still lands
+as a stealth output (at a fresh commitment); a claim built by a walletd older than 0.52 fails on a 0.52 network
+(read in the source, not seen: the old instruction decodes without its `output_data`, so its signature no longer
+matches) and leaves the file for a retry (upgrade-0.52.md §1). Either way, what pays fees with `account.pay_fee`
+(the template publish, the log, its checkpoints) needs a stealth transfer from `service` to its own address with a
+`revealed_output_amount`, which goes to its public vault.
 
 ## 4. Accounts and keys (10 minutes)
 

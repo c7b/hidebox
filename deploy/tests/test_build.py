@@ -104,8 +104,8 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(how.count("SPDX"), 1, "the partial's own license comment is not repeated")
         self.assertIn("hidebox · Esmeralda · " + "a" * 40 + " · 2025-10-09", how)
         for path in ("index.html", "404.html", "how/index.html", "status/index.html", "shared/tokens.css",
-                     "site/js/site.js", "vendor/ootle-wasm-0.50.0/ootle_wasm_bg.wasm",
-                     "app/vendor/ootle-wasm-0.50.0/ootle_wasm_bg.wasm"):
+                     "site/js/site.js", "vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm",
+                     "app/vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm"):
             self.assertTrue((dist / path).is_file(), path)
         for absent in ("app/tests/run.html", "app/README.md", "shared/partials/header.html"):
             self.assertFalse((dist / absent).exists(), absent)
@@ -122,7 +122,7 @@ class BuildTest(unittest.TestCase):
         # ootle-wasm and ootle-wasm-bor, each under app/vendor/ and vendor/
         self.assertEqual(markdown, ["PROVENANCE.md"] * 4, "only the vendored provenance notes")
         for kept in ("LICENSE", "SHA256SUMS", "ootle_wasm.d.ts"):
-            self.assertTrue((dist / "vendor" / "ootle-wasm-0.50.0" / kept).is_file(), kept)
+            self.assertTrue((dist / "vendor" / "ootle-wasm-0.52.0" / kept).is_file(), kept)
 
     def test_the_homes_stills_are_served_and_the_home_is_in_the_sitemap(self):
         """The home (the v3 design, docs/review/promote-v3.md): its AVIF and WebP stills under web/site/media/v3 reach
@@ -363,7 +363,7 @@ class BuildTest(unittest.TestCase):
         self.build()
         sidecar = self.tmp / "release" / "sidecar"
         for path in ("sidecar.mjs", "lib/format.js", "vendor/ootle-wasm-shim.js", "vendor/package.json",
-                     "vendor/ootle-wasm-0.50.0/ootle_wasm_bg.wasm"):
+                     "vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm"):
             self.assertTrue((sidecar / path).is_file(), path)
         self.assertFalse((self.tmp / "dist" / "app" / "sidecar").exists())
 
@@ -394,7 +394,7 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(build.settings({"public_origin": "https://h.example"}, None)["BRAND"], build.BRAND)
 
     def test_vendored_hash_mismatch_stops_the_build(self):
-        wasm = self.web / "app" / "vendor" / "ootle-wasm-0.50.0" / "ootle_wasm_bg.wasm"
+        wasm = self.web / "app" / "vendor" / "ootle-wasm-0.52.0" / "ootle_wasm_bg.wasm"
         wasm.write_bytes(wasm.read_bytes() + b"\0")
         with self.assertRaisesRegex(build.BuildError, "hash mismatch"):
             self.build()

@@ -1,0 +1,55 @@
+§3 of upgrade-0.52.md (upgrade-drill.md §3) as run on 2026-11-09, times UTC. Commands ran over a multiplexed
+ssh connection as the operator with sudo; walletd's RPC as root on the loopback port of the drill's own network
+namespace. scripts/drill.sh: the drill with NEW=/opt/tari/bin/tari_ootle_walletd-0.52.0-4ee751c, every directive
+of deploy/systemd/walletd.service plus PrivateNetwork=yes, an exit trap that deletes the copy on every path
+(`systemctl stop … || true; rm -rf`). Read-only additions: the copy's diesel migrations and accounts before and
+after, scripts/wsum.py's summary, the unit's journal.
+
+== §3 the new walletd on a copy of the wallet, with no network   18:04:21 to 18:04:27
+copy before: migrations (3, '20261106120000') | accounts 4
+drill start 2026-11-09T18:04:21Z
+Running as unit: walletd-drill.service; invocation ID: e0731ddcb109432dbdc4b5606bcff15a
+active
+wallet.get_info: {'network': 'esmeralda', 'version': '0.52.0'}
+validator_set.get_status: indexer_trust trust | trusted epoch None anchor epoch None | walk_failing_since None
+  buyer-demo  no TARI balance listed
+  operator    no TARI balance listed
+  service     revealed 94529814, confidential 4941062 µT
+  sponsor     revealed 0, confidential 3947256062 µT
+transactions.list Pending: 0
+copy after: migrations (3, '20261106120000') | accounts 4
+sandbox denials in the drill's journal: 0
+migration lines: 0
+drill copy vs live balances (version aside): SAME
+drill-balances.json: "version": "0.52.0"
+live-balances.json: "version": "0.50.1"
+drill copy removed: /var/lib/walletd-drill no longer exists
+
+No migration: the store has the same three applied migrations before and after (the newest 20261106120000, from
+0.50.0), as tari-ootle v0.52.0's crates/wallet/storage_sqlite/migrations/ holds the same three folders as v0.50.1.
+The same four accounts, the same balances as the live walletd 0.50.1 (version aside), nothing Pending.
+
+== the drill unit's journal (host name replaced, lines naming the keyring credential left out, cut at 330 characters)
+The errors are the drill's missing network: the indexers can't be reached from its namespace, as intended.
+2026-11-09T18:04:21.518740+00:00 <server> systemd[1]: Starting walletd-drill.service - [systemd-run] /usr/local/lib/mutis/run-walletd.sh...
+2026-11-09T18:04:21.609182+00:00 <server> systemd[1]: Started walletd-drill.service - [systemd-run] /usr/local/lib/mutis/run-walletd.sh.
+2026-11-09T18:04:21.664615+00:00 <server> run-walletd.sh[878479]: Initializing logging according to "/etc/mutis/walletd-log4rs.yml"
+2026-11-09T18:04:21.667390+00:00 <server> run-walletd.sh[878479]: WARNING: The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4rs.yml` or use a base path you own.
+2026-11-09T18:04:21.667390+00:00 <server> run-walletd.sh[878479]: WARNING: The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own.
+2026-11-09T18:04:21.667390+00:00 <server> run-walletd.sh[878479]: WARN common::config ⚠️  The file /etc/mutis/walletd-log4rs.yml is owned by uid 0 (mode 640), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis/walletd-log4rs.yml` or use a base path you own.
+2026-11-09T18:04:21.667390+00:00 <server> run-walletd.sh[878479]: WARN common::config ⚠️  The directory /etc/mutis is owned by uid 0 (mode 750), not by the current user (uid 1002). Another user could control its contents. Fix with `chown 1002 /etc/mutis` or use a base path you own.
+2026-11-09T18:04:21.849580+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::transaction_service::finalized_watch Failed to subscribe to transaction finalization stream, retrying in 5s: Indexer client error: Failed to send request: error sending request for url (https://ootle-indexer-a.tari.com/events):
+2026-11-09T18:04:21.850280+00:00 <server> run-walletd.sh[878479]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account service (component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8): Substate API error: Network interface error: Indexer client error: Failed to send request: er
+2026-11-09T18:04:21.851061+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::indexer_rest_api Indexer https://ootle-indexer-a.tari.com/ was unavailable for 3 consecutive requests, switching to https://ootle-indexer-b.tari.com/
+2026-11-09T18:04:21.851061+00:00 <server> run-walletd.sh[878479]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account buyer-demo (component_bb1017a0b4c9657650c16c88bd18caa88acdd5d5aee1cb0ccbb62eeab5867b2b): Substate API error: Network interface error: Indexer client error: Failed to send request:
+2026-11-09T18:04:21.851935+00:00 <server> run-walletd.sh[878479]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account sponsor (component_e9489a5ff306e4fc5a4ec56a2992a96b1ae6ce0881898edb197fad569db298f4): Substate API error: Network interface error: Indexer client error: Failed to send request: er
+2026-11-09T18:04:21.852693+00:00 <server> run-walletd.sh[878479]: ERROR tari::ootle::wallet_services::account_monitor 🏦 Failed to refresh account operator (component_fadaea016de4244b62b531f6fe0088fe1155d73c97d4044e4371f86a39f807b3): Substate API error: Network interface error: Indexer client error: Failed to send request: e
+2026-11-09T18:04:21.856232+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::indexer_rest_api Indexer https://ootle-indexer-b.tari.com/ was unavailable for 3 consecutive requests, switching to https://ootle-indexer-a.tari.com/
+2026-11-09T18:04:21.856232+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_453538fd5d652d682201e54e9de80a6cfe5eadfdf8fab347f9eb30bdfb6ad6e8 (resource_0101010101010101010101010101010101010101010101010101010101010101): Network interface er
+2026-11-09T18:04:21.856382+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_bb1017a0b4c9657650c16c88bd18caa88acdd5d5aee1cb0ccbb62eeab5867b2b (resource_0101010101010101010101010101010101010101010101010101010101010101): Network interface er
+2026-11-09T18:04:21.856511+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_e9489a5ff306e4fc5a4ec56a2992a96b1ae6ce0881898edb197fad569db298f4 (resource_0101010101010101010101010101010101010101010101010101010101010101): Network interface er
+2026-11-09T18:04:21.857106+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::stealth_utxo_scanner ❓️ Error during UTXO scan for component_fadaea016de4244b62b531f6fe0088fe1155d73c97d4044e4371f86a39f807b3 (resource_0101010101010101010101010101010101010101010101010101010101010101): Network interface er
+2026-11-09T18:04:26.854289+00:00 <server> run-walletd.sh[878479]: WARN tari::ootle::wallet_services::transaction_service::finalized_watch Failed to subscribe to transaction finalization stream, retrying in 5s: Indexer client error: Failed to send request: error sending request for url (https://ootle-indexer-a.tari.com/events):
+2026-11-09T18:04:27.035978+00:00 <server> systemd[1]: Stopping walletd-drill.service - [systemd-run] /usr/local/lib/mutis/run-walletd.sh...
+2026-11-09T18:04:27.054924+00:00 <server> systemd[1]: walletd-drill.service: Deactivated successfully.
+2026-11-09T18:04:27.055224+00:00 <server> systemd[1]: Stopped walletd-drill.service - [systemd-run] /usr/local/lib/mutis/run-walletd.sh.

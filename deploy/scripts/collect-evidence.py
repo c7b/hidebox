@@ -76,7 +76,7 @@ def collect(cfg: dict, conn: sqlite3.Connection, robot_file: Path, now: datetime
     robot = json.loads(robot_file.read_text())["address"] if robot_file.is_file() else None
     return {
         "network": cfg.get("network", "esmeralda"),
-        "ootle_version": cfg.get("ootle", {}).get("wasm_version", "0.50.0"),
+        "ootle_version": cfg.get("ootle", {}).get("wasm_version", "0.52.0"),
         "wasm_sha256": sidecar.get("wasm_sha256"),
         "receiver_address": meta(conn, "receiver_address"),
         "robot_address": robot,

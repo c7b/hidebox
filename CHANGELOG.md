@@ -1,6 +1,26 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- ootle 0.52 -->
+## 2026-11-09: Ootle 0.52.0 on Esmeralda
+
+Esmeralda moved to Ootle 0.51.0 and then 0.52.0 on 2026-11-09, without a reset and with no activation epoch:
+validators, indexers and wallets upgrade together. hidebox kept working through the move on walletd 0.50.1; what
+0.52 would have broken is a burn claim by an older wallet, which is how hidebox gets test money from L1. This
+release changes only what the upgrade needed. Every earlier tag stays where it was; this release has its own tag.
+
+- **walletd 0.52.0**: the release binary (tag v0.52.0, commit `4ee751c`), checked against four sources and
+  rehearsed on a copy of the wallet first; live since 18:16 UTC. The calls mutis makes, the command line and the
+  wallet's store are unchanged (no migration).
+- **The official libraries, 0.52.0**: `ootle-wasm` and `ootle-wasm-bor` 0.52.0, from the npm tarballs that tag
+  published (provenance in each folder). Only their `.wasm` changed: they refuse a few malformed inputs earlier
+  (non-canonical keys, the same input twice). The API, the glue and the layouts the browser builds and reads did not.
+- **SealLog stays as published**: templates on `tari_template_lib` 0.38 keep working on 0.52, and the log kept
+  committing checkpoints through the move, at the same cost (about 6,000 µT each).
+- **The runbook**: `deploy/ootle/upgrade-0.52.md`, with what 0.51 and 0.52 change for hidebox and how to tell that
+  a fleet has moved (`/info` on an indexer); the run's evidence in `docs/evidence/2026-11-09/upgrade-0.52.0/`.
+<!-- /ootle 0.52 -->
+
 <!-- testnet line -->
 ## 2026-11-09: the testnet line after the mainnet's launch
 

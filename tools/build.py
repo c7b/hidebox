@@ -37,12 +37,12 @@ BRAND = "hidebox"
 DEFAULT_CONFIG = ROOT / "deploy" / "config" / "mutis.toml.example"
 HOLDING = ROOT / "deploy" / "holding"
 
-# spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.50.0 build, and of ootle-wasm-bor.
+# spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.52.0 build, and of ootle-wasm-bor.
 PINNED = {
-    "ootle-wasm-0.50.0/ootle_wasm_bg.wasm": "f01d6e7855d60ec53a7f360eb0df5f02b9456d146904755ee5454293a94bca48",
-    "ootle-wasm-0.50.0/ootle_wasm_bg.js": "1b5933930f06b0be346a5bcb2e679a7a486512e61a4f9d1f40dfb94320a9f044",
-    "ootle-wasm-bor-0.50.0/ootle_wasm_bor_bg.wasm": "98b4e4aa2b0d89de2c8f79ac05b3365bde5ee03273c63ae10549e11aac8690cb",
-    "ootle-wasm-bor-0.50.0/ootle_wasm_bor_bg.js": "b7d668153c3ef4056030c3cc1eeb1828387e114a3747669f5cd94c4542a53b0b",
+    "ootle-wasm-0.52.0/ootle_wasm_bg.wasm": "29087e5618c4f5e1c94f31f42a00ccf0f33fc634ddece6f79f1cc37557c85725",
+    "ootle-wasm-0.52.0/ootle_wasm_bg.js": "1b5933930f06b0be346a5bcb2e679a7a486512e61a4f9d1f40dfb94320a9f044",
+    "ootle-wasm-bor-0.52.0/ootle_wasm_bor_bg.wasm": "f22b0e1b7f96769e64731488f8d1e5e09b973af0dd9cd170866f4b21c7b531ee",
+    "ootle-wasm-bor-0.52.0/ootle_wasm_bor_bg.js": "b7d668153c3ef4056030c3cc1eeb1828387e114a3747669f5cd94c4542a53b0b",
 }
 # Only these are ever copied into dist/ (an allow-list: notes, reviews, sources and tests never leak).
 SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".ico", ".webp", ".avif", ".jpg", ".woff2",

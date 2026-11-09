@@ -22,7 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 APP = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 NODE = shutil.which("node") or "/usr/bin/node"
 FLAGS = ["--experimental-permission", "--disallow-code-generation-from-strings"]
-WASM_SHA256 = "f01d6e7855d60ec53a7f360eb0df5f02b9456d146904755ee5454293a94bca48"
+WASM_SHA256 = "29087e5618c4f5e1c94f31f42a00ccf0f33fc634ddece6f79f1cc37557c85725"
 results = []
 SHARE_ID = base64.urlsafe_b64encode(bytes(range(16))).rstrip(b"=").decode()  # ids are b64u of 16 bytes
 
@@ -230,7 +230,7 @@ def main():
         tampered = os.path.join(tmp, "app")
         for d in ("lib", "sidecar", "vendor"):
             shutil.copytree(os.path.join(APP, d), os.path.join(tampered, d))
-        wasm = os.path.join(tampered, "vendor", "ootle-wasm-0.50.0", "ootle_wasm_bg.wasm")
+        wasm = os.path.join(tampered, "vendor", "ootle-wasm-0.52.0", "ootle_wasm_bg.wasm")
         data = bytearray(open(wasm, "rb").read())
         data[len(data) // 2] ^= 1
         open(wasm, "wb").write(bytes(data))
