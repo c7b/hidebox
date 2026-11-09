@@ -177,7 +177,7 @@
    ],
    "sentences": [
     "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet_date}.",
-    "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} stays on the testnet until our code is reviewed."
+    "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} runs there as a beta, with real TARI."
    ]
   },
   {

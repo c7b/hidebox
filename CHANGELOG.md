@@ -1,6 +1,14 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- testnet line -->
+## 2026-11-09: the testnet line after the mainnet's launch
+
+From 2026-11-11 the footer and the money screens would have said that hidebox "stays on the testnet until our code
+is reviewed". The mainnet beta at mainnet.hidebox.app makes that untrue, so the line now reads: "The Ootle mainnet
+is live; hidebox runs there as a beta, with real TARI." Nothing else changes. This release has its own tag.
+<!-- /testnet line -->
+
 <!-- ootle 0.50 -->
 ## 2026-11-07: Ootle 0.50.0 on Esmeralda
 

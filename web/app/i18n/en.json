@@ -1245,7 +1245,7 @@
  "recent.delete": "Delete",
  "noise.alt": "The locked bytes of your file, drawn as dots.",
  "testnet": "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet_date}.",
- "testnet_live": "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} stays on the testnet until our code is reviewed.",
+ "testnet_live": "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} runs there as a beta, with real TARI.",
  "dur.minute": {
   "one": "{count} minute",
   "other": "{count} minutes"
