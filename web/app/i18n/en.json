@@ -332,6 +332,8 @@
  "drop.another": "Leave another",
  "drop.closed": "This {brand} link is closed.",
  "drop.not_found": "This {brand} link doesn't exist.",
+ "drop.mismatch": "This {brand} link doesn't lead to the drive it was made for.",
+ "drop.mismatch_body": "Nothing can be left here. Ask its owner to send the link again.",
  "drop.name_save": "Save the name",
  "drop.page_say": "It gets locked right here, before it goes anywhere. Then it goes by Tari, and only the drive behind this link can open it.",
  "drop.step.lock": "Locking it in your browser",
@@ -542,6 +544,7 @@
  "buy.drive_sent": "Sent from your drive. Now we look for it on the chain.",
  "buy.drive_late": "The chain is slow right now. We keep checking.",
  "buy.drive_failed": "Your drive didn't pay.",
+ "buy.drive_unsure": "Your drive may have paid.",
  "buy.drive_failed_d": "Nothing was spent. Try again in a moment.",
  "buy.drive_short": "Your drive here has {have} tTARI. Paying from it takes {need} tTARI with the fee.",
  "buy.drive_checking": "Checking your drive here…",
@@ -1337,5 +1340,6 @@
  "error.insufficient": "This browser's testnet wallet doesn't have enough tTARI for that.",
  "error.timeout": "The Ootle didn't confirm in time. Check again in a minute; nothing is sent twice.",
  "error.rejected": "The Ootle refused that transaction. Nothing was spent.",
+ "error.maybe_sent": "We didn't hear back after sending it, so it may have gone out. Wait a few minutes before you try again, so nothing is paid twice.",
  "error.judge_spent": "That judge pass is used up; the anti-bot check is back."
 }

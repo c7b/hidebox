@@ -165,6 +165,31 @@ class BuildConfigTest(unittest.TestCase):
             self.assertEqual(verify.main(), 1)
         self.assertIn("DIFF /api/v1/config repo_url is not a plain https URL", out.getvalue())
 
+    def test_a_tag_whose_build_refuses_the_settings_is_a_difference_not_a_traceback(self):
+        """A tag from before the mainnet builds Esmeralda only; asked to rebuild a mainnet deployment its build.py
+        stops, and verify-deploy says so as a difference."""
+        mainnet = {"network": "mainnet", "repo_url": "https://github.com/c7b/hidebox",
+                   "testnet_origin": "https://testnet.example"}
+        refused = subprocess.CompletedProcess([], 1, "", "Traceback…\nBuildError: network must be one of esmeralda: 'mainnet'\n")
+        real_run = subprocess.run
+
+        def run(cmd, **kwargs):
+            if any(str(part).endswith("build.py") for part in cmd):
+                return refused
+            if cmd[0] == "tar":
+                return real_run(["true"])
+            return subprocess.CompletedProcess(cmd, 0, b"" if "archive" in cmd else "0123456789abcdef\n", "")
+
+        out = io.StringIO()
+        with mock.patch.object(verify, "fetch", lambda url: json.dumps({"files": {}}).encode()), \
+                mock.patch.object(verify, "live_config", lambda origin: mainnet), \
+                mock.patch.object(verify.subprocess, "run", run), \
+                mock.patch("sys.argv", ["verify-deploy.py", "https://h.example", "v1"]), \
+                mock.patch("sys.stdout", out):
+            self.assertEqual(verify.main(), 1)
+        self.assertIn("DIFF v1's tools/build.py did not build with this deployment's settings: BuildError: network must "
+                      "be one of esmeralda: 'mainnet'", out.getvalue())
+
     def test_no_seallog_no_check(self):
         self.assertEqual(verify.seallog_check({"seal_log": {"component": None}}, ROOT), [])
 

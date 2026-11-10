@@ -26,14 +26,14 @@ TX_BODY_MAX = 12 * 1024          # the envelope in base64 plus its JSON wrapper
 MAX_INPUTS = 4                   # wallet.js MAX_INPUTS: outputs spent in one send
 # Instruction variants as tari_bor numbers them (web/app/lib/wallet.js unsignedTx, in that order).
 STEALTH_TRANSFER, PUT_LAST_OUTPUT_ON_WORKSPACE, PAY_FEE_FROM_BUCKET = 12, 3, 13
-_RESULT = re.compile(r"^transactions/([0-9a-f]{64})/result$")
+_RESULT = re.compile(r"^transactions/([0-9a-f]{64})/result\Z")
 _GET_ALLOW = [
-    (re.compile(r"^substates/((?:utxo|component|template|resource|vault)_[0-9a-f_]{20,200})$"),
+    (re.compile(r"^substates/((?:utxo|component|template|resource|vault)_[0-9a-f_]{20,200})\Z"),
      "/substates/{0}?include_proof=true"),
     (_RESULT, "/transactions/{0}/result"),
-    (re.compile(r"^network$"), "/network"),
-    (re.compile(r"^epoch-manager/stats$"), "/epoch-manager/stats"),     # the browser wallet's epoch (G1)
-    (re.compile(r"^templates/((?:template_)?[0-9a-f]{64})$"), "/templates/{0}"),
+    (re.compile(r"^network\Z"), "/network"),
+    (re.compile(r"^epoch-manager/stats\Z"), "/epoch-manager/stats"),     # the browser wallet's epoch (G1)
+    (re.compile(r"^templates/((?:template_)?[0-9a-f]{64})\Z"), "/templates/{0}"),
 ]
 _POST_ALLOW = {"transactions": "/transactions", "transactions/dry-run": "/transactions/dry-run"}
 

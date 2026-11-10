@@ -10,6 +10,7 @@ import { h } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, hex } from '../lib/b64.js';
 import { config, deleteItem } from '../lib/api.js';
+import { dropUrl } from '../lib/links.js';
 import { copyButton, fill, formatDuration, icon, toast } from './core.js';
 import { safetyGrid, testnetLine } from './marks.js';
 import { errorBanner } from './errors.js';
@@ -116,7 +117,7 @@ function full(root, cfg, ctx) {
       h('div', { class: 'a-row' },
         copyButton({ label: t('locker.copy_address'), testid: 'copy-address', getText: () => identity.locker.address }),
         h('span', { class: 'a-chip' }, t('locker.network', { network }))),
-      scanCode(h('div', {}), `${cfg.origin}/#to=${identity.locker.address}`, t('locker.qr'), 'locker-qr')),
+      scanCode(h('div', {}), `${location.origin}/#to=${identity.locker.address}`, t('locker.qr'), 'locker-qr')),
     h('section', { class: 'a-id-block', 'aria-labelledby': 'a-safety-h' },
       h('h2', { id: 'a-safety-h', class: 'a-h2' }, t('safety.h')),
       safetyGrid(identity.safetyCode, { testid: 'locker-safety', class: 'a-safety--large' }),
@@ -169,7 +170,7 @@ function dropSection(cfg, ctx) {
       });
       return section.replaceChildren(head, make, errors);
     }
-    const url = `${cfg.origin}/d/${active.drop_id}`;
+    const url = dropUrl(location.origin, active.drop_id, ctx.identity.locker);
     const errors = h('div', {});
     const act = (fn) => async () => {
       errors.replaceChildren();

@@ -147,6 +147,11 @@ def compressed_paths(dist: Path) -> set[str]:
     return {p.relative_to(dist).as_posix()[:-3] for p in dist.rglob("*.gz") if p.is_file()}
 
 
+class BuildRefused(Exception):
+    """The tag's own tools/build.py wouldn't build with the deployment's settings (a tag from before the mainnet
+    asked to rebuild a mainnet deployment, say): a difference to report, not a traceback."""
+
+
 def build_tag(tag: str, config: str, holding: bool, work: Path) -> tuple[str, dict, Path]:
     sha = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--verify", f"{tag}^{{commit}}"],
                          capture_output=True, text=True, check=True).stdout.strip()
@@ -165,7 +170,10 @@ def build_tag(tag: str, config: str, holding: bool, work: Path) -> tuple[str, di
            "--source", sha, version, when]
     if holding:
         cmd.append("--holding")
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL)
+    built = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    if built.returncode != 0:
+        said = (built.stderr.strip().splitlines() or ["no message"])[-1]
+        raise BuildRefused(f"{tag}'s tools/build.py did not build with this deployment's settings: {said[:200]}")
     local = json.loads((work / "dist" / ".well-known" / "mutis-manifest.json").read_text())
     return sha, local, src
 
@@ -281,7 +289,12 @@ def main() -> int:
     config = build_config(origin, cfg, live.get("variant_config") or {})
     notes: list[str] = []
     with tempfile.TemporaryDirectory(prefix="mutis-verify-") as tmp:
-        sha, local, src = build_tag(args.tag, config, "holding.css" in live["files"], Path(tmp))
+        try:
+            sha, local, src = build_tag(args.tag, config, "holding.css" in live["files"], Path(tmp))
+        except BuildRefused as e:
+            print("DIFF", e)
+            print(f"verify-deploy: 1 difference; {args.tag} can't be compared with {origin}")
+            return 1
         diffs = compare(origin, local, live, sha, compressed_paths(Path(tmp) / "dist"), notes) + seallog_check(cfg, src)
     for line in notes:
         print(line)

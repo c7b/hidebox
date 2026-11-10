@@ -15,6 +15,10 @@ from .invoices import _unless_judge
 from .shares import _header_b64, effective_state, folder_tree, gone
 
 CLAIMS_PER_HOUR_64, CLAIMS_PER_HOUR_48 = 10, 30
+# And on one link: a link takes sales.MAX_OPEN_CLAIMS_PER_SHARE waiting claims, so one network must not be able to
+# hold them all without paying (security pass, 2026-11-09). A buyer who starts over still has a second try; the
+# server's own addresses (brakes.exempt_addresses, where its tests run) skip it, as they skip the daily brakes.
+CLAIMS_PER_LINK_HOUR_64, CLAIMS_PER_LINK_HOUR_48 = 2, 3
 DEMO_PER_DAY_64, DEMO_PER_DAY_48 = 3, 6
 DEMO_PER_SELLER = 2          # test money paid to one drive's links a day, from any network
 CHECKS_LISTED = 100
@@ -196,6 +200,9 @@ def create_claim(ctx, share_id: str):
     if seller is None or seller["state"] != "ok":
         raise ApiError(409, "seller_not_ready", "The owner's drive isn't ready to take payments yet. Try again soon.")
     rules = (("claim64", ctx.ip64, CLAIMS_PER_HOUR_64, 3600, 1), ("claim48", ctx.ip48, CLAIMS_PER_HOUR_48, 3600, 1))
+    if not ctx.exempt():
+        rules += (("claim_share64", (share_id, ctx.ip64), CLAIMS_PER_LINK_HOUR_64, 3600, 1),
+                  ("claim_share48", (share_id, ctx.ip48), CLAIMS_PER_LINK_HOUR_48, 3600, 1))
     with ctx.charged(*rules):
         ctx.proof_of_work("claim", body)
         claim_id = codec.claim_id()

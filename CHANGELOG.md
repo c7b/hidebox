@@ -1,6 +1,56 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- security 2026-11-09 -->
+## 2026-11-09: a security pass on the server and the deployment
+
+An audit of the API, the chain worker, the deploy scripts and the end-to-end tools. Nothing it found lets anyone
+read another person's file or key, or spend the wallet. What it found were ways to keep others from buying,
+downloading or making a drive, a way to make a file's own receipt fail, and three places where root trusted a name a
+lower user could have put there. Each is fixed with a test; `docs/review/fix-log.md` has the table.
+
+- **Download the stored bytes** is charged the bytes of its Range (it was the whole file, whatever was asked for), a
+  network takes a file's stored bytes 3 times a day (6 per /48), and all of it stays within half the file's daily
+  egress, so opens keep the other half.
+- **Claims on a pay link**: one network makes 2 an hour on one link (3 per /48), so it can't hold all 20 of a link's
+  waiting claims without paying.
+- **New drives**: the deployment's daily cap is charged after the proof of work and given back when no drive is made.
+- **Uploads**: an upload isn't completed while one of its chunks is still arriving (`409 upload_busy`), and one
+  request at a time writes one chunk, so stored bytes can't differ from the hash sealed for them.
+- **Ids**: every id pattern ends in `\Z`; a trailing newline no longer passes.
+- **Reports**: a paid link's own address (`/p/<id>`) can be reported.
+- **Root on the server**: `privilege-check.sh` has `mutis` make its probes, `activate-release.sh` tightens its
+  migration backups as `mutis`, and E2E scenario E-31 runs its search from the command line, not from a file in the
+  build user's directory.
+- **verify-deploy** prints a tag's refused build as a difference instead of a traceback; `e2e-artifacts/` is ignored.
+<!-- /security 2026-11-09 -->
+
+<!-- security 2026-11-09 web -->
+## 2026-11-09: the same security pass, in the browser
+
+The audit's other half: the app, the site and the library they share. Nothing it found lets a sender or a link holder
+run code on the site, read another person's keys or skip a link's rule. What it found is the browser acting on a
+missing answer, or on an answer of our API, where money and keys are concerned. Each is fixed with a test;
+`docs/review/fix-log.md` has the table.
+
+- **The owner's check of a payment** says "the payer kept control" only on evidence: the output shown with another
+  key, or proven spent. An indexer that hadn't caught up answered 404, and that alone ended a buyer's claim for good.
+- **Pay from my drive** signs the price the page shows, or nothing. If the answer to its submit is lost, the page says
+  the drive may have paid, offers no second payment for three minutes, and follows the claim if the first one lands.
+- **Links are built on the page's own origin**, whatever `/config` answers, and a lint keeps it that way.
+- **A hidebox link carries a mark of its drive's address** after its `#`; its page refuses any other address before a
+  file can be chosen. Links made before open as they did.
+- **A link's kind decides its mode**: a link with a word is never opened as "word only", whatever our server answers.
+- **Lock my drive and Forget this browser** also clear the recent list and the drive's id where two helpers kept it.
+- **Photos**: a JPEG's thumbnails in APP0 go with the rest, and the drive says when a photo or video went up as it was.
+- **File names**: spaces of every kind are trimmed from a name's ends, so they can't hide a program's extension.
+- **Uploads**: a file that changed between two tries starts a new upload with a new key; a complete that finds a chunk
+  still arriving (`409 upload_busy`) is asked again instead of failing.
+- **Reports**: the form takes a paid link, the buyer page has Report this link, and a paid program says so beside Save.
+- **Download all** refuses a name too long for a ZIP instead of writing an archive nothing opens, and a file can't
+  take the name of the folder beside it.
+<!-- /security 2026-11-09 web -->
+
 <!-- ootle 0.52 -->
 ## 2026-11-09: Ootle 0.52.0 on Esmeralda
 

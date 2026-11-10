@@ -31,7 +31,7 @@ export function parseRoute(pathname) {
   if (!m[1]) return { view: 'mine', folderId: null };
   const folder = /^folders\/([A-Za-z0-9_-]{22})$/.exec(m[1]);
   if (folder) return { view: 'mine', folderId: folder[1] };
-  return m[1] in VIEWS && m[1] !== 'mine' ? { view: m[1] } : { view: 'missing' };
+  return Object.hasOwn(VIEWS, m[1]) && m[1] !== 'mine' ? { view: m[1] } : { view: 'missing' };   // its own keys only: /drive/constructor is no view
 }
 
 const app = document.getElementById('app');

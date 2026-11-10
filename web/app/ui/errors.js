@@ -16,6 +16,7 @@ const SAME = {
   already_complete: 'conflict',
   item_not_ready: 'conflict',
   missing_chunks: 'upload_broken',
+  upload_busy: 'upload_broken',
   bad_index: 'upload_broken',
   bad_length: 'upload_broken',
   hash_mismatch: 'upload_broken',
@@ -30,7 +31,7 @@ too_large_locker too_large_drop too_large_request program_drop locked pow_requir
 probation_limit chain_unavailable feature_disabled budget_exhausted bad_address mainnet_address l1_address bad_blob
 unknown_pack internal client network crypto memory clipboard empty folder many text_long program needs_wasm needs_wasm_drop
 integrity read wrong_password keyfile checksum locked_key wrong_passphrase address_mismatch view_key drop_limit
-insufficient timeout rejected judge_spent pack_active packs_limited packs_paused drives_limited uploads_limited
+insufficient timeout rejected maybe_sent judge_spent pack_active packs_limited packs_paused drives_limited uploads_limited
 payment_required bad_claim claim_used not_for_sale seller_not_ready seller_not_registered busy`.split(/\s+/)); // last line: pay to open
 
 // An error the UI raises itself, with a code from the list above.
@@ -75,9 +76,13 @@ export function errorText(e, params = {}) {
   return t(`error.${code}`, { wait, max, ...params });
 }
 
+// "4:05", and from an hour on "23:57:12": a limit that lasts until tomorrow (a file's stored bytes, taken a few
+// times in a day) reads as hours, not as 1,437 minutes.
 export function mmss(seconds) {
   const s = Math.max(0, Math.ceil(seconds));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const two = (n) => String(n).padStart(2, '0');
+  const m = Math.floor(s / 60);
+  return s >= 3600 ? `${Math.floor(m / 60)}:${two(m % 60)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
 }
 
 // The one banner per error: data-code carries the code for tests and support. `action` is the single

@@ -17,7 +17,8 @@ const IN_FLIGHT = 3;
 
 // Thrown when an upload stops part-way; pass `resume` back to sealItem() to continue from the first
 // missing chunk with the same key, salt and upload. code 'aborted' (the user pressed Stop) has no
-// resume: the upload was deleted.
+// resume: the upload was deleted. A resume whose file changed starts a new upload with a new key (a chunk's
+// nonce is its index).
 export class SealError extends Error {
   constructor(code, cause, resume = null) {
     super(cause?.message ?? code);
@@ -49,6 +50,20 @@ async function putWithRetry(uploadId, chunk, headers, signal) {
   }
 }
 
+// POST /uploads/{id}/complete, asked again while our server says a chunk is still arriving (409 upload_busy: a
+// copy of a chunk this tab gave up on is still being read there; it ends by itself). Six tries over 15 seconds.
+const BUSY_TRIES = 6;
+async function complete(uploadId, headers, signal) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await completeUpload(uploadId, headers);
+    } catch (e) {
+      if (!(e instanceof ApiError && e.code === 'upload_busy') || attempt >= BUSY_TRIES || signal?.aborted) throw e;
+      await new Promise((r) => setTimeout(r, 1000 * (e.retryAfter ?? 1) * attempt));
+    }
+  }
+}
+
 // source: {file, name, type, mtime, stripped} or {text}.
 // opts: {headers (Bearer, X-Mutis-Canary or none), anonymous (solve the upload PoW, or send the judge
 //        pass), expiresAt (unix seconds, required unless the item is kept), dropId, keepFor (P1: an
@@ -69,6 +84,12 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
   });
   const first = (await chunks.next()).value;
   const { header, headerHash, chunkCount, sizeStored, salt } = first;
+  const afresh = async () => {
+    await chunks.return?.();
+    if (resume?.upload?.uploadId) await deleteUpload(resume.upload.uploadId, headers).catch(() => null);
+    return sealItem(source, { headers, anonymous, expiresAt, dropId, keepFor, parent, headBytes, onPhase, signal });
+  };
+  if (resume?.upload && resume.sizeStored !== undefined && resume.sizeStored !== sizeStored) return afresh();
   let up = resume?.upload;
   if (!up) {
     const { metaKey } = await deriveItemKeys(fk, salt);
@@ -94,6 +115,10 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
   let next = resume?.fromIndex ?? 0;
   try {
     for await (const chunk of chunks) {
+      if (resume && hashes[chunk.index] && !equal(hashes[chunk.index], chunk.sha256)) {
+        await Promise.allSettled(pending.values());
+        return afresh();
+      }
       hashes[chunk.index] = chunk.sha256;
       if (chunk.index === 0 && headBytes) head = chunk.ciphertext.slice(0, headBytes);
       pending.set(chunk.index, putWithRetry(up.uploadId, chunk, headers, signal).then(() => {
@@ -114,10 +139,14 @@ export async function sealItem(source, { headers = {}, anonymous = false, expire
       throw new SealError('aborted', e);
     }
     const fromIndex = pending.size ? Math.min(...pending.keys()) : next;
-    throw new SealError(e instanceof ApiError ? e.code : 'read', e, { fk, salt, fromIndex, hashes, head, upload: up });
+    throw new SealError(e instanceof ApiError ? e.code : 'read', e, { fk, salt, fromIndex, hashes, head, sizeStored, upload: up });
   }
   onPhase?.('finishing', 1);
-  const done = await completeUpload(up.uploadId, headers);
+  const done = await complete(up.uploadId, headers, signal).catch((e) => {
+    // Still busy after every try: every chunk is there, so the resume has nothing to send and only completes.
+    if (e instanceof ApiError && e.code === 'upload_busy') throw new SealError(e.code, e, { fk, salt, fromIndex: chunkCount, hashes, head, sizeStored, upload: up });
+    throw e;
+  });
   if (!equal(b64uDecode(done.ct_hash), await ctHash(hashes))) throw new SealError('integrity', new Error('server stored different bytes'));
   return { ...up, fk, headerHash, sizeStored, chunkCount, ctHash: done.ct_hash, head, headers: itemHeaders };
 }

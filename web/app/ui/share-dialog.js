@@ -194,7 +194,7 @@ async function makePay(btn) {
       kind: item.folder ? 'folder' : 'file', name: S.showName ? itemName(item) : null,
       count: files.length, size: files.reduce((sum, f) => sum + (f.meta?.size ?? 0), 0),
     };
-    const link = await pay.makePayLink(item, { priceUt: S.price, teaser }, { headers: drive.headers(), origin: ctx.cfg.origin || location.origin });
+    const link = await pay.makePayLink(item, { priceUt: S.price, teaser }, { headers: drive.headers(), origin: location.origin });
     await rememberLink(drive.identity, link.shareId, { url: link.url });
     S.firstSale = false;
     S.link = { ...link, word: null, rule: { pay: true } };
@@ -290,7 +290,7 @@ async function make(btn) {
   try {
     const rule = { opens: S.opens, ends: S.ends, thenDelete };
     const link = await makeLink(item, { ...rule, word },
-      { headers: drive.headers(), origin: ctx.cfg.origin || location.origin, firstDay: ctx.firstDay, limits: ctx.limits });
+      { headers: drive.headers(), origin: location.origin, firstDay: ctx.firstDay, limits: ctx.limits });
     await rememberLink(drive.identity, link.shareId, { url: link.url, word });
     S.link = { ...link, word, rule };
     S.step = 'result';
@@ -393,7 +393,7 @@ async function prepared({ views, span }) {
   const kind = S.kind4 ? 4 : 3;
   const key = `${S.address} ${kind}`;
   if (S.sendJob?.key === key) return S.sendJob;
-  const link = await makeLink(item, { maxViews: views, expiresAt: nowS() + span }, { headers: drive.headers(), origin: ctx.cfg.origin || location.origin });
+  const link = await makeLink(item, { maxViews: views, expiresAt: nowS() + span }, { headers: drive.headers(), origin: location.origin });
   const { sealDelivery } = await import('../lib/courier.js');
   const blob = await sealDelivery(S.address, { shareId: link.shareId, s: link.s, flags: item.folder ? FLAG_FOLDER : 0 }, kind);
   S.sendJob = { key, link, blob, kind, address: S.address };
@@ -700,7 +700,7 @@ export async function copyOnceLink(drive, item, { trigger = null } = {}) {
   const note = toast(t('share.making'), { type: 'loading', duration: Infinity });
   let link;
   try {
-    link = await makeLink(item, { opens: 'once', ends: 'week' }, { headers: drive.headers(), origin: ctx.cfg.origin || location.origin, firstDay: ctx.firstDay, limits: ctx.limits });
+    link = await makeLink(item, { opens: 'once', ends: 'week' }, { headers: drive.headers(), origin: location.origin, firstDay: ctx.firstDay, limits: ctx.limits });
   } catch (e) {
     note.dismiss();
     toast(t('drive.oops'), { type: 'error', description: e?.message });

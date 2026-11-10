@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Photo metadata stripping (§4.13), in the browser, before encryption, on by default. Every format is
 // cleaned by allowlist, so metadata in a block we don't know (C2PA manifests, maker notes) goes too.
-// JPEG: keep only APP0, APP2 ICC_PROFILE and APP14 Adobe of the APPn segments, drop COM and anything
+// JPEG: keep only a bare JFIF APP0 (no thumbnail), APP2 ICC_PROFILE and APP14 Adobe of the APPn segments, drop COM and anything
 // after the image's end, then write back the Exif orientation alone so the photo isn't shown rotated.
 // PNG: keep only the chunks that draw the image (pixels, palette, colour, transparency, animation).
 // WebP: keep only image, alpha, animation and ICC chunks, and clear the VP8X Exif and XMP flags. Any
@@ -19,6 +19,7 @@ const need = (cond) => { if (!cond) throw new ParseError('truncated or malformed
 const EXIF_ID = ascii('Exif\0\0');
 const ICC_ID = ascii('ICC_PROFILE\0');
 const ADOBE_ID = ascii('Adobe');
+const JFIF_ID = ascii('JFIF\0');
 
 // --- JPEG --------------------------------------------------------------------------------------------
 
@@ -46,8 +47,13 @@ function orientationSegment(o) {
     0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, (o >> 8) & 255, o & 255, 0, 0, 0, 0, 0, 0);
 }
 
+// APP0 stays only as the JFIF header itself: its 14 bytes with both thumbnail sizes 0. A JFIF with a
+// thumbnail, a JFXX extension (a thumbnail of its own) and an APP0 under any other name hold a second
+// picture or bytes we can't read, so they go like the Exif thumbnail does.
+const bareJfif = (data) => data.length === 14 && at(data, JFIF_ID) && data[12] === 0 && data[13] === 0;
+
 function keepAppSegment(marker, data) {
-  return marker === 0xe0 || (marker === 0xe2 && at(data, ICC_ID)) || (marker === 0xee && at(data, ADOBE_ID));
+  return (marker === 0xe0 && bareJfif(data)) || (marker === 0xe2 && at(data, ICC_ID)) || (marker === 0xee && at(data, ADOBE_ID));
 }
 
 // Scan entropy-coded data up to the next real marker (0xFF not followed by 0x00 stuffing or RSTn).

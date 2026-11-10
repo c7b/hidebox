@@ -24,16 +24,18 @@ export function crc32(bytes, previous = 0) {
 }
 
 export const ZIP_MAX_ENTRIES = 65535;
+export const ZIP_MAX_NAME = 65535;   // a name's length is a 16-bit field
 const U32 = 0x100000000;
 const FLAG_UTF8 = 0x0800;
 const VERSION = 20;
 const DIR_ATTR = 0x10;
 
 // A path inside the archive from folder names: no empty, "." or ".." part, no slash or control
-// character inside a name, NFC, so an archive can't write outside the folder it is opened in.
+// character inside a name, NFC, so an archive can't write outside the folder it is opened in. A name's
+// trailing dots and spaces go: Windows drops them, so "x" and "x." would be one folder there.
 export function zipPath(segments) {
   return segments.map((s) => {
-    const name = String(s ?? '').normalize('NFC').replace(/[\u0000-\u001f\u007f/\\]/g, '_').trim();
+    const name = String(s ?? '').normalize('NFC').replace(/[\u0000-\u001f\u007f/\\]/g, '_').trim().replace(/[. ]+$/, '');
     return name === '' || name === '.' || name === '..' ? '_' : name;
   }).join('/');
 }
@@ -88,9 +90,14 @@ export class ZipWriter {
 
   #entry(path, parts, { mtime, dir }) {
     if (this.count >= ZIP_MAX_ENTRIES) throw new RangeError('too many entries for a ZIP without ZIP64');
+    // Every folder above the entry is a taken name too, so a file beside it can't be called the same
+    // ("a" next to "a/…": the caller adds what is inside a folder before the files beside it).
+    for (let i = path.indexOf('/'); i > 0; i = path.indexOf('/', i + 1)) this.names.add(path.slice(0, i).toLowerCase());
     const name = this.unique(path, dir) + (dir ? '/' : '');
-    this.names.add((dir ? name.slice(0, -1) : name).toLowerCase());
     const nameBytes = utf8(name);
+    // Longer than the field that holds its length would wrap and give an archive nothing can open.
+    if (nameBytes.length > ZIP_MAX_NAME) throw new RangeError('name too long for a ZIP');
+    this.names.add((dir ? name.slice(0, -1) : name).toLowerCase());
     let crc = 0;
     let size = 0;
     for (const p of parts) {

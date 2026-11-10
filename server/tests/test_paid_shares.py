@@ -126,6 +126,26 @@ class PaidLinks(PaidCase):
         cols = [r[1] for r in self.s.conn.execute("PRAGMA table_info(claims)")]
         self.assertFalse({"identity_id", "ip", "ip64", "owner_id"} & set(cols))   # never a drive, never an IP
 
+    def test_one_network_cant_hold_a_links_waiting_claims(self):
+        """Security pass of 2026-11-09: a link takes 20 waiting claims and a /48 could make 30 an hour, so one network
+        could keep a link "busy" for everyone without paying. On one link: 2 an hour per /64, 3 per /48."""
+        link, other = self.sell(self.item["item_id"]), self.sell(self.kept()["item_id"])
+        made = 0
+        for i in range(sales.MAX_OPEN_CLAIMS_PER_SHARE):       # ten /64s of one /48, two tries each
+            ip = f"2001:db8:1:{i // 2:x}::1"
+            status, _, body = self.s.request("POST", f"{V}/p/{link['share_id']}/claims", {
+                "claim_verifier": codec.b64u(secrets.token_bytes(32)), "pow": self.s.solve("claim", ip)}, ip=ip)
+            made += status == 201
+            if status != 201:
+                self.assertEqual((status, body["error"]["code"]), (429, "rate_limited"))
+        self.assertEqual(made, 3)
+        self.claim(link, ip="203.0.113.9")                      # another network still buys
+        self.claim(other, ip="2001:db8:1::1")                   # and that network still buys something else
+        self.claim(link, ip="203.0.113.9")
+        self.claim(link, ip="203.0.113.9", expect=429)          # its third try on this link within the hour
+        self.s.now += 3600
+        self.claim(link, ip="203.0.113.9")
+
     def test_claims_are_capped_per_link_and_refused_when_not_for_sale(self):
         link = self.sell(self.item["item_id"])
         with db.tx(self.s.conn):

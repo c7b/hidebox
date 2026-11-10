@@ -6,8 +6,12 @@ opaque: nothing here (or anywhere in the server) decodes, unpacks, sniffs or run
 made 0700 and each file 0600 (a umask can only narrow them), so only mutis can list, add or swap anything under
 blobs/, and no file is executable; the files are opened without following symlinks.
 """
+import fcntl
 import hashlib
 import os
+import threading
+import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
@@ -16,9 +20,37 @@ from .http_util import PARAM_RE
 READ_SLICE = 64 * 1024
 
 
+class Busy(Exception):
+    """A chunk of this upload is still being written, so it can't be completed yet."""
+
+
+class Completed(Exception):
+    """The upload was completed while this chunk was on its way; it is written nowhere."""
+
+
 class Blobs:
     def __init__(self, root: Path):
         self.root = Path(root)
+        self._guard = threading.Lock()
+        self._writing: dict[tuple[str, int], list] = {}     # (item id, chunk) -> [lock, requests holding or waiting]
+
+    @contextmanager
+    def one_writer(self, item_id: str, index: int):
+        """One request at a time writes one chunk of one upload and records its hash (the API is one process); a
+        second waits for the first. Two copies of a chunk written at once could leave a mix of both on disk under
+        the hash of one."""
+        key = (item_id, index)
+        with self._guard:
+            entry = self._writing.setdefault(key, [threading.Lock(), 0])
+            entry[1] += 1
+        try:
+            with entry[0]:
+                yield
+        finally:
+            with self._guard:
+                entry[1] -= 1
+                if not entry[1]:
+                    del self._writing[key]
 
     def _dir(self, item_id: str) -> Path:
         if not PARAM_RE["id"].match(item_id):
@@ -51,10 +83,23 @@ class Blobs:
         os.close(fd)
 
     def write_at(self, item_id: str, offset: int, slices: Iterator[bytes]) -> bytes:
-        """Write the slices at `offset` and return the SHA-256 of what was written."""
+        """Write the slices at `offset` and return the SHA-256 of what was written.
+
+        A shared lock is held on the file for as long as the chunk arrives, and `finalize` needs it alone: an
+        upload can't be completed, hashed and sealed while a chunk is still being written into it (security pass,
+        2026-11-09: a chunk sent slowly across `complete` changed the stored bytes after their hash was sealed).
+        Raises Completed when the upload was completed between the caller's check and the lock."""
         digest = hashlib.sha256()
-        fd = os.open(self.part(item_id), os.O_WRONLY | os.O_NOFOLLOW)
+        part = self.part(item_id)
+        fd = os.open(part, os.O_WRONLY | os.O_NOFOLLOW)
         try:
+            fcntl.flock(fd, fcntl.LOCK_SH)
+            try:                              # still the upload's file, not one `finalize` renamed a moment ago
+                here, there = os.fstat(fd), os.stat(part, follow_symlinks=False)
+            except FileNotFoundError:
+                raise Completed() from None
+            if (here.st_dev, here.st_ino) != (there.st_dev, there.st_ino):
+                raise Completed()
             pos = offset
             for data in slices:
                 view = memoryview(data)
@@ -67,14 +112,27 @@ class Blobs:
             os.close(fd)
         return digest.digest()
 
+    FINALIZE_WAIT_S = 2.0             # how long `finalize` waits for a chunk that is still being written
+
     def finalize(self, item_id: str) -> None:
+        """fsync the upload's file and give it its final name, holding it alone: Busy while a chunk is still
+        being written (after FINALIZE_WAIT_S, which covers a write that is just ending)."""
         part = self.part(item_id)
         fd = os.open(part, os.O_RDONLY | os.O_NOFOLLOW)
         try:
+            deadline = time.monotonic() + self.FINALIZE_WAIT_S
+            while True:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise Busy() from None
+                    time.sleep(0.05)
             os.fsync(fd)
+            os.rename(part, self.bin(item_id))        # under the lock: no chunk is written across the rename
         finally:
             os.close(fd)
-        os.rename(part, self.bin(item_id))
         dir_fd = os.open(self._dir(item_id), os.O_RDONLY)
         try:
             os.fsync(dir_fd)

@@ -306,6 +306,7 @@ def e31(t: T) -> None:
               "                for form in {n.encode(), n.encode('utf-16-le')}:\n"
               "                    if form and form in data: hits.append([name, p])\n"
               "print(json.dumps(hits))\n")
-    t.env.remote.as_build(f"cat > {REMOTE_DIR}/{t.sid}-search.py", script.encode())
-    hits = json.loads(t.env.remote.run(f"cd /tmp && sudo python3 -I {REMOTE_DIR}/{t.sid}-search.py", json.dumps(needles).encode()))
+    # The search reads the database and the backups, so it runs as root, from the command line: saved first under the
+    # build user's directory, it was that user's file to change before root ran it.
+    hits = json.loads(t.env.remote.run("cd /tmp && sudo python3 -I -c " + shlex.quote(script), json.dumps(needles).encode()))
     t.check(not hits, f"no IP address, user agent or name in the database, its WAL or the backups ({hits[:3]})")

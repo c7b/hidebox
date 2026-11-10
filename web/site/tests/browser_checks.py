@@ -293,6 +293,21 @@ def check_abuse(browser):
             body = json.loads(next(b for u, b in page.posts() if u.endswith("/api/v1/abuse")))
             if ("#1SECRET" in body["link"]) != include or not body.get("pow", {}).get("nonce"):
                 problems.append(f"report (key {include}) sent {body['link']!r}")
+        # A paid link (/p/<id>) is reported as it is; a server from before it took them gets the same link as
+        # /s/<id>, with a second proof of work. Either way the key after # stays in the page.
+        for pid, sent in (("P" * 22, f"{origin}/p/{'P' * 22}"), ("O" * 22, f"{origin}/s/{'O' * 22}")):
+            page = browser.page()
+            page.goto(origin + "/fine-print")
+            page.eval(f"document.getElementById('abuse-link').value = '{origin}/p/{pid}#5SECRET'")
+            page.eval("document.querySelector('[data-abuse] [type=submit]').click()")
+            if not page.wait_for("document.getElementById('abuse-status').textContent.startsWith('Thanks.')", 30):
+                problems.append(f"paid link {pid[0]}: {page.eval('document.getElementById(\"abuse-status\").textContent')!r}")
+                continue
+            bodies = [json.loads(b) for u, b in page.posts() if u.endswith("/api/v1/abuse")]
+            pows = sum(1 for u, _ in page.posts() if u.endswith("/api/v1/pow"))
+            if bodies[-1]["link"] != sent or bodies[0]["link"] != f"{origin}/p/{pid}" or any("SECRET" in b["link"] for b in bodies) \
+                    or pows != len(bodies) or len(bodies) != (2 if pid[0] == "O" else 1):
+                problems.append(f"paid link {pid[0]}: sent {[b['link'] for b in bodies]}")
         link = f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA#2SECRET"
         page = browser.page()
         page.cmd("Emulation.setScriptExecutionDisabled", {"value": True})
@@ -310,6 +325,7 @@ def check_abuse(browser):
         # The app's "Report this link" opens /fine-print#link=<the link without its key>: the field is filled
         # through cleanLink (our origins only, never a key) and the fragment leaves the address bar.
         for reported, expected in ((f"{origin}/d/0123456789", f"{origin}/d/0123456789"),
+                                   (f"{origin}/p/AAAAAAAAAAAAAAAAAAAAAA#5SECRET", f"{origin}/p/AAAAAAAAAAAAAAAAAAAAAA"),
                                    (f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA#3SECRET", f"{origin}/s/AAAAAAAAAAAAAAAAAAAAAA"),
                                    ("https://elsewhere.example/s/AAAAAAAAAAAAAAAAAAAAAA", "")):
             page = browser.page()

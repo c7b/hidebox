@@ -24,6 +24,7 @@ import sqlite3
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -97,6 +98,7 @@ class PayFake:
         self.links = {}        # share id -> {price_ut, paused, seller_state, kind, size, teaser_ct, server_half, item_id, gone}
         self.claims = {}       # claim id -> {share, verifier, address, status, demo, owner_check, received, queue, views_left, ...}
         self.sales = None      # {address, view_sealed} from PUT /me/sales
+        self.claim_amount = None   # what a new claim asks, when it isn't the link's price (an answer the page must not follow)
         self.sales_puts = 0
         self.watch = None      # a real Ootle address for /config's watch_address
         self.confirms = []     # (claim id, body)
@@ -321,7 +323,7 @@ class PayFake:
             if link["paused"]:
                 return err("not_for_sale", 409)
             cid, c = self.new_claim(sid, body_of(params).get("claim_verifier"))
-            return 201, {"claim_id": cid, "address": c["address"], "amount_ut": link["price_ut"], "expires_at": c["expires_at"], "status": "pending"}
+            return 201, {"claim_id": cid, "address": c["address"], "amount_ut": self.claim_amount or link["price_ut"], "expires_at": c["expires_at"], "status": "pending"}
         cid = parts[2] if len(parts) > 2 else None
         c = self.claims.get(cid)
         token = header(params, "X-Mutis-Claim")
@@ -804,6 +806,59 @@ def pay_drive(t):
     fake.claims[cids[0]]["owner_check"] = "ok"
     t.check(wait_pay(d, ("open",), 30) == "open" and all(x.endswith(":done") for x in steps(d)), f"Ready to open ({steps(d)})")
     t.check(d.csp_violations() == [] and d.ax_unnamed() == [], "no CSP violation; every control named")
+
+    # pay-amount-mismatch: a claim that asks nine times what the page shows. The drive could pay it; nothing is signed.
+    m = t.actor("iphone")
+    attach(t, fake, m)
+    m.goto(t.origin + "/drive?make")
+    m.wait_for("drive-root", 90)
+    fake.add_outputs(m.eval(OUTPUTS_JS + "([{ to: 'wallet', amount: '1000000' }])", timeout=120))
+    fake.claim_amount = "900000"
+    m.goto(url)
+    m.wait_for("pay-browser", 120)
+    sent = len(fake.txs)
+    m.click("pay-browser")
+    m.wait_for("pay-failed", 60)
+    fake.claim_amount = None
+    t.check(m.attr("pay-failed", "data-code") == "conflict" and len(fake.txs) == sent and pay_state(m) == "wait",
+            f"a claim for more than the price shown: refused in this tab, nothing sent ({m.attr('pay-failed', 'data-code')}, {len(fake.txs) - sent} transactions)")
+    t.check(m.text("pay-failed").startswith("Your drive didn't pay.That changed while you were looking. Reload to see the latest."),
+            f"and the page says so in a plain sentence ({m.text('pay-failed')!r})")
+    t.check(m.exists("pay-report") and (m.attr("pay-report", "href") or "") == "/fine-print#link=" + urllib.parse.quote(url.split("#")[0], safe=""),
+            f"Report this link, filled in with the paid link and nothing after its # ({m.attr('pay-report', 'href')})")
+
+    # pay-lost-answer: our server takes the payment and its answer never arrives. The page doesn't say "nothing was
+    # spent", offers no second payment while the first may land, and follows the claim if it did.
+    n = t.actor("iphone")
+    attach(t, fake, n)
+    n.goto(t.origin + "/drive?make")
+    n.wait_for("drive-root", 90)
+    fake.add_outputs(n.eval(OUTPUTS_JS + "([{ to: 'wallet', amount: '1000000' }])", timeout=120))
+    n.goto(url)
+    n.wait_for("pay-browser", 120)
+    fake.on_tx = None    # the chain is slow: the claim stays as it is until the test says otherwise
+    n.eval("""(() => {
+      const real = window.fetch;
+      window.fetch = async (input, init = {}) => {
+        const res = await real(input, init);
+        if (init.method === 'POST' && String(input).includes('/chain/ix/transactions')) throw new TypeError('connection lost');
+        return res;
+      };
+    })()""")
+    sent = len(fake.txs)
+    n.click("pay-browser")
+    n.wait_for("pay-failed", 60)
+    said = n.text("pay-failed")
+    t.check(n.attr("pay-failed", "data-code") == "maybe_sent" and len(fake.txs) == sent + 1,
+            f"the answer to the submit is lost after our server took it ({n.attr('pay-failed', 'data-code')}, {len(fake.txs) - sent} transaction)")
+    t.check(said.startswith("Your drive may have paid.We didn't hear back after sending it, so it may have gone out.") and "Nothing was spent" not in said
+            and not n.exists("pay-retry"), f"the page says it may have paid, and offers no Try again ({said!r})")
+    n.click("pay-browser")
+    n.wait("document.querySelector('[data-testid=\"pay-failed\"]')?.dataset.code === 'maybe_sent' && !document.querySelector('[data-testid=\"pay-browser\"]')?.disabled", 30)
+    t.check(len(fake.txs) == sent + 1, f"Pay from my drive again, right away: refused in this tab, no second payment ({len(fake.txs) - sent} transaction)")
+    mine = [k for k, v in fake.claims.items() if v["share"] == sid and v["status"] == "pending"]
+    fake.claims[mine[-1]]["queue"] = ["seen", "paid"]
+    t.check(wait_pay(n, ("check",), 60) == "check", "the payment did land: the page follows the claim to the owner's check, without a reload")
 
 
 @scenario("sell-stop", "Stop selling where people look (B): the pay link's result has Stop selling, then Sell again; the row menu's Stop selling (PATCH paused) with Undo in its toast, and Sell again; the buyer page says it stopped", features=FEATURES)

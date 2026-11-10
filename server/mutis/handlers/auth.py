@@ -21,7 +21,7 @@ def register(ctx):
     # for sends and test money; the deployment-wide daily cap still applies.
     judge = ctx.judge() is not None
     network = () if judge else (("reg64", ctx.ip64, 5, 3600, 1), ("reg48", ctx.ip48, 20, 3600, 1))
-    ctx.limit(*network, ("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, 1))
+    ctx.limit(*network)
     identity_id = _identity_id(body)
     verifier = get_b64(body, "auth_verifier", 32)
     from_share = get_bool(body, "from_share")       # viral-1 (C60): the tab came from a link page's invitation
@@ -34,15 +34,18 @@ def register(ctx):
                    message="Your network has made all the new drives it can today. Try again tomorrow."):
         ctx.proof_of_work("register", body)
         today = codec.day(ctx.now)
-        try:
-            with db.tx(ctx.db):
-                ctx.db.execute("INSERT INTO identities(id, auth_verifier, created_day, last_seen_day) "
-                               "VALUES (?, ?, ?, ?)", (identity_id, verifier, today, today))
-                token, expires = auth.create_session(ctx.db, identity_id, ctx.now)
-                if from_share:
-                    counts.add(ctx.db, "drive_from_share", ctx.now)
-        except sqlite3.IntegrityError:
-            raise ApiError(409, "identity_exists", "This locker already exists. Sign in instead.") from None
+        # The deployment's daily cap counts drives made, so it is charged after the proof of work and given back
+        # when no drive is made: requests that did no work can't use it up for everyone (security pass, 2026-11-09).
+        with ctx.charged(("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, 1)):
+            try:
+                with db.tx(ctx.db):
+                    ctx.db.execute("INSERT INTO identities(id, auth_verifier, created_day, last_seen_day) "
+                                   "VALUES (?, ?, ?, ?)", (identity_id, verifier, today, today))
+                    token, expires = auth.create_session(ctx.db, identity_id, ctx.now)
+                    if from_share:
+                        counts.add(ctx.db, "drive_from_share", ctx.now)
+            except sqlite3.IntegrityError:
+                raise ApiError(409, "identity_exists", "This locker already exists. Sign in instead.") from None
     return json_response(201, {"token": codec.b64u(token), "expires_at": expires, "identity_id": identity_id,
                                "probation": True})
 

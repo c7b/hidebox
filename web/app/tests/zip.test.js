@@ -2,8 +2,8 @@
 // Download all's ZIP (16-drive-architecture §2.5, §6.2): CRC-32 against the standard check
 // values, safe paths, and a fixed tree that must give the frozen archive in vectors/zip-v1.json, which
 // crosscheck.py opens with Python's zipfile (every CRC, name, date and byte checked there, not here).
-import { ZipWriter, ZIP_MAX_ENTRIES, crc32, zipPath } from '../lib/zip.js';
-import { eq, loadJson, ok } from './harness.js';
+import { ZipWriter, ZIP_MAX_ENTRIES, ZIP_MAX_NAME, crc32, zipPath } from '../lib/zip.js';
+import { eq, loadJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
 
@@ -53,5 +53,24 @@ export default [
     z.addFile('a.txt', [enc('x')]);
     eq(z.count, 1);
     eq(z.unique('A.TXT'), 'A (2).TXT', 'names compare without case, as most file systems do');
+  }],
+  ['names: one longer than its 16-bit length field is refused, a file beside a folder of its name gets another, and a trailing dot can\'t make two of one', async () => {
+    eq(ZIP_MAX_NAME, 65535);
+    const z = new ZipWriter();
+    z.addFile('a'.repeat(ZIP_MAX_NAME), [enc('x')]);
+    await rejects(async () => z.addFile('b'.repeat(ZIP_MAX_NAME + 1), [enc('x')]), RangeError, 'it would wrap to a short length and an archive nothing opens');
+    await rejects(async () => z.addFile(zipPath(Array.from({ length: 400 }, () => 'é'.repeat(100))), [enc('x')]), RangeError, 'a deep path, counted in bytes');
+    eq(z.count, 1, 'a refused entry leaves nothing behind');
+    // what is inside a folder is added before the files beside it (ui/folder-view.js): the file can't take the folder's name
+    const w = new ZipWriter();
+    eq(w.addFile(zipPath(['Trip', 'a', 'inside.txt']), [enc('1')]), 'Trip/a/inside.txt');
+    eq(w.addFile(zipPath(['Trip', 'A']), [enc('2')]), 'Trip/A (2)', 'not "Trip/A" beside "Trip/a/…"');
+    eq(w.addFile(zipPath(['trip']), [enc('3')]), 'trip (2)');
+    eq(w.addFolder(zipPath(['Trip', 'a'])), 'Trip/a (3)/', 'nor a second folder of that name ("Trip/a (2)" is the file\'s now)');
+    // Windows drops a name's trailing dots and spaces: "x" and "x." are one name, and the second is told apart
+    eq(zipPath(['x.', 'y. .', 'file.txt.']), 'x/y/file.txt');
+    eq(zipPath(['...']), '_');
+    eq(w.addFile(zipPath(['x', 'f.txt']), [enc('4')]), 'x/f.txt');
+    eq(w.addFile(zipPath(['x.', 'f.txt']), [enc('5')]), 'x/f (2).txt');
   }],
 ];

@@ -11,7 +11,7 @@ from .system import limits_block
 BUNDLE_MAX = 4096
 PAGE_MAX = 50
 OPENS_HOURS = 168               # a week of hourly open counts per link in the drive's list
-_CURSOR = re.compile(r"^(\d{1,12})\.([A-Za-z0-9_-]{22})$")
+_CURSOR = re.compile(r"^(\d{1,12})\.([A-Za-z0-9_-]{22})\Z")
 
 
 def get_me(ctx):

@@ -13,12 +13,13 @@ CATEGORIES = ("csam", "malware", "phishing", "copyright", "harassment", "other")
 
 
 def parse_link(link: str, origins: list[str]) -> tuple[str | None, str | None, str]:
-    """→ (share_id, drop_id, fragment) for a mutis /s/ or /d/ link on one of our origins."""
+    """→ (share_id, drop_id, fragment) for a mutis /s/, /p/ or /d/ link on one of our origins. A paid link's page
+    is /p/<the link's id>: the same link, reported and taken down the same way."""
     url = urlsplit(link.strip())
     if f"{url.scheme}://{url.netloc}" not in origins or url.query:
         raise invalid("link", "Paste a mutis link.")
     segments = url.path.strip("/").split("/")
-    if len(segments) == 2 and segments[0] == "s" and PARAM_RE["id"].match(segments[1]):
+    if len(segments) == 2 and segments[0] in ("s", "p") and PARAM_RE["id"].match(segments[1]):
         return segments[1], None, url.fragment
     if len(segments) == 2 and segments[0] == "d" and PARAM_RE["drop"].match(segments[1]):
         return None, segments[1], ""

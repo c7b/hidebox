@@ -19,13 +19,14 @@ import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError } from '../lib/api.js';
 import { fetchContent, openItem } from '../lib/open.js';
 import { saveFile } from '../lib/download.js';
-import { sanitizeFileName } from '../lib/filetype.js';
+import { SNIFF_BYTES, checkRisky, sanitizeFileName } from '../lib/filetype.js';
 import * as pay from '../lib/pay.js';
 import { h, icon, init, toast } from './behaviors.js';
 import { alert, button, driveErrorText, errorAlert, formatTari } from './drive-parts.js';
 import { describe } from './errors.js';
 import { driveLook, folderPanel, ownDrive } from './folder-view.js';
 import { invite } from './invite.js';
+import { abuseHref } from './shell.js';
 import { testnetLine } from './marks.js';
 import { steps as runOf, waiting } from './progress.js';
 
@@ -234,7 +235,7 @@ export async function payPage(root, cfg, shareId) {
     const run = act('drive', async () => {
       try {
         const c = await claim();
-        const res = await pay.payFromDrive(P.identity, shareId, c, { onSent: () => {
+        const res = await pay.payFromDrive(P.identity, shareId, c, { priceUt: price, onSent: () => {
           P.claim = pay.savedClaim(shareId);
           draw();
         } });
@@ -247,7 +248,8 @@ export async function payPage(root, cfg, shareId) {
         }
       }
       P.claim = pay.savedClaim(shareId) ?? P.claim;
-      if (!P.driveError) poll();
+      // A payment that may have gone out is watched like one that did: if it landed, the claim says so.
+      if (!P.driveError || describe(P.driveError).code === 'maybe_sent') poll();
     });
     reveal('pay-claim-step', true);
     await run;
@@ -376,9 +378,13 @@ export async function payPage(root, cfg, shareId) {
         P.show = false;
         requestAnimationFrame(() => showFile(see));
       }
-      content = h('ul', { class: 'preview-list', role: 'list', 'data-testid': 'pay-file' },
-        h('li', {}, icon('file'), see, h('span', { class: 'size' }, formatBytes(f.size)),
-          button(t('buy.save'), { variant: 'ghost', size: 'sm', glyph: 'download', testid: 'pay-save', 'aria-label': t('buy.save_one', { name: sanitizeFileName(f.name) }), onclick: () => saveFile(f.parts, f.name) })));
+      // The seller chose the name and the bytes: a program says so beside its Save, as in a folder visit and Received.
+      const risky = checkRisky(f.name, f.parts[0]?.subarray(0, SNIFF_BYTES) ?? null).risky;
+      content = h('div', { class: 'stack' },
+        h('ul', { class: 'preview-list', role: 'list', 'data-testid': 'pay-file' },
+          h('li', {}, icon('file'), see, h('span', { class: 'size' }, formatBytes(f.size)),
+            button(t('buy.save'), { variant: 'ghost', size: 'sm', glyph: 'download', testid: 'pay-save', 'aria-label': t('buy.save_one', { name: sanitizeFileName(f.name) }), onclick: () => saveFile(f.parts, f.name) }))),
+        risky ? h('p', { class: 'small fv-warn', 'data-testid': 'pay-program' }, icon('triangle-alert'), t('fv.program')) : null);
     } else {
       const paid = phase === 'open';
       content = h('div', { class: 'locked-note', 'data-testid': 'pay-locked' }, icon(paid ? 'circle-check' : 'lock'),
@@ -391,7 +397,9 @@ export async function payPage(root, cfg, shareId) {
             h('span', { class: 'badge', 'data-variant': 'tari' }, icon('coins'), t('drive.rule.pay', { price: formatTari(price) }))),
           h('p', { class: 'card-description', 'data-testid': 'pay-what' }, folder ? t('buy.count', { count: P.teaser.count ?? 0, size }) : t('buy.about', { size }))),
         h('div', { class: 'card-content stack' }, content)),
-      P.opened?.folder ? null : h('p', { class: 'small muted' }, t('fv.scan'))); // the folder panel says it once
+      P.opened?.folder ? null : h('p', { class: 'small muted' }, t('fv.scan')), // the folder panel says it once
+      // Report this link: the form takes the paid link without its key (ui/shell.js abuseHref)
+      h('p', { class: 'small muted' }, h('a', { class: 'link-plain', href: abuseHref(`${location.origin}/p/${shareId}`), 'data-testid': 'pay-report' }, t('viewer.report'))));
   }
 
   // The paid file in the shared preview (ui/lightbox.js): what it shows comes from its bytes, never its name.
@@ -442,14 +450,16 @@ export async function payPage(root, cfg, shareId) {
   }
 
   // A payment from this drive that spent nothing: what happened, in one sentence, and Try again while the
-  // drive can still pay (it may have gone short: then the line under the price says so).
+  // drive can still pay (it may have gone short: then the line under the price says so). One whose answer
+  // was lost may have gone out: the page says that instead, and offers no second payment while it may land.
   function driveFailed() {
     const e = P.driveError;
     const code = describe(e).code;
+    const unsure = code === 'maybe_sent';
     const why = ['client', 'internal'].includes(code) ? t('buy.drive_failed_d') : driveErrorText(e);
-    const again = P.funded && code !== 'not_for_sale';
+    const again = P.funded && code !== 'not_for_sale' && !unsure;
     return h('div', { class: 'alert', 'data-variant': 'destructive', role: 'alert', 'data-testid': 'pay-failed', 'data-code': code }, icon('triangle-alert'),
-      h('div', { class: 'alert-title' }, t('buy.drive_failed')),
+      h('div', { class: 'alert-title' }, t(unsure ? 'buy.drive_unsure' : 'buy.drive_failed')),
       h('div', { class: 'alert-description' }, h('p', {}, why),
         again ? button(t('viewer.retry'), { variant: 'outline', size: 'sm', glyph: 'rotate-ccw', testid: 'pay-retry', onclick: payDrive }) : null));
   }

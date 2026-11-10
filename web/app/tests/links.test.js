@@ -3,6 +3,7 @@ import { b64uDecode, b64uEncode, hex, unhex } from '../lib/b64.js';
 import { IntegrityError, randomBytes } from '../lib/crypto.js';
 import { linkFragment, linkProof, parseFragment, shareKeys, shareUrl, unwrapFileKey, wrapFileKey } from '../lib/share.js';
 import { checkPassword, linkPasswordSecret, newKdfParams, passwordOnlySecret } from '../lib/password.js';
+import { dropMark, dropMarkOk, dropUrl } from '../lib/links.js';
 import { bytesEq, eq, loadJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
@@ -79,5 +80,25 @@ export default [
     eq(shareUrl('https://mutis.sh', 'A'.repeat(22), '1abc'), `https://mutis.sh/s/${'A'.repeat(22)}#1abc`);
     eq(shareUrl('https://mutis.sh', 'A'.repeat(22), null), `https://mutis.sh/s/${'A'.repeat(22)}`);
     ok(!shareUrl('https://x', 'id', null).includes('#'));
+  }],
+  ['a {brand} link carries a mark of its drive\'s address: the same address passes, another is refused, a link without one is as before', () => {
+    const owner = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const view = Uint8Array.from({ length: 32 }, (_, i) => 255 - i);
+    const other = Uint8Array.from({ length: 32 }, (_, i) => i ^ 1);
+    const mark = dropMark(owner, view);
+    ok(/^[A-Za-z0-9_-]{16}$/.test(mark), mark);
+    eq(mark, dropMark(owner, view), 'the same keys, the same mark');
+    ok(mark !== dropMark(other, view) && mark !== dropMark(owner, other) && mark !== dropMark(view, owner), 'both keys, in their order');
+    const url = dropUrl('https://h.example', 'abcdefghjk', { ownerPk: owner, viewPk: view });
+    eq(url, `https://h.example/d/abcdefghjk#a=${mark}`);
+    eq(dropUrl('https://h.example', 'abcdefghjk', null), 'https://h.example/d/abcdefghjk', 'no keys loaded yet: the plain link');
+    const hash = new URL(url).hash;
+    ok(dropMarkOk(hash, owner, view), 'the address the link was made for');
+    ok(!dropMarkOk(hash, other, view), 'another owner key');
+    ok(!dropMarkOk(hash, owner, other), 'another view key');
+    for (const cut of ['#a=', `#a=${mark.slice(0, 15)}`, `#a=${mark}A`, `#a=${mark.toLowerCase() === mark ? mark.toUpperCase() : mark.toLowerCase()}`]) {
+      ok(!dropMarkOk(cut, owner, view), `a mark that isn't whole or isn't it: ${cut}`);
+    }
+    for (const none of ['', '#', undefined, null, '#share', '#b=x']) ok(dropMarkOk(none, other, other), `no mark, no refusal: ${none}`);
   }],
 ];

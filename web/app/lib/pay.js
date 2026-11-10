@@ -211,31 +211,49 @@ export async function payWithTestMoney(shareId, claim, opts = {}) {
 }
 
 // Pay from my drive: the drive's browser wallet pays the claim address with the claim id as its memo.
-// The link and the claim are checked again right before the payment is built. onSent(txId) once the
+// The link and the claim are checked again right before the payment is built, and the amount is the
+// price and nothing else: the claim must ask exactly what the link's page says now (and `priceUt`, what
+// the buyer page showed), with nothing negative counted, or nothing is signed ('conflict'). What is sent
+// is the price minus what already arrived, so never more than the price. onSent(txId) once the
 // indexer has the transaction: from then on the claim's progress tells, so a slow chain (the wallet's
 // timeout) resolves as {tx_id, late: true}. A failure before that, or a refused transaction, spent
-// nothing: the claim forgets the drive, so the page offers the payment again.
-export async function payFromDrive(identity, shareId, claim, { signal, onSent } = {}) {
+// nothing: the claim forgets the drive, so the page offers the payment again. A submit whose answer was
+// lost ('maybe_sent') may have gone out: the claim remembers when, and for as long as the wallet holds
+// those outputs back (PENDING_MS) this refuses to pay it again.
+const conflict = () => Object.assign(new Error('conflict'), { code: 'conflict' });
+
+export async function payFromDrive(identity, shareId, claim, { priceUt = null, signal, onSent } = {}) {
   const [info, now] = await Promise.all([payInfo(shareId), claimState(shareId, claim)]);
   if (info.state !== 'selling') throw Object.assign(new Error('not_for_sale'), { code: 'not_for_sale' });
-  if (!OPEN_CLAIM.has(now.status)) throw Object.assign(new Error('conflict'), { code: 'conflict' });
-  const owed = BigInt(claim.amountUt) - BigInt(now.received_ut ?? '0');
+  if (!OPEN_CLAIM.has(now.status)) throw conflict();
+  let owed;
+  try {
+    const price = BigInt(info.price_ut);
+    const got = BigInt(now.received_ut ?? '0');
+    const same = [claim.amountUt, now.amount_ut ?? claim.amountUt, priceUt ?? info.price_ut].every((v) => BigInt(v) === price);
+    if (!same || price <= 0n || got < 0n) throw conflict();
+    owed = price - got;
+  } catch {
+    throw conflict();   // a number that isn't one, too
+  }
   if (owed <= 0n) return null;
+  const { PENDING_MS, WalletError, send } = await import('./wallet.js');
+  const unsure = savedClaim(shareId)?.unsure ?? 0;
+  if (Date.now() - unsure < PENDING_MS) throw new WalletError('maybe_sent');
   keepClaim(shareId, { how: 'drive', tx: null });
-  const { send } = await import('./wallet.js');
   let sent = null;
   try {
     return await send(identity, {
       to: claim.address, amountUt: owed, memo: { Message: claim.claimId }, signal,
       onSubmit: (tx) => {
         sent = tx;
-        keepClaim(shareId, { tx });
+        keepClaim(shareId, { tx, unsure: null });
         onSent?.(tx);
       },
     });
   } catch (e) {
     if (sent && e?.code !== 'rejected') return { tx_id: sent, late: true };
-    keepClaim(shareId, { how: null, tx: null });
+    keepClaim(shareId, { how: null, tx: null, unsure: e?.code === 'maybe_sent' ? Date.now() : null });
     throw e;
   }
 }
@@ -271,24 +289,33 @@ export function claimRef(memo) {
 }
 
 // One sales output: 'ok' when our sales owner key derives the output's one-time key (it is ours to
-// spend), 'bad' when it doesn't, or when the output is already gone (this drive never spends sales
-// outputs yet, so only the payer could have), null when the indexer can't be asked now.
+// spend); 'bad' only on evidence: the indexer shows the output with another key (or none we could
+// derive), or proves it spent before this drive confirmed it; null when there is no verdict to give now
+// (the indexers can't be asked, one doesn't know the output yet and answers 404, or its answer can't be
+// read). A 'bad' ends the buyer's claim for good, so a missing answer is never one: the next pass asks again.
 export async function auditOutput(keys, output) {
   const { chainIx } = await import('./api-locker.js');
   const { oneTimeKey } = await import('./ootle.js');
+  const { substateDown } = await import('./substate.js');
   let sub;
   try {
     sub = await chainIx('GET', `substates/${output.utxoId}`);
-  } catch (e) {
-    return e instanceof ApiError && e.status === 404 ? 'bad' : null;
+  } catch {
+    return null;
   }
-  const out = (await substateValue(sub))?.Utxo?.output;
+  if (substateDown(sub)) return 'bad';
+  const utxo = (await substateValue(sub))?.Utxo;
+  if (!utxo || typeof utxo !== 'object') return null;
+  const out = utxo.output;
   const key = out?.auth?.Key;
   const nonce = out?.output?.public_nonce ?? output.nonce;
   if (typeof key !== 'string' || !/^[0-9a-f]{64}$/.test(key) || typeof nonce !== 'string') return 'bad';
   if (output.nonce && nonce !== output.nonce) return 'bad';
   return (await oneTimeKey(keys.ownerSk, keys.viewSk, nonce)) === key ? 'ok' : 'bad';
 }
+
+// Verdicts kept from before this rule (no `v`) may have come from a 404 alone: they are asked about again.
+const VERDICT = 2;
 
 // The seller's drive, each time it opens: find new sales outputs, check each one, tell our server.
 // headers: the drive's session. -> the stored state ({outputs: [{utxoId, value, claimId, check,
@@ -333,7 +360,11 @@ export async function checkSales(identity, cfg, headers, { onOutput, onProgress,
   }
   for (const o of state.outputs) {
     signal?.throwIfAborted();
-    if (o.check === null) o.check = await auditOutput(keys, o);
+    if (o.check === 'bad' && o.v !== VERDICT) o.check = null;
+    if (o.check === null) {
+      o.check = await auditOutput(keys, o);
+      if (o.check) o.v = VERDICT;
+    }
     const claimId = waits ? asked.get(o.utxoId) : o.claimId;
     // A claim our server still waits on: confirm (or void) it. 409 with an open claim status means the
     // payment isn't counted yet; ask again next time. Any other 409 or 404: nothing waits on it.

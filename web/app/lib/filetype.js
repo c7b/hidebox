@@ -30,13 +30,15 @@ const MAX_NAME = 200;
 // The name a file is saved under (download.js) and stored under: no path separators, no characters
 // Windows refuses, no control or format characters (so "invoice.b\u200Bat" is "invoice.bat" and an
 // RTL override can't disguise one), and no leading or trailing dots and spaces, which Windows ignores
-// ("setup.exe. " is an .exe).
+// ("setup.exe. " is an .exe). Spaces of every kind, and again after the cut to length.
+const EDGES = /^[.\s\p{Z}]+|[.\s\p{Z}]+$/gu;
+
 export function sanitizeFileName(name) {
   const cleaned = Array.from(String(name ?? ''))
     .filter((c) => !/[\\/:*?"<>|\p{Cc}\p{Cf}]/u.test(c))
     .join('')
-    .replace(/^[. ]+|[. ]+$/g, '');
-  return Array.from(cleaned).slice(0, MAX_NAME).join('') || 'mutis-file';
+    .replace(EDGES, '');
+  return Array.from(cleaned).slice(0, MAX_NAME).join('').replace(EDGES, '') || 'mutis-file';
 }
 
 // The extension of the file as saved.

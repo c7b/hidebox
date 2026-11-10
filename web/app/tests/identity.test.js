@@ -9,6 +9,7 @@ import { idbGet } from '../lib/idb.js';
 import { rememberLink } from '../lib/links.js';
 import { keepClaim, savedClaim } from '../lib/pay.js';
 import { rememberPurchase } from '../lib/purchases.js';
+import { addRecentDrop, localGet, localSet, recentDrops } from '../lib/store.js';
 import { bytesEq, deepEq, eq, loadJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
@@ -34,7 +35,7 @@ export default [
     eq(hex(id.dropManage(15)), row(v, 'dropManage(15)'));
     await rejects(async () => id.dropTag(16), RangeError);
   }],
-  ['forgetting the drive erases what it kept in this browser: its links, their secret words, purchases and claims', async () => {
+  ['forgetting the drive erases what it kept in this browser: its links, their secret words, purchases and claims, the recent list with its delete tokens and addresses, and the drive\'s id', async () => {
     const shim = !globalThis.localStorage;          // Node: a Map stands in for localStorage
     if (shim) {
       const m = new Map();
@@ -48,12 +49,20 @@ export default [
       await rememberLink(id, link, { url: `https://h.example/s/${link}#2${'s'.repeat(43)}`, word: 'secret word' });
       await rememberPurchase(id, paid, { url: `https://h.example/p/${paid}#5${'h'.repeat(43)}`, price_ut: '100000' });
       keepClaim(paid, { claimId: 'clm_aaaaaaaaaaaaaaaaaaaa', t: 'T' });
+      addRecentDrop({ share_id: link, item_id: 'C'.repeat(22), manage_token: 'a-token-that-can-delete-it', ct_hash: 'h', expires: Math.floor(Date.now() / 1000) + 3600, to: 'otl_esm_1someone' });
+      localSet('mutis.keyAsked', [id.id]);
+      localSet('mutis.grant', { id: id.id, day: '2026-11-09', judge: false, state: 'pending', at: 1 });
+      eq(recentDrops().length, 1, 'the recent list is kept while the drive is here');
       ok((await idbGet('identity', `links:${id.id}`))?.[link]?.word === 'secret word', 'kept while the drive is here');
       await forgetIdentity();
       eq(await loadIdentity(), null);
       eq(await idbGet('identity', `links:${id.id}`), null);
       eq(await idbGet('identity', `purchases:${id.id}`), null);
       eq(savedClaim(paid), null);
+      eq(recentDrops().length, 0, 'the recent list, with each entry\'s delete token and the address it went to');
+      eq(localGet('mutis.recent'), null);
+      eq(localGet('mutis.keyAsked'), null, 'the drive ids the key reminder kept');
+      eq(localGet('mutis.grant'), null, 'the drive id kept with the day\'s grant answer');
     } finally {
       if (shim) delete globalThis.localStorage;
     }

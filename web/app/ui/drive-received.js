@@ -8,7 +8,7 @@
 // is no copy on our server's side. When the chain can't be reached, what was found before stays.
 import { formatRelative, t } from '../lib/i18n.js';
 import { ApiError } from '../lib/api.js';
-import { FLAG_FOLDER } from '../lib/links.js';
+import { FLAG_FOLDER, dropUrl } from '../lib/links.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import { h, icon, init, openModal, toast } from './behaviors.js';
 import { alert, button, copyButton, errorAlert, formatBytes, formatTari, shareButton } from './drive-parts.js';
@@ -64,7 +64,8 @@ function dropCard(drive) {
         errors));
       return;
     }
-    const url = `${drive.cfg.origin || location.origin}/d/${active.drop_id}`;
+    // The link carries a mark of this drive's address once its Tari keys are loaded (lib/links.js dropUrl).
+    const url = dropUrl(location.origin, active.drop_id, identity.locker);
     const field = h('input', { class: 'input', readonly: true, value: url, 'aria-label': t('rec.drop'), 'data-testid': 'drop-link' });
     const copy = copyButton(t('share.copy'), { text: () => url, field, testid: 'drop-copy' });
     head.append(h('div', { class: 'card-action' },
@@ -75,6 +76,8 @@ function dropCard(drive) {
       errors));
   };
   draw();
+  // The Tari keys load after the first screen (ui/drive.js): the link then gains its mark.
+  if (!drive.identity.locker) document.addEventListener('drive:ootle', () => card.isConnected && draw(), { once: true });
   return card;
 }
 

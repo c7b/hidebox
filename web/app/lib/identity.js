@@ -142,11 +142,14 @@ export async function updateIdentity(identity, patch) {
 // Lock my drive, Forget this browser, Delete my drive: the key goes, and with it everything the drive kept
 // beside it, since a link's URL is its key (security-audit-1): the links it made (each URL with its secret,
 // and a secret word), what it bought (each pay URL with its half key), the inbox and sales state, and the
-// claim tokens of its purchases. Both stores hold only this browser's one drive.
+// claim tokens of its purchases. Both stores hold only this browser's one drive. What store.js kept beside
+// them goes too: the recent list (each entry's token can delete its file, and names the address it was
+// sent to), and the drive's id where the key reminder (ui/keyflow.js) and the day's grant answer
+// (lib/wallet.js) kept it.
 export async function forgetIdentity() {
   await idbClear('identity');
   await idbClear('inbox');
-  localSet('mutis.claims', null);
+  for (const key of ['mutis.claims', 'mutis.recent', 'mutis.keyAsked', 'mutis.grant']) localSet(key, null);
   hasDrive(false);
   setState('identity', null);
 }

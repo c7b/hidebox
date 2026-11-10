@@ -24,3 +24,5 @@ receiver*.json
 *.db
 .env.*
 *.tar
+# What an end-to-end run leaves here by default (tests/e2e/run.py --out): screenshots and reports of a live site.
+e2e-artifacts/

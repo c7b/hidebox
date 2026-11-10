@@ -4,7 +4,7 @@ import { concat, utf8 } from '../lib/bytes.js';
 import { IntegrityError, sha256 } from '../lib/crypto.js';
 import { ApiError } from '../lib/api.js';
 import { SealError, createLink, sealItem } from '../lib/seal.js';
-import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';
+import { accessFor, fetchContent, kindFits, linkStatus, openItem, peek } from '../lib/open.js';
 import { parseFragment } from '../lib/share.js';
 import { FAKE_ORIGIN, installFakeApi } from './fake-api.js';
 import { eq, ok, rejects } from './harness.js';
@@ -197,6 +197,133 @@ export default [
       eq(api.state.uploads.size, 0);
     } finally {
       globalThis.fetch = fakeFetch;
+      api.restore();
+    }
+  }],
+  ['a kind-2 link never derives a password-only secret: what the link carries decides the mode, not our server\'s answer', async () => {
+    const api = installFakeApi();
+    try {
+      const item = await sealItem({ text: 'word' }, anon());
+      const link = await createLink(item, { mode: 'link_password', password: 'lamp curtain', origin: FAKE_ORIGIN });
+      const frag = parseFragment(new URL(link.url).hash);
+      eq(frag.kind, 2);
+      const status = await linkStatus(link.shareId);
+      eq(status.mode, 'link_password');
+      const before = api.state.requests.length;
+      // our server (or whoever answers for it) says "password only": the typed word alone would make the token
+      await rejects(() => accessFor({ ...status, mode: 'password' }, { s0: frag.s, password: 'lamp curtain' }), IntegrityError);
+      await rejects(() => accessFor({ ...status, mode: 'link' }, { s0: frag.s }), IntegrityError);
+      await rejects(() => accessFor({ ...status, mode: 'link_password' }, { s: frag.s, password: 'lamp curtain' }), IntegrityError, 'a kind-1 secret is no s0');
+      await rejects(() => accessFor({ ...status, mode: 'password' }, { s: frag.s, password: 'lamp curtain' }), IntegrityError);
+      await rejects(() => accessFor({ ...status, mode: 'something-new' }, { s0: frag.s, password: 'lamp curtain' }), IntegrityError);
+      await rejects(() => accessFor({ ...status, mode: 'link' }, {}), TypeError, 'a key that isn\'t there is "incomplete", as before');
+      eq(api.state.requests.length, before, 'refused in this tab: nothing was sent');
+      eq(new TextDecoder().decode(concat(...(await receive(link.url, 'lamp curtain')).parts)), 'word', 'the real mode still opens');
+    } finally {
+      api.restore();
+    }
+    const s = new Uint8Array(32);
+    for (const [mode, secrets, fits] of [
+      ['link', { s }, 'ok'], ['link', {}, 'missing'], ['link', { s0: s }, 'mismatch'], ['link', { s, s0: s }, 'mismatch'],
+      ['link_password', { s0: s }, 'ok'], ['link_password', {}, 'missing'], ['link_password', { s }, 'mismatch'],
+      ['password', {}, 'ok'], ['password', { s }, 'mismatch'], ['password', { s0: s }, 'mismatch'], ['pay', { s }, 'mismatch'], [undefined, { s }, 'mismatch'],
+    ]) eq(kindFits(mode, secrets), fits, `${mode} with ${Object.keys(secrets)}`);
+  }],
+  ['a resume whose file changed starts a fresh upload with a new key: the first key never locks other bytes', async () => {
+    const api = installFakeApi();
+    const realFetch = globalThis.fetch;
+    let failures = 0;
+    const puts = [];
+    globalThis.fetch = async (input, init = {}) => {
+      if (init.method === 'PUT') puts.push(String(input).replace(/^.*\/uploads\//, ''));
+      if (failures < 3 && init.method === 'PUT' && String(input).endsWith('/chunks/1')) {
+        failures++; // every retry of chunk 1 fails, so the upload stops
+        throw new TypeError('network down');
+      }
+      return realFetch(input, init);
+    };
+    try {
+      const first = fileOf(9 * MiB, 'big.bin');
+      const opts = anon();
+      const e = await rejects(() => sealItem({ file: first, name: 'big.bin', type: '' }, opts), SealError);
+      eq(e.resume.fromIndex, 1);
+      const old = e.resume.upload.uploadId;
+      // the same name and size, other bytes from the second chunk on (the file was saved again in between)
+      const bytes = new Uint8Array(await first.arrayBuffer());
+      bytes.fill(0x5a, 5 * MiB, 5 * MiB + 4096);
+      const changed = new Blob([bytes]);
+      puts.length = 0;
+      const item = await sealItem({ file: changed, name: 'big.bin', type: '' }, { ...opts, resume: e.resume });
+      ok(hex(item.fk) !== hex(e.resume.fk), 'a new key');
+      ok(item.uploadId !== old, 'a new upload');
+      ok(!puts.some((p) => p.startsWith(old)), 'nothing made from the changed bytes went to the old upload');
+      ok(!api.state.uploads.has(old) || api.state.uploads.get(old).deleted, 'and the old upload was given back');
+      const link = await createLink(item, { origin: FAKE_ORIGIN });
+      eq(hex(await sha256(concat(...(await receive(link.url)).parts))), hex(await sha256(bytes)), 'what opens is the file as it is now');
+      // a file of another size is a new upload too, before a chunk is made
+      failures = 0;
+      const e2 = await rejects(() => sealItem({ file: first, name: 'big.bin', type: '' }, opts), SealError);
+      const longer = fileOf(13 * MiB, 'big.bin');
+      const item2 = await sealItem({ file: longer, name: 'big.bin', type: '' }, { ...opts, resume: e2.resume });
+      ok(hex(item2.fk) !== hex(e2.resume.fk) && item2.uploadId !== e2.resume.upload.uploadId);
+      eq(item2.chunkCount, 4);
+    } finally {
+      globalThis.fetch = realFetch;
+      api.restore();
+    }
+  }],
+  ['a complete that finds a chunk still arriving (409 upload_busy) is asked again, not failed; if it stays busy the resume only completes', async () => {
+    const api = installFakeApi();
+    const realFetch = globalThis.fetch;
+    let busy = 2;
+    let asked = 0;
+    let puts = 0;
+    globalThis.fetch = async (input, init = {}) => {
+      if (init.method === 'PUT') puts++;
+      if (init.method === 'POST' && String(input).endsWith('/complete')) {
+        asked++;
+        if (busy > 0) {
+          busy--;
+          return new Response(JSON.stringify({ error: { code: 'upload_busy', message: 'A chunk of this upload is still arriving.', retry_after: 0.01 } }),
+            { status: 409, headers: { 'Content-Type': 'application/json' } });
+        }
+      }
+      return realFetch(input, init);
+    };
+    try {
+      // busy twice (the copy of a chunk this tab gave up on is still being read), then done: the upload stands
+      const item = await sealItem({ text: 'still arriving' }, anon());
+      eq(asked, 3, 'complete asked until our server could finish');
+      const link = await createLink(item, { origin: FAKE_ORIGIN });
+      eq(new TextDecoder().decode(concat(...(await receive(link.url)).parts)), 'still arriving');
+      // busy for good: it stops with a resume, and the resume sends no chunk again, only the complete
+      busy = Infinity;
+      asked = 0;
+      const e = await rejects(() => sealItem({ text: 'never quiet' }, anon()), (x) => x instanceof SealError && x.code === 'upload_busy');
+      eq(asked, 6, 'six tries');
+      ok(e.resume && e.resume.fromIndex === 1 && e.resume.upload.uploadId, 'a resume past the last chunk');
+      busy = 0;
+      puts = 0;
+      const again = await sealItem({ text: 'never quiet' }, { ...anon(), resume: e.resume });
+      eq(puts, 0, 'no chunk goes again');
+      eq(again.uploadId, e.resume.upload.uploadId, 'the same upload');
+      eq(hex(again.fk), hex(e.resume.fk), 'and the same key');
+      const link2 = await createLink(again, { origin: FAKE_ORIGIN });
+      eq(new TextDecoder().decode(concat(...(await receive(link2.url)).parts)), 'never quiet');
+      // any other refusal of complete is still passed on at once
+      busy = 0;
+      asked = 0;
+      globalThis.fetch = async (input, init = {}) => {
+        if (init.method === 'POST' && String(input).endsWith('/complete')) {
+          asked++;
+          return new Response(JSON.stringify({ error: { code: 'missing_chunks', message: 'x' } }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+        }
+        return realFetch(input, init);
+      };
+      await rejects(() => sealItem({ text: 'x' }, anon()), (x) => x instanceof ApiError && x.code === 'missing_chunks');
+      eq(asked, 1, 'not asked again');
+    } finally {
+      globalThis.fetch = realFetch;
       api.restore();
     }
   }],

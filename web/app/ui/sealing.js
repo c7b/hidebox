@@ -112,6 +112,12 @@ export function progressView({ live, onStop }) {
   return { el, phase, exif, done: () => { stop.hidden = true; } };
 }
 
+// What to say when a photo or video went up as it was, or null.
+export function exifNotice(info) {
+  if (!info || info.removed || !info.notice) return null;
+  return t(info.notice === 'unparsed' ? 'exif.unparsed' : 'exif.video');
+}
+
 // "Location and camera data removed" · Keep original, or the notice for formats we can't clean.
 export function exifChip(info, onKeep) {
   if (info.removed) {
@@ -120,5 +126,5 @@ export function exifChip(info, onKeep) {
       onKeep && h('button', { type: 'button', class: 'a-linkbtn', onclick: onKeep }, t('exif.keep')));
   }
   return h('p', { class: 'md-chip md-chip--note', 'data-testid': 'exif-chip', 'data-removed': 'false' },
-    icon('warning', 'a-icon'), h('span', {}, t(info.notice === 'unparsed' ? 'exif.unparsed' : 'exif.video')));
+    icon('warning', 'a-icon'), h('span', {}, exifNotice(info)));
 }

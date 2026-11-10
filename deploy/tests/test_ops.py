@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import sqlite3
 import stat
 import subprocess
@@ -375,6 +376,35 @@ class RunWalletdTest(unittest.TestCase):
             self.assertNotIn("bad", res.stderr)
 
 
+
+class ActivationSurvivesItsCallersDirectoryTest(unittest.TestCase):
+    """2026-11-09: activate-release.sh ran `find` as mutis from the caller's directory (a home directory mutis
+    can't enter). find ended with an error, `set -e` ended the activation, and the chain worker, stopped for the
+    migration a line earlier, stayed stopped."""
+
+    def test_the_backup_chmod_runs_from_the_root_and_cannot_end_the_activation(self):
+        script = (Path(__file__).resolve().parents[1] / "scripts" / "activate-release.sh").read_text(encoding="utf-8")
+        lines = [line for line in script.splitlines() if "as_mutis find" in line]
+        self.assertEqual(len(lines), 1, lines)
+        self.assertRegex(lines[0], r"^\s*\(cd / && as_mutis find ")
+        after = script.split(lines[0], 1)[1].lstrip().splitlines()[0]
+        self.assertTrue(after.startswith("|| echo "), after)
+
+    def test_find_as_another_user_fails_from_a_directory_it_cannot_enter(self):
+        # The behaviour the fix is about, shown without root: find must be able to return to where it started.
+        import os, subprocess, tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            closed = Path(tmp, "closed"); closed.mkdir()
+            target = Path(tmp, "open"); target.mkdir(); (target / "f").write_text("x")
+            script = f'cd "{closed}" && chmod 000 "{closed}" && find "{target}" -maxdepth 1 -type f >/dev/null 2>&1; echo $?'
+            try:
+                code = subprocess.run(["bash", "-c", script], capture_output=True, text=True).stdout.strip()
+            finally:
+                os.chmod(closed, 0o700)
+        if os.geteuid() == 0:
+            self.skipTest("root can enter any directory")
+        self.assertNotEqual(code, "0")
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -452,6 +482,34 @@ class SshHostTest(unittest.TestCase):
         for name, line in options:
             self.assertIn("default=SSH_HOST", line, name)
         self.assertIn("host=${MUTIS_SSH_HOST:-hidebox}", (ROOT / "deploy" / "ootle" / "publish-template.sh").read_text())
+
+
+class RootFollowsNoPlantedNameTest(unittest.TestCase):
+    """Security pass of 2026-11-09, the same class as security-audit-1's status writers: root must not write, copy,
+    chown, chmod or run a file at a name a service user (or the build user) could have put there first."""
+
+    def test_privilege_check_makes_its_probes_as_mutis(self):
+        check = (SCRIPTS / "privilege-check.sh").read_text()
+        self.assertIn("probe_dir=$(as mutis mktemp -d /srv/mutis/data/.privilege-check-XXXXXXXXXX", check)
+        for line in check.splitlines():
+            if "$probe" in line and not line.lstrip().startswith("#"):
+                root_writes = re.search(r"(^|[;&|]\s*)(printf|cp|chown|chmod|install|touch|ln)\b", line.strip())
+                self.assertFalse(root_writes and "as mutis" not in line, line)
+        self.assertNotIn("chown mutis:mutis", check)
+        self.assertNotRegex(check, r"/srv/mutis/data/\.privilege-check-probe-\$\$")
+
+    def test_activate_release_tightens_its_backups_as_mutis_and_only_files(self):
+        lines = [x.strip() for x in (SCRIPTS / "activate-release.sh").read_text().splitlines() if "pre-migrate-" in x]
+        self.assertEqual(len(lines), 1, lines)
+        self.assertTrue(lines[0].startswith("(cd / && as_mutis find "), lines[0])
+        self.assertIn(" -type f ", lines[0])
+
+    def test_no_e2e_step_runs_a_build_users_file_as_root(self):
+        """E-31 saved its search script under the build user's directory and ran it with sudo."""
+        for path in sorted((ROOT / "tests" / "e2e").glob("*.py")) + [ROOT / "tools" / "film.py"]:
+            for number, line in enumerate(path.read_text().splitlines(), 1):
+                if re.search(r"sudo (python3|bash|sh)\b", line):
+                    self.assertNotRegex(line, r"REMOTE_DIR|/home/build", f"{path.name}:{number}")
 
 
 @unittest.skipUnless((ROOT / ".git").exists(), "publish-template.sh runs from a git checkout (the deploy gate has none)")

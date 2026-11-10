@@ -140,7 +140,7 @@ export async function openSettings(drive) {
     addressSlot.replaceChildren(
       h('p', { class: 'mono small address-full', 'data-testid': 'locker-address' }, identity.locker.address),
       h('div', { class: 'row' }, copy),
-      h('div', { class: 'qr-wrap' }, qrFigure(`${cfg.origin}/#to=${identity.locker.address}`, { label: t('drive.set.qr_label'), caption: t('drive.set.qr'), testid: 'locker-qr' })));
+      h('div', { class: 'qr-wrap' }, qrFigure(`${location.origin}/#to=${identity.locker.address}`, { label: t('drive.set.qr_label'), caption: t('drive.set.qr'), testid: 'locker-qr' })));
     idSlot.replaceChildren(
       safetyGrid(identity.safetyCode, 'locker-safety'),
       h('p', { class: 'small muted' }, t('drive.set.safety_d', { count: identity.safetyCode.emoji.length })));

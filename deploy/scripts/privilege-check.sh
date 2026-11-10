@@ -76,12 +76,15 @@ check "drive (group mutis) can write the database" ok as drive test -w /srv/muti
 data_flags() { local o; o=$(findmnt -n -o OPTIONS --target /srv/mutis/data); [[ ,$o, == *,noexec,* && ,$o, == *,nosuid,* && ,$o, == *,nodev,* ]]; }
 check "/srv/mutis/data is mounted noexec,nosuid,nodev" ok data_flags
 check "srv-mutis-data.mount is enabled (it comes back at boot)" ok systemctl is-enabled --quiet srv-mutis-data.mount
-probe=/srv/mutis/data/.privilege-check-probe-$$
-trap 'rm -f "$probe.sh" "$probe.elf"' EXIT
+# mutis makes the probes itself, in a directory it names at random: root writes, copies, chowns and chmods nothing
+# in a directory a service user can write, where a link planted at a name it could guess (this script's process
+# id) was followed as root (security pass, 2026-11-09).
+probe_dir=$(as mutis mktemp -d /srv/mutis/data/.privilege-check-XXXXXXXXXX 2>/dev/null) || probe_dir=
+probe=${probe_dir:-/nonexistent}/probe
+trap '[ -z "$probe_dir" ] || as mutis rm -rf -- "$probe_dir"' EXIT
 loader=$(ls /lib64/ld-linux-*.so.* /lib/ld-linux-*.so.* 2>/dev/null | head -n 1)
-printf '#!/bin/sh\nexit 0\n' > "$probe.sh"
-cp /usr/bin/true "$probe.elf"
-chown mutis:mutis "$probe.sh" "$probe.elf" && chmod 0700 "$probe.sh" "$probe.elf"
+make_probes='umask 077; printf "#!/bin/sh\nexit 0\n" > "$1.sh" && cp /usr/bin/true "$1.elf" && chmod 0700 "$1.sh" "$1.elf"'
+[ -z "$probe_dir" ] || as mutis sh -c "$make_probes" sh "$probe"
 check "control: the same program runs as mutis from /usr/bin" ok as mutis /usr/bin/true
 if [ -n "$loader" ]; then
   check "control: the dynamic loader runs a program as mutis from /usr/bin" ok as mutis "$loader" /usr/bin/true
@@ -89,12 +92,13 @@ else
   echo "FAIL no dynamic loader found for the loader check"; failures=$((failures + 1))
 fi
 # (test -x can't confirm them: access(X_OK) itself says no on a noexec mount.)
-[ "$(stat -c %a "$probe.sh" "$probe.elf" 2>/dev/null)" = $'700\n700' ] ||
+[ "$(as mutis stat -c %a "$probe.sh" "$probe.elf" 2>/dev/null)" = $'700\n700' ] ||
   { echo "FAIL could not make the probe files in /srv/mutis/data"; failures=$((failures + 1)); }
 check "mutis cannot run a script stored in /srv/mutis/data (mode 0700)" denied as mutis "$probe.sh"
 check "mutis cannot run a program stored in /srv/mutis/data (mode 0700)" denied as mutis "$probe.elf"
 check "mutis cannot run it through the dynamic loader either" denied as mutis "$loader" "$probe.elf"
-rm -f "$probe.sh" "$probe.elf"
+[ -z "$probe_dir" ] || as mutis rm -rf -- "$probe_dir"
+probe_dir=
 check "drive (group mutis) cannot add a file to /srv/mutis/data itself (only to db/)" denied as drive touch /srv/mutis/data/.privilege-check-probe
 rm -f /srv/mutis/data/.privilege-check-probe
 # The status directory Caddy serves is written by mutis and drive (group mutis), and root writes releases.json

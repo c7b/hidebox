@@ -26,7 +26,7 @@ class PayloadError(Exception):
 
 def memo_regex(origins: list[str]) -> re.Pattern:
     alternatives = "|".join(re.escape(o) for o in origins)
-    return re.compile(rf"^(?:{alternatives})/t#[34][A-Za-z0-9_-]{{167}}$")
+    return re.compile(rf"^(?:{alternatives})/t#[34][A-Za-z0-9_-]{{167}}\Z")
 
 
 def courier_memo(origin: str, kind: int, blob: bytes) -> str:
@@ -51,7 +51,7 @@ def cost(kind: str, payload: dict, sponsor_grant_ut: int) -> int:
     return sponsor_grant_ut
 
 
-_DROP_ID = re.compile(r"^[0-9a-hjkmnp-tv-z]{10}$")
+_DROP_ID = re.compile(r"^[0-9a-hjkmnp-tv-z]{10}\Z")
 
 
 def end_drop_deliveries(conn: sqlite3.Connection, drop_id: str, error: str, now: int) -> None:

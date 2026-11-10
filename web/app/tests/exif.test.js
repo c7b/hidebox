@@ -136,4 +136,39 @@ export default [
     const movie = new File([utf8('not really a movie')], 'clip.mov', { type: 'video/quicktime' });
     eq((await stripMetadata(movie)).notice, 'video');
   }],
+  ['JFXX and JFIF thumbnails go: APP0 stays only as the bare 14-byte JFIF header', async () => {
+    const orig = stripBytes(await loadBytes('fixtures/exif/jpeg-gps.jpg')).bytes;   // the picture alone: no trailer, nothing else to remove
+    const seg = (marker, data) => concat(Uint8Array.of(0xff, marker, (data.length + 2) >> 8, (data.length + 2) & 255), data);
+    const jfif = (x, y, extra = []) => concat(utf8('JFIF\0'), Uint8Array.of(1, 2, 0, 0, 1, 0, 1, x, y, ...extra));
+    const thumb = utf8('THUMBNAIL-OF-THE-ORIGINAL-FRAME');
+    // the same picture with its APPn segments replaced by the ones under test (everything after them is kept)
+    const rest = (() => {
+      let p = 2;
+      while (orig[p] === 0xff && ((orig[p + 1] >= 0xe0 && orig[p + 1] <= 0xef) || orig[p + 1] === 0xfe)) p += 2 + ((orig[p + 2] << 8) | orig[p + 3]);
+      return orig.subarray(p);
+    })();
+    const jpeg = (...segs) => concat(orig.subarray(0, 2), ...segs, rest);
+    const app0 = (bytes) => jpegSegments(bytes).filter((s) => s.marker === 0xe0);
+
+    const bare = stripBytes(jpeg(seg(0xe0, jfif(0, 0))));
+    eq(bare.removed, false, 'a bare JFIF header is all there was: untouched');
+    eq(app0(bare.bytes).length, 1);
+
+    for (const [what, segs] of [
+      ['a JFIF header with a thumbnail', [seg(0xe0, jfif(1, 1, [9, 9, 9, ...thumb]))]],
+      ['a JFXX extension (a thumbnail of its own)', [seg(0xe0, jfif(0, 0)), seg(0xe0, concat(utf8('JFXX\0'), Uint8Array.of(0x10), thumb))]],
+      ['an APP0 under another name', [seg(0xe0, jfif(0, 0)), seg(0xe0, concat(utf8('CIFF\0'), thumb))]],
+      ['bytes after a header that says it has no thumbnail', [seg(0xe0, jfif(0, 0, [...thumb]))]],
+    ]) {
+      const before = jpeg(...segs);
+      ok(contains(before, thumb), `${what}: the fixture carries it`);
+      const { bytes, removed, notice } = stripBytes(before);
+      ok(removed, what);
+      eq(notice, null, what);
+      ok(!contains(bytes, thumb), `${what}: gone`);
+      ok(app0(bytes).every((s) => s.data.length === 14 && s.data[12] === 0 && s.data[13] === 0), `${what}: only a bare header is left`);
+      eq(sniffImage(bytes), 'jpeg', `${what}: still a JPEG`);
+      if (!isNode) eq((await decodes(bytes, 'image/jpeg')).w > 0, true, `${what}: still decodes`);
+    }
+  }],
 ];

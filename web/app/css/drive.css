@@ -142,6 +142,7 @@
 .upload-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); }
 .upload-row .progress { grid-column: 2 / 4; height: 0.25rem; }
 .upload-row .stage { font-size: var(--text-xs); color: var(--muted-foreground); }
+.upload-row .note { grid-column: 2 / 4; font-size: var(--text-xs); color: var(--muted-foreground); }   /* a photo that went up with its metadata */
 .upload-row[data-done] .stage { color: var(--success); }
 .upload-row[data-done] .progress { visibility: hidden; }   /* done says so in words; the full bar adds nothing */
 .upload-row[data-busy] .progress::after { content: ""; position: absolute; inset: 0; width: 30%; border-radius: inherit; background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary) 60%, transparent), transparent); animation: up-sweep 1.3s ease-in-out infinite; }

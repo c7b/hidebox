@@ -158,7 +158,10 @@ class Api:
             return 200, {"challenge": base64.urlsafe_b64encode(challenge).decode().rstrip("="), "difficulty": 4,
                          "expires_at": int(time.time()) + 300}
         if path == "/api/v1/abuse":
-            if not re.search(r"/(s|d)/", str(body.get("link", ""))):
+            # /s/, /p/ and /d/ links, as the server takes them; a /p/ link whose id is all O stands for a server
+            # from before it took paid links (it answers `invalid`), so the form's second try as /s/<id> is seen.
+            link = str(body.get("link", ""))
+            if not re.search(r"/(s|p|d)/", link) or "/p/" + "O" * 22 in link:
                 return 422, {"error": {"code": "invalid", "message": "Paste a mutis link.", "details": {"field": "link"}}}
             return 201, {"report_id": "rep_abcdefghijklmnop"}
         return 404, {"error": {"code": "not_found", "message": "Not found."}}

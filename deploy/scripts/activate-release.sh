@@ -78,7 +78,12 @@ if [ -x "$dir/server/bin/mutis-admin" ]; then
     [ "$chain_was" = active ] && systemctl start mutis-chain
     die "mutis-admin migrate failed; the previous release stays live"
   fi
-  find /srv/mutis/data/backup -maxdepth 1 -name 'pre-migrate-*' ! -perm 0600 -exec chmod 0600 {} +
+  # As mutis, which made them, and regular files only: root follows no name a service user could have planted there.
+  # From /: find returns to the directory it started in, and mutis can't enter the caller's (deploy.sh runs this from
+  # a home directory, where find then ends with an error). A backup's mode is not worth a chain worker left stopped,
+  # so a failure here is a notice and the activation goes on.
+  (cd / && as_mutis find /srv/mutis/data/backup -maxdepth 1 -type f -name 'pre-migrate-*' ! -perm 0600 -exec chmod 0600 {} +) \
+    || echo "notice: the pre-migrate backups' mode could not be tightened"
 fi
 
 ln -sfn "releases/$id" "$app/current.tmp"

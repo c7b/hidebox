@@ -7,7 +7,7 @@ BEGIN IMMEDIATE transaction, so concurrent uploads can never overshoot a limit (
 import os
 import struct
 
-from .. import auth, codec, db, items, lanes, quota, seallog, tree
+from .. import auth, codec, db, items, lanes, quota, seallog, storage, tree
 from ..http_util import ApiError, Response, get_b64, get_enum, get_int, invalid, json_response
 from .drops import active_drop
 
@@ -238,15 +238,19 @@ def put_chunk(ctx, upload_id: str, index: str):
         claimed = codec.unb64u(ctx.req.header("X-Mutis-Chunk-SHA256") or "", 32)
     except ValueError:
         raise ApiError(400, "bad_request", "Send X-Mutis-Chunk-SHA256.") from None
-    digest = ctx.app.blobs.write_at(row["id"], idx * (quota.CHUNK + quota.TAG), ctx.req.body_slices(expected))
-    if not codec.equal(digest, claimed):
-        # The bytes on disk changed, so an earlier good copy of this chunk no longer counts.
+    with ctx.app.blobs.one_writer(row["id"], idx):     # the bytes and their hash row, one copy of a chunk at a time
+        try:
+            digest = ctx.app.blobs.write_at(row["id"], idx * (quota.CHUNK + quota.TAG), ctx.req.body_slices(expected))
+        except storage.Completed:         # completed between the check above and the write: nothing was written
+            raise ApiError(409, "already_complete", "This upload is already complete.") from None
+        if not codec.equal(digest, claimed):
+            # The bytes on disk changed, so an earlier good copy of this chunk no longer counts.
+            with db.tx(ctx.db):
+                ctx.db.execute("DELETE FROM chunks WHERE item_id = ? AND idx = ?", (row["id"], idx))
+            raise ApiError(422, "hash_mismatch", "The chunk doesn't match its hash.")
         with db.tx(ctx.db):
-            ctx.db.execute("DELETE FROM chunks WHERE item_id = ? AND idx = ?", (row["id"], idx))
-        raise ApiError(422, "hash_mismatch", "The chunk doesn't match its hash.")
-    with db.tx(ctx.db):
-        ctx.db.execute("INSERT INTO chunks(item_id, idx, sha256) VALUES (?, ?, ?) "
-                       "ON CONFLICT(item_id, idx) DO UPDATE SET sha256 = excluded.sha256", (row["id"], idx, digest))
+            ctx.db.execute("INSERT INTO chunks(item_id, idx, sha256) VALUES (?, ?, ?) "
+                           "ON CONFLICT(item_id, idx) DO UPDATE SET sha256 = excluded.sha256", (row["id"], idx, digest))
     return Response(204)
 
 
@@ -259,7 +263,11 @@ def complete(ctx, upload_id: str):
     if missing:
         raise ApiError(409, "missing_chunks", "Some chunks haven't arrived.", details={"missing": missing[:100]})
     ct_hash = codec.sha256(*(h["sha256"] for h in hashes))
-    ctx.app.blobs.finalize(row["id"])
+    try:
+        ctx.app.blobs.finalize(row["id"])
+    except storage.Busy:                  # a chunk is still arriving: its bytes would change what we hash and seal
+        raise ApiError(409, "upload_busy", "A chunk of this upload is still arriving. Finish it, then try again.",
+                       retry_after=1) from None
     with db.tx(ctx.db):
         ctx.db.execute("UPDATE items SET state = 'ready', ct_hash = ? WHERE id = ? AND state = 'uploading'",
                        (ct_hash, row["id"]))

@@ -1427,15 +1427,25 @@ JS_STRING = re.compile(r"""(['"])((?:/|\./|\.\./)[^'"\s]*)\1""")
 TEMPLATE = re.compile(r"`([^`]*)`")
 
 
+def scratch(prefix: str) -> Path:
+    """A temporary directory for a build of this tree, removed when the run ends (each one is tens of MB, and a
+    run that left them behind filled the temp directory of the machine the suites share)."""
+    import atexit
+    import shutil
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix=prefix))
+    atexit.register(shutil.rmtree, tmp, ignore_errors=True)
+    return tmp
+
+
 def built():
     """(dist, the manifest's assets map, the build's error or None), built once."""
     if not _BUILT:
         import sys
-        import tempfile
         if str(WEB.parent / "tools") not in sys.path:
             sys.path.insert(0, str(WEB.parent / "tools"))
         import build
-        tmp = Path(tempfile.mkdtemp(prefix="mutis-site-fp-"))
+        tmp = scratch("mutis-site-fp-")
         cfg = build.load_config(build.DEFAULT_CONFIG)
         state = build.source_state(["0" * 40, "site-test", "1760000000"])
         try:
