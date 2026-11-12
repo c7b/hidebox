@@ -93,9 +93,11 @@ def header_problems(headers: dict, csp: str, extra: dict) -> list[str]:
     return problems
 
 
-def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | None = None) -> list[tuple[str, list[str]]]:
+def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | None = None,
+        staging: bool = False) -> list[tuple[str, list[str]]]:
     """`plain_http`: where the HTTP→HTTPS redirect answers, when not on port 80 of the origin's host
-    (the local stack); the certificate is then not checked."""
+    (the local stack); the certificate is then not checked. `staging`: a rehearsal deployment (/config staging),
+    whose every route says noindex, nofollow, so that no search engine indexes a copy of the site."""
     results = []
     error = (headers_spec.SITE_CSP, headers_spec.ERROR_CACHE)
     for path, (csp, extra) in headers_spec.ROUTES.items():
@@ -108,7 +110,9 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         else:
             problems = [] if status == 200 else [f"status {status}"]
             problems += header_problems(headers, csp, extra | headers_spec.REVALIDATE)
-            if "x-robots-tag" not in extra and "x-robots-tag" in headers:
+            if staging and headers.get("x-robots-tag") != "noindex, nofollow":
+                problems.append(f"x-robots-tag {headers.get('x-robots-tag')!r} on a staging deployment")
+            elif not staging and "x-robots-tag" not in extra and "x-robots-tag" in headers:
                 problems.append(f"x-robots-tag {headers['x-robots-tag']!r} on a route that may be indexed")
         results.append((f"GET {path} → {status}", problems))
 
@@ -169,7 +173,7 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
             problems = [] if status == 200 and headers.get("content-type") == ctype else \
                 [f"status {status}, content-type {headers.get('content-type')!r}"]
             problems += header_problems(headers, headers_spec.SITE_CSP, headers_spec.CRAWL_CACHE)
-            if "x-robots-tag" in headers:
+            if "x-robots-tag" in headers and not staging:     # staging: noindex everywhere, robots.txt still readable
                 problems.append("x-robots-tag on a file crawlers must read")
             if path == "/robots.txt" and f"Sitemap: {origin}/sitemap.xml".encode() not in body:
                 problems.append("no Sitemap line naming this origin")
@@ -180,7 +184,7 @@ def run(origin: str, holding: bool, redirect_from: list[str], plain_http: str | 
         problems = [] if status == 200 and headers.get("content-type") == "application/wasm" else \
             [f"status {status}, content-type {headers.get('content-type')!r}"]
         results.append((f"HEAD {WASM} is application/wasm", problems))
-        results += fingerprinted(origin)
+        results += fingerprinted(origin, staging)
 
     oversized = b"\0" * (6 << 20)
     status, headers, data = fetch(origin + "/api/v1/uploads/AAAAAAAAAAAAAAAAAAAAAA/chunks/0", "PUT", body=oversized)
@@ -254,7 +258,7 @@ def encoded(origin: str, path: str) -> list[str]:
     return problems
 
 
-def fingerprinted(origin: str) -> list[tuple[str, list[str]]]:
+def fingerprinted(origin: str, staging: bool = False) -> list[tuple[str, list[str]]]:
     """headers_spec.HASHED, HASHED_MISSING and PRECOMPRESSED_*: the hashed names from the live manifest."""
     results = []
     status, _, body = fetch(origin + "/.well-known/mutis-manifest.json", limit=None)
@@ -274,7 +278,7 @@ def fingerprinted(origin: str) -> list[tuple[str, list[str]]]:
             [f"status {status}, content-type {headers.get('content-type')!r} (the plain name's: {plain_headers.get('content-type')!r})"]
         problems += header_problems(headers, headers_spec.APP_CSP if app else headers_spec.SITE_CSP,
                                     headers_spec.IMMUTABLE | (headers_spec.NOINDEX if app else {}))
-        if not app and "x-robots-tag" in headers:
+        if not app and "x-robots-tag" in headers and not (staging and headers["x-robots-tag"] == "noindex, nofollow"):
             problems.append(f"x-robots-tag {headers['x-robots-tag']!r} on a site file")
         results.append((f"HEAD /{hashed}: {headers.get('content-type')}, kept a year, immutable, the "
                         f"{'app' if app else 'site'} policy", problems))

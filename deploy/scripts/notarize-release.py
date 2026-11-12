@@ -9,6 +9,8 @@ SHA-256 of the served /.well-known/mutis-manifest.json (through `mutis-admin not
 only service user walletd lets in) and appends {release, manifest_sha256, tx_id, at} to
 /srv/mutis/status/releases.json, which Caddy serves at /releases.json for /security to link.
 A release that is already listed is not notarized twice. With SealLog off it does nothing.
+For an instance beside production (deploy/scripts/instance.py), as root:
+  sudo env MUTIS_INSTANCE=<name> python3 -I /srv/mutis-<name>/app/current/deploy/scripts/notarize-release.py
 Python standard library only.
 """
 import contextlib
@@ -22,9 +24,13 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-CONFIG = Path("/etc/mutis/mutis.toml")
-CURRENT = Path("/srv/mutis/app/current")
-LEDGER = Path("/srv/mutis/status/releases.json")
+sys.path.insert(0, str(Path(__file__).resolve().parent))     # -I leaves the script's own directory out
+import instance  # noqa: E402
+
+LAYOUT = instance.layout(os.environ.get("MUTIS_INSTANCE"))
+CONFIG = Path(LAYOUT.config)
+CURRENT = Path(LAYOUT.srv) / "app" / "current"
+LEDGER = Path(LAYOUT.srv) / "status" / "releases.json"
 
 
 def publish(path: Path, text: str) -> None:
@@ -55,7 +61,7 @@ def main() -> int:
     if any(r["release"] == release and r["manifest_sha256"] == digest for r in ledger):
         print(f"notarize: {release} is already notarized")
         return 0
-    out = subprocess.run(["runuser", "-u", "drive", "--", "env", f"MUTIS_CONFIG={CONFIG}", "python3", "-I",
+    out = subprocess.run(["runuser", "-u", LAYOUT.drive_user, "--", "env", f"MUTIS_CONFIG={CONFIG}", "python3", "-I",
                           str(CURRENT / "server" / "bin" / "mutis-admin"), "notarize", digest],
                          capture_output=True, text=True, cwd="/tmp")
     try:

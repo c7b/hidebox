@@ -32,8 +32,8 @@ INVOICE_TTL_S = 3600
 UNDERPAID_GRACE_DAYS = 7
 INDEXER_FAILOVER_AFTER = 3
 UNKNOWN_ALERT_AFTER = 3          # hourly reconciles that couldn't reach a verdict before the alert is critical
-_INVOICE = re.compile(r"^inv_[a-z2-7]{20}$")
-_CLAIM = re.compile(r"^clm_[a-z2-7]{20}$")
+_INVOICE = re.compile(r"^inv_[a-z2-7]{20}\Z")
+_CLAIM = re.compile(r"^clm_[a-z2-7]{20}\Z")
 
 
 def pay_ref(memo) -> str | None:

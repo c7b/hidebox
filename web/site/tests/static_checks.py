@@ -23,7 +23,8 @@ SITE, SHARED = WEB / "site", WEB / "shared"
 PAGES = sorted((SITE / "pages").glob("*.html"))
 PARTIALS = sorted((SHARED / "partials").glob("*.html"))
 JS = sorted((SITE / "js").glob("*.js")) + sorted(SHARED.glob("*.js"))
-PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI", "BRAND"}
+PLACEHOLDERS = {"ORIGIN", "GIT_SHA", "VERSION", "BUILD_DATE", "NETWORK", "SECURITY_DROP_URL", "REPO_URL", "SRI", "BRAND",
+                "TESTNET_ORIGIN", "TESTNET_HOST"}
 DATA_FILES = {".json", ".png", ".ico", ".webp", ".avif", ".woff2", ".bin", ".webmanifest", ".pyc", ".webm", ".mp4"}
 NOT_SOURCE = {"OFL.txt", "NOTICE", "llms.txt", "llms-full.txt"}
 
@@ -211,10 +212,11 @@ def check_config_numbers():
 
 
 def check_variables():
-    """Every [data-v] and [data-when] names something stats.js knows; data-v lives inside [data-needs]."""
+    """Every [data-v] and [data-when] names something stats.js knows (or a condition the build fixes for good,
+    variants.FIXED, which it resolves and prunes); data-v lives inside [data-needs]."""
     src = (SITE / "js" / "stats.js").read_text()
     variables = set(re.findall(r"^  ([a-z0-9_]+): \['(?:config|stats)'", src, re.M))
-    conditions = set(re.findall(r"^  ([a-z_]+): \(c\) =>", src, re.M))
+    conditions = set(re.findall(r"^  ([a-z_]+): \(c\) =>", src, re.M)) | set(variants.FIXED)
     problems = []
     for f in PAGES + PARTIALS:
         text = f.read_text()
@@ -354,7 +356,7 @@ def check_seo():
     # The app's pages (a shared link, a paid link, a drop link, the task pages, the drive): noindex, and a preview card
     # with no address in it (no og:url, no canonical: one page serves every link, and a link's id is no business of a
     # preview). Each kind of link has its own card (viral-1).
-    cards = {"view": "{{ORIGIN}}/og-s.png", "pay": "{{ORIGIN}}/og-p.png", "drop": "{{ORIGIN}}/og-d.png",
+    cards = {"view": "{{ORIGIN}}/og-s.png", "pay": "{{ORIGIN}}/og-p.png", "drop": "{{ORIGIN}}/og-d.png", "shop": "{{ORIGIN}}/og-shop.png",
              "app": "{{ORIGIN}}/og.png", "drive": "{{ORIGIN}}/og.png"}
     for page, card in cards.items():
         f = WEB / "app" / f"{page}.html"
@@ -450,7 +452,7 @@ def check_ghost():
 
 # The head lines a link card is made of (viral-1): the title, the description and the og:* and twitter:* tags.
 CARD_LINE = re.compile(r'^<(title>|meta (name="description"|property="og:|name="twitter:))')
-TWINS = (("pay.html", "view.html"), ("drop.html", "app.html"))
+TWINS = (("pay.html", "view.html"), ("drop.html", "app.html"), ("shop.html", "view.html"))
 
 
 def check_link_cards():
@@ -464,7 +466,7 @@ def check_link_cards():
         if strip(a) != strip(b):
             diff = [x for x in strip(a) if x not in strip(b)] + [x for x in strip(b) if x not in strip(a)]
             problems.append(f"app/{twin} differs from app/{base} outside its card: {diff[:3]}")
-    for page, card in (("view", "og-s"), ("pay", "og-p"), ("drop", "og-d")):
+    for page, card in (("view", "og-s"), ("pay", "og-p"), ("drop", "og-d"), ("shop", "og-shop")):
         if not (SITE / "og" / f"{card}.html").is_file():
             problems.append(f"og/{card}.html: the source of app/{page}.html's card is missing")
     return problems
@@ -577,7 +579,7 @@ def check_static():
     s = SITE / "static"
     problems = []
     robots = (s / "robots.txt").read_text()
-    for path in ("/s/", "/p/", "/drive", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
+    for path in ("/s/", "/p/", "/shop/", "/drive", "/t$", "/api/", "/locker", "/inbox", "/send", "/watch", "/upgrade", "/verify"):
         if f"Disallow: {path}\n" not in robots:
             problems.append(f"robots.txt: no Disallow: {path}")
     for path in ("/t", "/s/abc", "/p/abc", "/drive", "/drive/received", "/api/v1/stats/wall", "/api/v1/canary", "/locker", "/verify/tx/1"):
@@ -626,6 +628,7 @@ def check_static():
         problems.append("manifest: no maskable icon (/icon-maskable-512.png, 512x512, purpose maskable)")
     for name, size, limit in (("og.png", (1200, 630), 150 * 1024), ("og-s.png", (1200, 630), 150 * 1024),
                               ("og-p.png", (1200, 630), 150 * 1024), ("og-d.png", (1200, 630), 150 * 1024),
+                              ("og-shop.png", (1200, 630), 150 * 1024), ("og-p-mainnet.png", (1200, 630), 150 * 1024),
                               ("icon-192.png", (192, 192), None), ("icon-512.png", (512, 512), None),
                               ("icon-maskable-512.png", (512, 512), None),
                               ("apple-touch-icon.png", (180, 180), None), ("favicon-32.png", (32, 32), None)):
@@ -772,9 +775,11 @@ def indexable_paths():
 
 # The server's own defaults (server/mutis/config.py): what the HTML must show before /config is read.
 SERVER_DEFAULTS = {"send_mode": "relay", "proof": "wallet", "seallog": "off", "kept": "on", "snapshots": "weekly",
-                   "security_drop": "off", "pay_to_open": "off", "folders": "off"}
+                   "security_drop": "off", "pay_to_open": "off", "folders": "off",
+                   "network": "esmeralda", "staging": "off", "judge": "on"}
 DIRECT = {"send_mode": "direct", "proof": "proven", "seallog": "on", "kept": "on", "snapshots": "off",
-          "security_drop": "on", "pay_to_open": "on", "folders": "on"}
+          "security_drop": "on", "pay_to_open": "on", "folders": "on",
+          "network": "esmeralda", "staging": "off", "judge": "on"}
 
 
 def check_build_variants():
@@ -1427,15 +1432,25 @@ JS_STRING = re.compile(r"""(['"])((?:/|\./|\.\./)[^'"\s]*)\1""")
 TEMPLATE = re.compile(r"`([^`]*)`")
 
 
+def scratch(prefix: str) -> Path:
+    """A temporary directory for a build of this tree, removed when the run ends (each one is tens of MB, and a
+    run that left them behind filled the temp directory of the machine the suites share)."""
+    import atexit
+    import shutil
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix=prefix))
+    atexit.register(shutil.rmtree, tmp, ignore_errors=True)
+    return tmp
+
+
 def built():
     """(dist, the manifest's assets map, the build's error or None), built once."""
     if not _BUILT:
         import sys
-        import tempfile
         if str(WEB.parent / "tools") not in sys.path:
             sys.path.insert(0, str(WEB.parent / "tools"))
         import build
-        tmp = Path(tempfile.mkdtemp(prefix="mutis-site-fp-"))
+        tmp = scratch("mutis-site-fp-")
         cfg = build.load_config(build.DEFAULT_CONFIG)
         state = build.source_state(["0" * 40, "site-test", "1760000000"])
         try:
@@ -1512,6 +1527,148 @@ def check_fingerprints():
     return problems
 
 
+# The mainnet instance (TASK: network as a config choice). A mainnet build says TARI, never the testnet's words, in
+# anything a reader sees: the site's pages and the app pages that carry its header and footer (visible text, and the
+# metas and attributes a link preview or a screen reader reads), llms.txt and llms-full.txt, and every app string as
+# t() resolves it there (key@mainnet first, tTARI read as TARI). A staging build (the mainnet instance's rehearsal on
+# Esmeralda) shows its banner on every page without JavaScript; a default build shows none.
+TESTNET_WORDS = re.compile(r"test money|worth nothing|no monetary value|play money|testnet|otl_esm_|\btTARI\b", re.I)
+# Sentences a mainnet page may keep: they name the testnet as the contest entry's network, or as history.
+MAINNET_KEEPS = ("The contest entry runs on the Esmeralda testnet, at",
+                 "In September a wallet bug on the testnet showed deposits that never happened",
+                 "We tested that fix on a fake chain, never on the public testnet.")
+# App strings for screens a mainnet deployment never shows: the server refuses demo payments, sponsor grants and
+# judge passes there (server/mutis/config.py), and direct sends spend a sponsor grant.
+OFF_ON_MAINNET = {"buy.test", "buy.test_d", "buy.note.demo", "buy.chain", "rec.test_money", "drive.sto.pay_test",
+                  "upgrade.pay_demo", "upgrade.short_pending", "upgrade.short_refused", "pay.demo_note",
+                  "error.judge_spent", "send.path.relay", "claim.c9_direct", "staging.banner"}
+
+
+class Seen(HTMLParser):
+    """What a reader sees of a built page: text outside [hidden] elements, scripts and styles, and the attributes
+    people read (alt, title, aria-label, placeholder, the description and og:/twitter: metas)."""
+    VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr",
+            "use", "path"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts, self.stack, self.banner = [], [], 0
+
+    def hidden(self):
+        return any(h for _, h in self.stack)
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "meta":
+            if a.get("name") == "description" or str(a.get("property", a.get("name", ""))).startswith(("og:", "twitter:")):
+                self.parts.append(a.get("content") or "")
+            return
+        if not self.hidden() and "hidden" not in a:
+            self.parts += [a[k] for k in ("alt", "title", "aria-label", "placeholder") if a.get(k)]
+            if "staging-banner" in (a.get("class") or "").split():
+                self.banner += 1
+        if tag not in self.VOID:
+            self.stack.append((tag, "hidden" in a or tag in ("script", "style", "template")))
+
+    def handle_startendtag(self, tag, attrs):   # <use …/>: a start tag that never had children
+        self.handle_starttag(tag, attrs)
+        if tag not in self.VOID:
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        if any(t == tag for t, _ in self.stack):
+            while self.stack.pop()[0] != tag:
+                pass
+
+    def handle_data(self, data):
+        if not self.hidden():
+            self.parts.append(data)
+
+
+def seen(path: Path) -> Seen:
+    doc = Seen()
+    doc.feed(path.read_text())
+    return doc
+
+
+def testnet_words(text: str, where: str) -> list[str]:
+    text = " ".join(text.split())
+    for keep in MAINNET_KEEPS:
+        text = text.replace(keep, " ")
+    return [f"{where}: {text[max(0, m.start() - 50):m.end() + 50]!r}" for m in TESTNET_WORDS.finditer(text)]
+
+
+def network_build(**over):
+    """A build of this tree with the example config and `over` (a dict of top-level keys and features), into a
+    temporary directory: (dist, None) or (None, the build's error)."""
+    import sys
+    if str(WEB.parent / "tools") not in sys.path:
+        sys.path.insert(0, str(WEB.parent / "tools"))
+    import build
+    cfg = build.load_config(build.DEFAULT_CONFIG)
+    features = over.pop("features", {})
+    cfg.update(over)
+    if cfg.get("staging") or cfg.get("network") == "mainnet":
+        cfg.setdefault("testnet_origin", "https://entry.example")   # the testnet deployment the copy names
+    cfg["features"] = {**cfg.get("features", {}), **features}
+    tmp = scratch("mutis-site-net-")
+    state = build.source_state(["0" * 40, "site-test", "1760000000"])
+    try:
+        build.build(WEB, tmp / "dist", tmp / "release", cfg, build.settings(cfg, "https://mainnet.example"), state, node="")
+    except build.BuildError as e:
+        return None, str(e)
+    return tmp / "dist", None
+
+
+def shown_pages(dist: Path) -> list[Path]:
+    """The built site pages, and the app pages that carry the site's header and footer."""
+    shells = [dist / "app" / f"{n}.html" for n in ("app", "view", "drop", "pay")]
+    return sorted(p for p in dist.rglob("*.html") if not p.relative_to(dist).as_posix().startswith(variants.NOT_PAGES)) \
+        + [p for p in shells if p.is_file()]
+
+
+def check_network_builds():
+    """A mainnet build reads TARI and carries none of the testnet's words; its pages say real TARI, a beta, small
+    amounts; every app string resolved for the mainnet is clean or belongs to a screen it never shows; a staging
+    build shows its banner on every page, a default build on none."""
+    problems = []
+    off = {"demo_pay": False, "sponsor": False, "judge_passes": False}
+    dist, error = network_build(network="mainnet", staging=False, features=dict(off))
+    if error:
+        problems.append(f"mainnet build: tools/build.py: {error}")
+    else:
+        for page in shown_pages(dist):
+            where = page.relative_to(dist).as_posix()
+            doc = seen(page)
+            text = " ".join(doc.parts)
+            problems += testnet_words(text, f"mainnet {where}")
+            if doc.banner:
+                problems.append(f"mainnet {where}: shows the staging banner")
+            if 'class="status-line"' in page.read_text() and "this is real TARI" not in text:
+                problems.append(f"mainnet {where}: its footer doesn't say real TARI, a beta, keep amounts small")
+        for name in ("llms.txt", "llms-full.txt"):
+            problems += testnet_words((dist / name).read_text(), f"mainnet {name}")
+    strings = json.loads((WEB / "app" / "i18n" / "en.json").read_text())
+    for key, value in strings.items():
+        if "@" in key or key in OFF_ON_MAINNET:
+            continue
+        value = strings.get(f"{key}@mainnet", value)
+        text = " ".join(_strings(value)).replace("{coin}", "TARI")
+        problems += testnet_words(re.sub(r"\btTARI\b", "TARI", text), f"en.json {key} on the mainnet")
+    problems += [f"en.json {k}: OFF_ON_MAINNET names a key en.json doesn't have" for k in OFF_ON_MAINNET if k not in strings]
+    for over, want in (({"network": "esmeralda", "staging": True, "features": dict(off)}, True), ({}, False)):
+        dist, error = network_build(**over)
+        label = "staging" if want else "default"
+        if error:
+            problems.append(f"{label} build: tools/build.py: {error}")
+            continue
+        for page in shown_pages(dist):
+            if bool(seen(page).banner) != want:
+                problems.append(f"{label} {page.relative_to(dist).as_posix()}: the staging banner is "
+                                f"{'missing' if want else 'shown'}")
+    return problems
+
+
 CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_sinks),
           ("markup: CSP-safe, includes, placeholders, JSON-LD", check_markup), ("banned words", check_banned_words),
           ("no typed /config numbers (P-20)", check_config_numbers), ("variables and conditions", check_variables),
@@ -1533,4 +1690,5 @@ CHECKS = [("SPDX headers", check_spdx), ("no HTML/script sinks in JS", check_js_
           ("V-02: the home's stills are sized and lazy, the hero's first; the open box is the favicon and the header's mark; no video", check_home_stills),
           ("404: the owner's words, one way home, the art sized from media/404, the three eggs", check_not_found),
           ("tagline-2: the hero's three lines, the tagline said once, quoted by the previews, the card and the manifest", check_tagline),
-          ("fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time", check_fingerprints)]
+          ("fingerprints: a build names every asset the pages ask for by its content, the same each time; nothing built at run time", check_fingerprints),
+          ("networks: a mainnet build says TARI and none of the testnet's words; a staging build shows its banner", check_network_builds)]

@@ -123,6 +123,24 @@ class Admin(unittest.TestCase):
             self.run_admin("takedown", "item", "--note", "x", "--", "-" + "Q" * 21)
         self.assertEqual(gone.exception.code, 1)              # "not found", not an argument error
 
+    def test_a_paid_links_own_address_can_be_reported(self):
+        """A paid link's page is /p/<id>; the report form took only /s/ and /d/, so the address a buyer was given
+        answered "Paste a mutis link"."""
+        s = self.s
+        link = s.share(s.upload(1000))
+        status, _, body = s.request("POST", "/api/v1/abuse", {"link": f"{ORIGIN}/p/{link['share_id']}#5abc",
+                                                              "category": "malware", "details": "x",
+                                                              "pow": s.solve("report")})
+        self.assertEqual(status, 201, body)
+        row = s.conn.execute("SELECT share_id, item_id, included_key FROM abuse_reports WHERE id = ?",
+                             (body["report_id"],)).fetchone()
+        self.assertEqual((row["share_id"], row["included_key"]), (link["share_id"], 1))
+        self.assertIsNotNone(row["item_id"])
+        status, _, body = s.request("POST", "/api/v1/abuse", {"link": f"{ORIGIN}/x/{link['share_id']}",
+                                                              "category": "malware", "details": "x",
+                                                              "pow": s.solve("report")})
+        self.assertEqual((status, body["error"]["details"]["field"]), (422, "link"))
+
     def test_reports_show_a_reporters_text_inert(self):
         """security-audit-1: an anonymous report can't add rows to `mutis-admin reports` or send controls to
         the operator's terminal; the contact field is one line."""

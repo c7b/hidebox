@@ -35,7 +35,7 @@ export async function showEvidence(box) {
   const ev = await loadEvidence();
   if (!ev || !box) return;
   const set = (name, text) => { box.querySelector(`[data-ev="${name}"]`).textContent = text; };
-  set('network', `${networkName(ev.network)} testnet`);
+  set('network', ev.network === 'mainnet' ? 'Ootle mainnet' : `${networkName(ev.network)} testnet`);
   set('version', ev.ootle_version ?? '');
   set('wasm', ev.wasm_sha256 ?? T.unreported); // null until the running verifier reports its hash
   txItems(box.querySelector('[data-ev="deliveries"]'), ev.deliveries);

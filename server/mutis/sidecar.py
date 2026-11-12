@@ -17,7 +17,7 @@ from . import logsafe
 TIMEOUT_S = 30
 MAX_LINE = 8 * 1024 * 1024
 # Errors about the sidecar process rather than the request: the process restarts, the caller retries later.
-TRANSPORT_ERRORS = frozenset({"timeout", "exited", "line_too_long", "protocol", "wasm_hash_mismatch"})
+TRANSPORT_ERRORS = frozenset({"timeout", "exited", "line_too_long", "protocol", "wasm_hash_mismatch", "wrong_network"})
 
 
 class SidecarError(Exception):
@@ -27,8 +27,8 @@ class SidecarError(Exception):
 
 
 class Sidecar:
-    def __init__(self, argv: list[str], api_url: str, expected_wasm_sha256: str):
-        self.argv, self.api_url, self.expected = argv, api_url, expected_wasm_sha256
+    def __init__(self, argv: list[str], api_url: str, expected_wasm_sha256: str, network: str = "esmeralda"):
+        self.argv, self.api_url, self.expected, self.network = argv, api_url, expected_wasm_sha256, network
         self._proc: subprocess.Popen | None = None
         self._buf = b""
         self._next = 0
@@ -37,13 +37,18 @@ class Sidecar:
 
     def _start(self) -> None:
         self._proc = subprocess.Popen(self.argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None,
-                                      env={"MUTIS_API": self.api_url}, close_fds=True)
+                                      env={"MUTIS_API": self.api_url, "MUTIS_NETWORK": self.network}, close_fds=True)
         self._buf = b""
         hello = self._exchange({"cmd": "hello"})
         if hello.get("wasm_sha256") != self.expected:
             self.stop()
             logsafe.event("chain.sidecar_hash_mismatch", "critical")
             raise SidecarError("wasm_hash_mismatch")
+        # Addresses and stealth keys depend on the network: a sidecar that doesn't say it runs on ours proves nothing.
+        if hello.get("network", "esmeralda") != self.network:
+            self.stop()
+            logsafe.event("chain.sidecar_wrong_network", "critical")
+            raise SidecarError("wrong_network")
         self.info = {"version": hello.get("version"), "wasm_sha256": hello.get("wasm_sha256"),
                      "node": hello.get("node")}
 
@@ -92,7 +97,7 @@ class Sidecar:
                     self._start()
                 return self._exchange({"cmd": cmd, **fields})
             except SidecarError as e:
-                if e.code in TRANSPORT_ERRORS - {"protocol", "wasm_hash_mismatch"}:
+                if e.code in TRANSPORT_ERRORS - {"protocol", "wasm_hash_mismatch", "wrong_network"}:
                     self.stop()
                     logsafe.event("chain.sidecar_restart", "warning")
                 raise

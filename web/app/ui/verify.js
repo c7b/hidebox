@@ -9,6 +9,7 @@ import { h } from './lines.js';
 import { formatDate, t } from '../lib/i18n.js';
 import { b64uDecode, hex, unhex } from '../lib/b64.js';
 import { config, exitReceipt } from '../lib/api.js';
+import { network } from '../lib/network.js';
 import { recentDrops } from '../lib/store.js';
 import { icon } from './core.js';
 import { formatTari, shortAddress } from './marks.js';
@@ -20,7 +21,10 @@ import { setTitle } from './shell.js';
 const short = (id) => (id.length > 24 ? `${id.slice(0, 14)}…${id.slice(-8)}` : id);
 // Tari's indexer as a page a person can read, for the Esmeralda testnet: its transaction page shows the decision
 // (Commit), the epoch and the fee, and falls back to the committed receipt once validators drop the full result.
+// On another network that page would show nothing of this transaction, so the sentence names the indexer
+// without a link there (the button under it asks this deployment's own indexers, lib/ootle.js checkWithIndexer).
 const INDEXER_PAGE = 'https://indexer.esme.tari.com';
+const indexerPage = () => (network()?.name === 'esmeralda' ? INDEXER_PAGE : null);
 const TX_TRIES = 7;           // about 30 seconds of asking before "the indexers don't know it"
 const TX_RETRY_MS = 5000;
 
@@ -85,8 +89,10 @@ export async function renderTx(main, { txId }) {
   // Each fact reads as one line (owner-5), so these two paragraphs skip lines.js's break after each sentence.
   const mark = '\u0000';
   const [before, after] = t('chain.proves', { indexer: mark }).split(mark);
-  const indexer = plain('a', { href: `${INDEXER_PAGE}/transactions/${txId}`, target: '_blank', rel: 'noopener', referrerpolicy: 'no-referrer',
-    'data-testid': 'tx-indexer' }, t('chain.proves_link'));
+  const page = indexerPage();
+  const indexer = page
+    ? plain('a', { href: `${page}/transactions/${txId}`, target: '_blank', rel: 'noopener', referrerpolicy: 'no-referrer', 'data-testid': 'tx-indexer' }, t('chain.proves_link'))
+    : plain('span', { 'data-testid': 'tx-indexer' }, t('chain.proves_link'));
   const facts = h('div', { class: 'a-tx-facts' },
     ok ? h('section', { class: 'a-tx-fact' }, h('h2', { class: 'a-tx-fact-h' }, glyph('circle-check'), h('span', {}, t('chain.proves_h'))),
       plain('p', { 'data-testid': 'tx-proves' }, before, indexer, after)) : null,

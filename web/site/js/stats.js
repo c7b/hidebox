@@ -103,6 +103,7 @@ const CONDITIONS = {
   folders: (c) => (c.features?.folders ? 'on' : 'off'),
   sponsor: (c) => (c.features?.sponsor ? 'on' : 'off'),
   test_pay: (c) => (c.features?.pay_to_open && c.features?.demo_pay ? 'on' : 'off'),
+  judge: (c) => (c.features?.judge_passes === false ? 'off' : 'on'),
 };
 
 function value(name, sources, locale) {

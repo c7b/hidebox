@@ -10,17 +10,23 @@ const plurals = new Intl.PluralRules(LOCALE);
 const numberFormat = (n) => new Intl.NumberFormat(LOCALE).format(n);
 
 let dict = {};
+let fix = (d) => d;   // lib/network.js, on the mainnet
+
+export function useFix(f) {
+  fix = f;
+  dict = f(dict);
+}
 
 export async function loadStrings() {
   const res = await fetch(new URL('../i18n/en.json', import.meta.url), { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error('no strings');
-  dict = await res.json();
+  dict = fix(await res.json());
 }
 
 // Installs a dictionary fetched elsewhere: the home widget's first, smaller one
 // (i18n/widget-en.json, ui/more.js), and the tests'.
 export function useStrings(strings) {
-  dict = strings;
+  dict = fix(strings);
 }
 
 export function t(key, params = {}) {

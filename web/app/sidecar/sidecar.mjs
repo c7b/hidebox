@@ -6,7 +6,7 @@
 //
 //   node --experimental-permission --allow-fs-read=<dir> --disallow-code-generation-from-strings sidecar.mjs
 import { createInterface } from 'node:readline';
-import { loadLib, readSidecarJson } from './loader.mjs';
+import { appRoot, loadLib, readSidecarJson } from './loader.mjs';
 
 const VERSION = 'mutis-sidecar/1';
 const MAX_LINE = 8 * 1024 * 1024;
@@ -17,6 +17,18 @@ try {
   lib = await loadLib();
 } catch {
   process.stderr.write('mutis-sidecar: could not load ootle-wasm (hash mismatch or missing files)\n');
+  process.exit(2);
+}
+// The network every address and stealth key here is for: the chain worker passes its config's (MUTIS_NETWORK) and
+// checks the answer to `hello`. Unset, Esmeralda; anything unknown stops the sidecar.
+let net;
+let networks;
+try {
+  const { NETWORKS, useNetwork } = await import(new URL('lib/network.js', appRoot).href);
+  networks = NETWORKS;
+  net = useNetwork(process.env.MUTIS_NETWORK || 'esmeralda');
+} catch {
+  process.stderr.write('mutis-sidecar: unknown MUTIS_NETWORK\n');
   process.exit(2);
 }
 const { ootle, api, apiLocker, b64, courier, crypto, seal } = lib;
@@ -58,9 +70,10 @@ async function selftest() {
   // A fresh pair made here: the genuine output opens, the swapped one doesn't.
   const k = await ootle.newRandomKeys();
   const w = ootle.bindings();
-  const mk = (amount) => JSON.parse(w.createStealthOutputWitness(ootle.NETWORK_BYTE, k.ownerPk, k.viewPk, amount, ootle.TARI_RESOURCE, null, null, null, 0n));
+  const mk = (amount) => JSON.parse(w.createStealthOutputWitness(ootle.networkByte(), k.ownerPk, k.viewPk, amount, ootle.TARI_RESOURCE, null, null, null, 0n));
   const st = w.generateStealthOutputsStatement(JSON.stringify([mk(1000n), mk(5000n)]), 0n, new Uint8Array(32));
-  const [a, b] = JSON.parse(st.statement_json).outputs.map((o) => o.output);
+  const made = JSON.parse(st.statement_json).outputs;
+  const [a, b] = made.map((o) => o.output);
   st.free();
   const id = (o) => `utxo_${'01'.repeat(32)}_${o.commitment}`;
   const genuine = await ootle.tryDecryptUtxo(k.viewSk, { id: id(b), nonce: b.sender_public_nonce, enc: b.encrypted_data });
@@ -68,16 +81,20 @@ async function selftest() {
   cases.push({ name: 'fresh genuine output opens', passed: genuine?.value === 5000n });
   cases.push({ name: 'fresh swapped payload rejected', passed: swapped === null });
   // R1: a view key proves the amount, not who can spend it. Both outputs below open with our view key
-  // and prove their value; only the genuine one carries the one-time key our owner key derives.
+  // and prove their value; only the genuine one carries the one-time key our owner key derives. The pair is a
+  // known answer made on Esmeralda, and the network's byte is part of the key (c = H(network || v·R)), so it is
+  // derived with Esmeralda's byte whatever network this sidecar runs on: the same answer is the wrong one for
+  // another network, and said "not ours" there. The fresh output after it is checked on this sidecar's own network.
   const own = v.ownership;
   const ownerSk = unhex(own.owner_sk);
   for (const [name, row, ours] of [['genuine', own.genuine, true], ['not ours', own.not_ours, false]]) {
     const d = await ootle.tryDecryptUtxo(unhex(own.view_sk), row);
     cases.push({ name: `ownership KAT: ${name} output opens with our view key`, passed: d !== null && d.value.toString() === row.value_ut });
-    cases.push({ name: `ownership KAT: ${name} output ${ours ? 'is' : 'is not'} spendable by our owner key`, passed: (oneTimeKeyHex(ownerSk, unhex(own.view_sk), unhex(row.nonce)) === row.auth_key) === ours });
+    cases.push({ name: `ownership KAT: ${name} output ${ours ? 'is' : 'is not'} spendable by our owner key`, passed: (oneTimeKeyHex(ownerSk, unhex(own.view_sk), unhex(row.nonce), networks.esmeralda.byte) === row.auth_key) === ours });
   }
+  cases.push({ name: `fresh output for our owner key is ours to spend on ${net.name}`, passed: oneTimeKeyHex(k.ownerSk, k.viewSk, unhex(b.sender_public_nonce)) === made[1].auth.Key });
   const other = await ootle.newRandomKeys();
-  const fake = JSON.parse(w.createStealthOutputWitness(ootle.NETWORK_BYTE, other.ownerPk, k.viewPk, 7000n, ootle.TARI_RESOURCE, null, null, null, 0n));
+  const fake = JSON.parse(w.createStealthOutputWitness(ootle.networkByte(), other.ownerPk, k.viewPk, 7000n, ootle.TARI_RESOURCE, null, null, null, 0n));
   const st2 = w.generateStealthOutputsStatement(JSON.stringify([fake]), 0n, new Uint8Array(32));
   const [f] = JSON.parse(st2.statement_json).outputs;
   st2.free();
@@ -103,9 +120,9 @@ async function selftest() {
 // R1: the one-time public key (c + k)·G of a stealth output, from the receiver's owner key, its view key
 // (Ootle 0.48+: c = H(network || v·R)) and the output's public nonce. It equals the output's `auth.Key` only
 // when that owner key can spend it.
-function oneTimeKeyHex(ownerSk, viewSk, nonce) {
+function oneTimeKeyHex(ownerSk, viewSk, nonce, byte = ootle.networkByte()) {
   const w = ootle.bindings();
-  const secret = w.stealthDhSecret(ootle.NETWORK_BYTE, ownerSk, viewSk, nonce);
+  const secret = w.stealthDhSecret(byte, ownerSk, viewSk, nonce);
   try {
     return hex(w.publicKeyFromSecretKey(secret));
   } finally {
@@ -238,7 +255,7 @@ async function openWatchKey({ blob, owner_sk, view_sk, address }) {
 }
 
 const handlers = {
-  hello: async () => ({ version: VERSION, wasm_sha256: lib.wasmSha256, node: process.version, permission: Boolean(process.permission) }),
+  hello: async () => ({ version: VERSION, wasm_sha256: lib.wasmSha256, node: process.version, permission: Boolean(process.permission), network: net.name }),
   newKeys: async () => keysHex(await ootle.newRandomKeys()),
   decoyAddress: async () => ({ address: (await ootle.newRandomKeys()).address }),
   scan: async (r) => {

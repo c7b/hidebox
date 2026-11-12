@@ -35,6 +35,7 @@ ROUTES = {
     "/s/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),
     "/t": (APP_CSP, NOINDEX),
     "/p/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),  # the buyer page of a paid link
+    "/shop/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),  # a drive's shop (docs/shop.md)
     "/d/7kq2x9mdh4": (APP_CSP, NOINDEX),
     "/send": (APP_CSP, NOINDEX),
     "/watch": (APP_CSP, NOINDEX),
@@ -48,6 +49,7 @@ ROUTES = {
     "/app/view.html": (APP_CSP, NOINDEX),
     "/app/pay.html": (APP_CSP, NOINDEX),                # a paid link's and a drop link's pages, with their own cards
     "/app/drop.html": (APP_CSP, NOINDEX),
+    "/app/shop.html": (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
     "/judges": (SITE_CSP, {}),
@@ -93,6 +95,7 @@ INDEXABLE = ("/", "/how", "/made", "/judges", "/fine-print")
 # What other products show beside a link (docs/review/seo-1.md): the share cards and the icons, kept a day (their
 # names carry no version) and loadable from any origin (a preview drawn from the page loads og:image cross-origin).
 CARDS = {"/og.png": "image/png", "/og-s.png": "image/png", "/og-p.png": "image/png", "/og-d.png": "image/png",
+         "/og-shop.png": "image/png", "/og-p-mainnet.png": "image/png",
          "/favicon.ico": "image/vnd.microsoft.icon",
          "/favicon.svg": "image/svg+xml", "/favicon-32.png": "image/png", "/apple-touch-icon.png": "image/png",
          "/icon-192.png": "image/png", "/icon-512.png": "image/png", "/icon-maskable-512.png": "image/png"}

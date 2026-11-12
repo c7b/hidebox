@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Entry of drive.html: the drive (16-drive-design §2), Google Drive's layout in shadcn's clothes.
 // Routes: /drive (My drive), /drive/folders/<id>, /drive/shared, /drive/activity, /drive/trash,
-// /drive/storage, /drive/received, /drive/earnings (where pay to open is on); moving between them keeps the page (and the open session).
+// /drive/storage, /drive/received, /drive/earnings (where pay to open is on), /drive/shop (where the shop is on too); moving between them
+// keeps the page (and the open session).
 // The drive opens without WebAssembly: the list needs only the vault key (WebCrypto); the Tari keys load
 // after the first render, for the address and the actions that need Tari (16-drive-architecture §6.4).
+import '../lib/network.js';   // the network this page's build names (its <meta name="mutis-network">), from the first line
 import { loadStrings, t, BRAND } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { setJudgePass } from '../lib/pow.js';
@@ -20,6 +22,7 @@ const VIEWS = {
   trash: () => import('./drive-list.js').then((m) => m.renderTrash),
   activity: () => import('./activity.js').then((m) => m.renderFeed),
   earnings: () => import('./drive-earnings.js').then((m) => m.render),
+  shop: () => import('./drive-shop.js').then((m) => m.render),
   storage: () => import('./drive-storage.js').then((m) => m.render),
   received: () => import('./drive-received.js').then((m) => m.render),
 };
@@ -31,7 +34,7 @@ export function parseRoute(pathname) {
   if (!m[1]) return { view: 'mine', folderId: null };
   const folder = /^folders\/([A-Za-z0-9_-]{22})$/.exec(m[1]);
   if (folder) return { view: 'mine', folderId: folder[1] };
-  return m[1] in VIEWS && m[1] !== 'mine' ? { view: m[1] } : { view: 'missing' };
+  return Object.hasOwn(VIEWS, m[1]) && m[1] !== 'mine' ? { view: m[1] } : { view: 'missing' };   // its own keys only: /drive/constructor is no view
 }
 
 const app = document.getElementById('app');
@@ -102,6 +105,7 @@ class Drive {
   async render() {
     this.route = parseRoute(location.pathname);
     if (this.route.view === 'earnings' && !this.cfg.features?.pay_to_open) this.route = { view: 'missing' };
+    if (this.route.view === 'shop' && !(this.cfg.features?.shop && this.cfg.features?.pay_to_open)) this.route = { view: 'missing' };
     const { view } = this.route;
     this.shell.setView(view === 'missing' ? null : view);
     this.shell.setNew(false);
@@ -229,6 +233,7 @@ try {
 }
 document.title = BRAND;
 const cfg = await config();
+if (cfg.staging) import('./notice.js').then((m) => m.stagingBanner(cfg)).catch(() => null);
 const q = new URLSearchParams(location.search);
 const { loadIdentity } = await import('../lib/identity.js');
 const stored = await loadIdentity({ lazy: true }).catch(() => null);

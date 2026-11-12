@@ -12,6 +12,7 @@ import unittest
 from harness import GiB, Disk, Stack
 from mutis import auth, codec, config, db, packs, payments, quota
 from mutis.fake_chain import fake_keys
+from mutis.handlers import auth as auth_handlers
 
 MiB = 1 << 20
 POOL = 19 * GiB // 4                 # 4.75 GiB: cap 1.9, judges 0.57, public 1.33
@@ -297,6 +298,30 @@ class FreeSpaceBrakes(Base):
             "identity_id": codec.b64u(b"z" * 16), "auth_verifier": codec.b64u(b"y" * 32),
             "pow": self.s.solve("register", "2001:db8:aa:99::1")}, ip="2001:db8:aa:99::1")
         self.assertEqual((status, body["error"]["code"]), (429, "drives_limited"))
+
+    def test_requests_that_did_no_work_dont_use_up_the_days_new_drives(self):
+        """Security pass of 2026-11-09: the deployment's daily cap on new drives was charged before the proof of work
+        and never given back, so requests without one, from a few networks, could use it up for everyone."""
+        cap, auth_handlers.REGISTRATIONS_PER_DAY = auth_handlers.REGISTRATIONS_PER_DAY, 3
+        try:
+            for i in range(12):                                 # no proof of work, and a name taken: no drive made
+                status, _, _ = self.s.request("POST", "/api/v1/auth/register", {
+                    "identity_id": codec.b64u(b"x" * 16), "auth_verifier": codec.b64u(b"y" * 32)},
+                    ip=f"2001:db8:{i:x}::1")
+                self.assertEqual(status, 428)
+            taken = self.s.register(ip="2001:db8:bb::1")
+            status, _, body = self.s.request("POST", "/api/v1/auth/register", {
+                "identity_id": taken["id"], "auth_verifier": codec.b64u(b"y" * 32),
+                "pow": self.s.solve("register", "2001:db8:bc::1")}, ip="2001:db8:bc::1")
+            self.assertEqual((status, body["error"]["code"]), (409, "identity_exists"))   # given back
+            for i in range(2):
+                self.s.register(ip=f"2001:db8:cc:{i:x}::1")     # the day's second and third drives
+            status, _, body = self.s.request("POST", "/api/v1/auth/register", {
+                "identity_id": codec.b64u(b"w" * 16), "auth_verifier": codec.b64u(b"y" * 32),
+                "pow": self.s.solve("register", "2001:db8:dd::1")}, ip="2001:db8:dd::1")
+            self.assertEqual((status, body["error"]["code"]), (429, "rate_limited"))      # the cap itself still holds
+        finally:
+            auth_handlers.REGISTRATIONS_PER_DAY = cap
 
     def drive(self, ip: str = NET, judge: dict | None = None) -> dict:
         d = self.s.register(ip=ip)

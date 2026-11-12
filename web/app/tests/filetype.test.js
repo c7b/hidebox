@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { SNIFF_BYTES, checkRisky, extensionOf, isActiveDocumentName, isArchiveName, isExecutableName, programSignature, sniffImage } from '../lib/filetype.js';
+import { SNIFF_BYTES, checkRisky, extensionOf, isActiveDocumentName, isArchiveName, isExecutableName, programSignature, sanitizeFileName, sniffImage } from '../lib/filetype.js';
 import { eq, ok } from './harness.js';
 
 export const env = 'any';
@@ -66,5 +66,24 @@ export default [
     eq(sniffImage(Uint8Array.from('\0\0\0\x18ftypisom', (c) => c.charCodeAt(0))), 'video');
     eq(sniffImage(Uint8Array.of(0x25, 0x50, 0x44, 0x46)), null);
     eq(sniffImage(new Uint8Array(0)), null);
+  }],
+  ['trailing Unicode spaces can\'t hide an extension; sanitizeFileName is idempotent', () => {
+    // no-break, narrow no-break, ideographic, thin, line separator, Ogham: none is a control or format character
+    for (const sp of [' ', ' ', '　', ' ', ' ', ' ', ' . 　']) {
+      for (const [n, ext, kind] of [['invoice.bat', 'bat', 'risky'], ['a.cmd', 'cmd', 'risky'], ['x.hta', 'hta', 'risky'], ['x.ps1', 'ps1', 'risky'], ['page.html', 'html', 'active']]) {
+        const r = checkRisky(n + sp, null);
+        ok(r[kind], JSON.stringify(n + sp));
+        eq(r.ext, ext, JSON.stringify(n + sp));
+        eq(sanitizeFileName(n + sp), n, 'saved under the name that was checked');
+      }
+    }
+    eq(sanitizeFileName('　  report.pdf'), 'report.pdf', 'at the start too');
+    eq(sanitizeFileName('a b c.txt'), 'a b c.txt', 'spaces inside a name stay');
+    // the cut to 200 characters can't leave a dot or a space at the end, and a clean name stays as it is
+    for (const n of ['x'.repeat(199) + '. exe', 'x'.repeat(198) + '. .bat', '  ..hidden. ', 'a.tar.gz', 'x'.repeat(300), '　', '']) {
+      const once = sanitizeFileName(n);
+      eq(sanitizeFileName(once), once, JSON.stringify(n.slice(-8)));
+      ok(!/[.\s\p{Z}]$/u.test(once) && !/^[.\s\p{Z}]/u.test(once), `no dot or space at an end: ${JSON.stringify(once.slice(-6))}`);
+    }
   }],
 ];

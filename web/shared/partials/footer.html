@@ -3,13 +3,13 @@
   <div class="wrap foot">
     <nav class="foot-nav" aria-label="More">
       <a href="/how">How it works</a>
-      <a href="/judges">For judges</a>
+      <a href="/judges" data-when="judge=on">For judges</a>
       <a href="/made">Under the hood</a>
       <a href="/fine-print">The fine print</a>
       <a href="/drive">My drive</a>
     </nav>
-    <p class="foot-line">Built on the Tari™ Ootle testnet. <br>Free to use.</p>
-    <p class="status-line"><span data-phase-show="pre">Esmeralda testnet: tTARI is test money, worth nothing. <br>Ootle mainnet launches <time datetime="2026-11-11" data-v="mainnet_date">Nov 11, 2026</time>.</span><span data-phase-show="mainnet" hidden>Esmeralda testnet: tTARI is test money, worth nothing. <br>The Ootle mainnet is live; {{BRAND}} runs there as a beta, with real TARI.</span></p>
+    <p class="foot-line"><span data-when="network=esmeralda">Built on the Tari™ Ootle testnet.</span><span data-when="network=mainnet" hidden>Built on the Tari™ Ootle mainnet.</span> <br>Free to use.</p>
+    <p class="status-line"><span data-when="network=esmeralda"><span data-phase-show="pre">Esmeralda testnet: tTARI is test money, worth nothing. <br>Ootle mainnet launches <time datetime="2026-11-11" data-v="mainnet_date">Nov 11, 2026</time>.</span><span data-phase-show="mainnet" hidden>Esmeralda testnet: tTARI is test money, worth nothing. <br>The Ootle mainnet is live; {{BRAND}} runs there as a beta, with real TARI.</span></span><span data-when="network=mainnet" hidden>Ootle mainnet: this is real TARI. <br>{{BRAND}} is a beta. <br>Keep amounts small.</span></p>
     <p class="foot-legal"><b class="brand">{{BRAND}}</b> is an independent open-source project. <br>It is not affiliated with, endorsed by, or sponsored by Tari Labs, the Tari Council, or the Tari project. <br>“Tari” is a trademark of Tari Labs. <br>All rights reserved.</p>
   </div>
 </footer>

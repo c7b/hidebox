@@ -98,7 +98,7 @@ def load_config(config_path: Path) -> dict:
 # open a tag. tools/verify-deploy.py rebuilds with the deployment's own values, so a value that could add
 # markup would make that markup part of the "clean" build it compares against (security-audit-1).
 PLAIN_URL = re.compile(r"(https://[A-Za-z0-9.-]+(:\d+)?|http://127\.0\.0\.1:\d+)(/[A-Za-z0-9._~%/+-]*)?(#[A-Za-z0-9._~/-]*)?")
-NETWORKS = ("esmeralda",)
+NETWORKS = ("esmeralda", "mainnet")
 
 
 def settings(cfg: dict, origin: str | None) -> dict:
@@ -113,7 +113,14 @@ def settings(cfg: dict, origin: str | None) -> dict:
     for name, value in values.items():
         if not (isinstance(value, str) and PLAIN_URL.fullmatch(value)):
             raise BuildError(f"{name.lower()} must be a plain https URL: {str(value)[:80]!r}")
-    return {"ORIGIN": origin, "NETWORK": network.capitalize(), **values, "BRAND": BRAND}
+    # The testnet deployment a staging build names as the live service and a mainnet build as the contest entry.
+    testnet = cfg.get("testnet_origin", "") or ""
+    if testnet and not re.fullmatch(r"https://[a-z0-9.-]+", testnet):
+        raise BuildError(f"testnet_origin must be https://host: {testnet[:80]!r}")
+    if (cfg.get("staging") or network == "mainnet") and not testnet:
+        raise BuildError("testnet_origin must name the testnet deployment on staging and on the mainnet")
+    return {"ORIGIN": origin, "NETWORK": network.capitalize(), **values, "BRAND": BRAND,
+            "TESTNET_ORIGIN": testnet, "TESTNET_HOST": testnet.removeprefix("https://")}
 
 
 def check_brand(web: Path) -> None:
@@ -381,6 +388,9 @@ def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: 
     copy_sidecar(web, release)
     process_files(dist, web / "shared" / "partials", values | {
         "GIT_SHA": state["sha"], "VERSION": state["version"], "BUILD_DATE": state["date"]})
+    if not holding:
+        import variants          # on sys.path since set_variants(): the inlined partials' variants (network, staging)
+        variants.after_includes(dist, cfg)
     names = fingerprint(dist)
     integrity(dist)
     sitemap(dist, pages, values["ORIGIN"], state["date"])

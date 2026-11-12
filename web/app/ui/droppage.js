@@ -39,8 +39,8 @@ export async function render(main, { dropId }) {
     return set('error', h('h1', { class: 'a-h1' }, t('drop.page_h_plain')), errorBanner({ code: 'needs_wasm' }, { key: 'error.needs_wasm_drop' }));
   }
 
-  const [{ getDrop, leaveInDrop }, s, { createLink }, { safetyCodeForAddress }] = await Promise.all([
-    import('../lib/drop.js'), import('./sealing.js'), import('../lib/seal.js'), import('../lib/ootle.js')]);
+  const [{ getDrop, leaveInDrop }, s, { createLink }, { decodeAddress, safetyCodeForAddress }, { dropMarkOk }] = await Promise.all([
+    import('../lib/drop.js'), import('./sealing.js'), import('../lib/seal.js'), import('../lib/ootle.js'), import('../lib/links.js')]);
   let drop;
   try {
     drop = await getDrop(dropId);
@@ -50,6 +50,17 @@ export async function render(main, { dropId }) {
     if (e?.code === 'drop_not_found') return set('not-found', scene({ state: 'oops', title: t('drop.not_found') }).head, ways());
     return set('error', errorBanner(e, { action: { label: t('viewer.retry'), onClick: () => render(main, { dropId }) } }));
   }
+  // What is left here is locked to the address our server just named. A link made in a drive carries a
+  // mark of that drive's address after its # (lib/links.js): another address is refused before anything can
+  // be chosen. A link without the mark (made before it existed) is checked by its drive ID, as it was.
+  let mine = false;
+  try {
+    const keys = decodeAddress(drop.address);
+    mine = dropMarkOk(location.hash, keys.ownerPk, keys.viewPk);
+  } catch {
+    mine = false;   // not an address at all
+  }
+  if (!mine) return set('mismatch', scene({ state: 'oops', title: t('drop.mismatch'), say: t('drop.mismatch_body') }).head);
   prefetchPow('upload');
   const code = await safetyCodeForAddress(drop.address);
   // The open bag: anyone can drop a file in; only the drive behind this link can open it. One compact column (the
@@ -60,7 +71,7 @@ export async function render(main, { dropId }) {
   const whose = h('section', { class: 'a-dd-id', 'aria-labelledby': 'dd-id-h' },
     h('div', { class: 'a-dd-id-top' },
       h('h2', { class: 'a-dd-id-h', id: 'dd-id-h' }, t('drop.safety_h')),
-      h('a', { class: 'a-more', 'data-testid': 'dd-report', href: abuseHref(`${cfg.origin}/d/${drop.drop_id}`) }, icon('report'), h('span', {}, t('drop.report')))),
+      h('a', { class: 'a-more', 'data-testid': 'dd-report', href: abuseHref(`${location.origin}/d/${drop.drop_id}`) }, icon('report'), h('span', {}, t('drop.report')))),
     h('div', { class: 'a-dd-id-body' },
       h('div', { class: 'a-dd-id-code' },
         h('span', { class: 'a-dd-id-label', 'aria-hidden': 'true' }, t('drop.id_label')),   // the grid's own name says it

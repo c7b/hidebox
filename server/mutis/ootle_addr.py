@@ -1,14 +1,29 @@
 # SPDX-License-Identifier: MIT
 """Ootle addresses (bech32m) and the address input classifier (spec §4.9.4, §10.1).
 
-Layout (tari-ootle v0.45.0 crates/ootle_address): HRP 'otl_esm_' on Esmeralda (network byte 0x26),
-then bech32m(owner_pk[32] || view_pk[32] || pay_ref[0..64]). The HRP carries the network.
+Layout (tari-ootle v0.45.0 crates/ootle_address): HRP 'otl_esm_' on Esmeralda (network byte 0x26), 'otl_' on
+the mainnet (0x00), then bech32m(owner_pk[32] || view_pk[32] || pay_ref[0..64]). The HRP carries the network.
+Every process accepts the addresses of one network, its config's: `use_network` is called once at start (the
+API, the chain worker, the admin CLI) and Esmeralda is the default.
 """
 import re
+
+from . import network as networks
 
 CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 BECH32M_CONST = 0x2BC830A3
 TESTNET_HRP = "otl_esm_"
+_hrp = TESTNET_HRP
+
+
+def use_network(name: str) -> None:
+    """Accept and write the addresses of `name` (mutis.toml `network`) from now on, in this process."""
+    global _hrp
+    _hrp = networks.get(name).hrp
+
+
+def hrp() -> str:
+    return _hrp
 MAX_PAY_REF = 64
 MAX_LENGTH = 300
 
@@ -27,7 +42,8 @@ _EMOJI_SET = frozenset(EMOJI_ALPHABET)
 _BASE58 = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{60,100}$")
 _IGNORED_IN_EMOJI = {"️", "‍", " ", "\n", "\t"}
 
-# Classes and the error code each one maps to (None = acceptable).
+# Classes and the error code each one maps to (None = acceptable). "ootle_testnet" names an address of the network
+# this process runs on (the name is older than the mainnet); "ootle_other" any other Ootle network's.
 ERROR_FOR_CLASS = {"ootle_testnet": None, "ootle_other": "mainnet_address", "l1_emoji": "l1_address",
                    "l1_base58": "l1_address", "invalid": "bad_address"}
 
@@ -91,26 +107,29 @@ def decode(address: str) -> tuple[str, bytes]:
     return hrp, bytes(_convert_bits(data[:-6], 5, 8, False))
 
 
-def parse_testnet(address: str) -> tuple[bytes, bytes, bytes]:
-    """Return (owner_pk, view_pk, pay_ref) of a valid Esmeralda address. Raises ValueError."""
-    hrp, payload = decode(address)
-    if hrp != TESTNET_HRP or not 64 <= len(payload) <= 64 + MAX_PAY_REF:
-        raise ValueError("not an Esmeralda address")
+def parse(address: str) -> tuple[bytes, bytes, bytes]:
+    """Return (owner_pk, view_pk, pay_ref) of a valid address of this process's network. Raises ValueError."""
+    prefix, payload = decode(address)
+    if prefix != _hrp or not 64 <= len(payload) <= 64 + MAX_PAY_REF:
+        raise ValueError("not an address of this network")
     return payload[:32], payload[32:64], payload[64:]
+
+
+parse_testnet = parse   # the name the callers know; it parses this process's network, the testnet by default
 
 
 def with_pay_ref(address: str, pay_ref: bytes) -> str:
     """The same keys with a pay-ref embedded (an invoice address, spec §5.7)."""
     if not 0 < len(pay_ref) <= MAX_PAY_REF:
         raise ValueError("pay_ref must be 1..64 bytes")
-    owner, view, _ = parse_testnet(address)
-    return encode(TESTNET_HRP, owner + view + pay_ref)
+    owner, view, _ = parse(address)
+    return encode(_hrp, owner + view + pay_ref)
 
 
 def base_address(address: str) -> str:
     """The address without any pay-ref, in canonical lowercase."""
-    owner, view, _ = parse_testnet(address)
-    return encode(TESTNET_HRP, owner + view)
+    owner, view, _ = parse(address)
+    return encode(_hrp, owner + view)
 
 
 def classify(text: str) -> str:
@@ -121,9 +140,9 @@ def classify(text: str) -> str:
     if not s or len(s) > 1000:
         return "invalid"
     if s.lower().startswith("otl_"):
-        if s.lower().startswith(TESTNET_HRP + "1"):
+        if s.lower().startswith(_hrp + "1"):
             try:
-                parse_testnet(s)
+                parse(s)
                 return "ootle_testnet"
             except ValueError:
                 return "invalid"

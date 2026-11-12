@@ -36,7 +36,8 @@ from harness import CHAIN, REGISTRY, SSH_HOST, STAGING, Env, Failed, Remote, Ski
 
 @scenario("E-21", "Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)")
 def e21(t: T) -> None:
-    for name, problems in test_headers.run(t.origin, not app_deployed(t.origin), []):
+    staging = bool(t.env.config().get("staging"))
+    for name, problems in test_headers.run(t.origin, not app_deployed(t.origin), [], staging=staging):
         t.check(not problems, f"D-01 {name} {problems}")
     for line in test_privileges.inside(t.env.remote) + test_privileges.outside(t.origin):
         t.check(line.startswith(("PASS", "SKIP")), f"D-03 {line}")
@@ -93,6 +94,8 @@ def main() -> int:
     p.add_argument("--origin", default="https://hidebox.app")
     p.add_argument("--host", default=SSH_HOST, help="ssh host of the server (MUTIS_SSH_HOST)")
     p.add_argument("--local", action="store_true", help="run on the server itself (as the operator)")
+    p.add_argument("--instance", default="", help="the --origin is this instance beside production (deploy/scripts/"
+                   "instance.py): admin steps use its own admin and database; steps that reach production's are skipped")
     p.add_argument("--only", default="")
     p.add_argument("--chain", action="store_true", help="include scenarios that make Esmeralda transactions")
     p.add_argument("--staging", action="store_true", help="include scenarios that change server limits")
@@ -110,7 +113,7 @@ def main() -> int:
     out = args.out / time.strftime("%Y%m%d-%H%M%S")
     out.mkdir(parents=True)
     control = Path(tempfile.mkdtemp(prefix="mutis-e2e-"))
-    env = Env(args.origin.rstrip("/"), Remote(None if args.local else args.host, control), out)
+    env = Env(args.origin.rstrip("/"), Remote(None if args.local else args.host, control, args.instance), out)
     if args.candidate:
         import candidate
         cdp.Browser.override = candidate.Override(args.candidate, env.origin)

@@ -19,11 +19,14 @@ def main() -> None:
     p.add_argument("--dist", type=Path, help="--dev: serve this built dist/ directory too")
     p.add_argument("--port", type=int, default=8787, help="--dev port")
     p.add_argument("--pow-bits", type=int, help="--dev: a fixed PoW difficulty for every purpose (no escalation)")
+    p.add_argument("--network", default="esmeralda", choices=("esmeralda", "mainnet"),
+                   help="--dev: the Ootle network the fakes and the config pretend to be on")
+    p.add_argument("--staging", action="store_true", help="--dev: a staging deployment (Esmeralda only)")
     args = p.parse_args()
     os.umask(0o007)           # files we create (the database, its -wal and -shm) stay within group mutis
     logsafe.setup()
     if args.dev:
-        dev.run(args.data, args.dist, args.port, args.pow_bits)
+        dev.run(args.data, args.dist, args.port, args.pow_bits, network=args.network, staging=args.staging)
         return
     cfg = config.load(args.config)
     if db.version(cfg.db_path) < db.SCHEMA_VERSION:

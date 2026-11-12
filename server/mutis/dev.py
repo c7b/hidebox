@@ -14,7 +14,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import api, cleanup, config, db
+from . import api, cleanup, config, db, network as networks, ootle_addr
 from .chain_worker import Worker
 from .fake_chain import FAKE_WASM_SHA256, FakeChain, FakeIndexer, fake_keys
 from .fake_sidecar import argv as fake_sidecar_argv
@@ -61,6 +61,8 @@ class Static:
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/view.html"
         elif path.startswith("/p/"):   # a paid link's buyer page, with its own preview card (viral-1)
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/pay.html"
+        elif path.startswith("/shop/"):   # a drive's shop, with its own preview card (docs/shop.md)
+            csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/shop.html"
         elif path.startswith("/d/"):   # a drop link, with its own preview card (viral-1)
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/drop.html"
         elif path == "/drive" or path.startswith("/drive/"):   # the drive's own page (16-drive-design §12)
@@ -90,10 +92,15 @@ def _write_keys(path: Path) -> str:
     return str(path)
 
 
-def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str) -> config.Config:
+def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str, network: str = "esmeralda",
+               staging: bool = False) -> config.Config:
     origin = f"http://127.0.0.1:{port}"
     mib = 1 << 20
+    # The mainnet has no test money: the dev stack drops those features there as a real deployment must.
+    features = {f: False for f in networks.TEST_MONEY} if network == "mainnet" else {}
     return config.from_dict({
+        "network": network, "staging": staging, "features": features,
+        "testnet_origin": "https://testnet.example" if staging or network == "mainnet" else "",
         "public_origin": origin, "memo_origins": [origin, "https://mutis.sh"], "listen": f"127.0.0.1:{port}",   # the UI fixtures move memos to this short test origin (realize.py); never served
         "data_dir": str(data / "data"), "secret_key": str(data / "secret.key"),
         "gates": {"send_mode": "relay", "amount_proof": "sidecar", "key_bundle": False},
@@ -110,18 +117,20 @@ def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str) -> con
     }, dev=True)
 
 
-def run(data: Path, dist: Path | None, port: int, pow_bits: int | None) -> None:
+def run(data: Path, dist: Path | None, port: int, pow_bits: int | None, network: str = "esmeralda",
+        staging: bool = False) -> None:
     data.mkdir(parents=True, exist_ok=True)
     secret = secrets.token_bytes(32)
     (data / "secret.key").write_bytes(secret)
-    chain = FakeChain()
+    ootle_addr.use_network(network)          # before the fakes make their addresses
+    chain = FakeChain(network=network)
     fake_indexer, fake_walletd = FakeIndexer(chain), FakeWalletd(chain)
-    cfg = dev_config(data, port, fake_walletd.url, fake_indexer.url)
+    cfg = dev_config(data, port, fake_walletd.url, fake_indexer.url, network, staging)
     db.migrate(cfg.db_path)
     app = api.App(cfg, secret, dev=True, pow_bits=pow_bits, static=Static(dist) if dist else None)
     stop = threading.Event()
     worker = Worker(cfg, secret, Walletd(cfg["ootle"]["walletd_url"]), Indexers(cfg["ootle"]["indexers"], rate=50),
-                    Sidecar(cfg.sidecar_argv(), cfg.origin, FAKE_WASM_SHA256))
+                    Sidecar(cfg.sidecar_argv(), cfg.origin, FAKE_WASM_SHA256, cfg["network"]))
 
     def background() -> None:
         threading.Thread(target=worker.run, args=(stop,), daemon=True).start()

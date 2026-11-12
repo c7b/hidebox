@@ -3,7 +3,7 @@
 // view, only after the user taps "Open it") → fetch ciphertext → decrypt in this tab. Each step is
 // separate so the viewer can stop for a password, the glass box or the program warning.
 import { b64uDecode, b64uEncode } from './b64.js';
-import { sha256 } from './crypto.js';
+import { IntegrityError, sha256 } from './crypto.js';
 import { decryptBlob, decryptMeta, deriveItemKeys, parseHeader } from './format.js';
 import { linkProof, shareKeys, unwrapFileKey } from './share.js';
 import { ApiError, blobDone, blobRange, openShare, peekShare, shareStatus } from './api.js';
@@ -12,9 +12,21 @@ import { solvePow } from './pow.js';
 // -> {state, mode, needs_password, kdf}; a link that ended throws ApiError 'gone' (details.reason).
 export const linkStatus = shareStatus;
 
+// The link's own kind decides its mode, not our server's answer: {s} only as `link`, {s0} only as
+// `link_password`, `password` only with neither. -> 'ok' | 'missing' | 'mismatch'
+export function kindFits(mode, { s, s0 } = {}) {
+  if (mode === 'link') return s0 ? 'mismatch' : s ? 'ok' : 'missing';
+  if (mode === 'link_password') return s ? 'mismatch' : s0 ? 'ok' : 'missing';
+  if (mode === 'password') return s || s0 ? 'mismatch' : 'ok';
+  return 'mismatch';
+}
+
 // The headers that prove access, from what the link or delivery carried: {s} for a plain link or a
 // Tari delivery, {s0, password} for link + password, {password} for password only.
 export async function accessFor(status, { s, s0, password } = {}) {
+  const fits = kindFits(status?.mode, { s, s0 });
+  if (fits === 'missing') throw new TypeError('missing link secret');
+  if (fits !== 'ok') throw new IntegrityError('link kind and mode disagree');
   let secret = s;
   const headers = {};
   if (status.mode === 'link_password' || status.mode === 'password') {

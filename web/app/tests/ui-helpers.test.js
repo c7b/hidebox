@@ -3,6 +3,7 @@ import { h, scriptUrl, svg } from '../lib/dom.js';
 import { sanitizeFileName } from '../lib/filetype.js';
 import { match } from '../lib/router.js';
 import { BRAND, formatBytes, t, useStrings } from '../lib/i18n.js';
+import { useNetwork } from '../lib/network.js';
 import { saveJudgePass, savedJudgePass } from '../lib/store.js';
 import { eq, isNode, ok, rejects } from './harness.js';
 
@@ -67,6 +68,22 @@ export default [
     eq(formatBytes(2.4 * 1024 * 1024), '2.4 MB');
     eq(formatBytes(512), '512 B');
     eq(formatBytes(25 * 1024 * 1024), '25 MB');
+  }],
+  ['i18n on the mainnet: key@mainnet first, the word tTARI reads TARI, the testnet unchanged', () => {
+    useStrings({ price: 'Pay {price} tTARI', unit: '{x} tTARI', line: 'Test money here.', 'line@mainnet': 'Real tTARI here.', 'earn.unit': 'tTARI' });
+    try {
+      eq(t('price', { price: 2 }), 'Pay 2 tTARI');
+      eq(t('line'), 'Test money here.');
+      eq(t('earn.unit'), 'tTARI');
+      useNetwork('mainnet');
+      eq(t('price', { price: 2 }), 'Pay 2 TARI');
+      eq(t('unit', { x: 1 }), '1 TARI');
+      eq(t('line'), 'Real TARI here.');
+      eq(t('earn.unit'), 'TARI');
+    } finally {
+      useNetwork('esmeralda');
+    }
+    eq(t('line'), 'Test money here.');
   }],
   ['judge pass kept per tab in sessionStorage (in Node, where there is none, it just isn\'t kept)', () => {
     saveJudgePass('judge-7kq2x9mdh4ab7kq2x9mdh4ab');

@@ -1,0 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+/* The staging banner (partials/staging-banner.html): only a staging build keeps the banner, and this sheet with it. */
+.staging-banner { background: var(--fg); color: var(--bg); padding: 10px 16px; text-align: center; }
+.staging-banner p { margin: 0; max-width: none; }
+.staging-banner a { color: inherit; }

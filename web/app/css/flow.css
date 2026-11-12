@@ -142,3 +142,11 @@
   .done-file { display: none; }
   .done > :not(.done-art), .done-box, .done-check, .invite { animation: none; }
 }
+
+/* ---------- the staging banner (mutis.toml staging = true: the mainnet instance's rehearsal on Esmeralda) ----------
+   Above everything, in the page's own ink: the text colour as the background, so it reads in both themes. The same
+   rule is in web/site/css/site.css for the site's pages; the app's read another token file, hence the fallbacks. */
+.staging-banner { background: var(--foreground, var(--fg)); color: var(--background, var(--bg)); padding: 10px 16px; text-align: center; font-size: 14px; line-height: 1.5; }
+.staging-banner p { margin: 0; max-width: none; }
+.staging-banner a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.staging-banner[hidden] { display: none; }

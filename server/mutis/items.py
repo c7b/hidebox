@@ -5,7 +5,7 @@ Callers hold a BEGIN IMMEDIATE transaction around every function that writes.
 """
 import sqlite3
 
-from . import codec, sales, seallog, tree
+from . import codec, sales, seallog, shop, tree
 from .storage import Blobs
 
 ENDED_REASON = {"exhausted": "burned", "expired": "expired", "revoked": "revoked", "removed": "removed",
@@ -15,8 +15,15 @@ EGRESS_PER_ITEM_DAY = 10 << 30     # bytes served per item per day, by every lin
 MAX_DELETE_AFTER_DAYS = 30    # Delete it after… on a kept file: at most this far ahead (16-drive-design §7)
 
 
-def egress_ok(conn: sqlite3.Connection, item, now: int, size: int) -> bool:
-    """Count `size` more bytes against an item's daily egress (EGRESS_PER_ITEM_DAY); False when over.
+def stored_egress_cap() -> int:
+    """What "Download the stored bytes" may take of a file's daily egress: half, so reads that use no view can't
+    leave the day's opens without any (security pass, 2026-11-09)."""
+    return EGRESS_PER_ITEM_DAY // 2
+
+
+def egress_ok(conn: sqlite3.Connection, item, now: int, size: int, cap: int | None = None) -> bool:
+    """Count `size` more bytes against an item's daily egress (EGRESS_PER_ITEM_DAY, or the lower `cap` a caller
+    is held to); False when over.
 
     One conditional UPDATE reads and adds in place, so the count never comes from `item`, which a caller may
     have read before its transaction began: concurrent downloads each add their bytes, none overwrites
@@ -24,7 +31,7 @@ def egress_ok(conn: sqlite3.Connection, item, now: int, size: int) -> bool:
     today = codec.day(now)
     used = "(CASE WHEN egress_day = ? THEN egress_bytes ELSE 0 END)"
     cur = conn.execute(f"UPDATE items SET egress_day = ?, egress_bytes = {used} + ? WHERE id = ? AND {used} + ? <= ?",
-                       (today, today, size, item["id"], today, size, EGRESS_PER_ITEM_DAY))
+                       (today, today, size, item["id"], today, size, EGRESS_PER_ITEM_DAY if cap is None else cap))
     return cur.rowcount == 1
 
 
@@ -34,6 +41,7 @@ def end_share(conn: sqlite3.Connection, share_id: str, state: str, now: int) -> 
                        "link_hash = NULL WHERE id = ? AND state = 'active'", (state, now, share_id))
     if cur.rowcount:
         sales.end_for_share(conn, share_id)      # a paid link: our half of its key goes, waiting claims are void
+        shop.end_for_share(conn, share_id)       # and its shop listing, if it had one
 
 
 def doom_if_unlinked(conn: sqlite3.Connection, item_id: str, now: int) -> bool:

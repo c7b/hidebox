@@ -1018,3 +1018,133 @@ budgets and the screenshots; evidence in `docs/evidence/2026-10-19/brand-kit-1/`
 
 Suites on the server as build: lint PASS, check-copy PASS, build OK, core 9/9, deploy 89 OK, server 331 OK (5 skipped), site
 42/42, UI 804/804; D-01 on the throwaway stack PASS. Not deployed (the integrator's).
+
+## Security pass on the server and the deployment (2026-11-09)
+
+A source-first audit of `server/`, `deploy/`, `template/`, `tools/` and `tests/e2e/`, read against the threat model and
+the earlier reviews. Each finding below was traced in the code and, where the test stack could show it, reproduced
+there before its fix. None of them lets anyone read another person's file or key, or spend the wallet. Branch
+`sec/nov09`, cut from `main`; nothing deployed.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| 1 | `GET /s/{id}/stored` uses no view and charged every request the whole file, so one-byte requests spent a file's daily egress; on a paid file, the other buyers then had no open that day | anyone holding the link, one buyer among them | A request is charged the bytes of its Range; a network takes a file's stored bytes 3 times a day (6 per /48 or /24); all of it stays within half the file's daily egress, so opens keep the other half | `server/tests/test_burn_race.py` `test_a_range_of_stored_bytes_is_charged_its_own_length`, `test_stored_bytes_leave_half_the_days_egress_to_opens`, `test_a_network_takes_a_files_stored_bytes_a_few_times_a_day` |
+| 2 | A pay link takes 20 waiting claims and a /48 could make 30 an hour: one network kept a link "busy" for everyone, paying nothing | anyone, from one network | On one link a network makes 2 claims an hour, 3 per /48 or /24; the server's own addresses skip it, as they skip the daily brakes | `server/tests/test_paid_shares.py` `test_one_network_cant_hold_a_links_waiting_claims` |
+| 3 | The deployment's daily cap on new drives was charged before the proof of work and never given back: requests that did no work used it up for everyone | anyone, from a few networks | The cap is charged after the proof of work and given back when no drive is made | `server/tests/test_packs.py` `test_requests_that_did_no_work_dont_use_up_the_days_new_drives` |
+| 4 | A chunk sent slowly across `complete`, or two copies of a chunk sent at once, left stored bytes that differ from the hash sealed for them | the uploader, against their own file's receipt | The upload's file is locked shared while a chunk is written and alone for the rename (`409 upload_busy` while a chunk is still arriving); a chunk that reaches a completed upload is written nowhere; one request at a time writes one chunk and records its hash | `server/tests/test_burn_race.py` `ChunkAcrossComplete` |
+| 5 | Id patterns ended in `$`, which also matches before a final newline: an identity id of 22 characters plus a newline registered as a drive of its own | anyone | Every id pattern ends in `\Z` (path parameters, payment references, cursors, the indexer paths, job payloads) | `server/tests/test_input_safety.py` `test_an_id_with_a_trailing_newline_is_refused` |
+| 6 | E2E scenario E-31 saved its search script under the build user's directory and ran it with sudo | code running as `build` | The script goes on root's command line; nothing of `build`'s is run as root | `deploy/tests/test_ops.py` `RootFollowsNoPlantedNameTest` |
+| 7 | `privilege-check.sh` wrote, copied, chowned and chmodded its probes as root at a name `mutis` could guess, in a directory `mutis` owns | code running as `mutis` | `mutis` makes the probes itself, in a directory it names at random; root's part is reading the result | the same class |
+| 8 | `activate-release.sh` ran `chmod` as root on whatever matched `pre-migrate-*` in a directory `mutis` owns | code running as `mutis` | The step runs as `mutis` and takes regular files only | the same class |
+| 9 | A paid link's own address (`/p/<id>`) couldn't be reported: the form took `/s/` and `/d/` only | any reporter | `POST /abuse` takes `/p/<id>` as the link it is | `server/tests/test_admin.py` `test_a_paid_links_own_address_can_be_reported` |
+| 10 | verify-deploy ended in a traceback when the tag's own `build.py` refused the deployment's settings (a tag from before the mainnet, asked about a mainnet deployment) | whoever verifies | It prints the refusal as a difference and exits 1 | `deploy/tests/test_verify_deploy.py` `test_a_tag_whose_build_refuses_the_settings_is_a_difference_not_a_traceback` |
+| 11 | `e2e-artifacts/`, where an end-to-end run leaves screenshots and reports of a live site by default, was not ignored | whoever commits | `.gitignore` names it | (none) |
+
+One existing test changed with finding 1: `test_racing_stored_downloads_serve_only_what_is_left` started the race one
+download under the file's whole daily egress and now starts it one download under the half that stored bytes may take;
+what it holds (racing downloads serve only what is left, and count all of it) is the same.
+
+`docs/api.md` still gives the old numbers for claims and says nothing of the limits on stored bytes; that page is
+outside this pass.
+
+Suites (`sec/nov09`, temporary files on a real disk): server 395 OK (5 skipped), deploy 136 OK, lint PASS, check-copy
+PASS, build OK. Not deployed (the integrator's).
+
+### On the mainnet instance (`sec/nov09-mainnet`, cut from `launch/mainnet`)
+
+Everything above, and four more that exist only where withdrawals and the choice of network do.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| 12 | A withdrawal's output commitment written as a CBOR integer n made the parse allocate n bytes, and their hex, before its length was checked: one 153-byte envelope took the API past its memory limit (under the unit's 1 GiB the process is killed and restarted, and each restart forgets the limits held in memory), and 2^62 answered 500 | any drive | A commitment is 32 bytes before anything is made from it; every request is counted before its envelope is read (60 an hour per drive, 120 per network; the 12 an hour still count withdrawals); a `change` value longer than 19 digits is refused before it is read as a number | `server/tests/test_withdraw.py` `test_an_output_commitment_that_isnt_32_bytes_is_refused_before_anything_is_made_from_it`, `test_every_request_is_counted_before_its_envelope_is_read` |
+| 13 | Which drive a payment is for is known only through its claim, its link and the link's file, and their notes were purged 30 days after the link ended: settled money not yet withdrawn left Earnings, and `POST /me/withdrawals` answered 409 for it | nobody: it happened by itself | A pay link that still holds a payment our server vouches for, not yet spent by a committed withdrawal, keeps its note, and its file's, until that money is withdrawn; of such a link only the claims that money came through stay, and none of its opens. A payment the payer kept, or one never checked, holds nothing back. No schema change | `server/tests/test_withdraw.py` `NotesOfLinksThatHoldMoney` |
+| 14 | `chain.walletd_wrong_network` and `chain.sidecar_wrong_network` were not events `logsafe` writes: a walletd or a sidecar on another network stopped the worker as it should, but the refusal raised from the logger and the journal only said `chain.loop_error` | (an operator's mistake) | Both are in the list; the refusals raise what their callers expect | `server/tests/test_network.py` `WrongNetworkIsSaid` |
+| 15 | The daily evidence payment is test money; on the mainnet the worker queued its invoice and job all the same, every day, and the job failed on a budget of nothing | (nobody) | The worker queues none there | `server/tests/test_network.py` `test_no_daily_evidence_payment_is_queued` |
+
+Finding 13 keeps some notes longer than `retention.tombstone_days`: those of pay links whose money hasn't been
+withdrawn. The pages and `docs/withdraw.md` that give the 30 days don't say so yet; they are outside this pass.
+
+Suites (`sec/nov09-mainnet`, temporary files on a real disk): server 451 OK (5 skipped), deploy 175 OK, lint PASS,
+check-copy PASS, build OK. `test_the_scan_starts_where_the_oldest_waiting_claim_was_made` failed once in several runs,
+as it does about one run in eight on `main` without this pass (a decoy's timing); it was left as it is. Not deployed
+(the integrator's).
+
+## Security pass on the browser (2026-11-09)
+
+The same audit, read from the other side: `web/app`, `web/site`, `web/shared`, the vendored library and what the build
+does with them. No finding lets a sender or a link holder run code on the origin, read another person's keys or skip a
+link's rule. What it found is client code that acted on a missing answer, or on an answer of our API, where money and
+keys are concerned: a server that changes API answers (which SRI and `verify-deploy` can't see) is a party the threat
+model names. Each fix has a test; the findings that could be shown without a browser were reproduced against the
+library first and shown dead after. Branch `sec/nov09-web`, merged into `sec/nov09`; nothing deployed.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| W-01 | The owner check read any 404 from the indexer as "the payer kept control", and that answer ends a buyer's claim for good (`void` is one-way). The read proxy answers with the first indexer that answers, so one that hasn't caught up was enough; the browser wallet wrote an output off for good the same way | nobody: an indexer that lags, or one that misbehaves | A verdict needs evidence: the output shown with another key, or proven spent. A 404, no answer or an answer nothing can read gives none and sends no confirm; the next pass asks again. Verdicts kept from before (no `v`) are asked about once more. The wallet holds such an output back for three minutes and asks again | `web/app/tests/pay.test.js` "a 404 is no verdict", "a 'payer kept control' kept from before the evidence rule"; `wallet.test.js` "a 404 from the indexer writes nothing off" |
+| W-03 | Pay from my drive paid the amount and the address of the claim our API answered; the page showed the link's price and never compared the two | a server that changes API answers | The claim must ask exactly the link's price, which is also the price the page showed, with nothing negative counted, or nothing is signed; what is sent is the price minus what arrived. The address is still our server's word (the link names no address); that is said here, not fixed | `pay.test.js` "Pay from my drive signs the price the page shows or nothing"; UI `pay-drive` |
+| W-04 | Every link, QR code and memo was built on `/config`'s `origin`: another host there would have received the key after the `#` of every link made from then on | a server that changes API answers | The places that build a link read the page's own origin, and `web/app/tests/lint_core.py` refuses `cfg.origin` anywhere in `ui/` and `lib/` (one fallback outside a page). The rule first lived in `config()`; `lib/api.js` is in the home's first load and that put the home over its 60 KB (M-01), so it moved to the call sites and `api.js` is as it was. The pages are served on the deployment's origin only (an older host redirects), so nothing changes on an honest server | `lint_core.py` rule 6b |
+| W-05 | What is left at a hidebox link's page is locked to the address our server names; only the drive ID on the page, compared by eye, tied it to the owner | a server that changes API answers | A link a drive makes ends in `#a=` and 12 bytes of a hash of the drive's owner and view keys; the page refuses another address before a file can be chosen. A link without the mark opens exactly as before | `links.test.js` "carries a mark of its drive's address"; UI `locker` |
+| W-06 | A submit whose answer was lost (a timeout, a dropped connection) was reported as "Nothing was spent", with Try again; if it had gone out and the wallet held another output, the buyer paid twice | nobody: a bad connection | A send's inputs are held from before the submit; a lost answer is `maybe_sent`: the page says the drive may have paid, offers no second payment for three minutes, and follows the claim if the first one lands. A refusal (a 4xx) frees the inputs at once | `wallet.test.js` "a submit that times out holds its inputs"; `pay.test.js`; UI `pay-drive` |
+| W-08 | Lock my drive and Forget this browser left the recent list (each entry's delete token and the Tari address it was sent to) and the drive's id in two places | a later user of the same browser | `forgetIdentity()` clears `mutis.recent`, `mutis.keyAsked` and `mutis.grant` with the rest | `identity.test.js` (extended) |
+| W-09 | The viewer took a link's mode from our server: `password` answered for a link + word link made a token from the typed word alone, which a copy of the database could then guess offline (it still opened nothing without the link) | a server that changes API answers | A link's kind decides its mode (`kindFits`): kind 1 only as `link`, kind 2 only as `link_password`, `password` only with no fragment; a mismatch is refused before a word is asked for | `seal-open.test.js` "a kind-2 link never derives a password-only secret" |
+| W-10 | A JPEG kept every APP0 segment, so a JFIF or JFXX thumbnail of the original frame stayed while the page said the camera data was removed; the drive said nothing when a photo or video went up as it was | (the uploader's own photo) | APP0 stays only as the bare 14-byte JFIF header; the drive's upload row shows the notice the home's chip shows | `exif.test.js` "JFXX and JFIF thumbnails go" |
+| W-11 | A paid link couldn't be reported from the form or its own page, and its row's Save skipped the program line | any reporter; a seller | The form takes `/p/<id>` (and sends it again as `/s/<id>` to a server that doesn't yet); the buyer page has Report this link, and a program says so beside Save | site suite "abuse form"; UI `pay-drive` |
+| NV-2 | A resumed upload re-made chunks under the first try's key and salt; a chunk's nonce is its index, so a file that changed in between would have had two plaintexts under one nonce | (the uploader, on a browser that reads a changed file) | A chunk the first try made must come out the same; a difference, or another size, starts a new upload with a new key | `seal-open.test.js` "a resume whose file changed starts a fresh upload" |
+| NV-3 | `sanitizeFileName` trimmed only dots and plain spaces: `invoice.bat` followed by a no-break space wasn't read as a program | a sender or a seller | Spaces of every kind are trimmed, again after the cut to length | `filetype.test.js` "trailing Unicode spaces can't hide an extension" |
+| | `/drive/constructor` read as a view; Download all wrapped a name longer than 65,535 bytes into an archive nothing opens, and let a file take the name of the folder beside it | | The views' own keys only; such a name is refused; a folder's name is taken; trailing dots and spaces leave folder names | `zip.test.js` "names" |
+
+Where the two halves of the pass meet: `POST /uploads/{id}/complete` now answers `409 upload_busy` while a chunk is
+still arriving, and the upload client asks again (six tries over 15 seconds) instead of failing; if it stays busy the
+upload stops with a resume that sends no chunk again (`seal-open.test.js` "a complete that finds a chunk still
+arriving"). A file's stored bytes can now be refused until tomorrow, so a wait of an hour or more reads as hours
+(`23:57:12`). The site suite reports a paid link both ways and removes the builds it makes in the temp directory.
+
+Existing tests that held the old behaviour and changed with it: `wallet.test.js` "only a 404 from the indexer means
+already spent" (now: a 404 holds the output back and it pays once the indexer shows it); the UI flows `locker` and
+`received-list` (a hidebox link now ends in its mark) and `deaddrop` (Report this link carries the link without
+anything after its `#`).
+
+`docs/api.md` now gives the limits both halves of the pass set (stored bytes, claims on one link, `upload_busy`,
+`/abuse` taking `/p/<id>`).
+
+Not fixed here, and said so: voids already recorded from a 404 can't be told from true ones and stay void on our
+server (the browser's own record is asked about again); a pack invoice paid from the browser wallet has the held
+inputs of W-06 but not the claim's three-minute guard; the read proxy still answers with the first indexer's 404.
+
+Suites (`sec/nov09` with both halves merged, temporary files on a real disk; the test machine has Node 26, not the
+server's Node 20): server 395 OK (5 skipped), deploy 136 OK, lint PASS, check-copy PASS, the core suites 173/173 under
+Node and in headless Chromium (99/99 without WebAssembly), `lint_core.py` 1126/1126, the vectors' cross-check 97/97,
+the library against `mutis-api --dev` 12/12, build OK. The app's UI suite ran whole, its 74 scenarios ten at a time:
+1,336 of 1,337 checks (the static checks counted once per batch); `folder-viewer` timed out once on a busy machine
+and passed alone. Site 46 of 47 in the suite run: `motion: reveals` counts what is still hidden after scrolling a
+page in a headless browser, failed there and in one of four runs alone, and nothing in this pass touches it. Not run
+here: `sidecar_test.py` (it starts Node with a permission flag Node 26 no longer takes). Not deployed (the
+integrator's).
+
+### The browser on the mainnet instance (`sec/nov09-mainnet-web`, merged into `sec/nov09-mainnet`)
+
+Everything above, and what exists only where the network is a choice and earnings can be withdrawn.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| W-02 | The page took its network from the first `/config` request, once; when that one failed and the page's own later request succeeded, a mainnet page ran on Esmeralda's byte and prefix for its lifetime. With that byte the owner check derives another one-time key for every real payment and voids it; the money screens read "test money" | nobody: one failed request (an API restart) | The app's pages name their network in their HTML (`<meta name="mutis-network">`, filled by the build). A page without the tag has no network until `/config` names one; if the two disagree it has none. `NETWORK_BYTE` is null while unknown, `ready()` waits for the network, and the byte reaches the library only through `networkByte()`, which throws rather than let a null pass as 0, the mainnet's | `web/app/tests/ootle.test.js` "a first /config that fails doesn't leave the page on Esmeralda" |
+| W-07 | The withdraw confirm step sets apart the first and last six characters of the address to check; the prefix was read as two words (`otl_esm_1`), so a mainnet address (`otl_1…`) showed its prefix and one character | (a clipboard that swaps an address) | The prefix is `otl_1` or `otl_esm_1`, in `addressParts` and both `shortAddress` helpers | `withdraw.test.js` "the address" |
+| W-12 | The key file called a mainnet address "Esmeralda testnet"; `/verify` linked a mainnet transaction to Esmeralda's indexer page | (nobody) | The key file says "Ootle mainnet" there; `/verify` links that page only on Esmeralda and names the indexer without a link elsewhere (the repository names no mainnet page for it) | `identity.test.js` "the key file names the network" |
+| | A withdrawal that never said how it ended was settled from its input's answer: any 404 was reported as commit, and any answer at all, a proven spend included, as reject | nobody: an indexer that lags, or a withdrawal that committed after its tab closed | The answer is read: shown unspent is reject, proven spent is commit, a 404 or an answer nothing can read settles nothing and is asked about again | `withdraw.test.js` "a withdrawal that never said how it ended is settled on evidence" |
+
+| | The sidecar's self-test answered `passed: false` with `MUTIS_NETWORK=mainnet`: its ownership known answer was made on Esmeralda, and the network's byte is part of a one-time key, so the genuine output read as not ours. Nothing in the server reads that answer (the worker asks `hello` and checks the network there); it is the operator's check in the upgrade drill | (nobody) | The known answer is derived with the byte it was made with on any network, and a fresh output for the sidecar's own keys is checked on the network it runs on | `web/app/tests/sidecar_test.py` "selftest on the mainnet" |
+
+The shop's link and its Buy links are built on the page's own origin too (W-04), and the test pages that are no built
+pages (`tests/run.js`, the bench, the chain gate) name Esmeralda themselves.
+
+Sentences that are no longer true on a mainnet build and are the owner's to rewrite, listed for him and left as they
+are: `SECURITY.md` ("Esmeralda testnet. tTARI has no monetary value"), `/made` ("Test payments (our demo wallet paying
+our own invoice)", "One runtime dependency"), and the footer's line for the testnet site after 2026-11-11.
+
+Suites (`sec/nov09-mainnet` with both halves merged, temporary files on a real disk; Node 26 on the test machine):
+server 451 OK (5 skipped), deploy 175 OK, lint PASS, check-copy PASS, the core suites 189/189 under Node and in
+headless Chromium (105/105 without WebAssembly), `lint_core.py` 1191/1191, the vectors' cross-check 97/97, the library
+against `mutis-api --dev` 12/12, site 48 of 48, both builds OK (the app's pages say Esmeralda in one and Mainnet in
+the other). The app's UI suite ran whole, its 76 scenarios ten at a time: 1,437 of 1,437 checks. Not run here:
+`sidecar_test.py` whole (Node 26; with that Node's flag name its self-test checks, the mainnet one among them, pass).
+Not deployed (the integrator's).

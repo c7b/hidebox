@@ -82,8 +82,8 @@ And three changes so the copy stays true:
 - The component header the engine writes is the same JSON shape on 0.50 (`seal_log_v2/tests/vectors/
   seallog-state-v1.json` differs from the 0.37 one only in the test engine's template address and entity id), and
   `seallog-encoded-v2.json` holds the 0.50 CBOR of the component and of a PublishedTemplate; `server/mutis/cbor.py`
-  reads both unchanged (`server/tests/test_cbor.py`). (On lane `launch/mainnet` the app's check also refuses, on
-  the mainnet, a header with no upgrade rule; this lane serves Esmeralda only and leaves `lib/seallog.js` as it was.)
+  reads both unchanged (`server/tests/test_cbor.py`). The app's check now also refuses, on the mainnet, a header
+  with no upgrade rule.
 - The template address is computed as before (`wasm_check.py address <author key> dist-v2/seal_log.wasm`); the
   hashing in tari_engine_types did not change.
 - Publishing: the same `PublishTemplate` transaction as `deploy/ootle/publish-template.sh`, with

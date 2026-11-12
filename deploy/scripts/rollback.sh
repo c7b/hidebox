@@ -6,9 +6,12 @@
 #   sudo bash …/rollback.sh --from-failed <release-id>                     used by deploy after a failure
 # Database migrations only move forward; a release older than the schema refuses to start
 # (mutis-api checks), and the healthcheck turns red. See deploy/README.md, "Rolling back".
+# MUTIS_INSTANCE=<name> rolls back that instance (deploy/scripts/instance.py), its own site and units only.
 set -euo pipefail
 
-app=/srv/mutis/app
+eval "$(python3 -I "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/instance.py" env "${MUTIS_INSTANCE:-}")"
+export MUTIS_INSTANCE
+app=$INST_APP
 die() { echo "rollback: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
 
@@ -32,10 +35,12 @@ mv -T "$app/current.tmp" "$app/current"
 printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$target" >> "$app/history"
 echo "rollback: current → releases/$target (was $current)"
 
-for unit in mutis-api mutis-chain; do
+for unit in "$INST_API_UNIT" "$INST_CHAIN_UNIT"; do
   if systemctl is-enabled --quiet "$unit" 2>/dev/null; then systemctl restart "$unit"; fi
 done
-if ! cmp -s "$app/releases/$target/deploy/caddy/Caddyfile" /etc/caddy/Caddyfile; then
+if [ -n "$MUTIS_INSTANCE" ]; then
+  [ -f "$app/releases/$target/deploy/scripts/caddy-site.sh" ] && bash "$app/releases/$target/deploy/scripts/caddy-site.sh" "$app/releases/$target"
+elif ! cmp -s "$app/releases/$target/deploy/caddy/Caddyfile" /etc/caddy/Caddyfile; then
   install -m 0644 "$app/releases/$target/deploy/caddy/Caddyfile" /etc/caddy/Caddyfile
   systemctl reload caddy
 fi

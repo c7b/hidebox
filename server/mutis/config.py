@@ -11,6 +11,8 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import network as networks
+
 PINNED_WASM_SHA256 = "29087e5618c4f5e1c94f31f42a00ccf0f33fc634ddece6f79f1cc37557c85725"   # spec §3.3 step 7
 
 DEFAULTS: dict = {
@@ -19,7 +21,12 @@ DEFAULTS: dict = {
     "listen": "127.0.0.1:8787",
     "data_dir": "/srv/mutis/data",
     "secret_key": "/etc/mutis/secret.key",
-    "network": "esmeralda",
+    "network": "esmeralda",         # or "mainnet" (server/mutis/network.py): real TARI, no test money
+    # A rehearsal of a mainnet deployment on the testnet: the site and the app say so on every page.
+    "staging": False,
+    # The testnet deployment (https://host) a staging rehearsal names as the live service, and a mainnet deployment as
+    # the contest entry (/judges). Needed by both; production leaves it empty.
+    "testnet_origin": "",
     "single_uid": False,            # read by the deploy scripts (spec D4); the server behaves the same
     "security_drop_url": "",
     "repo_url": "https://github.com/c7b/hidebox",
@@ -29,11 +36,12 @@ DEFAULTS: dict = {
     # /judges, track one, step 4 opens it, so a judge sees a goodbye already on the chain (14 §9).
     "judge_demo_gone": "",
     "gates": {"send_mode": "relay", "amount_proof": "wallet", "key_bundle": False},
-    # The drive (16-drive-design §15): folders, Trash and Delete it after; pay to open. Off until the
-    # routes switch over; the tests turn them on.
+    # The drive (16-drive-design §15): folders, Trash and Delete it after; pay to open; a drive's shop of pay links
+    # (docs/shop.md, it needs pay_to_open too); withdrawing earnings (docs/withdraw.md, it needs pay_to_open too). Off
+    # until the routes switch over; the tests turn them on.
     "features": {"drops": True, "relay_send": True, "direct_send": False, "demo_pay": True, "sponsor": False,
                  "decoys": True, "kept": True, "seallog": False, "folders": False, "pay_to_open": False,
-                 "packs": True},
+                 "packs": True, "judge_passes": True, "shop": False, "withdraw": False},
     "limits": {"reserve_min_bytes": 10 << 30, "small_lane_bytes": 1 << 30, "drop_lane_bytes": 2 << 30,
                "anon_lane_max_bytes": 6 << 30},
     # Space packs (spec §9.6, against griefing; server/mutis/packs.py). Paid space is capped at
@@ -70,6 +78,7 @@ DEFAULTS: dict = {
         "jitter_s": [5, 45],
         "decoy_mean_gap_s": 900,
         "sponsor_grant_ut": 1_000_000,
+        "sponsor_min_ut": 200_000_000,   # the healthcheck's sponsor balance turns amber below this
         "seallog_component": "",
         "wasm_version": "0.52.0",
         "mainnet_date": "2026-11-11",
@@ -103,6 +112,10 @@ class Config:
     @property
     def origin(self) -> str:
         return self.raw["public_origin"]
+
+    @property
+    def net(self) -> networks.Network:
+        return networks.get(self.raw["network"])
 
     @property
     def data_dir(self) -> Path:
@@ -144,8 +157,25 @@ def _merge(base: dict, over: dict, path: str) -> dict:
 
 
 def validate(raw: dict, dev: bool = False) -> None:
-    if raw["network"] != "esmeralda":
-        raise ConfigError("network must be esmeralda (testnet only)")
+    if raw["network"] not in networks.NETWORKS:
+        raise ConfigError(f"network must be one of {', '.join(networks.NETWORKS)}")
+    net = networks.get(raw["network"])
+    if not net.testnet:
+        on = [f for f in networks.TEST_MONEY if raw["features"][f]]
+        if on:
+            raise ConfigError(f"features {', '.join(on)} must be false on the {net.name} (no test money there)")
+        if raw["staging"]:
+            raise ConfigError("staging is a rehearsal on the testnet: set it to false on the mainnet")
+    testnet = raw["testnet_origin"]
+    if testnet and not (testnet.startswith("https://") and re.fullmatch(r"https://[a-z0-9.-]+", testnet)):
+        raise ConfigError("testnet_origin must be empty or https://host")
+    if (raw["staging"] or not net.testnet) and not testnet:
+        raise ConfigError("testnet_origin must name the testnet deployment (https://host) on staging and on the mainnet")
+    foreign = [u for u in raw["ootle"]["indexers"] if networks.foreign_indexer(net.name, u)]
+    if foreign:
+        raise ConfigError(f"ootle.indexers lists another network's indexer: {foreign[0]}")
+    if not raw["ootle"]["indexers"]:
+        raise ConfigError("ootle.indexers must name at least one indexer")
     origin = raw["public_origin"]
     if not (origin.startswith("https://") or (dev and origin.startswith("http://127.0.0.1:"))):
         raise ConfigError("public_origin must be https://")

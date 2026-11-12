@@ -27,7 +27,7 @@ of every route is in [api.md](api.md); what each guarantee defends against is in
  └──────────────────────────┘           │ sponsor grants, payment proofs, canaries, SealLog      │
              ▲                          │ checkpoints, decoys                                    │
              │                          │   ├─► sidecar (Node 20, permission model, ootle-wasm)  │
-             │                          │   └─► tari_ootle_walletd 0.47 (user drive, :5100)      │
+             │                          │   └─► tari_ootle_walletd 0.52 (user drive, :5100)      │
              │                          └───────────────┬──────────────────────────────────────┘
              └───────────── Esmeralda ◄─────────────────┘
 ```
@@ -186,6 +186,6 @@ year and a release can only add names, never change what an old one holds.
 
 Built with AI coding agents under the author's direction. The design, threat model and crypto choices
 were reviewed by the author; the verification evidence is in [evidence/](evidence/). The project
-depends on Python's standard library, the browser's WebCrypto, Debian's Node and Caddy, and one
-pinned, hash-checked piece of third-party code (`ootle-wasm`, see [NOTICE](../NOTICE)). Nothing is
+depends on Python's standard library, the browser's WebCrypto, Debian's Node and Caddy, and the
+pinned, hash-checked official Tari library (`ootle-wasm` and `ootle-wasm-bor` 0.52.0, see [NOTICE](../NOTICE)). Nothing is
 installed from npm or pip.

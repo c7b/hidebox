@@ -18,6 +18,12 @@ nothing holds open. Blobs are never backed up: mutis isn't a backup service, and
 exit must not live on in our backups. Each copy uses SQLite's online backup API, so a live database
 is copied consistently, and is then a single self-contained file (rollback journal, no -wal).
 One installed copy of this script (/usr/local/lib/mutis/backup.py) serves both backup units.
+
+An instance beside production (deploy/scripts/instance.py) runs its own copy with its own paths, which its
+units pass in the environment: MUTIS_WALLET_DBS (one walletd database per network, ":"-separated; each copy is
+named wallet-<network>-YYYYMMDD.sqlite, or <name>-YYYYMMDD.sqlite for a `name=path` entry such as the L1 wallet's,
+and a wallet not set up yet is skipped), MUTIS_WALLET_BACKUPS,
+MUTIS_KEYS and MUTIS_ROOT_BACKUPS. Unset, production's paths below.
 """
 import argparse
 import datetime
@@ -34,9 +40,22 @@ from pathlib import Path
 KEEP_DAYS = 7          # server/mutis/cleanup.py DB_BACKUP_DAYS; deploy/tests checks they agree
 SLACK_S = 12 * 3600    # the daily run that falls on day 7 removes the day-0 copy despite timer jitter
 WALLET_DB = Path("/home/drive/wallet/esmeralda/data/wallet.sqlite")
-WALLET_BACKUPS = Path("/home/drive/wallet/backup")
-KEYS = Path("/home/drive/mutis")
-ROOT_BACKUPS = Path("/var/backups/mutis")
+WALLET_BACKUPS = Path(os.environ.get("MUTIS_WALLET_BACKUPS") or "/home/drive/wallet/backup")
+KEYS = Path(os.environ.get("MUTIS_KEYS") or "/home/drive/mutis")
+ROOT_BACKUPS = Path(os.environ.get("MUTIS_ROOT_BACKUPS") or "/var/backups/mutis")
+
+
+def wallet_dbs() -> list[tuple[str, Path, bool]]:
+    """(copy name prefix, database, required): production's one walletd, or an instance's, one per network."""
+    listed = os.environ.get("MUTIS_WALLET_DBS")
+    if not listed:
+        return [("wallet", WALLET_DB, True)]
+    # name=path, or …/wallet-<network>/<network>/data/wallet.sqlite: the network is the directory above data/
+    out = []
+    for entry in (e for e in listed.split(":") if e):
+        name, _, path = entry.rpartition("=")
+        out.append((name or f"wallet-{Path(path).parent.parent.name}", Path(path), False))
+    return out
 DB_COPY_SUFFIXES = (".sqlite3", ".sqlite3-wal", ".sqlite3-shm", ".sqlite3.part")   # mutis databases only
 
 
@@ -106,10 +125,13 @@ def backup_wallet(now: float | None = None) -> list[str]:
     now = time.time() if now is None else now
     remove_side_files(WALLET_BACKUPS)
     done = []
-    target = WALLET_BACKUPS / f"wallet-{today()}.sqlite"
-    copy_sqlite(WALLET_DB, target)
-    prune(WALLET_BACKUPS, "wallet-????????.sqlite", now)
-    done.append(target.name)
+    for prefix, database, required in wallet_dbs():
+        if not required and not database.is_file():
+            continue                   # an instance's walletd for a network it doesn't run (yet)
+        target = WALLET_BACKUPS / f"{prefix}-{today()}.sqlite"
+        copy_sqlite(database, target)
+        prune(WALLET_BACKUPS, f"{prefix}-????????.sqlite", now)
+        done.append(target.name)
     for key in sorted(KEYS.glob("*.json")):
         target = WALLET_BACKUPS / f"{key.stem}-{today()}.json"
         copy_file(key, target)
@@ -150,7 +172,8 @@ def check_copy(path: Path) -> dict:
 
 def restore_drill() -> list[dict]:
     results = []
-    for folder, prefix, suffix in ((None, "mutis", ".sqlite3"), (WALLET_BACKUPS, "wallet", ".sqlite")):
+    wallets = [(WALLET_BACKUPS, prefix, ".sqlite") for prefix, _, _ in wallet_dbs()]
+    for folder, prefix, suffix in ((None, "mutis", ".sqlite3"), *wallets):
         try:
             folder = folder or data_dir() / "backup"
             copies = sorted(folder.glob(f"{prefix}-????????{suffix}"))

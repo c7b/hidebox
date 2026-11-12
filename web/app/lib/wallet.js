@@ -6,11 +6,11 @@
 // into a bucket that pays it, so no account or vault is involved and the chain shows no sender
 // account or address. deliver() picks this or our relay for each send.
 import { b64uEncode, hex, unhex } from './b64.js';
-import { NETWORK_BYTE, TARI_RESOURCE, bindings, parseAddress, ready, tryDecryptUtxo } from './ootle.js';
+import { TARI_RESOURCE, bindings, networkByte, parseAddress, ready, tryDecryptUtxo } from './ootle.js';
 import { ApiError, config } from './api.js';
 import { chainIx, demoPay, postCourier, requestSponsor } from './api-locker.js';
 import { inboxState, scan, updateWallet } from './scan.js';
-import { substateValue } from './substate.js';
+import { substateDown, substateValue } from './substate.js';
 import { memoFor } from './courier.js';
 import { hasJudgePass, withPow } from './pow.js';
 import { localGet, localSet } from './store.js';
@@ -18,14 +18,14 @@ import { authHeaders } from './session.js';
 
 // The same flat fee as every relay send (§1.4), so a direct send doesn't stand out by its fee.
 export const FEE_UT = 30000n;
-const VALIDITY_EPOCHS = 10;
+export const VALIDITY_EPOCHS = 10;
 const MAX_INPUTS = 4;
 // Inputs of a submitted transaction are held back this long (longer than waitFinal waits); after
-// that a send asks the indexer again: gone means spent, still there means the transaction failed.
-const PENDING_MS = 180000;
+// that a send asks the indexer again: proven spent means spent, still there means the transaction failed.
+export const PENDING_MS = 180000;
 
 export class WalletError extends Error {
-  // code: 'insufficient' | 'input_gone' | 'rejected' | 'timeout'
+  // code: 'insufficient' | 'input_gone' | 'input_missing' | 'rejected' | 'timeout' | 'maybe_sent'
   constructor(code, detail = '') {
     super(detail || code);
     this.name = 'WalletError';
@@ -51,26 +51,30 @@ export async function demoPayInvoice(invoiceId, opts = {}) {
   return withPow('demo_pay', (pow, judge) => demoPay(invoiceId, pow, { ...authHeaders(), ...judge }), opts);
 }
 
-// A wallet output as the indexer has it now, unblinded with the wallet's view key. A spent output is
-// gone from the indexer (404, or a proven down); any other failure is passed on, so a network blip
-// spends nothing.
+// A wallet output as the indexer has it now, unblinded with the wallet's view key. 'input_gone' needs
+// evidence: the indexer proves it spent, or shows it frozen or not this wallet's. A 404, or an answer
+// without a value, is 'input_missing': an indexer that hasn't caught up says the same, so the output is
+// left out of this send and asked about again later, never written off. Any other failure is passed on,
+// so a network blip spends nothing.
 async function loadInput(identity, utxoId) {
   let sub;
   try {
     sub = await chainIx('GET', `substates/${utxoId}`);
   } catch (e) {
-    if (e instanceof ApiError && e.status === 404) throw new WalletError('input_gone', utxoId);
+    if (e instanceof ApiError && e.status === 404) throw new WalletError('input_missing', utxoId);
     throw e;
   }
+  if (substateDown(sub)) throw new WalletError('input_gone', utxoId);
   const utxo = (await substateValue(sub))?.Utxo;
   const body = utxo?.output?.output;
-  if (!body || utxo.is_frozen) throw new WalletError('input_gone', utxoId);
+  if (!body) throw new WalletError('input_missing', utxoId);
+  if (utxo.is_frozen) throw new WalletError('input_gone', utxoId);
   const mine = await tryDecryptUtxo(identity.wallet.viewSk, { id: utxoId, nonce: body.public_nonce, enc: body.encrypted_data });
   if (!mine) throw new WalletError('input_gone', utxoId);
   return { utxoId, nonce: unhex(body.public_nonce), value: mine.value, mask: mine.mask };
 }
 
-function witness(network, keys, amount, memo) {
+export function witness(network, keys, amount, memo) {
   return bindings().createStealthOutputWitness(
     network, keys.ownerPk, keys.viewPk, amount, TARI_RESOURCE, null, memo ? JSON.stringify(memo) : null, null, 0n,
   );
@@ -78,17 +82,17 @@ function witness(network, keys, amount, memo) {
 
 // Unsigned transaction JSON. The statement is spliced in byte-exact, because its u64 amounts are bare
 // JSON numbers that must never round-trip through a JS number.
-function unsignedTx(statement, inputs, maxEpoch) {
+export function unsignedTx(statement, inputs, maxEpoch) {
   const substates = [`{"substate_id":"${TARI_RESOURCE}","version":null,"is_write":false}`]
     .concat(inputs.map((i) => `{"substate_id":"${i.utxoId}","version":null,"is_write":true}`));
-  return `{"network":${NETWORK_BYTE},"fee_instructions":[`
+  return `{"network":${networkByte()},"fee_instructions":[`
     + `{"StealthTransfer":{"resource_address_ref":{"Address":"${TARI_RESOURCE}"},"statement":${statement},"revealed_input_bucket":null}},`
     + '{"PutLastInstructionOutputOnWorkspace":{"key":0}},{"PayFeeFromBucket":{"bucket":{"id":0,"offset":null}}}],'
     + `"instructions":[],"inputs":[${substates.join(',')}],"min_epoch":null,"max_epoch":${maxEpoch},`
     + '"main_signer":"SealSigner","dry_run":false,"blobs":[],"nonce":0}';
 }
 
-async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
+export async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
   const end = Date.now() + timeoutMs;
   while (Date.now() < end) {
     signal?.throwIfAborted();
@@ -104,8 +108,24 @@ async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
   throw new WalletError('timeout', txId);
 }
 
+// An output the indexer doesn't show now. If a transaction of ours took it and the chain committed that
+// one, it is spent. Otherwise nobody proved anything: it is held back for PENDING_MS and asked about again.
+async function missing(identity, c) {
+  const tx = c.pending?.tx ?? null;
+  const res = tx ? await chainIx('GET', `transactions/${tx}/result`).catch(() => null) : null;
+  if (res?.result?.Finalized?.final_decision === 'Commit') return updateWallet(identity, [c.utxoId], { spent: true, pending: null });
+  return updateWallet(identity, [c.utxoId], { pending: { tx, at: Date.now() } });
+}
+
+// A submit our server refused outright (a 4xx: no session, a shape it won't relay, a rate limit) went
+// nowhere. Anything else (no answer, a timeout, a 5xx) may have been relayed before the answer was lost.
+const refused = (e) => e instanceof ApiError && e.status >= 400 && e.status < 500;
+
 // Send `amountUt` to an Ootle address with an optional memo object ({Message: "…"}).
 // onSubmit(txId): the indexer took the transaction (it may still land after a timeout).
+// The inputs are held back (pending) from before the submit: if its answer is lost, WalletError
+// 'maybe_sent' says so and they stay held for PENDING_MS. Other outputs could still pay, so a caller
+// that pays a bill remembers the lost answer and doesn't pay it again meanwhile (lib/pay.js payFromDrive).
 // -> {tx_id, inputs, fee_ut}
 export async function send(identity, { to, amountUt, memo = null, signal, onSubmit = null }) {
   await ready();
@@ -125,14 +145,15 @@ export async function send(identity, { to, amountUt, memo = null, signal, onSubm
       total += input.value;
     } catch (e) {
       if (!(e instanceof WalletError)) throw e;
-      await updateWallet(identity, [c.utxoId], { spent: true, pending: null }); // spent here, in another tab or on another device
+      if (e.code === 'input_missing') await missing(identity, c);
+      else await updateWallet(identity, [c.utxoId], { spent: true, pending: null }); // spent here, in another tab or on another device
     }
   }
   if (total < amount + FEE_UT) throw new WalletError('insufficient');
 
-  const outputs = [witness(NETWORK_BYTE, dest, amount, memo)];
+  const outputs = [witness(networkByte(), dest, amount, memo)];
   const change = total - amount - FEE_UT;
-  if (change > 0n) outputs.push(witness(NETWORK_BYTE, identity.wallet, change, null));
+  if (change > 0n) outputs.push(witness(networkByte(), identity.wallet, change, null));
   const seal = w.generateKeypair();
   const sealSk = seal.secret_key;
   const sealPk = seal.public_key;
@@ -147,17 +168,27 @@ export async function send(identity, { to, amountUt, memo = null, signal, onSubm
   let tx = unsignedTx(statement, inputs, epoch + VALIDITY_EPOCHS);
   // Each input is authorised by its one-time key c + k (the receiver side of the stealth DH; Ootle 0.48+:
   // c = H(network || v·R), so the wallet's view secret takes part).
-  for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(NETWORK_BYTE, identity.wallet.ownerSk, identity.wallet.viewSk, i.nonce), sealPk);
+  for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(networkByte(), identity.wallet.ownerSk, identity.wallet.viewSk, i.nonce), sealPk);
   const envelope = w.borEncodeTransaction(w.sealTransaction(tx, sealSk));
 
   // Submitting takes the locker session: the proxy relays sends of our lockers, not anyone's transactions.
-  const { transaction_id: txId } = await chainIx('POST', 'transactions', { transaction: envelope }, authHeaders());
+  const ids = inputs.map((i) => i.utxoId);
+  await updateWallet(identity, ids, { pending: { tx: null, at: Date.now() } });
+  let txId;
+  try {
+    ({ transaction_id: txId } = await chainIx('POST', 'transactions', { transaction: envelope }, authHeaders()));
+  } catch (e) {
+    if (refused(e)) {
+      await updateWallet(identity, ids, { pending: null });
+      throw e;
+    }
+    throw new WalletError('maybe_sent', e?.message ?? '');
+  }
   try {
     onSubmit?.(txId);
   } catch {
     // the caller's display only: the inputs below are marked whatever it did
   }
-  const ids = inputs.map((i) => i.utxoId);
   await updateWallet(identity, ids, { pending: { tx: txId, at: Date.now() } });
   try {
     await waitFinal(txId, { signal });
@@ -226,7 +257,8 @@ export async function deliver(identity, { address, kind, blob, signal }) {
   const cfg = await config();
   if (await canSendDirect(identity, cfg, { signal })) {
     try {
-      const memo = { Message: memoFor(cfg.origin, kind, blob) };
+      // the page's own origin (a link's host is never an answer's to choose); /config's only outside a page
+      const memo = { Message: memoFor(globalThis.location?.origin ?? cfg.origin, kind, blob) };
       return { mode: 'direct', ...(await send(identity, { to: address, amountUt: courierAmount(cfg), memo, signal })) };
     } catch (e) {
       if (!(e instanceof WalletError && e.code === 'insufficient')) throw e;

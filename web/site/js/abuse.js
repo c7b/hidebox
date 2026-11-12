@@ -8,12 +8,17 @@ import { config } from './site.js';
 const T = {
   working: 'A few seconds of math instead of a captcha…',
   sent: (id) => `Thanks. Report ${id} received. We read every report and usually disable the link first and ask questions later.`,
-  notLink: 'Paste a link from this site: it has /s/ or /d/ in it.',
+  notLink: 'Paste a link from this site: it has /s/, /p/, /d/ or /shop/ in it.',
   wait: (s) => `You can send another report in ${s} seconds.`,
   offline: 'We couldn\'t reach our server. Nothing was sent. Try again.',
   failed: 'Our server failed. Nothing was sent. Try again in a minute.',
 };
-const PATH = /^\/(s\/[A-Za-z0-9_-]{22}|d\/[0-9a-hjkmnp-tv-z]{10})$/;
+const PATH = /^\/(s\/[A-Za-z0-9_-]{22}|p\/[A-Za-z0-9_-]{22}|d\/[0-9a-hjkmnp-tv-z]{10}|shop\/[A-Za-z0-9_-]{22})$/;
+// A paid link (/p/<id>) is a link with a price: the same id opens as /s/<id> for a report.
+function asPlain(link) {
+  const url = new URL(link);
+  return url.origin + url.pathname.replace(/^\/p\//, '/s/') + url.hash;
+}
 
 const form = document.querySelector('[data-abuse]');
 const linkInput = form.elements.link;
@@ -51,10 +56,15 @@ form.addEventListener('submit', async (event) => {
   say(T.working);
   try {
     const [{ solvePow }, { reportAbuse }] = await Promise.all([import('/app/lib/pow.js'), import('/app/lib/api.js')]);
-    const pow = await solvePow('report');
-    const { report_id: id } = await reportAbuse({
-      link, category: form.elements.category.value, details: form.elements.details.value.trim(),
-      contact: form.elements.contact.value.trim() || null, pow,
+    const send = async (as) => reportAbuse({
+      link: as, category: form.elements.category.value, details: form.elements.details.value.trim(),
+      contact: form.elements.contact.value.trim() || null, pow: await solvePow('report'),
+    });
+    // A server that doesn't take /p/ links yet answers `invalid`: the report goes again under the link's own
+    // id as /s/<id>, which every server takes, so a paid link can be reported either way.
+    const { report_id: id } = await send(link).catch((e) => {
+      if (e.code !== 'invalid' || asPlain(link) === link) throw e;
+      return send(asPlain(link));
     });
     form.reset();
     say(T.sent(id));
@@ -68,7 +78,7 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-// The app's "Report this link" and "Report this drop" open /fine-print#link=<the link without its key>.
+// The app's "Report this link", "Report this drop" and "Report this shop" open /fine-print#link=<the link without its key>.
 // The fragment is cleared at once; the field takes the link only as the form would send it, and the
 // page goes to the form (it sits below the privacy and terms text).
 const prefill = new URLSearchParams(location.hash.slice(1)).get('link');

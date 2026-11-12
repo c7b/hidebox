@@ -125,8 +125,9 @@ export default [
       api.restore();
     }
   }],
-  ['direct send: a network failure spends nothing; only a 404 from the indexer means "already spent"', async () => {
+  ['direct send: a network failure spends nothing, and a 404 from the indexer writes nothing off: the output is held back and asked about again', async () => {
     await ready();
+    set('session', { token: 'wallet-test' });
     const me = await identityFromSeed(randomBytes(32), { createdSeq: 0 });
     const funding = outputTo(me.wallet, 2000000);
     await idbPut('inbox', 'current', { identityId: me.id, cursor: 0, deliveries: [], receipts: [], wallet: [{ utxoId: funding.id, value: '2000000', spent: false }] });
@@ -136,16 +137,71 @@ export default [
       if (String(input).includes('/chain/ix/substates/')) throw new TypeError('offline');
       return fakeFetch(input, init);
     };
+    const to = (await newRandomKeys()).address;
     try {
-      const to = (await newRandomKeys()).address;
       await rejects(() => send(me, { to, amountUt: 1000 }), (e) => e instanceof ApiError && e.code === 'network');
       eq(await balance(me), 2000000n, 'still spendable');
       globalThis.fetch = fakeFetch;
+      // An indexer that hasn't seen the output yet answers 404, as one would for an output that never was.
       await rejects(() => send(me, { to, amountUt: 1000 }), (e) => e instanceof WalletError && e.code === 'insufficient');
-      eq(await balance(me), 0n, 'the indexer says it is gone (404), so it is marked spent');
+      const held = (await inboxState(me)).wallet[0];
+      ok(!held.spent && held.pending && held.pending.tx === null, 'held back, not written off');
+      eq(await balance(me), 0n, 'not offered while nobody knows');
+      held.pending.at -= 200000; // three minutes and more later
+      await idbPut('inbox', 'current', { identityId: me.id, cursor: 0, deliveries: [], receipts: [], wallet: [held] });
+      eq(await balance(me), 2000000n, 'offered again once the hold is over');
     } finally {
       globalThis.fetch = fakeFetch;
       api.restore();
+    }
+    // The indexer caught up: the same output pays.
+    const caught = installFakeApi({ substates: new Map([[funding.id, funding]]) });
+    try {
+      await send(me, { to, amountUt: 1000 });
+      eq(caught.state.submitted.length, 1, 'the output a 404 once hid is spent when the indexer shows it');
+    } finally {
+      caught.restore();
+    }
+  }],
+  ['a submit that times out holds its inputs and isn\'t offered again; one our server refuses outright frees them', async () => {
+    const to = (await newRandomKeys()).address;
+    // the answer to the submit is lost (the connection drops after our server took it)
+    const { me, funding } = await funded(2000000);
+    const api = installFakeApi({ substates: new Map([[funding.id, funding]]) });
+    const fakeFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init = {}) => {
+      const res = await fakeFetch(input, init);
+      if (init.method === 'POST' && String(input).endsWith('/chain/ix/transactions')) throw new TypeError('connection lost');
+      return res;
+    };
+    try {
+      let told = null;
+      const e = await rejects(() => send(me, { to, amountUt: 1000, onSubmit: (tx) => { told = tx; } }), (x) => x instanceof WalletError && x.code === 'maybe_sent');
+      ok(e instanceof WalletError);
+      eq(api.state.submitted.length, 1, 'our server did take it');
+      eq(told, null, 'nobody knows its id');
+      const held = (await inboxState(me)).wallet[0];
+      ok(!held.spent && held.pending && held.pending.tx === null, 'held back from before the submit');
+      eq(await balance(me), 0n, 'not offered while it may still land');
+      globalThis.fetch = fakeFetch;
+      await rejects(() => send(me, { to, amountUt: 1000 }), (x) => x instanceof WalletError && x.code === 'insufficient');
+      eq(api.state.submitted.length, 1, 'no second transaction');
+    } finally {
+      globalThis.fetch = fakeFetch;
+      api.restore();
+    }
+    // a refusal (no session: 401) went nowhere: the output is free at once
+    const again = await funded(2000000);
+    set('session', null);
+    const refusing = installFakeApi({ substates: new Map([[again.funding.id, again.funding]]) });
+    try {
+      await rejects(() => send(again.me, { to, amountUt: 1000 }), (x) => x instanceof ApiError && x.status === 401);
+      eq(refusing.state.submitted.length, 0);
+      eq((await inboxState(again.me)).wallet[0].pending, null);
+      eq(await balance(again.me), 2000000n, 'still spendable');
+    } finally {
+      set('session', { token: 'wallet-test' });
+      refusing.restore();
     }
   }],
   ['direct send rejected by the network: nothing was spent, the next send can use the same output', async () => {

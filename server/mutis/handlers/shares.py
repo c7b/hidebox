@@ -29,6 +29,7 @@ PWONLY_GLOBAL_HARD = 100      # password only: daily failures across everyone be
 PWONLY_HARD_BITS = 20
 EGRESS_PER_ITEM_DAY = items.EGRESS_PER_ITEM_DAY
 UNLIMITED_OPENS_PER_HOUR = 60
+STORED_TIMES_64, STORED_TIMES_48 = 3, 6   # a file's stored bytes a day per /64 (or IPv4 address) and per /48 (or /24)
 TEASER_MAX = 2076             # iv ‖ AES-GCM(teaserKey, JSON padded to 256-byte steps): the pay page's preview
 KDF_MIN_ITER, KDF_MAX_ITER = 600_000, 5_000_000
 NOT_KNOWN = ["file_name", "file_type", "file_content", "link_key", "password", "ip_address_on_disk"]
@@ -506,6 +507,12 @@ def stored_bytes(ctx, share_id: str):
     """P1 "Download the stored bytes": the ciphertext exactly as stored, without using a view.
 
     Safe for the link holder too: the wrapped file key is released only by /open.
+
+    It uses no view, so what it may take is bounded three ways (security pass, 2026-11-09: one buyer's one-byte
+    requests, each charged the whole file, left a paid file's other buyers without an open for the day): a request
+    is charged the bytes of its Range; a network takes a file's stored bytes STORED_TIMES_64 times a day (a /48
+    STORED_TIMES_48 times); and all of it together stays within half the file's daily egress
+    (items.stored_egress_cap), so opens keep the other half.
     """
     ctx.limit(("stored64", ctx.ip64, 30, 60, 1))
     _, item = authorized_share(ctx, share_id, {})
@@ -513,11 +520,18 @@ def stored_bytes(ctx, share_id: str):
         raise ApiError(410, "gone", "This link has ended.", details={"reason": "removed", "ended_day": codec.day(ctx.now)})
     if item["kind"] == "folder":
         raise ApiError(409, "conflict", "A folder has no stored bytes of its own; open it.")
-    with db.tx(ctx.db):
-        allowed = _egress_ok(ctx.db, item, ctx.now, item["size_stored"])
-    if not allowed:
-        raise ApiError(429, "rate_limited", "This file was downloaded a lot today.")
-    return ranged(ctx, item["id"], item["size_stored"], "sealed.bin", "no-store")
+    size, again = item["size_stored"], codec.next_utc_midnight(ctx.now) - ctx.now
+
+    def charge(length: int) -> None:
+        rules = (("stored_item64", (item["id"], ctx.ip64), STORED_TIMES_64 * size, 86400, length),
+                 ("stored_item48", (item["id"], ctx.ip48), STORED_TIMES_48 * size, 86400, length))
+        with ctx.charged(*rules, message="Your network took this file's stored bytes a few times today."):
+            with db.tx(ctx.db):
+                allowed = _egress_ok(ctx.db, item, ctx.now, length, items.stored_egress_cap())
+            if not allowed:
+                raise ApiError(429, "rate_limited", "This file was downloaded a lot today.", retry_after=again)
+
+    return ranged(ctx, item["id"], size, "sealed.bin", "no-store", charge)
 
 
 # --- owner edits -------------------------------------------------------------------------------------

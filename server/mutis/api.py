@@ -16,7 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
-from . import auth, codec, config, db, logsafe
+from . import auth, codec, config, db, logsafe, network, ootle_addr
 from .http_util import HEADERS_MAX, ApiError, Request, Response, error_response
 from .indexer import Indexers
 from .ipkeys import IpKeys, client_ip
@@ -76,6 +76,7 @@ class App:
                  static=None):
         self.cfg = cfg
         self.dev = dev
+        ootle_addr.use_network(cfg["network"])
         self.k_pow = codec.hkdf(secret, b"mutis/v1", b"pow", 32)
         self.canary_token = codec.hkdf(secret, b"mutis/v1", b"canary", 32)
         self.limiter = Limiter()
@@ -119,6 +120,7 @@ class App:
             return cached
         merged = dict(self.cfg["features"])
         merged.update({k: v for k, v in db.get_meta_json(conn, "features", {}).items() if k in merged})
+        merged.update(network.forced_features(self.cfg["network"]))   # no test money on the mainnet, whatever was set
         self._features = (time.monotonic(), merged)
         return merged
 
@@ -241,7 +243,7 @@ class Ctx:
         with the job they queue (`spend_judge`), so a refused send costs the pass nothing.
         """
         code = self.req.header("X-Mutis-Judge")
-        if code is None:
+        if code is None or not self.features()["judge_passes"]:    # off (the mainnet): the header means nothing
             return None
         if len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
             raise _judge_refused()
@@ -251,7 +253,7 @@ class Ctx:
         """The X-Mutis-Judge code when it names a live pass, else None (never a 403): for the brakes a pass
         widens (uploads, packs), where an old pass in a browser must not break the request."""
         code = self.req.header("X-Mutis-Judge")
-        if code is None or len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
+        if code is None or not self.features()["judge_passes"] or len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
             return None
         return code
 

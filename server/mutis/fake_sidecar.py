@@ -21,6 +21,10 @@ from pathlib import Path
 from . import codec, ootle_addr, quota
 from .fake_chain import FAKE_WASM_SHA256, fake_keys, fake_one_time_key, fake_pk, open_output
 
+# The network the chain worker runs us on (Sidecar passes MUTIS_NETWORK), as the real sidecar reads it.
+NETWORK = os.environ.get("MUTIS_NETWORK") or "esmeralda"
+ootle_addr.use_network(NETWORK)
+
 _MEMO = re.compile(r"/t#3([A-Za-z0-9_-]{167})$")
 _canaries: dict[int, dict] = {}
 
@@ -130,7 +134,8 @@ def scan(view_sk: str, utxos: list[dict]) -> list[dict]:
 def handle(req: dict) -> dict:
     cmd = req.get("cmd")
     if cmd == "hello":
-        return {"version": "fake", "wasm_sha256": FAKE_WASM_SHA256, "node": "python", "permission": False}
+        return {"version": "fake", "wasm_sha256": FAKE_WASM_SHA256, "node": "python", "permission": False,
+                "network": NETWORK}
     if cmd == "newKeys":
         return fake_keys()
     if cmd == "decoyAddress":

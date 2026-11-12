@@ -23,11 +23,13 @@ function rowMenu(drive) {
     // link, Stop sharing for the others (ui/share-dialog.js stopFromMenu).
     const live = it.row ? activeShares(it) : [];
     const sale = live.find((s) => s.mode === 'pay' || s.paid);
+    const shop = drive.cfg.features?.shop && drive.cfg.features?.pay_to_open;
     menu.replaceChildren(...[   // the entries a folder doesn't have are null: never append them (they'd read "null")
       item('share', 'share-2', 'drive.menu.share'),
       file ? item('once', 'flame', 'drive.menu.once') : null,
       sale ? (sale.paid?.paused ? item('sell-again', 'rotate-ccw', 'sell.resume') : item('stop-sell', 'x', 'sell.stop')) : null,
       live.some((s) => s !== sale) ? item('stop-share', 'x', 'share.stop') : null,
+      shop ? item('shop', 'store', 'shop.menu') : null,   // docs/shop.md: list it, or price it and list it
       item('activity', 'activity', 'drive.menu.activity'),
       sep(),
       file ? item('download', 'download', 'drive.menu.download') : null,
@@ -55,6 +57,7 @@ export async function act(drive, value, items, trigger = null) {
     }
     if (value === 'stop-share' || value === 'stop-sell' || value === 'sell-again') return (await import('./share-dialog.js')).stopFromMenu(drive, items[0], value);
     if (value === 'activity') return (await import('./activity.js')).openActivity(drive, items[0]);
+    if (value === 'shop') return (await import('./drive-shop.js')).listFromMenu(drive, items[0], trigger);
     return (await import('./drive-menu.js')).menuAction(drive, value, items, trigger);
   } catch (e) {
     toast(t('drive.oops'), { type: 'error', description: e?.message });

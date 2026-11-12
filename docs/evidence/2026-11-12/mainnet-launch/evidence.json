@@ -1,0 +1,65 @@
+{
+ "epoch_at_evidence": 38542,
+ "fees_ut": {
+  "publish": 842961
+ },
+ "l1_height_at_evidence": 385421,
+ "label": "mainnet",
+ "log": {
+  "component": "component_45efaa40c370fa98b86ad59bd395694a241313d741f81ed30bc772b88ef84690",
+  "create": {
+   "decision": "Commit",
+   "finalized_time": "2026-11-12 18:28:36.0",
+   "indexer": "https://indexer-a.ootle.tari.com",
+   "tx": "ba9792cfd15ad29ba4465007e7a89048d0a223454389b8a3f093c62ba5e44d9d"
+  },
+  "fee_ut": 2414,
+  "header": {
+   "access_rules": {
+    "default": "DenyAll",
+    "method_access": {
+     "append_root": {
+      "Restricted": {
+       "Require": {
+        "Require": {
+         "NonFungibleAddress": {
+          "id": {
+           "U256": "9250fcabd52d7319996904b64ea494c0b077a8b2c8c39d94eb2e06a9c7294762"
+          },
+          "resource_address": "resource_0100000000000000000000000000000000000000000000000000000000000000"
+         }
+        }
+       }
+      }
+     },
+     "checkpoint_count": "AllowAll",
+     "get": "AllowAll",
+     "latest": "AllowAll",
+     "notarize": "AllowAll"
+    }
+   },
+   "owner_rule": "None",
+   "template_address": "494d34a5f55bcef614655c9f8b7fdcb672f1d086467fc96816c0a93a4a5c8472",
+   "upgrade_rule": "Locked"
+  },
+  "submitted_at": "2026-11-12T18:28:36Z"
+ },
+ "network": "mainnet",
+ "template": {
+  "address": "template_494d34a5f55bcef614655c9f8b7fdcb672f1d086467fc96816c0a93a4a5c8472",
+  "at_epoch": 38542,
+  "author_public_key": "9250fcabd52d7319996904b64ea494c0b077a8b2c8c39d94eb2e06a9c7294762",
+  "dry_run_fee_ut": 842961,
+  "publish": {
+   "decision": "Commit",
+   "finalized_time": "2026-11-12 18:28:34.0",
+   "indexer": "https://indexer-a.ootle.tari.com",
+   "tx": "dbb5173483176a9cadbc82bec4b981d44dd178eb8dfa750febe1e1462bc74dca"
+  },
+  "submitted_at": "2026-11-12T18:28:33Z",
+  "wasm_bytes": 107038,
+  "wasm_sha256": "00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f"
+ },
+ "what": "SealLog published and its log created by the mutis launch trigger (deploy/ootle/launch.py)",
+ "written_at": "2026-11-12T18:28:38Z"
+}

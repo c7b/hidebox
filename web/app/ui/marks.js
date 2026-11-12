@@ -21,7 +21,7 @@ export function formatTari(ut) {
 // network prefix ("otl_esm_1"), which every testnet address shares.
 export function shortAddress(address) {
   const a = String(address);
-  const prefix = /^[a-z]+_[a-z]+_1/.exec(a)?.[0].length ?? 0;
+  const prefix = /^otl_(?:[a-z]+_)?1/.exec(a)?.[0].length ?? 0;   // otl_esm_1, or the mainnet's otl_1
   return a.length > prefix + 16 ? `${a.slice(0, prefix + 6)}…${a.slice(-6)}` : a;
 }
 
@@ -35,8 +35,10 @@ export function safetyGrid(code, props = {}) {
 }
 
 // The testnet line every money screen carries (claim C19). It changes on its own when the Ootle
-// mainnet starts, like the footer's (/shared/dates.js).
+// mainnet starts, like the footer's (/shared/dates.js). On a mainnet deployment it is the mainnet's line
+// instead (C61, en.json testnet@mainnet: real TARI, a beta, keep amounts small), whatever the date.
 export function testnetLine(cfg) {
+  if (cfg.network === 'mainnet') return h('p', { class: 'a-testnet', 'data-testid': 'mainnet-line' }, t('testnet'));
   const network = cfg.network.charAt(0).toUpperCase() + cfg.network.slice(1);
   if (phase() === 'mainnet') return h('p', { class: 'a-testnet' }, t('testnet_live', { network }));
   const date = formatDate(Date.parse(`${cfg.ootle.mainnet_date}T00:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' });

@@ -17,7 +17,8 @@ import time
 import urllib.error
 import urllib.request
 
-from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, packs, payments, quota, sales, seallog
+from . import (budgets, codec, db, indexer, jobs, logsafe, mirror, network, ootle_addr, packs, payments, quota, sales,
+               seallog)
 from .indexer import IndexerError, Indexers
 from .sidecar import TRANSPORT_ERRORS, Sidecar, SidecarError
 from .walletd import Walletd, WalletdError
@@ -27,6 +28,7 @@ PAYMENTS_EVERY_S = 10
 RECONCILE_EVERY_S = 3600
 RECONCILE_RECHECK_S = 300        # after a mismatch, which holds credits until this check (payments.py)
 STATUS_EVERY_S = 15
+SETUP_RETRY_S = 10               # walletd unreachable or on another network: ask again this often
 REVEAL_AFTER_S = 86400
 EVIDENCE_PAY_HOUR_UTC = 12
 SCAN_BATCH = 2000
@@ -54,6 +56,24 @@ def random_memo(origin: str) -> str:
     return f"{origin}/t#3" + codec.b64u(secrets.token_bytes(125))
 
 
+def walletd_on_network(info: dict, net: network.Network) -> bool:
+    """wallet.get_info names walletd's network (a name, or the network byte): it must be ours. A walletd that
+    names none passes on the testnet only (the fake one, and old releases); on the mainnet it never does."""
+    named = info.get("network") if isinstance(info, dict) else None
+    byte = info.get("network_byte") if isinstance(info, dict) else None
+    if isinstance(named, str):
+        if named.lower() not in (net.name, net.walletd, net.label.lower()):
+            return False
+    elif isinstance(named, int) and not isinstance(named, bool):
+        if named != net.byte:
+            return False
+    elif named is not None:
+        return False
+    if isinstance(byte, int) and not isinstance(byte, bool) and byte != net.byte:
+        return False
+    return named is not None or isinstance(byte, int) or net.testnet
+
+
 def _keys(path: str) -> dict:
     with open(path) as f:
         keys = json.load(f)
@@ -68,6 +88,7 @@ class Worker:
     def __init__(self, cfg, secret: bytes, walletd: Walletd, indexers: Indexers, sidecar: Sidecar,
                  clock=codec.now, rng: random.Random | None = None):
         self.cfg, self.walletd, self.indexers, self.sidecar, self.clock = cfg, walletd, indexers, sidecar, clock
+        ootle_addr.use_network(cfg["network"])
         self.canary_token = codec.hkdf(secret, b"mutis/v1", b"canary", 32)
         self.conn = db.connect(cfg.db_path)
         self.rng = rng or random.Random()
@@ -116,6 +137,7 @@ class Worker:
     def _features(self) -> dict:
         merged = dict(self.cfg["features"])
         merged.update({k: v for k, v in db.get_meta_json(self.conn, "features", {}).items() if k in merged})
+        merged.update(network.forced_features(self.cfg["network"]))
         return merged
 
     def _force(self, name: str) -> bool:
@@ -140,7 +162,13 @@ class Worker:
     # --- lifecycle ----------------------------------------------------------------------------------
 
     def setup(self) -> None:
-        """Learn the receiving address for invoices (receiver keys, or walletd's `service` in the G4 fallback)."""
+        """Learn the receiving address for invoices (receiver keys, or walletd's `service` in the G4 fallback), once
+        walletd is known to run on our network: nothing is sent before that."""
+        info = self.walletd.info()
+        if not walletd_on_network(info, self.cfg.net):
+            self.status["walletd_ok"] = False
+            logsafe.event("chain.walletd_wrong_network", "critical")
+            raise WalletdError("walletd_wrong_network")
         if self.mode == "wallet":
             address = self.walletd.account(self.cfg["ootle"]["service_account"])["address"]
         else:
@@ -178,7 +206,7 @@ class Worker:
     def tick(self) -> None:
         now = self.clock()
         self._step(self._beat, self.conn)
-        if self.receiver_base is None or self.robot is None:
+        if (self.receiver_base is None or self.robot is None) and self._due("setup", SETUP_RETRY_S, now):
             self._step(self.setup)
         if self._due("mirror", MIRROR_EVERY_S, now):
             self._step(self.mirror, now)
@@ -473,6 +501,9 @@ class Worker:
             ootle_addr.parse_testnet(address)
             return self.walletd.stealth_transfer(sponsor, address, o["courier_amount_ut"], random_memo(self.cfg.origin),
                                                  fee)
+        if kind in ("demo_pay", "sponsor") and not self.cfg.net.testnet:
+            # The API never queues test money on the mainnet; a job like this here came from somewhere else.
+            raise ValueError(f"{kind} sends test money; there is none on the {self.cfg.net.name}")
         if kind == "demo_pay":
             return self.walletd.stealth_transfer(sponsor, payload["address"], int(payload["amount_ut"]), None, fee)
         return self.walletd.stealth_transfer(sponsor, payload["address"], o["sponsor_grant_ut"], None, fee)
@@ -649,6 +680,8 @@ class Worker:
         due = now % 86400 >= EVIDENCE_PAY_HOUR_UTC * 3600 and db.get_meta(self.conn, "evidence_pay_day") != today
         if self.receiver_base is None or not (due or self._force("evidence_pay")):
             return
+        if not self.cfg.net.testnet:
+            return                        # no test money on the mainnet: our demo wallet can't pay it
         pack = quota.PACKS["s30"]
         invoice_id = codec.invoice_id()
         address = ootle_addr.with_pay_ref(self.receiver_base, invoice_id.encode())

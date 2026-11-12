@@ -104,6 +104,17 @@ for p in files("lib", exts=(".js",)):
             flag(p, f"import outside the library: {spec}")
 
 
+# 6b. Links are built on the page's own origin whatever /config answers: a link's host gets the key after its #,
+#     so /config's `origin` is read nowhere in the pages or the library, except as lib/wallet.js's value outside a
+#     page (`globalThis.location?.origin ?? cfg.origin`: Node has no page).
+for p in list(files("lib", exts=(".js",))) + list(files("ui", exts=(".js",))):
+    checks += 1
+    for n, line in enumerate(open(p, encoding="utf-8").read().splitlines(), 1):
+        if re.search(r"\bcfg\??\.origin\b", line) and "globalThis.location?.origin ?? cfg.origin" not in line \
+                and not line.lstrip().startswith("//"):
+            flag(p, f"line {n}: /config's origin used to build something; use location.origin")
+
+
 # 7. A-06 (library side): what the widget loads before anyone picks a locker action. Static imports
 #    only: exif.js, password.js and the locker modules load with import() when they are needed, and
 #    the Ootle WebAssembly never loads on this path.

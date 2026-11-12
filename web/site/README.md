@@ -40,7 +40,7 @@ the icons, the manifest, robots.txt, the sitemap and noindex on the private rout
 | `../shared/theme.js` | classic script in `<head>`, before the first paint: "Lights off / Lights on", and `html.motion` when scripts run and motion is allowed |
 | `../shared/icons.svg` | the icon sprite of 11-brand §13.8, plus drop slot, watch and the wall's `keyhole` |
 | `../shared/brand/` | `symbol.svg`, `favicon.svg`: the mark, the open box in lime on its ink tile (docs/review/brand-kit-1.md), the same in both themes; `../shared/ui/icons.svg#i-hidebox` draws it in the header's tile and `#i-wordmark`, the name as the logo, beside it |
-| `../shared/partials/` | `header`, `footer`, `status-line`, each also `-es` |
+| `../shared/partials/` | `header` (with `staging-banner` inside), `footer`, `status-line` |
 | `../shared/fonts/` | Mutis Script Regular and Bold, Mutis Script Code, `OFL.txt`, `NOTICE` |
 | `pages/` | `index how made judges fine-print 404`. `/v3` ([docs/review/home-v3.md](../../docs/review/home-v3.md)) became `index` and answers 301 to `/` ([docs/review/promote-v3.md](../../docs/review/promote-v3.md)); `/v2`, the preview with the product loops before it ([docs/review/home-v2.md](../../docs/review/home-v2.md)), left with its loops and answers 301 to `/` too ([docs/review/perf-1.md](../../docs/review/perf-1.md)) |
 | `js/` | `site.js` (every page: the mainnet phase, live numbers and copy variants, the header's button, drive detection; on the home, /how and /judges it loads `motion.js` after the load event, A-06h; the home has no WebGL field since the v3 design), `stats.js` (numbers from `/config` and `/stats`), `made.js` with `canary.js` (then `reveal.js` on a click; it also marks the part being read in /made's contents and breadcrumb, and opens the disclosure a link points into), `evidence.js` and `noise.js`; `abuse.js`, `judges.js`, `status.js`; `stills.js` (`/how` only: its stills replay what they show, from `site.js` after the load event, with motion allowed); `egg.js` (the 404 page only: a note in the console, from `site.js`; [docs/review/site-404.md](../../docs/review/site-404.md)) |
@@ -60,7 +60,10 @@ No limit, price, duration or count is typed into a page (11-brand §8.3, P-20). 
 `/api/v1/stats`, formatted for the page's language. Every such element sits inside a block marked
 `data-needs`, which stays `hidden` until all of its values arrive, so a failed request removes the
 sentence instead of printing a guess. `data-when="send_mode=direct"` (also `proof`, `seallog`, `kept`,
-`snapshots`, `security_drop`) marks a copy variant. The HTML ships the server's defaults visible (relay
+`snapshots`, `security_drop`, `pay_to_open`, `folders`, `sponsor`, `test_pay`, `judge`, `network` and `staging`) marks a
+copy variant. `network` (esmeralda or mainnet) and `staging` are fixed by the build: a mainnet build leaves out the
+testnet's sentences altogether, reads tTARI as TARI, and gives `/p/` links the site's share card; a staging build shows
+the banner of `shared/partials/staging-banner.html` on every page (`tools/variants.py`). The HTML ships the server's defaults visible (relay
 sends, amounts read by our wallet, SealLog off, kept files on, host snapshots on); `tools/variants.py`
 sets the deployment's own variants into the built pages from its `mutis.toml`, so readers without
 JavaScript, crawlers and `llms-full.txt` get the true ones too, and `stats.js` switches them again

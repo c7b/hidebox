@@ -9,7 +9,7 @@
 import { h, lines } from './lines.js';
 import { formatBytes, formatDate, t } from '../lib/i18n.js';
 import { ApiError, config, exitReceipt } from '../lib/api.js';
-import { accessFor, fetchContent, linkStatus, openItem, peek } from '../lib/open.js';
+import { accessFor, fetchContent, kindFits, linkStatus, openItem, peek } from '../lib/open.js';
 import { parseFragment } from '../lib/share.js';
 import { SNIFF_BYTES, checkRisky, isArchiveName, sanitizeFileName } from '../lib/filetype.js';
 import { saveFile, warnLargeOnPhone } from '../lib/download.js';
@@ -128,10 +128,12 @@ export function viewer(root, opts) {
     } catch (e) {
       return fail(e);
     }
+    // The link's own kind decides the mode (lib/open.js kindFits): one our server names that doesn't fit it is
+    // refused here, before a word is asked for or anything is derived from it.
     const s = opts.secrets ?? {};
-    if ((status.mode === 'link' && !s.s) || (status.mode === 'link_password' && !s.s0)) {
-      return oops('incomplete', 'gone.nokey', 'gone.nokey_body');
-    }
+    const fits = kindFits(status.mode, s);
+    if (fits === 'missing') return oops('incomplete', 'gone.nokey', 'gone.nokey_body');
+    if (fits !== 'ok') return oops('integrity-error', 'gone.integrity', 'gone.integrity_body');
     if (status.mode !== 'link') return passwordState();
     access = await accessFor(status, { s: s.s });
     return ready();
@@ -468,6 +470,11 @@ export async function main() {
     setTitle('buy.page_title');
     const { payPage } = await import('./paypage.js');
     await payPage(root, cfg, route.params.shareId);
+  } else if (route.name === 'shop' && cfg.features?.shop) {
+    // A drive's shop (docs/shop.md), loaded only for /shop/<id>.
+    setTitle('shop.page_title');
+    const { shopPage } = await import('./shop-page.js');
+    await shopPage(root, cfg, route.params.shopId);
   } else {
     root.dataset.state = 'not-found';
     root.replaceChildren(scene({ state: 'oops', title: t('gone.notfound') }).head, footer());

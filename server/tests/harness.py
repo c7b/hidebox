@@ -16,7 +16,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from mutis import api, cleanup, codec, config, db, pow as pow_mod, quota  # noqa: E402
+from mutis import api, cleanup, codec, config, db, network as networks, ootle_addr, pow as pow_mod, quota  # noqa: E402
 from mutis.chain_worker import Worker  # noqa: E402
 from mutis.fake_chain import FAKE_WASM_SHA256, FakeChain, FakeIndexer, fake_keys  # noqa: E402
 from mutis.fake_sidecar import argv as fake_sidecar_argv  # noqa: E402
@@ -160,12 +160,14 @@ class Stack(Client):
     """A real mutis-api on 127.0.0.1:0 over a temporary data dir, with a settable clock and disk and the fake
     chain, indexer and walletd; `chain=True` also builds a chain worker driven by the same clock."""
 
-    def __init__(self, overrides: dict | None = None, pow_bits: int = 1, chain: bool = False):
+    def __init__(self, overrides: dict | None = None, pow_bits: int = 1, chain: bool = False, network: str = "esmeralda"):
         self.tmp = Path(tempfile.mkdtemp(prefix="mutis-test-"))
         self.now = START
         self.secret = secrets.token_bytes(32)
         (self.tmp / "secret.key").write_bytes(self.secret)
-        self.chain = FakeChain()
+        self.network = network
+        ootle_addr.use_network(network)          # the fakes' addresses are this network's (close() goes back)
+        self.chain = FakeChain(network=network)
         self.indexer = FakeIndexer(self.chain)
         self.walletd_fake = FakeWalletd(self.chain)
         self.receiver, self.robot = fake_keys(), fake_keys()
@@ -180,7 +182,9 @@ class Stack(Client):
                       "jitter_s": [5, 45]},
             "sidecar": {"command": fake_sidecar_argv(), "expected_wasm_sha256": FAKE_WASM_SHA256},
             # The drive's features are off in config.py until the routes switch over; tests run with them on.
-            "features": {"folders": True, "pay_to_open": True},
+            "features": {"folders": True, "pay_to_open": True, **networks.forced_features(network)},
+            "network": network,
+            **({"testnet_origin": "https://testnet.example"} if network != "esmeralda" else {}),
             # Requests without `ip` come from 127.0.0.1, the test's own address: like the server's own tests in
             # production, it skips the per-network daily brakes. Tests of the brakes pass `ip`.
             "brakes": {"exempt_addresses": ["127.0.0.1"]},
@@ -211,7 +215,8 @@ class Stack(Client):
         cfg = config.from_dict({**self.cfg.raw, "listen": f"127.0.0.1:{self.port}"})
         self.worker = Worker(cfg, self.secret, Walletd(self.walletd_fake.url),
                              Indexers([self.indexer.url], rate=1000),
-                             Sidecar(fake_sidecar_argv(), f"http://127.0.0.1:{self.port}", FAKE_WASM_SHA256),
+                             Sidecar(fake_sidecar_argv(), f"http://127.0.0.1:{self.port}", FAKE_WASM_SHA256,
+                                     self.network),
                              clock=lambda: self.now)
         self.worker.statvfs = lambda path: self.app.statvfs(path)    # the worker sees the API's disk
         return self.worker
@@ -227,6 +232,7 @@ class Stack(Client):
             fake.server_close()
         self.conn.close()
         shutil.rmtree(self.tmp, ignore_errors=True)
+        ootle_addr.use_network("esmeralda")
 
     def heartbeat(self) -> None:
         with db.tx(self.conn):

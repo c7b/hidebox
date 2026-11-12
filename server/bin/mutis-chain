@@ -27,7 +27,8 @@ def main() -> None:
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     signal.signal(signal.SIGINT, lambda *_: stop.set())
-    sidecar = Sidecar(cfg.sidecar_argv(), "http://" + cfg["listen"], cfg["sidecar"]["expected_wasm_sha256"])
+    sidecar = Sidecar(cfg.sidecar_argv(), "http://" + cfg["listen"], cfg["sidecar"]["expected_wasm_sha256"],
+                      cfg["network"])
     worker = Worker(cfg, config.read_secret(cfg), Walletd(cfg["ootle"]["walletd_url"]),
                     Indexers(cfg["ootle"]["indexers"]), sidecar)
     worker.run(stop)

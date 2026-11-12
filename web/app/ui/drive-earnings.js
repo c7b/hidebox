@@ -8,7 +8,8 @@
 // which finds and proves payments and can't spend them. No Tari wallet can take that key today: Ootle wallets
 // make their accounts from their own seed words, and their key import doesn't make an account that finds or
 // spends stealth outputs. So the page says the money stays at this address, and offers no way out that
-// doesn't work (docs/review/drive-earnings-activity.md).
+// doesn't work (docs/review/drive-earnings-activity.md); where withdrawing is on, the drive itself sends it on
+// (ui/drive-withdraw.js, docs/withdraw.md).
 import { formatRelative, t } from '../lib/i18n.js';
 import { h, icon, init, toast } from './behaviors.js';
 import { button, fileIcon, formatTari, itemName } from './drive-parts.js';
@@ -106,7 +107,15 @@ function whereCard(drive) {
     h('div', { class: 'card-content stack' },
       h('div', { class: 'stack earn-field' }, h('label', { class: 'label', for: 'earn-addr' }, t('earn.address')), h('div', { class: 'link-row' }, field, copy)),
       h('p', { class: 'small muted' }, t('earn.key')),
-      h('div', { class: 'stack earn-move', 'data-testid': 'earn-move' }, h('h3', { class: 'h4' }, t('earn.move_h')), h('p', { class: 'small muted' }, t('earn.move')))));
+      drive.cfg.features?.withdraw ? withdrawSlot(drive)   // Withdraw (ui/drive-withdraw.js, docs/withdraw.md)
+        : h('div', { class: 'stack earn-move', 'data-testid': 'earn-move' }, h('h3', { class: 'h4' }, t('earn.move_h')), h('p', { class: 'small muted' }, t('earn.move')))));
+}
+
+// Where withdrawing is on, the money can leave: its block loads with the first look at the address.
+function withdrawSlot(drive) {
+  const slot = h('div', { 'data-testid': 'withdraw-slot' });
+  import('./drive-withdraw.js').then((m) => slot.replaceChildren(m.withdrawBlock(drive)), () => null);
+  return slot;
 }
 
 export async function render(drive, page) {

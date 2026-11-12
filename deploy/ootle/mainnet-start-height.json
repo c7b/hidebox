@@ -1,0 +1,36 @@
+{
+ "about": "MAINNET_START_HEIGHT of the Ootle release each mainnet walletd version comes from (tari-ootle applications/tari_ootle_app_utilities/src/epoch_oracle_config.rs). A burn is claimable only if its L1 block is at or above it; burns below the final value are lost. deploy/ootle/burn-guard.py refuses to help with a burn unless the installed mainnet walletd's version has an entry here with final = true, the source at source_ref still says start_height, and the L1 tip has reached it. Set final = true only from the release that includes the PR fixing the value, and say which in why.",
+ "constant": "MAINNET_START_HEIGHT",
+ "file": "applications/tari_ootle_app_utilities/src/epoch_oracle_config.rs",
+ "repository": "tari-project/tari-ootle",
+ "pins": [
+  {
+   "ootle_version": "0.50.0",
+   "source_ref": "a5ea91cca53c01967184755f07918471e70bbc03",
+   "start_height": 380400,
+   "final": false,
+   "why": "v0.50.0 release commit (#3379, untagged on 2026-11-05): a placeholder; a follow-up PR sets the final value"
+  },
+  {
+   "ootle_version": "0.50.1",
+   "source_ref": "v0.50.1",
+   "start_height": 380400,
+   "final": true,
+   "why": "v0.50.1, the walletd the mainnet instance ran at the launch: MAINNET_START_HEIGHT 380,400 is final: MainNet launched on it. The Ootle MainNet runs since 2026-11-10 (its indexers answer epoch-manager from 23:05 UTC, and other entries' SealLogs were published on it on 2026-11-11), the source's doc comment says the value is fixed once MainNet runs (changing it makes nodes disagree on which burns are claimable and on the state root), and no commit after #3322 changed it (#3603 only made the validator set configurable). #3322 had called it a placeholder before the launch."
+  },
+  {
+   "ootle_version": "0.53.0",
+   "source_ref": "v0.53.0",
+   "start_height": 380400,
+   "final": true,
+   "why": "v0.53.0 release (2026-11-10), the version MainNet launched on: MAINNET_START_HEIGHT 380,400 is final: MainNet launched on it. The Ootle MainNet runs since 2026-11-10 (its indexers answer epoch-manager from 23:05 UTC, and other entries' SealLogs were published on it on 2026-11-11), the source's doc comment says the value is fixed once MainNet runs (changing it makes nodes disagree on which burns are claimable and on the state root), and no commit after #3322 changed it (#3603 only made the validator set configurable). #3322 had called it a placeholder before the launch."
+  },
+  {
+   "ootle_version": "0.53.2",
+   "source_ref": "v0.53.2",
+   "start_height": 380400,
+   "final": true,
+   "why": "v0.53.2 (tag 2026-11-11, signed; its release had no binaries yet, walletd from the tag's CI build), the version MainNet's indexers and validators run: MAINNET_START_HEIGHT 380,400 is final: MainNet launched on it. The Ootle MainNet runs since 2026-11-10 (its indexers answer epoch-manager from 23:05 UTC, and other entries' SealLogs were published on it on 2026-11-11), the source's doc comment says the value is fixed once MainNet runs (changing it makes nodes disagree on which burns are claimable and on the state root), and no commit after #3322 changed it (#3603 only made the validator set configurable). #3322 had called it a placeholder before the launch."
+  }
+ ]
+}

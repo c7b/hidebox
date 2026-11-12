@@ -67,7 +67,7 @@ DYNAMIC = {
     "rules": ["pw_too_short", "pw_common", "pw_pattern", "pw_fair", "pw_strong"],
     "gone": ["burned", "expired", "revoked", "removed"],
     # the drive's families (ui/drive*.js)
-    "drive.side": ["mine", "received", "shared", "earnings", "activity", "trash", "storage"],
+    "drive.side": ["mine", "received", "shared", "earnings", "shop", "activity", "trash", "storage"],
     "drive.theme": ["light", "dark", "system"],
     "drive.sto.kind": ["media", "docs", "other", "trash"],
     "drive.error": ["quota_exceeded", "probation_limit", "too_large_locker", "auth_required", "bad_auth"],
@@ -113,6 +113,8 @@ def static_checks(r):
     for who in ("link", "password", "password_only"):
         for count in ("once", "n", "unlimited"):
             used.update({f"rules.sentence.{who}.{count}", f"rules.sentence.{who}.{count}_kept"})
+    # "key@mainnet" is the mainnet's word for "key" (lib/i18n.js): used wherever "key" is.
+    used.update(f"{k}@{net}" for k in list(used) for net in ("mainnet",) if f"{k}@{net}" in en)
     missing = sorted(k for k in used if k not in en)
     unused = sorted(k for k in en if k not in used)
     r.check(not missing, f"every string the UI asks for exists ({missing[:8]})")
@@ -252,6 +254,8 @@ def main():
     import flows_ux  # noqa: E402,F401 (ux-feedback-1: the waits and the done moment)
     import flows_preview  # noqa: E402,F401 (the file preview: the lightbox and its hostile fixtures)
     import flows_viral  # noqa: E402,F401 (viral-1: the line after the value, the share link's two counts)
+    import flows_shop  # noqa: E402,F401 (a drive's shop: My shop, the public page, a buy through /p/)
+    import flows_withdraw  # noqa: E402,F401 (withdrawing earnings: Earnings → Withdraw)
 
     r = Results()
     static_checks(r)

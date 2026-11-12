@@ -107,11 +107,13 @@ function panelRow(p, name) {
       // a chunk on its way moves the bar only when it lands: until then it sweeps (ux-feedback-1)
       row.toggleAttribute('data-busy', (phase === 'uploading' && fraction < 1) || phase === 'finishing');
     },
-    done() {
+    // `note`: what the row says under its name once it is saved (a photo whose metadata couldn't be removed).
+    done(note = null) {
       row.removeAttribute('data-busy');
       row.dataset.done = '';
       bar.style.setProperty('--value', '100');
       stage.replaceChildren(icon('check', '3'), ' ', t('drive.up.ok'));
+      if (note) row.append(h('span', { class: 'note', 'data-testid': 'upload-note' }, note));
     },
     fail(e, retry) {
       row.removeAttribute('data-busy');
@@ -152,7 +154,7 @@ export async function upload(drive, plan) {
       }
     }
   }
-  const [{ sealItem }, { fileSource, precheck, stripPhoto }] = await Promise.all([import('../lib/seal.js'), import('./sealing.js')]);
+  const [{ sealItem }, { exifNotice, fileSource, precheck, stripPhoto }] = await Promise.all([import('../lib/seal.js'), import('./sealing.js')]);
   const queue = plan.files.map((f) => ({ ...f, row: panelRow(p, f.file.name) }));
   let done = 0;
   let failed = 0;
@@ -162,13 +164,15 @@ export async function upload(drive, plan) {
       const stop = await precheck(source, { limits: drive.me.limits, next: null, anonymous: false });
       if (stop) throw Object.assign(new Error(stop.code), { code: stop.code, details: { max_bytes: drive.me.limits.max_file_bytes } });
       job.row.set('stripping');
-      source = (await stripPhoto(source, { keepOriginal: false })).source;
+      // A photo or video this browser can't clean goes up as it is, and its row says so (as the home's chip does).
+      const stripped = await stripPhoto(source, { keepOriginal: false });
+      source = stripped.source;
       const parent = made.get(job.path.join('/')) ?? base;
       await sealItem(source, {
         headers: drive.headers(), keepFor: drive.identity, parent: parent && drive.folders ? parent : null, resume,
         onPhase: (phase, fraction) => job.row.set(phase, fraction),
       });
-      job.row.done();
+      job.row.done(exifNotice(stripped.exif));
       done++;
     } catch (e) {
       failed++;

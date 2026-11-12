@@ -88,10 +88,10 @@ class FakeApi(BaseHTTPRequestHandler):
 
 
 class Sidecar:
-    def __init__(self, app_dir, api):
+    def __init__(self, app_dir, api, network=None):
         self.p = subprocess.Popen([NODE, *FLAGS, f"--allow-fs-read={app_dir}", os.path.join(app_dir, "sidecar", "sidecar.mjs")],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                  env={"MUTIS_API": api}, text=True)
+                                  env={"MUTIS_API": api, **({"MUTIS_NETWORK": network} if network else {})}, text=True)
         self.next_id = 0
 
     def ask(self, cmd, **fields):
@@ -134,6 +134,16 @@ def main():
     st = sc.ask("selftest")
     check("selftest: real outputs open, every forgery is rejected (G4)", st["ok"] and st["passed"],
           "; ".join(f"{c['name'][:48]}={'ok' if c['passed'] else 'NO'}" for c in st.get("cases", [])))
+
+    # The same self-test on the mainnet: the known answers are Esmeralda's and still hold (derived with its byte), and
+    # the fresh output is checked with the mainnet's.
+    main = Sidecar(APP, api, network="mainnet")
+    mst = main.ask("selftest")
+    check("selftest on the mainnet: every case passes there too, the fresh output with the mainnet's byte",
+          main.ask("hello").get("network") == "mainnet" and mst["ok"] and mst["passed"]
+          and any(c["name"].endswith("on mainnet") and c["passed"] for c in mst.get("cases", [])),
+          "; ".join(c["name"][:48] for c in mst.get("cases", []) if not c["passed"]))
+    main.close()
 
     own = json.load(open(os.path.join(APP, "sidecar", "selftest.json"), encoding="utf-8"))["ownership"]
     otk = {n: sc.ask("oneTimeKey", owner_sk=own["owner_sk"], view_sk=own["view_sk"], nonce=own[n]["nonce"])

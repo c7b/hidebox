@@ -49,12 +49,13 @@ UA = "mutis-check-seo/1 (+https://github.com/c7b/hidebox)"
 TITLE_MAX, DESC_MAX = 60, 155
 CARD_SIZE = (1200, 630)
 WHATSAPP_MAX = 300 * 1024      # WhatsApp drops a preview image over about 300 KB
-ROBOTS_BLOCKED = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t",
+ROBOTS_BLOCKED = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA",
+                  "/shop/AAAAAAAAAAAAAAAAAAAAAA", "/t",
                   "/api/v1/stats/wall", "/send", "/verify/tx/" + "0" * 64)
 # Private routes: never in an index. They answer X-Robots-Tag (Caddy); the HTML ones also carry a robots meta.
 PRIVATE = ("/drive", "/drive/received", "/drive/earnings", "/s/AAAAAAAAAAAAAAAAAAAAAA", "/p/AAAAAAAAAAAAAAAAAAAAAA", "/t", "/d/7kq2x9mdh4",
            "/send", "/watch", "/verify/tx/" + "0" * 64, "/app/drive.html", "/app/view.html", "/app/app.html",
-           "/app/pay.html", "/app/drop.html", "/api/v1/config")
+           "/app/pay.html", "/app/drop.html", "/app/shop.html", "/shop/AAAAAAAAAAAAAAAAAAAAAA", "/api/v1/config")
 # One preview card per kind of link (viral-1), as a chat draws it under a pasted link: a static head for every link of the
 # kind, nothing of the link in it. Through Caddy, made-up links of each kind (the page answers before it asks the API);
 # without Caddy (--dist), the page the kind's route serves.
@@ -68,6 +69,9 @@ LINK_CARDS = {
     "drop": {"paths": ("/d/7kq2x9mdh4", "/d/3vbn8w2xqp"), "file": "/app/drop.html",
              "title": f"Leave a file on {BRAND}.", "description": "It locks in your browser before it leaves. No account needed.",
              "image": "/og-d.png"},
+    "shop": {"paths": ("/shop/Kd8sL2pQ5vX1nB7mR4tYwE", "/shop/zU3gH9jF0cA6eW2qN8oPlS"), "file": "/app/shop.html",
+             "title": f"A shop on {BRAND}.", "description": "Files and folders you pay to open with Tari. No account needed.",
+             "image": "/og-shop.png"},
 }
 # The bots that draw a pasted link's card (robots.txt's second group): they may read a shared link's page.
 PREVIEW_BOTS = ("Twitterbot", "facebookexternalhit", "Slackbot-LinkExpanding", "LinkedInBot", "Discordbot", "TelegramBot",

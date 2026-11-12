@@ -11,18 +11,19 @@ JSON_MAX = 65_536
 HEADERS_MAX = 16 * 1024
 SLICE = 64 * 1024
 
-# Path parameters are checked against these before any database or file access (spec §6.1, S-10).
+# Path parameters are checked against these before any database or file access (spec §6.1, S-10). Each ends in \Z,
+# not $, which would also take a trailing newline.
 PARAM_RE = {
-    "id": re.compile(r"^[A-Za-z0-9_-]{22}$"),
-    "drop": re.compile(r"^[0-9a-hjkmnp-tv-z]{10}$"),
-    "invoice": re.compile(r"^inv_[a-z2-7]{20}$"),
-    "claim": re.compile(r"^clm_[a-z2-7]{20}$"),
-    "report": re.compile(r"^rep_[a-z2-7]{16}$"),
-    "index": re.compile(r"^\d{1,6}$"),
-    "substate": re.compile(r"^(utxo|component|template|resource|vault)_[0-9a-f_]{20,200}$"),
-    "tx": re.compile(r"^[0-9a-f]{64}$"),
-    "ticket": re.compile(r"^[A-Za-z0-9_-]{43}$"),
-    "template": re.compile(r"^(template_)?[0-9a-f]{64}$"),
+    "id": re.compile(r"^[A-Za-z0-9_-]{22}\Z"),
+    "drop": re.compile(r"^[0-9a-hjkmnp-tv-z]{10}\Z"),
+    "invoice": re.compile(r"^inv_[a-z2-7]{20}\Z"),
+    "claim": re.compile(r"^clm_[a-z2-7]{20}\Z"),
+    "report": re.compile(r"^rep_[a-z2-7]{16}\Z"),
+    "index": re.compile(r"^\d{1,6}\Z"),
+    "substate": re.compile(r"^(utxo|component|template|resource|vault)_[0-9a-f_]{20,200}\Z"),
+    "tx": re.compile(r"^[0-9a-f]{64}\Z"),
+    "ticket": re.compile(r"^[A-Za-z0-9_-]{43}\Z"),
+    "template": re.compile(r"^(template_)?[0-9a-f]{64}\Z"),
 }
 
 

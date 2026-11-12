@@ -9,6 +9,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import shlex
 import subprocess
 import time
@@ -52,15 +53,25 @@ def scenario(sid: str, title: str, *tags: str):
     return register
 
 
+# Steps that reach production's own files, users or units by name. Against an instance beside production
+# (run.py --instance, deploy/scripts/instance.py) they are skipped rather than pointed at production.
+PRODUCTION_ONLY = re.compile(r"/srv/mutis/|sudo -u (mutis|drive) |mutis-evidence\.service|127\.0\.0\.1:8787|sudo bash -s|sudo python3")
+
+
 class Remote:
     """Shell commands on the server: through one multiplexed ssh connection, or locally when on it."""
 
-    def __init__(self, host: str | None, control_dir: Path):
+    def __init__(self, host: str | None, control_dir: Path, instance: str = ""):
         self.prefix = ["bash", "-c"] if host is None else [
             "ssh", "-o", "ControlMaster=auto", "-o", f"ControlPath={control_dir}/cm", "-o", "ControlPersist=15m",
             "-o", "ClearAllForwardings=yes", "-o", "ServerAliveInterval=30", host]
+        if instance and not re.fullmatch(r"[a-z][a-z0-9]{1,15}", instance):
+            raise SystemExit(f"bad instance name {instance!r}")
+        self.instance, self.suffix = instance, (f"-{instance}" if instance else "")
 
     def run(self, command: str, data: bytes | None = None, check: bool = True) -> str:
+        if self.instance and PRODUCTION_ONLY.search(command):
+            raise Skipped(f"this step reaches production's own files or units; not run against instance {self.instance}")
         res = subprocess.run(self.prefix + [command], input=data, capture_output=True, timeout=900)
         if check and res.returncode != 0:
             raise Failed(f"remote command failed ({res.returncode}): {command[:120]}: {res.stderr.decode()[-400:]}")
@@ -70,17 +81,17 @@ class Remote:
         return self.run(f"sudo -iu build bash -c {shlex.quote(command)}", data)
 
     def admin(self, *args: str) -> str:
-        return self.run("sudo mutis-admin " + " ".join(shlex.quote(a) for a in args))
+        return self.run(f"sudo mutis-admin{self.suffix} " + " ".join(shlex.quote(a) for a in args))
 
     def sql(self, query: str, *params) -> list:
         """A read-only query on the live database, as mutis (statements arrive on stdin, not argv)."""
-        script = ("import json, sqlite3, sys; c = sqlite3.connect('file:/srv/mutis/data/db/mutis.sqlite3?mode=ro', uri=True);"
-                  f" print(json.dumps(c.execute({query!r}, {list(params)!r}).fetchall()))")
-        return json.loads(self.run("cd /tmp && sudo -u mutis sh -c 'umask 007; exec python3 -I -'", script.encode()))
+        script = (f"import json, sqlite3, sys; c = sqlite3.connect('file:/srv/mutis{self.suffix}/data/db/mutis.sqlite3?mode=ro',"
+                  f" uri=True); print(json.dumps(c.execute({query!r}, {list(params)!r}).fetchall()))")
+        return json.loads(self.run(f"cd /tmp && sudo -u mutis{self.suffix} sh -c 'umask 007; exec python3 -I -'", script.encode()))
 
     def browser_command(self, jitless: bool) -> list[str]:
         relay = f"python3 -I {REMOTE_DIR}/relay.py" + (" --jitless" if jitless else "")
-        return self.prefix + [f"sudo -iu build {relay}"]
+        return self.prefix + [f"sudo -iu build nice -n 15 {relay}"]   # the browser shares the box with production
 
 
 @dataclass

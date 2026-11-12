@@ -6,6 +6,8 @@
 // are remembered next to the drive's key (IndexedDB, this device only), so the Links tab can copy them
 // again; another device lists the same links without their secrets.
 import { b64uEncode } from './b64.js';
+import { concat, utf8 } from './bytes.js';
+import { sha256Sync } from './sha256sync.js';
 import { createShare, deleteShare } from './api.js';
 import { linkFragment, linkProof, newShareSecret, shareKeys, shareUrl, wrapFileKey } from './share.js';
 import { idbGet, idbPut } from './idb.js';
@@ -65,6 +67,34 @@ export async function makeLink(item, rule, { headers, origin = globalThis.locati
     maxViews: res.max_views, expiresAt: res.expires_at, itemExpiresAt: res.item_expires_at ?? null,
   };
 }
+
+// --- the drive's own {brand} link (/d/<id>), where anyone leaves a file -----------------------------------
+
+// What that link carries after its `#`: a mark of the drive's address (its owner and view keys), made in
+// the drive. The page a visitor opens gets the address from our server, and whatever is left there is
+// locked to that address; with the mark, the page refuses an address that isn't the one the link was made
+// for (ui/droppage.js). 12 bytes of SHA-256, base64url; no key, and not the drive ID's emoji.
+export function dropMark(ownerPk, viewPk) {
+  return b64uEncode(sha256Sync(concat(utf8('mutis-drop-link-v1'), ownerPk, viewPk)).subarray(0, 12));
+}
+
+// {origin}/d/{id}#a={mark}. Without the keys (a drive whose Tari keys aren't loaded yet) the link is the
+// plain one, which works as every link made before the mark did.
+export function dropUrl(origin, dropId, keys = null) {
+  return `${origin}/d/${dropId}${keys?.ownerPk && keys?.viewPk ? `#a=${dropMark(keys.ownerPk, keys.viewPk)}` : ''}`;
+}
+
+// A link's fragment against the address our server named: true for a link without a mark (made before
+// it existed: the drive ID on the page is its check, as it was), else whether the mark is that address's.
+export function dropMarkOk(hash, ownerPk, viewPk) {
+  const f = String(hash ?? '').replace(/^#/, '');
+  if (!f.startsWith('a=')) return true;
+  return f.slice(2) === dropMark(ownerPk, viewPk);
+}
+
+// Every link, QR code and memo a page makes is on the page's own origin (`location.origin`), never /config's: a
+// link's host gets the key after its `#`, so no answer chooses it (tests/lint_core.py keeps `cfg.origin` out of
+// ui/ and lib/).
 
 // Stop a link now (DELETE /s/{id}, the owner's session). A file set to leave with its link leaves.
 export const stopLink = (shareId, headers) => deleteShare(shareId, headers);

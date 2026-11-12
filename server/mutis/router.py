@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .handlers import (abuse, auth, blobs, canary, chain, courier, drops, folders, invoices, me, pay, seallog,
-                       shares, stats, system, uploads)
+                       shares, shop, stats, system, uploads, withdraw)
 from .http_util import PARAM_RE, ApiError
 
 
@@ -88,6 +88,17 @@ ROUTER = Router([
     ("POST", f"{V}/p/{{share_id:id}}/claims", pay.create_claim, "pay.claim"),
     ("GET", f"{V}/p/{{share_id:id}}/claims/{{claim_id:claim}}", pay.get_claim, "pay.claim_get"),
     ("POST", f"{V}/p/{{share_id:id}}/claims/{{claim_id:claim}}/demo-pay", pay.demo_pay, "pay.demo_pay"),
+    # A drive's shop of pay links (docs/shop.md), behind features.shop
+    ("GET", f"{V}/me/shop", shop.get_mine, "shop.get"),
+    ("PUT", f"{V}/me/shop", shop.put_mine, "shop.put"),
+    ("DELETE", f"{V}/me/shop", shop.delete_mine, "shop.delete"),
+    ("PUT", f"{V}/me/shop/listings/{{share_id:id}}", shop.put_listing, "shop.list"),
+    ("DELETE", f"{V}/me/shop/listings/{{share_id:id}}", shop.delete_listing, "shop.unlist"),
+    ("GET", f"{V}/shop/{{shop_id:id}}", shop.public, "shop.public"),
+    # Withdrawing earnings (docs/withdraw.md), behind features.withdraw
+    ("GET", f"{V}/me/sales/outputs", withdraw.outputs, "withdraw.outputs"),
+    ("POST", f"{V}/me/withdrawals", withdraw.submit, "withdraw.submit"),
+    ("POST", f"{V}/me/withdrawals/{{tx_id:tx}}", withdraw.report, "withdraw.report"),
 
     ("GET", f"{V}/blobs/{{ticket:ticket}}", blobs.download, "blobs.get"),
     ("POST", f"{V}/blobs/{{ticket:ticket}}/done", blobs.done, "blobs.done"),

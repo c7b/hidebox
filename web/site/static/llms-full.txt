@@ -357,8 +357,11 @@ This is the complete list, from our schema. Each link also has a “What we know
 | meta | Server settings and counters, such as when the last file was locked and which file is our hourly test. | Overwritten as they change.
 | sellers | For paid links: a drive's sales address, the key that lets our payment checker see payments to it (sealed to keys only our chain worker holds), and how far the checker has read. | Empty until paid links are switched on.
 | paid_shares | One row per paid link: its price; our half of its key, which we erase when the link ends; its encrypted preview; how many views and how long a buyer gets; whether it is paused. | Empty until paid links are switched on.
+| shops | For a drive that turns on a shop: a random id for its page, the name and bio its owner wrote to publish, and the shop's key wrapped so only that drive opens it. | Until its owner turns the shop off or deletes the drive. Empty until shops are switched on.
+| shop_listings | One row per listed paid link: the title and line its owner wrote, file or folder, its padded size and price, and its half of the link's key sealed with the shop's key, which we never hold. | Deleted when it is taken off, when its link ends, or with its shop.
 | claims | One row per try to buy: a random id that is also the payment reference; the SHA-256 of the buyer's claim token; the address to pay; the price and what has arrived; its status; when it was made, paid, opened and when it expires. | Empty until paid links are switched on.
-| sale_payments | Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it. | Empty until paid links are switched on.
+| sale_payments | Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it; once its owner withdraws it, which withdrawal spent it and when. | Empty until paid links are switched on.
+| sales_change | What a withdrawal sent back to its drive's sales address: the output's id, its value as the drive told us, the withdrawal that made it and the one that spent it. Never where the rest went. | Until the drive is deleted. Empty until withdrawals are switched on.
 
 ### What we publish
 Our live numbers (/api/v1/stats) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many drives were active recently, once there are enough of them; and how many minutes ago the latest file finished uploading, to the minute.

@@ -520,7 +520,8 @@ def received_list(t):
     b.wait_for("drop-create", 60)
     b.click("drop-create")
     b.wait_for("drop-link", 120)
-    t.check(re.fullmatch(re.escape(t.origin) + r"/d/[A-Za-z0-9_-]+", b.value("drop-link") or "") is not None, "Make my hidebox link: a link anyone can leave a file at")
+    t.check(re.fullmatch(re.escape(t.origin) + r"/d/[A-Za-z0-9_-]+#a=[A-Za-z0-9_-]{16}", b.value("drop-link") or "") is not None,
+            "Make my hidebox link: a link anyone can leave a file at, with the mark of this drive's address after the #")
     b.click("drop-copy")
     t.check(b.wait(f"navigator.clipboard.readText().then((x) => x === {json.dumps(b.value('drop-link'))})", 10), "Copy puts the hidebox link on the clipboard")
     # A purchase this browser made (pay to open's buyer page keeps it on the device): listed with its price.

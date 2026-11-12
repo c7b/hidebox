@@ -12,16 +12,25 @@
 # root, the operator and drive by owner-match rules in /etc/ufw/before.rules and before6.rules.
 #
 # WALLETD_BASE, WALLETD_LISTEN and WALLETD_BIN exist for the upgrade drill, which runs a new binary
-# against a copy of the data directory (deploy/ootle/upgrade-drill.md).
+# against a copy of the data directory (deploy/ootle/upgrade-drill.md). An instance beside production
+# (deploy/scripts/instance.py) sets them, and WALLETD_NETWORK (esmeralda | mainnet), in its own walletd units.
+# Arguments replace `run`: the same sandbox and password for a one-off command (create-account, seed-words,
+# reset --confirm), started with systemd-run by the playbooks.
 set -euo pipefail
 
 base=${WALLETD_BASE:-/home/drive/wallet}
 listen=${WALLETD_LISTEN:-127.0.0.1:5100}
 bin=${WALLETD_BIN:-/opt/tari/bin/tari_ootle_walletd}
 log_config=${WALLETD_LOG_CONFIG:-/etc/mutis/walletd-log4rs.yml}
-source_config="$base/esmeralda/config/config.toml"
+network=${WALLETD_NETWORK:-esmeralda}
+case $network in
+  esmeralda) flag=esme ;;
+  mainnet) flag=mainnet ;;
+  *) echo "walletd: WALLETD_NETWORK must be esmeralda or mainnet" >&2; exit 1 ;;
+esac
+source_config="$base/$network/config/config.toml"
 runtime_config="$RUNTIME_DIRECTORY/config.toml"
-section='[esmeralda.ootle_wallet_daemon]'
+section="[$network.ootle_wallet_daemon]"
 
 pass=$(<"$CREDENTIALS_DIRECTORY/keyring-pass")
 pass=${pass%$'\n'}
@@ -53,5 +62,6 @@ if (( ! inserted )); then
 fi
 
 cd "$base"
-exec "$bin" --network esme --base-path "$base" --config "$runtime_config" --log-config "$log_config" \
-  --listen-on "$listen" --authentication none run
+[ $# -gt 0 ] || set -- run
+exec "$bin" --network "$flag" --base-path "$base" --config "$runtime_config" --log-config "$log_config" \
+  --listen-on "$listen" --authentication none "$@"

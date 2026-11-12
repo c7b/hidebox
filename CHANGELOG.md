@@ -1,6 +1,153 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- mainnet 1 -->
+## 2026-11-12: hidebox on the Ootle mainnet, a second instance
+
+Production stays on Esmeralda, unchanged. A second, independent instance runs beside it on the same server, at
+its own host, first as a staging rehearsal on Esmeralda and from launch day on the Ootle mainnet with real TARI.
+
+- **SealLog on the mainnet**, 2026-11-12 18:28:36 UTC, epoch 38542: `template_494d34a5f55bcef614655c9f8b7fdcb672f1d086467fc96816c0a93a4a5c8472`, published by the launch trigger with `template/dist-v2/` byte for byte (transaction `dbb5173483176a9cadbc82bec4b981d44dd178eb8dfa750febe1e1462bc74dca`), and its log `component_45efaa40c370fa98b86ad59bd395694a241313d741f81ed30bc772b88ef84690` (no owner, upgrade rule Locked, only the service key appends). The receipt, with the raw indexer answers: `docs/evidence/2026-11-12/mainnet-launch/`. The same day mainnet.hidebox.app moved from its staging rehearsal to the mainnet.
+- **The network is a config choice**: `network = "esmeralda" | "mainnet"` and `staging` in mutis.toml
+  (`server/mutis/network.py`: the network byte, the address prefix, the coin, the indexers). On the mainnet the
+  server refuses to start with demo payments, sponsor grants or judge passes on, and forces them off over any
+  override; addresses, the sidecar and walletd are checked against the network; `/config` says which.
+- **An instance beside production** (`deploy/scripts/instance.py`): its own config, tree, users, walletds,
+  units, ports and Caddy site, rendered from production's units and Caddyfile, validated inside the live Caddy
+  configuration before it is installed; `provision-instance.sh`, `deploy.sh --instance`, `mutis-admin-NAME`,
+  backups, health and evidence per instance. Production's paths are the defaults everywhere.
+- **The launch kit** (`deploy/ootle/`): the mainnet walletd's accounts and a root-only seed backup
+  (`mainnet-walletd.sh`), the burn guard (`burn-guard.py`, `mainnet-start-height.json`, `burn-mainnet.md`),
+  the mainnet L1 wallet (`l1-wallet-mainnet.sh`), the unattended launch trigger (`launch.py`,
+  `launch-arm.sh`), the flip from staging (`flip-to-mainnet.sh`) and the launch-hour runbook
+  (`mainnet-launch.md`).
+- **verify-deploy checks an instance too**: it rebuilds with the instance's own `staging` and `testnet_origin` from
+  `/config`, so a staging or mainnet deployment compares equal to its tag.
+<!-- /mainnet 1 -->
+
+<!-- withdraw -->
+## Draft (November MVP): withdrawing earnings
+
+- **Withdraw**, in Earnings, behind `features.withdraw` (off by default): the drive sends what people paid to its
+  pay links to any Ootle address the owner types. It is built and signed in the browser from the drive's own sales
+  keys (`stealthDhSecret`, as Pay from my drive spends), so our server never holds a key that can move it and never
+  learns where it goes. The confirm step shows what arrives, the network fee (0.03, taken from the amount
+  withdrawn), what leaves the earnings, and the address with its first and last 6 characters set apart. The receipt
+  links What the chain sees.
+- **Rules, the same in the browser and on our server**: at least 0.06; change smaller than the fee goes along
+  instead of staying as dust; at most 8 payments per withdrawal; only settled money (counted, and test money or
+  checked by the owner's drive, the same rule as Earnings), so a payment still being counted is never spent away from
+  its buyer; one at a time (the button, the library and our server each refuse a second). An address on another
+  network, with a broken checksum or with a payment reference is refused before anything is built.
+- **Server**: migration 009 (`sale_payments.withdraw_tx`, `withdraw_at`, `withdrawn`; `sales_change`),
+  `GET /me/sales/outputs`, `POST /me/withdrawals` (checked, marked, relayed), `POST /me/withdrawals/{tx}` (the
+  drive's report of the outcome), `/config`'s `withdraw` rules. Docs: `docs/withdraw.md`, the threat model.
+- Tests: `server/tests/test_withdraw.py`, `web/app/tests/withdraw.test.js`, `web/app/ui/tests/flows_withdraw.py`.
+<!-- /withdraw -->
+
+<!-- shop -->
+## Draft (November MVP): a drive's shop
+
+- **My shop**, behind `features.shop` (off by default, so production is unaffected): a drive turns on a public page at
+  `/shop/<id>` with a name and a bio its owner writes, and lists some of its pay links on it, each with a title and a
+  line the owner types (never the file's name), file or folder, its padded size and its price. **Buy and open** is the
+  pay link's own page, unchanged; Earnings are unchanged. Take a listing off, edit its words, or turn the shop off (its
+  page answers 404, the pay links keep selling); a paused pay link hides its listing, and one that ends removes it.
+- **The split key holds for listed links.** The shop's link is `/shop/<id>#6<shop key>`; our server keeps the key only
+  wrapped under the drive's key and each listing's `sA` only sealed with it (`link_ct`, bound to its link), so it holds
+  one half of each listed link and opens none. Whoever holds the shop's whole link holds every listed `sA`; the
+  listing dialog says what that means (docs/shop.md, "Threat-model delta").
+- **Server**: migration 008 (`shops`, `shop_listings`, `abuse_reports.shop_id`), `GET/PUT/DELETE /me/shop`,
+  `PUT/DELETE /me/shop/listings/{id}`, `GET /shop/{id}` (cached a minute), `/config`'s `shop` limits (50 listings, field
+  lengths), rate limits per drive and per network; **Report this shop** through the existing report form and
+  `mutis-admin takedown shop`. Caddy serves `/shop/` from `shop.html`, `view.html`'s twin with its own card
+  (`og-shop.png`); `/shop/` is noindex and disallowed in `robots.txt`.
+- Tests: `server/tests/test_shop.py`, `web/app/tests/shop.test.js`, `web/app/ui/tests/flows_shop.py`.
+<!-- /shop -->
+
+<!-- security 2026-11-09 mainnet -->
+## Unreleased (launch/mainnet): the security pass on the mainnet instance
+
+The pass below, and what it found only here (`docs/review/fix-log.md`, findings 12 to 15):
+
+- **Withdrawals**: an output commitment is 32 bytes before anything is made from it. Written as a number, it made the
+  API allocate that many bytes: one small request from any drive took it past its memory limit. Every request is now
+  counted before its envelope is read.
+- **Money not yet withdrawn outlives its link's note**: a pay link that still holds settled money its drive hasn't
+  withdrawn keeps its note, and its file's, past the 30 days, until that money is withdrawn. Before, the money left
+  Earnings with the note and the relay refused to withdraw it.
+- **A walletd or a sidecar on another network** is said in the journal with its own event; the refusal used to raise
+  from the logger.
+- **No daily evidence payment on the mainnet**: it is test money, and the worker no longer queues it there.
+<!-- /security 2026-11-09 mainnet -->
+
+<!-- security 2026-11-09 mainnet web -->
+## Unreleased (launch/mainnet): the browser's security pass on the mainnet instance
+
+The browser's pass below, and what it found only here (`docs/review/fix-log.md`, "The browser on the mainnet instance"):
+
+- **A page's network is its build's.** The app's pages name it in their HTML; a page without that has no network
+  until `/config` names one, and nothing that touches Tari runs meanwhile. Before, one failed first request left a
+  mainnet page on Esmeralda's byte, where the owner's check reads every real payment as not its own.
+- **Withdraw**: the confirm step sets apart six characters after `otl_1`, as it says; a withdrawal that never said
+  how it ended is settled from what the indexer shows (unspent, or proven spent), never from a 404.
+- **The key file** calls a mainnet address "Ootle mainnet"; `/verify` links Esmeralda's indexer page only on
+  Esmeralda.
+- **The shop's link and its Buy links** are built on the page's own origin, like every other link.
+- **The sidecar's self-test** passes on the mainnet: its known answer for "is this output ours to spend" was made on
+  Esmeralda and is now derived with Esmeralda's byte, and a fresh output is checked on the network the sidecar runs on.
+<!-- /security 2026-11-09 mainnet web -->
+
+<!-- security 2026-11-09 -->
+## 2026-11-09: a security pass on the server and the deployment
+
+An audit of the API, the chain worker, the deploy scripts and the end-to-end tools. Nothing it found lets anyone
+read another person's file or key, or spend the wallet. What it found were ways to keep others from buying,
+downloading or making a drive, a way to make a file's own receipt fail, and three places where root trusted a name a
+lower user could have put there. Each is fixed with a test; `docs/review/fix-log.md` has the table.
+
+- **Download the stored bytes** is charged the bytes of its Range (it was the whole file, whatever was asked for), a
+  network takes a file's stored bytes 3 times a day (6 per /48), and all of it stays within half the file's daily
+  egress, so opens keep the other half.
+- **Claims on a pay link**: one network makes 2 an hour on one link (3 per /48), so it can't hold all 20 of a link's
+  waiting claims without paying.
+- **New drives**: the deployment's daily cap is charged after the proof of work and given back when no drive is made.
+- **Uploads**: an upload isn't completed while one of its chunks is still arriving (`409 upload_busy`), and one
+  request at a time writes one chunk, so stored bytes can't differ from the hash sealed for them.
+- **Ids**: every id pattern ends in `\Z`; a trailing newline no longer passes.
+- **Reports**: a paid link's own address (`/p/<id>`) can be reported.
+- **Root on the server**: `privilege-check.sh` has `mutis` make its probes, `activate-release.sh` tightens its
+  migration backups as `mutis`, and E2E scenario E-31 runs its search from the command line, not from a file in the
+  build user's directory.
+- **verify-deploy** prints a tag's refused build as a difference instead of a traceback; `e2e-artifacts/` is ignored.
+<!-- /security 2026-11-09 -->
+
+<!-- security 2026-11-09 web -->
+## 2026-11-09: the same security pass, in the browser
+
+The audit's other half: the app, the site and the library they share. Nothing it found lets a sender or a link holder
+run code on the site, read another person's keys or skip a link's rule. What it found is the browser acting on a
+missing answer, or on an answer of our API, where money and keys are concerned. Each is fixed with a test;
+`docs/review/fix-log.md` has the table.
+
+- **The owner's check of a payment** says "the payer kept control" only on evidence: the output shown with another
+  key, or proven spent. An indexer that hadn't caught up answered 404, and that alone ended a buyer's claim for good.
+- **Pay from my drive** signs the price the page shows, or nothing. If the answer to its submit is lost, the page says
+  the drive may have paid, offers no second payment for three minutes, and follows the claim if the first one lands.
+- **Links are built on the page's own origin**, whatever `/config` answers, and a lint keeps it that way.
+- **A hidebox link carries a mark of its drive's address** after its `#`; its page refuses any other address before a
+  file can be chosen. Links made before open as they did.
+- **A link's kind decides its mode**: a link with a word is never opened as "word only", whatever our server answers.
+- **Lock my drive and Forget this browser** also clear the recent list and the drive's id where two helpers kept it.
+- **Photos**: a JPEG's thumbnails in APP0 go with the rest, and the drive says when a photo or video went up as it was.
+- **File names**: spaces of every kind are trimmed from a name's ends, so they can't hide a program's extension.
+- **Uploads**: a file that changed between two tries starts a new upload with a new key; a complete that finds a chunk
+  still arriving (`409 upload_busy`) is asked again instead of failing.
+- **Reports**: the form takes a paid link, the buyer page has Report this link, and a paid program says so beside Save.
+- **Download all** refuses a name too long for a ZIP instead of writing an archive nothing opens, and a file can't
+  take the name of the folder beside it.
+<!-- /security 2026-11-09 web -->
+
 <!-- ootle 0.52 -->
 ## 2026-11-09: Ootle 0.52.0 on Esmeralda
 

@@ -131,9 +131,10 @@ def e06(t: T) -> None:
     flows.home(a, t.origin)
     url = flows.seal_file(a, t.fixture("five-mb.dat"))
     item = item_of(t, url)
-    path = f"/srv/mutis/data/blobs/{item[:2]}/{item[2:4]}/{item}.bin"
+    suffix = t.env.remote.suffix          # an instance's own blobs, as its own user (run.py --instance)
+    path = f"/srv/mutis{suffix}/data/blobs/{item[:2]}/{item[2:4]}/{item}.bin"
     flip = f"f = open({path!r}, 'r+b'); f.seek(4096); b = f.read(1); f.seek(4096); f.write(bytes([b[0] ^ 1])); f.close()"
-    t.env.remote.run("cd /tmp && sudo -u mutis sh -c 'umask 007; exec python3 -I -'", flip.encode())
+    t.env.remote.run(f"cd /tmp && sudo -u mutis{suffix} sh -c 'umask 007; exec python3 -I -'", flip.encode())
     b = t.actor()
     t.check(flows.open_link(b, url) == "integrity-error", "B gets integrity-error")
     b.b.drain(5)

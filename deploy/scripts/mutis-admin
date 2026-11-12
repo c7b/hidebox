@@ -4,11 +4,19 @@
 # live release, with umask 007 so the database and its -wal/-shm files stay writable for group mutis.
 # Commands that talk to walletd run as drive, the only service user the port 5100 guard lets in
 # (spec §15.7); everything else runs as mutis.
+# Installed as /usr/local/sbin/mutis-admin-<name> (deploy/scripts/provision-instance.sh), the same script runs
+# the instance <name>'s admin with its own users, config and release (deploy/scripts/instance.py).
 umask 007
 cd /tmp || exit 1
-case ${1:-} in
-  notarize|walletd-fixture) user=drive ;;
-  *) user=mutis ;;
+suffix=
+case ${0##*/} in
+  mutis-admin-*)
+    suffix=-${0##*/mutis-admin-}
+    case $suffix in -*[!a-z0-9]*|-) echo "mutis-admin: bad instance name in ${0##*/}" >&2; exit 2 ;; esac ;;
 esac
-exec runuser -u "$user" -- env MUTIS_CONFIG=/etc/mutis/mutis.toml \
-  python3 -I /srv/mutis/app/current/server/bin/mutis-admin "$@"
+case ${1:-} in
+  notarize|walletd-fixture) user=drive$suffix ;;
+  *) user=mutis$suffix ;;
+esac
+exec runuser -u "$user" -- env MUTIS_CONFIG="/etc/mutis$suffix/mutis.toml" \
+  python3 -I "/srv/mutis$suffix/app/current/server/bin/mutis-admin" "$@"

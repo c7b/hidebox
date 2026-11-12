@@ -3,6 +3,10 @@
 // "TESTS PASS n/n" or "TESTS FAIL k/n" (read by headless.py). `#nowasm` runs the suites anonymous
 // links depend on plus the no-WebAssembly checks (A-09: Chromium --js-flags=--jitless).
 import { SUITES, WASM_FREE } from './suites.js';
+import { useNetwork } from '../lib/network.js';
+
+// This page is no built page: it names its network itself (lib/network.js has none for a page until told).
+useNetwork('esmeralda');
 
 const out = [];
 let passed = 0;

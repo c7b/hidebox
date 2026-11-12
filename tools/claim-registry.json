@@ -616,6 +616,31 @@
     "How many one-off links and how many drives were made each day after someone tapped Make your own secret or Sell your own files: the day, which of the two, and a count. Nothing about who.",
     "how many links and drives were made each day after someone tapped Make your own secret or Sell your own files, never who"
    ]
+  },
+  {
+   "id": "C61",
+   "condition": "a mainnet deployment (mutis.toml network = \"mainnet\"; /config network): every money screen (the line C19-k holds on the testnet), the footer's status line, the What's tTARI? box, /made's prices, the fine print and /judges",
+   "backed_by": "the Ootle mainnet's coin is TARI (tari-ootle v0.50.0 genesis_resources.rs: TARI on MainNet, tTARI elsewhere); the server refuses demo payments, sponsor grants and judge passes there (server/mutis/config.py); hidebox is unreviewed on the mainnet, so it says beta and asks for small amounts",
+   "markers": [
+    "real tari"
+   ],
+   "sentences": [
+    "Ootle mainnet: this is real TARI. {brand} is a beta. Keep amounts small.",
+    "Payments use real TARI. Keep amounts small.",
+    "These prices are in real TARI. {brand} is a beta. Keep amounts small.",
+    "This is {brand} on the Tari Ootle mainnet, with real TARI. It's a beta, so keep amounts small."
+   ]
+  },
+  {
+   "id": "C62",
+   "condition": "a staging rehearsal (mutis.toml staging = true; /config staging): the mainnet instance before its launch, on the Esmeralda testnet; every site and app page, above everything",
+   "backed_by": "deploy/ootle/mainnet-launch.md (the staging instance runs on Esmeralda until the flip to the mainnet at launch); hidebox.app is the contest entry",
+   "markers": [
+    "rehearsal for the ootle mainnet"
+   ],
+   "sentences": [
+    "Staging: a rehearsal for the Ootle mainnet launch. It runs on the Esmeralda testnet, with test money. Don't keep files here. The live {brand} is at {testnet}."
+   ]
   }
  ],
  "labels": [

@@ -601,7 +601,21 @@ def locker(t):
             "the first screen: what a locker is, and its three things by name")
     t.shot(a, "locker-390-empty", full_page=True)
     drop = make_locker_with_drop(t, a, None)
-    t.check(re.match(rf"^{re.escape(t.origin)}/d/[0-9a-hjkmnp-tv-z]{{10}}$", drop) is not None, f"a short drop link ({drop})")
+    t.check(re.match(rf"^{re.escape(t.origin)}/d/[0-9a-hjkmnp-tv-z]{{10}}#a=[A-Za-z0-9_-]{{16}}$", drop) is not None,
+            f"a short drop link, with the mark of its drive's address after the # ({drop})")
+    # The mark (lib/links.js): the page refuses an address that isn't the one the link was made for; a link
+    # without a mark (every link made before it existed) opens exactly as it did.
+    plain, mark = drop.split("#a=")
+    for url, want, say in ((plain, "ready", "a link without the mark opens as it always did"),
+                           (drop, "ready", "the link as the drive made it opens"),
+                           (plain + "#a=" + ("B" if mark[0] == "A" else "A") + mark[1:], "mismatch", "a mark that isn't this drive's: nothing can be left"),
+                           (plain + "#a=" + mark[:-1], "mismatch", "a mark cut short: refused, not ignored")):
+        v = t.actor()
+        v.goto(url)
+        got = v.wait_state("dd-root", ("ready", "mismatch", "closed", "not-found", "error"), 60)
+        t.check(got == want, f"{say} ({got})")
+        if want == "mismatch":
+            t.check(not v.exists("dd-input") and "doesn't lead to the drive it was made for" in v.text("dd-root"), "and the page says so, with no way to choose a file")
     a.wait_for("key-save-file", 30)
     t.check(a.eval("!!document.querySelector('dialog[open]')"), "the key modal asks once, now that something persistent exists")
     t.shot(a, "locker-390-key-modal")
@@ -619,7 +633,7 @@ def locker(t):
     a.fill("drop-label", "Council")
     a.click("drop-label-save")
     a.wait("document.querySelector('[data-testid=\"drop-label\"]')?.value === 'Council'", 30)
-    t.check(a.eval(f"fetch('/api/v1/drops/{drop.rsplit('/', 1)[1]}').then((r) => r.json()).then((j) => j.label)") == "Council",
+    t.check(a.eval(f"fetch('/api/v1/drops/{drop.rsplit('/', 1)[1].split('#')[0]}').then((r) => r.json()).then((j) => j.label)") == "Council",
             "the drop's name is set after the link exists (people see it)")
     a.wait_for("locker-safety", 30)
     safety = safety_emoji(a, "locker-safety")
@@ -681,7 +695,8 @@ def deaddrop(t):
     t.check("The server doesn't check it" in b.text("dd-root"), "the page says the link's owner wrote the label and the server doesn't check it")
     report = b.attr("dd-report", "href") or ""
     t.check(b.eval("!!document.querySelector('main [data-testid=\"dd-report\"]')") and report.startswith("/fine-print#link=")
-            and urllib.parse.unquote(report) == f"/fine-print#link={drop}", f"a Report this link in the page, filled in ({report[:60]})")
+            and urllib.parse.unquote(report) == f"/fine-print#link={drop.split('#')[0]}",
+            f"a Report this link in the page, filled in with the link and nothing after its # ({report[:60]})")
     t.shot(b, "drop-1440-ready")
     # Compact (the owner's "I have to scroll just to find stuff"): Choose a file and Write a secret, side by side,
     # in the first screen on a computer and on a phone; the native input is never drawn.

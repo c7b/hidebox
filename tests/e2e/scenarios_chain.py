@@ -269,7 +269,7 @@ def e25(t: T) -> None:
     client = apiclient.Client(t.origin)
     _, canary = client.call("GET", "/canary")
     t.check(canary.get("delivery_tx") == entry["delivery_tx"], "/api/v1/canary shows the delivery")
-    t.env.remote.run("sudo systemctl start mutis-evidence.service")
+    t.env.remote.run(f"sudo systemctl start mutis{t.env.remote.suffix}-evidence.service")   # an instance's own unit
     with urllib.request.urlopen(urllib.request.Request(t.origin + "/evidence.json", headers={"User-Agent": "mutis-e2e"}),
                                 timeout=20) as res:
         evidence = json.load(res)

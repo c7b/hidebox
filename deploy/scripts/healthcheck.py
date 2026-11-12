@@ -77,7 +77,7 @@ def meta(conn: sqlite3.Connection, key: str, default=None):
         return row[0]
 
 
-def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
+def chain_checks(conn: sqlite3.Connection, now: int, coin: str = "tTARI", sponsor_min_ut: int = SPONSOR_MIN_UT) -> dict:
     checks = {}
     beat = int(meta(conn, "chain_heartbeat", 0) or 0)
     status = meta(conn, "chain_status", {}) or {}
@@ -90,7 +90,7 @@ def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
         checks["chain_worker"] = (GREEN, "heartbeat ok, verifier running")
     checks["walletd"] = (GREEN, "reachable") if fresh and status.get("walletd_ok") else (RED, "walletd_unreachable")
     balance = int(status.get("sponsor_balance_ut") or 0)
-    checks["sponsor_balance"] = (GREEN, f"{balance // 1_000_000} tTARI") if balance > SPONSOR_MIN_UT else \
+    checks["sponsor_balance"] = (GREEN, f"{balance // 1_000_000} {coin}") if balance > sponsor_min_ut else \
         (AMBER, "sponsor_low")
     mirror_at = int(status.get("mirror_ok_at") or 0)
     checks["mirror"] = (GREEN, "current") if now - mirror_at < MIRROR_MAX_S else (RED, "mirror_lagging")
@@ -162,7 +162,8 @@ def evaluate(cfg: dict, conn: sqlite3.Connection | None, now: int, probes: dict)
         checks["chain_worker"] = (RED, "database_unreadable")    # its state is read from the database
         reasons = []
     else:
-        checks |= chain_checks(conn, now)
+        coin = "TARI" if cfg.get("network") == "mainnet" else "tTARI"
+        checks |= chain_checks(conn, now, coin, cfg.get("ootle", {}).get("sponsor_min_ut", SPONSOR_MIN_UT))
         reasons = attention(conn, now)
     checks["disk"] = probes["disk"](Path(cfg.get("data_dir", "/srv/mutis/data")),
                                     cfg.get("limits", {}).get("reserve_min_bytes", 10 * GIB))

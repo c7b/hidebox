@@ -19,52 +19,58 @@ config.then((c) => {
   for (const a of document.querySelectorAll('a[data-demo-gone]')) a.href = `/s/${id}`;
 });
 
+// The pass form, where this deployment has judge passes: not on the mainnet (its build leaves the form out, the
+// contest entry has them) nor on a deployment that switched them off (/config features.judge_passes).
 const box = document.querySelector('[data-judge-pass]');
-const form = box.querySelector('form');
-const input = form.querySelector('input');
-const status = form.querySelector('[role="status"]');
-const forget = form.querySelector('[data-judge-forget]');
-const chips = (shown) => document.querySelectorAll('[data-judge-active]').forEach((chip) => { chip.hidden = !shown; });
+if (box) config.then((c) => { if (c?.features?.judge_passes !== false) passForm(box); });
 
-// A pass handed out as a link (/judges#pass=…): saved on opening, or when the address changes while
-// this page is open (a fragment change runs no script), and the code leaves the address bar.
-function passFromLink() {
-  const code = location.hash.startsWith('#pass=') ? location.hash.slice(6) : '';
-  if (!PASS.test(code)) return;
-  saveJudgePass(code);
-  history.replaceState(null, '', location.pathname);
-  input.value = code;
-  forget.hidden = false;
-  box.open = true;
-  status.textContent = T.saved;
-  chips(true);
-}
-input.value = savedJudgePass() ?? '';
-forget.hidden = !input.value;
-box.open = Boolean(input.value);
-box.hidden = false;
-passFromLink();
-window.addEventListener('hashchange', passFromLink);
+function passForm(box) {
+  const form = box.querySelector('form');
+  const input = form.querySelector('input');
+  const status = form.querySelector('[role="status"]');
+  const forget = form.querySelector('[data-judge-forget]');
+  const chips = (shown) => document.querySelectorAll('[data-judge-active]').forEach((chip) => { chip.hidden = !shown; });
 
-form.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const code = input.value.trim().toLowerCase();
-  if (!PASS.test(code)) {
-    status.textContent = T.bad;
-    input.setAttribute('aria-invalid', 'true');
-    return;
+  // A pass handed out as a link (/judges#pass=…): saved on opening, or when the address changes while
+  // this page is open (a fragment change runs no script), and the code leaves the address bar.
+  function passFromLink() {
+    const code = location.hash.startsWith('#pass=') ? location.hash.slice(6) : '';
+    if (!PASS.test(code)) return;
+    saveJudgePass(code);
+    history.replaceState(null, '', location.pathname);
+    input.value = code;
+    forget.hidden = false;
+    box.open = true;
+    status.textContent = T.saved;
+    chips(true);
   }
-  input.removeAttribute('aria-invalid');
-  input.value = code;
-  saveJudgePass(code);
-  status.textContent = T.saved;
-  forget.hidden = false;
-  chips(true);
-});
-forget.addEventListener('click', () => {
-  saveJudgePass(null);
-  input.value = '';
-  forget.hidden = true;
-  status.textContent = T.forgot;
-  chips(false);
-});
+  input.value = savedJudgePass() ?? '';
+  forget.hidden = !input.value;
+  box.open = Boolean(input.value);
+  box.hidden = false;
+  passFromLink();
+  window.addEventListener('hashchange', passFromLink);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const code = input.value.trim().toLowerCase();
+    if (!PASS.test(code)) {
+      status.textContent = T.bad;
+      input.setAttribute('aria-invalid', 'true');
+      return;
+    }
+    input.removeAttribute('aria-invalid');
+    input.value = code;
+    saveJudgePass(code);
+    status.textContent = T.saved;
+    forget.hidden = false;
+    chips(true);
+  });
+  forget.addEventListener('click', () => {
+    saveJudgePass(null);
+    input.value = '';
+    forget.hidden = true;
+    status.textContent = T.forgot;
+    chips(false);
+  });
+}

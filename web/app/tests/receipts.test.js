@@ -7,6 +7,7 @@ import { identityFromSeed } from '../lib/identity.js';
 import { sealItem } from '../lib/seal.js';
 import { fetchContent, openKept } from '../lib/open.js';
 import { listMyItems } from '../lib/api-locker.js';
+import { useNetwork } from '../lib/network.js';
 import { installFakeApi } from './fake-api.js';
 import { eq, loadJson, loadOptionalJson, ok, rejects } from './harness.js';
 
@@ -115,6 +116,23 @@ export default [
     eq(JSON.stringify(log.checkpoints.map((c) => [c.index, c.epoch, c.leafCount])), '[[0,12127,64],[1,12128,128]]');
     eq(shape(await readSealLog({ version: 0, state: { up: { substate: encoded.component } } })), shape(log), 'Encoded');
     eq(shape(await readSealLog({ substate: encoded.component_json })), shape(log), 'its serde JSON');
+  }],
+  ['SealLog: on the mainnet, a log header must name its upgrade rule, and Locked', async () => {
+    const state = await loadOptionalJson('../../../template/seal_log/tests/vectors/seallog-state-v1.json');
+    if (!state) return;
+    const unnamed = structuredClone(state);
+    delete unnamed.substate.Component.header.upgrade_rule;
+    eq((await readSealLog(unnamed)).checkpoints.length, 2, 'Esmeralda: a log from before 0.49 named none');
+    try {
+      useNetwork('mainnet');
+      eq((await readSealLog(state)).checkpoints.length, 2);
+      await rejects(async () => readSealLog(unnamed), TypeError, 'mainnet: no upgrade rule');
+      const owner = structuredClone(state);
+      owner.substate.Component.header.upgrade_rule = 'Owner';
+      await rejects(async () => readSealLog(owner), TypeError, 'mainnet: an upgradable log');
+    } finally {
+      useNetwork('esmeralda');
+    }
   }],
   ['SealLog: a log that could be rewritten is refused (the research log on Esmeralda has an owner)', async () => {
     const research = await loadJson('vectors/seallog-component.json');

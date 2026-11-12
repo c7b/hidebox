@@ -188,7 +188,7 @@ export function formatTari(ut) {
 // Tari addresses the way wallets show them: the first and last 6 characters after the network prefix.
 export function shortAddress(address) {
   const a = String(address);
-  const prefix = /^[a-z]+_[a-z]+_1/.exec(a)?.[0].length ?? 0;
+  const prefix = /^otl_(?:[a-z]+_)?1/.exec(a)?.[0].length ?? 0;   // otl_esm_1, or the mainnet's otl_1
   return a.length > prefix + 16 ? `${a.slice(0, prefix + 6)}…${a.slice(-6)}` : a;
 }
 

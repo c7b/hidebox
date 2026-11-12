@@ -9,7 +9,8 @@ import unittest
 from pathlib import Path
 
 from harness import ORIGIN, Stack
-from mutis import api, codec, config
+from mutis import api, codec, config, payments
+from mutis.http_util import PARAM_RE
 from mutis.ipkeys import client_ip
 from mutis.storage import Blobs
 
@@ -59,6 +60,23 @@ class InputSafety(unittest.TestCase):
             for method, path in (("GET", f"/api/v1/blobs/{ticket}"), ("POST", f"/api/v1/blobs/{ticket}/done")):
                 status, _, body = self.s.request(method, path, raw=b"" if method == "POST" else None)
                 self.assertEqual((status, body["error"]["code"]), (404, "not_found"), path)
+
+    def test_an_id_with_a_trailing_newline_is_refused(self):
+        """Security pass of 2026-11-09: `$` also matches before a final newline, so an id of the right length plus
+        "\\n" passed every pattern; they end in \\Z now."""
+        for kind, value in (("id", "A" * 22), ("drop", "0" * 10), ("invoice", "inv_" + "a" * 20),
+                            ("claim", "clm_" + "a" * 20), ("report", "rep_" + "a" * 16), ("index", "7"),
+                            ("substate", "utxo_" + "0" * 40), ("tx", "0" * 64), ("ticket", "A" * 43),
+                            ("template", "0" * 64)):
+            self.assertTrue(PARAM_RE[kind].match(value), kind)
+            self.assertIsNone(PARAM_RE[kind].match(value + "\n"), kind)
+        self.assertEqual(payments.claim_ref({"Message": "clm_" + "a" * 20}), "clm_" + "a" * 20)
+        self.assertIsNone(payments.claim_ref({"Message": "clm_" + "a" * 20 + "\n"}))
+        self.assertIsNone(payments.pay_ref({"Message": "inv_" + "a" * 20 + "\n"}))
+        status, _, body = self.s.request("POST", "/api/v1/auth/register", {
+            "identity_id": codec.b64u(b"n" * 16) + "\n", "auth_verifier": codec.b64u(b"v" * 32),
+            "pow": self.s.solve("register")})
+        self.assertEqual((status, body["error"]["details"]), (422, {"field": "identity_id"}))
 
     def test_blob_paths_only_from_valid_ids(self):
         blobs = Blobs(self.s.app.blobs.root)
