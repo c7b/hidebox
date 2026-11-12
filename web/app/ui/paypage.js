@@ -68,6 +68,12 @@ function phaseOf(P) {
 }
 
 const needsOwner = (P) => !(P.status?.demo || P.claim?.how === 'test' || P.busy === 'test');
+// features.away_release (docs/mvp-november.md §2): our payment checker tells from the sales view key whether a payment
+// is the owner's to spend, so it opens without the owner's drive; the words for that check say so (C38-a).
+let away = false;
+const AWAY = { 'buy.own_wait': 'buy.own_wait_away', 'buy.check': 'buy.check_away', 'buy.step.owner': 'buy.step.owner_away',
+  'buy.step.owner_wait': 'buy.step.owner_wait_away' };
+const own = (key) => (away ? AWAY[key] ?? key : key);
 const viaDrive = (P) => P.busy === 'drive' || P.claim?.how === 'drive';
 const txOf = (P) => [P.status?.tx_id, P.claim?.tx].find((x) => typeof x === 'string' && /^[0-9a-f]{64}$/.test(x)) ?? null;
 
@@ -76,8 +82,8 @@ const txOf = (P) => [P.status?.tx_id, P.claim?.tx].find((x) => typeof x === 'str
 function stepList(P) {
   const drive = viaDrive(P);
   return drive
-    ? [['build', P.claim?.tx ? 'buy.step.sent' : 'buy.step.build'], ['chain', 'buy.step.on_chain'], ['owner', 'buy.step.owner_wait'], ['open', 'buy.step.open']]
-    : [['wait', 'buy.step.wait'], ['seen', 'buy.step.seen'], ['chain', 'buy.step.chain'], ...(needsOwner(P) ? [['owner', 'buy.step.owner']] : []), ['open', 'buy.step.open']];
+    ? [['build', P.claim?.tx ? 'buy.step.sent' : 'buy.step.build'], ['chain', 'buy.step.on_chain'], ['owner', own('buy.step.owner_wait')], ['open', 'buy.step.open']]
+    : [['wait', 'buy.step.wait'], ['seen', 'buy.step.seen'], ['chain', 'buy.step.chain'], ...(needsOwner(P) ? [['owner', own('buy.step.owner')]] : []), ['open', 'buy.step.open']];
 }
 
 // What the step in progress is waiting on, as it changes (owner-5): test money is getting ready, then our demo
@@ -118,6 +124,7 @@ function stepper(P, phase) {
 }
 
 export async function payPage(root, cfg, shareId) {
+  away = cfg.features?.away_release === true;
   root.setAttribute('data-testid', 'pay-page');
   const P = {
     cfg, shareId, sA: pay.parsePayFragment(location.hash), info: null, teaser: null, claim: pay.savedClaim(shareId),
@@ -436,7 +443,7 @@ export async function payPage(root, cfg, shareId) {
         h('span', { class: 'label' }, t('buy.to')),
         h('input', { class: 'input mono', readonly: true, value: c.address, 'aria-label': t('buy.to'), 'data-testid': 'pay-address' }),
         copy)),
-      h('p', { class: 'small muted' }, t('buy.own_wait')));
+      h('p', { class: 'small muted' }, t(own('buy.own_wait'))));
     } else if (P.busy === 'other') {
       inner.append(h('p', { class: 'small muted row' }, spinner(), t('buy.making')));
     }
@@ -467,11 +474,11 @@ export async function payPage(root, cfg, shareId) {
   function payCard(phase) {
     const drive = viaDrive(P);
     const desc = {
-      wait: t('buy.wait'), paying: drive ? t(P.claim?.tx ? 'buy.drive_sent' : 'buy.drive_paying') : t('buy.wait'), seen: t('buy.seen'), check: t('buy.check'), unlocking: t('buy.seen'),
+      wait: t('buy.wait'), paying: drive ? t(P.claim?.tx ? 'buy.drive_sent' : 'buy.drive_paying') : t('buy.wait'), seen: t('buy.seen'), check: t(own('buy.check')), unlocking: t('buy.seen'),
       open: t('buy.open'), opened: t('buy.open'), expired: t('buy.expired'), void: t('buy.void'), used: t('buy.used'),
     }[phase];
     const content = h('div', { class: 'card-content stack' },
-      h('div', { class: 'price-big', 'data-testid': 'pay-price' }, formatTari(price), h('small', {}, 'tTARI')),
+      h('div', { class: 'price-big', 'data-testid': 'pay-price' }, formatTari(price), h('small', {}, t('earn.unit'))),
       h('p', { class: 'small muted', 'data-testid': 'pay-fee' }, t('buy.fee', { fee: formatTari(P.info.fee_ut ?? cfg.pay_to_open?.fee_ut ?? '0') })));
     const paused = P.info.state === 'paused';
     const notReady = P.info.seller?.ready === false;
@@ -503,7 +510,7 @@ export async function payPage(root, cfg, shareId) {
           // Its click turns the card into the payment's steps at once (phase 'paying'), never a quiet spinner.
           choices.append(h('div', { class: 'pay-drive stack' },
             button(t('buy.drive'), { variant: testMoney ? 'outline' : null, glyph: 'wallet', testid: 'pay-browser', disabled: P.busy ? true : null, onclick: payDrive }),
-            h('p', { class: 'small muted' }, t('buy.own_wait'))));
+            h('p', { class: 'small muted' }, t(own('buy.own_wait')))));
         } else if (P.have !== null) {
           // A drive here, short of the price and the fee: say why there is no Pay from my drive.
           choices.append(h('div', { class: 'pay-drive stack' }, h('p', { class: 'small muted row', 'data-testid': 'pay-drive-short' }, icon('wallet'),
@@ -518,7 +525,7 @@ export async function payPage(root, cfg, shareId) {
       if (P.status?.status === 'underpaid' || (got > 0n && got < BigInt(price))) {
         content.append(alert({ glyph: 'info', title: t('buy.partial', { paid: formatTari(got.toString()), price: formatTari(price) }), testid: 'pay-partial', role: 'status' }));
       }
-      if (phase === 'check') content.append(h('p', { class: 'small muted' }, t('buy.own_wait')));
+      if (phase === 'check') content.append(h('p', { class: 'small muted' }, t(own('buy.own_wait'))));
       if (drive && P.late && phase === 'paying') content.append(h('p', { class: 'small muted', 'data-testid': 'pay-late' }, t('buy.drive_late')));
       if (!drive && P.claim?.how !== 'test' && P.claim?.address && phase === 'paying') content.append(otherBox(phase));
     } else if (phase === 'open' || phase === 'opened') {

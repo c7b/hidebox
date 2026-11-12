@@ -6,6 +6,7 @@
 import { unhex } from './b64.js';
 import { concat, equal, u32be, utf8 } from './bytes.js';
 import { sha256 } from './crypto.js';
+import { network } from './network.js';
 import { substateValue } from './substate.js';
 
 const leaf = (data) => sha256(concat(Uint8Array.of(0), data));
@@ -60,16 +61,20 @@ const KEY_BADGES = `resource_01${'0'.repeat(62)}`;
 // The SealLog component substate (a GET substates/component_… response, through our proxy or straight
 // from an indexer, in either shape lib/substate.js reads, or the bare value), trusted only when nobody
 // can rewrite it: owner_rule "None" (nobody, us included, can change its rules), upgrade_rule "Locked"
-// (Ootle 0.49+: nobody can swap the code behind it; earlier components had no such rule and no owner was
-// enough), every method denied by default, and append_root open only to one public key's badge. The state keeps
-// the newest 64 checkpoints after `first_index`.
+// (Ootle 0.49+: nobody can swap the code behind it; earlier Esmeralda components had no such rule and no owner
+// was enough; on the mainnet, which started on 0.50, a header without it is refused), every method denied by
+// default, and append_root open only to one public key's badge. The header reads the same whether the log's
+// template has V1 definitions (tari_template_lib 0.37, dist/) or V2 ones (0.38, dist-v2/, the mainnet build).
+// The state keeps the newest 64 checkpoints after `first_index`.
 // -> {template, writer (hex public key), checkpoints: [{index (in the whole log), epoch, root,
 //     leafCount}], oldest first}; TypeError for anything else.
 export async function readSealLog(response) {
   const component = ((await substateValue(response)) ?? response)?.Component;
   const header = component?.header;
   const writer = header?.access_rules?.method_access?.append_root?.Restricted?.Require?.Require?.NonFungibleAddress;
-  if (header?.owner_rule !== 'None' || ('upgrade_rule' in header && header.upgrade_rule !== 'Locked')
+  // the older header (no upgrade_rule) passes only on Esmeralda: not on the mainnet, nor while the network is unknown
+  const locked = header?.upgrade_rule === 'Locked' || (network()?.name === 'esmeralda' && header != null && !('upgrade_rule' in header));
+  if (header?.owner_rule !== 'None' || !locked
     || header.access_rules?.default !== 'DenyAll'
     || writer?.resource_address !== KEY_BADGES || !/^[0-9a-f]{64}$/.test(writer.id?.U256 ?? '')) {
     throw new TypeError('a SealLog that can be rewritten');

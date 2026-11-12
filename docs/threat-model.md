@@ -21,9 +21,9 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Password guesser, online | try passwords | the access token comes from the password; growing pauses; proof of work; only holders of the full link can count as wrong passwords | slow guessing against weak password-only links |
 | Password guesser, with a copy of our database | guess password-only links offline | PBKDF2-SHA256; link + password is the default, and password-only links come with a warning | weak password-only secrets |
 | A dishonest payer (packs) | build an output that opens with our receiver's view key but that they can still spend | the one-time key must be the one our receiver's owner key derives ("Ownership" below) | none known |
-| A curious or compromised server, for paid links (pay to open) | hold half of each paid link's key (`sB`); read each seller's payments through the view key of the sales address | `sA` stays after the `#`; `sB` is erased when the link ends; the view key arrives sealed to the payment checker's keys, which the API user and a copy of the database can't use; outputs that pay no claim of that seller are not recorded | our server together with a leaked link could open a paid link; `sB` stays in database backups for `retention.db_backup_days`; the payment checker sees a seller's sales payments while it scans (amount, time, claim) |
+| A curious or compromised server, for paid links (pay to open) | hold half of each paid link's key (`sB`); read each seller's payments through the view key of the sales address; relay market asks | `sA` stays after the `#`, and reaches a market shopper only sealed to that shopper's keys; `sB` is erased when the link ends; the view key arrives sealed to the payment checker's keys, which the API user and a copy of the database can't use; outputs that pay no claim of that seller are not recorded | our server together with a leaked link could open a paid link; `sB` stays in database backups for `retention.db_backup_days`; the payment checker sees a seller's sales payments while it scans (amount, time, claim); with `features.away_release` it also decides alone whether each is the seller's to collect, and releases on that; it could ask for a public shop's listing in the market, as anyone can, and with `sB` open it |
 | A compromised API, for test money | invent sellers and claims to steer demo payments | the chain worker re-checks every demo payment to a claim: the claim waits for money on a live link, the address is that link owner's sales address with the claim's reference, the seller's view key opened, the amount is at most what is missing; per-network caps; the daily `demo_pay` budget | at most a day's demo budget, in test money, to an address the attacker picks |
-| A dishonest buyer (pay to open) | build a payment the seller's view key opens while keeping its spend key, to get the key for the fee | only test money our demo wallet built for the whole price releases by itself; every other payment waits until the owner's drive has compared its one-time keys and confirmed ("Pay to open" below); a failed check voids the claim | a wallet payment opens nothing until the owner's drive has run its check |
+| A dishonest buyer (pay to open) | build a payment the seller's view key opens while keeping its spend key, to get the key for the fee | only test money our demo wallet built for the whole price releases by itself; every other payment waits until its one-time keys are compared and confirmed: by the owner's drive, or, with `features.away_release`, by our payment checker from the view key and the address ("Pay to open" below); a failed check voids the claim | a wallet payment opens nothing until one of the two checks has run; with `away_release`, a flaw in our checker's arithmetic (`web/app/lib/ristretto.js`) would let a forged payment open a file the seller can't collect for |
 | A buyer passing a paid file on | share the file, or the link with their claim token | each claim gives `pay_to_open.buyer_views` opens within `pay_to_open.buyer_window_s`; the link alone opens nothing | anyone who opens a file can share it further (stated on the pay page) |
 | A dishonest seller | sell something other than the preview says | none: no disputes, no refunds (stated before paying) | stated |
 | Chain observer | read all public state | stealth outputs, encrypted memos, one fee and one amount for every relay send, decoy sends | the fee and the transaction graph are public; relay sends are recognisable as ours; direct sends link to our sponsor wallet and to each other |
@@ -34,7 +34,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 | Someone hosting abuse | upload and share | small and short-lived files without a locker, one open by default, proof of work, rate limits, downloads only, a warning before programs, no listing or search, `noindex`, the report form, removal by id | we can't scan encrypted content, by design |
 | Someone who sends or sells a hostile file | make a preview run code on our origin, where this browser's keys live: an SVG with a script, a web page named `.txt`, a picture with a page after it | the preview picks what to show from the decrypted bytes, never the name or stored type: pictures in an `<img>`, an SVG drawn into a canvas, text as text nodes, everything else download only; the content security policy still refuses inline script ("Previews" below) | a flaw in the browser's own image or SVG decoder; a downloaded file opened elsewhere is as safe as its sender (the app warns before programs) |
 | Someone uploading a program to attack the server | send any bytes in place of ciphertext: an executable, a script, a web page, an archive | the server never decodes, parses or runs what it stores, and names each file itself; the files are 0600 on a mount where nothing executes; nothing a service can write is executable in its view; stored bytes leave only as downloads ("Uploads are inert" below) | a flaw in the kernel, Python, Caddy or SQLite reached through the HTTP request itself rather than through the stored bytes |
-| Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the two vendored artifacts (ootle-wasm and ootle-wasm-bor 0.52.0) are pinned by hash and re-hashed before they run; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
+| Script injection or a poisoned dependency | run code in our origin | no third-party scripts; a strict content security policy with Trusted Types where supported; no HTML sinks in our code; the two vendored artifacts (ootle-wasm and ootle-wasm-bor 0.53.2) are pinned by hash and re-hashed before they run; SRI on each page's top-level scripts and stylesheets, and the hash manifest (`verify-deploy`) for the modules they import | browser extensions (out of scope) |
 | A misbehaving indexer | answer the chain worker's and the API's reads with anything | the UTXO stream and fetch answers are checked field by field before use (bounded numbers, 32-byte nonces, JSON objects); a malformed answer counts against that indexer alone and the others keep the mirror; a credit needs the official library's amount proof and a verified substate | an indexer can hide or delay what only it shows; the health check turns red when the mirror lags |
 | A compromised service user (the chain worker's `drive`, or `mutis`) | write where its unit may write, such as the status directory both share | the status directory is mounted `nosymfollow`, so no process (Caddy and root included) follows a link placed there; status files are written under random names and renamed into place ("Uploads are inert" below; `docs/review/security-audit-1.md`) | what that user may do by design: drive holds the testnet wallet's keys and writes the database |
 | Draining our wallet through the API | spend the sponsor wallet | the internet-facing API runs as a separate user that can't reach the wallet (a firewall rule per user on the wallet port); jobs are validated; daily budget slices | at most the daily budgets |
@@ -65,7 +65,7 @@ ciphertext and never receives a file key, a link's secret, a password or a locke
 
 A wallet saying "sent" isn't enough (in September 2026 a testnet wallet showed deposits that never
 happened), so **hidebox** credits rented space only after its own checks. With `amount_proof = "sidecar"`
-the official Tari™ library (ootle-wasm 0.52.0, in a Node process under the permission model that can
+the official Tari™ library (ootle-wasm 0.53.2, in a Node process under the permission model that can
 only read its own directory) opens the output's commitment to the exact amount, and a Tari-run public
 indexer shows the output committed. walletd never decides a credit. With `amount_proof = "wallet"`
 (the fallback when the sidecar can't run) the amount is the one our wallet reads, and the site says
@@ -94,6 +94,72 @@ until the owner's drive compares each output's one-time key with its own (`steal
 payment". Tested on the fake chain only (`test_release_gate.py`, `test_sales_worker.py`); the sidecar's
 `openWatchKey` has an offline round trip in its selftest. Not yet: a locked payment with a refund (a
 native Ootle HTLC), which has never run, so nothing is promised about it.
+
+**Release without the seller's drive (`features.away_release`, off by default; on in the mainnet lane).** Since Ootle
+0.48 a stealth output's one-time key is `P = H(network ‖ v·R)·G + K`: the view key `v` and the account key `K` in the
+address are enough to check it, the check the Ootle's watch-only accounts run. With the flag on, the chain worker runs it
+for each sale payment when an indexer commits it (`chain_worker._sale_owns`, `sales.count`): the sidecar asks the
+official library for `c·G` (`stealthDhSecret` with the account secret 1, minus 1) and adds `K` with
+`web/app/lib/ristretto.js` (RFC 9496; the library exports no point addition), checked against the RFC's vectors, against
+the library on random scalars and on the frozen ownership known-answer test, in `web/app/tests/ristretto.test.js` and in
+the sidecar's `selftest`, which the chain worker runs before it trusts the check (once per start; a failure, or a
+sidecar without those cases, leaves every sale to the drive). Equal: `owner_ok = 1`, `checked_by = 'server'`, and a claim whose every counted payment
+passed releases `sB` on the buyer's next poll, with the seller's drive closed. Different: the payment never counts and the claim is void, as when the drive
+refuses it. When the check can't tell (no plain one-time key, such as a condition tree anyone who meets it could spend;
+no nonce; no view key open; the address changed since the claim; a sidecar refusal), nothing releases on our checker's
+word and the claim waits for the drive, as before. The delta:
+- *What our server learns:* nothing new. The payment checker already opened each payment to a claim with the view key;
+  now it also records the verdict the drive used to send, at once.
+- *Who decides:* our checker, alone. Before, the release waited for code running in the seller's own browser. A
+  compromised server could always release `sB` (it holds it); what changes is that an honest server with a wrong check
+  could release for a forged payment. That is why the arithmetic is tested against the official library before the worker uses it.
+- *The seller keeps a say:* until the buyer's next poll releases the claim, the drive can still refuse a payment
+  (`POST /me/sales/claims/{id}/confirm`, `checked_by = 'drive'`), and a checked payment is withdrawable at once.
+
+Tested on the fake chain (`server/tests/test_away_release.py`: a wallet payment released with no drive, the forgery
+void at once and never counted, a condition tree, a partial forgery, an extra payment, the drive's refusal, the check
+that can't tell, the sidecar down, the flag off) and with the real library (`web/app/tests/ristretto.test.js`,
+`web/app/tests/sidecar_test.py`); never with forged outputs on a public network.
+
+**Shops (`features.shop`, off by default).** A drive's shop lists some of its pay links on a public page
+([shop.md](shop.md)). A listing's `sA` is stored and served only sealed with the shop's key, which lives after the shop
+link's `#` and, wrapped, in the owner's drive, so our server and a copy of its database still hold one half of each
+listed link and open none. Whoever holds a shop's whole link holds every listed `sA`: someone who has both that link and
+`sB` (us, or a copy of our database) can open what is listed, the leaked-link boundary above widened to a shop at once;
+the owner is told so when listing. The shop's words are its owner's plain text on our origin, reportable and removable
+like a link (`mutis-admin takedown shop`). A shop's address is a readable username ([shop.md](shop.md), "The address"):
+ASCII only and unique by look-alike, so a name can't pass for another shop's or for ours. A private shop answers only
+to a read token derived from its key, so a guessed name shows nothing of it (only that the name is taken, to someone
+who tries to take it). A **public** shop (the owner's choice) is readable by anyone and
+listed in the market ([market.md](market.md)); its words, titles and prices are on pages search engines index, and its
+key still never reaches us.
+
+**The market (`features.market`, off by default; on in the mainnet lane).** A shopper without a public shop's whole link
+asks the seller's drive for a listing's key half: the shopper's browser sends a key pair made for that ask alone, the
+seller's drive (whenever it is open) seals `sA` to that pair (the address wrap, kind 3, bound to the ask and the listing),
+and our server relays the 125-byte answer, which it can't open. The shopper pays only once it has arrived, and the
+release doesn't wait for the seller. Our server and a copy of its database hold `sB`, `link_ct` and sealed answers, never
+both halves of a listed file's key, so what we store opens nothing on its own. What remains: the drive answers anyone
+who asks for a listing in the market, by design, so **whoever holds `sB` could open a public listing by asking for it**,
+without paying: our server, or someone with a copy of our database or its backups while the seller's drive still
+answers. That is the boundary of a shop link posted in public, which the owner is told before making a shop public; a
+private shop's listings are never asked for. An ask tells our server which listing was asked about and when, with a
+key pair made for it; never who asked.
+
+**Storage in a rented store (`storage.backend = "s3"`, [storage.md](storage.md)).** Finished blobs over 256 KiB move to an
+S3-compatible bucket. The provider holds what our disk would: ciphertext under random ids, padded sizes, arrival and exit
+times, and our server's address; downloads come through our server, so never a visitor's address. It can withhold or
+delete a blob, never read or change one unseen (each chunk is authenticated in the opening browser, the blob's hash is in
+SealLog). A provider that keeps deleted objects keeps ciphertext; the setup turns versions off. Requests are signed with
+the payload's SHA-256 over HTTPS; the access key lives in a root-owned file only the service group reads.
+
+**Withdrawals (`features.withdraw`, off by default).** A drive sends its earnings from the sales address to any Ootle
+address ([withdraw.md](withdraw.md)). The withdrawal is built and signed only in the browser, with the sales owner key
+derived there from the drive's seed; our server never holds a spend key and never learns the destination. It relays a
+withdrawal only when every input is a settled payment of that drive (counted, and test money or checked by the owner's
+drive) or change of its own withdrawals, so a payment still being counted can't be spent away from its buyer through
+us. It learns when a seller withdraws, which payments it spent and the change. A compromised server can refuse or
+delay a withdrawal, never redirect it.
 
 ## Griefing the space
 
@@ -246,7 +312,8 @@ That isn't "nobody ever sees your IP": the server sees it while you're connected
   mode, and Tari features need WebAssembly.
 - Deletion you can't see: we delete on cue, and nothing can prove we kept no copy. The daily database
   backup holds the wrapped key of every link open at that moment (useless without the link's secret);
-  the host's snapshots and free disk blocks can hold ciphertext until they rotate.
+  the host's snapshots and free disk blocks can hold ciphertext until they rotate, and so can a rented store's old
+  versions where they aren't turned off.
 - Testnet resets and legal requests: we can hand over what we have (ciphertext, the columns on the
   "What we know" panel, invoices), never contents or keys.
 

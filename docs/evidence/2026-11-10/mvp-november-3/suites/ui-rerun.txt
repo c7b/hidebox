@@ -1,0 +1,3 @@
+web/app/ui/tests/run.py --only share-simple-link at 01ba912 (its check reads the new tombstone sentence):
+PASS share-simple-link: not found, in the server's words ("This link isn't here. Check that you copied all of it. The server remembers an ended link for at least 30 days. After t")
+UI PASS 34/34

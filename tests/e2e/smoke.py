@@ -3,6 +3,7 @@
 """Deploy smoke test (spec §15.5 step 5), run by deploy.sh from the workstation. Stdlib only.
 
   python3 -I tests/e2e/smoke.py --origin https://… --manifest dist/.well-known/mutis-manifest.json [--api] [--chain]
+                                [--indexers "https://a https://b"]
 
 Passes when: the home page answers 200 with the app CSP and the §14.2 headers; the live hash manifest
 lists exactly the files and hashes of the local build; with --api, /api/v1/health is ok and reports
@@ -31,11 +32,15 @@ def get(url: str):
         return e.code, {k.lower(): v for k, v in e.headers.items()}, e.read()
 
 
+INDEXERS = "https://ootle-indexer-a.tari.com https://ootle-indexer-b.tari.com"
+expected_app_csp = headers_spec.APP_CSP     # --indexers: a deployment on another network's indexers (the mainnet)
+
+
 def home(origin: str, _manifest: dict) -> str | None:
     status, headers, _ = get(origin + "/")
     if status != 200:
         return f"home answered {status}"
-    if headers.get("content-security-policy") != headers_spec.APP_CSP:
+    if headers.get("content-security-policy") != expected_app_csp:
         return "home CSP is not the app policy of spec §14.2"
     wrong = [k for k, v in headers_spec.COMMON.items() if headers.get(k) != v]
     if wrong or any(k in headers for k in headers_spec.ABSENT):
@@ -79,7 +84,12 @@ def main() -> int:
     p.add_argument("--manifest", required=True, help="the local build's .well-known/mutis-manifest.json")
     p.add_argument("--api", action="store_true", help="also require /api/v1/health (mutis-api enabled)")
     p.add_argument("--chain", action="store_true", help="also require chain_ok in /api/v1/stats (mutis-chain enabled)")
+    p.add_argument("--indexers", help="the deployment's indexers as the app CSP lists them (sorted, space-separated)")
     args = p.parse_args()
+    if args.indexers:
+        global expected_app_csp
+        assert INDEXERS in headers_spec.APP_CSP
+        expected_app_csp = headers_spec.APP_CSP.replace(INDEXERS, args.indexers)
     with open(args.manifest) as f:
         local = json.load(f)
     checks = [(home, 20), (manifest, 20)] + ([(health, 20)] if args.api else []) + ([(chain, 150)] if args.chain else [])

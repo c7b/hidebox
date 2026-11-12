@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Entry of app.html: one page module per route (spec §3.2), loaded on demand. Links between app
 // pages are ordinary links, so the back button, reloads and new tabs behave as everywhere else.
+import '../lib/network.js';   // the network this page's build names (its <meta name="mutis-network">), from the first line
 import { h } from './lines.js';
 import { t } from '../lib/i18n.js';
 import { current } from '../lib/router.js';

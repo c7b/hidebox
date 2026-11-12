@@ -1,0 +1,78 @@
+{
+ "transaction": {
+  "created_at": "2026-11-12 18:28:33.0",
+  "rejected_reason": null,
+  "source": "gossip",
+  "summary": {
+   "finalized_at": "2026-11-12 18:28:36.0",
+   "outcome": "Commit",
+   "total_fees_paid": 842961
+  },
+  "transaction": {
+   "V1": {
+    "body": {
+     "signatures": [],
+     "transaction": {
+      "blob_hashes": [
+       "d57a7fd5a4881568fadbf80ac5c6369abbcacc1b948fcb49aebb4462ce2b82b0"
+      ],
+      "blob_sizes": [
+       107038
+      ],
+      "dry_run": false,
+      "fee_instructions": [
+       {
+        "CallMethod": {
+         "args": [
+          {
+           "Literal": "1a001e8480"
+          }
+         ],
+         "call": {
+          "Address": "component_aba98a258919d0a3033ca657124d37df91e640e4ba6cbc2a97ea0ae4df02f687"
+         },
+         "method": "pay_fee"
+        }
+       }
+      ],
+      "inputs": [
+       {
+        "is_write": true,
+        "substate_id": "resource_0101010101010101010101010101010101010101010101010101010101010101",
+        "version": null
+       },
+       {
+        "is_write": true,
+        "substate_id": "component_aba98a258919d0a3033ca657124d37df91e640e4ba6cbc2a97ea0ae4df02f687",
+        "version": null
+       },
+       {
+        "is_write": true,
+        "substate_id": "vault_ab0c97844fd17a42bf3a48de7a5332beb6fa6de2cd4317e1872d6faa47bd4108",
+        "version": null
+       }
+      ],
+      "instructions": [
+       {
+        "PublishTemplate": {
+         "binary": 0,
+         "metadata_hash": null
+        }
+       }
+      ],
+      "main_signer": "SealSigner",
+      "max_epoch": 38544,
+      "min_epoch": null,
+      "network": 0,
+      "nonce": 2931826450698456619
+     }
+    },
+    "seal_signature": {
+     "public_key": "9250fcabd52d7319996904b64ea494c0b077a8b2c8c39d94eb2e06a9c7294762",
+     "signature": "0a607d3cc39d1323553ead9aa4dc845e7b13d97c53699d461810d27b895c822a69d3db36070def16a71b7b9cbb05318665a87ffbdf939b4db57a32d000922489"
+    }
+   }
+  },
+  "transaction_id": "dbb5173483176a9cadbc82bec4b981d44dd178eb8dfa750febe1e1462bc74dca"
+ }
+}

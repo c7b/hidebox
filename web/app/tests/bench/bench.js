@@ -6,8 +6,12 @@ import { concat } from '../../lib/bytes.js';
 import { randomBytes } from '../../lib/crypto.js';
 import { searchNonce, solvePow } from '../../lib/pow.js';
 import { newRandomKeys, ready, tryDecryptUtxo } from '../../lib/ootle.js';
+import { useNetwork } from '../../lib/network.js';
 import { installFakeApi } from '../fake-api.js';
 import { outputTo } from '../outputs.js';
+
+// This page is no built page: it names its network itself (lib/network.js has none for a page until told).
+useNetwork('esmeralda');
 
 const out = [];
 const log = (...a) => out.push(a.join(' '));

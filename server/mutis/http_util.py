@@ -15,6 +15,7 @@ SLICE = 64 * 1024
 # not $, which would also take a trailing newline.
 PARAM_RE = {
     "id": re.compile(r"^[A-Za-z0-9_-]{22}\Z"),
+    "shopref": re.compile(r"^[A-Za-z0-9_-]{1,64}\Z"),     # a shop's username or id (shop.by_ref decides which)
     "drop": re.compile(r"^[0-9a-hjkmnp-tv-z]{10}\Z"),
     "invoice": re.compile(r"^inv_[a-z2-7]{20}\Z"),
     "claim": re.compile(r"^clm_[a-z2-7]{20}\Z"),

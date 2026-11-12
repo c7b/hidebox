@@ -131,9 +131,10 @@ def e06(t: T) -> None:
     flows.home(a, t.origin)
     url = flows.seal_file(a, t.fixture("five-mb.dat"))
     item = item_of(t, url)
-    path = f"/srv/mutis/data/blobs/{item[:2]}/{item[2:4]}/{item}.bin"
+    suffix = t.env.remote.suffix          # an instance's own blobs, as its own user (run.py --instance)
+    path = f"/srv/mutis{suffix}/data/blobs/{item[:2]}/{item[2:4]}/{item}.bin"
     flip = f"f = open({path!r}, 'r+b'); f.seek(4096); b = f.read(1); f.seek(4096); f.write(bytes([b[0] ^ 1])); f.close()"
-    t.env.remote.run("cd /tmp && sudo -u mutis sh -c 'umask 007; exec python3 -I -'", flip.encode())
+    t.env.remote.run(f"cd /tmp && sudo -u mutis{suffix} sh -c 'umask 007; exec python3 -I -'", flip.encode())
     b = t.actor()
     t.check(flows.open_link(b, url) == "integrity-error", "B gets integrity-error")
     b.b.drain(5)
@@ -228,8 +229,9 @@ def e16s(t: T) -> None:
         a.click("drop-write")
         a.fill("drop-textarea", "E2E E-16 during the freeze")
         a.click("drop-seal-text")
-        a.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'uploads_frozen'", 60)
-        t.check(True, "the widget shows uploads_frozen")
+        # An operator's freeze of everything is scope "all": the widget names it uploads_frozen_all (web/app/ui/errors.js).
+        a.wait("document.querySelector('[data-testid=\"error-banner\"]')?.dataset.code === 'uploads_frozen_all'", 60)
+        t.check(True, "the widget shows uploads_frozen_all")
         t.check(flows.open_link(t.actor(), earlier) == "opened", "an existing link still opens")
     finally:
         t.env.remote.admin("freeze", "none")
@@ -242,7 +244,7 @@ def e17(t: T) -> None:
     url = flows.seal_text(a, "E2E E-17 to be reported")
     owner = apiclient.Client(t.origin)
     owner.register()
-    drop = owner.create_drop(apiclient.random_address(), "E2E E-17")
+    drop = owner.create_drop(apiclient.random_address(t.env.config()["address_prefix"]), "E2E E-17")
     reporter = apiclient.Client(t.origin)
     for link in (url.split("#")[0], drop["url"]):
         t.check(reporter.report(link, "other").get("report_id", "").startswith("rep_"), f"report accepted for {link[-24:]}")
@@ -324,7 +326,7 @@ def e20(t: T) -> None:
     t.check(not unnamed_controls(a), "sealed card: every control has an accessible name")
     owner = apiclient.Client(t.origin)
     owner.register()
-    drop = owner.create_drop(apiclient.random_address(), "E2E E-20")
+    drop = owner.create_drop(apiclient.random_address(t.env.config()["address_prefix"]), "E2E E-20")
     a.goto(drop["url"])
     a.wait_state("dd-root", ("ready",), 60)
     t.check(not unnamed_controls(a), "drop page: every control has an accessible name")

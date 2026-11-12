@@ -61,7 +61,7 @@ class System(unittest.TestCase):
         self.assertEqual((c["pricing"]["one_per_drive"], c["pricing"]["renew_days"]), (True, 3))
         self.assertTrue(c["features"]["packs"])
         self.assertEqual(c["courier"], {"amount_ut": "1000", "max_fee_ut": "30000", "jitter_s": [5, 45]})
-        self.assertEqual(c["ootle"]["wasm_version"], "0.52.0")
+        self.assertEqual(c["ootle"]["wasm_version"], "0.53.2")
         self.assertEqual(c["hosting"], {"snapshots": "weekly"})
         self.assertIsNone(c["onion"])
         self.assertEqual(c["retention"]["ticket_s"], 1800)

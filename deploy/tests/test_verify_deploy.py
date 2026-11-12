@@ -134,6 +134,26 @@ class BuildConfigTest(unittest.TestCase):
         self.assertEqual(doc["security_drop_url"], "")
         self.assertEqual({t: doc[t] for t in ("gates", "features", "hosting")}, recorded)
 
+    def test_an_instance_is_rebuilt_with_its_staging_and_testnet_origin(self):
+        """A staging or mainnet instance's /config names both; its pages carry the staging banner or the testnet's
+        links by them. Production's /config names neither: built as before, staging off and no testnet origin."""
+        staging = {"network": "esmeralda", "staging": True, "testnet_origin": "https://t.example"}
+        doc = tomllib.loads(verify.build_config("https://m.example", staging, {}))
+        self.assertEqual((doc["staging"], doc["testnet_origin"]), (True, "https://t.example"))
+        doc = tomllib.loads(verify.build_config("https://m.example", {**staging, "network": "mainnet", "staging": False}, {}))
+        self.assertEqual((doc["network"], doc["staging"], doc["testnet_origin"]), ("mainnet", False, "https://t.example"))
+        doc = tomllib.loads(verify.build_config("https://h.example", {"network": "esmeralda"}, {}))
+        self.assertEqual((doc["staging"], doc["testnet_origin"]), (False, ""))
+        self.assertEqual(verify.unsafe_settings(staging), [])
+        for key, value in (("testnet_origin", 'https://t.example"><script>'), ("testnet_origin", "http://t.example"),
+                           ("testnet_origin", "https://t.example/path"), ("staging", "yes"), ("staging", 1)):
+            with self.subTest(key=key, value=value):
+                self.assertEqual(len(verify.unsafe_settings({**staging, key: value})), 1)
+        # What tools/build.py would refuse is a difference, not a failed rebuild.
+        for cfg in ({**staging, "testnet_origin": ""}, {"network": "mainnet", "staging": False}):
+            with self.subTest(cfg=cfg):
+                self.assertEqual(len(verify.unsafe_settings(cfg)), 1)
+
     def test_a_manifest_cannot_add_keys_or_tables(self):
         recorded = {"gates": {"send_mode": "relay", 'x = 1\n[evil]\ny': True, "nested": {"a": 1}},
                     "secrets": {"key": "value"}}
@@ -149,7 +169,7 @@ class BuildConfigTest(unittest.TestCase):
                   "repo_url": "https://github.com/c7b/hidebox"}
         self.assertEqual(verify.unsafe_settings(honest), [])
         self.assertEqual(verify.unsafe_settings({}), [])
-        self.assertEqual(verify.unsafe_settings({**honest, "network": "mainnet"}), [])
+        self.assertEqual(verify.unsafe_settings({**honest, "network": "mainnet", "testnet_origin": "https://t.example"}), [])
         for key, value in (("repo_url", 'https://github.com/c7b/hidebox"><script src="/x.js"></script>'),
                            ("security_drop", "https://h.example/<svg onload=x>"), ("repo_url", "http://code.example"),
                            ("network", "esmeralda\"><script>"), ("network", "stagenet"), ("repo_url", ["https://x.example"])):

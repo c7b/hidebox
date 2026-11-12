@@ -1,22 +1,35 @@
 // SPDX-License-Identifier: MIT
 // Everything that touches Tari Ootle keys: addresses, deterministic locker/wallet keys, sealing a
 // link secret to an address (kind 3: owner + view key; kind 4: view key only) and trial-decrypting
-// stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.52.0, loaded on demand; the
+// stealth outputs. Ristretto maths runs in the vendored official ootle-wasm 0.53.2, loaded on demand; the
 // indexers' CBOR values (0.48+) are read with the official ootle-wasm-bor, loaded when one is first needed.
 import { ALPHABET, safetyCode } from './emoji.js';
 import { concat, equal, utf8 } from './bytes.js';
 import { hex, unhex } from './b64.js';
 import { IntegrityError, aesGcmDecrypt, aesGcmEncrypt, hkdf, randomBytes } from './crypto.js';
 import { BOR_URL, WASM_URL, bor, instantiate, instantiateBor, wasm as glue } from '../vendor/ootle-wasm-shim.js';
+import { NetworkError, indexers, network, networkReady, onNetwork } from './network.js';
 
-export const NETWORK_BYTE = 0x26; // Esmeralda
-export const TESTNET_HRP = 'otl_esm_';
+// The network this page or the sidecar runs on (lib/network.js: the build's, /config's or MUTIS_NETWORK):
+// Esmeralda's 0x26 and otl_esm_, or the mainnet's 0x00 and otl_; null while a page doesn't know its network.
+// Live bindings: importers see every change. Code that hands the byte to the library reads it through
+// networkByte(), which throws while it is unknown: a bare null would reach the library as 0, the mainnet's.
+export let NETWORK_BYTE = null;
+export let ADDRESS_HRP = null;
+onNetwork((n) => {
+  NETWORK_BYTE = n ? n.byte : null;
+  ADDRESS_HRP = n ? n.hrp : null;
+});
+
+export function networkByte() {
+  if (NETWORK_BYTE === null) throw new NetworkError('network_unknown');
+  return NETWORK_BYTE;
+}
 export const TARI_RESOURCE = 'resource_' + '01'.repeat(32);
 export const BLOB_LENGTH = 125;
+// Esmeralda's public indexers, for a deployment whose /config names none over https (the dev stack's are local).
+const ESMERALDA_INDEXERS = ['https://ootle-indexer-b.tari.com', 'https://ootle-indexer-a.tari.com'];
 export const INNER_LENGTH = 65;
-
-// Used only by checkWithIndexer(), behind the explicit "Check directly with the Tari indexer" button.
-const INDEXERS = ['https://ootle-indexer-b.tari.com', 'https://ootle-indexer-a.tari.com'];
 
 export class AddressError extends Error {
   constructor(code) {
@@ -40,7 +53,7 @@ export function wasmAvailable() {
   }
 }
 
-export function ready() {
+function loaded() {
   if (!loading) {
     loading = (async () => {
       const res = await fetch(WASM_URL, { signal: AbortSignal.timeout(60000) });
@@ -50,6 +63,12 @@ export function ready() {
     loading.catch(() => { loading = null; });
   }
   return loading;
+}
+
+// The library loaded and the network known (lib/network.js networkReady()): everything that makes or reads
+// an address, a key for an output or a transaction waits here, so none of it runs on a network nobody named.
+export async function ready() {
+  await Promise.all([networkReady(), loaded()]);
 }
 
 export function initWithBytes(wasmBytes) {
@@ -177,9 +196,10 @@ const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{60,100}$/;
 export function classifyAddressInput(str) {
   const s = String(str).trim();
   if (/^otl_/i.test(s)) {
+    if (!ADDRESS_HRP) return 'invalid';   // no network yet: no address is this network's
     const d = decodeBech32m(s);
-    if (!s.toLowerCase().startsWith(TESTNET_HRP)) return 'ootle_other';
-    return d && d.hrp === TESTNET_HRP && d.payload.length >= 64 && d.payload.length <= 128 ? 'ootle_testnet' : 'invalid';
+    if (!s.toLowerCase().startsWith(ADDRESS_HRP + '1')) return 'ootle_other';
+    return d && d.hrp === ADDRESS_HRP && d.payload.length >= 64 && d.payload.length <= 128 ? 'ootle_testnet' : 'invalid';
   }
   const symbols = Array.from(s.replace(/[\s️]/g, ''));
   if (symbols.length >= 20 && symbols.every((c) => EMOJI.has(c))) return 'l1_emoji';
@@ -209,19 +229,19 @@ export async function safetyCodeForAddress(address) {
 
 export async function addressFromKeys(ownerPk, viewPk, payRef = null) {
   await ready();
-  return glue.generateOotleAddress(ownerPk, viewPk, NETWORK_BYTE, payRef);
+  return glue.generateOotleAddress(ownerPk, viewPk, networkByte(), payRef);
 }
 
 export async function parseAddress(str) {
-  const local = decodeAddress(str);
   await ready();
+  const local = decodeAddress(str);
   let p;
   try {
     p = take(glue.parseOotleAddress(String(str).trim()), ['network', 'owner_key', 'view_key', 'destination_tag']);
   } catch {
     throw new AddressError('bad_address');
   }
-  if (p.network !== NETWORK_BYTE) throw new AddressError('mainnet_address');
+  if (p.network !== networkByte()) throw new AddressError('mainnet_address');
   if (!equal(p.owner_key, local.ownerPk) || !equal(p.view_key, local.viewPk)) throw new AddressError('bad_address');
   return { network: p.network, ownerPk: p.owner_key, viewPk: p.view_key, payRef: p.destination_tag ?? null };
 }
@@ -253,11 +273,12 @@ async function seedScalar(seed, info) {
 
 // `sales` is the drive's sales address, which receives pay-to-open money only
 // (16-drive-architecture §1.3).
-const KEY_INFO = { ootle: ['ootle-owner', 'ootle-view'], wallet: ['wallet-owner', 'wallet-view'], sales: ['sales-owner', 'sales-view'] };
+// `ask`: a market ask's own pair, from a secret drawn for that ask (lib/market.js).
+const KEY_INFO = { ootle: ['ootle-owner', 'ootle-view'], wallet: ['wallet-owner', 'wallet-view'], sales: ['sales-owner', 'sales-view'], ask: ['ask-owner', 'ask-view'] };
 
 export async function deriveOotleKeys(seed, label) {
   const info = KEY_INFO[label];
-  if (!info) throw new TypeError('label must be ootle, wallet or sales');
+  if (!info) throw new TypeError('label must be ootle, wallet, sales or ask');
   const ownerSk = await seedScalar(seed, info[0]);
   const viewSk = await seedScalar(seed, info[1]);
   await ready();
@@ -270,7 +291,7 @@ export async function newRandomKeys() {
   await ready();
   const sk = take(glue.generateOotleSecretKey(), ['owner_key', 'view_key']);
   const pk = take(glue.ootlePublicKeyFromSecretKey(sk.owner_key, sk.view_key), ['owner_key', 'view_key']);
-  const address = glue.generateOotleAddress(pk.owner_key, pk.view_key, NETWORK_BYTE, null);
+  const address = glue.generateOotleAddress(pk.owner_key, pk.view_key, networkByte(), null);
   return { ownerSk: sk.owner_key, viewSk: sk.view_key, ownerPk: pk.owner_key, viewPk: pk.view_key, address };
 }
 
@@ -279,21 +300,42 @@ export async function viewPublicKey(viewSk) {
   return glue.publicKeyFromSecretKey(viewSk);
 }
 
-// R1 (16-drive-architecture §1.9): the one-time public key (c + k)·G of a stealth output paid to
-// this owner key, from the output's public nonce (hex); since Ootle 0.48, c = H(network || v·R) takes the
-// address's view secret too. It equals the output's `auth.Key` only when this owner key can spend it; a
-// view key proves the amount and the memo, never that. Same as the sidecar's `oneTimeKey`. -> hex, or null
-// when the nonce isn't a point.
+// R1: the one-time key (c + k)·G of a stealth output paid to this owner key, from its nonce (hex); since Ootle 0.48
+// c = H(network || v·R). It equals the output's `auth.Key` only when this owner key can spend it (a view key proves
+// amount and memo, never that). As the sidecar's `oneTimeKey`. -> hex, or null for a nonce that isn't a point.
 export async function oneTimeKey(ownerSk, viewSk, nonceHex) {
   await ready();
+  const byte = networkByte();   // outside the try: no network is an error, never "not our key"
   let secret;
   try {
-    secret = glue.stealthDhSecret(NETWORK_BYTE, ownerSk, viewSk, unhex(nonceHex));
+    secret = glue.stealthDhSecret(byte, ownerSk, viewSk, unhex(nonceHex));
     return hex(glue.publicKeyFromSecretKey(secret));
   } catch {
     return null;
   } finally {
     secret?.fill(0);
+  }
+}
+
+// The watch-only check (Ootle 0.48+): P = c·G + K from the address's account key K and its view secret. The library
+// gives c + 1 (stealthDhSecret with account secret 1), so c = (c + 1) - 1 mod ℓ; lib/ristretto.js adds K (RFC 9496),
+// which the library can't. Equal to `auth.Key` only when K's owner can spend it. -> hex, or null for a non-point.
+const ONE = Uint8Array.from({ length: 32 }, (_, i) => (i === 0 ? 1 : 0));
+
+export async function watchOneTimeKey(ownerPk, viewSk, nonceHex) {
+  await ready();
+  const { add, scalarSub } = await import('./ristretto.js');
+  let cPlusOne;
+  let c;
+  try {
+    cPlusOne = glue.stealthDhSecret(NETWORK_BYTE, ONE, viewSk, unhex(nonceHex));
+    c = scalarSub(cPlusOne, ONE);
+    return hex(add(ownerPk, glue.publicKeyFromSecretKey(c)));
+  } catch {
+    return null;
+  } finally {
+    cPlusOne?.fill(0);
+    c?.fill(0);
   }
 }
 
@@ -360,9 +402,8 @@ export function commitmentFromUtxoId(id) {
   return m ? unhex(m[1]) : null;
 }
 
-// Trial decryption of one mirror row: {value, mask, memo} when this view key owns it, else null.
-// The official unblindOutput derives the AEAD key from the commitment and re-commits the decrypted
-// value and mask, so a row whose payload doesn't open its own commitment throws and is skipped.
+// Trial decryption of a mirror row: {value, mask, memo} when this view key owns it, else null. unblindOutput
+// re-commits the value and mask, so a row whose payload doesn't open its own commitment throws and is skipped.
 export async function tryDecryptUtxo(viewSk, { id, nonce, enc }) {
   const commitment = commitmentFromUtxoId(id);
   if (!commitment) return null;
@@ -382,7 +423,8 @@ export async function checkWithIndexer(path) {
     throw new TypeError('path not allowed');
   }
   let last;
-  for (const origin of INDEXERS) {
+  const named = indexers().length ? indexers() : network()?.name === 'esmeralda' ? ESMERALDA_INDEXERS : [];
+  for (const origin of named) {     // the deployment's (/config), behind the explicit "Check directly" button
     try {
       const res = await fetch(`${origin}/${path}`, { signal: AbortSignal.timeout(10000), credentials: 'omit', referrerPolicy: 'no-referrer' });
       return { origin, status: res.status, body: await res.json() };
@@ -390,7 +432,7 @@ export async function checkWithIndexer(path) {
       last = e;
     }
   }
-  throw last;
+  throw last ?? new Error('this deployment names no indexer');
 }
 
 // A transaction is checked through its committed receipt: the indexers drop

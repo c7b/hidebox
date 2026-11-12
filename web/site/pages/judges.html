@@ -52,6 +52,7 @@
     <div class="grid-static" aria-hidden="true"></div>
     <div class="wrap">
       <h1 id="j-h">For judges</h1>
+      <div data-when="network=esmeralda">
       <p class="lede">Two tracks, six steps each. <br>If a step shows something else, it's a bug: tell us on <a href="https://community.tari.com/">the Tari™ community forum</a>.</p>
       <details class="pass" id="pass" data-judge-pass hidden>
         <summary>Have a judge pass?</summary>
@@ -65,10 +66,14 @@
           <p class="form-status" id="judge-status" role="status"></p>
         </form>
       </details>
+      </div>
+      <div data-when="network=mainnet" hidden>
+        <p class="lede">The contest entry runs on the Esmeralda testnet, at {{TESTNET_HOST}}. <br>Its two tracks are on <a href="{{TESTNET_ORIGIN}}/judges">{{TESTNET_HOST}}/judges</a>. <br>This is {{BRAND}} on the Tari™ Ootle mainnet, with real TARI. <br>It's a beta, so keep amounts small.</p>
+      </div>
     </div>
   </section>
 
-  <section class="sec alt" aria-label="The two tracks">
+  <section class="sec alt" aria-label="The two tracks" data-when="network=esmeralda">
     <div class="wrap tracks">
       <article class="track" aria-labelledby="t1">
         <div class="track-top"><span class="track-num" aria-hidden="true">1</span><h2 id="t1">One device, no wallet</h2><p>About two minutes.</p></div>

@@ -185,7 +185,7 @@ async function buy(drive, pack, label) {
     }
   };
   body.replaceChildren(...[   // without the null lines, which would read "null"
-    h('div', { class: 'price-big' }, formatTari(invoice.amount_ut), h('small', {}, 'tTARI')),
+    h('div', { class: 'price-big' }, formatTari(invoice.amount_ut), h('small', {}, t('earn.unit'))),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'invoice-addr' }, t('upgrade.address')),
       h('div', { class: 'link-row' }, h('input', { class: 'input mono', id: 'invoice-addr', type: 'text', readonly: true, value: invoice.address, 'data-testid': 'invoice-address' }), copy),
       h('p', { class: 'small muted' }, t('upgrade.address_note'))),
@@ -232,7 +232,7 @@ function moreSection(drive) {
       return h('div', { class: 'card', 'data-testid': 'storage-pack', 'data-pack': pack.id, 'data-held': held && (held.id === pack.id || held.id === null) ? 'true' : null },
         h('div', { class: 'card-header' }, h('h3', { class: 'card-title' }, label),
           h('p', { class: 'card-description' }, t(i === 0 ? 'drive.sto.small_d' : 'drive.sto.big_d'))),
-        h('div', { class: 'card-content' }, h('div', { class: 'pack-price' }, formatTari(pack.price_ut), h('small', {}, 'tTARI'))),
+        h('div', { class: 'card-content' }, h('div', { class: 'pack-price' }, formatTari(pack.price_ut), h('small', {}, t('earn.unit')))),
         h('div', { class: 'card-footer' }, action(pack, label, i)));
     })),
     testnetLine(drive.cfg));

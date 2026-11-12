@@ -7,6 +7,7 @@ import { t, BRAND } from '../lib/i18n.js';
 import { h, icon, init, lines, openModal, closeModal, wordmark } from './behaviors.js';
 import { alert, button, dialogBox, errorAlert } from './drive-parts.js';
 import { mmss } from './errors.js';
+import { movedCard } from './moved.js';
 
 // A new drive: its key made in this browser, then registered (a proof of work, or the judge pass).
 export async function makeDrive({ onProgress } = {}) {
@@ -100,7 +101,7 @@ function still() {
 }
 
 // The screen itself. onReady(identity, {made}) boots the drive.
-export function renderStart(app, { onReady, make = false, open = false }) {
+export function renderStart(app, { onReady, make = false, open = false, moved = null }) {
   const status = h('div', { class: 'stack', 'aria-live': 'polite' });
   const makeBtn = button(t('drive.start.make'), { glyph: 'plus', testid: 'drive-make', size: 'lg' });
   const openBtn = button(t('drive.start.open'), { variant: 'outline', glyph: 'key-round', testid: 'drive-open', size: 'lg' });
@@ -142,7 +143,9 @@ export function renderStart(app, { onReady, make = false, open = false }) {
       h('a', { class: 'brand', href: '/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('hidebox')), wordmark(), h('span', { class: 'sr-only' }, BRAND)),
       h('h1', { class: 'h2' }, t('drive.start.title')),
       h('p', { class: 'lead' }, t('drive.start.lede')),
+      moved ? movedCard(moved) : null,
       h('div', { class: 'row wrap' }, makeBtn, openBtn),
+      moved ? h('p', { class: 'small muted' }, t('drive.moved.new')) : null,
       status,
       h('p', { class: 'small muted' }, t('drive.start.no_email'))),
     still()));

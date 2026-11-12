@@ -23,6 +23,9 @@ LINE = re.compile(r"^(INFO|WARNING|ERROR|CRITICAL) (route=[a-z_]+(\.[a-z_]+)* st
 FORBIDDEN_COLUMNS = {"email", "name", "ip", "ip_address", "remote_ip", "user_agent", "file_name", "filename", "mime",
                      "mime_type", "content_type", "public_key", "pubkey", "owner_pk", "view_pk", "seed", "password",
                      "plaintext", "plaintext_size", "recipient", "sender", "grant", "grantee", "locker_address"}
+# A market ask (docs/market.md) keeps the public halves of a key pair its shopper's browser made for that ask alone, from
+# a fresh secret: they name no drive and no wallet, and they go with the ask (a week at most). Nothing else may.
+PER_ASK_KEYS = {("market_asks", "owner_pk"), ("market_asks", "view_pk")}
 
 
 class Capture(logging.Handler):
@@ -59,7 +62,8 @@ class Schema(unittest.TestCase):
             addresses = []
             for table in tables:
                 for col in s.conn.execute(f"PRAGMA table_info({table})"):
-                    self.assertNotIn(col["name"], FORBIDDEN_COLUMNS, f"{table}.{col['name']}")
+                    if (table, col["name"]) not in PER_ASK_KEYS:
+                        self.assertNotIn(col["name"], FORBIDDEN_COLUMNS, f"{table}.{col['name']}")
                     if "address" in col["name"]:
                         addresses.append(f"{table}.{col['name']}")
             # A drop's public intake address and our own receiver per invoice; pay to open adds a seller's

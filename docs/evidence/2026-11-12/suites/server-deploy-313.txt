@@ -1,0 +1,5 @@
+Python 3.13.5 (the server's), tree at aaf44b8 (aba5ff5 changes only web/site/tests)
+Ran 580 tests in 142.986s
+OK (skipped=5)
+Ran 206 tests in 25.728s
+OK (skipped=4)

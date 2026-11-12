@@ -13,6 +13,7 @@ export const NAV = [
   ['received', 'inbox', '/drive/received'],
   ['shared', 'share-2', '/drive/shared'],
   ['earnings', 'coins', '/drive/earnings', 'pay_to_open'],   // only where pay to open is on
+  ['shop', 'store', '/drive/shop', ['shop', 'pay_to_open']],   // only where the shop and pay to open are on (docs/shop.md)
   ['activity', 'activity', '/drive/activity'],
   ['trash', 'trash', '/drive/trash'],
 ];
@@ -24,7 +25,7 @@ function brandBlock() {
 }
 
 function navList(p, features) {
-  return h('ul', { class: 'sidebar-menu', role: 'list' }, NAV.filter(([, , , needs]) => !needs || features[needs]).map(([view, glyph, href]) =>
+  return h('ul', { class: 'sidebar-menu', role: 'list' }, NAV.filter(([, , , needs]) => !needs || [needs].flat().every((n) => features[n])).map(([view, glyph, href]) =>
     h('li', { class: 'sidebar-menu-item' },
       h('a', { class: 'sidebar-menu-button', href, 'data-nav': '', 'data-view': view, 'data-testid': `nav-${view}` },
         icon(glyph), h('span', {}, t(`drive.side.${view}`))),

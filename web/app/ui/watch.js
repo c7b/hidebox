@@ -83,7 +83,7 @@ export async function render(main) {
         onProgress: (p) => { progress.textContent = t('watch.looking', { n: p.checked }); },
         onRow: (r) => rows.append(h('tr', { 'data-testid': 'watch-row' },
           h('td', { class: 'mono' }, String(r.epoch ?? '—')),
-          h('td', { class: 'mono' }, `${formatTari(r.value)} tTARI`),
+          h('td', { class: 'mono' }, `${formatTari(r.value)} ${t('earn.unit')}`),
           h('td', {}, t(`watch.kind.${r.kind}`), r.text ? [' · ', h('q', { class: 'mono' }, r.text)] : null))),
       });
       out.replaceChildren(

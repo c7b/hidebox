@@ -85,7 +85,7 @@ class FakeWalletd(ThreadingHTTPServer):
                 self.issued.add(token)
             return {"token": token}
         if method == "wallet.get_info":
-            return {"network": "esmeralda", "network_byte": 38, "version": "0.45.0"}
+            return {"network": chain.network.name, "network_byte": chain.network.byte, "version": "0.45.0"}
         if method == "accounts.get":
             name = self._name(p["name_or_address"])
             return {"account": {"name": name, "component_address": self.components[name]},

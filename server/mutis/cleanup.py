@@ -8,8 +8,8 @@ or, while a download ticket is still open, when that download finishes (at most 
 import sqlite3
 import time
 
-from . import codec, counts, db, items, packs, payments, quota, sales
-from .storage import Blobs
+from . import codec, counts, db, items, market, packs, payments, quota, sales, withdraw
+from .storage import Blobs, TieredBlobs
 
 TOMBSTONE_DAYS = 30
 INACTIVE_DAYS = 180
@@ -107,11 +107,28 @@ def purge_expired(conn: sqlite3.Connection, now: int) -> None:
         counts.purge(conn, COUNT_DAYS, now)
 
 
+# Money a drive hasn't withdrawn yet (docs/withdraw.md): a payment our server vouches for (withdraw._VOUCHED, the rule
+# Earnings counts by) that no committed withdrawal has spent. Which drive a payment is for is known only through its
+# claim, its link and that link's file, so their notes stay while such a payment waits: purged with the rest, the
+# money left Earnings and the relay refused to withdraw it (security pass, 2026-11-09).
+_OWED = "sp.withdrawn = 0 AND " + withdraw._VOUCHED
+_LINK_OWED = f"EXISTS (SELECT 1 FROM claims c JOIN sale_payments sp ON sp.claim_id = c.id WHERE c.share_id = shares.id AND {_OWED})"
+_ENDED = "state <> 'active' AND ended_at IS NOT NULL AND ended_at <= ?"
+
+
 def purge_tombstones(conn: sqlite3.Connection, now: int) -> None:
+    """Notes of links, files and drops that ended TOMBSTONE_DAYS ago go. A pay link that still holds money its
+    drive hasn't withdrawn keeps its note, and its file's, until that money is withdrawn; of such a link only the
+    claims that money came through stay, and none of its opens."""
     cutoff = now - TOMBSTONE_DAYS * 86400
     with db.tx(conn):
-        conn.execute("DELETE FROM shares WHERE state <> 'active' AND ended_at IS NOT NULL AND ended_at <= ?", (cutoff,))
-        conn.execute("DELETE FROM items WHERE state IN ('deleted','removed') AND COALESCE(exit_hour, created_hour) <= ?",
+        conn.execute(f"DELETE FROM shares WHERE {_ENDED} AND NOT {_LINK_OWED}", (cutoff,))
+        kept = f"SELECT id FROM shares WHERE {_ENDED}"          # what is left of them: the links money waits on
+        conn.execute(f"DELETE FROM claims AS c WHERE c.share_id IN ({kept}) AND NOT EXISTS "
+                     f"(SELECT 1 FROM sale_payments sp WHERE sp.claim_id = c.id AND {_OWED})", (cutoff,))
+        conn.execute(f"DELETE FROM share_opens WHERE share_id IN ({kept})", (cutoff,))
+        conn.execute("DELETE FROM items WHERE state IN ('deleted','removed') AND COALESCE(exit_hour, created_hour) <= ? "
+                     f"AND NOT EXISTS (SELECT 1 FROM shares WHERE shares.item_id = items.id AND {_LINK_OWED})",
                      (cutoff,))
         conn.execute("DELETE FROM drops WHERE state <> 'active' AND ended_day IS NOT NULL AND ended_day <= ?",
                      (codec.day(cutoff),))
@@ -121,7 +138,7 @@ def hourly(conn: sqlite3.Connection, pool: quota.Pool, now: int) -> None:
     """Move the free quota one smoothing step toward its target (spec §9.2)."""
     with db.tx(conn):
         old = db.get_meta(conn, "free_quota_bytes")
-        new = pool.q_target if old is None else quota.smooth(int(old), pool.q_target)
+        new = pool.q_target if old is None else quota.bounded(pool, quota.smooth(int(old), pool.q_target))
         db.set_meta(conn, "free_quota_bytes", str(new))
         db.set_meta(conn, "free_quota_updated_at", str(now))
 
@@ -165,9 +182,14 @@ def run(conn: sqlite3.Connection, cfg, blobs: Blobs, statvfs, now: int) -> dict:
     purge_tombstones(conn, now)
     payments.expire_invoices(conn, now)
     sales.expire_claims(conn, now)
+    with db.tx(conn):
+        market.purge(conn, now)
+    backlog = blobs.backlog(now) if isinstance(blobs, TieredBlobs) else None    # a directory scan, before the lock
     with db.tx(conn):                    # what the healthcheck reads for its `packs` check (packs.status)
         db.set_meta(conn, "packs", packs.status(conn, quota.measure(conn, statvfs, cfg.data_dir, cfg["limits"], now),
                                                 cfg["packs"], now))
+        if backlog is not None:          # and for `storage.offload_behind` (docs/storage.md)
+            db.set_meta(conn, "storage", {"updated_at": now, **backlog})
     hour = str(codec.floor_hour(now))
     if db.get_meta(conn, "cleanup_hour") != hour:
         pool = quota.measure(conn, statvfs, cfg.data_dir, cfg["limits"], now)

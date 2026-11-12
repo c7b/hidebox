@@ -98,7 +98,7 @@ export function salesSection(drive) {
   const body = h('tbody', {});
   const el = h('section', { class: 'stack', 'aria-labelledby': 'sales-h', 'data-testid': 'sales-root', hidden: true },
     h('h2', { class: 'h4', id: 'sales-h' }, t('sales.h')),
-    h('p', { class: 'small muted' }, t('sales.d')),
+    h('p', { class: 'small muted' }, t(drive.cfg.features?.away_release ? 'sales.d_away' : 'sales.d')),
     h('div', { class: 'files', 'data-plain': '' }, h('div', { class: 'table-container' }, h('table', { class: 'table' },
       h('thead', {}, h('tr', {}, h('th', {}, t('rec.what')), h('th', {}, t('sales.price')), h('th', { class: 'col-wide' }, t('rec.when')), h('th', { class: 'col-wide' }, t('sales.check')))),
       body))));

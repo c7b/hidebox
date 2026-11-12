@@ -16,8 +16,9 @@ def require_testnet_address(value, field: str = "address") -> str:
     cls = ootle_addr.classify(value) if isinstance(value, str) else "invalid"
     code = ootle_addr.ERROR_FOR_CLASS[cls]
     if code:
-        messages = {"mainnet_address": "That's an Ootle address for another network. mutis runs on the testnet.",
-                    "l1_address": "That's a Tari base-layer address. mutis runs on the Ootle testnet.",
+        here = "the Ootle testnet" if ootle_addr.hrp() == ootle_addr.TESTNET_HRP else "the Ootle mainnet"
+        messages = {"mainnet_address": f"That's an Ootle address for another network. mutis runs on {here}.",
+                    "l1_address": f"That's a Tari base-layer address. mutis runs on {here}.",
                     "bad_address": "That isn't a Tari Ootle address."}
         raise ApiError(422, code, messages[code], details={"field": field, "class": cls})
     return ootle_addr.base_address(value)

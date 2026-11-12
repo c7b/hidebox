@@ -1,0 +1,88 @@
+{
+ "transaction": {
+  "created_at": "2026-11-12 18:28:36.0",
+  "rejected_reason": null,
+  "source": "gossip",
+  "summary": {
+   "finalized_at": "2026-11-12 18:28:45.0",
+   "outcome": "Commit",
+   "total_fees_paid": 2414
+  },
+  "transaction": {
+   "V1": {
+    "body": {
+     "signatures": [],
+     "transaction": {
+      "blob_hashes": [],
+      "blob_sizes": [],
+      "dry_run": false,
+      "fee_instructions": [
+       {
+        "CallMethod": {
+         "args": [
+          {
+           "Literal": "1a000186a0"
+          }
+         ],
+         "call": {
+          "Address": "component_aba98a258919d0a3033ca657124d37df91e640e4ba6cbc2a97ea0ae4df02f687"
+         },
+         "method": "pay_fee"
+        }
+       }
+      ],
+      "inputs": [
+       {
+        "is_write": false,
+        "substate_id": "resource_0101010101010101010101010101010101010101010101010101010101010101",
+        "version": null
+       },
+       {
+        "is_write": false,
+        "substate_id": "component_aba98a258919d0a3033ca657124d37df91e640e4ba6cbc2a97ea0ae4df02f687",
+        "version": null
+       },
+       {
+        "is_write": true,
+        "substate_id": "vault_ab0c97844fd17a42bf3a48de7a5332beb6fa6de2cd4317e1872d6faa47bd4108",
+        "version": null
+       }
+      ],
+      "instructions": [
+       {
+        "AllocateAddress": {
+         "allocatable_type": "Component",
+         "workspace_id": 0
+        }
+       },
+       {
+        "CallFunction": {
+         "address": "494d34a5f55bcef614655c9f8b7fdcb672f1d086467fc96816c0a93a4a5c8472",
+         "args": [
+          {
+           "Workspace": {
+            "id": 0,
+            "offset": null
+           }
+          }
+         ],
+         "function": "new"
+        }
+       }
+      ],
+      "main_signer": "SealSigner",
+      "max_epoch": 38545,
+      "min_epoch": null,
+      "network": 0,
+      "nonce": 6096492484295746960
+     }
+    },
+    "seal_signature": {
+     "public_key": "9250fcabd52d7319996904b64ea494c0b077a8b2c8c39d94eb2e06a9c7294762",
+     "signature": "de3426c2e3784891c24efd2dde748c2deb5b4179448355101b19a413d0aee239be9d312a5a2403e60b66c22575a925cbfc480508d6b8a3a1003e4d36aae4268c"
+    }
+   }
+  },
+  "transaction_id": "ba9792cfd15ad29ba4465007e7a89048d0a223454389b8a3f093c62ba5e44d9d"
+ }
+}

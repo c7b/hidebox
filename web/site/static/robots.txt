@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Content pages are open to every crawler, AI crawlers included, and so are the public configuration
-# and numbers that the pages fill in. Drives, links and pay pages are private; a drop page is public by
-# design and carries its own noindex.
+# and numbers that the pages fill in. Drives, links and pay pages are private; a drop page is public by design and
+# carries its own noindex. A shop's page (/shop/<name>) may be read: a public shop asks to be indexed, every other
+# one answers noindex (docs/shop.md "The address"), and public shops are listed in sitemap-shops.xml.
 User-agent: *
 Allow: /
 Allow: /api/v1/config$
@@ -32,3 +33,4 @@ Allow: /
 Disallow: /api/
 
 Sitemap: {{ORIGIN}}/sitemap.xml
+Sitemap: {{ORIGIN}}/sitemap-shops.xml

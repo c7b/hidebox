@@ -140,7 +140,8 @@ def e08(t: T) -> None:
     t.secret("the key file", key_text.strip())
     t.check("Locked key:" in key_text and "MUTIS-" not in key_text, "the key file holds the key locked with the passphrase")
     address, safety = identity(a)
-    t.check(address.startswith("otl_esm_1") and safety, f"Settings shows the drive's Tari address and safety code ({address[:16]}…)")
+    prefix = t.env.config()["address_prefix"]           # otl_esm_ on Esmeralda, otl_ on the mainnet
+    t.check(address.startswith(prefix + "1") and safety, f"Settings shows the drive's Tari address and safety code ({address[:16]}…)")
     b = open_drive(t, key_text, passphrase)
     t.check(identity(b) == (address, safety), "the restored drive has the same address and safety code")
     t.check(b.exists("quota-bar"), "/me answers for the restored drive (the storage meter is shown)")
@@ -295,8 +296,12 @@ def e31(t: T) -> None:
     t.check(opens and opens >= 2, f"share_opens counts the opens per hour ({opens}); the feed: {feed[:80]!r}")
     ips = [x for x in t.env.remote.run("hostname -I").split() if x]
     needles = [("a visitor's user agent", ua), ("a file name", "activity-probe-file.txt")] + [("the visitors' address", ip) for ip in ips]
+    # Against an instance (run.py --instance), its own database and backups, as its own user, like E-06; the root-only
+    # copies the operator playbooks leave under /var/backups are production's.
+    suffix = t.env.remote.suffix
+    tops = (f"/srv/mutis{suffix}/data/db", f"/srv/mutis{suffix}/data/backup") + (() if suffix else ("/var/backups/mutis",))
     script = ("import json, os, sys; needles = json.load(sys.stdin); hits = []\n"
-              "for top in ('/srv/mutis/data/db', '/srv/mutis/data/backup', '/var/backups/mutis'):\n"
+              f"for top in {tops!r}:\n"
               "    for d, _, fs in os.walk(top):\n"
               "        for f in fs:\n"
               "            p = os.path.join(d, f)\n"
@@ -308,5 +313,6 @@ def e31(t: T) -> None:
               "print(json.dumps(hits))\n")
     # The search reads the database and the backups, so it runs as root, from the command line: saved first under the
     # build user's directory, it was that user's file to change before root ran it.
-    hits = json.loads(t.env.remote.run("cd /tmp && sudo python3 -I -c " + shlex.quote(script), json.dumps(needles).encode()))
+    runner = f"cd /tmp && sudo -u mutis{suffix} python3 -I -c " if suffix else "cd /tmp && sudo python3 -I -c "
+    hits = json.loads(t.env.remote.run(runner + shlex.quote(script), json.dumps(needles).encode()))
     t.check(not hits, f"no IP address, user agent or name in the database, its WAL or the backups ({hits[:3]})")

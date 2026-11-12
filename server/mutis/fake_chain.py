@@ -13,7 +13,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from . import codec, ootle_addr
+from . import codec, network as networks, ootle_addr
 
 TARI_HEX = "01" * 32
 FAKE_WASM_SHA256 = codec.sha256(b"mutis fake sidecar").hex()
@@ -27,7 +27,7 @@ def fake_keys() -> dict:
     owner_sk, view_sk = secrets.token_bytes(32), secrets.token_bytes(32)
     owner_pk, view_pk = fake_pk(owner_sk), fake_pk(view_sk)
     return {"owner_sk": owner_sk.hex(), "view_sk": view_sk.hex(), "owner_pk": owner_pk.hex(), "view_pk": view_pk.hex(),
-            "address": ootle_addr.encode(ootle_addr.TESTNET_HRP, owner_pk + view_pk)}
+            "address": ootle_addr.encode(ootle_addr.hrp(), owner_pk + view_pk)}
 
 
 def fake_commitment(value: int, nonce: bytes) -> bytes:
@@ -55,8 +55,9 @@ def open_output(view_sk: bytes, commitment: bytes, nonce: bytes, enc: bytes):
 
 
 class FakeChain:
-    def __init__(self, epoch: int = 12000):
+    def __init__(self, epoch: int = 12000, network: str = "esmeralda"):
         self.lock = threading.Lock()
+        self.network = networks.get(network)
         self.epoch = epoch
         self.outputs: list[dict] = []
         self.versions: dict[int, int] = {}
@@ -201,7 +202,7 @@ class _IndexerHandler(BaseHTTPRequestHandler):
         if path == "/epoch-manager/stats":
             return self._send(200, {"current_epoch": chain.epoch, "consensus_epoch": chain.epoch})
         if path == "/network":
-            return self._send(200, {"network": "esmeralda", "network_byte": 38, "epoch": chain.epoch})
+            return self._send(200, {"network": chain.network.name, "network_byte": chain.network.byte, "epoch": chain.epoch})
         if path.startswith("/substates/"):
             substate_id = path.removeprefix("/substates/")
             found = chain.substate(substate_id)

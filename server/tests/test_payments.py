@@ -422,11 +422,13 @@ class Payments(unittest.TestCase):
         self.assertEqual(self.get(inv)["status"], "credited")
 
     def test_demo_payments_go_only_to_our_receiver(self):
-        """Review M8: the API can write `meta.receiver_address`; the worker pays only the receiver it
-        learned from its own key file, so a rewritten row can't send the sponsor's funds elsewhere."""
+        """Review M8: the API can write `meta.invoice_address` (and `receiver_address`); the worker pays only the
+        address it learned from its own key file or config, so a rewritten row can't send the sponsor's funds
+        elsewhere."""
         stranger = fake_keys()["address"]
         with db.tx(self.s.conn):
             db.set_meta(self.s.conn, "receiver_address", stranger)
+            db.set_meta(self.s.conn, "invoice_address", stranger)
         inv = self.invoice()
         self.assertEqual(ootle_addr.base_address(inv["address"]), ootle_addr.base_address(stranger))
         sent = len(self.s.chain.transfers)

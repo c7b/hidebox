@@ -38,6 +38,7 @@ CERT_MIN_DAYS = 14
 RECONCILE_UNKNOWN_ALERT = 3     # hourly reconciles in a row without a verdict (server payments.UNKNOWN_ALERT_AFTER)
 BUDGET_ALERT = 90               # a daily budget slice at 90 % of its limit (meta.alerts)
 PACKS_MAX_S = 900               # meta.packs older than this (cleanup stopped) is ignored
+OFFLOAD_BEHIND_S = 3600         # a blob waiting this long for the remote store, or a deletion (meta.storage)
 
 
 def https_ok(origin: str) -> tuple[str, str]:
@@ -77,7 +78,7 @@ def meta(conn: sqlite3.Connection, key: str, default=None):
         return row[0]
 
 
-def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
+def chain_checks(conn: sqlite3.Connection, now: int, coin: str = "tTARI", sponsor_min_ut: int = SPONSOR_MIN_UT) -> dict:
     checks = {}
     beat = int(meta(conn, "chain_heartbeat", 0) or 0)
     status = meta(conn, "chain_status", {}) or {}
@@ -90,7 +91,7 @@ def chain_checks(conn: sqlite3.Connection, now: int) -> dict:
         checks["chain_worker"] = (GREEN, "heartbeat ok, verifier running")
     checks["walletd"] = (GREEN, "reachable") if fresh and status.get("walletd_ok") else (RED, "walletd_unreachable")
     balance = int(status.get("sponsor_balance_ut") or 0)
-    checks["sponsor_balance"] = (GREEN, f"{balance // 1_000_000} tTARI") if balance > SPONSOR_MIN_UT else \
+    checks["sponsor_balance"] = (GREEN, f"{balance // 1_000_000} {coin}") if balance > sponsor_min_ut else \
         (AMBER, "sponsor_low")
     mirror_at = int(status.get("mirror_ok_at") or 0)
     checks["mirror"] = (GREEN, "current") if now - mirror_at < MIRROR_MAX_S else (RED, "mirror_lagging")
@@ -141,10 +142,22 @@ def disk_check(data_dir: Path, reserve_min: int, statvfs=os.statvfs) -> tuple[st
     return GREEN, f"{(avail - reserve) // GIB} GiB above the reserve"
 
 
+def storage_reasons(conn: sqlite3.Connection, now: int) -> list[str]:
+    """With a remote store (docs/storage.md): `storage.offload_behind` when a finished upload or a deletion has waited
+    more than OFFLOAD_BEHIND_S for it (meta.storage, written every minute by cleanup). A stale note says nothing."""
+    note = meta(conn, "storage", {}) or {}
+    if not note or now - int(note.get("updated_at") or 0) > PACKS_MAX_S:
+        return []
+    behind = any((note.get(q) or {}).get("oldest_s", 0) > OFFLOAD_BEHIND_S for q in ("offload", "delete"))
+    return ["storage.offload_behind"] if behind else []
+
+
 def attention(conn: sqlite3.Connection, now: int | None = None) -> list[str]:
     reasons = [f"budget.{key.replace(':', '.')}.{level}" for key, level in
                sorted(((meta(conn, "alerts", {}) or {}).get("budgets") or {}).items())]
-    reasons += pack_reasons(conn, int(time.time()) if now is None else now)
+    now = int(time.time()) if now is None else now
+    reasons += pack_reasons(conn, now)
+    reasons += storage_reasons(conn, now)
     if conn.execute("SELECT COUNT(*) FROM abuse_reports WHERE state = 'new'").fetchone()[0]:
         reasons.append("abuse.new_reports")
     return reasons
@@ -162,7 +175,8 @@ def evaluate(cfg: dict, conn: sqlite3.Connection | None, now: int, probes: dict)
         checks["chain_worker"] = (RED, "database_unreadable")    # its state is read from the database
         reasons = []
     else:
-        checks |= chain_checks(conn, now)
+        coin = "TARI" if cfg.get("network") == "mainnet" else "tTARI"
+        checks |= chain_checks(conn, now, coin, cfg.get("ootle", {}).get("sponsor_min_ut", SPONSOR_MIN_UT))
         reasons = attention(conn, now)
     checks["disk"] = probes["disk"](Path(cfg.get("data_dir", "/srv/mutis/data")),
                                     cfg.get("limits", {}).get("reserve_min_bytes", 10 * GIB))

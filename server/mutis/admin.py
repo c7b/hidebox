@@ -11,13 +11,13 @@ import sys
 import time
 from pathlib import Path
 
-from . import auth, budgets, codec, config, counts, db, indexer, items, jobs, logsafe, packs, quota
+from . import (auth, budgets, codec, config, counts, db, indexer, items, jobs, logsafe, network, ootle_addr, packs,
+               quota, shop, storage)
 from .chain_worker import notarize_manifest
-from .storage import Blobs
 from .walletd import Walletd
 
 FEATURES = ("drops", "relay_send", "direct_send", "demo_pay", "sponsor", "decoys", "kept", "seallog",
-            "folders", "pay_to_open", "packs")
+            "folders", "pay_to_open", "packs", "judge_passes", "shop", "withdraw", "away_release", "market")
 
 
 def _backup(cfg: config.Config) -> Path | None:
@@ -46,13 +46,18 @@ def cmd_migrate(cfg, conn, args) -> None:
 
 
 def cmd_takedown(cfg, conn, args) -> None:
-    now, blobs = codec.now(), Blobs(cfg.blob_dir)
+    now, blobs = codec.now(), storage.from_config(cfg, offline=True)
     with db.tx(conn):
         if args.kind == "drop":
             cur = conn.execute("UPDATE drops SET state = 'removed', ended_day = ? WHERE id = ?", (codec.day(now), args.id))
             found = cur.rowcount == 1
             jobs.end_drop_deliveries(conn, args.id, "drop_removed", now)
             where = ("drop_id = ?", args.id)
+        elif args.kind == "shop":           # the shop's page goes (410) with its listings; its pay links stay
+            named = shop.by_ref(conn, args.id)          # its id, or its username
+            shop_id = named["id"] if named is not None else args.id
+            found = shop.takedown(conn, shop_id, now)
+            where = ("shop_id = ?", shop_id)
         else:
             if args.kind == "share":
                 row = conn.execute("SELECT item_id FROM shares WHERE id = ?", (args.id,)).fetchone()
@@ -113,13 +118,26 @@ def inert(text: str) -> str:
 def cmd_reports(cfg, conn, args) -> None:
     sql = "SELECT * FROM abuse_reports" + (" WHERE state = 'new'" if args.new else "") + " ORDER BY created_at"
     for r in conn.execute(sql):
-        target = r["share_id"] and f"share {r['share_id']}" or r["drop_id"] and f"drop {r['drop_id']}" or "-"
+        target = r["share_id"] and f"share {r['share_id']}" or r["drop_id"] and f"drop {r['drop_id']}" \
+            or r["shop_id"] and f"shop {r['shop_id']}" or "-"
         print(f"{r['id']}  {time.strftime('%Y-%m-%d %H:%M', time.gmtime(r['created_at']))}  {r['state']:8}  "
               f"{r['category']:10}  {target}  item={r['item_id'] or '-'}  key={'yes' if r['included_key'] else 'no'}")
         for line in r["details"].split("\n"):        # the reporter's words, each line marked as theirs
             print("    | " + inert(line))
         if r["contact"]:
             print("    contact: " + inert(r["contact"]))
+
+
+def cmd_storage(cfg, conn, args) -> None:
+    """Where blobs live (docs/storage.md), and what waits for the store; `offload-existing` queues the blobs still on
+    our disk for it."""
+    blobs = storage.from_config(cfg, offline=True)
+    if not isinstance(blobs, storage.TieredBlobs):
+        print(json.dumps({"backend": "local"}))
+        return
+    queued = blobs.enqueue_existing() if args.command == "offload-existing" else 0
+    print(json.dumps({"backend": "s3", "bucket": cfg["storage"]["s3_bucket"], "queued_now": queued,
+                      **blobs.backlog(time.time())}, sort_keys=True))
 
 
 def cmd_freeze(cfg, conn, args) -> None:
@@ -129,6 +147,9 @@ def cmd_freeze(cfg, conn, args) -> None:
 
 
 def cmd_feature(cfg, conn, args) -> None:
+    forced = network.forced_features(cfg["network"])
+    if args.state == "on" and args.name in forced:
+        sys.exit(f"feature {args.name} hands out test money or skips our limits: it stays off on the {cfg['network']}")
     with db.tx(conn):
         overrides = db.get_meta_json(conn, "features", {})
         if args.state == "clear":
@@ -136,7 +157,7 @@ def cmd_feature(cfg, conn, args) -> None:
         else:
             overrides[args.name] = args.state == "on"
         db.set_meta(conn, "features", overrides)
-    print(json.dumps({**cfg["features"], **overrides}, sort_keys=True))
+    print(json.dumps({**cfg["features"], **overrides, **forced}, sort_keys=True))
 
 
 def cmd_budget(cfg, conn, args) -> None:
@@ -177,6 +198,8 @@ def _force(conn, name: str) -> None:
 
 
 def cmd_judge_pass(cfg, conn, args) -> None:
+    if not cfg["features"]["judge_passes"] or not cfg.net.testnet:
+        sys.exit(f"judge passes are off here (features.judge_passes, network {cfg['network']})")
     if args.action == "extend":
         return _extend_judge_passes(conn, args.until, sys.stdin)
     now = codec.now()
@@ -269,8 +292,8 @@ def parser() -> argparse.ArgumentParser:
     m.add_argument("--check", action="store_true", help="exit 3 if a migration is pending, 0 if none; change nothing")
     m.set_defaults(fn=cmd_migrate, needs_db=False)
     sub.add_parser("check-config").set_defaults(fn=lambda cfg, conn, args: print("ok"), needs_db=False)
-    t = sub.add_parser("takedown", usage="mutis-admin takedown {share,item,drop} [--note NOTE] -- id")
-    t.add_argument("kind", choices=("share", "item", "drop"))
+    t = sub.add_parser("takedown", usage="mutis-admin takedown {share,item,drop,shop} [--note NOTE] -- id")
+    t.add_argument("kind", choices=("share", "item", "drop", "shop"))
     t.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
     t.add_argument("--note")
     t.set_defaults(fn=cmd_takedown)
@@ -298,6 +321,10 @@ def parser() -> argparse.ArgumentParser:
     c.add_argument("--days", type=int, default=30, help="the last N UTC days, today included (default 30)")
     c.set_defaults(fn=cmd_counts)
     sub.add_parser("unfreeze-credits").set_defaults(fn=cmd_unfreeze_credits)
+    sub.add_parser("storage", help="where blobs live, and what waits for the store").set_defaults(
+        fn=cmd_storage, needs_db=False)
+    sub.add_parser("offload-existing", help="queue the blobs still on our disk for the store").set_defaults(
+        fn=cmd_storage, needs_db=False)
     for name, flag in (("canary-now", "canary"), ("evidence-pay-now", "evidence_pay"), ("seal-now", "seal")):
         sub.add_parser(name).set_defaults(fn=lambda cfg, conn, args, flag=flag: _force(conn, flag))
     j = sub.add_parser("judge-pass")
@@ -325,6 +352,7 @@ def main(argv: list[str] | None = None) -> None:
     logsafe.setup()
     args = parser().parse_args(argv)
     cfg = config.load(args.config)
+    ootle_addr.use_network(cfg["network"])
     if not getattr(args, "needs_db", True):
         args.fn(cfg, None, args)
         return

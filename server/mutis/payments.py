@@ -122,6 +122,28 @@ def utxo_on_indexer(indexers, utxo_id: str, position: int) -> tuple[str, dict]:
     return "missing", none
 
 
+def spent_on_indexers(indexers, utxo_id: str) -> bool:
+    """True only on evidence that the UTXO was spent: an indexer serves its version 0 as down, verified, with the down
+    proof, and no indexer serves it live. A 404 is no such evidence, whatever its words: an indexer that hasn't caught up,
+    one that pruned the output, or one that misbehaves answers the same way, so a 404 from every indexer still says
+    nothing. Neither does a verified-false answer, a gateway's page, a 5xx or a timeout. For a decision that can't be
+    taken back (withdraw.mark_gone): without the evidence the output stays, and the drive asks again later."""
+    spent = False
+    for position in range(len(indexers.upstreams)):
+        try:
+            status, data, _ = indexers.call_one(position, "GET", f"/substates/{utxo_id}?version=0&include_proof=true")
+            obj = json.loads(data)
+        except (IndexerError, ValueError):
+            continue                          # this indexer can't say; another may
+        if status != 200 or not isinstance(obj, dict):
+            continue                          # a 404 included: no evidence either way
+        if substate_down(obj):
+            spent = spent or obj.get("verified") is True
+        elif substate_value(obj) is not None:
+            return False                      # served live (verified or not): it isn't gone
+    return spent
+
+
 def committed_on_indexer(indexers, utxo_id: str, position: int) -> str:
     """`utxo_on_indexer`'s verdict alone: `ok`, `missing` or `unknown`."""
     return utxo_on_indexer(indexers, utxo_id, position)[0]
@@ -200,7 +222,7 @@ def credit(conn: sqlite3.Connection, utxo_id: str, now: int, room=None) -> bool:
                 and now <= inv["expires_at"] + UNDERPAID_GRACE_DAYS * 86400 \
                 and inv["received_ut"] + min(pay["value_ut"], inv["price_ut"]) >= inv["price_ut"] \
                 and not holds_its_space(conn, inv, now) \
-                and not (room and room(quota.PACKS[inv["pack"]]["bytes"], bool(inv["judge"]))):
+                and not (room and room(quota.invoice_terms(inv)[0], bool(inv["judge"]))):
             logsafe.event("chain.invoice_held", "warning")
             return False
         conn.execute("UPDATE payments SET committed = 1, status = 'credited' WHERE utxo_id = ?", (utxo_id,))
@@ -214,16 +236,18 @@ def credit(conn: sqlite3.Connection, utxo_id: str, now: int, room=None) -> bool:
         conn.execute("UPDATE invoices SET received_ut = ?, status = 'credited', credited_at = ? WHERE id = ?",
                      (received, now, inv["id"]))
         if inv["identity_id"]:
-            grant_pack(conn, inv["identity_id"], inv["pack"], now, bool(inv["judge"]))
+            grant_pack(conn, inv["identity_id"], inv["pack"], now, bool(inv["judge"]), quota.invoice_terms(inv))
     return True
 
 
-def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int, judge: bool = False) -> None:
+def grant_pack(conn: sqlite3.Connection, identity_id: str, pack_id: str, now: int, judge: bool = False,
+               terms: tuple[int, int] | None = None) -> None:
     """A drive holds one pack at a time (packs.py): a new pack sets its bytes and days from now;
     a payment while one is active (a renewal in its last days, or a second invoice paid anyway) adds the
     days from the old end and keeps the larger of the two sizes: bytes never stack, and a pack bought when
     packs were bigger doesn't shrink. The slice (judges' or public) is the first purchase's."""
-    pack = quota.PACKS[pack_id]
+    nbytes, days = terms or (quota.PACKS[pack_id]["bytes"], quota.PACKS[pack_id]["days"])
+    pack = {"bytes": nbytes, "days": days}       # `terms`: the invoice's own (schema 12)
     row = conn.execute("SELECT paid_bytes, paid_until, paid_pack FROM identities WHERE id = ?", (identity_id,)).fetchone()
     if row is None:
         return

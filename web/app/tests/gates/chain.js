@@ -9,11 +9,15 @@ import { randomBytes, sha256 } from '../../lib/crypto.js';
 import { identityFromSeed } from '../../lib/identity.js';
 import { memoFor, parseMemo, decodeInner, sealDelivery } from '../../lib/courier.js';
 import { ready, tryDecryptUtxo, unwrapBlob } from '../../lib/ootle.js';
+import { useNetwork } from '../../lib/network.js';
 import { configureApi } from '../../lib/api.js';
 import { chainIx } from '../../lib/api-locker.js';
 import { idbPut } from '../../lib/idb.js';
 import { send } from '../../lib/wallet.js';
 import { substateValue } from '../../lib/substate.js';
+
+// This page is no built page: it names its network itself (lib/network.js has none for a page until told).
+useNetwork('esmeralda');
 
 const ORIGIN = 'https://srv2052606.hstgr.cloud';
 const out = [];

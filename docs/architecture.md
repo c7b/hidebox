@@ -187,5 +187,5 @@ year and a release can only add names, never change what an old one holds.
 Built with AI coding agents under the author's direction. The design, threat model and crypto choices
 were reviewed by the author; the verification evidence is in [evidence/](evidence/). The project
 depends on Python's standard library, the browser's WebCrypto, Debian's Node and Caddy, and the
-pinned, hash-checked official Tari library (`ootle-wasm` and `ootle-wasm-bor` 0.52.0, see [NOTICE](../NOTICE)). Nothing is
+pinned, hash-checked official Tari library (`ootle-wasm` and `ootle-wasm-bor` 0.53.2, see [NOTICE](../NOTICE)). Nothing is
 installed from npm or pip.

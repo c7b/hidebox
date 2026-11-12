@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: MIT
-"""POST /abuse (spec §6.3 Abuse). The operator acts with `mutis-admin takedown` (spec §15.7).
+"""POST /abuse (spec §6.3 Abuse). The operator acts with `mutis-admin takedown` (spec §15.7). A shop's link
+(/shop/<username> or /shop/<id>, docs/shop.md) is reported here too, and taken down with `mutis-admin takedown shop`.
 
 The browser strips the link's key unless the reporter chose to include it; when it's included we
 keep it with the report so the operator can look at the content, and the report says so.
 """
 from urllib.parse import urlsplit
 
-from .. import codec, db
+from .. import codec, db, shop
 from ..http_util import PARAM_RE, get_enum, get_str, invalid, json_response
 
 CATEGORIES = ("csam", "malware", "phishing", "copyright", "harassment", "other")
@@ -29,13 +30,21 @@ def parse_link(link: str, origins: list[str]) -> tuple[str | None, str | None, s
 def report(ctx):
     body = ctx.req.json()
     ctx.limit(("abuse64", ctx.ip64, 10, 3600, 1))
-    share_id, drop_id, fragment = parse_link(get_str(body, "link", 600), list(ctx.cfg["memo_origins"]))
+    link, origins = get_str(body, "link", 600), list(ctx.cfg["memo_origins"])
+    shop_link = shop.shop_of_link(link, origins)
+    share_id, drop_id, fragment = (None, None, shop_link[1]) if shop_link else parse_link(link, origins)
+    shop_id = None
+    if shop_link:                    # a username or an id: the report keeps the shop's id, whatever its name becomes
+        found = shop.by_ref(ctx.db, shop_link[0])
+        shop_id = found["id"] if found is not None else None
     category = get_enum(body, "category", CATEGORIES)
     details = get_str(body, "details", 2000)
     contact = get_str(body, "contact", 200, optional=True) or None
     if contact and any(not c.isprintable() for c in contact):     # one line of plain text
         raise invalid("contact")
     ctx.proof_of_work("report", body)
+    if shop_link and shop_id is None:    # no shop has it now: said in the report, never tied to whoever takes it later
+        details += f"\n\n[Reported shop address: /shop/{shop_link[0]} (no shop has it)]"
     if fragment:
         details += f"\n\n[Reporter included the link key: #{fragment[:200]}]"
     item_id = None
@@ -44,9 +53,9 @@ def report(ctx):
         item_id = row["item_id"] if row else None
     report_id = codec.report_id()
     with db.tx(ctx.db):
-        ctx.db.execute("INSERT INTO abuse_reports(id, share_id, item_id, drop_id, category, details, contact, "
-                       "included_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                       (report_id, share_id, item_id, drop_id, category, details, contact, int(bool(fragment)),
-                        ctx.now))
+        ctx.db.execute("INSERT INTO abuse_reports(id, share_id, item_id, drop_id, shop_id, category, details, contact, "
+                       "included_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (report_id, share_id, item_id, drop_id, shop_id, category, details, contact,
+                        int(bool(fragment)), ctx.now))
     return json_response(201, {"report_id": report_id})
 

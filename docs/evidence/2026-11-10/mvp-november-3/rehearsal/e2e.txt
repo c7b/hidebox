@@ -1,0 +1,68 @@
+E2E against the rehearsal instance mvp (https://mvp-rehearsal.hidebox.app, Esmeralda, staging), run from the workstation with
+tests/e2e/run.py --instance mvp, in batches, each on a restarted rehearsal API (the hourly per-network limits are in memory).
+
+Pass 1: release 01ba912 (relay mode, test money on)
+== batch E-01,E-02,E-04,E-05,E-06,E-07,E-03
+PASS E-01      9.2s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-02     16.5s  10 MB file, 3 views: B, C, D save identical files; E sees burned
+PASS E-04     28.3s  Link + password and password-only; path-only attempts never lock a link
+PASS E-05     71.0s  Expiry 60 s: after 65 s the link is expired
+PASS E-06     10.7s  Tamper: one flipped byte of a 5 MB blob gives integrity-error and saves nothing
+PASS E-07      4.9s  A link without its #key shows incomplete
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+== batch E-08,E-15,E-16,E-16s,E-17,E-03
+PASS E-08      8.8s  Drive: Make my drive at once; the key file locked with a passphrase; restored in a clean browser (same address and safety code)
+PASS E-15     12.1s  Burn race: five browsers press Open it together; exactly one opens
+PASS E-16      2.9s  Limits: a 26 MiB anonymous file is refused before upload; the server refuses it too
+FAIL E-16s    65.1s  Limits under a freeze: uploads_frozen banner, downloads still work
+PASS E-17      8.1s  Abuse: a reported link and drop are taken down by id
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+== batch E-18,E-19,E-20,E-21,E-22,E-24,E-03
+PASS E-18     14.6s  Every page: only same-origin requests and no CSP or Trusted Types violation
+PASS E-19     85.8s  Phones: E-01 at 390×844 and 412×915; reduced motion; no horizontal scroll at 360 px
+PASS E-20      7.8s  Accessibility: every control named; keyboard-only seal and copy; the live region speaks
+FAIL E-21     33.8s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+PASS E-22     11.2s  Programs: an anonymous .exe is refused; in a free locker or a drive it opens behind the program warning
+PASS E-24     57.1s  Tor-like browser (--jitless, no WebAssembly): E-01 passes; the drive opens and lists without it; drop pages say needs_wasm
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+== batch E-26,E-27,E-28,E-31,E-03
+PASS E-26      9.7s  Drive: upload a folder (3 files, 1 subfolder) with the folder picker; restored in a clean browser with the key file: the same tree
+PASS E-27     13.2s  Folder link, Once: a phone opens it, lists 4 things, saves one, downloads all (zipfile checks it); a second phone sees it ended
+PASS E-28     13.5s  Move and rename: a file moved into a shared folder shows through its link; one moved out mid-visit is refused (403)
+SKIP E-31     13.6s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+== batch E-09,E-10,E-11,E-12,E-03
+PASS E-09     33.1s  Dead drop on chain: a phone's drive makes a drop link, desktop leaves a GPS photo, Received opens it
+PASS E-10     21.3s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+SKIP E-11      0.0s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+PASS E-12     58.6s  A view key sees the delivery and can open no file
+PASS E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+== batch E-13,E-14,E-25
+PASS E-13     12.7s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +256 MiB
+PASS E-14    636.0s  Payment forgery: a payment row for a UTXO that doesn't exist is never credited
+PASS E-25     41.6s  Canary: forced run is delivered, found in the mirror, opened; /canary and evidence show it
+== batch E-29,E-30,E-03
+PASS E-29     34.7s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+FAIL E-30    627.7s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+== batch E-J
+PASS E-J      53.0s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+
+Pass 2: release 24bab04 (the shop pages' headers fixed), the five that failed or skipped, with the scenario fixes
+== batch E-16s,E-21,E-31,E-11,E-30,E-03
+PASS E-11     15.8s  Kind 4 to another Ootle wallet: its memo is a /t#4 link that opens with the view key alone
+PASS E-16s     7.0s  Limits under a freeze: uploads_frozen banner, downloads still work
+FAIL E-21     38.2s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+SKIP E-30      0.0s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+PASS E-31     14.7s  Activity hygiene: the owner sees opens per hour; the database and its backups hold no IP address, user agent or name
+SKIP E-03      0.0s  Secret hygiene across E-01, E-02, E-05, E-08, E-09, E-10, E-12, E-26, E-27, E-28
+SKIP E-21     34.8s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)   (D-01: every check passes, 117 with test_headers.run; D-03 reads production's own users and units, so it skips on an instance by design)
+
+Pass 3: the same release in direct mode (send_mode = "direct", features.direct_send), as hidebox.app's shape
+== batch E-30
+PASS E-30     45.7s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+== batch E-J
+PASS E-J      41.3s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+== batch E-30,E-13
+PASS E-13     27.0s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +256 MiB
+FAIL E-30     43.0s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend

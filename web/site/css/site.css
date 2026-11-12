@@ -262,3 +262,4 @@ a:hover > .go { rotate: -45deg; }
 .form-status.error { color: var(--exit-text); }
 .box-note { padding: var(--s-4); border-radius: var(--r-input); background: var(--bg-sunken); }
 .noscript { padding-block: var(--s-4); color: var(--fg-2); }
+

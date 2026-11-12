@@ -1,0 +1,6 @@
+template_45a467821933d68b39f807bf8d0b1d9641128bbbd4c43aaf215de012a0b0b82e: SealLog, author 90ac469ba720789206d752178c4d116dd3fd81d2b4947c9663a9cff295ecee24, epoch 12949, indexer verified: True
+on chain   107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+the address commits to these bytes
+seal_log.wasm 107038 bytes, sha256 00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f
+ABI (tari_tdef): equal
+the chain runs seal_log.wasm byte for byte

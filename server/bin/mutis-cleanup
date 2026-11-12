@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mutis import cleanup, codec, config, db, logsafe  # noqa: E402
-from mutis.storage import Blobs  # noqa: E402
+from mutis import storage  # noqa: E402
 
 
 def main() -> None:
@@ -21,7 +21,7 @@ def main() -> None:
     cfg = config.load(args.config)
     conn = db.connect(cfg.db_path)
     try:
-        counts = cleanup.run(conn, cfg, Blobs(cfg.blob_dir), os.statvfs, codec.now())
+        counts = cleanup.run(conn, cfg, storage.from_config(cfg, offline=True), os.statvfs, codec.now())
         logsafe.event("cleanup.run", count=sum(counts.values()))
     except Exception:
         logsafe.event("cleanup.error", "error")

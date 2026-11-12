@@ -1,0 +1,170 @@
+# SPDX-License-Identifier: MIT
+# /etc/mutis-@NAME@/mutis.toml (root:mutis-@NAME@ 0640): an instance of mutis beside production
+# (deploy/scripts/instance.py), written by deploy/scripts/provision-instance.sh only when it doesn't exist yet.
+# Every key and default is in server/mutis/config.py; `sudo mutis-admin-@NAME@ check-config` validates the file.
+#
+# It starts as STAGING: a rehearsal of the mainnet deployment on the Esmeralda testnet, with test money, a banner
+# on every page, no search indexing, and the mainnet's feature set (no demo payments, no sponsor grants, no judge
+# passes). deploy/ootle/mainnet-launch.md §4 flips it: network = "mainnet", staging = false, the mainnet indexers,
+# the mainnet walletd's port, the new SealLog component, then deploy.sh --instance @NAME@.
+
+public_origin = "@ORIGIN@"
+memo_origins = ["@ORIGIN@"]
+listen = "127.0.0.1:@API_PORT@"
+data_dir = "/srv/mutis-@NAME@/data"
+secret_key = "/etc/mutis-@NAME@/secret.key"
+network = "esmeralda"
+staging = true
+# The testnet deployment: the live service the staging banner names, the contest entry /judges names on the mainnet.
+testnet_origin = "@TESTNET_ORIGIN@"
+single_uid = false
+security_drop_url = ""
+repo_url = "https://github.com/c7b/hidebox"
+judge_demo_gone = ""
+onion = ""
+
+[gates]
+# relay: our relay posts each send from our sponsor account, within the budgets below (no sponsor grants fund a
+# browser's own wallet here, so direct mode's copy wouldn't hold).
+send_mode = "relay"
+amount_proof = "sidecar"
+key_bundle = false
+
+[features]
+drops = true
+relay_send = true
+direct_send = false
+# Test money and judge passes don't exist on the mainnet: the server refuses to start there with any of them on.
+demo_pay = false
+sponsor = false
+judge_passes = false
+decoys = true
+kept = true
+# On once the instance has its own log (ootle.seallog_component): setup-accounts.md §4, or the launch trigger.
+seallog = false
+folders = true
+pay_to_open = true
+# Space packs (s30, m30; docs/review/packs-small.md), sold in TARI on the mainnet as a beta: the owner's decision of
+# 2026-11-07 (docs/mvp-november.md §4). `mutis-admin-@NAME@ feature packs off` pauses them at once.
+packs = true
+# A drive's shop of pay links (docs/shop.md) and withdrawing earnings (docs/withdraw.md); both need pay_to_open.
+shop = true
+withdraw = true
+# A sale opens without the seller's drive: our payment checker checks each payment is the seller's to collect, from
+# the view key and the address (Ootle 0.48+, docs/mvp-november.md §2). Needs pay_to_open and amount_proof = "sidecar".
+away_release = true
+# The market of public shops (docs/market.md): public shops' listings at /market, asked for without the shop's key. Needs
+# shop and pay_to_open.
+market = true
+
+[limits]
+reserve_min_bytes = 10737418240
+small_lane_bytes = 1073741824
+drop_lane_bytes = 2147483648
+anon_lane_max_bytes = 6442450944
+# Files live on this server's disk (storage below). The beta takes at most 20 GiB of it, beside production on the same
+# disk, and never takes the disk below reserve_min_bytes (docs/storage.md).
+disk_cap_bytes = 21474836480
+# Only with storage.backend = "s3": the space rented there (docs/storage.md, "Rented storage, later").
+capacity_bytes = 0
+# Each drive's free share (docs/pricing.md): 1 GiB on the mainnet beta; 256 MiB to 5 GiB is the testnet's.
+quota_floor_bytes = 1073741824
+quota_ceiling_bytes = 1073741824
+
+# Where ciphertext lives (docs/storage.md): "local", this server's disk, capped by limits.disk_cap_bytes. "s3" (an
+# S3-compatible bucket: endpoint, region, bucket, the key file at s3_key_file, limits.capacity_bytes) stays for later;
+# nothing is rented for the beta. A provider would only ever receive ciphertext.
+[storage]
+backend = "local"
+# The store's name as /fine-print lists it among third parties, e.g. "Backblaze B2".
+provider = ""
+s3_endpoint = ""
+s3_region = ""
+s3_bucket = ""
+s3_prefix = "blobs/"
+s3_addressing = "path"
+s3_key_file = "/etc/mutis-@NAME@/s3.key"
+keep_local_max_bytes = 262144
+staging_free_min_bytes = 4294967296
+
+[packs]
+paid_cap_fraction = 0.4
+judge_fraction = 0.0
+renew_days = 3
+per_network_day = 1
+judge_per_network_day = 0
+public_per_day = 3
+judge_per_day = 0
+# What the mainnet sells, in TARI (1 TARI = 1,000,000 ut), sized to the 20 GiB of disk above (docs/pricing.md):
+# +2 GiB for 30 days at 50 TARI and +5 GiB for 30 days at 100 TARI.
+catalog = [
+  { id = "p2", bytes = 2147483648, days = 30, price_ut = 50000000 },
+  { id = "p5", bytes = 5368709120, days = 30, price_ut = 100000000 },
+]
+
+[brakes]
+drives_per_network_day = 5
+drives_per_wide_network_day = 20
+upload_bytes_per_network_day = 2147483648
+upload_bytes_per_wide_network_day = 6442450944
+judge_upload_bytes_per_network_day = 0
+exempt_addresses = []
+
+# Every relay send and decoy spends from our sponsor account, and on the mainnet that is real TARI (a 0.001 TARI
+# output plus its fee): small daily budgets. Test money (demo_pay_ut, sponsor_ut) is never spent here.
+[budgets.public]
+courier = 100
+demo_pay_ut = 0
+sponsor_ut = 0
+
+[budgets.reserved]
+courier = 20
+decoy = 24
+demo_pay_ut = 0
+sponsor_ut = 0
+
+[budgets.evidence]
+courier = 30
+demo_pay_ut = 0
+sponsor_ut = 0
+
+[ootle]
+# The instance's own walletd for the config's network (provision-instance.sh --walletd NETWORK:PORT): the
+# Esmeralda one while staging, the mainnet one after the flip.
+walletd_url = "http://127.0.0.1:@WALLETD_PORT@/json_rpc"
+sponsor_account = "sponsor"
+service_account = "service"
+operator_account = "service"
+receiver_keys = "/home/drive-@NAME@/mutis/receiver.json"
+# Pack payments go to our receiving address above, the default. revenue_address and revenue_view_key (an address of our
+# own made elsewhere, with only its view secret here; docs/currencies.md §1) stay empty for the beta.
+revenue_address = ""
+revenue_view_key = ""
+robot_keys = "/home/drive-@NAME@/mutis/robot.json"
+# Esmeralda's while staging; the mainnet's after the flip: ["https://indexer-a.ootle.tari.com", "https://indexer-b.ootle.tari.com"]
+indexers = ["https://ootle-indexer-b.tari.com", "https://ootle-indexer-a.tari.com"]
+mirror_start_epoch = 0
+max_fee_transfer_ut = 30000
+courier_amount_ut = 1000
+jitter_s = [5, 45]
+# One decoy an hour on average (production: every 15 minutes), with the reserved decoy budget above.
+decoy_mean_gap_s = 3600
+sponsor_grant_ut = 0
+# The healthcheck's sponsor balance turns amber below this (5 TARI or tTARI: about three days of sends and decoys).
+sponsor_min_ut = 5000000
+seallog_component = ""
+wasm_version = "0.53.2"
+mainnet_date = "2026-11-11"
+
+[sidecar]
+node = "/usr/bin/node"
+dir = "/srv/mutis-@NAME@/app/current/sidecar"
+command = ["/usr/local/lib/mutis-@NAME@/run-sidecar.sh", "/srv/mutis-@NAME@/app/current/sidecar"]
+canary_every_s = 3600
+
+[seal_log]
+# One checkpoint an hour (production: every 15 minutes): a fee each, in real TARI on the mainnet.
+checkpoint_interval_s = 3600
+
+[hosting]
+snapshots = "weekly"

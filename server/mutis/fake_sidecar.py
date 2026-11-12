@@ -21,6 +21,10 @@ from pathlib import Path
 from . import codec, ootle_addr, quota
 from .fake_chain import FAKE_WASM_SHA256, fake_keys, fake_one_time_key, fake_pk, open_output
 
+# The network the chain worker runs us on (Sidecar passes MUTIS_NETWORK), as the real sidecar reads it.
+NETWORK = os.environ.get("MUTIS_NETWORK") or "esmeralda"
+ootle_addr.use_network(NETWORK)
+
 _MEMO = re.compile(r"/t#3([A-Za-z0-9_-]{167})$")
 _canaries: dict[int, dict] = {}
 
@@ -130,7 +134,8 @@ def scan(view_sk: str, utxos: list[dict]) -> list[dict]:
 def handle(req: dict) -> dict:
     cmd = req.get("cmd")
     if cmd == "hello":
-        return {"version": "fake", "wasm_sha256": FAKE_WASM_SHA256, "node": "python", "permission": False}
+        return {"version": "fake", "wasm_sha256": FAKE_WASM_SHA256, "node": "python", "permission": False,
+                "network": NETWORK}
     if cmd == "newKeys":
         return fake_keys()
     if cmd == "decoyAddress":
@@ -142,10 +147,19 @@ def handle(req: dict) -> dict:
         if len(owner_sk) != 32 or len(view_sk) != 32 or len(nonce) != 32:   # 0.48+: the view key takes part
             raise ValueError("bad_request")
         return {"public_key": fake_one_time_key(fake_pk(owner_sk), nonce).hex()}
+    if cmd == "watchOneTimeKey":             # away_release: the same key from the view key and the address alone
+        view_sk, nonce = bytes.fromhex(req["view_sk"]), bytes.fromhex(req["nonce"])
+        if len(view_sk) != 32 or len(nonce) != 32:
+            raise ValueError("bad_request")
+        owner_pk, view_pk, pay_ref = ootle_addr.parse_testnet(req["address"])
+        if pay_ref or fake_pk(view_sk) != view_pk:
+            raise ValueError("bad_key")
+        return {"public_key": fake_one_time_key(owner_pk, nonce).hex()}
     if cmd == "openWatchKey":                # pay to open: a seller's sales view key, sealed to our receiver
         return open_watch_key(bytes.fromhex(req["blob"]), req["address"])
-    if cmd == "selftest":
-        return {"passed": True, "cases": 0}
+    if cmd == "selftest":                    # the watch-only cases the chain worker looks for (sidecar.mjs)
+        return {"passed": True, "cases": [{"name": f"ristretto255: fake case {i}", "passed": True} for i in range(4)]
+                + [{"name": f"watch-only: fake case {i}", "passed": True} for i in range(3)]}
     if cmd == "canary":
         return canary(int(req["n"]), req["canary_token"], req["robot_address"])
     if cmd == "openDelivery":

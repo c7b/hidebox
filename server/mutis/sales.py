@@ -11,9 +11,13 @@ commits it, exactly as for packs (payments.py). Then the release gate decides:
 * **Test money** (`demo = 1`): our demo wallet built the output for the full price, to the claim's
   address, so the owner can spend it by construction. It releases at `paid`.
 * **Any other payment**: a view key proves amount and memo, never who can spend the output (R2, the same
-  hole as R1 for packs: `createStealthOutputWitness` takes the owner and view keys separately). We can't
-  run the ownership check, because only the owner's drive holds the sales owner key. So a `paid` claim
-  waits at `owner_check = 'pending'` until the owner's drive checks the payment's one-time key and calls
+  hole as R1 for packs: `createStealthOutputWitness` takes the owner and view keys separately). Since Ootle
+  0.48 the one-time key is P = H(network ‖ v·R)·G + K, so the view key and the account key K in the
+  address are enough to check it (the watch-only check). With `features.away_release` the chain worker runs
+  it when it counts each payment (`owns` in check_pending): the seller's to spend sets `owner_ok = 1`
+  (`checked_by = 'server'`) and a paid claim releases with no drive online; the payer's own key voids it.
+  Without the flag, or when the check can't tell, a `paid` claim waits at `owner_check = 'pending'` until
+  the owner's drive checks the one-time key with its owner key and calls
   `POST /me/sales/claims/{cid}/confirm` (`ok` releases it; `bad` voids it).
 
 `server_half` goes to whoever shows the claim token `t` (we keep only SHA-256(t)), once the claim is
@@ -66,8 +70,9 @@ def seller_of_share(conn: sqlite3.Connection, share_id: str):
 
 
 def releasable(claim) -> bool:
-    """The release gate: test money we built releases once paid; any other payment waits for the owner's
-    drive to check the money is the owner's to spend."""
+    """The release gate: test money we built releases once paid; any other payment once every payment that
+    counted for it was checked to be the owner's to spend: by our payment checker (features.away_release) or by
+    the owner's drive."""
     return claim["status"] == "paid" and (claim["demo"] == 1 or claim["owner_check"] == "ok")
 
 
@@ -169,44 +174,71 @@ def record_sales(conn: sqlite3.Connection, seller_id: str, found: list[dict], sc
     return added
 
 
-def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int) -> int:
+def check_pending(conn: sqlite3.Connection, indexers, failures: dict, now: int, owns=None) -> int:
     """Each found sale payment must be committed on an indexer (indexer-b, indexer-a after 3 failures)
-    before it counts, as for packs. Pack crediting's freeze doesn't stop this: none of the money is ours."""
+    before it counts, as for packs. Pack crediting's freeze doesn't stop this: none of the money is ours.
+
+    `owns(row, nonce_hex, auth_key_hex)` → True | False | None is the watch-only ownership check
+    (features.away_release; the chain worker's `_sale_owns`): `row` carries the payment's `utxo_id`, `owner_id`,
+    `claim_id`, the claim's `claim_address` and the seller's `seller_address`. None (no flag, or it can't tell)
+    leaves the payment to the owner's drive, as before. It may raise to stop the step (the sidecar is down): the
+    payment waits for the next tick."""
     counted = 0
-    for row in conn.execute("SELECT utxo_id FROM sale_payments WHERE status = 'pending_check'").fetchall():
+    rows = conn.execute("SELECT sp.utxo_id, sp.claim_id, c.address AS claim_address, i.owner_id, "
+                        "se.address AS seller_address FROM sale_payments sp LEFT JOIN claims c ON c.id = sp.claim_id "
+                        "LEFT JOIN shares s ON s.id = c.share_id LEFT JOIN items i ON i.id = s.item_id "
+                        "LEFT JOIN sellers se ON se.identity_id = i.owner_id WHERE sp.status = 'pending_check'").fetchall()
+    for row in rows:
         key = ("sale", row["utxo_id"])
         position = 1 if failures.get(key, 0) >= INDEXER_FAILOVER_AFTER and len(indexers.upstreams) > 1 else 0
-        if utxo_on_indexer(indexers, row["utxo_id"], position)[0] != "ok":
+        verdict, seen = utxo_on_indexer(indexers, row["utxo_id"], position)
+        if verdict != "ok":
             failures[key] = failures.get(key, 0) + 1
             continue
         failures.pop(key, None)
-        count(conn, row["utxo_id"], now)
+        ours = owns(row, seen["nonce"], seen["auth_key"]) if owns is not None else None
+        count(conn, row["utxo_id"], now, ours)
         counted += 1
     return counted
 
 
-def count(conn: sqlite3.Connection, utxo_id: str, now: int) -> None:
+def count(conn: sqlite3.Connection, utxo_id: str, now: int, ours: bool | None = None) -> None:
     """A committed sale payment adds to its claim. Enough → `paid`; test money we built releases from there,
-    anything else waits for the owner's check. A payment to a claim already paid, or closed, is `extra`:
-    the owner keeps it, nothing more opens."""
+    anything else waits for the ownership check. A payment to a claim already paid, or closed, is `extra`:
+    the owner keeps it, nothing more opens.
+
+    `ours` is our payment checker's watch-only verdict (features.away_release), None when it didn't run. True: the
+    payment is the seller's to spend (`owner_ok = 1`, `checked_by = 'server'`), and a claim that every counted payment
+    of which is checked releases without the owner's drive (`owner_check = 'ok'`). False: the payer kept control of
+    it: it never counts toward the claim, and the claim is void (`owner_check = 'bad'`), as when the owner's drive
+    says so."""
     with db.tx(conn):
         pay = conn.execute("SELECT * FROM sale_payments WHERE utxo_id = ? AND status = 'pending_check'",
                            (utxo_id,)).fetchone()
         if pay is None:
             return
+        checked = (int(ours), "server") if ours is not None else (None, None)
         claim = conn.execute("SELECT * FROM claims WHERE id = ?", (pay["claim_id"],)).fetchone()
         if claim is None or claim["status"] not in OPEN or now > claim["expires_at"] + LATE_GRACE_S:
-            conn.execute("UPDATE sale_payments SET committed = 1, status = 'extra' WHERE utxo_id = ?", (utxo_id,))
+            conn.execute("UPDATE sale_payments SET committed = 1, status = 'extra', owner_ok = ?, checked_by = ? "
+                         "WHERE utxo_id = ?", (*checked, utxo_id))
             return
-        conn.execute("UPDATE sale_payments SET committed = 1, status = 'counted' WHERE utxo_id = ?", (utxo_id,))
+        conn.execute("UPDATE sale_payments SET committed = 1, status = 'counted', owner_ok = ?, checked_by = ? "
+                     "WHERE utxo_id = ?", (*checked, utxo_id))
+        if ours is False:
+            conn.execute("UPDATE claims SET owner_check = 'bad', status = 'void' WHERE id = ?", (claim["id"],))
+            return
         received = claim["received_ut"] + pay["value_ut"]           # an overpayment counts in full
         if received < claim["price_ut"]:
             conn.execute("UPDATE claims SET received_ut = ?, status = ? WHERE id = ?",
                          (received, "seen" if now <= claim["expires_at"] else "underpaid", claim["id"]))
             return
+        # Released without the drive only when our checker vouched for every payment that counted for it.
+        unchecked = conn.execute("SELECT 1 FROM sale_payments WHERE claim_id = ? AND status = 'counted' "
+                                 "AND owner_ok IS NOT 1", (claim["id"],)).fetchone()
         conn.execute("UPDATE claims SET received_ut = ?, status = 'paid', paid_at = ?, "
-                     "owner_check = CASE WHEN demo = 1 THEN 'none' ELSE 'pending' END WHERE id = ?",
-                     (received, now, claim["id"]))
+                     "owner_check = CASE WHEN demo = 1 THEN 'none' WHEN ? THEN 'pending' ELSE 'ok' END WHERE id = ?",
+                     (received, now, unchecked is not None, claim["id"]))
 
 
 def demo_payload_ok(conn: sqlite3.Connection, payload: dict, now: int) -> bool:

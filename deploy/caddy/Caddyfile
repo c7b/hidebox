@@ -156,19 +156,38 @@ http://{$MUTIS_HOST} {
 
 	@api path /api/*
 	# A link's page answers with its kind's own preview card (viral-1): a secret (/s/*, /t) view.html, a paid link's buyer
-	# page (/p/*) pay.html, a drop link (/d/*) drop.html; the same head for every link of a kind, nothing of the link in it.
+	# page (/p/*) pay.html, a drop link (/d/*) drop.html, a drive's shop (/shop/*, docs/shop.md) shop.html; the same head
+	# for every link of a kind, nothing of the link in it.
 	@viewer path /s/* /t
 	@paylink path /p/*
+	# A shop's page by its address (docs/shop.md "The address"): the API fills in a public shop's page for search engines
+	# and sends every other one as the release's shop.html, noindex (server/mutis/shop_page.py). Only a name or an id;
+	# anything else under /shop/ (and a HEAD, which the API doesn't answer) is the plain page below.
+	@shoppage {
+		method GET
+		path_regexp shoppage ^/shop/([A-Za-z0-9_-]{1,64})$
+	}
+	@shopsitemap path /sitemap-shops.xml
+	# The market of public shops (docs/market.md): the API fills shop.html with the market's words and newest listings
+	# (indexable), or sends it plain and noindex while the market is off.
+	@marketpage {
+		method GET
+		path /market
+	}
+	@marketlink path /market
+	@shoplink path /shop/*
 	@droplink path /d/*
 	@approute path /send /send/* /watch /watch/* /verify /verify/*
 	# The drive (16-drive-design §12) has its own page
 	@drive path /drive /drive/*
-	@appfiles path /app/* /vendor/*
+	# Regexps, not paths, for the three file routes a fingerprinted name also falls under: Caddy's adapter sorts handle
+	# blocks with a path matcher by the path's length, which can put one ahead of @hashed (seen on an instance, 2026-11-12).
+	@appfiles path_regexp ^/(?:app|vendor)/
 	@status path /evidence.json /evidence-archive-*.json /status.json /releases.json
-	@fonts path /shared/fonts/*
+	@fonts path_regexp ^/shared/fonts/
 	# What other products show beside a link to us: the share cards (og:image) and the icons. Their names stay put
 	# when their pictures change, so a day, not immutable.
-	@cards path /og.png /og-s.png /og-p.png /og-d.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png /icon-maskable-512.png
+	@cards path /og.png /og-s.png /og-p.png /og-p-mainnet.png /og-d.png /og-shop.png /favicon.ico /favicon.svg /favicon-32.png /apple-touch-icon.png /icon-192.png /icon-512.png /icon-maskable-512.png
 	@crawl path /robots.txt /sitemap.xml
 
 	handle @api {
@@ -250,6 +269,58 @@ http://{$MUTIS_HOST} {
 		import files
 	}
 
+	handle @shoppage {
+		import app_csp
+		rewrite * /api/v1/page/shop/{re.shoppage.1}
+		reverse_proxy 127.0.0.1:8787 {
+			header_up X-Real-IP {remote_host}
+			header_up -X-Forwarded-For
+			# The API says noindex, or index for a public shop, and how long to keep the page; the policy is ours, and so is
+			# the referrer policy security_headers sets (the API's own copy would be a second Referrer-Policy line).
+			header_down -X-Content-Type-Options
+			header_down -Content-Security-Policy
+			header_down -Referrer-Policy
+		}
+	}
+
+	handle @marketpage {
+		import app_csp
+		rewrite * /api/v1/page/market
+		reverse_proxy 127.0.0.1:8787 {
+			header_up X-Real-IP {remote_host}
+			header_up -X-Forwarded-For
+			header_down -X-Content-Type-Options
+			header_down -Content-Security-Policy
+			header_down -Referrer-Policy
+		}
+	}
+
+	handle @shopsitemap {
+		import site_csp
+		rewrite * /api/v1/shops/sitemap.xml
+		reverse_proxy 127.0.0.1:8787 {
+			header_up X-Real-IP {remote_host}
+			header_up -X-Forwarded-For
+			header_down -X-Content-Type-Options
+		}
+	}
+
+	handle @marketlink {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/shop.html
+		import files
+	}
+
+	handle @shoplink {
+		import app_csp
+		import revalidate
+		header X-Robots-Tag "noindex, nofollow"
+		rewrite * /app/shop.html
+		import files
+	}
+
 	handle @droplink {
 		import app_csp
 		import revalidate
@@ -325,7 +396,7 @@ http://{$MUTIS_HOST} {
 
 	# The home's stills (media/v3, docs/review/promote-v3.md) and the 404 page's art under their plain names: no version
 	# in them, so a day like the font. The pages ask for their fingerprinted names (@hashed above), kept a year.
-	@media path /site/media/*
+	@media path_regexp ^/site/media/
 	handle @media {
 		import site_csp
 		header Cache-Control "public, max-age=86400"

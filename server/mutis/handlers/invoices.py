@@ -41,9 +41,10 @@ def create(ctx):
     body = ctx.req.json()
     ctx.limit(("inv_locker", identity["id"], 10, 3600, 1))
     pack_id = body.get("pack")
-    if pack_id not in quota.PACKS:
+    table = quota.pack_table(ctx.cfg["packs"])
+    if not isinstance(pack_id, str) or pack_id not in table:
         raise ApiError(422, "unknown_pack", "No such pack.", details={"field": "pack"})
-    pack, cfg, now = quota.PACKS[pack_id], ctx.cfg["packs"], ctx.now
+    pack, cfg, now = table[pack_id], ctx.cfg["packs"], ctx.now
     replaced = []                            # the drive changed its mind about an unpaid invoice
     for row in ctx.db.execute("SELECT * FROM invoices WHERE identity_id = ? AND status IN ('pending','seen') "
                               "AND expires_at > ? ORDER BY created_at DESC", (identity["id"], now)).fetchall():
@@ -53,7 +54,7 @@ def create(ctx):
             raise ApiError(409, "conflict", "A payment for your other invoice is on its way.")
         replaced.append(row["id"])
     swapped = bool(replaced)
-    holding = packs.held(identity, now, cfg["renew_days"])
+    holding = packs.held(identity, now, cfg["renew_days"], table)
     if holding and (now < holding["renew_from"] or holding["id"] not in (None, pack_id)):
         n = holding["bytes"]
         size = f"{n / quota.GiB:g} GiB" if n >= quota.GiB else f"{n / quota.MiB:g} MiB"
@@ -62,7 +63,11 @@ def create(ctx):
                        details={"pack": holding["id"], "bytes": holding["bytes"], "until": holding["until"],
                                 "renew_from": holding["renew_from"]})
     require_chain(ctx)
-    base = db.get_meta(ctx.db, "receiver_address")
+    # Where pack payments go: the owner's revenue address when the config names one (docs/currencies.md §1), else ours.
+    # Empty while a revenue address's view key hasn't checked out: no invoice, so nobody pays an address nothing watches.
+    base = db.get_meta(ctx.db, "invoice_address")
+    if base is None:
+        base = db.get_meta(ctx.db, "receiver_address")
     if not base:
         raise ApiError(503, "chain_unavailable", "Payments aren't ready yet. Try again in a minute.")
     code = ctx.judge_soft()
@@ -91,8 +96,9 @@ def create(ctx):
         if not holding and not packs.slices(ctx.db, pool, cfg, now).room(pack["bytes"], judge):
             raise ApiError(409, "sold_out", "The disk is finite. We'd rather say no than overbook.")
         ctx.db.execute("INSERT INTO invoices(id, identity_id, pack, price_ut, address, status, created_at, expires_at, "
-                       "judge) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)",
-                       (invoice_id, identity["id"], pack_id, pack["price_ut"], address, now, expires, int(judge)))
+                       "judge, pack_bytes, pack_days) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)",
+                       (invoice_id, identity["id"], pack_id, pack["price_ut"], address, now, expires, int(judge),
+                        pack["bytes"], pack["days"]))
     return json_response(201, {"invoice_id": invoice_id, "address": address, "amount_ut": str(pack["price_ut"]),
                                "expires_at": expires, "status": "pending"})
 
@@ -101,10 +107,10 @@ def get_invoice(ctx, invoice_id: str):
     identity = ctx.session()
     inv = _invoice(ctx, invoice_id, identity)
     rows = ctx.db.execute("SELECT * FROM payments WHERE invoice_id = ? ORDER BY seen_at", (invoice_id,)).fetchall()
-    pack = quota.PACKS[inv["pack"]]
+    nbytes, days = quota.invoice_terms(inv)
     credited = None
     if inv["status"] == "credited":
-        credited = {"bytes": pack["bytes"], "until": inv["credited_at"] + pack["days"] * 86400}
+        credited = {"bytes": nbytes, "until": inv["credited_at"] + days * 86400}
     return json_response(200, {
         "invoice_id": inv["id"], "status": inv["status"],
         "pack": inv["pack"], "address": inv["address"], "expires_at": inv["expires_at"],

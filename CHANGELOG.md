@@ -1,6 +1,166 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- mainnet 1 -->
+## 2026-11-12: hidebox on the Ootle mainnet, a second instance
+
+Production stays on Esmeralda, unchanged. A second, independent instance runs beside it on the same server, at
+its own host, first as a staging rehearsal on Esmeralda and from launch day on the Ootle mainnet with real TARI.
+
+- **SealLog on the mainnet**, 2026-11-12 18:28:36 UTC, epoch 38542: `template_494d34a5f55bcef614655c9f8b7fdcb672f1d086467fc96816c0a93a4a5c8472`, published by the launch trigger with `template/dist-v2/` byte for byte (transaction `dbb5173483176a9cadbc82bec4b981d44dd178eb8dfa750febe1e1462bc74dca`), and its log `component_45efaa40c370fa98b86ad59bd395694a241313d741f81ed30bc772b88ef84690` (no owner, upgrade rule Locked, only the service key appends). The receipt, with the raw indexer answers: `docs/evidence/2026-11-12/mainnet-launch/`. The same day mainnet.hidebox.app moved from its staging rehearsal to the mainnet.
+- **The network is a config choice**: `network = "esmeralda" | "mainnet"` and `staging` in mutis.toml
+  (`server/mutis/network.py`: the network byte, the address prefix, the coin, the indexers). On the mainnet the
+  server refuses to start with demo payments, sponsor grants or judge passes on, and forces them off over any
+  override; addresses, the sidecar and walletd are checked against the network; `/config` says which.
+- **An instance beside production** (`deploy/scripts/instance.py`): its own config, tree, users, walletds,
+  units, ports and Caddy site, rendered from production's units and Caddyfile, validated inside the live Caddy
+  configuration before it is installed; `provision-instance.sh`, `deploy.sh --instance`, `mutis-admin-NAME`,
+  backups, health and evidence per instance. Production's paths are the defaults everywhere.
+- **The launch kit** (`deploy/ootle/`): the mainnet walletd's accounts and a root-only seed backup
+  (`mainnet-walletd.sh`), the burn guard (`burn-guard.py`, `mainnet-start-height.json`, `burn-mainnet.md`),
+  the mainnet L1 wallet (`l1-wallet-mainnet.sh`), the unattended launch trigger (`launch.py`,
+  `launch-arm.sh`), the flip from staging (`flip-to-mainnet.sh`) and the launch-hour runbook
+  (`mainnet-launch.md`).
+- **verify-deploy checks an instance too**: it rebuilds with the instance's own `staging` and `testnet_origin` from
+  `/config`, so a staging or mainnet deployment compares equal to its tag.
+<!-- /mainnet 1 -->
+
+<!-- november -->
+## 2026-11-12: the November MVP on the mainnet: the market, a bigger drive on a capped disk, release without the seller, a shop's address, packs, withdrawals
+
+- **A sale opens without the seller's drive** (`features.away_release`, off by default; on in the mainnet instance):
+  since Ootle 0.48 a stealth output's one-time key is `H(network ‖ v·R)·G + K`, so our payment checker, which already
+  holds each seller's sales view key, checks it with the address's account key when it counts the payment (the
+  watch-only check). The seller's to spend: the claim releases on the buyer's next poll, with the drive closed; the
+  payer's own key: the claim is void and the payment never counts. When the check can't tell (a spend rule that isn't
+  a plain key, among others), the drive checks as before. The library has no point addition, so
+  `web/app/lib/ristretto.js` adds the two public points (RFC 9496), tested against the RFC's vectors and the library,
+  and the chain worker runs the sidecar's selftest before it trusts the check. Migration 010
+  (`sale_payments.checked_by`); the pay page, Earnings, `/made` and `/fine-print` say who checks.
+- **A shop's address, `/shop/<username>`**: ASCII a-z, 0-9 and single hyphens, 3 to 30, folded, unique by look-alike,
+  no reserved words or brand look-alikes, held 30 days when given up. **Private** (the default): the key after the
+  `#`, reads take a token only the key makes, `noindex`. **Public**: anyone and search engines read the page, filled in
+  by our server (title, description, canonical, OpenGraph, JSON-LD, `/sitemap-shops.xml`), every piece of the owner's
+  text escaped. The shop key stays in the drive in both modes (below). Migration 011; Caddy sends `/shop/<ref>` and the
+  sitemap to the API; `robots.txt` lets shops be read.
+- **The market** (`features.market`, docs/market.md): `/market` lists what public shops sell, newest first, searchable,
+  filled in for search engines and in the sitemap. A visitor without a shop's whole link taps Ask for it: the browser
+  makes a key pair for that ask alone, the seller's drive (whenever it is open) seals the listing's key half to it, our
+  server relays an answer it can't open, and the visitor pays only once it has arrived; the release still doesn't wait
+  for the seller. So our server never holds both halves of a listed file's key, in any mode: public shops no longer hand
+  their key to us. Asks end with their listing, the shop, or their time. Migration 013; `/fine-print` lists the table
+  and what remains: the drive answers whoever asks, so whoever holds our half (us, or a copy of our database) could
+  ask too; list in public only what you'd sell to anyone.
+- **Our disk, capped** (docs/storage.md): the mainnet beta keeps files on this server's disk, at most 20 GiB of it
+  (`limits.disk_cap_bytes`), never taking the disk below its reserve; the freezes come at the cap as at a full disk,
+  and `/stats` (with /made's "free of" line) counts the cap and the room left in it, not the whole shared disk. A
+  lowered ceiling on the free share holds at once (the mainnet's 1 GiB), not after the hourly steps reach it.
+  Nothing is rented. Rented S3-compatible storage is in the code for later (`storage.backend = "s3"`, our own
+  standard-library client, Signature Version 4 checked against AWS's published vectors), off.
+- **A bigger drive on the mainnet** (docs/pricing.md): 1 GiB free per drive (256 MiB to 5 GiB on the testnet), packs
+  of +2 GiB for 50 TARI and +5 GiB for 100 TARI for 30 days, sized to the 20 GiB, set in config (`packs.catalog`,
+  `limits.quota_*`). An invoice keeps the terms it was made with (migration 012).
+- **Pack revenue** stays on our receiving key, the default. A watch-only revenue address (`ootle.revenue_address`,
+  docs/currencies.md) is in the code, empty for the beta.
+- **Space packs on the mainnet lane**, a beta in TARI (`features.packs` on in the instance), same packs and prices.
+- **Withdrawals**: an output spent elsewhere leaves the list once an indexer proves it spent, a verified down state
+  with none serving it live (`POST /me/sales/outputs/{id}/gone`), so a withdrawal never keeps picking it; a 404, even
+  from every indexer, proves nothing and leaves the money listed (2026-11-10, W-01's class); the confirm step splits a mainnet
+  address after `otl_1`.
+- **Ootle 0.53.2, the version the MainNet launched on and Esmeralda now runs**: `ootle-wasm` and `ootle-wasm-bor`
+  0.53.2 from the npm tarballs tag v0.53.2 (commit `4be6db3`, signed) built, held to their provenance by
+  `npm-provenance.py` and repinned. Only the `.wasm` files change: the glue and the types are byte-identical to
+  0.52.0's, and the stricter engine rules they carry are the validators' own (the PROVENANCE files). walletd's
+  JSON-RPC types are unchanged in 0.53.x. Merged with the mainnet burns (`l1-burn.py`, the final start height).
+- **hidebox.app moves to the mainnet** (docs/cutover.md, decided 2026-11-11): the October entry runs on, unchanged, at
+  testnet.hidebox.app, and mainnet.hidebox.app answers 308. The testnet's links made on hidebox.app keep working: Caddy
+  sends the frozen set of their ids there (`legacy_origin`, `deploy/scripts/legacy-ids.py`), with the key in the
+  fragment. The app forwards judge-pass links, `/verify#<share>` and deliveries, and hands a drive saved on
+  hidebox.app over by its key file; a drive record now says its network. `deploy/scripts/cutover.py` switches in one
+  Caddy reload, with `--check` and rollback, and `tests/e2e/cutover.py` checks every link class. Rehearsed on three
+  hostnames: docs/evidence/2026-11-12/cutover-rehearsal/.
+- **Caddy's route order**: `/app/`, `/shared/fonts/` and `/site/media/` match by regexp, so the adapter's path sort can't
+  put them ahead of the fingerprinted routes (a non-staging instance kept pictures a day, not a year); a test adapts the
+  real config with caddy.
+- Plan and record: `docs/mvp-november.md`, `docs/mvp-november-2.md`. Tests: `server/tests/test_market.py`,
+  `test_s3.py`, `test_storage_remote.py`, `test_pack_catalog.py`, `test_revenue.py`, `web/app/tests/market.test.js`, `server/tests/test_away_release.py`, `test_shop_names.py`,
+  `test_withdraw.py` (Gone), `test_network.py` (MainnetPacks), `web/app/tests/ristretto.test.js`, `shop.test.js`,
+  `sidecar_test.py`, `web/app/ui/tests/flows_shop.py`.
+<!-- /november -->
+
+<!-- withdraw -->
+## 2026-11-12, the November MVP: withdrawing earnings
+
+- **Withdraw**, in Earnings, behind `features.withdraw` (off by default): the drive sends what people paid to its
+  pay links to any Ootle address the owner types. It is built and signed in the browser from the drive's own sales
+  keys (`stealthDhSecret`, as Pay from my drive spends), so our server never holds a key that can move it and never
+  learns where it goes. The confirm step shows what arrives, the network fee (0.03, taken from the amount
+  withdrawn), what leaves the earnings, and the address with its first and last 6 characters set apart. The receipt
+  links What the chain sees.
+- **Rules, the same in the browser and on our server**: at least 0.06; change smaller than the fee goes along
+  instead of staying as dust; at most 8 payments per withdrawal; only settled money (counted, and test money or
+  checked by the owner's drive, the same rule as Earnings), so a payment still being counted is never spent away from
+  its buyer; one at a time (the button, the library and our server each refuse a second). An address on another
+  network, with a broken checksum or with a payment reference is refused before anything is built.
+- **Server**: migration 009 (`sale_payments.withdraw_tx`, `withdraw_at`, `withdrawn`; `sales_change`),
+  `GET /me/sales/outputs`, `POST /me/withdrawals` (checked, marked, relayed), `POST /me/withdrawals/{tx}` (the
+  drive's report of the outcome), `/config`'s `withdraw` rules. Docs: `docs/withdraw.md`, the threat model.
+- Tests: `server/tests/test_withdraw.py`, `web/app/tests/withdraw.test.js`, `web/app/ui/tests/flows_withdraw.py`.
+<!-- /withdraw -->
+
+<!-- shop -->
+## 2026-11-12, the November MVP: a drive's shop
+
+- **My shop**, behind `features.shop` (off by default, so production is unaffected): a drive turns on a public page at
+  `/shop/<id>` with a name and a bio its owner writes, and lists some of its pay links on it, each with a title and a
+  line the owner types (never the file's name), file or folder, its padded size and its price. **Buy and open** is the
+  pay link's own page, unchanged; Earnings are unchanged. Take a listing off, edit its words, or turn the shop off (its
+  page answers 404, the pay links keep selling); a paused pay link hides its listing, and one that ends removes it.
+- **The split key holds for listed links.** The shop's link is `/shop/<id>#6<shop key>`; our server keeps the key only
+  wrapped under the drive's key and each listing's `sA` only sealed with it (`link_ct`, bound to its link), so it holds
+  one half of each listed link and opens none. Whoever holds the shop's whole link holds every listed `sA`; the
+  listing dialog says what that means (docs/shop.md, "Threat-model delta").
+- **Server**: migration 008 (`shops`, `shop_listings`, `abuse_reports.shop_id`), `GET/PUT/DELETE /me/shop`,
+  `PUT/DELETE /me/shop/listings/{id}`, `GET /shop/{id}` (cached a minute), `/config`'s `shop` limits (50 listings, field
+  lengths), rate limits per drive and per network; **Report this shop** through the existing report form and
+  `mutis-admin takedown shop`. Caddy serves `/shop/` from `shop.html`, `view.html`'s twin with its own card
+  (`og-shop.png`); `/shop/` is noindex and disallowed in `robots.txt`.
+- Tests: `server/tests/test_shop.py`, `web/app/tests/shop.test.js`, `web/app/ui/tests/flows_shop.py`.
+<!-- /shop -->
+
+<!-- security 2026-11-09 mainnet -->
+## 2026-11-12, the mainnet line: the security pass on the mainnet instance
+
+The pass below, and what it found only here (`docs/review/fix-log.md`, findings 12 to 15):
+
+- **Withdrawals**: an output commitment is 32 bytes before anything is made from it. Written as a number, it made the
+  API allocate that many bytes: one small request from any drive took it past its memory limit. Every request is now
+  counted before its envelope is read.
+- **Money not yet withdrawn outlives its link's note**: a pay link that still holds settled money its drive hasn't
+  withdrawn keeps its note, and its file's, past the 30 days, until that money is withdrawn. Before, the money left
+  Earnings with the note and the relay refused to withdraw it.
+- **A walletd or a sidecar on another network** is said in the journal with its own event; the refusal used to raise
+  from the logger.
+- **No daily evidence payment on the mainnet**: it is test money, and the worker no longer queues it there.
+<!-- /security 2026-11-09 mainnet -->
+
+<!-- security 2026-11-09 mainnet web -->
+## 2026-11-12, the mainnet line: the browser's security pass on the mainnet instance
+
+The browser's pass below, and what it found only here (`docs/review/fix-log.md`, "The browser on the mainnet instance"):
+
+- **A page's network is its build's.** The app's pages name it in their HTML; a page without that has no network
+  until `/config` names one, and nothing that touches Tari runs meanwhile. Before, one failed first request left a
+  mainnet page on Esmeralda's byte, where the owner's check reads every real payment as not its own.
+- **Withdraw**: the confirm step sets apart six characters after `otl_1`, as it says; a withdrawal that never said
+  how it ended is settled from what the indexer shows (unspent, or proven spent), never from a 404.
+- **The key file** calls a mainnet address "Ootle mainnet"; `/verify` links Esmeralda's indexer page only on
+  Esmeralda.
+- **The shop's link and its Buy links** are built on the page's own origin, like every other link.
+- **The sidecar's self-test** passes on the mainnet: its known answer for "is this output ours to spend" was made on
+  Esmeralda and is now derived with Esmeralda's byte, and a fresh output is checked on the network the sidecar runs on.
+<!-- /security 2026-11-09 mainnet web -->
+
 <!-- security 2026-11-09 -->
 ## 2026-11-09: a security pass on the server and the deployment
 

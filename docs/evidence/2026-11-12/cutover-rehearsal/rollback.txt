@@ -1,0 +1,6 @@
+deploy/scripts/cutover.py rollback, then deploy/scripts/rollback.sh for each instance (2026-11-12 00:55 UTC):
+cutover: put back 4 files from /var/backups/mutis-cutover-20261112T005019Z; Caddy reloaded
+cutover: restarted mutis-cutt-api, mutis-cutt-chain, mutis-mvp-api, mutis-mvp-chain
+rollback: mvp current → releases/e1f744f… (was 65ae4b0…); caddy: mvp.caddy unchanged
+rollback: cutt current → releases/e1f744f… (was 65ae4b0…); caddy: cutt.caddy unchanged
+after: https://cut.hidebox.app staging False legacy None (the testnet again); https://cut-mainnet.hidebox.app staging True (the MVP again); cut-testnet.hidebox.app: no site

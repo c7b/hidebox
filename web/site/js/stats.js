@@ -30,7 +30,6 @@ export function formatDate(isoDay, locale) {
     .format(new Date(`${isoDay}T00:00:00Z`));
 }
 
-const pack = (c, id) => c.pricing.packs.find((p) => p.id === id);
 const days = (d) => d * 86400;
 
 // name → [source, read(json), format]
@@ -56,12 +55,12 @@ const VARIABLES = {
   paid_sends: ['config', (c) => c.limits.paid.sends_per_day, formatCount],
   demo_pay_daily: ['config', (c) => c.limits.demo_pay_per_day, formatCount],
   text_max: ['config', (c) => c.text_max_chars, formatCount],
-  pack_s30_size: ['config', (c) => pack(c, 's30')?.bytes, formatBytes],
-  pack_s30_price: ['config', (c) => pack(c, 's30')?.price_ut, formatTari],
-  pack_s30_days: ['config', (c) => pack(c, 's30') && days(pack(c, 's30').days), formatDuration],
-  pack_m30_size: ['config', (c) => pack(c, 'm30')?.bytes, formatBytes],
-  pack_m30_price: ['config', (c) => pack(c, 'm30')?.price_ut, formatTari],
-  pack_m30_days: ['config', (c) => pack(c, 'm30') && days(pack(c, 'm30').days), formatDuration],
+  pack_1_size: ['config', (c) => c.pricing.packs[0]?.bytes, formatBytes],
+  pack_1_price: ['config', (c) => c.pricing.packs[0]?.price_ut, formatTari],
+  pack_1_days: ['config', (c) => c.pricing.packs[0] && days(c.pricing.packs[0].days), formatDuration],
+  pack_2_size: ['config', (c) => c.pricing.packs[1]?.bytes, formatBytes],
+  pack_2_price: ['config', (c) => c.pricing.packs[1]?.price_ut, formatTari],
+  pack_2_days: ['config', (c) => c.pricing.packs[1] && days(c.pricing.packs[1].days), formatDuration],
   pack_renew_days: ['config', (c) => c.pricing?.renew_days && days(c.pricing.renew_days), formatDuration],
   courier_amount: ['config', (c) => c.courier.amount_ut, formatTari],
   sponsor_grant: ['config', (c) => c.sponsor_grant_ut, formatTari],
@@ -81,6 +80,7 @@ const VARIABLES = {
   lapse_grace_n: ['config', (c) => c.retention.lapse_grace_days, formatCount],
   trash_n: ['config', (c) => c.retention.trash_days, formatCount],
   max_days: ['config', (c) => c.items && days(c.items.max_delete_after_days), formatDuration],
+  storage_provider: ['config', (c) => c.storage?.provider, String],
   quota_floor: ['config', (c) => c.quota.floor_bytes, formatBytes],
   quota_ceiling: ['config', (c) => c.quota.ceiling_bytes, formatBytes],
   overbook: ['config', (c) => c.quota.overcommit, formatCount],
@@ -103,6 +103,10 @@ const CONDITIONS = {
   folders: (c) => (c.features?.folders ? 'on' : 'off'),
   sponsor: (c) => (c.features?.sponsor ? 'on' : 'off'),
   test_pay: (c) => (c.features?.pay_to_open && c.features?.demo_pay ? 'on' : 'off'),
+  // Who checks that a payment is the owner's to spend: the owner's drive, or our payment checker (away_release).
+  release: (c) => (c.features?.away_release ? 'away' : 'owner'),
+  judge: (c) => (c.features?.judge_passes === false ? 'off' : 'on'),
+  storage: (c) => c.storage?.backend ?? 'local',
 };
 
 function value(name, sources, locale) {

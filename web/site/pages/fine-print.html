@@ -57,7 +57,7 @@
   <div class="doc">
     <section id="privacy" aria-labelledby="privacy-h" class="wide">
       <h2 id="privacy-h">Privacy</h2>
-      <p class="muted"><b class="brand">{{BRAND}}</b> runs on the Tari™ Ootle testnet. <br>What we collect, what we can't, every table in our database, and how long each thing lasts.</p>
+      <p class="muted"><span data-when="network=esmeralda"><b class="brand">{{BRAND}}</b> runs on the Tari™ Ootle testnet.</span><span data-when="network=mainnet" hidden><b class="brand">{{BRAND}}</b> runs on the Tari™ Ootle mainnet, as a beta.</span> <br>What we collect, what we can't, every table in our database, and how long each thing lasts.</p>
 <div class="prose">
   <h3 id="short">The short version</h3>
   <ul>
@@ -96,12 +96,17 @@
       <tr><th scope="row"><code>daily_counts</code></th><td>How many one-off links and how many drives were made each day after someone tapped Make your own secret or Sell your own files: the day, which of the two, and a count. <br>Nothing about who.</td><td>Kept<span data-needs="config" hidden> for <span data-v="count_days"></span></span>, then deleted.</td></tr>
       <tr><th scope="row"><code>used_nonces</code></th><td>The SHA-256 of each spent anti-bot challenge, so it can't be reused.</td><td>Five minutes.</td></tr>
       <tr><th scope="row"><code>seal_leaves</code>, <code>seal_checkpoints</code></th><td>SealLog: hashes of stored files and exits, and the checkpoints written to the Ootle.</td><td>Permanent, like the chain.</td></tr>
-      <tr><th scope="row"><code>judge_passes</code></th><td>The SHA-256 of each one-time pass we gave the Council, and its uses left.</td><td>For the contest. <br>They hold nothing about a person.</td></tr>
+      <tr><th scope="row"><code>judge_passes</code></th><td><span data-when="judge=on">The SHA-256 of each one-time pass we gave the Council, and its uses left.</span><span data-when="judge=off" hidden>Empty here. <br>Judge passes exist only on the contest's own deployment, {{TESTNET_HOST}}.</span></td><td>For the contest. <br>They hold nothing about a person.</td></tr>
       <tr><th scope="row"><code>meta</code></th><td>Server settings and counters, such as when the last file was locked and which file is our hourly test.</td><td>Overwritten as they change.</td></tr>
       <tr><th scope="row"><code>sellers</code></th><td>For paid links: a drive's sales address, the key that lets our payment checker see payments to it (sealed to keys only our chain worker holds), and how far the checker has read.</td><td>Empty until paid links are switched on.</td></tr>
       <tr><th scope="row"><code>paid_shares</code></th><td>One row per paid link: its price; our half of its key, which we erase when the link ends; its encrypted preview; how many views and how long a buyer gets; whether it is paused.</td><td>Empty until paid links are switched on.</td></tr>
+      <tr><th scope="row"><code>shops</code></th><td>For a drive that turns on a shop: a random id, the address name its owner picked (and that name with look-alike letters merged, so no other shop can take one that reads the same), the name and bio its owner wrote to publish, private or public, the shop's key wrapped so only that drive opens it, and a hash of the token that reads a private shop. <br>Never the shop's key, private or public.</td><td>Until its owner turns the shop off or deletes the drive. Empty until shops are switched on.</td></tr>
+      <tr><th scope="row"><code>shop_listings</code></th><td>One row per listed paid link: the title and line its owner wrote, file or folder, its padded size and price, and its half of the link's key sealed with the shop's key, which we never hold.</td><td>Deleted when it is taken off, when its link ends, or with its shop.</td></tr>
+      <tr><th scope="row"><code>market_asks</code></th><td>One row per ask in the market: the listing asked about, a key pair made for that ask alone (its public halves), a hash of the token that reads it, and, once the seller's drive answers, the listing's half of its key sealed to that pair, which we can't open. <br>The drive answers anyone who asks, so we, who hold the other half, could open a public listing by asking for it, as could anyone with a copy of our database: list in a public shop only what you'd sell to anyone.</td><td>Up to a week waiting, a week after its answer, or until its listing leaves the market. Empty until the market is switched on.</td></tr>
+      <tr><th scope="row"><code>shop_name_holds</code></th><td>A shop name given up (renamed, or the shop turned off), with the drive it belonged to, so nobody else can take it for a while.</td><td>About a month.</td></tr>
       <tr><th scope="row"><code>claims</code></th><td>One row per try to buy: a random id that is also the payment reference; the SHA-256 of the buyer's claim token; the address to pay; the price and what has arrived; its status; when it was made, paid, opened and when it expires.</td><td>Empty until paid links are switched on.</td></tr>
-      <tr><th scope="row"><code>sale_payments</code></th><td>Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it.</td><td>Empty until paid links are switched on.</td></tr>
+      <tr><th scope="row"><code>sale_payments</code></th><td>Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it; whether it is the owner's to spend, and who checked (our payment checker or the owner's drive); once its owner withdraws it, which withdrawal spent it and when.</td><td>Empty until paid links are switched on.</td></tr>
+      <tr><th scope="row"><code>sales_change</code></th><td>What a withdrawal sent back to its drive's sales address: the output's id, its value as the drive told us, the withdrawal that made it and the one that spent it. <br>Never where the rest went.</td><td>Until the drive is deleted. Empty until withdrawals are switched on.</td></tr>
     </tbody>
   </table>
 </div>
@@ -127,6 +132,7 @@
   <h3 id="third-parties">Third parties</h3>
   <ul>
     <li><strong>Hostinger</strong> rents us the server. <br>It can see everything our server stores, and its snapshots are described above.</li>
+    <li data-when="storage=s3" hidden><strong>Our storage provider</strong><span data-needs="config" hidden>, <span data-v="storage_provider"></span>,</span> keeps our files for us. <br>It holds what our disk would: encrypted bytes under random ids, their padded sizes and times, and our server's address. <br>Never a name, a key or your address: downloads come through our server.</li>
     <li><strong>Let's Encrypt</strong> issues our certificate. <br>It never sees our visitors.</li>
     <li><strong>Tari's public indexer</strong>, only when you press “Check it on Tari's indexer”. <br>It then sees your IP address. <br>Otherwise your browser talks only to this site.</li>
   </ul>
@@ -138,14 +144,15 @@
 
     <section id="terms" aria-labelledby="terms-h">
       <h2 id="terms-h">Terms</h2>
-      <p class="muted">Plain English, for a service on the Tari™ Ootle testnet. <br>Last changed in October 2026; every change is in the repository's history.</p>
+      <p class="muted"><span data-when="network=esmeralda">Plain English, for a service on the Tari™ Ootle testnet.</span><span data-when="network=mainnet" hidden>Plain English, for a beta on the Tari™ Ootle mainnet.</span> <br>Last changed in October 2026; every change is in the repository's history.</p>
 <div class="prose">
   <h3 id="terms-short">The short version</h3>
   <ul>
     <li>Your files are yours. <br>We host ciphertext we can't read, for as long as the rule you chose (or your rental) allows.</li>
     <li>Don't use <b class="brand">{{BRAND}}</b> to hurt people. <br>No child sexual abuse material (zero tolerance; reported to the authorities), no malware, no phishing, no harassment, no illegal content, nothing you don't have the right to share.</li>
     <li>Programs and installers can only be sent from a drive. <br>We can remove any link, file or drop that's reported or abusing limits, by id, without seeing inside.</li>
-    <li>This is a testnet service in active development, with no warranty. <br>It's not a backup service. <br>Files can be lost, the testnet can reset, and tTARI has no monetary value.</li>
+    <li data-when="network=esmeralda">This is a testnet service in active development, with no warranty. <br>It's not a backup service. <br>Files can be lost, the testnet can reset, and tTARI has no monetary value.</li>
+    <li data-when="network=mainnet" hidden>This is a beta on the Ootle mainnet, in active development, with no warranty. <br>Payments use real TARI. <br>Keep amounts small. <br>It's not a backup service. <br>Files can be lost.</li>
     <li>Free space changes hourly. <br>Extra space lasts the period you paid for, then a grace period<span data-needs="config" hidden> of <span data-v="lapse_grace_days"></span></span>. <br>Files in drives unused<span data-needs="config" hidden> for <span data-v="inactive_days"></span></span> are deleted.</li>
     <li>If you lose your drive key, we can't help, by design.</li>
   </ul>
@@ -157,12 +164,18 @@
     <li>spread malware, or host pages or files meant to steal passwords, money or identities;</li>
     <li>harass, threaten or expose anyone, including by sending them deliveries they didn't ask for through their Tari address or {{BRAND}} link;</li>
     <li>share anything illegal where you or the recipient are, or anything that infringes someone else's rights;</li>
-    <li>attack <b class="brand">{{BRAND}}</b>, its users or the Tari testnet, or get around our limits with many networks, drives or scripts.</li>
+    <li>attack <b class="brand">{{BRAND}}</b>, its users or the Tari <span data-when="network=esmeralda">testnet</span><span data-when="network=mainnet" hidden>network</span>, or get around our limits with many networks, drives or scripts.</li>
   </ul>
   <p>We can't see inside files, so we rely on reports. <br>Anyone can <a href="#report">report a link</a>.</p>
 
+  <div data-when="network=esmeralda">
   <h3 id="terms-testnet">A testnet service, with no warranty</h3>
   <p><b class="brand">{{BRAND}}</b> runs on the Esmeralda testnet of the Tari Ootle. tTARI has no monetary value, payments use play money, and the testnet can be reset. <br>The service is provided as is, without warranty of any kind, and may change or stop. <br>It is not a backup: keep your own copy of anything you can't lose.</p>
+  </div>
+  <div data-when="network=mainnet" hidden>
+  <h3 id="terms-beta">A beta on the mainnet, with no warranty</h3>
+  <p><b class="brand">{{BRAND}}</b> runs on the Tari Ootle mainnet, as a beta. <br>Payments use real TARI. <br>Keep amounts small. <br>The service is provided as is, without warranty of any kind, and may change or stop. <br>It is not a backup: keep your own copy of anything you can't lose.</p>
+  </div>
 
   <h3 id="terms-limits">Limits and space</h3>
   <p>Free space is a fair share of one real disk, recalculated every hour, and it can go down. <br>When it does, nothing of yours is deleted, but you can't add more until you're under it again. <br>If the disk truly fills, new uploads pause for everyone. <br>Rented space adds to your share for the period you paid for. <br>The live limits are on <a class="more" href="/made#limits">Pricing and limits<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/icons.svg#arrow"/></svg></a></p>
@@ -197,7 +210,7 @@
     <div class="field">
       <label for="abuse-link">Link</label>
       <input type="url" id="abuse-link" name="link" required autocomplete="off" spellcheck="false" aria-describedby="abuse-link-hint abuse-status">
-      <p class="hint" id="abuse-link-hint">A link to a file (<code>/s/…</code>), a paid link (<code>/p/…</code>) or a {{BRAND}} link (<code>/d/…</code>).</p>
+      <p class="hint" id="abuse-link-hint">A link to a file (<code>/s/…</code>), a paid link (<code>/p/…</code>), a {{BRAND}} link (<code>/d/…</code>) or a shop (<code>/shop/…</code>).</p>
     </div>
     <div class="field">
       <label for="abuse-category">What's wrong</label>

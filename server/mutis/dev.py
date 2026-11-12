@@ -14,7 +14,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import api, cleanup, config, db
+from . import api, cleanup, config, db, network as networks, ootle_addr
 from .chain_worker import Worker
 from .fake_chain import FAKE_WASM_SHA256, FakeChain, FakeIndexer, fake_keys
 from .fake_sidecar import argv as fake_sidecar_argv
@@ -61,6 +61,8 @@ class Static:
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/view.html"
         elif path.startswith("/p/"):   # a paid link's buyer page, with its own preview card (viral-1)
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/pay.html"
+        elif path.startswith("/shop/") or path == "/market":   # a drive's shop and the market (docs/shop.md, market.md)
+            csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/shop.html"
         elif path.startswith("/d/"):   # a drop link, with its own preview card (viral-1)
             csp, extra, target = APP_CSP, {"X-Robots-Tag": "noindex, nofollow"}, "/app/drop.html"
         elif path == "/drive" or path.startswith("/drive/"):   # the drive's own page (16-drive-design §12)
@@ -90,15 +92,18 @@ def _write_keys(path: Path) -> str:
     return str(path)
 
 
-def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str) -> config.Config:
+def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str, network: str = "esmeralda",
+               staging: bool = False, store: dict | None = None) -> config.Config:
     origin = f"http://127.0.0.1:{port}"
-    mib = 1 << 20
+    # The mainnet has no test money: the dev stack drops those features there as a real deployment must.
+    features = {f: False for f in networks.TEST_MONEY} if network == "mainnet" else {}
     return config.from_dict({
+        "network": network, "staging": staging, "features": features,
+        "testnet_origin": "https://testnet.example" if staging or network == "mainnet" else "",
         "public_origin": origin, "memo_origins": [origin, "https://mutis.sh"], "listen": f"127.0.0.1:{port}",   # the UI fixtures move memos to this short test origin (realize.py); never served
         "data_dir": str(data / "data"), "secret_key": str(data / "secret.key"),
         "gates": {"send_mode": "relay", "amount_proof": "sidecar", "key_bundle": False},
-        "limits": {"reserve_min_bytes": 0, "small_lane_bytes": 256 * mib, "drop_lane_bytes": 256 * mib,
-                   "anon_lane_max_bytes": 512 * mib},
+        "limits": limits_dev(),
         # A browser on this machine is the dev stack's own address: like the server's own tests in production
         # it skips the daily brakes. Forged X-Real-IP traffic (griefer.py, devil.py) meets all of them.
         "brakes": {"exempt_addresses": ["127.0.0.1", "::1"]},
@@ -107,21 +112,44 @@ def dev_config(data: Path, port: int, walletd_url: str, indexer_url: str) -> con
         "ootle": {"walletd_url": walletd_url, "indexers": [indexer_url], "decoy_mean_gap_s": 600,
                   "receiver_keys": _write_keys(data / "receiver.json"), "robot_keys": _write_keys(data / "robot.json")},
         "sidecar": {"command": fake_sidecar_argv(), "expected_wasm_sha256": FAKE_WASM_SHA256, "canary_every_s": 600},
+        # --s3: blobs go to the local S3 stand-in (fake_s3.py), as a deployment's go to a rented store (docs/storage.md).
+        **({"storage": store["storage"], "limits": {**limits_dev(), **store["limits"]}} if store else {}),
     }, dev=True)
 
 
-def run(data: Path, dist: Path | None, port: int, pow_bits: int | None) -> None:
+def limits_dev() -> dict:
+    mib = 1 << 20
+    return {"reserve_min_bytes": 0, "small_lane_bytes": 256 * mib, "drop_lane_bytes": 256 * mib,
+            "anon_lane_max_bytes": 512 * mib}
+
+
+def fake_store(data: Path):
+    """A local S3 stand-in and the [storage] settings that use it, its key file in the dev data directory."""
+    from .fake_s3 import FakeS3
+    fake = FakeS3()
+    keys = data / "s3.key"
+    keys.write_text(f"{fake.access_key}\n{fake.secret_key}\n")
+    os.chmod(keys, 0o600)
+    return fake, {"storage": {"backend": "s3", "s3_endpoint": fake.url, "s3_region": fake.region,
+                              "s3_bucket": fake.bucket, "s3_key_file": str(keys), "staging_free_min_bytes": 0},
+                  "limits": {"capacity_bytes": 8 << 30}}
+
+
+def run(data: Path, dist: Path | None, port: int, pow_bits: int | None, network: str = "esmeralda",
+        staging: bool = False, s3: bool = False) -> None:
     data.mkdir(parents=True, exist_ok=True)
     secret = secrets.token_bytes(32)
     (data / "secret.key").write_bytes(secret)
-    chain = FakeChain()
+    ootle_addr.use_network(network)          # before the fakes make their addresses
+    chain = FakeChain(network=network)
     fake_indexer, fake_walletd = FakeIndexer(chain), FakeWalletd(chain)
-    cfg = dev_config(data, port, fake_walletd.url, fake_indexer.url)
+    store = fake_store(data)[1] if s3 else None
+    cfg = dev_config(data, port, fake_walletd.url, fake_indexer.url, network, staging, store)
     db.migrate(cfg.db_path)
     app = api.App(cfg, secret, dev=True, pow_bits=pow_bits, static=Static(dist) if dist else None)
     stop = threading.Event()
     worker = Worker(cfg, secret, Walletd(cfg["ootle"]["walletd_url"]), Indexers(cfg["ootle"]["indexers"], rate=50),
-                    Sidecar(cfg.sidecar_argv(), cfg.origin, FAKE_WASM_SHA256))
+                    Sidecar(cfg.sidecar_argv(), cfg.origin, FAKE_WASM_SHA256, cfg["network"]))
 
     def background() -> None:
         threading.Thread(target=worker.run, args=(stop,), daemon=True).start()

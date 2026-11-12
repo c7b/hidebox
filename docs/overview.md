@@ -89,8 +89,9 @@ More: [architecture.md](architecture.md) Â· [threat-model.md](threat-model.md) Â
 | **Now** | Live on the Esmeralda testnet. tTARI is the coin on Tari's test network. It is worth nothing. |
 | **October 2026** | Built for the Tari Ootle contest "Spooky Secrets"; the judged release is the tag `spooky-secrets-2026-10`. |
 | **2 November 2026** | Esmeralda was reset with Ootle 0.48/0.49; the organizers asked entries to republish their templates and change nothing else. The tag `spooky-secrets-2026-10-reset` is that release: the same hidebox on Ootle 0.49.2, SealLog published again (CHANGELOG, 2026-11-02). |
-| **Nov 11, 2026** | The Ootle mainnet launches. hidebox stays on the testnet until its code is reviewed. |
-| **After review** | Paid features open only after that review. |
+| **Nov 11, 2026** | The Ootle mainnet launches. hidebox.app stays on the testnet, unchanged while the October entry is judged; the mainnet beta runs at mainnet.hidebox.app. |
+| **After review** | On hidebox.app, paid features open only after that review. The mainnet beta at mainnet.hidebox.app doesn't wait for it: it sells space packs, paid in TARI. |
+| **November 2026, the mainnet beta** | 1 GiB free per drive and packs of 2 and 5 GiB in TARI, on up to 20 GiB of this server's disk ([pricing.md](pricing.md), [storage.md](storage.md)); a market of public shops ([market.md](market.md)). Rented S3-compatible storage is in the code for later. Paying with XTM, Monero and Zcash: designed, not built ([currencies.md](currencies.md)). |
 
 Reviews of the live site and what each one changed: [review/fix-log.md](review/fix-log.md).
 Evidence for every pass: [evidence/](evidence/). Security reports: [SECURITY.md](../SECURITY.md).

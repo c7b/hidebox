@@ -535,9 +535,15 @@ class PublishTemplateOptionsTest(unittest.TestCase):
             return run, calls.read_text().splitlines() if calls.exists() else []
 
     def test_an_unknown_option_stops_it(self):
+        run, calls = self.run_script("check", "--bogus", "x")
+        self.assertEqual(run.returncode, 2)
+        self.assertIn("unknown option --bogus", run.stderr)
+        self.assertEqual(calls, [])
+
+    def test_the_mainnet_without_an_instance_is_refused_before_any_ssh(self):
         run, calls = self.run_script("check", "--network", "mainnet")
         self.assertEqual(run.returncode, 2)
-        self.assertIn("unknown option --network", run.stderr)
+        self.assertIn("the mainnet is an instance's", run.stderr)
         self.assertEqual(calls, [])
 
     def test_a_wasm_that_does_not_match_its_sha256sums_is_refused_before_any_walletd_call(self):

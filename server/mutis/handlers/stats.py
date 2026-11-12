@@ -33,13 +33,19 @@ def build_stats(ctx) -> dict:
     beat = int(db.get_meta(conn, "chain_heartbeat", "0"))
     checkpoint = seallog.latest_committed(conn)
     paid = packs.slices(conn, pool, ctx.cfg["packs"], now)
+    limits = ctx.cfg["limits"]
+    cap = 0 if limits.get("capacity_bytes", 0) else limits.get("disk_cap_bytes", 0)
+    if cap:   # our share of a shared disk (docs/storage.md): the cap, and the room left in it above the disk's reserve
+        total, free = cap, max(0, min(pool.d_avail - pool.reserve, cap))
+    else:
+        total, free = pool.d_total, pool.d_avail
     return {
         "free_quota_bytes": quota.free_quota(conn, pool),
         "last_sealed_min": (now - int(last)) // 60 if last else None,
         "lockers_active_30d": active if active >= LOCKERS_SHOWN_FROM else None,
-        "disk_used_pct": round(100 * (pool.d_total - pool.d_avail) / pool.d_total) if pool.d_total else None,
-        "disk_total_bytes": pool.d_total - pool.d_total % DISK_STEP,
-        "disk_free_bytes": pool.d_avail - pool.d_avail % DISK_STEP,
+        "disk_used_pct": round(100 * (total - free) / total) if total else None,
+        "disk_total_bytes": total - total % DISK_STEP,
+        "disk_free_bytes": free - free % DISK_STEP,
         "uploads_frozen": lanes.freeze_state(conn, pool),
         # The public slice of paid space, in whole GiB (no drive, no judge slice).
         "packs_sold_public": paid.public_sold - paid.public_sold % quota.GiB,

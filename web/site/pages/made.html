@@ -69,7 +69,7 @@
     <section id="short" aria-labelledby="short-h">
       <div class="part-head"><span class="icon-tile" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-book-open"/></svg></span><h2 id="short-h">The short version</h2></div>
       <p>Your browser encrypts each file with AES-256-GCM before upload. <br>We store ciphertext and never receive the key. <br>Everything after # is the key. <br>Browsers don't send it to any server, including ours.</p>
-      <p data-needs="config" hidden>We delete the ciphertext from our disk within a minute of its exit. <br>If the exit was a download, we wait for it to finish (at most <span data-v="ticket"></span>). <br>We keep a <span data-v="tombstone_days"></span> note that the link existed, so we can tell you why it's gone. <br>We never had the key, so any leftover bytes are noise.</p>
+      <p data-needs="config" hidden>We delete the ciphertext from our disk within a minute of its exit. <br>If the exit was a download, we wait for it to finish (at most <span data-v="ticket"></span>). <br>We keep a <span data-v="tombstone_days"></span> note that the link existed, so we can tell you why it's gone. <br>A pay link's note stays longer while it holds money its seller hasn't withdrawn. <br>We never had the key, so any leftover bytes are noise.</p>
       <p data-when="seallog=on" hidden>Every exit goes on the public record: we add it to SealLog on the Ootle at the next checkpoint (within <span data-v="checkpoint"></span>). <br>It proves we said we deleted it, publicly and permanently. <br>It can't prove we kept no copy.</p>
     </section>
 
@@ -163,8 +163,10 @@
         <li>We keep half of the key and give it to you once the chain shows your payment. <br>The other half is in the link, which we never see. <br>Neither half opens it alone.</li>
         <li>If the link leaks, our server could open it too.</li>
         <li data-needs="config" hidden>Our half of a paid link's key stays in our database backups for <span data-v="db_backup_days"></span> after the link ends.</li>
-        <li>We check the amount and that the payment is on the chain. <br>Only the owner's drive can check the money is theirs to spend.</li>
-        <li>Test money comes from our demo wallet, so it can be grouped with our other payments. <br>It opens at once, because our wallet built it. <br>Paid from your own wallet? <br>It opens after the owner's drive checks it.</li>
+        <li data-when="release=owner">We check the amount and that the payment is on the chain. <br>Only the owner's drive can check the money is theirs to spend.</li>
+        <li data-when="release=away" hidden>We check the amount and that the payment is on the chain. <br>With the owner's view key, our payment checker also checks the money is the owner's to spend, so it opens while the owner is away. <br>If our checker can't tell, the owner's drive checks it. <br>The owner's drive can still refuse a payment before it opens.</li>
+        <li data-when="network=esmeralda">Test money comes from our demo wallet, so it can be grouped with our other payments. <br>It opens at once, because our wallet built it. <br>Paid from your own wallet? <br><span data-when="release=owner">It opens after the owner's drive checks it.</span><span data-when="release=away" hidden>It opens once our checker sees it's the owner's to spend, or the owner's drive if it can't tell.</span></li>
+        <li data-when="network=mainnet" hidden>Every payment comes from the buyer's own wallet. <br><span data-when="release=owner">It opens after the owner's drive checks it.</span><span data-when="release=away" hidden>It opens once our checker sees it's the owner's to spend, or the owner's drive if it can't tell.</span></li>
         <li>Payments can't be taken back, by us or by Tari. <br>Pay only if what you see here is enough.</li>
         <li>To see who paid you, we keep your sales view key. <br>It is sealed, so a copy of our database can't read it. <br>Our payment checker on our server can. <br>A view key can see payments, never spend them.</li>
       </ul>
@@ -277,10 +279,10 @@
         <summary><h3 id="rent">More space, paid in tTARI</h3></summary>
 <div class="table-wrap">
   <table class="data-table">
-    <thead><tr><th scope="col">Pack</th><th scope="col">Price (testnet)</th><th scope="col"></th></tr></thead>
+    <thead><tr><th scope="col">Pack</th><th scope="col">Price<span data-when="network=esmeralda"> (testnet)</span></th><th scope="col"></th></tr></thead>
     <tbody>
-      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_s30_size"></span> for <span data-v="pack_s30_days"></span></th><td data-cue="Price (testnet)"><span class="price"><span data-v="pack_s30_price"></span> tTARI</span></td><td>Pay in tTARI<span data-when="send_mode=relay">, or try it with demo tTARI</span><span data-when="send_mode=direct" hidden> from the testnet grant your browser's wallet gets</span>.</td></tr>
-      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_m30_size"></span> for <span data-v="pack_m30_days"></span></th><td data-cue="Price (testnet)"><span class="price"><span data-v="pack_m30_price"></span> tTARI</span></td><td>The same, for people who keep more.</td></tr>
+      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_1_size"></span> for <span data-v="pack_1_days"></span></th><td data-cue="Price (testnet)"><span class="price"><span data-v="pack_1_price"></span> tTARI</span></td><td>Pay in tTARI<span data-when="network=esmeralda"><span data-when="send_mode=relay">, or try it with demo tTARI</span><span data-when="send_mode=direct" hidden> from the testnet grant your browser's wallet gets</span></span>.</td></tr>
+      <tr data-needs="config" hidden><th scope="row">+<span data-v="pack_2_size"></span> for <span data-v="pack_2_days"></span></th><td data-cue="Price (testnet)"><span class="price"><span data-v="pack_2_price"></span> tTARI</span></td><td>The same, for people who keep more.</td></tr>
       <tr data-needs="config" hidden><th scope="row">One at a time</th><td data-cue="Price (testnet)">none</td><td>One pack at a time. <br>In its last <span data-v="pack_renew_days"></span> you can renew it, which adds days, not space. <br>Packs are limited to a few a day while we're small.</td></tr>
       <tr><th scope="row">Sold out</th><td data-cue="Price (testnet)">none</td><td>The disk is finite. <br>We'd rather say no than overbook paid space. <br>Free space still works.</td></tr>
     </tbody>
@@ -291,15 +293,18 @@
   <p><span data-when="proof=proven" hidden>We credit a payment only after the official Tari library opens its commitment to the exact amount and a Tari-run public indexer shows it committed on the chain.</span><span data-when="proof=wallet">We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. <br>The amount is the one our wallet reads.</span> <br>You pay our receiving address with this invoice's reference inside it; the reference travels in the payment's encrypted memo, so the chain doesn't show which invoice was paid, or by whom. <br>The network fee is public on the chain. <br>The amount and who paid are not. <br>For space you rent from us we see the amount, because we're the seller. <br>Nobody else does.</p>
   <div data-needs="config" hidden>
     <h3>Sending a file to a Tari address</h3>
-    <p><span data-v="courier_amount"></span> tTARI plus a network fee of <span data-v="courier_fee"></span> per send<span data-when="send_mode=relay">, on us during the testnet</span>.</p>
+    <p><span data-v="courier_amount"></span> tTARI plus a network fee of <span data-v="courier_fee"></span> per send<span data-when="send_mode=relay">, on us<span data-when="network=esmeralda"> during the testnet</span></span>.</p>
   </div>
-  <div data-needs="config" hidden>
+  <div data-when="network=esmeralda"><div data-needs="config" hidden>
     <h3><span data-when="send_mode=relay">Demo tTARI</span><span data-when="send_mode=direct" hidden>Testnet tTARI for your browser</span></h3>
     <p><span data-when="send_mode=relay">Try paid features with demo tTARI from our sponsor wallet, <span data-v="demo_pay_daily"></span> payments a day. <br>Our demo wallet pays our own invoice: a real stealth transaction with play money. <br>You can check it on the chain.</span><span data-when="send_mode=direct" hidden>When your drive opens, our sponsor wallet sends its browser wallet a grant of <span data-v="sponsor_grant"></span> tTARI, and again on a later day when the wallet runs short: one grant a day per drive, and two a day per network. <br>Packs are paid from it: a real stealth transaction with play money, built and signed in your browser. <br>You can check it on the chain.</span></p>
-  </div>
-  <div class="box-note">
+  </div></div>
+  <div class="box-note" data-when="network=esmeralda">
     <p><strong>Testnet.</strong> tTARI has no monetary value. <br>These prices are real logic with play money.</p>
-    <p><span data-needs="config" hidden>Ootle mainnet launches <span data-v="mainnet_date"></span>. <br></span>Paid features stay on the testnet until our code has been reviewed.</p>
+    <p><span data-phase-show="pre" hidden><span data-needs="config" hidden>Ootle mainnet launches <span data-v="mainnet_date"></span>. <br></span>Paid features stay on the testnet until our code has been reviewed.</span><span data-phase-show="mainnet">The Ootle mainnet is live; {{BRAND}} runs there as a beta, with real TARI.</span></p>
+  </div>
+  <div class="box-note" data-when="network=mainnet" hidden>
+    <p><strong>Ootle mainnet.</strong> These prices are in real TARI. <br>{{BRAND}} is a beta. <br>Keep amounts small.</p>
   </div>
 </div>
       </details>
@@ -478,7 +483,7 @@
     <li><details><summary><strong>Metadata.</strong></summary> <div>We see a padded size (rounded up so the exact size stays hidden: at least 1 KB, and at most 12% over for anything bigger), the hour it arrived, when it leaves (rounded up to the hour when that's an hour or more away; “midnight” is your own local midnight, which shows your time zone), its exit rule and how often it's opened. <br>Not the name, the type, the contents or the key. <br>Our server sees your IP address while you're connected. <br>We don't write it to disk: rate limits use a keyed hash, kept in memory, with a key that changes every day. <br>A VPN or Tor hides your IP from us; links without a drive work in Tor Browser's Safer mode, and Tari features need WebAssembly.</div></details></li>
     <li><details><summary><strong>On-chain facts.</strong></summary> <div>The chain shows an output with a hidden amount, a hidden owner and an encrypted memo. <br>The fee is public. <br>Payments our relay sends all come from one wallet with the same fee, so someone watching could group them as “sent by <b class="brand">{{BRAND}}</b>”, but not see to whom.<span data-when="send_mode=direct" hidden> <br>Sends from your browser spend a grant from our sponsor wallet, then each send's change, so anyone reading the Ootle can link them to each other and to our sponsor wallet, but not see to whom or how much.</span><span data-when="seallog=on" hidden> <br>SealLog shows roughly how many records (stored files plus exits) we write, in steps of 64, and when.</span></div></details></li>
     <li><details><summary><strong>Deletion you can't see.</strong></summary> <div>We delete on cue, and nothing can prove we kept no copy. <br>Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. <br>Without the key it's noise.<span data-when="snapshots=weekly"> <br>Our host also takes automatic snapshots of the whole server and keeps them for a few weeks. <br>A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.</span></div></details></li>
-    <li><details><summary><strong>Testnet resets.</strong></summary> <div>Esmeralda can be reset. <br>Payments and on-chain records from before a reset are archived in our repository; files on our server are not affected.</div></details></li>
+    <li data-when="network=esmeralda"><details><summary><strong>Testnet resets.</strong></summary> <div>Esmeralda can be reset. <br>Payments and on-chain records from before a reset are archived in our repository; files on our server are not affected.</div></details></li>
     <li><details><summary><strong>Legal requests.</strong></summary> <div>If compelled, we can hand over what we have: ciphertext, the columns “What our server knows” prints, invoices. <br>Not contents. <br>Not keys.</div></details></li>
   </ol>
       <div class="boxes">
@@ -508,7 +513,7 @@
       <details class="more-box">
         <summary><h3 id="self-host">Run your own</h3></summary>
         <div class="prose">
-      <p>File sharing needs Python's standard library and a web server. <br>The Tari features also need a walletd on the Ootle testnet and Node for the payment checker. <br><a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Self-host guide<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a></p>
+      <p>File sharing needs Python's standard library and a web server. <br>The Tari features also need a walletd on the Ootle<span data-when="network=esmeralda"> testnet</span> and Node for the payment checker. <br><a class="more" href="{{REPO_URL}}/blob/main/docs/self-host.md">Self-host guide<svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-external-link"/></svg></a></p>
         </div>
       </details>
       <details class="more-box">

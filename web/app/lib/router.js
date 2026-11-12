@@ -15,6 +15,10 @@ const ROUTES = [
   [/^\/verify\/tx\/([0-9a-f]{64})$/, 'verify-tx', 'txId'],
   // The buyer page of a paid link (view.html, ui/paypage.js)
   [/^\/p\/([A-Za-z0-9_-]{22})$/, 'pay', 'shareId'],
+  // A drive's shop (shop.html, view.html's twin; ui/shop-page.js)
+  [/^\/shop\/([A-Za-z0-9_-]{1,64})$/, 'shop', 'shopId'],   // a username, or the id of a shop made before names
+  // The market of public shops (shop.html too; ui/market-page.js, docs/market.md)
+  [/^\/market$/, 'market'],
 ];
 
 // -> {name, params}; unknown paths give {name: 'not-found'}.

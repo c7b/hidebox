@@ -177,7 +177,8 @@
    ],
    "sentences": [
     "{network} testnet: tTARI is test money, worth nothing. Ootle mainnet launches {mainnet_date}.",
-    "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} runs there as a beta, with real TARI."
+    "{network} testnet: tTARI is test money, worth nothing. The Ootle mainnet is live; {brand} runs there as a beta, with real TARI.",
+    "The Ootle mainnet is live; {brand} runs there as a beta, with real TARI."
    ]
   },
   {
@@ -325,6 +326,27 @@
     "We check the amount and that the payment is on the chain. Only the owner's drive can check the money is theirs to spend.",
     "Paid. The owner's drive checks it next time it opens.",
     "The owner's drive checks it"
+   ]
+  },
+  {
+   "id": "C38-a",
+   "condition": "non-test payments with features.away_release (docs/mvp-november.md §2): our payment checker runs the watch-only check (P = H(network ‖ v·R)·G + K) when it counts each sale payment; the owner's drive can still refuse one before it releases; when it can't tell (no plain one-time key, no nonce, no view key open, a changed address, a sidecar refusal, a selftest that didn't pass) the owner's drive checks, as before",
+   "backed_by": "server/mutis/sales.py count(), chain_worker._sale_owns, web/app/lib/ristretto.js; server/tests/test_away_release.py",
+   "markers": [
+    "owner's to spend",
+    "while the owner is away",
+    "even while your drive is closed",
+    "the owner can be away"
+   ],
+   "sentences": [
+    "Paid from your own wallet? It opens once our checker sees it's the owner's to spend. The owner can be away. If our checker can't tell, the owner's drive checks it.",
+    "Paid. Now we check it's the owner's to spend.",
+    "We check it's the owner's to spend",
+    "Checking it's the owner's to spend",
+    "It opens once our checker sees it's the owner's to spend, or the owner's drive if it can't tell.",
+    "We check the amount and that the payment is on the chain. With the owner's view key, our payment checker also checks the money is the owner's to spend, so it opens while the owner is away. If our checker can't tell, the owner's drive checks it. The owner's drive can still refuse a payment before it opens.",
+    "Our payment checker checks that each one is yours to spend, even while your drive is closed. Your drive can still refuse one before it opens.",
+    "Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it; whether it is the owner's to spend, and who checked (our payment checker or the owner's drive); once its owner withdraws it, which withdrawal spent it and when."
    ]
   },
   {
@@ -615,6 +637,31 @@
     "The server counts how many links and drives were made after someone tapped Make your own secret or Sell your own files: one number per day for each, nothing about who.",
     "How many one-off links and how many drives were made each day after someone tapped Make your own secret or Sell your own files: the day, which of the two, and a count. Nothing about who.",
     "how many links and drives were made each day after someone tapped Make your own secret or Sell your own files, never who"
+   ]
+  },
+  {
+   "id": "C61",
+   "condition": "a mainnet deployment (mutis.toml network = \"mainnet\"; /config network): every money screen (the line C19-k holds on the testnet), the footer's status line, the What's tTARI? box, /made's prices, the fine print and /judges",
+   "backed_by": "the Ootle mainnet's coin is TARI (tari-ootle v0.50.0 genesis_resources.rs: TARI on MainNet, tTARI elsewhere); the server refuses demo payments, sponsor grants and judge passes there (server/mutis/config.py); hidebox is unreviewed on the mainnet, so it says beta and asks for small amounts",
+   "markers": [
+    "real tari"
+   ],
+   "sentences": [
+    "Ootle mainnet: this is real TARI. {brand} is a beta. Keep amounts small.",
+    "Payments use real TARI. Keep amounts small.",
+    "These prices are in real TARI. {brand} is a beta. Keep amounts small.",
+    "This is {brand} on the Tari Ootle mainnet, with real TARI. It's a beta, so keep amounts small."
+   ]
+  },
+  {
+   "id": "C62",
+   "condition": "a staging rehearsal (mutis.toml staging = true; /config staging): the mainnet instance before its launch, on the Esmeralda testnet; every site and app page, above everything",
+   "backed_by": "deploy/ootle/mainnet-launch.md (the staging instance runs on Esmeralda until the flip to the mainnet at launch); hidebox.app is the contest entry",
+   "markers": [
+    "rehearsal for the ootle mainnet"
+   ],
+   "sentences": [
+    "Staging: a rehearsal for the Ootle mainnet launch. It runs on the Esmeralda testnet, with test money. Don't keep files here. The live {brand} is at {testnet}."
    ]
   }
  ],

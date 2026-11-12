@@ -1,0 +1,65 @@
+{
+ "epoch_at_evidence": 12949,
+ "fees_ut": {
+  "publish": 842962
+ },
+ "l1_height_at_evidence": 1035931,
+ "label": "rehearsal2",
+ "log": {
+  "component": "component_e7a58799b7adb1dcb00ae9ab4bb01306703650eb906b3064e815de9ae062b639",
+  "create": {
+   "decision": "Commit",
+   "finalized_time": "2026-11-08 05:58:56.0",
+   "indexer": "https://ootle-indexer-b.tari.com",
+   "tx": "e556f0d433ee4eb2a5708cfd48c986a08d97363ce514cd529bd1fc761c96c55d"
+  },
+  "fee_ut": 2412,
+  "header": {
+   "access_rules": {
+    "default": "DenyAll",
+    "method_access": {
+     "append_root": {
+      "Restricted": {
+       "Require": {
+        "Require": {
+         "NonFungibleAddress": {
+          "id": {
+           "U256": "90ac469ba720789206d752178c4d116dd3fd81d2b4947c9663a9cff295ecee24"
+          },
+          "resource_address": "resource_0100000000000000000000000000000000000000000000000000000000000000"
+         }
+        }
+       }
+      }
+     },
+     "checkpoint_count": "AllowAll",
+     "get": "AllowAll",
+     "latest": "AllowAll",
+     "notarize": "AllowAll"
+    }
+   },
+   "owner_rule": "None",
+   "template_address": "45a467821933d68b39f807bf8d0b1d9641128bbbd4c43aaf215de012a0b0b82e",
+   "upgrade_rule": "Locked"
+  },
+  "submitted_at": "2026-11-08T05:58:56Z"
+ },
+ "network": "esmeralda",
+ "template": {
+  "address": "template_45a467821933d68b39f807bf8d0b1d9641128bbbd4c43aaf215de012a0b0b82e",
+  "at_epoch": 12949,
+  "author_public_key": "90ac469ba720789206d752178c4d116dd3fd81d2b4947c9663a9cff295ecee24",
+  "dry_run_fee_ut": 842962,
+  "publish": {
+   "decision": "Commit",
+   "finalized_time": "2026-11-08 05:58:45.0",
+   "indexer": "https://ootle-indexer-b.tari.com",
+   "tx": "376e2c383d82aaa1f33a9b6b387809e6cf7da22bf58c834eaf2aa6c7d934d713"
+  },
+  "submitted_at": "2026-11-08T05:58:44Z",
+  "wasm_bytes": 107038,
+  "wasm_sha256": "00ca5f34e5f7a2b036319047fd09ab3c112556dbec119d9a5e75735e462f878f"
+ },
+ "what": "SealLog published and its log created by the mutis launch trigger (deploy/ootle/launch.py)",
+ "written_at": "2026-11-08T05:58:58Z"
+}

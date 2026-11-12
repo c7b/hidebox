@@ -3,12 +3,14 @@ import { b64uEncode, hex, unhex } from '../lib/b64.js';
 import { sha256 } from '../lib/crypto.js';
 import {
   KeyError, createIdentity, forgetIdentity, identityFromSeed, keyFileName, keyFileText, loadIdentity, lockedKeyFileText,
-  parseRecoveryCode, recoveryCode, restoreFromText,
+  parseRecoveryCode, recoveryCode, restoreFromText, testnetDrive,
 } from '../lib/identity.js';
-import { idbGet } from '../lib/idb.js';
+import { idbDelete, idbGet, idbPut } from '../lib/idb.js';
+import { configureApi } from '../lib/api.js';
 import { rememberLink } from '../lib/links.js';
 import { keepClaim, savedClaim } from '../lib/pay.js';
 import { rememberPurchase } from '../lib/purchases.js';
+import { useNetwork } from '../lib/network.js';
 import { addRecentDrop, localGet, localSet, recentDrops } from '../lib/store.js';
 import { bytesEq, deepEq, eq, loadJson, ok, rejects } from './harness.js';
 
@@ -110,4 +112,81 @@ export default [
     await rejects(() => restoreFromText(text, 'lamp curtain velvet exist'), (e) => e.code === 'wrong_passphrase');
     eq((await restoreFromText(text, 'lamp curtain velvet exit')).id, id.id);
   }],
+  ['the key file names the network its address is on: Esmeralda testnet there, Ootle mainnet on the mainnet', async () => {
+    const seed = new Uint8Array(32).fill(9);
+    const here = await identityFromSeed(seed);
+    ok(keyFileText(here).includes(`Tari address (Esmeralda testnet): ${here.locker.address}`) && here.locker.address.startsWith('otl_esm_1'));
+    try {
+      useNetwork('mainnet');
+      const there = await identityFromSeed(seed);
+      const text = keyFileText(there);
+      ok(there.locker.address.startsWith('otl_1'), there.locker.address.slice(0, 9));
+      ok(text.includes(`Tari address (Ootle mainnet): ${there.locker.address}`), 'the mainnet\'s address under the mainnet\'s name');
+      ok(!/testnet|Esmeralda/i.test(text), 'and no word of the testnet');
+      eq(hex((await restoreFromText(text)).seed), hex(seed), 'it restores the same drive');
+    } finally {
+      useNetwork('esmeralda');
+    }
+  }],
+  ['a drive saved before this host moved to the mainnet is set aside whole, never opened here, and handed over by its key file', async () => {
+    const seed = new Uint8Array(32).fill(7);
+    const restore = withConfig({ legacy_origin: 'https://testnet.example' });
+    try {
+      // What the October app kept: a record with no network mark, and its inbox state.
+      await idbPut('identity', 'current', { v: 2, seed: [...seed], created: '2026-10-20', createdSeq: null, dropIndex: 0, drops: [], keySaved: true });
+      const old = await identityFromSeed(seed, {}, { lazy: true });
+      await idbPut('inbox', 'current', { identityId: old.id, cursor: 7 });
+      useNetwork('mainnet');
+      eq(await loadIdentity(), null, 'no mainnet drive is opened from it');
+      eq(await idbGet('identity', 'current'), null);
+      deepEq((await idbGet('identity', 'testnet')).seed, [...seed], 'the key is kept, whole');
+      eq(await idbGet('inbox', 'current'), null, 'its inbox state moves out of a new drive\'s way');
+      eq((await idbGet('inbox', 'testnet:current')).cursor, 7);
+      const moved = await testnetDrive();
+      ok(moved.fileText.includes(recoveryCode(seed)), 'the key file holds its key');
+      ok(!moved.fileText.includes('Tari address'), 'and no address worked out on this network');
+      eq(moved.fileName, keyFileName(old));
+      // A new drive here, then Delete my drive: the drive set aside stays.
+      await createIdentity({ lazy: true });
+      eq((await idbGet('identity', 'current')).net, 'mainnet', 'a new drive says its network');
+      await forgetIdentity();
+      ok(await testnetDrive(), 'Delete my drive leaves the drive set aside');
+      eq(await idbGet('identity', 'current'), null, 'and erases its own');
+    } finally {
+      restore();
+      useNetwork('esmeralda');
+      for (const key of ['current', 'testnet']) await idbDelete('identity', key);
+      await idbDelete('inbox', 'testnet:current');
+    }
+  }],
+  ['an unmarked drive on a host that moved nowhere is this network\'s, and gets its mark; one from another network is set aside', async () => {
+    const seed = new Uint8Array(32).fill(9);
+    const restore = withConfig({});
+    try {
+      await idbPut('identity', 'current', { v: 2, seed: [...seed], created: '2026-11-01', createdSeq: null, dropIndex: 0, drops: [], keySaved: true });
+      useNetwork('mainnet');
+      const here = await loadIdentity({ lazy: true });
+      ok(here, 'it opens');
+      eq((await idbGet('identity', 'current')).net, 'mainnet');
+      useNetwork('esmeralda');
+      eq(await loadIdentity({ lazy: true }), null, 'marked for the mainnet, it never opens on the testnet');
+      eq((await idbGet('identity', 'testnet')).net, 'mainnet');
+    } finally {
+      restore();
+      useNetwork('esmeralda');
+      for (const key of ['current', 'testnet']) await idbDelete('identity', key);
+    }
+  }],
 ];
+
+// /config as a deployment answers it (only the keys the drive reads), over a stand-in fetch.
+function withConfig(cfg) {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = new URL(new Request(input, init).url);
+    if (url.pathname === '/api/v1/config') return new Response(JSON.stringify(cfg), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: { code: 'not_found', message: 'x' } }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+  };
+  configureApi({ origin: 'https://moved.mutis.test' });
+  return () => { globalThis.fetch = realFetch; configureApi({ origin: '' }); };
+}

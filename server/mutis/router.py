@@ -3,9 +3,10 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from .handlers import (abuse, auth, blobs, canary, chain, courier, drops, folders, invoices, me, pay, seallog,
-                       shares, stats, system, uploads)
+from .handlers import (abuse, auth, blobs, canary, chain, courier, drops, folders, invoices, market, me, pay,
+                       seallog, shares, shop, stats, system, uploads, withdraw)
 from .http_util import PARAM_RE, ApiError
+from . import shop_page
 
 
 @dataclass(frozen=True)
@@ -88,6 +89,28 @@ ROUTER = Router([
     ("POST", f"{V}/p/{{share_id:id}}/claims", pay.create_claim, "pay.claim"),
     ("GET", f"{V}/p/{{share_id:id}}/claims/{{claim_id:claim}}", pay.get_claim, "pay.claim_get"),
     ("POST", f"{V}/p/{{share_id:id}}/claims/{{claim_id:claim}}/demo-pay", pay.demo_pay, "pay.demo_pay"),
+    # A drive's shop of pay links (docs/shop.md), behind features.shop
+    ("GET", f"{V}/me/shop", shop.get_mine, "shop.get"),
+    ("PUT", f"{V}/me/shop", shop.put_mine, "shop.put"),
+    ("DELETE", f"{V}/me/shop", shop.delete_mine, "shop.delete"),
+    ("PUT", f"{V}/me/shop/listings/{{share_id:id}}", shop.put_listing, "shop.list"),
+    ("DELETE", f"{V}/me/shop/listings/{{share_id:id}}", shop.delete_listing, "shop.unlist"),
+    ("GET", f"{V}/shop/{{ref:shopref}}", shop.public, "shop.public"),
+    # The page /shop/<ref> and /sitemap-shops.xml: Caddy sends them here (shop_page.py)
+    ("GET", f"{V}/page/shop/{{ref:shopref}}", shop_page.page, "shop.page"),
+    ("GET", f"{V}/shops/sitemap.xml", shop_page.sitemap, "shop.sitemap"),
+    ("GET", f"{V}/page/market", shop_page.market_page, "market.page"),
+    # The market (docs/market.md), behind features.market: public shops' listings, and asks for a listing's key half
+    ("GET", f"{V}/market", market.browse, "market.browse"),
+    ("POST", f"{V}/market/asks", market.ask, "market.ask"),
+    ("GET", f"{V}/market/asks/{{ask_id:id}}", market.ask_state, "market.ask_get"),
+    ("GET", f"{V}/me/market/asks", market.mine, "market.mine"),
+    ("PUT", f"{V}/me/market/asks/{{ask_id:id}}", market.answer, "market.answer"),
+    # Withdrawing earnings (docs/withdraw.md), behind features.withdraw
+    ("GET", f"{V}/me/sales/outputs", withdraw.outputs, "withdraw.outputs"),
+    ("POST", f"{V}/me/sales/outputs/{{utxo_id:substate}}/gone", withdraw.gone, "withdraw.gone"),
+    ("POST", f"{V}/me/withdrawals", withdraw.submit, "withdraw.submit"),
+    ("POST", f"{V}/me/withdrawals/{{tx_id:tx}}", withdraw.report, "withdraw.report"),
 
     ("GET", f"{V}/blobs/{{ticket:ticket}}", blobs.download, "blobs.get"),
     ("POST", f"{V}/blobs/{{ticket:ticket}}/done", blobs.done, "blobs.done"),

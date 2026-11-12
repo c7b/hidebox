@@ -30,6 +30,11 @@ pass, no transaction id of a visitor's send.
 | [`2026-10-20/upgrade-0.47.0/`](2026-10-20/upgrade-0.47.0/) | The 0.47.0 outage and the walletd upgrade drill: the same balances, checkpoints and notarizations committing again, E-13, E-25 and E-29 passing |
 | [`2026-10-21/tagline-2/`](2026-10-21/tagline-2/) | The new tagline as served: the hero before and after at 1440 and 390, its lines measured from 360 to 1440 px, the two cards and the film's end card |
 | [`2026-10-21/packs-small/`](2026-10-21/packs-small/) | Packs of 256 MiB and 1 GiB: the drive's Get more space at 1440 and the suites ([`../review/packs-small.md`](../review/packs-small.md)) |
+| [`2026-11-08/launch-rehearsal2/`](2026-11-08/launch-rehearsal2/) | The mainnet launch trigger run unattended on Esmeralda with the V2 build: template and log on chain, the template byte for byte against `template/dist-v2/` |
+| [`2026-11-12/mainnet-launch/`](2026-11-12/mainnet-launch/) | SealLog published on the Ootle mainnet by the launch trigger and its log made: the trigger's evidence, the template byte for byte against `template/dist-v2/`, and the raw indexer answers |
+| [`2026-11-10/mvp-november-3/`](2026-11-10/mvp-november-3/) | The November MVP before its deploy: every gate, and the E2E suite on a rehearsal of the tree on Esmeralda, chain scenarios and E-05 included |
+| [`2026-11-12/cutover-rehearsal/`](2026-11-12/cutover-rehearsal/) | hidebox.app's move to the mainnet rehearsed on three hostnames: every link class, the drive handover, the rollback, the chain scenarios on Ootle 0.53.2 ([`../cutover.md`](../cutover.md)) |
+| [`2026-11-12/suites/`](2026-11-12/suites/) | Every gate at the release head of the November MVP |
 
 Elsewhere: [`../../deploy/evidence/`](../../deploy/evidence/) (the deploy lane's first, fix and integration passes,
 cited by `deploy/ACCEPTANCE.md`) and [`../../web/app/tests/evidence/`](../../web/app/tests/evidence/) (the app

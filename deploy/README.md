@@ -288,8 +288,26 @@ packs are sold), `/api/v1/stats` `packs_sold_public` close to `packs_cap_public`
 `python3 -I tests/e2e/smoke.py --origin … --manifest <dist manifest> --api`. Restart the L1 wallet's
 tmux session only if a burn is planned.
 
+## An instance beside production
+
+A second deployment on the same server (the mainnet one) is an *instance*: `deploy/scripts/instance.py` names its
+config, tree, users, walletds, units and Caddy site, all under its own names, and renders its units and site from
+production's files, so production's hardening applies to it and nothing of production's is reachable from it.
+
+```sh
+sudo bash deploy/scripts/provision-instance.sh --name NAME --origin https://HOST --api-port 8788 \
+  --walletd mainnet:5101 --walletd esmeralda:5102 --walletd-bin esmeralda:/opt/tari/bin/tari_ootle_walletd-<version>
+deploy/scripts/deploy.sh <ref> --instance NAME      # then: systemctl enable --now mutis-NAME-api mutis-NAME-chain
+sudo mutis-admin-NAME check-config
+```
+
+The instance starts as staging on Esmeralda (`deploy/config/instance.toml.example`: a banner, no search indexing,
+no test money, no judge passes). Its Caddy site is validated inside the whole live configuration before it is
+installed (`deploy/scripts/caddy-site.sh`); production's Caddyfile is never written by an instance's deploy.
+
 ## Playbooks
 
 - [ootle/setup-accounts.md](ootle/setup-accounts.md): accounts, funding, SealLog, keys (what exists and how it was made)
 - [ootle/reset-playbook.md](ootle/reset-playbook.md): the testnet forgot us
 - [ootle/upgrade-drill.md](ootle/upgrade-drill.md): new walletd / indexer / ootle-wasm
+- [ootle/mainnet-launch.md](ootle/mainnet-launch.md): the mainnet instance on launch day; [ootle/burn-mainnet.md](ootle/burn-mainnet.md): the owner's burn

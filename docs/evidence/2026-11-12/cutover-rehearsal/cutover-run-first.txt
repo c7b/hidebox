@@ -1,0 +1,16 @@
+First run (2026-11-12 00:50 UTC), before the fixes it found: 13 of 15
+ok   before: the host is the testnet  (esmeralda, legacy_origin None)
+ok   before: test links made  (text, share, pay link, drop, judge pass)
+ok   the switch ran  (exit 0, 373 s)
+ok   after: the host is the new deployment, naming the testnet as legacy_origin  (esmeralda, https://cut.hidebox.app)
+ok   after: the testnet answers at its own host  (https://cut-testnet.hidebox.app)
+ok   a text secret (/s/, Once) opens on the testnet with its key  (opened at https://cut-testnet.hidebox.app/s/mIRixcLrtMbVqu3Jf77E0g)
+FAIL a drive's file link (/s/) opens on the testnet with its key  (opened at https://cut-testnet.hidebox.app/s/v9MJhdwfF8GzX2WCWhTpMA)
+ok   a pay link (/p/) shows its page on the testnet, the half key kept  (wait at https://cut-testnet.hidebox.app/p/NEbbW9-FXu64kbuu9wfE2w)
+ok   a drop link (/d/) shows its page on the testnet
+ok   a judge pass link lands on the testnet's /judges, saved there
+ok   /verify#<share id> of a testnet link goes to the testnet's /verify  (https://cut-testnet.hidebox.app/verify)
+FAIL drive: the handover  (CdpError: timed out after 60 s waiting for: (() => { const e = document.querySelector("[data-testid=\"drive-moved\"]"); return !!e && e.getClientRects().length > 0; })() @ 257)
+ok   a link made on the host after the switch stays on the host  (opened at https://cut.hidebox.app/s/ElejLOZJRxa7hf6-8zVEGw)
+ok   the old mainnet host answers 308 to the host, path and query kept  (308 https://cut.hidebox.app/drive?from=t521)
+ok   …on plain HTTP too  (308 https://cut.hidebox.app/x)

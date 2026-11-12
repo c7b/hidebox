@@ -113,6 +113,7 @@ def toml_value(value) -> str:
 # tag would become markup in this build too, and the comparison would vouch for it (security-audit-1). The
 # same rule as tools/build.py's, applied here because an older tag's build.py doesn't have it.
 PLAIN_URL = re.compile(r"https://[A-Za-z0-9.-]+(:\d+)?(/[A-Za-z0-9._~%/+-]*)?(#[A-Za-z0-9._~/-]*)?")
+TESTNET_ORIGIN = re.compile(r"https://[a-z0-9.-]+")    # tools/build.py's rule for testnet_origin
 
 
 def unsafe_settings(cfg: dict) -> list[str]:
@@ -124,15 +125,26 @@ def unsafe_settings(cfg: dict) -> list[str]:
         value = cfg.get(key)
         if value not in (None, "") and not (isinstance(value, str) and PLAIN_URL.fullmatch(value.rstrip("/"))):
             out.append(f"/api/v1/config {key} is not a plain https URL: {str(value)[:80]!r}")
+    testnet = cfg.get("testnet_origin")
+    if testnet not in (None, "") and not (isinstance(testnet, str) and TESTNET_ORIGIN.fullmatch(testnet)):
+        out.append(f"/api/v1/config testnet_origin is not https://host: {str(testnet)[:80]!r}")
+    if "staging" in cfg and not isinstance(cfg["staging"], bool):
+        out.append(f"/api/v1/config staging is not true or false: {str(cfg.get('staging'))[:40]!r}")
+    elif (cfg.get("staging") is True or cfg.get("network") == "mainnet") and not testnet:
+        out.append("/api/v1/config names no testnet_origin, which a staging or mainnet build needs")
     return out
 
 
 def build_config(origin: str, cfg: dict, variant_config: dict) -> str:
     """The mutis.toml the tag is built with: the public settings from /config, then the tables the
     live build's copy variants read, as its manifest records them (only plain names and values)."""
+    # staging and testnet_origin: the instance's build leaves out or fills in the staging banner and the testnet's
+    # links by them (tools/build.py settings(), web/site/tools/variants.py), so a staging or mainnet instance is rebuilt
+    # with its own; a deployment whose /config names neither (production) is built as before.
     lines = [f"{k} = {toml_value(v)}" for k, v in {
         "public_origin": origin, "network": cfg.get("network", "esmeralda"),
         "security_drop_url": cfg.get("security_drop") or "", "repo_url": cfg.get("repo_url", "https://github.com/c7b/hidebox"),
+        "staging": cfg.get("staging") is True, "testnet_origin": cfg.get("testnet_origin") or "",
     }.items()]
     for table in VARIANT_TABLES:
         values = variant_config.get(table)
@@ -285,7 +297,9 @@ def main() -> int:
             print("DIFF", line)
         print(f"verify-deploy: {len(unsafe)} differences; not rebuilding with these values ({origin})")
         return 1
-    print(f"verify-deploy: building with repo_url={cfg.get('repo_url')!r}, security_drop={cfg.get('security_drop')!r}")
+    print(f"verify-deploy: building with repo_url={cfg.get('repo_url')!r}, security_drop={cfg.get('security_drop')!r}, "
+          f"network={cfg.get('network', 'esmeralda')!r}, staging={cfg.get('staging') is True}, "
+          f"testnet_origin={cfg.get('testnet_origin') or None!r}")
     config = build_config(origin, cfg, live.get("variant_config") or {})
     notes: list[str] = []
     with tempfile.TemporaryDirectory(prefix="mutis-verify-") as tmp:

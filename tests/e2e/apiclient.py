@@ -33,9 +33,10 @@ def unb64u(text: str) -> bytes:
     return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
 
 
-def random_address() -> str:
-    """A well-formed Esmeralda address with random keys (accepted by the API, unspendable)."""
-    return ootle_addr.encode(ootle_addr.TESTNET_HRP, secrets.token_bytes(64))
+def random_address(prefix: str = ootle_addr.TESTNET_HRP) -> str:
+    """A well-formed address with random keys (accepted by the API, unspendable), on the network whose prefix
+    (/config address_prefix) is given: Esmeralda's by default."""
+    return ootle_addr.encode(prefix, secrets.token_bytes(64))
 
 
 def leading_zero_bits(digest: bytes) -> int:

@@ -10,10 +10,12 @@ import { concat, u32be, readU32be, utf8 } from './bytes.js';
 import { aesGcmDecrypt, aesGcmEncrypt, hkdf, pbkdf2Sha256, randomBytes } from './crypto.js';
 import { sha256Sync } from './sha256sync.js';
 import { chainUtxos } from './api-locker.js';
-import { idbClear, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
+import { config } from './api.js';
+import { idbClear, idbDelete, idbGet, idbPut, persistStorage, storageAvailable } from './idb.js';
 import { localSet, set as setState } from './store.js';
 import { PBKDF2_ITER } from './password.js';
 import { BRAND } from './i18n.js';
+import { network } from './network.js';
 
 const SALT = 'mutis/v1';
 const DROP_SLOTS = 16;
@@ -92,7 +94,8 @@ export function withOotle(identity) {
 
 function recordOf(identity) {
   const { seed, created, createdSeq, dropIndex, drops, keySaved } = identity;
-  return { v: 2, seed, created, createdSeq, dropIndex, drops, keySaved };
+  // net: the network the drive was made on, so a host that changes networks can tell (docs/cutover.md).
+  return { v: 2, seed, created, createdSeq, dropIndex, drops, keySaved, ...(network() ? { net: network().name } : {}) };
 }
 
 // 'mutis.drive' = 1 while this browser holds a drive: the site's pages paint Open my drive from it
@@ -124,13 +127,60 @@ export async function createIdentity({ lazy = false } = {}) {
 }
 
 export async function loadIdentity({ lazy = false } = {}) {
-  const rec = await idbGet('identity', 'current');
+  let rec = await idbGet('identity', 'current');
+  if (rec?.v === 2 && network() && rec.net !== network().name) rec = await fromAnotherNetwork(rec);
   hasDrive(rec?.v === 2);
   if (!rec || rec.v !== 2) return null;
   const identity = await identityFromSeed(new Uint8Array(rec.seed), rec, { lazy });
   identity.persisted = await persistStorage({ ask: false });
   setState('identity', identity);
   return identity;
+}
+
+// The keys a drive set aside from another network is kept under (a second one only if a second drive ever comes).
+const ASIDE = ['testnet', 'testnet-2'];
+
+// A drive kept in this browser by a deployment on another network. Its record says so (net), or it has no mark and
+// this host took over another deployment (/config legacy_origin): the drives saved here before the move are that
+// deployment's (docs/cutover.md). Such a drive is set aside whole, never deleted and never opened here, where its
+// address and files don't exist: testnetDrive() hands it over. An unmarked record on a host that moved nowhere is
+// this network's, and gets its mark. Without an answer from /config nothing changes, and the next load asks again.
+async function fromAnotherNetwork(rec) {
+  if (!rec.net) {
+    const moved = await config().then((c) => Boolean(c?.legacy_origin), () => null);
+    if (moved === null) return rec;
+    if (!moved) {
+      const marked = { ...rec, net: network().name };
+      await idbPut('identity', 'current', marked);
+      return marked;
+    }
+  }
+  const first = await idbGet('identity', ASIDE[0]);
+  const same = first && first.seed.length === rec.seed.length && [...first.seed].every((b, i) => b === rec.seed[i]);
+  await idbPut('identity', !first || same ? ASIDE[0] : ASIDE[1], { ...rec, setAside: Date.now() });
+  const old = await identityFromSeed(new Uint8Array(rec.seed), rec, { lazy: true });
+  // What the inbox kept for it is that network's too: it moves with the drive, out of a new drive's way.
+  for (const key of ['current', `sales:${old.id}`, `withdrawals:${old.id}`]) {
+    const value = await idbGet('inbox', key);
+    if (value !== null) {
+      await idbPut('inbox', `testnet:${key}`, value);
+      await idbDelete('inbox', key);
+    }
+  }
+  await idbDelete('identity', 'current');
+  return null;
+}
+
+// The drive set aside from another network (fromAnotherNetwork), with its key file: what the handover offers.
+// keys: also the drive itself (its keys come from the seed whatever the network), to tell whether a delivery was
+// sealed for it; never stored, never opened as a drive here.
+export async function testnetDrive({ keys = false } = {}) {
+  const rec = await idbGet('identity', 'testnet').catch(() => null);
+  if (rec?.v !== 2) return null;
+  // The key file from the seed alone: an address worked out here would be this network's, not the drive's.
+  const plain = await identityFromSeed(new Uint8Array(rec.seed), rec, { lazy: true });
+  return { created: rec.created, net: rec.net ?? null, fileName: keyFileName(plain), fileText: keyFileText(plain),
+    ...(keys ? { identity: await identityFromSeed(new Uint8Array(rec.seed), rec) } : {}) };
 }
 
 // Updates the mutable parts of the record (keySaved, drops, dropIndex, createdSeq) and stores them.
@@ -147,7 +197,14 @@ export async function updateIdentity(identity, patch) {
 // sent to), and the drive's id where the key reminder (ui/keyflow.js) and the day's grant answer
 // (lib/wallet.js) kept it.
 export async function forgetIdentity() {
+  // A drive set aside from another network (fromAnotherNetwork) isn't this one: its key stays.
+  const aside = [];
+  for (const key of ASIDE) {
+    const rec = await idbGet('identity', key);
+    if (rec) aside.push([key, rec]);
+  }
   await idbClear('identity');
+  for (const [key, rec] of aside) await idbPut('identity', key, rec);
   await idbClear('inbox');
   for (const key of ['mutis.claims', 'mutis.recent', 'mutis.keyAsked', 'mutis.grant']) localSet(key, null);
   hasDrive(false);
@@ -229,7 +286,7 @@ function fileHeader(identity) {
   const e = identity.safetyCode?.emoji;
   return [
     ...(e ? [`Safety code: ${e.slice(0, 4).join('')} ${e.slice(4, 8).join('')} ${e.slice(8, 12).join('')}`,
-      `Tari address (Esmeralda testnet): ${identity.locker.address}`] : []),
+      `Tari address (${network()?.name === 'mainnet' ? 'Ootle mainnet' : 'Esmeralda testnet'}): ${identity.locker.address}`] : []),
     `Created: ${identity.created}`,
   ];
 }

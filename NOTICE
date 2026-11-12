@@ -3,11 +3,11 @@ Copyright (c) 2026 Cristobal Alanis and the hidebox contributors. MIT License (L
 
 This repository includes or is built with the following third-party work.
 
-1. @tari-project/ootle-wasm 0.52.0 (the official Tari Ootle client cryptography) and
-   @tari-project/ootle-wasm-bor 0.52.0 (the official decoders for the indexers' CBOR values)
-   Files: web/app/vendor/ootle-wasm-0.52.0/ and web/app/vendor/ootle-wasm-bor-0.52.0/ (vendored
+1. @tari-project/ootle-wasm 0.53.2 (the official Tari Ootle client cryptography) and
+   @tari-project/ootle-wasm-bor 0.53.2 (the official decoders for the indexers' CBOR values)
+   Files: web/app/vendor/ootle-wasm-0.53.2/ and web/app/vendor/ootle-wasm-bor-0.53.2/ (vendored
    byte for byte from the npm tarballs, never installed with npm). Source:
-   https://github.com/tari-project/tari-ootle, tag v0.52.0, commit 4ee751c4ee83f75635c958c993af0f3e0e04bfbf.
+   https://github.com/tari-project/tari-ootle, tag v0.53.2, commit 4be6db38fbee738b23624e64ad7ab90a52bc737c.
    ootle_wasm_bg.wasm sha256 29087e5618c4f5e1c94f31f42a00ccf0f33fc634ddece6f79f1cc37557c85725
    ootle_wasm_bg.js   sha256 1b5933930f06b0be346a5bcb2e679a7a486512e61a4f9d1f40dfb94320a9f044
    ootle_wasm_bor_bg.wasm sha256 f22b0e1b7f96769e64731488f8d1e5e09b973af0dd9cd170866f4b21c7b531ee

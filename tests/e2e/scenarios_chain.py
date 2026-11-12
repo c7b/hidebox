@@ -123,8 +123,13 @@ def e10(t: T) -> None:
 def sidecar(t: T, *requests: dict) -> list[dict]:
     """Requests to a fresh copy of the release's verifier sidecar, run as drive (its only user)."""
     lines = "".join(json.dumps({"id": i, **r}) + "\n" for i, r in enumerate(requests)).encode()
-    out = t.env.remote.run("cd /tmp && sudo -u drive env -i MUTIS_API=http://127.0.0.1:8787 "
-                           "/usr/local/lib/mutis/run-sidecar.sh 2>/dev/null", lines)
+    suffix = t.env.remote.suffix
+    if suffix:   # an instance's own copy, as its drive user (run.py --instance); only the canary command reads MUTIS_API
+        command = (f"cd /tmp && sudo -u drive{suffix} env -i /usr/local/lib/mutis{suffix}/run-sidecar.sh "
+                   f"/srv/mutis{suffix}/app/current/sidecar 2>/dev/null")
+    else:
+        command = "cd /tmp && sudo -u drive env -i MUTIS_API=http://127.0.0.1:8787 /usr/local/lib/mutis/run-sidecar.sh 2>/dev/null"
+    out = t.env.remote.run(command, lines)
     return [json.loads(line) for line in out.splitlines() if line.strip()]
 
 
@@ -269,7 +274,7 @@ def e25(t: T) -> None:
     client = apiclient.Client(t.origin)
     _, canary = client.call("GET", "/canary")
     t.check(canary.get("delivery_tx") == entry["delivery_tx"], "/api/v1/canary shows the delivery")
-    t.env.remote.run("sudo systemctl start mutis-evidence.service")
+    t.env.remote.run(f"sudo systemctl start mutis{t.env.remote.suffix}-evidence.service")   # an instance's own unit
     with urllib.request.urlopen(urllib.request.Request(t.origin + "/evidence.json", headers={"User-Agent": "mutis-e2e"}),
                                 timeout=20) as res:
         evidence = json.load(res)
@@ -406,6 +411,10 @@ def e29(t: T) -> None:
 def e30(t: T) -> None:
     import scenarios_drive as drv
     cfg = pay_to_open(t)
+    if not (cfg.get("send_mode") == "direct" and (cfg.get("features") or {}).get("direct_send")):
+        # Relay mode (the mainnet's): a browser's wallet gets no sponsor grant and the pay page offers no Pay from my
+        # drive (web/app/ui/paypage.js), so there is nothing here to pay with.
+        t.skip("pay from my drive needs send_mode = \"direct\" and features.direct_send")
     judge = t.env.remote.admin("judge-pass", "new", "--uses", "4").strip()
     desk = t.actor("desktop", judge_pass=judge)
     desk.goto(t.origin + "/drive?make")
@@ -425,8 +434,13 @@ def e30(t: T) -> None:
     phone.wait_for("pay-browser", 180)
     t.shot(phone, "1-pay-from-drive")
     phone.click("pay-browser")
-    t.check(pay_wait(phone, ("check", "open", "expired", "void", "error"), 600) == "check",
-            f"paid from the drive: it waits for the owner's drive ({pay_steps(phone)})")
+    # With features.away_release our payment checker can tell from the sales view key that the payment is the seller's,
+    # so the page may open before the seller's drive does (web/app/ui/paypage.js); the drive still checks it below.
+    away = bool((cfg.get("features") or {}).get("away_release"))
+    state = pay_wait(phone, ("check", "open", "expired", "void", "error"), 600)
+    t.check(state == "check" or (away and state == "open"),
+            f"paid from the drive: it waits for the owner's drive{', or our payment checker releases it' if away else ''} "
+            f"({state}, {pay_steps(phone)})")
     t.shot(phone, "2-owner-check")
     desk.goto(t.origin + "/drive/earnings")                            # the owner check runs as the drive opens
     t.check(bool(desk.wait("document.querySelector('[data-testid=\"sales-row\"]')?.dataset.check === 'ok'", 300)),

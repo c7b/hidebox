@@ -1573,7 +1573,7 @@ def share_simple_link(t):
     n = t.actor()
     t.check(open_link(n, t.origin + "/s/" + "A" * 22 + "#1" + "A" * 43) == "not-found", "not found")
     shown = n.eval("document.querySelector('[data-testid=\"view-root\"]').innerText")
-    t.check("This link isn't here." in shown and "The server remembers an ended link for 30 days." in shown
+    t.check("This link isn't here." in shown and "The server remembers an ended link for at least 30 days." in shown
             and not re.search(r"\b(we|our|us)\b", shown, re.I), f"not found, in the server's words ({shown[:120]!r})")
 
 

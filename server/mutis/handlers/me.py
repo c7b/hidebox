@@ -38,7 +38,7 @@ def get_me(ctx):
                   "paid_until": identity["paid_until"] if paid_active else None,
                   "trash_bytes": counts["trash_bytes"]},
         # The pack this drive holds (one at a time) and when it can be renewed.
-        "pack": packs.held(identity, ctx.now, ctx.cfg["packs"]["renew_days"]),
+        "pack": packs.held(identity, ctx.now, ctx.cfg["packs"]["renew_days"], quota.pack_table(ctx.cfg["packs"])),
         "files": counts["files"], "folders": counts["folders"],
         "limits": limits_block()[cls],
         "sends_today": identity["sends_today"] if identity["sends_day"] == today else 0,

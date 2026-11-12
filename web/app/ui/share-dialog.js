@@ -17,6 +17,7 @@ import { FEW, FLAG_FOLDER, knownLinks, makeLink, rememberLink, stopLink } from '
 import { h, icon, id, init, lines, openModal, closeModal, toast } from './behaviors.js';
 import { alert, button, closeX, copyButton, endsText, errorAlert, formatTari, itemName, opensText, ruleBadge, safetyGrid, shareButton, shortAddress } from './drive-parts.js';
 import { patchShare } from '../lib/api.js';
+import { testnetLine } from './marks.js';
 import { done, relayWait, steps } from './progress.js';
 
 const coarse = () => matchMedia('(pointer: coarse)').matches;
@@ -177,7 +178,9 @@ function payStep(body, footer) {
   body.append(...[h('p', { class: 'small muted' }, t('sell.price_d')),
     group('price', t('sell.price'), prices.map((p) => choice('price', p, 'coins', t('sell.chip', { price: formatTari(p) }), null, { tari: true }))),
     switchRow('showName', 'eye', t('sell.names'), t('sell.names_d'), { testid: 'pay-names' }),
-    S.firstSale ? alert({ glyph: 'key-round', variant: 'tari', title: t('sell.key_h'), description: t('sell.key'), testid: 'pay-key-note' }) : null].filter(Boolean));
+    S.firstSale ? alert({ glyph: 'key-round', variant: 'tari', title: t('sell.key_h'), description: t('sell.key'), testid: 'pay-key-note' }) : null,
+    // On the mainnet the price is real TARI: the line every money screen carries (C61) says so before the link exists.
+    ctx.cfg.network === 'mainnet' ? testnetLine(ctx.cfg) : null].filter(Boolean));
   footer.append(back('who'), button(t('sell.make'), { glyph: 'coins', testid: 'pay-make', 'data-autofocus': '', onclick: (e) => makePay(e.currentTarget) }));
 }
 

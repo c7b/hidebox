@@ -5,10 +5,12 @@ A folder link's ticket (`scope = 'tree'`, 16-drive-architecture §2.3) serves `?
 that is, when it is asked for, a ready descendant of the ticket's folder outside the Trash: a file moved
 out or deleted mid-visit is refused at once (403 `not_in_folder`). Its byte cap counts across files.
 """
+import itertools
 import re
 
-from .. import codec, db, items, tree
+from .. import codec, db, items, logsafe, tree
 from ..http_util import PARAM_RE, ApiError, Response
+from ..s3 import S3Error
 
 _RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 
@@ -32,19 +34,35 @@ def parse_range(header: str | None, size: int) -> tuple[int, int] | None:
 
 
 def ranged(ctx, item_id: str, size: int, filename: str, cache: str, charge=None) -> Response:
-    """Stream an item's ciphertext, honouring a Range header. `charge(length)` may refuse with an ApiError."""
+    """Stream an item's ciphertext, honouring a Range header. `charge(length)` may refuse with an ApiError.
+
+    The first slice is read before anything is charged or sent, so a remote store that is down (docs/storage.md)
+    answers 503 `store_unavailable` instead of a cut-off body, and costs the ticket nothing."""
     span = parse_range(ctx.req.header("Range"), size)
     start, end = span if span else (0, size - 1)
     length = end - start + 1
+    body = ctx.app.blobs.read_range(item_id, start, length)
+    try:
+        first = next(body, b"")
+    except S3Error as e:
+        if e.status == 404 and e.code == "NoSuchKey":     # the store has lost it: no retry will bring it back
+            logsafe.event("api.store_object_missing", "critical")
+            raise ApiError(404, "not_found", "This file is missing from our storage.") from None
+        logsafe.event("api.store_read_failed", "warning")
+        raise ApiError(503, "store_unavailable", "This file can't be fetched right now. Try again in a minute.",
+                       retry_after=30) from None
     if charge:
-        charge(length)
+        try:
+            charge(length)
+        except BaseException:
+            body.close()
+            raise
     headers = {"Content-Type": "application/octet-stream", "Accept-Ranges": "bytes", "Cache-Control": cache,
                "Content-Disposition": f'attachment; filename="{filename}"'}
     if span:
         headers["Content-Range"] = f"bytes {start}-{end}/{size}"
-    blobs = ctx.app.blobs
     return Response(206 if span else 200, headers=headers, length=length,
-                    stream=lambda: blobs.read_range(item_id, start, length))
+                    stream=lambda: itertools.chain((first,) if first else (), body))
 
 
 def _ticket(ctx, ticket: str):

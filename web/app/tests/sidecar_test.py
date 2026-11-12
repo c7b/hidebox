@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import shutil
 import statistics
 import subprocess
@@ -22,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 APP = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 NODE = shutil.which("node") or "/usr/bin/node"
 FLAGS = ["--experimental-permission", "--disallow-code-generation-from-strings"]
-WASM_SHA256 = "29087e5618c4f5e1c94f31f42a00ccf0f33fc634ddece6f79f1cc37557c85725"
+WASM_SHA256 = "072f77c11de0ab34e0cae1cc9ffc3f732995fbed3ffb03ddfdb7027b1164c3ae"
 results = []
 SHARE_ID = base64.urlsafe_b64encode(bytes(range(16))).rstrip(b"=").decode()  # ids are b64u of 16 bytes
 
@@ -88,10 +89,11 @@ class FakeApi(BaseHTTPRequestHandler):
 
 
 class Sidecar:
-    def __init__(self, app_dir, api):
+    def __init__(self, app_dir, api, network=None):
+        env = {"MUTIS_API": api, **({"MUTIS_NETWORK": network} if network else {})}
         self.p = subprocess.Popen([NODE, *FLAGS, f"--allow-fs-read={app_dir}", os.path.join(app_dir, "sidecar", "sidecar.mjs")],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                  env={"MUTIS_API": api}, text=True)
+                                  env=env, text=True)
         self.next_id = 0
 
     def ask(self, cmd, **fields):
@@ -135,6 +137,28 @@ def main():
     check("selftest: real outputs open, every forgery is rejected (G4)", st["ok"] and st["passed"],
           "; ".join(f"{c['name'][:48]}={'ok' if c['passed'] else 'NO'}" for c in st.get("cases", [])))
 
+    # The chain worker trusts the watch-only check only on a selftest that passes with its cases (chain_worker
+    # WATCH_CASES_MIN), on the network it runs: the mainnet's too, where the frozen Esmeralda outputs don't apply.
+    WATCH_CASES_MIN = int(re.search(r"^WATCH_CASES_MIN = (\d+)", open(os.path.join(APP, "..", "..", "server", "mutis", "chain_worker.py"),
+                                                                     encoding="utf-8").read(), re.M)[1])
+    main = Sidecar(APP, api, network="mainnet")
+    try:
+        mst = main.ask("selftest")
+    finally:
+        main.close()
+    watch = [c for c in mst.get("cases", []) if c["name"].startswith(("watch-only", "ristretto255"))]
+    check("selftest on the mainnet: passed, with the watch-only cases (away_release can run there)",
+          mst["ok"] and mst["passed"] and len(watch) >= WATCH_CASES_MIN and all(c["passed"] for c in watch),
+          f"{len(watch)} watch cases; failed: {[c['name'] for c in mst.get('cases', []) if not c['passed']]}")
+    # The same self-test on the mainnet, from the security pass: it says it runs there, and the fresh output is
+    # checked with the mainnet's byte.
+    main = Sidecar(APP, api, network="mainnet")
+    mst = main.ask("selftest")
+    check("selftest on the mainnet: every case passes there too, the fresh output with the mainnet's byte",
+          main.ask("hello").get("network") == "mainnet" and mst["ok"] and mst["passed"]
+          and any(c["name"].endswith("on mainnet") and c["passed"] for c in mst.get("cases", [])),
+          "; ".join(c["name"][:48] for c in mst.get("cases", []) if not c["passed"]))
+    main.close()
     own = json.load(open(os.path.join(APP, "sidecar", "selftest.json"), encoding="utf-8"))["ownership"]
     otk = {n: sc.ask("oneTimeKey", owner_sk=own["owner_sk"], view_sk=own["view_sk"], nonce=own[n]["nonce"])
            for n in ("genuine", "not_ours")}
@@ -143,6 +167,20 @@ def main():
           and otk["not_ours"]["ok"] and otk["not_ours"].get("public_key") != own["not_ours"]["auth_key"])
     bad = sc.ask("oneTimeKey", owner_sk=own["owner_sk"], view_sk=own["view_sk"], nonce="ff" * 32)
     check("oneTimeKey: a nonce that isn't a point is refused", not bad["ok"] and bad["error"] == "bad_point", bad.get("error", ""))
+
+    # features.away_release: the same check from the view key and the address alone (no owner key).
+    pub = sc.ask("newKeys")
+    kat_address = own["address"]      # the KAT's keys' Esmeralda address (its owner key's public half, its view key)
+    watch = {n: sc.ask("watchOneTimeKey", view_sk=own["view_sk"], address=kat_address, nonce=own[n]["nonce"])
+             for n in ("genuine", "not_ours")}
+    check("watchOneTimeKey: the view key and the address derive the genuine output's one-time key, not the other one's",
+          watch["genuine"].get("public_key") == own["genuine"]["auth_key"]
+          and watch["not_ours"]["ok"] and watch["not_ours"].get("public_key") != own["not_ours"]["auth_key"])
+    for name, args, code in (("another address's view key", dict(view_sk=pub["view_sk"], address=kat_address), "bad_key"),
+                             ("a nonce that isn't a point", dict(view_sk=own["view_sk"], address=kat_address, nonce="ff" * 32), "bad_point"),
+                             ("an address that isn't one", dict(view_sk=own["view_sk"], address="otl_esm_1nope"), "bad_request")):
+        r = sc.ask("watchOneTimeKey", **{"nonce": own["genuine"]["nonce"], **args})
+        check(f"watchOneTimeKey: refused with {name}", not r["ok"] and r["error"] == code, r.get("error", ""))
 
     wallet_rows = [r for r in wrap["real_outputs"] if r["owner"] == "gate wallet"]
     mixed = [{k: r[k] for k in ("id", "nonce", "enc")} for r in wrap["real_outputs"]] + [{k: c[k] for k in ("id", "nonce", "enc")} for c in wrap["crafted"]]
@@ -230,7 +268,7 @@ def main():
         tampered = os.path.join(tmp, "app")
         for d in ("lib", "sidecar", "vendor"):
             shutil.copytree(os.path.join(APP, d), os.path.join(tampered, d))
-        wasm = os.path.join(tampered, "vendor", "ootle-wasm-0.52.0", "ootle_wasm_bg.wasm")
+        wasm = os.path.join(tampered, "vendor", "ootle-wasm-0.53.2", "ootle_wasm_bg.wasm")
         data = bytearray(open(wasm, "rb").read())
         data[len(data) // 2] ^= 1
         open(wasm, "wb").write(bytes(data))

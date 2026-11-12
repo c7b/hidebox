@@ -1,0 +1,6 @@
+legacy-ids.py export, read-only, from production's database into a root-only scratch folder (2026-11-12 01:20 UTC):
+{"added": {"d": 76, "p": 21, "s": 1038, "verify/tx": 3645}}
+legacy-ids.py check (names only, nothing opened):
+in the set: d/3w7m8k2v5t (the security drop)
+in the set: the three newest canary shares (s/<id>)
+in the set: two pay links (p/<id>)

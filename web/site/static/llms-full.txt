@@ -207,7 +207,7 @@ Files shared without a drive have their own reserved space, and small files have
 ### How paying works
 We credit a payment only after our wallet sees it and a Tari-run public indexer confirms it exists on the chain. The amount is the one our wallet reads. You pay our receiving address with this invoice's reference inside it; the reference travels in the payment's encrypted memo, so the chain doesn't show which invoice was paid, or by whom. The network fee is public on the chain. The amount and who paid are not. For space you rent from us we see the amount, because we're the seller. Nobody else does.
 Testnet. tTARI has no monetary value. These prices are real logic with play money.
-Paid features stay on the testnet until our code has been reviewed.
+The Ootle mainnet is live; {{BRAND}} runs there as a beta, with real TARI.
 
 ## Receipts on the Tari chain
 A link that ends on a file you keep gets no receipt: the file is still in your drive.
@@ -357,8 +357,13 @@ This is the complete list, from our schema. Each link also has a “What we know
 | meta | Server settings and counters, such as when the last file was locked and which file is our hourly test. | Overwritten as they change.
 | sellers | For paid links: a drive's sales address, the key that lets our payment checker see payments to it (sealed to keys only our chain worker holds), and how far the checker has read. | Empty until paid links are switched on.
 | paid_shares | One row per paid link: its price; our half of its key, which we erase when the link ends; its encrypted preview; how many views and how long a buyer gets; whether it is paused. | Empty until paid links are switched on.
+| shops | For a drive that turns on a shop: a random id, the address name its owner picked (and that name with look-alike letters merged, so no other shop can take one that reads the same), the name and bio its owner wrote to publish, private or public, the shop's key wrapped so only that drive opens it, and a hash of the token that reads a private shop. Never the shop's key, private or public. | Until its owner turns the shop off or deletes the drive. Empty until shops are switched on.
+| shop_listings | One row per listed paid link: the title and line its owner wrote, file or folder, its padded size and price, and its half of the link's key sealed with the shop's key, which we never hold. | Deleted when it is taken off, when its link ends, or with its shop.
+| market_asks | One row per ask in the market: the listing asked about, a key pair made for that ask alone (its public halves), a hash of the token that reads it, and, once the seller's drive answers, the listing's half of its key sealed to that pair, which we can't open. The drive answers anyone who asks, so we, who hold the other half, could open a public listing by asking for it, as could anyone with a copy of our database: list in a public shop only what you'd sell to anyone. | Up to a week waiting, a week after its answer, or until its listing leaves the market. Empty until the market is switched on.
+| shop_name_holds | A shop name given up (renamed, or the shop turned off), with the drive it belonged to, so nobody else can take it for a while. | About a month.
 | claims | One row per try to buy: a random id that is also the payment reference; the SHA-256 of the buyer's claim token; the address to pay; the price and what has arrived; its status; when it was made, paid, opened and when it expires. | Empty until paid links are switched on.
-| sale_payments | Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it. | Empty until paid links are switched on.
+| sale_payments | Each chain output paid to a sales address: its id, its value, the claim it paid and when we saw it; whether it is the owner's to spend, and who checked (our payment checker or the owner's drive); once its owner withdraws it, which withdrawal spent it and when. | Empty until paid links are switched on.
+| sales_change | What a withdrawal sent back to its drive's sales address: the output's id, its value as the drive told us, the withdrawal that made it and the one that spent it. Never where the rest went. | Until the drive is deleted. Empty until withdrawals are switched on.
 
 ### What we publish
 Our live numbers (/api/v1/stats) are public: the free quota; our disk's size and free space, rounded; whether uploads or the Tari features are paused; how many drives were active recently, once there are enough of them; and how many minutes ago the latest file finished uploading, to the minute.

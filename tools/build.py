@@ -37,12 +37,12 @@ BRAND = "hidebox"
 DEFAULT_CONFIG = ROOT / "deploy" / "config" / "mutis.toml.example"
 HOLDING = ROOT / "deploy" / "holding"
 
-# spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.52.0 build, and of ootle-wasm-bor.
+# spec §3.3 step 7 (verified in 03 §6.1): the two files of the official ootle-wasm 0.53.2 build, and of ootle-wasm-bor.
 PINNED = {
-    "ootle-wasm-0.52.0/ootle_wasm_bg.wasm": "29087e5618c4f5e1c94f31f42a00ccf0f33fc634ddece6f79f1cc37557c85725",
-    "ootle-wasm-0.52.0/ootle_wasm_bg.js": "1b5933930f06b0be346a5bcb2e679a7a486512e61a4f9d1f40dfb94320a9f044",
-    "ootle-wasm-bor-0.52.0/ootle_wasm_bor_bg.wasm": "f22b0e1b7f96769e64731488f8d1e5e09b973af0dd9cd170866f4b21c7b531ee",
-    "ootle-wasm-bor-0.52.0/ootle_wasm_bor_bg.js": "b7d668153c3ef4056030c3cc1eeb1828387e114a3747669f5cd94c4542a53b0b",
+    "ootle-wasm-0.53.2/ootle_wasm_bg.wasm": "072f77c11de0ab34e0cae1cc9ffc3f732995fbed3ffb03ddfdb7027b1164c3ae",
+    "ootle-wasm-0.53.2/ootle_wasm_bg.js": "1b5933930f06b0be346a5bcb2e679a7a486512e61a4f9d1f40dfb94320a9f044",
+    "ootle-wasm-bor-0.53.2/ootle_wasm_bor_bg.wasm": "61dca2064ef9e993a59c0ffa942f136bb4f113a5a80e580b39d04e5c3a24f0ce",
+    "ootle-wasm-bor-0.53.2/ootle_wasm_bor_bg.js": "b7d668153c3ef4056030c3cc1eeb1828387e114a3747669f5cd94c4542a53b0b",
 }
 # Only these are ever copied into dist/ (an allow-list: notes, reviews, sources and tests never leak).
 SERVED_EXT = {".html", ".js", ".mjs", ".css", ".wasm", ".svg", ".png", ".ico", ".webp", ".avif", ".jpg", ".woff2",
@@ -98,7 +98,7 @@ def load_config(config_path: Path) -> dict:
 # open a tag. tools/verify-deploy.py rebuilds with the deployment's own values, so a value that could add
 # markup would make that markup part of the "clean" build it compares against (security-audit-1).
 PLAIN_URL = re.compile(r"(https://[A-Za-z0-9.-]+(:\d+)?|http://127\.0\.0\.1:\d+)(/[A-Za-z0-9._~%/+-]*)?(#[A-Za-z0-9._~/-]*)?")
-NETWORKS = ("esmeralda",)
+NETWORKS = ("esmeralda", "mainnet")
 
 
 def settings(cfg: dict, origin: str | None) -> dict:
@@ -113,7 +113,14 @@ def settings(cfg: dict, origin: str | None) -> dict:
     for name, value in values.items():
         if not (isinstance(value, str) and PLAIN_URL.fullmatch(value)):
             raise BuildError(f"{name.lower()} must be a plain https URL: {str(value)[:80]!r}")
-    return {"ORIGIN": origin, "NETWORK": network.capitalize(), **values, "BRAND": BRAND}
+    # The testnet deployment a staging build names as the live service and a mainnet build as the contest entry.
+    testnet = cfg.get("testnet_origin", "") or ""
+    if testnet and not re.fullmatch(r"https://[a-z0-9.-]+", testnet):
+        raise BuildError(f"testnet_origin must be https://host: {testnet[:80]!r}")
+    if (cfg.get("staging") or network == "mainnet") and not testnet:
+        raise BuildError("testnet_origin must name the testnet deployment on staging and on the mainnet")
+    return {"ORIGIN": origin, "NETWORK": network.capitalize(), **values, "BRAND": BRAND,
+            "TESTNET_ORIGIN": testnet, "TESTNET_HOST": testnet.removeprefix("https://")}
 
 
 def check_brand(web: Path) -> None:
@@ -381,6 +388,9 @@ def build(web: Path, dist: Path, release: Path, cfg: dict, values: dict, state: 
     copy_sidecar(web, release)
     process_files(dist, web / "shared" / "partials", values | {
         "GIT_SHA": state["sha"], "VERSION": state["version"], "BUILD_DATE": state["date"]})
+    if not holding:
+        import variants          # on sys.path since set_variants(): the inlined partials' variants (network, staging)
+        variants.after_includes(dist, cfg)
     names = fingerprint(dist)
     integrity(dist)
     sitemap(dist, pages, values["ORIGIN"], state["date"])

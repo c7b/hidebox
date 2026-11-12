@@ -1050,6 +1050,25 @@ outside this pass.
 Suites (`sec/nov09`, temporary files on a real disk): server 395 OK (5 skipped), deploy 136 OK, lint PASS, check-copy
 PASS, build OK. Not deployed (the integrator's).
 
+### On the mainnet instance (`sec/nov09-mainnet`, cut from `launch/mainnet`)
+
+Everything above, and four more that exist only where withdrawals and the choice of network do.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| 12 | A withdrawal's output commitment written as a CBOR integer n made the parse allocate n bytes, and their hex, before its length was checked: one 153-byte envelope took the API past its memory limit (under the unit's 1 GiB the process is killed and restarted, and each restart forgets the limits held in memory), and 2^62 answered 500 | any drive | A commitment is 32 bytes before anything is made from it; every request is counted before its envelope is read (60 an hour per drive, 120 per network; the 12 an hour still count withdrawals); a `change` value longer than 19 digits is refused before it is read as a number | `server/tests/test_withdraw.py` `test_an_output_commitment_that_isnt_32_bytes_is_refused_before_anything_is_made_from_it`, `test_every_request_is_counted_before_its_envelope_is_read` |
+| 13 | Which drive a payment is for is known only through its claim, its link and the link's file, and their notes were purged 30 days after the link ended: settled money not yet withdrawn left Earnings, and `POST /me/withdrawals` answered 409 for it | nobody: it happened by itself | A pay link that still holds a payment our server vouches for, not yet spent by a committed withdrawal, keeps its note, and its file's, until that money is withdrawn; of such a link only the claims that money came through stay, and none of its opens. A payment the payer kept, or one never checked, holds nothing back. No schema change | `server/tests/test_withdraw.py` `NotesOfLinksThatHoldMoney` |
+| 14 | `chain.walletd_wrong_network` and `chain.sidecar_wrong_network` were not events `logsafe` writes: a walletd or a sidecar on another network stopped the worker as it should, but the refusal raised from the logger and the journal only said `chain.loop_error` | (an operator's mistake) | Both are in the list; the refusals raise what their callers expect | `server/tests/test_network.py` `WrongNetworkIsSaid` |
+| 15 | The daily evidence payment is test money; on the mainnet the worker queued its invoice and job all the same, every day, and the job failed on a budget of nothing | (nobody) | The worker queues none there | `server/tests/test_network.py` `test_no_daily_evidence_payment_is_queued` |
+
+Finding 13 keeps some notes longer than `retention.tombstone_days`: those of pay links whose money hasn't been
+withdrawn. The pages and `docs/withdraw.md` that give the 30 days don't say so yet; they are outside this pass.
+
+Suites (`sec/nov09-mainnet`, temporary files on a real disk): server 451 OK (5 skipped), deploy 175 OK, lint PASS,
+check-copy PASS, build OK. `test_the_scan_starts_where_the_oldest_waiting_claim_was_made` failed once in several runs,
+as it does about one run in eight on `main` without this pass (a decoy's timing); it was left as it is. Not deployed
+(the integrator's).
+
 ## Security pass on the browser (2026-11-09)
 
 The same audit, read from the other side: `web/app`, `web/site`, `web/shared`, the vendored library and what the build
@@ -1101,3 +1120,31 @@ and passed alone. Site 46 of 47 in the suite run: `motion: reveals` counts what 
 page in a headless browser, failed there and in one of four runs alone, and nothing in this pass touches it. Not run
 here: `sidecar_test.py` (it starts Node with a permission flag Node 26 no longer takes). Not deployed (the
 integrator's).
+
+### The browser on the mainnet instance (`sec/nov09-mainnet-web`, merged into `sec/nov09-mainnet`)
+
+Everything above, and what exists only where the network is a choice and earnings can be withdrawn.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| W-02 | The page took its network from the first `/config` request, once; when that one failed and the page's own later request succeeded, a mainnet page ran on Esmeralda's byte and prefix for its lifetime. With that byte the owner check derives another one-time key for every real payment and voids it; the money screens read "test money" | nobody: one failed request (an API restart) | The app's pages name their network in their HTML (`<meta name="mutis-network">`, filled by the build). A page without the tag has no network until `/config` names one; if the two disagree it has none. `NETWORK_BYTE` is null while unknown, `ready()` waits for the network, and the byte reaches the library only through `networkByte()`, which throws rather than let a null pass as 0, the mainnet's | `web/app/tests/ootle.test.js` "a first /config that fails doesn't leave the page on Esmeralda" |
+| W-07 | The withdraw confirm step sets apart the first and last six characters of the address to check; the prefix was read as two words (`otl_esm_1`), so a mainnet address (`otl_1…`) showed its prefix and one character | (a clipboard that swaps an address) | The prefix is `otl_1` or `otl_esm_1`, in `addressParts` and both `shortAddress` helpers | `withdraw.test.js` "the address" |
+| W-12 | The key file called a mainnet address "Esmeralda testnet"; `/verify` linked a mainnet transaction to Esmeralda's indexer page | (nobody) | The key file says "Ootle mainnet" there; `/verify` links that page only on Esmeralda and names the indexer without a link elsewhere (the repository names no mainnet page for it) | `identity.test.js` "the key file names the network" |
+| | A withdrawal that never said how it ended was settled from its input's answer: any 404 was reported as commit, and any answer at all, a proven spend included, as reject | nobody: an indexer that lags, or a withdrawal that committed after its tab closed | The answer is read: shown unspent is reject, proven spent is commit, a 404 or an answer nothing can read settles nothing and is asked about again | `withdraw.test.js` "a withdrawal that never said how it ended is settled on evidence" |
+
+| | The sidecar's self-test answered `passed: false` with `MUTIS_NETWORK=mainnet`: its ownership known answer was made on Esmeralda, and the network's byte is part of a one-time key, so the genuine output read as not ours. Nothing in the server reads that answer (the worker asks `hello` and checks the network there); it is the operator's check in the upgrade drill | (nobody) | The known answer is derived with the byte it was made with on any network, and a fresh output for the sidecar's own keys is checked on the network it runs on | `web/app/tests/sidecar_test.py` "selftest on the mainnet" |
+
+The shop's link and its Buy links are built on the page's own origin too (W-04), and the test pages that are no built
+pages (`tests/run.js`, the bench, the chain gate) name Esmeralda themselves.
+
+Sentences that are no longer true on a mainnet build and are the owner's to rewrite, listed for him and left as they
+are: `SECURITY.md` ("Esmeralda testnet. tTARI has no monetary value"), `/made` ("Test payments (our demo wallet paying
+our own invoice)", "One runtime dependency"), and the footer's line for the testnet site after 2026-11-11.
+
+Suites (`sec/nov09-mainnet` with both halves merged, temporary files on a real disk; Node 26 on the test machine):
+server 451 OK (5 skipped), deploy 175 OK, lint PASS, check-copy PASS, the core suites 189/189 under Node and in
+headless Chromium (105/105 without WebAssembly), `lint_core.py` 1191/1191, the vectors' cross-check 97/97, the library
+against `mutis-api --dev` 12/12, site 48 of 48, both builds OK (the app's pages say Esmeralda in one and Mainnet in
+the other). The app's UI suite ran whole, its 76 scenarios ten at a time: 1,437 of 1,437 checks. Not run here:
+`sidecar_test.py` whole (Node 26; with that Node's flag name its self-test checks, the mainnet one among them, pass).
+Not deployed (the integrator's).

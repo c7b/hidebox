@@ -1,0 +1,34 @@
+ok   before: the host is the testnet  (esmeralda, legacy_origin None)
+ok   before: the drive's record has no network mark, as the October app writes it  (True)
+ok   before: test links made  (text, share, pay link, drop, judge pass)
+cutover: kept 4 files in /var/backups/mutis-cutover-20261112T005909Z
+cutover: frozen set {"added": {"s": 3, "p": 1, "d": 1, "verify/tx": 0}, "total": {"s": 9, "p": 2, "d": 2, "verify/tx": 0}}
+cutover: both configs check
+cutover: the whole Caddy configuration validates with the move
+cutover: installed; Caddy reloaded
+cutover: restarted mutis-cutt-api
+cutover: restarted mutis-cutt-chain
+cutover: restarted mutis-mvp-api
+cutover: restarted mutis-mvp-chain
+cutover: frozen set again {"added": {"s": 0, "p": 0, "d": 0, "verify/tx": 0}, "total": {"s": 9, "p": 2, "d": 2, "verify/tx": 0}}
+cutover: done; rollback: cutover.py rollback --from /var/backups/mutis-cutover-20261112T005909Z
+rebuilt mvp for its new host: == deployed 88263e8f168f0727fd3e4b07507979bb47d0a837-c674bde2b to https://cut.hidebox.app
+rebuilt cutt for its new host: == deployed 88263e8f168f0727fd3e4b07507979bb47d0a837-c419427c8 to https://cut-testnet.hidebox.app
+ok   the switch ran  (exit 0, 383 s)
+ok   after: the host is the new deployment, naming the testnet as legacy_origin  (esmeralda, https://cut.hidebox.app)
+ok   after: the testnet answers at its own host  (https://cut-testnet.hidebox.app)
+ok   a text secret (/s/, Once) opens on the testnet with its key  (opened at https://cut-testnet.hidebox.app/s/AaUiMs5GGOlRIz4ho5o3zQ)
+ok   a drive's file link (/s/) opens on the testnet with its key  (opened at https://cut-testnet.hidebox.app/s/YNbilXspbjfdZEfoVFS60Q)
+ok   a pay link (/p/) shows its page on the testnet, the half key kept  (wait at https://cut-testnet.hidebox.app/p/IKNh8o6LizsLLlj4zgpgmw)
+ok   a drop link (/d/) shows its page on the testnet
+ok   a judge pass link lands on the testnet's /judges, saved there
+ok   /verify#<share id> of a testnet link goes to the testnet's /verify  (https://cut-testnet.hidebox.app/verify)
+ok   the drive saved on the host gets the handover screen, not a mainnet drive
+ok   its key file holds the key, and no address worked out on the new network
+ok   the key file opens the same drive on the testnet, with its file
+ok   back on the host, the drive set aside is still offered
+ok   a link made on the host after the switch stays on the host  (opened at https://cut.hidebox.app/s/QMRRrPxck7vxC1MufqKTfQ)
+ok   the old mainnet host answers 308 to the host, path and query kept  (308 https://cut.hidebox.app/drive?from=t521)
+ok   …on plain HTTP too  (308 https://cut.hidebox.app/x)
+cutover: PASS (19 of 19) → <scratch>
+exit 0

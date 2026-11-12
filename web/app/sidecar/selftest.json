@@ -50,6 +50,7 @@
   "_about": "R1 (16-drive-architecture §1.1): both outputs open with our view key and prove 500000 µT; only the genuine one has the one-time key our owner and view keys derive (stealthDhSecret, c = H(network || v·R) since Ootle 0.48). Made offline with ootle-wasm 0.49.2 on 2026-11-02; throwaway keys.",
   "owner_sk": "a96c0c0e99a59a77c76efd2505488b4facdd6d40ba0c84239f55ebc0de00c206",
   "view_sk": "de7a17aa69c67cba6913615c06fb0f8878deb2e1b027dfa94535791db4939804",
+  "address": "otl_esm_19tu6sjnktyw3qmhkh6m84uvwd7jjpe50e8xwqt8l5x92tyuzk35yfd2u8ezsh3qzpg57r270zdrfk263vurw7prn9kfxu9d88efy6ugv7uf7l",
   "genuine": {
    "id": "utxo_0101010101010101010101010101010101010101010101010101010101010101_b8be6a81d8aea948da92c9ba6aa58865612e2cc6ade4287bb8726e43b134bd31",
    "nonce": "be8941bc7e07aa8238c60e52e5a0a52b545a00f68cee7b1bee04d94d00bd800a",

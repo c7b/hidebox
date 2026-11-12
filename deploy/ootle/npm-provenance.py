@@ -45,6 +45,7 @@ RESERVED = {"SHA256SUMS", "LICENSE", "PROVENANCE.md"}     # files this script or
 PIN_FILES = (
     "tools/build.py", "web/app/vendor/ootle-wasm-shim.js", "web/app/sidecar/loader.mjs", "server/mutis/config.py",
     "deploy/scripts/activate-release.sh", "deploy/scripts/init-keys.sh", "deploy/config/mutis.toml.example",
+    "deploy/config/instance.toml.example",
     "deploy/scripts/collect-evidence.py", "deploy/tests/test_build.py", "deploy/tests/test_config.py",
     "server/tests/test_contract.py", "tests/e2e/headers_spec.py", "tests/e2e/test_headers.py",
     "web/app/tests/node-run.mjs", "web/app/tests/make-rows.mjs", "web/app/tests/vectors/generate.mjs",

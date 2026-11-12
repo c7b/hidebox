@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Entry of drive.html: the drive (16-drive-design §2), Google Drive's layout in shadcn's clothes.
 // Routes: /drive (My drive), /drive/folders/<id>, /drive/shared, /drive/activity, /drive/trash,
-// /drive/storage, /drive/received, /drive/earnings (where pay to open is on); moving between them keeps the page (and the open session).
+// /drive/storage, /drive/received, /drive/earnings (where pay to open is on), /drive/shop (where the shop is on too); moving between them
+// keeps the page (and the open session).
 // The drive opens without WebAssembly: the list needs only the vault key (WebCrypto); the Tari keys load
 // after the first render, for the address and the actions that need Tari (16-drive-architecture §6.4).
+import '../lib/network.js';   // the network this page's build names (its <meta name="mutis-network">), from the first line
 import { loadStrings, t, BRAND } from '../lib/i18n.js';
 import { config } from '../lib/api.js';
 import { setJudgePass } from '../lib/pow.js';
@@ -20,6 +22,7 @@ const VIEWS = {
   trash: () => import('./drive-list.js').then((m) => m.renderTrash),
   activity: () => import('./activity.js').then((m) => m.renderFeed),
   earnings: () => import('./drive-earnings.js').then((m) => m.render),
+  shop: () => import('./drive-shop.js').then((m) => m.render),
   storage: () => import('./drive-storage.js').then((m) => m.render),
   received: () => import('./drive-received.js').then((m) => m.render),
 };
@@ -102,6 +105,7 @@ class Drive {
   async render() {
     this.route = parseRoute(location.pathname);
     if (this.route.view === 'earnings' && !this.cfg.features?.pay_to_open) this.route = { view: 'missing' };
+    if (this.route.view === 'shop' && !(this.cfg.features?.shop && this.cfg.features?.pay_to_open)) this.route = { view: 'missing' };
     const { view } = this.route;
     this.shell.setView(view === 'missing' ? null : view);
     this.shell.setNew(false);
@@ -204,6 +208,7 @@ async function boot(identity, { made }) {
       // The owner check (R1, the release gate): a drive that sells checks its sales outputs each
       // time it opens and confirms the claims our server holds back until then (ui/sales.js).
       if (cfg.features?.pay_to_open) import('./sales.js').then((m) => m.startOwnerCheck(drive)).catch(() => null);
+      if (cfg.features?.market && cfg.features?.shop) import('./market-answers.js').then((m) => m.startAnswering(drive)).catch(() => null);
       // Direct mode: a new drive's browser wallet asks for its sponsor grant in the background, as the
       // locker did (Pay from my drive and direct sends spend it); a refusal only means sends go by relay.
       if (made && cfg.send_mode === 'direct' && cfg.features?.sponsor) {
@@ -229,6 +234,7 @@ try {
 }
 document.title = BRAND;
 const cfg = await config();
+if (cfg.staging) import('./notice.js').then((m) => m.stagingBanner(cfg)).catch(() => null);
 const q = new URLSearchParams(location.search);
 const { loadIdentity } = await import('../lib/identity.js');
 const stored = await loadIdentity({ lazy: true }).catch(() => null);
@@ -236,5 +242,11 @@ if (stored) {
   boot(stored, { made: false });
 } else {
   const { renderStart } = await import('./drive-start.js');
-  renderStart(app, { onReady: boot, make: q.has('make'), open: q.has('open') });
+  // A drive this browser kept for the deployment that served this host before (docs/cutover.md): the start screen
+  // hands it over, and Make my drive waits for a tap instead of making a second drive on arrival.
+  const there = cfg.legacy_origin || cfg.testnet_origin;
+  const { testnetDrive } = await import('../lib/identity.js');
+  const kept = there ? await testnetDrive().catch(() => null) : null;
+  const moved = kept && { ...kept, origin: there };
+  renderStart(app, { onReady: boot, make: q.has('make') && !moved, open: q.has('open'), moved });
 }

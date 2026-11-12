@@ -1,0 +1,17 @@
+== batch E-10,E-12,E-13
+PASS E-10     32.8s  Send to a Tari address on chain; /verify shows hidden amounts; the recipient opens it
+PASS E-12     52.2s  A view key sees the delivery and can open no file
+PASS E-13     23.6s  Pack purchase on chain: Waiting → Seen → Amount proven → Added; quota +256 MiB
+== batch E-29,E-30
+PASS E-29     40.5s  Pay to open a folder with test money: a drive sells a folder of three; a phone with no drive pays; Waiting → Unlocked; three names, one opens; a reload keeps its opens; a second stranger gets 402
+PASS E-30     50.6s  Pay from my drive: a phone's drive pays a paid file from its own wallet; it waits for the owner's drive; the seller's drive opens and checks it; the phone opens it; the seller's Received says Yours to spend
+== batch E-J
+PASS E-J      52.5s  The judge script (/judges, 16-drive-design §10): track one, six steps on a computer and a phone; track two, six with a pay link and test money (with pay to open off: Send by Tari and Get more space), each step timed
+== batch E-01,E-08,E-21
+PASS E-01      9.8s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-08      8.5s  Drive: Make my drive at once; the key file locked with a passphrase; restored in a clean browser (same address and safety code)
+SKIP E-21     34.3s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)
+== batch E-01,E-08,E-21
+PASS E-01      9.0s  Text secret, Once: B reads it; reload and C see burned; item deleted
+PASS E-08      8.9s  Drive: Make my drive at once; the key file locked with a passphrase; restored in a clean browser (same address and safety code)
+FAIL E-21     34.5s  Headers and privileges: D-01 and D-03 (D-02 is tests/e2e/test_logs.py)

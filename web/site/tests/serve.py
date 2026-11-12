@@ -38,6 +38,18 @@ TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
          ".wasm": "application/wasm", ".webp": "image/webp",
          ".avif": "image/avif", ".xml": "application/xml; charset=utf-8", ".ico": "image/vnd.microsoft.icon"}
 TEXT = {".html", ".txt", ".webmanifest"}   # the build expands placeholders in pages and static text only
+# What every build fixes in a page (web/site/tools/variants.py FIXED): this server is a default deployment, on
+# Esmeralda and not a staging rehearsal, so the other network's elements and the staging banner are left out.
+FIXED = {"network": "esmeralda", "staging": "off"}
+
+
+def _variants():
+    spec = importlib.util.spec_from_file_location("site_variants", SITE / "tools" / "variants.py")
+    import sys
+    sys.path.insert(0, str(SITE / "tools"))     # variants.py imports llms_full beside it
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 INCLUDE = re.compile(r"<!--#include ([a-z0-9-]+(?:\.svg)?)-->")
 SRI_TAG = re.compile(r'(<(?:script|link)\b[^>]*?(?:src|href)="(/[^"]+)"[^>]*?) integrity="\{\{SRI\}\}"')
 PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
@@ -63,7 +75,8 @@ class Site:
         self.opts, self.origin = opts, origin
         self.values = {"ORIGIN": origin, "GIT_SHA": "0" * 40, "VERSION": "test", "BUILD_DATE": "2026-10-11",
                        "NETWORK": "esmeralda", "SECURITY_DROP_URL": f"{origin}/fine-print#report",
-                       "REPO_URL": "https://github.com/c7b/hidebox", "BRAND": "hidebox"}
+                       "REPO_URL": "https://github.com/c7b/hidebox", "BRAND": "hidebox",
+                       "TESTNET_ORIGIN": "https://entry.example", "TESTNET_HOST": "entry.example"}
 
     def file_for(self, path):
         """URL path → source file, mirroring the dist/ layout of spec §3.3."""
@@ -99,7 +112,11 @@ class Site:
                 raise KeyError(f"unknown placeholder {m[0]}")
             return self.values[m[1]]
 
-        return PLACEHOLDER.sub(value, text)
+        text = PLACEHOLDER.sub(value, text)
+        if "data-when=" in text:
+            variants = _variants()
+            text = variants.prune(variants.resolve(text, FIXED), FIXED)
+        return text
 
     def render(self, f, path):
         data = f.read_bytes()

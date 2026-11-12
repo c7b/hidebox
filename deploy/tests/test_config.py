@@ -98,7 +98,7 @@ class CaddyfileTest(unittest.TestCase):
         self.assertEqual(headers_spec.REDIRECTS["/v2"], "/")
         self.assertNotIn("/v2", headers_spec.ROUTES)
         self.assertFalse([path for path in headers_spec.MEDIA if "/motion/" in path])
-        self.assertEqual(re.search(r"(?m)^\t@media path (.+)$", self.text).group(1), "/site/media/*")
+        self.assertEqual(re.search(r"(?m)^\t@media path_regexp (.+)$", self.text).group(1), "^/site/media/")
         media = re.search(r"(?ms)^\thandle @media \{\n(.*?)^\t\}", self.text).group(1)
         self.assertIn(f'header Cache-Control "{headers_spec.MEDIA_CACHE["cache-control"]}"', media)
         site = self.text.split("\n{$MUTIS_HOST} {", 1)[1]
@@ -144,7 +144,7 @@ class CaddyfileTest(unittest.TestCase):
         for path, ctype in headers_spec.CRAWL.items():
             self.assertTrue(any(fnmatch.fnmatchcase(ctype, p) for p in patterns), f"{path} ({ctype}) is compressed")
         noindex = f'header X-Robots-Tag "{headers_spec.NOINDEX["x-robots-tag"]}"'
-        for route in ("@api", "@appfiles", "@viewer", "@paylink", "@droplink", "@approute", "@drive"):
+        for route in ("@api", "@appfiles", "@viewer", "@paylink", "@shoplink", "@droplink", "@approute", "@drive"):
             body = re.search(rf"(?ms)^\thandle {route} \{{\n(.*?)^\t\}}", self.text).group(1)
             self.assertIn(noindex, body, route)
         for path in headers_spec.INDEXABLE:
@@ -166,6 +166,16 @@ class CaddyfileTest(unittest.TestCase):
             if matcher.strip() == "@api":
                 proxied = re.sub(r"(?ms)^\t\thandle @too_large \{.*?^\t\t\}", "", body)   # the 413 mirrors the API's no-store
                 self.assertNotIn("Cache-Control", proxied, "the API sets its own Cache-Control (spec §6)")
+            elif matcher.strip() in ("@shoppage", "@shopsitemap", "@marketpage"):
+                # A shop's page and the sitemap of public shops come from the API (server/mutis/shop_page.py), which sets
+                # its own Cache-Control (no-cache, an hour) and X-Robots-Tag; Caddy keeps the policy its own.
+                self.assertIn("reverse_proxy 127.0.0.1:8787", body, matcher)
+                self.assertNotIn("Cache-Control", body, matcher)
+                self.assertIn("header_up X-Real-IP {remote_host}", body, matcher)
+                self.assertRegex(body, r"import (app|site)_csp", matcher)
+                if matcher.strip() != "@shopsitemap":   # the pages carry the API's Referrer-Policy; ours is sent once
+                    self.assertIn("header_down -Referrer-Policy", body, matcher)
+                self.assertNotIn("import api_csp", body, matcher)
             else:
                 self.assertRegex(body, r"import (revalidate|immutable)|Cache-Control", matcher or "default handle")
         # A year, immutable, only for the fingerprinted names (test below): the plain ones (fonts, stills, icons) carry
@@ -197,7 +207,7 @@ class CaddyfileTest(unittest.TestCase):
         order = [m for m in re.findall(r"(?m)^\thandle (@\w+) \{", site)]
         self.assertEqual(order[:4], ["@api", "@notread", "@hashed_app", "@hashed"], "ahead of every file route")
         self.assertRegex(self.text, r"(?s)\(files\) \{\s*file_server \{\s*precompressed br gzip\s*\}\s*\}")
-        for matcher in ("@viewer", "@paylink", "@droplink", "@approute", "@drive", "@appfiles", "@cards", "@crawl", "@home"):
+        for matcher in ("@viewer", "@paylink", "@shoplink", "@droplink", "@approute", "@drive", "@appfiles", "@cards", "@crawl", "@home"):
             self.assertIn("import files", bodies[matcher], matcher)
         self.assertIn("import files", re.search(r"(?ms)^\thandle \{\n(.*?)^\t\}", site).group(1), "the catch-all")
         self.assertRegex(site.split("handle_errors {", 1)[1], r"(?s)rewrite \* /404\.html\s*file_server \{\s*status 404\s*precompressed br gzip")
@@ -241,8 +251,8 @@ class PinnedWasmTest(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "tools"))
         import build
         from mutis import config
-        pinned = build.PINNED["ootle-wasm-0.52.0/ootle_wasm_bg.wasm"]
-        sums = (ROOT / "web" / "app" / "vendor" / "ootle-wasm-0.52.0" / "SHA256SUMS").read_text()
+        pinned = build.PINNED["ootle-wasm-0.53.2/ootle_wasm_bg.wasm"]
+        sums = (ROOT / "web" / "app" / "vendor" / "ootle-wasm-0.53.2" / "SHA256SUMS").read_text()
         self.assertIn(f"{pinned}  ootle_wasm_bg.wasm", sums)
         self.assertEqual(config.PINNED_WASM_SHA256, pinned)
         for script in ("activate-release.sh", "init-keys.sh"):

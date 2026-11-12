@@ -16,6 +16,10 @@ SITE_CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 's
             "connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; "
             "object-src 'none'; upgrade-insecure-requests")
 
+# The indexers a page's connect-src names: Esmeralda's in the policies below, the mainnet's on a mainnet deployment
+# (server/mutis/network.py; test_headers.run(network=…) swaps them).
+ESMERALDA_INDEXERS = "https://ootle-indexer-a.tari.com https://ootle-indexer-b.tari.com"
+MAINNET_INDEXERS = "https://indexer-a.ootle.tari.com https://indexer-b.ootle.tari.com"
 APP_CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; "
            "img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; "
            "connect-src 'self' https://ootle-indexer-a.tari.com https://ootle-indexer-b.tari.com; manifest-src 'self'; "
@@ -35,6 +39,8 @@ ROUTES = {
     "/s/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),
     "/t": (APP_CSP, NOINDEX),
     "/p/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),  # the buyer page of a paid link
+    "/shop/AAAAAAAAAAAAAAAAAAAAAA": (APP_CSP, NOINDEX),  # a drive's shop (docs/shop.md): unknown, so noindex
+    "/shop/no-such-shop": (APP_CSP, NOINDEX),           # an address no public shop has: the plain page, noindex
     "/d/7kq2x9mdh4": (APP_CSP, NOINDEX),
     "/send": (APP_CSP, NOINDEX),
     "/watch": (APP_CSP, NOINDEX),
@@ -48,6 +54,7 @@ ROUTES = {
     "/app/view.html": (APP_CSP, NOINDEX),
     "/app/pay.html": (APP_CSP, NOINDEX),                # a paid link's and a drop link's pages, with their own cards
     "/app/drop.html": (APP_CSP, NOINDEX),
+    "/app/shop.html": (APP_CSP, NOINDEX),
     "/how": (SITE_CSP, {}),
     "/made": (SITE_CSP, {}),
     "/judges": (SITE_CSP, {}),
@@ -93,12 +100,15 @@ INDEXABLE = ("/", "/how", "/made", "/judges", "/fine-print")
 # What other products show beside a link (docs/review/seo-1.md): the share cards and the icons, kept a day (their
 # names carry no version) and loadable from any origin (a preview drawn from the page loads og:image cross-origin).
 CARDS = {"/og.png": "image/png", "/og-s.png": "image/png", "/og-p.png": "image/png", "/og-d.png": "image/png",
+         "/og-shop.png": "image/png", "/og-p-mainnet.png": "image/png",
          "/favicon.ico": "image/vnd.microsoft.icon",
          "/favicon.svg": "image/svg+xml", "/favicon-32.png": "image/png", "/apple-touch-icon.png": "image/png",
          "/icon-192.png": "image/png", "/icon-512.png": "image/png", "/icon-maskable-512.png": "image/png"}
 CARD_HEADERS = {"cache-control": "public, max-age=86400", "cross-origin-resource-policy": "cross-origin"}
 # robots.txt and the sitemap: their types, kept an hour.
 CRAWL = {"/robots.txt": "text/plain; charset=utf-8", "/sitemap.xml": "application/xml; charset=utf-8"}
+# The public shops' sitemap: the API writes it (server/mutis/shop_page.py), with the same type and hour as Caddy's.
+API_CRAWL = {"/sitemap-shops.xml": "application/xml; charset=utf-8"}
 CRAWL_CACHE = {"cache-control": "public, max-age=3600"}
 # Fingerprinted files (tools/assets.py; the Caddyfile's @hashed and @hashed_app): every asset a page asks for, under a
 # name with a hash of its bytes, kept a year. test_headers.py looks up each plain name below in the live manifest's
@@ -109,7 +119,7 @@ HASHED = ("shared/tokens.css", "site/css/site.css", "site/js/site.js", "shared/t
           "app/css/widget.css", "app/lib/pow-worker.js", "app/i18n/widget-en.json", "shared/ui/icons.svg",
           "shared/fonts/geist/Geist-Latin.woff2", "site/media/v3/hero-480.avif", "site/media/v3/hero-480.webp",
           "site/media/404/box-zero-480.avif", "favicon-32.png", "icon-512.png",
-          "app/vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm")
+          "app/vendor/ootle-wasm-0.53.2/ootle_wasm_bg.wasm")
 # A hashed name that no build made: the 404 page, never stored, through both hashed routes.
 HASHED_MISSING = ("/site/css/site.0000000000.css", "/app/ui/app.0000000000.js")
 # The text a browser gets compressed from the .br and .gz copies the build and the activation make
@@ -117,7 +127,7 @@ HASHED_MISSING = ("/site/css/site.0000000000.css", "/app/ui/app.0000000000.js")
 # to the file's bytes; with neither, the file. Each with Vary: Accept-Encoding. A hashed asset of each text type, and
 # pages (whose names never change: they keep revalidating, compressed the same way).
 PRECOMPRESSED_ASSETS = ("site/css/site.css", "site/js/site.js", "shared/ui/icons.svg", "app/i18n/en.json",
-                        "app/vendor/ootle-wasm-0.52.0/ootle_wasm_bg.wasm")
+                        "app/vendor/ootle-wasm-0.53.2/ootle_wasm_bg.wasm")
 PRECOMPRESSED_PAGES = ("/", "/how", "/manifest.webmanifest", "/this-page-does-not-exist")
 # Served from /srv/mutis/status when the timers have written them, a 404 page otherwise.
 STATUS_FILES = ("/status.json", "/evidence.json", "/releases.json")

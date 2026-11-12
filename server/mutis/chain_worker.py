@@ -10,6 +10,7 @@ A separate thread writes the heartbeat the API checks, for as long as the loop k
 import json
 import os
 import random
+import re
 import secrets
 import sqlite3
 import threading
@@ -17,16 +18,24 @@ import time
 import urllib.error
 import urllib.request
 
-from . import budgets, codec, db, indexer, jobs, logsafe, mirror, ootle_addr, packs, payments, quota, sales, seallog
+from . import (budgets, codec, db, indexer, jobs, logsafe, mirror, network, ootle_addr, packs, payments, quota, sales,
+               seallog)
 from .indexer import IndexerError, Indexers
 from .sidecar import TRANSPORT_ERRORS, Sidecar, SidecarError
 from .walletd import Walletd, WalletdError
+
+# The sidecar's selftest cases for the watch-only check (ristretto255 against the library, outputs on this network):
+# fewer than this, and our checker vouches for no sale (an older sidecar has none). Esmeralda has 9, the mainnet 7
+# (web/app/tests/sidecar_test.py checks the mainnet's against this).
+WATCH_CASES_MIN = 6
+WATCH_RETRY_S = 600          # a selftest that didn't pass runs again after this long
 
 MIRROR_EVERY_S = 3
 PAYMENTS_EVERY_S = 10
 RECONCILE_EVERY_S = 3600
 RECONCILE_RECHECK_S = 300        # after a mismatch, which holds credits until this check (payments.py)
 STATUS_EVERY_S = 15
+SETUP_RETRY_S = 10               # walletd unreachable or on another network: ask again this often
 REVEAL_AFTER_S = 86400
 EVIDENCE_PAY_HOUR_UTC = 12
 SCAN_BATCH = 2000
@@ -54,6 +63,41 @@ def random_memo(origin: str) -> str:
     return f"{origin}/t#3" + codec.b64u(secrets.token_bytes(125))
 
 
+def walletd_on_network(info: dict, net: network.Network) -> bool:
+    """wallet.get_info names walletd's network (a name, or the network byte): it must be ours. A walletd that
+    names none passes on the testnet only (the fake one, and old releases); on the mainnet it never does."""
+    named = info.get("network") if isinstance(info, dict) else None
+    byte = info.get("network_byte") if isinstance(info, dict) else None
+    if isinstance(named, str):
+        if named.lower() not in (net.name, net.walletd, net.label.lower()):
+            return False
+    elif isinstance(named, int) and not isinstance(named, bool):
+        if named != net.byte:
+            return False
+    elif named is not None:
+        return False
+    if isinstance(byte, int) and not isinstance(byte, bool) and byte != net.byte:
+        return False
+    return named is not None or isinstance(byte, int) or net.testnet
+
+
+# A valid point to ask the sidecar for a one-time key with, only to learn whether a view key is its address's own.
+RISTRETTO_BASEPOINT = "e2f2ae0a6abc4e71a884a961c500515f58e30b6aa582dd8db6a65945e08d2d76"
+
+
+def _revenue(cfg_ootle: dict) -> dict | None:
+    """The owner's revenue address and its view secret (hex), or None while the config names none."""
+    address = cfg_ootle["revenue_address"]
+    if not address:
+        return None
+    with open(cfg_ootle["revenue_view_key"], encoding="ascii") as f:
+        view_sk = f.read().strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", view_sk):
+        raise ValueError("the revenue view key file holds 64 hex characters")
+    ootle_addr.parse_testnet(address)
+    return {"address": ootle_addr.base_address(address), "view_sk": view_sk}
+
+
 def _keys(path: str) -> dict:
     with open(path) as f:
         keys = json.load(f)
@@ -68,6 +112,7 @@ class Worker:
     def __init__(self, cfg, secret: bytes, walletd: Walletd, indexers: Indexers, sidecar: Sidecar,
                  clock=codec.now, rng: random.Random | None = None):
         self.cfg, self.walletd, self.indexers, self.sidecar, self.clock = cfg, walletd, indexers, sidecar, clock
+        ootle_addr.use_network(cfg["network"])
         self.canary_token = codec.hkdf(secret, b"mutis/v1", b"canary", 32)
         self.conn = db.connect(cfg.db_path)
         self.rng = rng or random.Random()
@@ -84,7 +129,14 @@ class Worker:
         # the API can write the database, and demo payments must not go anywhere else.
         self.receiver_base: str | None = None
         self.receiver: dict | None = None
+        # The owner's own address for pack payments, with its view secret only (ootle.revenue_address,
+        # docs/currencies.md §1); None while the config names none, and invoices pay our receiving address.
+        self.revenue: dict | None = None
+        self.invoice_base: str | None = None
         self.robot: dict | None = None
+        # The sidecar's selftest for the watch-only check (features.away_release): None until it has run.
+        self._watch_selftest: bool | None = None
+        self._watch_checked_at = 0.0
         # Sellers' sales view keys (pay to open), opened from their sealed copies; only ever in this memory.
         self.watch_keys: dict[str, str] = {}
         self.alive_at = time.monotonic()
@@ -116,6 +168,7 @@ class Worker:
     def _features(self) -> dict:
         merged = dict(self.cfg["features"])
         merged.update({k: v for k, v in db.get_meta_json(self.conn, "features", {}).items() if k in merged})
+        merged.update(network.forced_features(self.cfg["network"]))
         return merged
 
     def _force(self, name: str) -> bool:
@@ -140,7 +193,13 @@ class Worker:
     # --- lifecycle ----------------------------------------------------------------------------------
 
     def setup(self) -> None:
-        """Learn the receiving address for invoices (receiver keys, or walletd's `service` in the G4 fallback)."""
+        """Learn the receiving address for invoices (receiver keys, or walletd's `service` in the G4 fallback), once
+        walletd is known to run on our network: nothing is sent before that."""
+        info = self.walletd.info()
+        if not walletd_on_network(info, self.cfg.net):
+            self.status["walletd_ok"] = False
+            logsafe.event("chain.walletd_wrong_network", "critical")
+            raise WalletdError("walletd_wrong_network")
         if self.mode == "wallet":
             address = self.walletd.account(self.cfg["ootle"]["service_account"])["address"]
         else:
@@ -150,6 +209,32 @@ class Worker:
         self.receiver_base = ootle_addr.base_address(address)
         with db.tx(self.conn):
             db.set_meta(self.conn, "receiver_address", self.receiver_base)
+        self.setup_revenue()
+
+    def setup_revenue(self) -> None:
+        """Where pack invoices pay (docs/currencies.md §1). With no revenue address, our receiving address. With one,
+        its view key is read and checked against the address (the sidecar refuses a view key that isn't the address's
+        own) before anything is set; until that has passed, `meta.invoice_address` is empty and the API makes no
+        invoice (503), so no buyer pays an address nothing watches. Retried by tick() until it passes."""
+        if not self.cfg["ootle"]["revenue_address"] or self.mode == "wallet":
+            self.revenue, self.invoice_base = None, self.receiver_base
+            with db.tx(self.conn):
+                db.set_meta(self.conn, "invoice_address", self.receiver_base)
+            return
+        self.revenue, self.invoice_base = None, None
+        with db.tx(self.conn):
+            db.set_meta(self.conn, "invoice_address", "")
+        revenue = _revenue(self.cfg["ootle"])         # a missing or malformed file raises: the step logs and retries
+        try:
+            self.sidecar.request("watchOneTimeKey", view_sk=revenue["view_sk"], address=revenue["address"],
+                                 nonce=RISTRETTO_BASEPOINT)
+        except SidecarError as e:
+            if e.code == "bad_key":
+                logsafe.event("chain.revenue_bad_key", "critical")
+            raise
+        self.revenue, self.invoice_base = revenue, revenue["address"]
+        with db.tx(self.conn):
+            db.set_meta(self.conn, "invoice_address", self.invoice_base)
 
     def recover(self, now: int) -> None:
         """At start: whatever a previous run left half-done is settled before anything new is sent."""
@@ -178,8 +263,10 @@ class Worker:
     def tick(self) -> None:
         now = self.clock()
         self._step(self._beat, self.conn)
-        if self.receiver_base is None or self.robot is None:
+        if (self.receiver_base is None or self.robot is None) and self._due("setup", SETUP_RETRY_S, now):
             self._step(self.setup)
+        elif self.receiver_base is not None and self.invoice_base is None and self._due("revenue", SETUP_RETRY_S, now):
+            self._step(self.setup_revenue)        # a revenue address whose view key hasn't checked out yet
         if self._due("mirror", MIRROR_EVERY_S, now):
             self._step(self.mirror, now)
         if self._due("payments", PAYMENTS_EVERY_S, now):
@@ -294,6 +381,15 @@ class Worker:
                 payments.record_found(self.conn, found, True, now, self.epoch())
                 with db.tx(self.conn):
                     db.set_meta(self.conn, "receiver_scan_seq", str(rows[-1]["seq"]))
+            if self.revenue is not None:      # the owner's revenue address, from its own place in the mirror
+                start = int(db.get_meta(self.conn, "revenue_scan_seq", "0"))
+                rows = self.conn.execute("SELECT seq, id, nonce, enc FROM chain_utxos WHERE seq > ? ORDER BY seq LIMIT ?",
+                                         (start, SCAN_BATCH * 5)).fetchall()
+                if rows:
+                    found = self._scan(self.revenue["view_sk"], rows)
+                    payments.record_found(self.conn, found, True, now, self.epoch())
+                    with db.tx(self.conn):
+                        db.set_meta(self.conn, "revenue_scan_seq", str(rows[-1]["seq"]))
         payments.check_pending(self.conn, self.indexers, self.failures, now,
                                owns=self._ours if self.receiver is not None else None, room=self._paid_room(now))
 
@@ -321,7 +417,32 @@ class Worker:
         key = reply.get("public_key")
         if not isinstance(key, str) or len(key) != 64:
             return None
-        return codec.equal(bytes.fromhex(key), bytes.fromhex(auth_key))
+        if codec.equal(bytes.fromhex(key), bytes.fromhex(auth_key)):
+            return True
+        return self._revenue_owns(nonce, auth_key) if self.revenue is not None else False
+
+    def _revenue_owns(self, nonce: str, auth_key: str) -> bool | None:
+        """A pack payment to the owner's revenue address: its one-time key from the address's view secret and its
+        account key (the watch-only check, which the sidecar's selftest must have passed). True when it is the owner's
+        to spend; False when it isn't; None while that can't be told (the payment waits, never credits)."""
+        if not self._watch_check_ok():
+            return None
+        try:
+            reply = self.sidecar.request("watchOneTimeKey", view_sk=self.revenue["view_sk"], address=self.revenue["address"],
+                                         nonce=nonce)
+        except SidecarError as e:
+            if e.code in TRANSPORT_ERRORS:
+                raise
+            if e.code == "bad_key":
+                logsafe.event("chain.revenue_bad_key", "critical")    # the view key isn't the address's own
+            return None if e.code == "bad_key" else False
+        key = reply.get("public_key")
+        if not isinstance(key, str) or len(key) != 64 or len(auth_key) != 64:
+            return None
+        try:
+            return codec.equal(bytes.fromhex(key), bytes.fromhex(auth_key))
+        except ValueError:
+            return None
 
     # --- pay to open (16-drive-architecture §1.6) -----------------------------------------------------
 
@@ -342,7 +463,64 @@ class Worker:
             found = self._scan(view_sk, rows) if rows else []
             sales.record_sales(self.conn, seller["identity_id"], found, rows[-1]["seq"] if rows else start, now,
                                self.epoch())
-        sales.check_pending(self.conn, self.indexers, self.failures, now)
+        sales.check_pending(self.conn, self.indexers, self.failures, now, owns=self._sale_owns)
+
+    def _sale_owns(self, row: sqlite3.Row, nonce: str | None, auth_key: str | None) -> bool | None:
+        """Release without the seller's drive (features.away_release, docs/mvp-november.md §2): is this sale output the
+        seller's to spend? Since Ootle 0.48 its one-time key is H(network ‖ v·R)·G + K, so the sales view key (only in
+        this memory) and the account key K in the address the buyer paid tell, as a watch-only wallet tells. True or
+        False when they do; None leaves it to the owner's drive: the flag off, a payment to no claim or to an address
+        that isn't this seller's claim address, no view key open, no nonce, or a sidecar refusal."""
+        if not self._features().get("away_release"):
+            return None
+        # No one-time key (a condition tree anyone who meets it could spend, or an answer without one), no nonce, no
+        # claim: our checker can't vouch for it, so it never releases on our word; the owner's drive decides.
+        if auth_key is None or nonce is None or row["owner_id"] is None or row["seller_address"] is None \
+                or row["claim_id"] is None:
+            return None
+        if not self._watch_check_ok():
+            return None
+        if row["claim_address"] != ootle_addr.with_pay_ref(row["seller_address"], row["claim_id"].encode()):
+            return None                   # the seller's address changed since this claim: their drive checks it
+        view_sk = self.watch_keys.get(row["owner_id"])
+        if view_sk is None:
+            return None
+        try:
+            reply = self.sidecar.request("watchOneTimeKey", view_sk=view_sk, address=row["seller_address"], nonce=nonce)
+        except SidecarError as e:
+            if e.code in TRANSPORT_ERRORS:
+                raise                     # the step stops; the payment waits for a working sidecar
+            return None
+        key = reply.get("public_key")
+        if not isinstance(key, str) or len(key) != 64 or not isinstance(auth_key, str) or len(auth_key) != 64:
+            return None
+        try:
+            return codec.equal(bytes.fromhex(key), bytes.fromhex(auth_key))
+        except ValueError:
+            return None                   # not hex: nothing to compare, so nothing vouched for
+
+    def _watch_check_ok(self) -> bool:
+        """The sidecar's selftest, once per worker: the point addition agrees with the official library and the
+        watch-only known-answer tests come out right (sidecar.mjs selftest). Until it has passed, our checker vouches
+        for no payment; a failure says so in the log and leaves every sale to the owner's drive."""
+        if self._watch_selftest is False and time.monotonic() - self._watch_checked_at >= WATCH_RETRY_S:
+            self._watch_selftest = None   # once in a while, in case the sidecar works again
+        if self._watch_selftest is None:
+            self._watch_checked_at = time.monotonic()
+            try:
+                reply = self.sidecar.request("selftest")
+            except SidecarError as e:
+                if e.code in TRANSPORT_ERRORS:
+                    raise                 # the step stops, and the selftest runs again with a working sidecar
+                reply = {}                # the sidecar refused: not trusted, and sales go on counting for the drive
+            cases = reply.get("cases")
+            cases = cases if isinstance(cases, list) else []
+            watch = [c for c in cases if isinstance(c, dict) and str(c.get("name", "")).startswith(("watch-only", "ristretto255"))]
+            self._watch_selftest = reply.get("passed") is True and len(watch) >= WATCH_CASES_MIN \
+                and all(c.get("passed") is True for c in watch)
+            if not self._watch_selftest:
+                logsafe.event("chain.watch_selftest_failed", "error")
+        return self._watch_selftest
 
     def _watch_key(self, seller: sqlite3.Row) -> str | None:
         """A seller's sales view key, from the blob sealed to our receiver (`openWatchKey`: kind 3, flag 0x08,
@@ -372,8 +550,8 @@ class Worker:
             balance = self.walletd.stealth_balance_ut(self.cfg["ootle"]["service_account"])
             payments.reconcile_wallet(self.conn, balance, now)
         elif self.receiver is not None:
-            view_sk = self.receiver["view_sk"]
-            payments.reconcile(self.conn, lambda rows: {f["id"]: f["value_ut"] for f in self._scan(view_sk, rows)},
+            keys = [self.receiver["view_sk"]] + ([self.revenue["view_sk"]] if self.revenue else [])
+            payments.reconcile(self.conn, lambda rows: {f["id"]: f["value_ut"] for k in keys for f in self._scan(k, rows)},
                                lambda uid: payments.committed_anywhere(self.indexers, uid), now,
                                self.cfg["ootle"]["mirror_start_epoch"])
 
@@ -394,7 +572,7 @@ class Worker:
             # Pay to open: test money to a seller's claim address, re-checked here (sales.demo_payload_ok).
             if not sales.demo_payload_ok(self.conn, payload, self.clock()):
                 raise jobs.PayloadError()
-        elif job["kind"] == "demo_pay" and ootle_addr.base_address(payload["address"]) != self.receiver_base:
+        elif job["kind"] == "demo_pay" and ootle_addr.base_address(payload["address"]) != self.invoice_base:
             raise jobs.PayloadError()
         elif job["kind"] == "courier" and "drop_id" in payload:
             drop = self.conn.execute("SELECT state, address FROM drops WHERE id = ?", (payload["drop_id"],)).fetchone()
@@ -473,6 +651,9 @@ class Worker:
             ootle_addr.parse_testnet(address)
             return self.walletd.stealth_transfer(sponsor, address, o["courier_amount_ut"], random_memo(self.cfg.origin),
                                                  fee)
+        if kind in ("demo_pay", "sponsor") and not self.cfg.net.testnet:
+            # The API never queues test money on the mainnet; a job like this here came from somewhere else.
+            raise ValueError(f"{kind} sends test money; there is none on the {self.cfg.net.name}")
         if kind == "demo_pay":
             return self.walletd.stealth_transfer(sponsor, payload["address"], int(payload["amount_ut"]), None, fee)
         return self.walletd.stealth_transfer(sponsor, payload["address"], o["sponsor_grant_ut"], None, fee)
@@ -647,15 +828,18 @@ class Worker:
         """Daily at 12:00 UTC: a no-locker invoice paid by the sponsor through the full proof path."""
         today = codec.day(now)
         due = now % 86400 >= EVIDENCE_PAY_HOUR_UTC * 3600 and db.get_meta(self.conn, "evidence_pay_day") != today
-        if self.receiver_base is None or not (due or self._force("evidence_pay")):
+        if self.invoice_base is None or not (due or self._force("evidence_pay")):
             return
-        pack = quota.PACKS["s30"]
+        if not self.cfg.net.testnet:
+            return                        # no test money on the mainnet: our demo wallet can't pay it
+        pack_id, pack = min(quota.pack_table(self.cfg["packs"]).items(), key=lambda kv: kv[1]["price_ut"])
         invoice_id = codec.invoice_id()
-        address = ootle_addr.with_pay_ref(self.receiver_base, invoice_id.encode())
+        address = ootle_addr.with_pay_ref(self.invoice_base, invoice_id.encode())
         with db.tx(self.conn):
             self.conn.execute("INSERT INTO invoices(id, identity_id, pack, price_ut, address, status, created_at, "
-                              "expires_at) VALUES (?, NULL, 's30', ?, ?, 'pending', ?, ?)",
-                              (invoice_id, pack["price_ut"], address, now, now + payments.INVOICE_TTL_S))
+                              "expires_at, pack_bytes, pack_days) VALUES (?, NULL, ?, ?, ?, 'pending', ?, ?, ?, ?)",
+                              (invoice_id, pack_id, pack["price_ut"], address, now, now + payments.INVOICE_TTL_S,
+                               pack["bytes"], pack["days"]))
             jobs.enqueue(self.conn, "demo_pay", "evidence", {"address": address, "amount_ut": str(pack["price_ut"]),
                                                              "ref": invoice_id}, now, now, evidence=True)
             db.set_meta(self.conn, "evidence_pay_day", today)

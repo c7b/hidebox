@@ -5,6 +5,7 @@ Nothing from a request is ever logged: the stock request/error logging of http.s
 replaced, and failures are reported only as fixed event codes through logsafe.
 """
 import ipaddress
+import re
 import os
 import signal
 import sqlite3
@@ -16,22 +17,25 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
-from . import auth, codec, config, db, logsafe
+from . import auth, codec, config, db, logsafe, network, ootle_addr, storage
 from .http_util import HEADERS_MAX, ApiError, Request, Response, error_response
 from .indexer import Indexers
 from .ipkeys import IpKeys, client_ip
 from .pow import Pow, PowError
 from .ratelimit import DayCounts, Limiter, Recent
 from .router import ROUTER
-from .storage import Blobs
 
 API_PREFIX = "/api/v1/"
 FEATURE_CACHE_S = 2
+OFFLOAD_BUSY_S, OFFLOAD_IDLE_S, OFFLOAD_RETRY_S = 1, 10, 60   # the offloader's pauses (App.offloader)
 DRAIN_MAX = 8 * 1024 * 1024       # an early error still reads a body this small, so the client sees the answer
 MEMORY_CAP = 200_000              # entries in each in-memory table
 IN_FLIGHT_64 = 32                 # requests in progress per IPv6 /64 or IPv4 address (a browser uses about 6)
 IN_FLIGHT_48 = 128                # per IPv6 /48 or IPv4 /24
 
+
+# A shop's page: /shop/<username or id> (deploy/caddy/Caddyfile @shoppage, the same pattern).
+SHOP_PAGE = re.compile(r"^/shop/[A-Za-z0-9_-]{1,64}$")
 
 class InFlight:
     """Counts requests in progress, in all (SIGTERM lets them finish, up to 20 s) and per network, so slow
@@ -76,12 +80,13 @@ class App:
                  static=None):
         self.cfg = cfg
         self.dev = dev
+        ootle_addr.use_network(cfg["network"])
         self.k_pow = codec.hkdf(secret, b"mutis/v1", b"pow", 32)
         self.canary_token = codec.hkdf(secret, b"mutis/v1", b"canary", 32)
         self.limiter = Limiter()
         self.pow = Pow(self.k_pow, pow_bits)
         self.ipkeys = IpKeys(on_rotate=self._new_day)
-        self.blobs = Blobs(cfg.blob_dir)
+        self.blobs = storage.from_config(cfg)
         self.indexers = Indexers(cfg["ootle"]["indexers"])
         self.statvfs = os.statvfs
         self.clock = codec.now
@@ -94,6 +99,27 @@ class App:
         self.cache: dict = {}
         self.inflight = InFlight()
         self._features = (0.0, {})
+
+    def offloader(self, stop: threading.Event) -> None:
+        """With a remote store (storage.TieredBlobs): copy finished uploads there and carry out queued deletions, one
+        round every few seconds while there is work, every OFFLOAD_IDLE_S while there is none, and after a failure
+        (the store is down or refusing) every OFFLOAD_RETRY_S, until `stop`."""
+        if not isinstance(self.blobs, storage.TieredBlobs):
+            return
+        while not stop.is_set():
+            try:
+                done = self.blobs.offload_once()
+            except Exception:
+                logsafe.event("api.offload_error", "error")
+                done = {"failed": 1}
+            if done.get("mismatched"):
+                logsafe.event("api.offload_mismatch", "critical", count=done["mismatched"])
+            if done.get("failed"):
+                logsafe.event("api.offload_failed", "warning")
+                wait = OFFLOAD_RETRY_S
+            else:
+                wait = OFFLOAD_BUSY_S if done.get("offloaded") or done.get("deleted") else OFFLOAD_IDLE_S
+            stop.wait(wait)
 
     def _new_day(self) -> None:
         self.limiter.clear()
@@ -119,6 +145,7 @@ class App:
             return cached
         merged = dict(self.cfg["features"])
         merged.update({k: v for k, v in db.get_meta_json(conn, "features", {}).items() if k in merged})
+        merged.update(network.forced_features(self.cfg["network"]))   # no test money on the mainnet, whatever was set
         self._features = (time.monotonic(), merged)
         return merged
 
@@ -241,7 +268,7 @@ class Ctx:
         with the job they queue (`spend_judge`), so a refused send costs the pass nothing.
         """
         code = self.req.header("X-Mutis-Judge")
-        if code is None:
+        if code is None or not self.features()["judge_passes"]:    # off (the mainnet): the header means nothing
             return None
         if len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
             raise _judge_refused()
@@ -251,7 +278,7 @@ class Ctx:
         """The X-Mutis-Judge code when it names a live pass, else None (never a 403): for the brakes a pass
         widens (uploads, packs), where an old pass in a browser must not break the request."""
         code = self.req.header("X-Mutis-Judge")
-        if code is None or len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
+        if code is None or not self.features()["judge_passes"] or len(code) > 64 or not auth.judge_pass_live(self.db, code, self.now):
             return None
         return code
 
@@ -328,7 +355,13 @@ class Handler(BaseHTTPRequestHandler):
             if not counted:
                 raise ApiError(429, "rate_limited", "Too many requests at once from your network. Try again shortly.",
                                retry_after=1)
-            if not url.path.startswith(API_PREFIX) and app.static is not None:
+            if app.static is not None and (SHOP_PAGE.match(url.path) or url.path == "/market"):
+                # The dev server's stand-in for Caddy's @shoppage and @marketpage routes: those pages come from the API.
+                page = "page/market" if url.path == "/market" else f"page/shop/{url.path.split('/')[2]}"
+                route, params = ROUTER.match("GET", f"{API_PREFIX}{page}")
+                route_name = route.name if route else "unknown"
+                resp = self._dispatch(ctx, route, params) if self.command == "GET" else app.static.serve(req)
+            elif not url.path.startswith(API_PREFIX) and app.static is not None:
                 route_name = "static"
                 resp = app.static.serve(req)
             else:
@@ -429,11 +462,14 @@ def serve(app: App, host: str, port: int, on_ready=None) -> None:
     signal.signal(signal.SIGTERM, on_term)
     signal.signal(signal.SIGINT, on_term)
     logsafe.event("api.start")
+    stop = threading.Event()
+    threading.Thread(target=app.offloader, args=(stop,), daemon=True).start()
     if on_ready:
         on_ready()
     try:
         server.serve_forever(poll_interval=0.5)
     finally:
+        stop.set()
         app.inflight.wait_idle(20)
         server.server_close()
         logsafe.event("api.stop")

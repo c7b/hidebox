@@ -94,6 +94,11 @@ export function viewer(root, opts) {
 
   function fail(e) {
     if (e instanceof ApiError && e.code === 'gone') return ended(e.details.reason, e.details);
+    if (e instanceof ApiError && e.code === 'not_found' && opts.moved) {
+      // A delivery's link from the deployment that served this host before (docs/cutover.md): it opens there.
+      return movedLink(cfg, 's', shareId).then((moved) => (moved ? location.replace(`${cfg.legacy_origin}${opts.moved}`)
+        : oops('not-found', 'gone.notfound', 'gone.notfound_body', { tombstone_days: cfg.retention.tombstone_days })));
+    }
     if (e instanceof ApiError && e.code === 'not_found') return oops('not-found', 'gone.notfound', 'gone.notfound_body', { tombstone_days: cfg.retention.tombstone_days });
     if (e?.name === 'IntegrityError') return oops('integrity-error', 'gone.integrity', 'gone.integrity_body');
     if (e instanceof ApiError && e.code === 'locked') return locked(e);
@@ -380,6 +385,7 @@ async function delivery(root, cfg, fragment) {
   root.setAttribute('data-testid', 'view-root');
   root.classList.add('a-view');
   const parsed = parseFragment(fragment);
+  const here = location.pathname + location.search + location.hash;   // the link as it came, for the move (below)
   const say = (state, ...children) => {
     root.dataset.state = state;
     root.replaceChildren(...children.filter(Boolean), footer());
@@ -400,7 +406,19 @@ async function delivery(root, cfg, fragment) {
 
   const go = (inner, keepKey) => viewer(root, {
     cfg, shareId: inner.shareId, secrets: { s: inner.s }, delivery: null, clearKey: keepKey, locker: identity ? () => openLocker() : null,
+    moved: cfg.legacy_origin ? here : null,
   });
+  // On a host another deployment served before (docs/cutover.md), a delivery may be for the drive set aside from it.
+  const there = cfg.legacy_origin;
+  const kept = there && !identity ? await (await import('../lib/identity.js')).testnetDrive({ keys: true }).catch(() => null) : null;
+  const away = kept && await unwrapBlob(kept.identity, parsed.blob, parsed.kind).then(() => kept, () => null);
+  const elsewhere = () => there ? h('a', { class: 'a-btn', href: `${there}${here}`, 'data-testid': 'view-moved-open' },
+    t('view.moved_open', { host: there.replace(/^https:\/\//, '') })) : null;
+  if (away) {
+    const { movedCard } = await import('./moved.js');
+    return say('moved', scene({ state: 'courier', title: t('view.moved_h'), say: t('view.moved_body', { host: there.replace(/^https:\/\//, '') }) }).head,
+      movedCard({ ...away, origin: there }, { linkPath: here, button: 'a-btn' }));
+  }
 
   if (identity) {
     try {
@@ -409,7 +427,7 @@ async function delivery(root, cfg, fragment) {
       return say('wrong-key',
         scene({ state: 'oops', title: t('viewer.wrong_h'), say: t('viewer.wrong_body') }).head,
         safetyGrid(identity.safetyCode, { testid: 'view-my-safety' }),
-        h('a', { class: 'a-btn', href: '/drive' }, t('viewer.switch')));
+        h('a', { class: 'a-btn', href: '/drive' }, t('viewer.switch')), elsewhere());
     }
   }
 
@@ -422,7 +440,7 @@ async function delivery(root, cfg, fragment) {
   say('needs-locker',
     scene({ state: 'courier', title: t('viewer.needs_h'), say: t('viewer.needs_body') }).head,
     h('details', { class: 'a-disclose' }, h('summary', {}, t('viewer.have_key')), restorePanel({ onRestored: () => location.reload() })),
-    viewKey);
+    viewKey, elsewhere());
 }
 
 // Kind 4 ("another Ootle wallet"): that address's view key opens it. A view-key screen, so C15 sits
@@ -470,6 +488,16 @@ export async function main() {
     setTitle('buy.page_title');
     const { payPage } = await import('./paypage.js');
     await payPage(root, cfg, route.params.shareId);
+  } else if (route.name === 'shop' && cfg.features?.shop) {
+    // A drive's shop (docs/shop.md), loaded only for /shop/<id>.
+    setTitle('shop.page_title');
+    const { shopPage } = await import('./shop-page.js');
+    await shopPage(root, cfg, route.params.shopId);
+  } else if (route.name === 'market' && cfg.features?.market && cfg.features?.shop) {
+    // The market of public shops (docs/market.md), loaded only for /market.
+    setTitle('market.page_title');
+    const { marketPage } = await import('./market-page.js');
+    await marketPage(root, cfg);
   } else {
     root.dataset.state = 'not-found';
     root.replaceChildren(scene({ state: 'oops', title: t('gone.notfound') }).head, footer());

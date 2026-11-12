@@ -1,0 +1,98 @@
+PASS static: tools/lint.py: lint: PASS (0 problems)
+FAIL static: tools/check-copy.py: check-copy: FAIL (1 problems, 15 to read, (3) skipped: no --config)
+PASS static: web/app/i18n/subset.py: subset: up to date
+PASS static: web/app/ui/tests/qr_logo.py: qr-logo: PASS (40 level codes, 46 codes with or without the mark, 0 problems)
+PASS static: every string the UI asks for exists ([])
+PASS static: no string in the dictionaries goes unused ([])
+PASS static: every data-testid of spec §3.4.9 is in the UI (86 ids; missing [])
+PASS static: drive.html preloads drive.js's static imports exactly (missing [], extra [])
+PASS shop: the sidebar has My shop where the shop is on
+PASS shop: My shop starts off (off)
+PASS shop: what's public and what stays private ("What's publicThe shop's name and bio. For each thing you list: your title and line, file or folder, its size and price. What stays privateFile names and what's inside. Your drive and its address.")
+PASS shop: every control has a name ([])
+PASS shop: a shop needs a name, said under it
+PASS shop: a shop needs an address, said under it
+PASS shop: the address 'mila zines': Use only the letters a to z, digits and hyphens.
+PASS shop: the address 'mаla': Use only the letters a to z, digits and hyphens.
+PASS shop: the address '-mila': Put a hyphen between letters or digits, one at a time.
+PASS shop: the address 'ab': Use at least 3 characters.
+PASS shop: no shop made from a bad address
+PASS shop: Private is the default
+PASS shop: the shop's link: its address, folded, its key after the # (kind 6: 0.1:52485/shop/mila-zines#6EMgPdqcTRm-AAWkzTE9__hwMHxTBHw9bzk7ZTPlOxP4)
+PASS shop: our server holds the name, the address, the bio, the key only wrapped and a hash of its token
+PASS shop: nothing listed yet
+PASS shop: List something offers what sells (notes.txt), by its name, to its owner only
+PASS shop: the listing dialog says what the shop's link carries, and what that means
+PASS shop: the title starts empty: never the file's name
+PASS shop: its pay page shows its name: said first, and the button says so ("Its pay page shows its name, notes.txt. Anyone with your shop's link can read it there.")
+PASS shop: a listing needs a title
+PASS shop: listed and selling ([['Zine no. 3', 'true']])
+PASS shop: a file without a pay link: its price is set here, from /config
+PASS shop: a failed listing: its error, and the pay link the dialog made is stopped (server: [('revoked',)])
+PASS shop: Try again makes a fresh pay link, at the price picked, and lists it
+PASS shop: List in my shop on a listed file edits its listing
+PASS shop: both listed ([['Zine no. 3', 'true'], ['Field recordings', 'true']])
+PASS shop: each listing shows its owner the price and which file it is (['0.1 tTARI · song.txt', '0.25 tTARI · notes.txt'])
+PASS shop: My shop: no sideways scroll at 1440
+PASS shop: My shop on a phone: no sideways scroll, every control named
+PASS shop: our server keeps what the owner published, and each half of a key only sealed ([('Zine no. 3', 'Twelve pages, scanned.', 'file', 250000, 60), ('Field recordings', '', 'file', 100000, 60)])
+PASS shop: no file name went to the shop
+PASS shop: iphone: the shop opens (ready)
+PASS shop: iphone: the name and the bio, with its own line break
+PASS shop: iphone: the titles the owner wrote (['Field recordings', 'Zine no. 3'])
+PASS shop: iphone: its line, file and about how big, its price in the currency /config names ({'title': 'Zine no. 3', 'desc': 'Twelve pages, scanned.', 'meta': 'File · About 1 MB', 'price': '0.25 tTARI', 'buy': 'http://127.0.0.1:52485/p/41ZB1e1pJKwEmEmNpmRmew#5ZNjabuAThuuix2ipOzCaAuwdh_Epp3k8kQpQw0Stjko', 'share': '41ZB1e1pJKwEmEmNpmRmew'})
+PASS shop: iphone: Buy and open is the pay link itself, its half of the key opened here from the shop's key
+PASS shop: iphone: no file name anywhere on the page
+PASS shop: iphone: who wrote it
+PASS shop: iphone: Report this shop fills the report form with the shop's link, without its key (/fine-print#link=http%3A%2F%2F127.0.0.1%3A52485%2Fshop%2Fmila-zines)
+PASS shop: iphone: no sideways scroll, every control named, no CSP violation
+PASS shop: iphone: the page asks for /shop/{id}; the shop's key never leaves the browser
+PASS shop: a pay link made for the shop has no name in its preview ({'v': 1, 'kind': 'file', 'count': 1, 'size_bucket': 1048576})
+PASS shop: Buy and open lands on the pay page, waiting for a payment
+PASS shop: the pay page's preview names it, as its owner allowed when selling
+PASS shop: paid with test money: ready to open
+PASS shop: opened: the file the listing sells
+PASS shop: desktop: the shop opens (ready)
+PASS shop: desktop: the name and the bio, with its own line break
+PASS shop: desktop: the titles the owner wrote (['Field recordings', 'Zine no. 3'])
+PASS shop: desktop: its line, file and about how big, its price in the currency /config names ({'title': 'Zine no. 3', 'desc': 'Twelve pages, scanned.', 'meta': 'File · About 1 MB', 'price': '0.25 tTARI', 'buy': 'http://127.0.0.1:52485/p/41ZB1e1pJKwEmEmNpmRmew#5ZNjabuAThuuix2ipOzCaAuwdh_Epp3k8kQpQw0Stjko', 'share': '41ZB1e1pJKwEmEmNpmRmew'})
+PASS shop: desktop: Buy and open is the pay link itself, its half of the key opened here from the shop's key
+PASS shop: desktop: no file name anywhere on the page
+PASS shop: desktop: who wrote it
+PASS shop: desktop: Report this shop fills the report form with the shop's link, without its key (/fine-print#link=http%3A%2F%2F127.0.0.1%3A52485%2Fshop%2Fmila-zines)
+PASS shop: desktop: no sideways scroll, every control named, no CSP violation
+PASS shop: desktop: the page asks for /shop/{id}; the shop's key never leaves the browser
+PASS shop: My shop says who can see it: Private
+PASS shop: Make it public says what it means, before ("Make your shop public?Anyone can find it, in the market and on search engines. People with your shop's link still buy at once. Others ask, and your drive sends ")
+PASS shop: public: the whole link still buys at once, and the address is shown for the market (http://127.0.0.1:52485/shop/mila-zines)
+PASS shop: public: our server holds no key
+PASS shop: the public page as served, before any script: indexable, its canonical, its title and listings; no file name, no key
+PASS shop: the sitemap lists it, and the market
+PASS shop: at the address, no key in it: no pay link, Ask for it on each (['Zine no. 3', 'Field recordings'])
+PASS shop: the public page on a phone: no sideways scroll, no CSP violation
+PASS shop: asked: one ask waits on our server
+PASS shop: a link to come back with the ask's secret after the # (http://127.0.0.1:52485/market#87IkVmys_g)
+PASS shop: the owner's drive answered: 125 sealed bytes our server can't read, no key half in them
+PASS shop: Go to pay is the pay link itself, waiting for a payment
+PASS shop: paid with test money: ready to open, as through the shop's link
+PASS shop: /market as served: indexable, the newest listings, no key
+PASS shop: the market lists the public shop's listings, each with its shop (['Field recordings', 'Zine no. 3'])
+PASS shop: each with Ask for it
+PASS shop: search by words (the shop's own name, Mila's zines, would match both)
+PASS shop: the market: no sideways scroll, every control named, no CSP violation
+PASS shop: the link to come back, on another device: the answered ask, and the secret gone from the address bar
+PASS shop: Make it private says it leaves the market ('Make your shop private?It leaves the market and search engines. Your link keeps working, and open asks end.CancelMake it private')
+PASS shop: private again: the same link and key
+PASS shop: still no key on our server
+PASS shop: the address alone shows nothing again, noindex
+PASS shop: the link sells as before
+PASS shop: Take off: it leaves the shop ([['Field recordings', 'true']])
+PASS shop: the visitor's next look shows one
+PASS shop: Stop selling hides it: Not selling, and why ([['Field recordings', 'false']])
+PASS shop: the visitor sees nothing for sale while it doesn't sell
+PASS shop: Turn off says the pay links stay
+PASS shop: turned off: the shop and its listings are gone from our server
+PASS shop: the shop's link now says it's closed
+PASS shop: a shop's link without its key says it lost its key
+PASS shop: no CSP or Trusted Types violation ([])
+UI FAIL 96/97

@@ -63,10 +63,10 @@ def slices(conn: sqlite3.Connection, pool: quota.Pool, cfg_packs: dict, now: int
     for row in conn.execute(f"SELECT paid_judge, COALESCE(SUM(paid_bytes), 0) FROM identities WHERE {_ACTIVE} "
                             "GROUP BY paid_judge", (now,)):
         active[row[0]] += row[1]
-    for row in conn.execute("SELECT i.pack, i.judge FROM invoices i JOIN identities d ON d.id = i.identity_id "
-                            "WHERE i.status IN ('pending','seen') AND i.expires_at > ? "
+    for row in conn.execute("SELECT i.pack, i.judge, i.pack_bytes, i.pack_days FROM invoices i JOIN identities d "
+                            "ON d.id = i.identity_id WHERE i.status IN ('pending','seen') AND i.expires_at > ? "
                             "AND NOT (d.paid_until IS NOT NULL AND d.paid_until > ? AND d.paid_bytes > 0)", (now, now)):
-        pending[row[1]] += quota.PACKS[row[0]]["bytes"]
+        pending[row["judge"]] += quota.invoice_terms(row)[0]
     return Slices(cap, judge_cap, cap - judge_cap, active[0], active[1], pending[0], pending[1])
 
 
@@ -82,12 +82,12 @@ def sold_today(conn: sqlite3.Connection, now: int, judge: bool) -> int:
         (int(judge), now - now % 86400, now, now)).fetchone()[0]
 
 
-def held(identity, now: int, renew_days: int) -> dict | None:
-    """The pack a drive holds: its id (for packs bought before schema 6, the pack of that size today, else
-    None), bytes, end, and when renewing opens."""
+def held(identity, now: int, renew_days: int, table: dict | None = None) -> dict | None:
+    """The pack a drive holds: its id (for packs bought before schema 6, the pack of that size on sale now, `table`,
+    else None), bytes, end, and when renewing opens."""
     if not (identity["paid_until"] and identity["paid_until"] > now and identity["paid_bytes"] > 0):
         return None
-    pack = identity["paid_pack"] or next((pid for pid, p in quota.PACKS.items()
+    pack = identity["paid_pack"] or next((pid for pid, p in (table or quota.PACKS).items()
                                           if p["bytes"] == identity["paid_bytes"]), None)
     return {"id": pack, "bytes": identity["paid_bytes"], "until": identity["paid_until"],
             "renew_from": identity["paid_until"] - renew_days * 86400}

@@ -1,0 +1,14 @@
+PASS contract: config: the gate values are strings, the memo origins include ours, the text limit is this library's  [send_mode=relay amount_proof=sidecar]
+PASS contract: anonymous text, Once: the item keeps its 20 h expiry (rounded up to the hour) and the link inherits it; opens once, then burned  [second open: gone/burned]
+PASS contract: 6 MiB file: two chunks, ticket and byte ranges, 3 views
+PASS contract: link + password: the wrong password is refused, the right one opens
+PASS contract: password only: after 3 wrong tries the server says wait, then wants a PoW; the library solves it and opens  [waited 59 s]
+PASS contract: Stop: an aborted upload ends as SealError "aborted" and the server deletes it
+PASS contract: locker: register with a PoW; a 7-day Bearer upload and its link without an expiry last 7 days  [link lasts 7.01 days; createdSeq 2]
+PASS contract: an anonymous item adopted into the locker with its manage token
+PASS contract: dead drop: created with a PoW and no session; a submitter leaves a sealed 3-view link; the job finishes; closed
+PASS contract: deliver() in relay mode: our relay takes the sealed link for an address
+PASS contract: judge pass (P-12): a drop and a relay send go without a PoW; an unknown pass is dropped and the PoW comes back
+PASS contract: inbox scan and /watch over the mirror: cursor saved; /watch starts at the epoch about 7 days back  [head=6 watch from seq 0, 4 rows]
+CONTRACT PASS 12/12 (node v26.12.1)
+remote markers: 1 local .bin: 5 queued: 0

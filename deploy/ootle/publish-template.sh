@@ -23,9 +23,11 @@
 # Then put the component in /etc/mutis/mutis.toml (ootle.seallog_component) and, when the server's
 # checkpoints should start, features.seallog = true. setup-accounts.md §4 records what was done.
 #
-# check and publish take --wasm PATH after the command: template/dist-v2/seal_log.wasm, the V2 build that Ootle 0.50
-# loads (upgrade-0.50.md §9); the file must match the SHA256SUMS beside it. With none, template/dist/ as before.
-# (The same option as lane launch/mainnet's, whose version also takes an instance, a network and an account.)
+# For an instance beside production (deploy/scripts/instance.py), and for the mainnet, the same commands take
+# options after the command: --instance NAME (its walletd and release, as drive-NAME), --network esmeralda|mainnet
+# (the transaction's network byte and the indexer), --walletd-port P (the instance's walletd for that network),
+# --wasm PATH (template/dist-v2/seal_log.wasm for the V2 build) and --account NAME. With none, production as
+# before. The unattended version, with waits, reveals and evidence, is deploy/ootle/launch.py.
 set -euo pipefail
 
 host=${MUTIS_SSH_HOST:-hidebox}
@@ -36,25 +38,42 @@ command=${1:-}
 [ $# -gt 0 ] && shift
 template_arg=
 case $command in instantiate) template_arg=${1:-}; [ $# -gt 0 ] && shift ;; esac
+instance= network=esmeralda port= account=service
 while [ $# -gt 0 ]; do
   case $1 in
-    --wasm) [ $# -ge 2 ] || { echo "publish-template: --wasm needs a path" >&2; exit 2; }
-            wasm=$(cd "$(dirname "$2")" && pwd)/$(basename "$2"); shift ;;
+    --instance) instance=$2; shift ;;
+    --network) network=$2; shift ;;
+    --walletd-port) port=$2; shift ;;
+    --wasm) wasm=$(cd "$(dirname "$2")" && pwd)/$(basename "$2"); shift ;;
+    --account) account=$2; shift ;;
     *) echo "publish-template: unknown option $1" >&2; exit 2 ;;
   esac
   shift
 done
+case $network in
+  esmeralda) network_byte=38 ;;
+  mainnet) network_byte=0; indexer=https://indexer-a.ootle.tari.com ;;
+  *) echo "publish-template: --network esmeralda|mainnet" >&2; exit 2 ;;
+esac
+eval "$(python3 -I "$repo/deploy/scripts/instance.py" env "$instance")"
+if [ -n "$instance" ]; then
+  [[ $port =~ ^[0-9]+$ ]] && [ "$port" != 5100 ] || { echo "publish-template: --instance needs --walletd-port (not 5100)" >&2; exit 2; }
+  rpc_url="--url http://127.0.0.1:$port/json_rpc"
+elif [ "$network" = mainnet ]; then
+  echo "publish-template: production stays on Esmeralda; the mainnet is an instance's (--instance)" >&2; exit 2
+else
+  rpc_url=
+fi
 control=$(mktemp -d)
 # set -e holds in the trap too: without `|| true`, an exit before the first ssh (no master to stop) skipped the rm.
 trap 'ssh -o "ControlPath=$control/cm" -O exit "$host" 2>/dev/null || true; rm -rf "$control"' EXIT
 remote() { ssh -o ControlMaster=auto -o "ControlPath=$control/cm" -o ControlPersist=5m -o ClearAllForwardings=yes "$host" "$@"; }
-rpc() { remote "cd /tmp && sudo -u drive python3 -I /srv/mutis/app/current/deploy/ootle/walletd-rpc.py $*"; }
+rpc() { remote "cd /tmp && sudo -u $INST_DRIVE_USER python3 -I $INST_APP/current/deploy/ootle/walletd-rpc.py $rpc_url $*"; }
 field() { python3 -I -c 'import json, sys; print(json.load(sys.stdin)[sys.argv[1]])' "$1"; }
 die() { echo "publish-template: $*" >&2; exit 1; }
 
 expected=$(awk '$2 == "seal_log.wasm" {print $1}' "$(dirname "$wasm")/SHA256SUMS")
 [ "$(sha256sum "$wasm" | cut -d' ' -f1)" = "$expected" ] || die "$wasm does not match the SHA256SUMS beside it"
-account=service
 read -r owner author key_id < <(rpc call accounts.list "'{\"offset\":0,\"limit\":100}'" | python3 -I -c '
 import json, sys
 a = next(e["account"] for e in json.load(sys.stdin)["accounts"] if e["account"]["name"] == sys.argv[1])
@@ -62,11 +81,11 @@ print(a["component_address"], a["owner_public_key"], json.dumps(a["owner_key_id"
 [ -n "${key_id:-}" ] || die "walletd has no account named $account"
 
 publish_params() {  # $1 = true for a dry run. An unsigned transaction, sealed by walletd with the account's key.
-  python3 -I - "$wasm" "$owner" "$key_id" "$1" "$indexer" <<'PY'
+  python3 -I - "$wasm" "$owner" "$key_id" "$1" "$indexer" "$network_byte" <<'PY'
 import base64, json, secrets, sys, urllib.request
 wasm, owner, key_id, dry, indexer = sys.argv[1], sys.argv[2], json.loads(sys.argv[3]), sys.argv[4] == "true", sys.argv[5]
 MAX_FEE_UT = 3_000_000          # the dry run says what it costs (106,770 bytes: 8 KiB over the allowance)
-ESMERALDA = 38                  # the network byte (/api/v1/config network_byte)
+ESMERALDA = int(sys.argv[6])    # the network byte (/api/v1/config network_byte): 38 Esmeralda, 0 the mainnet
 req = urllib.request.Request(indexer + "/epoch-manager/stats", headers={"User-Agent": "mutis"})
 with urllib.request.urlopen(req, timeout=30) as res:
     epoch = json.load(res)["current_epoch"]
@@ -86,14 +105,15 @@ print(json.dumps({"transaction": transaction, "seal_signer": key_id, "other_sign
 PY
 }
 
-manifest_params() {  # $1 = template hex, $2 = true for a dry run
+manifest_params() {  # $1 = template hex, $2 = true for a dry run; sealed by the account's own key (its log's writer)
   python3 -I -c 'import json, sys
-template, owner, dry = sys.argv[1:]
+template, owner, dry, key_id = sys.argv[1:]
 manifest = (f"use template_{template} as SealLog;\n"
             "fn fee_main() { let account = var![\"account\"]; account.pay_fee(1000000); }\n"
             "fn main() { let alloc = new_component_addr!(); SealLog::new(alloc); }\n")
-print(json.dumps({"manifest": manifest, "variables": {"account": owner}, "max_fee": "1000000", "dry_run": dry == "true"}))' \
-    "$1" "$owner" "$2"
+print(json.dumps({"manifest": manifest, "variables": {"account": owner}, "max_fee": "1000000", "dry_run": dry == "true",
+                  "seal_signer_key_id": json.loads(key_id)}))' \
+    "$1" "$owner" "$2" "$key_id"
 }
 
 dry_run_outcome() {  # the dry run's verdict, fee and template, and whether the chain would hold our bytes
@@ -133,7 +153,7 @@ case $command in
     wait_for "$tx" | python3 -I -c 'import json, sys
 r = json.load(sys.stdin)
 print("status", r.get("status"), "fee", r.get("final_fee"))'
-    python3 -I "$repo/template/wasm_check.py" onchain "$predicted" --wasm "$wasm"   # the chain runs $wasm byte for byte
+    python3 -I "$repo/template/wasm_check.py" onchain "$predicted" --indexer "$indexer" --wasm "$wasm"   # byte for byte
     ;;
   instantiate)
     template=${template_arg#template_}

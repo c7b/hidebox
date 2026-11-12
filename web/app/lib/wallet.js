@@ -6,7 +6,7 @@
 // into a bucket that pays it, so no account or vault is involved and the chain shows no sender
 // account or address. deliver() picks this or our relay for each send.
 import { b64uEncode, hex, unhex } from './b64.js';
-import { NETWORK_BYTE, TARI_RESOURCE, bindings, parseAddress, ready, tryDecryptUtxo } from './ootle.js';
+import { TARI_RESOURCE, bindings, networkByte, parseAddress, ready, tryDecryptUtxo } from './ootle.js';
 import { ApiError, config } from './api.js';
 import { chainIx, demoPay, postCourier, requestSponsor } from './api-locker.js';
 import { inboxState, scan, updateWallet } from './scan.js';
@@ -18,7 +18,7 @@ import { authHeaders } from './session.js';
 
 // The same flat fee as every relay send (§1.4), so a direct send doesn't stand out by its fee.
 export const FEE_UT = 30000n;
-const VALIDITY_EPOCHS = 10;
+export const VALIDITY_EPOCHS = 10;
 const MAX_INPUTS = 4;
 // Inputs of a submitted transaction are held back this long (longer than waitFinal waits); after
 // that a send asks the indexer again: proven spent means spent, still there means the transaction failed.
@@ -74,7 +74,7 @@ async function loadInput(identity, utxoId) {
   return { utxoId, nonce: unhex(body.public_nonce), value: mine.value, mask: mine.mask };
 }
 
-function witness(network, keys, amount, memo) {
+export function witness(network, keys, amount, memo) {
   return bindings().createStealthOutputWitness(
     network, keys.ownerPk, keys.viewPk, amount, TARI_RESOURCE, null, memo ? JSON.stringify(memo) : null, null, 0n,
   );
@@ -82,17 +82,17 @@ function witness(network, keys, amount, memo) {
 
 // Unsigned transaction JSON. The statement is spliced in byte-exact, because its u64 amounts are bare
 // JSON numbers that must never round-trip through a JS number.
-function unsignedTx(statement, inputs, maxEpoch) {
+export function unsignedTx(statement, inputs, maxEpoch) {
   const substates = [`{"substate_id":"${TARI_RESOURCE}","version":null,"is_write":false}`]
     .concat(inputs.map((i) => `{"substate_id":"${i.utxoId}","version":null,"is_write":true}`));
-  return `{"network":${NETWORK_BYTE},"fee_instructions":[`
+  return `{"network":${networkByte()},"fee_instructions":[`
     + `{"StealthTransfer":{"resource_address_ref":{"Address":"${TARI_RESOURCE}"},"statement":${statement},"revealed_input_bucket":null}},`
     + '{"PutLastInstructionOutputOnWorkspace":{"key":0}},{"PayFeeFromBucket":{"bucket":{"id":0,"offset":null}}}],'
     + `"instructions":[],"inputs":[${substates.join(',')}],"min_epoch":null,"max_epoch":${maxEpoch},`
     + '"main_signer":"SealSigner","dry_run":false,"blobs":[],"nonce":0}';
 }
 
-async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
+export async function waitFinal(txId, { timeoutMs = 120000, signal } = {}) {
   const end = Date.now() + timeoutMs;
   while (Date.now() < end) {
     signal?.throwIfAborted();
@@ -151,9 +151,9 @@ export async function send(identity, { to, amountUt, memo = null, signal, onSubm
   }
   if (total < amount + FEE_UT) throw new WalletError('insufficient');
 
-  const outputs = [witness(NETWORK_BYTE, dest, amount, memo)];
+  const outputs = [witness(networkByte(), dest, amount, memo)];
   const change = total - amount - FEE_UT;
-  if (change > 0n) outputs.push(witness(NETWORK_BYTE, identity.wallet, change, null));
+  if (change > 0n) outputs.push(witness(networkByte(), identity.wallet, change, null));
   const seal = w.generateKeypair();
   const sealSk = seal.secret_key;
   const sealPk = seal.public_key;
@@ -168,7 +168,7 @@ export async function send(identity, { to, amountUt, memo = null, signal, onSubm
   let tx = unsignedTx(statement, inputs, epoch + VALIDITY_EPOCHS);
   // Each input is authorised by its one-time key c + k (the receiver side of the stealth DH; Ootle 0.48+:
   // c = H(network || v·R), so the wallet's view secret takes part).
-  for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(NETWORK_BYTE, identity.wallet.ownerSk, identity.wallet.viewSk, i.nonce), sealPk);
+  for (const i of inputs) tx = w.addTransactionSigner(tx, w.stealthDhSecret(networkByte(), identity.wallet.ownerSk, identity.wallet.viewSk, i.nonce), sealPk);
   const envelope = w.borEncodeTransaction(w.sealTransaction(tx, sealSk));
 
   // Submitting takes the locker session: the proxy relays sends of our lockers, not anyone's transactions.

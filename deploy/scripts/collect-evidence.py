@@ -23,7 +23,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-STATUS = Path("/srv/mutis/status")
+STATUS = Path("/srv/mutis/status")     # production's; an instance's is beside its data_dir (main())
 # SealLog components we wrote to before the live one (template NOTES §1.5): the 1.0.0 log, never
 # appended to, and the research log, with one test checkpoint; and the 2.0.0 log of the 0.37 build, live from
 # the 2026-11-02 reset until Ootle 0.50 stopped loading its V1 template (deploy/ootle/upgrade-0.50.md §9). Listed
@@ -76,7 +76,7 @@ def collect(cfg: dict, conn: sqlite3.Connection, robot_file: Path, now: datetime
     robot = json.loads(robot_file.read_text())["address"] if robot_file.is_file() else None
     return {
         "network": cfg.get("network", "esmeralda"),
-        "ootle_version": cfg.get("ootle", {}).get("wasm_version", "0.52.0"),
+        "ootle_version": cfg.get("ootle", {}).get("wasm_version", "0.53.2"),
         "wasm_sha256": sidecar.get("wasm_sha256"),
         "receiver_address": meta(conn, "receiver_address"),
         "robot_address": robot,
@@ -113,6 +113,8 @@ def main() -> int:
     with open(os.environ.get("MUTIS_CONFIG", "/etc/mutis/mutis.toml"), "rb") as f:
         cfg = tomllib.load(f)
     data = Path(cfg.get("data_dir", "/srv/mutis/data"))
+    global STATUS
+    STATUS = data.parent / "status"        # /srv/mutis/status, or an instance's /srv/mutis-<name>/status
     robot = Path(cfg.get("ootle", {}).get("robot_keys", "/home/drive/mutis/robot.json"))
     conn = sqlite3.connect(f"file:{data / 'db' / 'mutis.sqlite3'}?mode=ro", uri=True, timeout=10)
     now = datetime.datetime.now(datetime.UTC)

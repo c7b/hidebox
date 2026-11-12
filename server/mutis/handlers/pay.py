@@ -25,8 +25,8 @@ CHECKS_LISTED = 100
 PAID_LISTED = 50       # Earnings → Payments, newest first
 LINKS_LISTED = 200     # Earnings → By link, the link paid last first
 # What counts as the owner's money: a committed payment we can vouch for. Test money our demo wallet paid for a
-# claim's whole price (it built the output to the owner's address), or a payment the owner's drive checked is its
-# own to spend (owner_ok = 1). A payment still waiting for that check, a partial one the check never reaches and one
+# claim's whole price (it built the output to the owner's address), or a payment checked to be the owner's own to
+# spend (owner_ok = 1: by the owner's drive, or by our payment checker with features.away_release). A payment still waiting for that check, a partial one the check never reaches and one
 # the payer kept (owner_ok = 0) count nowhere: a view key proves the amount, never who can spend it (R2).
 _EARNED = ("FROM sale_payments sp JOIN claims c ON c.id = sp.claim_id JOIN shares s ON s.id = c.share_id "
            "JOIN items i ON i.id = s.item_id WHERE i.owner_id = ? AND sp.status IN ('counted','extra') "
@@ -72,7 +72,8 @@ def get_sales(ctx):
     # first, so Received → Payments can say which link, Test money, Checked and the tx on any device that
     # opens the drive. What our server already holds; never who paid.
     paid = []
-    for r in conn.execute("SELECT sp.utxo_id, sp.value_ut, sp.seen_at, sp.committed, sp.owner_ok, c.id AS claim_id, "
+    for r in conn.execute("SELECT sp.utxo_id, sp.value_ut, sp.seen_at, sp.committed, sp.owner_ok, sp.checked_by, "
+                          "c.id AS claim_id, "
                           "c.share_id, c.demo FROM sale_payments sp JOIN claims c ON c.id = sp.claim_id "
                           "JOIN shares s ON s.id = c.share_id JOIN items i ON i.id = s.item_id "
                           "WHERE i.owner_id = ? AND sp.status IN ('counted','extra') ORDER BY sp.seen_at DESC LIMIT ?",
@@ -84,7 +85,8 @@ def get_sales(ctx):
             tx = json.loads(job[0]).get("tx_id") if job else None
         paid.append({"utxo_id": r["utxo_id"], "share_id": r["share_id"], "value_ut": str(r["value_ut"]),
                      "seen_at": r["seen_at"], "demo": bool(r["demo"]), "checked": bool(r["committed"]),
-                     "owner_ok": None if r["owner_ok"] is None else bool(r["owner_ok"]), "tx_id": tx})
+                     "owner_ok": None if r["owner_ok"] is None else bool(r["owner_ok"]), "checked_by": r["checked_by"],
+                     "tx_id": tx})
     # Earnings (the owner's "where's my money?"): what each paid link took in and in all, over every payment,
     # not only the newest 50; `test_ut` is the part our demo wallet paid (test money), `views_used` the link's opens.
     total = conn.execute(f"SELECT COALESCE(SUM(sp.value_ut), 0), COALESCE(SUM(CASE WHEN c.demo = 1 THEN sp.value_ut END), 0), "
@@ -125,7 +127,8 @@ def confirm_claim(ctx, claim_id: str):
                 or pay is None or pay["status"] != "counted":
             raise ApiError(409, "conflict", "This payment isn't waiting for your check.",
                            details={"status": claim["status"]})
-        conn.execute("UPDATE sale_payments SET owner_ok = ? WHERE utxo_id = ?", (int(spendable), utxo_id))
+        conn.execute("UPDATE sale_payments SET owner_ok = ?, checked_by = 'drive' WHERE utxo_id = ?",
+                     (int(spendable), utxo_id))
         if not spendable:
             conn.execute("UPDATE claims SET owner_check = 'bad', status = 'void' WHERE id = ?", (claim_id,))
         elif conn.execute("SELECT 1 FROM sale_payments WHERE claim_id = ? AND status = 'counted' "
@@ -183,7 +186,7 @@ def page(ctx, share_id: str):
         "buyer_window_s": share["buyer_window_s"], "kind": item["kind"],
         "size_stored": sum(r["size_stored"] for r in contents) if contents else item["size_stored"],
         "child_count": len(contents), "teaser_ct": codec.b64u(share["teaser_ct"]) if share["teaser_ct"] else None,
-        "seller": {"ready": seller is not None and seller["state"] == "ok"}, "testnet": True})
+        "seller": {"ready": seller is not None and seller["state"] == "ok"}, "testnet": ctx.cfg.net.testnet})
 
 
 def create_claim(ctx, share_id: str):

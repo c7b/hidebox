@@ -3,10 +3,13 @@ import { hex, unhex } from '../lib/b64.js';
 import { IntegrityError, randomBytes } from '../lib/crypto.js';
 import {
   AddressError, addressErrorCode, bindings, checkTxWithIndexer, checkWithIndexer, classifyAddressInput, decodeAddress,
-  decodeBech32m, deriveOotleKeys, encodeBech32m, NETWORK_BYTE, newRandomKeys, parseAddress, ready, reduceScalar, sealToKeys, TARI_RESOURCE,
+  decodeBech32m, deriveOotleKeys, encodeBech32m, NETWORK_BYTE, networkByte, newRandomKeys, oneTimeKey, parseAddress, ready, reduceScalar, sealToKeys, TARI_RESOURCE,
   tryDecryptUtxo, unwrapBlob, wasmAvailable, wrapToAddress,
 } from '../lib/ootle.js';
+import * as ootleLive from '../lib/ootle.js';
+import { configureApi } from '../lib/api.js';
 import { ALPHABET } from '../lib/emoji.js';
+import { NetworkError, adoptPage, network, networkReady, useIndexers, useNetwork } from '../lib/network.js';
 import { bytesEq, eq, loadJson, loadOptionalJson, ok, rejects } from './harness.js';
 
 export const env = 'any';
@@ -171,6 +174,7 @@ export default [
     for (const bad of [`transactions/${tx}/result`, `transaction-receipts/${tx}/x`, 'epoch-manager/stats', `substates/vault_${tx}`, `../transaction-receipts/${tx}`]) {
       await rejects(() => checkWithIndexer(bad), TypeError, bad);
     }
+    useIndexers(['https://ootle-indexer-b.tari.com/', 'https://ootle-indexer-a.tari.com', 'ftp://x.example', 'https://x.example/path']);   // as /config does
     const realFetch = globalThis.fetch;
     const asked = [];
     globalThis.fetch = async (url, init) => {
@@ -187,5 +191,92 @@ export default [
     } finally {
       globalThis.fetch = realFetch;
     }
+  }],
+  ['a first /config that fails doesn\'t leave the page on Esmeralda: a page has the network its build names, or none until it is told', async () => {
+    await ready();
+    const page = (content) => ({ querySelector: (sel) => (sel === 'meta[name="mutis-network"]' && content !== null ? { content } : null) });
+    const realFetch = globalThis.fetch;
+    const origin = 'https://net.mutis.test';
+    let answers = [];
+    let asked = 0;
+    globalThis.fetch = async (input, init) => {
+      if (!String(input).startsWith(origin)) return realFetch(input, init);
+      asked++;
+      const [status, body] = answers.shift() ?? [503, {}];
+      return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    };
+    const settle = () => new Promise((r) => setTimeout(r, 20));
+    const k = await deriveOotleKeys(new Uint8Array(32).fill(5), 'sales');
+    const kp = bindings().generateKeypair();
+    const nonce = hex(kp.public_key);
+    kp.free();
+    const esmeraldaKey = await oneTimeKey(k.ownerSk, k.viewSk, nonce);
+    const esmeraldaAddress = await ootleLive.addressFromKeys(k.ownerPk, k.viewPk);
+    try {
+      // 1. A page whose HTML names no network, and whose first /config fails (a 502 while the API restarts).
+      configureApi({ origin });
+      answers = [[502, {}]];
+      adoptPage(page(null));
+      eq(network(), null, 'no network, not Esmeralda');
+      eq(ootleLive.NETWORK_BYTE, null);
+      eq(ootleLive.ADDRESS_HRP, null);
+      await settle();
+      eq(network(), null, 'a failed answer names nothing');
+      await rejects(async () => networkByte(), NetworkError, 'the byte isn\'t handed out');
+      eq(classifyAddressInput(esmeraldaAddress), 'invalid', 'no address is this network\'s yet');
+      answers = [[502, {}]];
+      await rejects(() => ready(), (e) => e?.name === 'ApiError' || e instanceof NetworkError, 'nothing Tari runs');
+      await rejects(() => oneTimeKey(k.ownerSk, k.viewSk, nonce), (e) => e?.name === 'ApiError' || e instanceof NetworkError, 'the owner check throws: it never reads as "not our key"');
+      // the page's own, later /config succeeds: that is the network, from then on
+      answers = [[200, { network: 'mainnet', ootle: { indexers: [] } }]];
+      await ready();
+      eq(network().name, 'mainnet');
+      eq(networkByte(), 0);
+      eq(ootleLive.ADDRESS_HRP, 'otl_');
+      const mainnetKey = await oneTimeKey(k.ownerSk, k.viewSk, nonce);
+      ok(mainnetKey && mainnetKey !== esmeraldaKey, 'the one-time key is the mainnet\'s, not the one Esmeralda\'s byte gives');
+      ok((await ootleLive.addressFromKeys(k.ownerPk, k.viewPk)).startsWith('otl_1'));
+
+      // 2. A built page: the network is the build's from the first line, with no answer at all.
+      configureApi({ origin });
+      const before = asked;
+      answers = [];   // every /config fails
+      adoptPage(page('Mainnet'));
+      eq(network().name, 'mainnet', 'known at once');
+      eq(networkByte(), 0);
+      await ready();
+      await settle();
+      ok(asked > before, '/config is still asked (the indexers, and that it agrees)');
+      eq(network().name, 'mainnet', 'a /config that never answers changes nothing');
+      configureApi({ origin });
+      adoptPage(page('Esmeralda'));
+      eq(network().name, 'esmeralda');
+      eq(networkByte(), 0x26);
+
+      // 3. The build and /config name different networks: no network, and everything refuses.
+      configureApi({ origin });
+      answers = [[200, { network: 'esmeralda' }]];
+      adoptPage(page('mainnet'));
+      eq(network().name, 'mainnet');
+      await settle();
+      eq(network(), null, 'neither is taken');
+      await rejects(() => networkReady(), (e) => e instanceof NetworkError && e.code === 'network_mismatch');
+      await rejects(() => ready(), NetworkError);
+      await rejects(async () => networkByte(), NetworkError);
+      await rejects(() => ootleLive.addressFromKeys(k.ownerPk, k.viewPk), NetworkError, 'no address is made');
+      await rejects(() => parseAddress(esmeraldaAddress), NetworkError, 'none is accepted');
+      // an unknown name in the tag is no tag
+      configureApi({ origin });
+      answers = [[200, { network: 'esmeralda' }]];
+      adoptPage(page('{{NETWORK}}'));
+      eq(network(), null);
+      await ready();
+      eq(network().name, 'esmeralda');
+    } finally {
+      globalThis.fetch = realFetch;
+      useNetwork('esmeralda');   // as the tests run
+    }
+    eq(await oneTimeKey(k.ownerSk, k.viewSk, nonce), esmeraldaKey);
+    eq(NETWORK_BYTE, 0x26);
   }],
 ];

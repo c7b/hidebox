@@ -1,8 +1,8 @@
 -- SPDX-License-Identifier: MIT
--- mutis database, schema version 7 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
--- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 to 007:
--- the drive's folders, Trash, opens per hour, the pay-to-open tables, the owner's check of sales, packs and the
--- two daily counts).
+-- mutis database, schema version 11 (spec §7, plus brand patches P-8 exit receipts, P-12 judge passes,
+-- P-25 first_opened_min, the SealLog tables of spec §11 that P-8 needs, and migrations/002 to 011:
+-- the drive's folders, Trash, opens per hour, the pay-to-open tables, the owner's check of sales, packs, the
+-- two daily counts, the shop, withdrawals, who checked a sale payment, and a shop's address).
 -- Deliberately absent: email, name, IP address, user agent, any login public key, a user's locker address,
 -- file or folder name, MIME type, plaintext size, any secret key in clear, any grant or recipient table, the
 -- drop an item came from, who opened a link, a buyer's identity. Kept on purpose, opt-in and for sales only:
@@ -13,7 +13,8 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;
 --       mirror_cursors (json, per indexer), receiver_address, receiver_scan_seq, credit_freeze, last_reconcile,
 --       reconcile_unknown, canary_item_id, canary_n, canary_delivery_tx, canary_sealed_at, canary_log (json),
 --       evidence_pay_day, features (json overrides), alerts (json), budget_overrides (json), last_sealed_at,
---       cleanup_hour, cleanup_day, seal_last_at, force (json: canary/evidence_pay/seal requests from mutis-admin)
+--       cleanup_hour, cleanup_day, seal_last_at, force (json: canary/evidence_pay/seal requests from mutis-admin),
+--       invoice_address and revenue_scan_seq (where pack invoices pay, docs/currencies.md), storage (json, docs/storage.md)
 
 CREATE TABLE identities (
   id             TEXT PRIMARY KEY,                -- b64u(HKDF(seed,'identity-id')[0:16])
@@ -150,7 +151,8 @@ CREATE TABLE invoices (
   status TEXT NOT NULL CHECK (status IN ('pending','seen','proven','credited','underpaid','expired')),
   received_ut INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, credited_at INTEGER,
-  judge INTEGER NOT NULL DEFAULT 0 CHECK (judge IN (0,1))   -- made with a judge pass (schema 6)
+  judge INTEGER NOT NULL DEFAULT 0 CHECK (judge IN (0,1)),  -- made with a judge pass (schema 6)
+  pack_bytes INTEGER, pack_days INTEGER                    -- the pack's terms when it was made (schema 12)
 ) STRICT;
 
 CREATE TABLE payments (                           -- one row per on-chain UTXO (idempotency)
@@ -174,7 +176,8 @@ CREATE TABLE chain_utxos (                        -- mirror of TARI UTXOs for in
 CREATE TABLE abuse_reports (
   id TEXT PRIMARY KEY, share_id TEXT, item_id TEXT, drop_id TEXT, category TEXT NOT NULL, details TEXT NOT NULL,
   contact TEXT, included_key INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL,
-  state TEXT NOT NULL DEFAULT 'new' CHECK (state IN ('new','actioned','rejected')), action_note TEXT
+  state TEXT NOT NULL DEFAULT 'new' CHECK (state IN ('new','actioned','rejected')), action_note TEXT,
+  shop_id TEXT                                    -- a report of a shop (schema 8)
 ) STRICT;
 
 -- SealLog storage receipts (spec §11) with exit receipts (P-8). Leaves hold hashes only; the item a leaf
@@ -264,7 +267,11 @@ CREATE TABLE sale_payments (                     -- one row per UTXO ever; apart
   epoch      INTEGER,
   committed  INTEGER NOT NULL DEFAULT 0,
   status     TEXT NOT NULL CHECK (status IN ('pending_check','counted','extra')),
-  owner_ok   INTEGER CHECK (owner_ok IN (0,1))       -- the seller's drive: 1 its to spend, 0 the payer kept it
+  owner_ok   INTEGER CHECK (owner_ok IN (0,1)),      -- the seller's drive: 1 its to spend, 0 the payer kept it
+  withdraw_tx TEXT,                                -- the withdrawal spending it (schema 9)
+  withdraw_at INTEGER,
+  withdrawn  INTEGER NOT NULL DEFAULT 0 CHECK (withdrawn IN (0,1)),  -- that withdrawal committed
+  checked_by TEXT CHECK (checked_by IN ('server','drive'))   -- who set owner_ok (schema 10): our checker or the drive
 ) STRICT;
 
 -- Two numbers a day (viral-1, C60; schema 7): how many one-off links and how many drives were made by a browser tab
@@ -276,3 +283,79 @@ CREATE TABLE daily_counts (
   n    INTEGER NOT NULL CHECK (n > 0),
   PRIMARY KEY (day, kind)
 ) STRICT, WITHOUT ROWID;
+
+-- A drive's shop (schema 8; server/mutis/shop.py, docs/shop.md), behind features.shop. What the owner chose to publish:
+-- the shop's title and bio, and per listed pay link a title and a line. Its id is random, never from the drive; key_wrap
+-- is the shop's own key wrapped under the drive's key (only the owner's browser opens it; the key itself rides after
+-- the # of the shop's link). A listing holds what our server already knew of its pay link (kind, padded size, price)
+-- and link_ct, the pay link's own half of its key sealed with the shop's key. It goes with its pay link and its shop.
+CREATE TABLE shops (
+  id          TEXT PRIMARY KEY,                   -- 22 random base64url characters: /shop/<id>
+  identity_id TEXT NOT NULL UNIQUE REFERENCES identities(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,                      -- the shop's public name, plain text
+  bio         TEXT NOT NULL DEFAULT '',
+  key_wrap    BLOB NOT NULL,                      -- 60 B
+  state       TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open','removed')),   -- removed: an operator's takedown
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  username    TEXT,                               -- schema 11: /shop/<username>, case-folded ASCII; NULL before names
+  skeleton    TEXT,                               -- the name with look-alikes merged and hyphens dropped: unique too
+  mode        TEXT NOT NULL DEFAULT 'private' CHECK (mode IN ('private','public')),
+  token_hash  BLOB,                               -- SHA-256 of the read token, HKDF(shop key, "mutis/v2", "shop-read")
+  published_key BLOB                              -- always NULL since schema 13: a shop's key never reaches us
+) STRICT;
+CREATE UNIQUE INDEX shops_username ON shops(username) WHERE username IS NOT NULL;
+CREATE UNIQUE INDEX shops_skeleton ON shops(skeleton) WHERE skeleton IS NOT NULL;
+
+-- A name a shop gave up stays its drive's until `until` (schema 11), so nobody else answers at an address its old
+-- visitors and search engines still know.
+CREATE TABLE shop_name_holds (
+  skeleton    TEXT PRIMARY KEY,
+  identity_id TEXT NOT NULL,
+  until       INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE shop_listings (
+  share_id    TEXT PRIMARY KEY REFERENCES shares(id) ON DELETE CASCADE,   -- the pay link it sells
+  shop_id     TEXT NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,                      -- typed by the owner, never the file's name
+  description TEXT NOT NULL DEFAULT '',
+  kind        TEXT NOT NULL CHECK (kind IN ('file','folder')),
+  size_stored INTEGER NOT NULL,                   -- padded, as the pay page already shows it
+  price_ut    INTEGER NOT NULL,
+  link_ct     BLOB NOT NULL,                      -- 60 B: iv ‖ AES-GCM(shop key, the pay link's own half)
+  created_at  INTEGER NOT NULL
+) STRICT;
+CREATE INDEX shop_listings_shop ON shop_listings(shop_id, created_at);
+
+-- Withdrawals (schema 9; server/mutis/withdraw.py, docs/withdraw.md), behind features.withdraw: what a withdrawal sent
+-- back to the drive's sales address. Never where the rest went.
+CREATE TABLE sales_change (
+  utxo_id     TEXT PRIMARY KEY,
+  identity_id TEXT NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+  value_ut    INTEGER NOT NULL CHECK (value_ut > 0),
+  from_tx     TEXT NOT NULL,                      -- the withdrawal that made it
+  committed   INTEGER NOT NULL DEFAULT 0 CHECK (committed IN (0,1)),
+  created_at  INTEGER NOT NULL,
+  withdraw_tx TEXT,                               -- a later withdrawal spending it
+  withdraw_at INTEGER,
+  withdrawn   INTEGER NOT NULL DEFAULT 0 CHECK (withdrawn IN (0,1))
+) STRICT;
+CREATE INDEX sales_change_owner ON sales_change(identity_id, withdrawn);
+
+-- The market (schema 13, docs/market.md): a shopper's ask for a listing's half of its pay link's key (sA), answered by
+-- the seller's drive with sA sealed to the ask's own key pair (125 bytes), which our server can't open.
+CREATE TABLE market_asks (
+  id          TEXT PRIMARY KEY,                   -- from the shopper's secret (HKDF), 22 base64url characters
+  share_id    TEXT NOT NULL REFERENCES shares(id) ON DELETE CASCADE,
+  shop_id     TEXT NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  owner_pk    BLOB NOT NULL,                      -- 32 B, the ask's own key pair
+  view_pk     BLOB NOT NULL,                      -- 32 B
+  token_hash  BLOB NOT NULL,                      -- SHA-256 of HKDF(secret, "mutis/v2", "market-ask")
+  answer      BLOB,                               -- 125 B: sA sealed to the ask's keys by the seller's drive
+  created_at  INTEGER NOT NULL,
+  answered_at INTEGER,
+  expires_at  INTEGER NOT NULL
+) STRICT;
+CREATE INDEX market_asks_shop ON market_asks(shop_id, answered_at, created_at);
+CREATE INDEX market_asks_share ON market_asks(share_id);

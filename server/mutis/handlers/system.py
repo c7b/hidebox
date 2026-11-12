@@ -2,7 +2,7 @@
 """GET /health, GET /config, POST /pow (spec §6.3 System, brand patch P-3)."""
 import sqlite3
 
-from .. import cleanup, db, items, payments, pow as pow_mod, quota, sales, tree
+from .. import cleanup, db, items, market, payments, pow as pow_mod, quota, sales, shop, tree, withdraw
 from ..auth import SESSION_TTL_S
 from ..http_util import get_enum, get_int, json_response
 from .invoices import DEMO_PAY_PER_DAY
@@ -41,20 +41,22 @@ def limits_block() -> dict:
 
 
 def build_config(ctx) -> dict:
-    cfg, ootle = ctx.cfg, ctx.cfg["ootle"]
+    cfg, ootle, net = ctx.cfg, ctx.cfg["ootle"], ctx.cfg.net
     start = ctx.db.execute("SELECT COALESCE(MIN(seq), 1) FROM chain_utxos").fetchone()[0]
     e2e = {"e2e_expiry_s": cfg["e2e_expiry_s"]} if cfg["e2e_expiry_s"] else {}     # spec §17.1, never in production
     return {
         "origin": cfg.origin, "memo_origins": list(cfg["memo_origins"]),
-        "network": cfg["network"], "network_byte": 38, "testnet": True,
+        "network": net.name, "network_byte": net.byte, "testnet": net.testnet, "coin": net.coin,
+        "address_prefix": net.hrp, "staging": cfg["staging"], "testnet_origin": cfg["testnet_origin"] or None,
+        "legacy_origin": cfg["legacy_origin"] or None,
         "send_mode": cfg["gates"]["send_mode"], "amount_proof": cfg["gates"]["amount_proof"],
         "chunk_size": quota.CHUNK, "text_max_chars": quota.TEXT_MAX_CHARS, "text_max_bytes": quota.TEXT_MAX_BYTES,
         "inline_max_stored": quota.INLINE_MAX_STORED,
         "limits": limits_block(),
         "kdf": {"alg": "PBKDF2-SHA256", "min_iter": KDF_MIN_ITER, "max_iter": KDF_MAX_ITER},
-        "pricing": {"unit": "tTARI", "packs": [
+        "pricing": {"unit": net.coin, "packs": [
             {"id": pid, "bytes": p["bytes"], "days": p["days"], "price_ut": str(p["price_ut"])}
-            for pid, p in quota.PACKS.items()], "one_per_drive": True, "renew_days": cfg["packs"]["renew_days"]},
+            for pid, p in quota.pack_table(cfg["packs"]).items()], "one_per_drive": True, "renew_days": cfg["packs"]["renew_days"]},
         "features": ctx.features(),
         "courier": {"amount_ut": str(ootle["courier_amount_ut"]), "max_fee_ut": str(ootle["max_fee_transfer_ut"]),
                     "jitter_s": list(ootle["jitter_s"])},
@@ -76,12 +78,17 @@ def build_config(ctx) -> dict:
         "items": {"max_delete_after_days": items.MAX_DELETE_AFTER_DAYS},
         "send": {"views": quota.SEND_VIEWS, "expiry_s": quota.SEND_EXPIRY_S},
         "pay_to_open": sales.config_block(ootle["max_fee_transfer_ut"], db.get_meta(ctx.db, "receiver_address")),
-        "quota": {"floor_bytes": quota.QUOTA_FLOOR, "ceiling_bytes": quota.QUOTA_CEILING,
+        "shop": shop.config_block(),     # a drive's shop (docs/shop.md), behind features.shop
+        "market": market.config_block(),     # the market of public shops (docs/market.md), behind features.market
+        "withdraw": withdraw.config_block(),     # withdrawing earnings (docs/withdraw.md), behind features.withdraw
+        "quota": {"floor_bytes": cfg["limits"]["quota_floor_bytes"], "ceiling_bytes": cfg["limits"]["quota_ceiling_bytes"],
                   "overcommit": quota.OVERCOMMIT, "active_days": quota.ACTIVE_DAYS},
         "password": {"lock_after": PW_LOCK_AFTER, "lock_s": PW_DELAY_START_S, "permanent_after": PW_PERMANENT_AFTER,
                      "min_chars_link_password": 4, "min_chars_password_only": 10},
         "invoices": {"underpaid_grace_days": payments.UNDERPAID_GRACE_DAYS, "expires_s": payments.INVOICE_TTL_S},
         "hosting": {"snapshots": cfg["hosting"]["snapshots"]},
+        # Where files live (docs/storage.md), for /fine-print's third parties: never an endpoint, a bucket or a key.
+        "storage": {"backend": cfg["storage"]["backend"], "provider": cfg["storage"]["provider"] or None},
         "onion": cfg["onion"] or None,
         **e2e,
     }

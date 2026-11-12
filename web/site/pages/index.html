@@ -231,10 +231,11 @@
       <aside class="coin-box" id="ttari" aria-labelledby="ttari-h">
         <div class="coin-top"><span class="icon-tile chain" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg></span><h3 id="ttari-h">What's tTARI?</h3></div>
         <ul role="list">
-          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg><span>tTARI is the coin on Tari's test network.</span></li>
+          <li data-when="network=esmeralda"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg><span>tTARI is the coin on Tari's test network.</span></li>
+          <li data-when="network=mainnet" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-info"/></svg><span>TARI is the coin of the Tari network. <br>It's real money, and {{BRAND}} is a beta. <br>Keep amounts small.</span></li>
           <li data-when="sponsor=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hard-drive"/></svg><span>When your drive opens, our sponsor wallet sends it some tTARI to try things.</span></li>
           <li data-when="test_pay=on" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-coins"/></svg><span>On a pay page, tap Pay with test money. <br>Our demo wallet pays the owner for you, with test money.</span></li>
-          <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg><span>Judging? <br><a href="/judges#pass">Get a judge pass</a>.</span></li>
+          <li data-when="judge=on"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-key-round"/></svg><span>Judging? <br><a href="/judges#pass">Get a judge pass</a>.</span></li>
         </ul>
       </aside>
     </div>

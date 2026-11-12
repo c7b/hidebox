@@ -16,7 +16,7 @@ SMALL_PLAINTEXT_MAX = 5 * MiB
 DEMO_RESERVE = 128 * MiB          # the SMALL lane's last 128 MiB only takes files of at most 1 MiB
 DEMO_FILE_MAX = 1 * MiB
 
-QUOTA_FLOOR = 256 * MiB
+QUOTA_FLOOR = 256 * MiB            # the defaults of limits.quota_floor_bytes and limits.quota_ceiling_bytes
 QUOTA_CEILING = 5 * GiB
 QUOTA_STEP = 64 * MiB
 OVERCOMMIT = 4
@@ -46,10 +46,28 @@ CANARY_MAX_EXPIRY_S = 2 * 86400
 SEND_VIEWS = 3
 SEND_EXPIRY_S = 30 * 86400
 
-# Against griefing: packs are small next to the paid share (256 MiB and 1 GiB, a few sold a day), so a run
-# of purchases can't take it at once. The ids stay: invoices name them.
+# The built-in packs, sold where `packs.catalog` is empty (the testnet). Against griefing: packs are small next to the
+# paid share (256 MiB and 1 GiB, a few sold a day), so a run of purchases can't take it at once. The ids stay: invoices
+# name them. A deployment's own catalog replaces them (docs/pricing.md); each invoice keeps its own terms (schema 12).
 PACKS = {"s30": {"bytes": 256 * MiB, "days": 30, "price_ut": 500_000},
          "m30": {"bytes": 1 * GiB, "days": 30, "price_ut": 1_000_000}}
+
+
+def pack_table(cfg_packs: dict) -> dict:
+    """The packs on sale: `packs.catalog` (config.py checks it) in its order, or the built-in PACKS."""
+    catalog = cfg_packs.get("catalog") or []
+    if not catalog:
+        return PACKS
+    return {p["id"]: {"bytes": p["bytes"], "days": p["days"], "price_ut": p["price_ut"]} for p in catalog}
+
+
+def invoice_terms(inv) -> tuple[int, int]:
+    """(bytes, days) an invoice promised: its own (schema 12), or, made before, its built-in pack's."""
+    keys = inv.keys() if hasattr(inv, "keys") else ()
+    if "pack_bytes" in keys and inv["pack_bytes"] is not None:
+        return inv["pack_bytes"], inv["pack_days"]
+    pack = PACKS[inv["pack"]]
+    return pack["bytes"], pack["days"]
 
 
 def padme(length: int) -> int:
@@ -100,6 +118,8 @@ class Pool:
     anon: int
     free_pool: int
     q_target: int
+    q_floor: int = QUOTA_FLOOR       # limits.quota_floor_bytes and limits.quota_ceiling_bytes
+    q_ceiling: int = 0                # 0: no bound given (a Pool made by hand in a test)
 
 
 def compute(d_total: int, d_avail: int, stored: int, paid: int, n_active: int, limits: dict) -> Pool:
@@ -110,9 +130,10 @@ def compute(d_total: int, d_avail: int, stored: int, paid: int, n_active: int, l
     anon = min(int(ANON_FRACTION * pool), limits["anon_lane_max_bytes"])
     free_pool = max(0, pool - paid - small - drop - anon)
     n = max(N_MIN, n_active)
-    target = min(max(OVERCOMMIT * free_pool // n, QUOTA_FLOOR), QUOTA_CEILING)
+    floor, ceiling = limits.get("quota_floor_bytes", QUOTA_FLOOR), limits.get("quota_ceiling_bytes", QUOTA_CEILING)
+    target = min(max(OVERCOMMIT * free_pool // n, floor), ceiling)
     target -= target % QUOTA_STEP
-    return Pool(d_total, d_avail, stored, paid, n, reserve, pool, small, drop, anon, free_pool, target)
+    return Pool(d_total, d_avail, stored, paid, n, reserve, pool, small, drop, anon, free_pool, target, floor, ceiling)
 
 
 def smooth(q_old: int, q_target: int) -> int:
@@ -122,10 +143,26 @@ def smooth(q_old: int, q_target: int) -> int:
 
 
 def measure(conn: sqlite3.Connection, statvfs, data_dir, limits: dict, now: int) -> Pool:
-    st = statvfs(data_dir)
-    d_total, d_avail = st.f_blocks * st.f_frsize, st.f_bavail * st.f_frsize
+    """The pool now. On our disk (`limits.capacity_bytes` 0) the disk's size and free space, and with
+    `limits.disk_cap_bytes` at most that much of it: the pool never takes the disk below its reserve, and grows past the
+    cap only by what is already stored beyond it (then every upload waits, as on a full disk), so another deployment on
+    the same disk keeps its room (docs/storage.md). In a rented store the space
+    rented, of which what we store is taken (our disk then only stages uploads, and the store guards it,
+    storage.TieredBlobs)."""
     stored = conn.execute("SELECT COALESCE(SUM(size_stored), 0) FROM items "
                           "WHERE state IN ('uploading','ready','doomed')").fetchone()[0]
+    capacity = limits.get("capacity_bytes", 0)
+    if capacity:
+        d_total, d_avail = capacity, max(0, capacity - stored)
+    else:
+        st = statvfs(data_dir)
+        d_total, d_avail = st.f_blocks * st.f_frsize, st.f_bavail * st.f_frsize
+        cap = limits.get("disk_cap_bytes", 0)
+        if cap:
+            # What is free counts only up to the cap's room left, above the disk's reserve: the pool (stored + free -
+            # reserve) is then at most the cap, and the freezes near the reserve come at the cap as at a full disk.
+            reserve = max(limits["reserve_min_bytes"], int(RESERVE_FRACTION * d_total))
+            d_avail = min(d_avail, reserve + max(0, cap - stored))
     paid = conn.execute("SELECT COALESCE(SUM(paid_bytes), 0) FROM identities WHERE paid_until > ?",
                         (now,)).fetchone()[0]
     # N counts lockers active on two or more days that store something: a locker made only to be
@@ -136,10 +173,16 @@ def measure(conn: sqlite3.Connection, statvfs, data_dir, limits: dict, now: int)
     return compute(d_total, d_avail, stored, paid, n_active, limits)
 
 
+def bounded(pool: Pool, q: int) -> int:
+    """Q no higher than the configured ceiling: a lowered ceiling holds at once, not after the hourly steps (at most
+    0.4 % each) reach it. Below the floor Q still climbs back by steps, as it does after a full disk."""
+    return min(q, pool.q_ceiling) if pool.q_ceiling else q
+
+
 def free_quota(conn: sqlite3.Connection, pool: Pool) -> int:
-    """The current free quota Q (meta.free_quota_bytes; the target on first boot)."""
+    """The current free quota Q (meta.free_quota_bytes, within the bounds; the target on first boot)."""
     value = db.get_meta(conn, "free_quota_bytes")
-    return int(value) if value is not None else pool.q_target
+    return bounded(pool, int(value)) if value is not None else pool.q_target
 
 
 def class_of(identity: sqlite3.Row, now: int) -> str:
