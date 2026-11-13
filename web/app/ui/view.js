@@ -499,6 +499,8 @@ export async function main() {
     const { marketPage } = await import('./market-page.js');
     await marketPage(root, cfg);
   } else {
+    // shop.html starts in the drive's look; this page is the link page's.
+    if (document.body.dataset.look === 'drive') (await import('./folder-view.js')).ghostLook();
     root.dataset.state = 'not-found';
     root.replaceChildren(scene({ state: 'oops', title: t('gone.notfound') }).head, footer());
   }

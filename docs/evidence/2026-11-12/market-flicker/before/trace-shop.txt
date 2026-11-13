@@ -1,0 +1,111 @@
+{"responseStart":223.60000002384186,"responseEnd":225.10000002384186,"domInteractive":456.90000009536743} fcp 492
+res 247 394 link /shared/tokens.c07690b9f3.css
+res 250 330 link /shared/base.2c4813dc35.css
+res 250 391 link /site/css/site.2cf9b0f84f.css
+res 250 333 link /app/css/widget.927b54d16e.css
+res 250 391 link /app/css/parts.8eec5cc316.css
+res 250 391 link /app/css/app.eeb820e519.css
+res 250 397 link /app/css/look.283f9ea50f.css
+res 251 396 link /app/css/flow.ef20f72407.css
+res 251 397 script /shared/theme.e707163600.js
+res 251 395 script /site/js/site.3e59d9caab.js
+res 251 395 script /app/ui/view-page.745cc2fa88.js
+res 407 472 other /shared/ui/icons.828538c36c.svg#i-hidebox
+res 418 581 css /shared/fonts/geist/Geist-Variable.2ffebe993e.woff2
+res 456 585 script /shared/dates.324e98a2c1.js
+res 456 585 script /site/js/stats.83511714c4.js
+res 457 584 script /app/lib/network.2989b3063e.js
+res 457 586 script /app/ui/view.f9fb247f7c.js
+res 592 660 script /app/lib/api.f62652ae97.js
+res 592 660 script /app/lib/i18n.b5a88fcbfd.js
+res 601 795 fetch /api/v1/config
+res 602 673 script /app/lib/store.40e4044630.js
+res 607 674 script /app/ui/lines.3c5419d8a5.js
+res 608 692 script /app/lib/open.5e7ca253ae.js
+res 608 694 script /app/lib/share.351aaedd49.js
+res 608 694 script /app/lib/filetype.c80a2e9c5a.js
+res 608 693 script /app/lib/download.43fdb60fcd.js
+res 608 700 script /app/lib/bytes.750a0e75c9.js
+res 608 699 script /app/ui/core.4a20bacd5d.js
+res 608 700 script /app/lib/router.b23608106d.js
+res 608 702 script /app/ui/marks.b5c3db1dce.js
+res 609 701 script /app/ui/errors.91fe1f852c.js
+res 609 704 script /app/ui/known.f0fe65338e.js
+res 609 705 script /app/ui/scene.dc26192ee5.js
+res 609 695 script /app/ui/shell.82b5148612.js
+res 609 695 script /app/ui/invite.a268c9a9e4.js
+res 609 696 script /app/ui/progress.66e825f29e.js
+res 678 744 script /app/lib/dom.780351c43f.js
+res 694 780 script /app/lib/b64.0d05104471.js
+res 694 781 script /app/lib/crypto.712dcc0942.js
+res 695 782 script /app/lib/format.aab82020fe.js
+res 695 783 script /app/lib/pow.1b5dc3cc5b.js
+res 705 783 script /app/lib/idb.179df63eaf.js
+res 711 782 script /shared/ghost.9b9707a76b.js
+res 788 853 script /app/lib/sha256sync.f304bd5203.js
+res 859 925 fetch /api/v1/config
+res 864 929 fetch /app/i18n/en.a5520d462a.json
+res 874 940 other /favicon.svg
+res 946 1011 other /favicon.ico
+res 951 1016 script /app/ui/shop-page.625a835ad2.js
+res 1018 1086 script /app/ui/behaviors.1821771825.js
+res 1018 1084 script /app/ui/drive-parts.7a2f1db78e.js
+res 1018 1084 script /app/ui/folder-view.f99d3a9aaf.js
+res 1086 1151 script /app/lib/drive.b97984ad5b.js
+res 1086 1151 script /app/lib/links.1a8ff7a60d.js
+res 1088 1153 script /app/lib/folder-open.a469cc296d.js
+res 1155 1222 script /app/lib/api-drive.67eca7933b.js
+res 1155 1223 script /app/lib/folder.4942359ef7.js
+res 1226 1292 script /app/lib/shop.8dfc7974f9.js
+res 1226 1292 script /app/lib/pay.565b1fc083.js
+res 1294 1359 script /app/lib/substate.75c52b3f02.js
+res 1361 1426 script /app/lib/ootle.f8cc0b84fb.js
+res 1429 1495 script /app/lib/emoji.60f4a5c411.js
+res 1429 1494 script /app/vendor/ootle-wasm-shim.295d203fc1.js
+res 1497 1564 script /app/vendor/ootle-wasm-0.53.2/ootle_wasm_bg.1b5933930f.js
+res 1497 1563 script /app/vendor/ootle-wasm-bor-0.53.2/ootle_wasm_bor_bg.b7d668153c.js
+res 1568 1636 fetch /api/v1/shop/demo-shop
+res 1639 1703 link /shared/ui/tokens.7f65183bcb.css
+res 1639 1706 link /shared/ui/components.b5edb73dcf.css
+res 1639 1705 link /app/css/drive.63bc0c3568.css
+res 1712 1797 css /shared/fonts/geist/Geist-Latin.7e1491511d.woff2
+res 1734 1799 script /app/ui/market-ask.23bf08a5da.js
+res 1806 1871 script /app/lib/asks.4a7a358743.js
+dom 405 html.motion @class=motion
+dom 408 body.a-page children 5
+dom 408 body.a-page children 5
+dom 408 body.a-page children 5
+dom 408 body.a-page children 5
+dom 409 body.a-page children 5
+dom 409 body.a-page children 5
+dom 409 #main children 1
+dom 409 ul.shop-items children 2
+dom 409 ul.shop-items children 2
+dom 409 body.a-page children 5
+dom 409 body.a-page children 5
+dom 409 body.a-page children 5
+dom 409 body.a-page children 5
+dom 409 body.a-page children 5
+dom 864 DOMContentLoaded
+dom 865 button.lights @hidden=null
+dom 866 load
+dom 1226 #main @data-state=loading
+dom 1639 link /shared/ui/tokens.7f65183bcb.css @disabled=null
+dom 1639 link /shared/ui/components.b5edb73dcf.css @disabled=null
+dom 1639 link /app/css/drive.63bc0c3568.css @disabled=null
+dom 1733 link /shared/tokens.c07690b9f3.css @disabled=
+dom 1733 link /shared/base.2c4813dc35.css @disabled=
+dom 1733 link /site/css/site.2cf9b0f84f.css @disabled=
+dom 1733 link /app/css/widget.927b54d16e.css @disabled=
+dom 1733 link /app/css/parts.8eec5cc316.css @disabled=
+dom 1733 link /app/css/app.eeb820e519.css @disabled=
+dom 1733 link /app/css/look.283f9ea50f.css @disabled=
+dom 1733 body.a-page @data-look=drive
+dom 1733 header.site-header @hidden=
+dom 1733 footer.site-footer @hidden=
+dom 1733 a.skip @class=skip sr-only
+dom 1733 #main @class=fv-page
+dom 1733 body.a-page children 6
+dom 1733 #main @class=fv-page shop-main
+dom 1890 #main @data-state=ready
+dom 1890 #main children 1

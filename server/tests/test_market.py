@@ -2,7 +2,9 @@
 """The market (docs/market.md, server/mutis/market.py), behind features.market: what public shops sell, searchable and
 paged; asks for a listing's key half, answered by the seller's drive with something sealed our server can't open;
 asks that end with their listing, their shop's mode, the shop or their time; the limits."""
+import json
 import os
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -12,11 +14,12 @@ from urllib.parse import quote
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from harness import Stack  # noqa: E402
-from mutis import codec, db, market, shop  # noqa: E402
+from mutis import codec, db, market, shop, shop_page  # noqa: E402
 from paid_fixture import V, b64  # noqa: E402
 from test_shop import ShopCase  # noqa: E402
 
 ON = {"features": {"shop": True, "market": True}}
+WEB = Path(__file__).resolve().parents[2] / "web"
 
 
 class MarketCase(ShopCase):
@@ -262,6 +265,62 @@ class Shape(MarketCase):
         self.assertEqual(cfg["market"], {"page": 24, "q_max": 60, "ask_days": 7, "answer_keep_days": 7,
                                          "max_waiting": 200})
         self.assertTrue(cfg["features"]["market"])
+
+
+class Page(MarketCase):
+    """/market and a public shop's page as served, while the market is on: ui/market-page.js's and ui/shop-page.js's
+    markup in the app's words, so the app's first frame is its last one's layout (the market flickered, Nov 2026;
+    web/app/ui/tests/flows_shop.py measures it in a browser)."""
+    def setUp(self):
+        super().setUp()
+        self.s.cfg.raw["site_dir"] = str(WEB)
+        self.deck = json.loads((WEB / "app" / "i18n" / "en.json").read_text())
+
+    def page(self, path):
+        import http.client
+        conn = http.client.HTTPConnection("127.0.0.1", self.s.port, timeout=30)
+        conn.request("GET", path)
+        resp = conn.getresponse()
+        body = resp.read().decode()
+        conn.close()
+        self.assertEqual(resp.status, 200, body[:200])
+        return resp.getheader("X-Robots-Tag"), re.search(r'(?s)<main id="main"[^>]*>(.*)</main>', body)[1]
+
+    def test_the_market_as_the_app_draws_it_before_any_search(self):
+        robots, main = self.page(f"{V}/page/market")
+        self.assertEqual(robots, "index, follow")
+        e = shop_page.esc
+        for key in ("market.page_title", "market.h", "market.search", "shop.ask"):
+            self.assertIn(e(self.deck[key]), main, key)
+        for key in ("market.desc", "market.owner_wrote"):            # paragraphs: one sentence a line (ui/lines.js)
+            self.assertIn(f">{shop_page.prose(self.deck[key])}</p>", main, key)
+        self.assertIn('<form class="market-search" role="search"><input class="input" id="market-q" type="search" name="q" '
+                      f'maxlength="60" autocomplete="off" aria-label="{e(self.deck["market.search_label"])}">', main)
+        self.assertIn('<li class="card shop-item market-item">', main)
+        self.assertIn('<a class="link-plain shop-own-text" href="/shop/mila">from Mila&#x27;s prints</a>', main)
+        self.assertIn('<div class="shop-item-buy market-item-buy"><span class="shop-price">0.1 tTARI</span>'
+                      '<div class="market-ask-slot"><div class="stack-sm"><button class="btn" type="button" '
+                      'aria-label="Ask for Zine no. 3">', main)
+        self.assertNotIn("data-testid", main)
+        self.assertNotIn(e(self.deck["market.empty"]), main)
+
+    def test_an_empty_market_says_so_as_the_app_does(self):
+        status, _, _ = self.s.request("DELETE", f"{V}/me/shop/listings/{self.link['share_id']}", headers=self.d["auth"])
+        self.assertIn(status, (200, 204))
+        _, main = self.page(f"{V}/page/market")
+        self.assertIn('<ul class="shop-items" role="list"></ul><div><div class="empty">', main)
+        self.assertIn(shop_page.esc(self.deck["market.empty"]), main)
+        self.assertIn(f'<p class="empty-description">{shop_page.prose(self.deck["market.empty_d"])}</p>', main)
+
+    def test_a_public_shop_offers_ask_for_it_as_the_app_does_without_its_key(self):
+        _, main = self.page(f"{V}/page/shop/mila")
+        e = shop_page.esc
+        for key in ("shop.label", "shop.ask"):
+            self.assertIn(e(self.deck[key]), main, key)
+        for key in ("shop.owner_wrote", "shop.keyless"):
+            self.assertIn(f">{shop_page.prose(self.deck[key])}</p>", main, key)
+        self.assertNotIn(shop_page.prose(self.deck["shop.no_key"]), main)
+        self.assertIn('aria-label="Ask for Zine no. 3"', main)
 
 
 if __name__ == "__main__":

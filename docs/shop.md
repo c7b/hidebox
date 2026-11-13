@@ -66,6 +66,9 @@ Two modes, the owner's choice (Private is the default):
   sale). Its listings are also in the market (`/market`, [market.md](market.md)). **The shop key still never reaches
   us**: a visitor with the shop's whole link buys at once, as from a private shop; a visitor at the bare address, or
   from the market, asks the seller's drive for a listing's key half, which the drive seals to that visitor alone.
+  The listings in `<main>` are the app's own markup in the app's own words (the release's copy deck and icons), and
+  `shop.html` starts in the drive's look. So the page's first frame has the layout of its last one: nothing moves
+  when the app draws. The market's page works the same way.
 
 Until the market (2026-11-09), a public shop handed its key to our server, which served it to every visitor and so
 could open what the shop listed. The market replaced that: whatever a visitor can fetch from us to buy, our server can
@@ -82,7 +85,7 @@ under it.
 Escaping: every piece of the owner's text is escaped where it lands: HTML text and attribute values (`&`, `<`, `>`,
 `"` and `'`), one line in meta tags, JSON-LD with `<`, `>` and `&` as `\u` escapes and nothing outside ASCII. The
 address is built from the stored username, ASCII by construction. If the release's `shop.html` lacks exactly the
-anchors this fills, the page goes out unfilled and `noindex`. The content security policy is the app's, unchanged; the
+anchors this fills, or its copy deck lacks a word the page needs, the page goes out unfilled and `noindex`. The content security policy is the app's, unchanged; the
 one inline block is JSON-LD, which no browser runs. On a staging rehearsal every shop page stays `noindex` and the
 sitemap is empty.
 

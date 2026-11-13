@@ -453,22 +453,59 @@ def check_ghost():
 # The head lines a link card is made of (viral-1): the title, the description and the og:* and twitter:* tags.
 CARD_LINE = re.compile(r'^<(title>|meta (name="description"|property="og:|name="twitter:))')
 TWINS = (("pay.html", "view.html"), ("drop.html", "app.html"), ("shop.html", "view.html"))
+# shop.html starts in the drive's look (a shop and the market are drawn in it): the lines that say a page's look, and
+# the notes about it, are the ones it may write its own way; check_drive_look says how.
+LOOK_LINE = re.compile(r'^(<link rel="(stylesheet|preload)" |<body |<a class="skip|<main id="main" |<header class="fv-top">|<!-- |     )')
+DRIVE_LOOK = ("shop.html",)
 
 
 def check_link_cards():
     """viral-1: one preview card per kind of link. pay.html (/p/) is view.html (/s/, /t) and drop.html (/d/) is app.html with
     only their card lines and the note above <html> changed, so a change to one page that misses its twin fails here;
-    each card names its own picture, which render-images.py draws from og/<card>.html."""
+    shop.html (/shop/, /market) too, but in the drive's look from its first frame (check_drive_look). Each card names
+    its own picture, which render-images.py draws from og/<card>.html."""
     problems = []
     for twin, base in TWINS:
         a, b = ((WEB / "app" / f).read_text().splitlines() for f in (twin, base))
-        strip = lambda lines: [x for x in lines[lines.index('<html lang="en">'):] if not CARD_LINE.match(x)]   # noqa: E731
+        look = (lambda x: bool(LOOK_LINE.match(x))) if twin in DRIVE_LOOK else (lambda x: False)
+        strip = lambda lines: [x for x in lines[lines.index('<html lang="en">'):] if not CARD_LINE.match(x) and not look(x)]   # noqa: E731
+        if twin in DRIVE_LOOK:
+            problems += check_drive_look(twin, a, b)
         if strip(a) != strip(b):
             diff = [x for x in strip(a) if x not in strip(b)] + [x for x in strip(b) if x not in strip(a)]
             problems.append(f"app/{twin} differs from app/{base} outside its card: {diff[:3]}")
     for page, card in (("view", "og-s"), ("pay", "og-p"), ("drop", "og-d"), ("shop", "og-shop")):
         if not (SITE / "og" / f"{card}.html").is_file():
             problems.append(f"og/{card}.html: the source of app/{page}.html's card is missing")
+    return problems
+
+
+def check_drive_look(name, page, base):
+    """A twin that starts in the drive's look (ui/folder-view.js driveLook, done by its markup so its first frame is its
+    last one's look): the same stylesheets as its base in the same order, the drive's on and the rest off (data-both
+    stays on); Geist-Latin preloaded as drive.html does; <body> marked data-look="drive"; the skip link and <main> in
+    the drive's classes with their own kept in data-page-class for ghostLook; the drive's top bar just before <main>,
+    with both ways to a drive (theme.js's data-has-drive shows one)."""
+    problems = []
+    sheet = re.compile(r'^<link rel="stylesheet" href="([^"]+)"')
+    sheets = lambda lines: [(m[1], x) for x in lines if (m := sheet.match(x))]   # noqa: E731
+    mine, theirs = sheets(page), sheets(base)
+    if [h for h, _ in mine] != [h for h, _ in theirs]:
+        problems.append(f"app/{name}: not the stylesheets of its twin, in its order")
+    for href, line in mine:
+        on = "data-drive" in line or "data-both" in line
+        if (" disabled" in line) == on:
+            problems.append(f"app/{name}: {href} is {'off' if on else 'on'} in the drive's look")
+    want = ['<link rel="preload" href="/shared/fonts/geist/Geist-Latin.woff2" as="font" type="font/woff2" crossorigin>',
+            '<body class="a-page" data-look="drive">',
+            '<a class="skip sr-only" data-page-class="skip-link" href="#main">Skip to the content</a>']
+    problems += [f"app/{name}: missing {line!r}" for line in want if line not in page]
+    main = next((i for i, x in enumerate(page) if x.startswith('<main id="main" ')), None)
+    if main is None or not page[main].startswith('<main id="main" class="fv-page shop-main" data-page-class="container a-main" '):
+        problems.append(f"app/{name}: <main> isn't in the drive's classes with the page's own kept")
+    elif not page[main - 1].startswith('<header class="fv-top">') or not all(
+            x in page[main - 1] for x in ('class="btn own-make"', 'class="btn own-open"', 'href="/drive?make"', 'href="/drive"')):
+        problems.append(f"app/{name}: the drive's top bar, with both ways to a drive, isn't just before <main>")
     return problems
 
 

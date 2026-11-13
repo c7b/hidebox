@@ -35,6 +35,7 @@ pass, no transaction id of a visitor's send.
 | [`2026-11-10/mvp-november-3/`](2026-11-10/mvp-november-3/) | The November MVP before its deploy: every gate, and the E2E suite on a rehearsal of the tree on Esmeralda, chain scenarios and E-05 included |
 | [`2026-11-12/cutover-rehearsal/`](2026-11-12/cutover-rehearsal/) | hidebox.app's move to the mainnet rehearsed on three hostnames: every link class, the drive handover, the rollback, the chain scenarios on Ootle 0.53.2 ([`../cutover.md`](../cutover.md)) |
 | [`2026-11-12/suites/`](2026-11-12/suites/) | Every gate at the release head of the November MVP |
+| [`2026-11-12/market-flicker/`](2026-11-12/market-flicker/) | The market and a public shop's page as they opened, frame by frame, before and after the fix: the switch of look and the empty list, then one layout from the first frame |
 
 Elsewhere: [`../../deploy/evidence/`](../../deploy/evidence/) (the deploy lane's first, fix and integration passes,
 cited by `deploy/ACCEPTANCE.md`) and [`../../web/app/tests/evidence/`](../../web/app/tests/evidence/) (the app

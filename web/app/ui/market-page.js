@@ -117,8 +117,10 @@ export async function marketPage(root, cfg) {
     query = q;
     load(false);
   });
+  // The first page of listings comes before the page is drawn: what our server wrote stays on screen until then
+  // (shop_page.py writes this same markup), and the list is never seen empty while it loads.
+  await load(false);
   root.replaceChildren(h('div', { class: 'shop market' }, head, asks,
     h('section', { class: 'shop-list', 'aria-label': t('market.h') }, form, list, status, more),
     h('footer', { class: 'shop-foot' }, testnetLine(cfg))));
-  await load(false);
 }

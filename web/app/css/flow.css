@@ -114,10 +114,11 @@
   .invite-in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "say x" "go go"; padding-block: .5rem .75rem; }
 }
 
-/* --- before the scripts run: a turning ring where the page will be (the link and task pages' "…", the drive's boot) --- */
-.a-main > .a-working[aria-hidden="true"]:only-child, .drive-boot { display: grid; place-items: center; font-size: 0; color: var(--muted-foreground, var(--fg-2)); }
-.a-main > .a-working[aria-hidden="true"]:only-child { min-height: 40vh; }
-.a-main > .a-working[aria-hidden="true"]:only-child::before, .drive-boot::before {
+/* --- before the scripts run: a turning ring where the page will be (the link and task pages' "…", the drive's boot;
+   shop.html's <main> starts in the drive's classes, .fv-page) --- */
+:is(.a-main, .fv-page) > .a-working[aria-hidden="true"]:only-child, .drive-boot { display: grid; place-items: center; font-size: 0; color: var(--muted-foreground, var(--fg-2)); }
+:is(.a-main, .fv-page) > .a-working[aria-hidden="true"]:only-child { min-height: 40vh; }
+:is(.a-main, .fv-page) > .a-working[aria-hidden="true"]:only-child::before, .drive-boot::before {
   content: ""; width: 1.5rem; height: 1.5rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
   animation: fl-spin .9s linear infinite;
 }

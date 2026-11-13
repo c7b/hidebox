@@ -1,0 +1,116 @@
+{"responseStart":268.2999999523163,"responseEnd":272.89999997615814,"domInteractive":498.89999997615814} fcp 592
+res 320 415 link /shared/tokens.c07690b9f3.css
+res 321 417 link /shared/base.2c4813dc35.css
+res 323 479 link /site/css/site.2cf9b0f84f.css
+res 323 421 link /app/css/widget.927b54d16e.css
+res 323 484 link /app/css/parts.8eec5cc316.css
+res 326 481 link /app/css/app.eeb820e519.css
+res 326 481 link /app/css/look.283f9ea50f.css
+res 327 482 link /app/css/flow.ef20f72407.css
+res 327 482 script /shared/theme.e707163600.js
+res 327 483 script /site/js/site.3e59d9caab.js
+res 327 485 script /app/ui/view-page.745cc2fa88.js
+res 496 561 other /shared/ui/icons.828538c36c.svg#i-hidebox
+res 498 566 script /shared/dates.324e98a2c1.js
+res 498 565 script /site/js/stats.83511714c4.js
+res 499 570 script /app/lib/network.2989b3063e.js
+res 499 572 script /app/ui/view.f9fb247f7c.js
+res 507 626 css /shared/fonts/geist/Geist-Variable.2ffebe993e.woff2
+res 571 790 fetch /api/v1/config
+res 571 669 script /app/lib/store.40e4044630.js
+res 595 673 script /app/lib/api.f62652ae97.js
+res 597 690 script /app/lib/i18n.b5a88fcbfd.js
+res 597 691 script /app/ui/lines.3c5419d8a5.js
+res 597 694 script /app/lib/open.5e7ca253ae.js
+res 597 694 script /app/lib/share.351aaedd49.js
+res 598 694 script /app/lib/filetype.c80a2e9c5a.js
+res 598 699 script /app/lib/download.43fdb60fcd.js
+res 598 700 script /app/lib/bytes.750a0e75c9.js
+res 598 705 script /app/lib/router.b23608106d.js
+res 598 703 script /app/ui/core.4a20bacd5d.js
+res 598 704 script /app/ui/marks.b5c3db1dce.js
+res 598 688 script /app/ui/errors.91fe1f852c.js
+res 598 693 script /app/ui/known.f0fe65338e.js
+res 599 693 script /app/ui/scene.dc26192ee5.js
+res 599 693 script /app/ui/shell.82b5148612.js
+res 599 694 script /app/ui/invite.a268c9a9e4.js
+res 599 702 script /app/ui/progress.66e825f29e.js
+res 691 774 script /shared/ghost.9b9707a76b.js
+res 710 789 script /app/lib/dom.780351c43f.js
+res 711 784 script /app/lib/b64.0d05104471.js
+res 712 785 script /app/lib/pow.1b5dc3cc5b.js
+res 712 786 script /app/lib/idb.179df63eaf.js
+res 712 787 script /app/lib/crypto.712dcc0942.js
+res 712 788 script /app/lib/format.aab82020fe.js
+res 789 855 script /app/lib/sha256sync.f304bd5203.js
+res 860 932 fetch /api/v1/config
+res 864 933 fetch /app/i18n/en.a5520d462a.json
+res 876 943 other /favicon.svg
+res 955 1020 other /favicon.ico
+res 959 1024 script /app/ui/market-page.eb309f0f19.js
+res 1026 1094 script /app/ui/behaviors.1821771825.js
+res 1026 1093 script /app/ui/drive-parts.7a2f1db78e.js
+res 1026 1096 script /app/ui/folder-view.f99d3a9aaf.js
+res 1026 1096 script /app/ui/market-ask.23bf08a5da.js
+res 1097 1163 script /app/lib/asks.4a7a358743.js
+res 1099 1164 script /app/lib/drive.b97984ad5b.js
+res 1099 1166 script /app/lib/links.1a8ff7a60d.js
+res 1101 1168 script /app/lib/folder-open.a469cc296d.js
+res 1166 1233 script /app/lib/api-drive.67eca7933b.js
+res 1166 1233 script /app/lib/folder.4942359ef7.js
+res 1237 1304 script /app/lib/market.afc6709fa3.js
+res 1238 1305 script /app/lib/pay.565b1fc083.js
+res 1307 1377 script /app/lib/ootle.f8cc0b84fb.js
+res 1307 1374 script /app/lib/shop.8dfc7974f9.js
+res 1307 1376 script /app/lib/substate.75c52b3f02.js
+res 1379 1446 script /app/lib/emoji.60f4a5c411.js
+res 1380 1446 script /app/vendor/ootle-wasm-shim.295d203fc1.js
+res 1450 1518 script /app/vendor/ootle-wasm-0.53.2/ootle_wasm_bg.1b5933930f.js
+res 1450 1519 script /app/vendor/ootle-wasm-bor-0.53.2/ootle_wasm_bor_bg.b7d668153c.js
+res 1523 1587 link /shared/ui/tokens.7f65183bcb.css
+res 1523 1589 link /shared/ui/components.b5edb73dcf.css
+res 1524 1590 link /app/css/drive.63bc0c3568.css
+res 1594 1670 css /shared/fonts/geist/Geist-Latin.7e1491511d.woff2
+res 1612 1679 fetch /api/v1/market
+dom 493 html.motion @class=motion
+dom 497 body.a-page children 5
+dom 497 body.a-page children 5
+dom 497 body.a-page children 5
+dom 497 body.a-page children 5
+dom 497 body.a-page children 5
+dom 497 body.a-page children 5
+dom 498 #main children 1
+dom 498 ul.shop-items children 2
+dom 498 ul.shop-items children 2
+dom 498 body.a-page children 5
+dom 498 body.a-page children 5
+dom 498 body.a-page children 5
+dom 498 body.a-page children 5
+dom 498 body.a-page children 5
+dom 864 DOMContentLoaded
+dom 864 button.lights @hidden=null
+dom 868 load
+dom 1238 #main @data-state=loading
+dom 1525 link /shared/ui/tokens.7f65183bcb.css @disabled=null
+dom 1525 link /shared/ui/components.b5edb73dcf.css @disabled=null
+dom 1525 link /app/css/drive.63bc0c3568.css @disabled=null
+dom 1608 link /shared/tokens.c07690b9f3.css @disabled=
+dom 1608 link /shared/base.2c4813dc35.css @disabled=
+dom 1608 link /site/css/site.2cf9b0f84f.css @disabled=
+dom 1608 link /app/css/widget.927b54d16e.css @disabled=
+dom 1608 link /app/css/parts.8eec5cc316.css @disabled=
+dom 1608 link /app/css/app.eeb820e519.css @disabled=
+dom 1608 link /app/css/look.283f9ea50f.css @disabled=
+dom 1608 body.a-page @data-look=drive
+dom 1608 header.site-header @hidden=
+dom 1608 footer.site-footer @hidden=
+dom 1608 a.skip @class=skip sr-only
+dom 1608 #main @class=fv-page
+dom 1608 body.a-page children 6
+dom 1613 #main @class=fv-page shop-main
+dom 1613 #main children 1
+dom 1613 button.btn @disabled=
+dom 1698 ul.shop-items children 2
+dom 1698 button.btn @hidden=
+dom 1698 #main @data-state=ready
+dom 1698 button.btn @disabled=null

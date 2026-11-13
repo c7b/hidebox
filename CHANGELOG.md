@@ -1,6 +1,25 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- market-flicker -->
+## 2026-11-12: the market and a shop's page open without a flicker
+
+The market (`/market`) and a public shop's page changed their look while they opened. The first frame was our
+server's text in the site's look, with a bare list. Then the page switched to the drive's look, and the market showed
+an empty list until its listings came. Now the first frame has the layout of the last one.
+
+- **`app/shop.html` starts in the drive's look.** The drive's stylesheets are on and the site's are off, the drive's
+  top bar is in the markup, and Geist-Latin is preloaded, as on `drive.html`. Every shop and market page ended in
+  that look (`driveLook`), so nothing switches now. The site's sheets stay, off, for the one page that isn't here.
+- **Our server writes the app's markup** (`server/mutis/shop_page.py`): the elements, classes and icons that
+  `ui/market-page.js` and `ui/shop-page.js` draw, in the words of the release's copy deck as the network says them,
+  one sentence a line, with the app's sizes and prices. When the app draws, nothing moves.
+- **The market draws once**, with its first page of listings. The list is never seen empty while it loads.
+- Tests: the UI suite loads each page with scripts off and checks that every part is where the app draws it. Server
+  tests check the markup, the words, the sizes and the prices. The site check keeps `shop.html` the twin of
+  `view.html`, in the drive's look. The frames before and after: `docs/evidence/2026-11-12/market-flicker/`.
+<!-- /market-flicker -->
+
 <!-- mainnet 1 -->
 ## 2026-11-12: hidebox on the Ootle mainnet, a second instance
 

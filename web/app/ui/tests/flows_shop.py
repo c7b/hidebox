@@ -148,6 +148,36 @@ def shop_state(page):
     return page.eval("document.querySelector('[data-testid=\"shop-page\"]')?.dataset.state ?? ''")
 
 
+# The parts of a shop's or the market's page a visitor sees move when the app draws: the top bar, the head, the search,
+# each listing and what is in it. The market flickered (Nov 2026): its first frame was the site's look with a bare list,
+# then the drive's look with an empty one. Now our server writes the app's markup in the drive's look, so the page as
+# served, before any script, has every part where the app then draws it.
+PARTS = (".fv-top, #main .shop-head > *, #main .market-search, #main .shop-list > h2, #main .shop-list > p, #main .shop-item, "
+         "#main .shop-item-icon, #main .shop-item-title, #main .shop-item-meta, #main .shop-price, #main .market-ask-slot")
+
+
+def layout(page):
+    return page.eval("document.fonts.ready.then(() => [...document.querySelectorAll(" + json.dumps(PARTS) + ")].map((e) => {"
+                     " const r = e.getBoundingClientRect(); return [e.tagName.toLowerCase() + '.' + String(e.className.baseVal ?? e.className).split(' ')[0],"
+                     " r.x, r.y, r.width, r.height]; }))")
+
+
+def served(t, url, device):
+    """The page as our server wrote it, before any script: a new visitor whose browser runs none."""
+    page = t.actor(device)
+    page.cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+    page.goto(url)
+    return page
+
+
+def moved(first, last):
+    """The parts that aren't where they were (within a pixel), or that one page has and the other hasn't."""
+    if [x[0] for x in first] != [x[0] for x in last]:
+        return [f"served {[x[0] for x in first]}", f"drawn {[x[0] for x in last]}"]
+    return [f"{a[0]} {[round(v) for v in a[1:]]} -> {[round(v) for v in b[1:]]}" for a, b in zip(first, last)
+            if any(abs(u - v) > 1 for u, v in zip(a[1:], b[1:]))]
+
+
 def items(page):
     return page.eval("""[...document.querySelectorAll('[data-testid="shop-item"]')].map((e) => ({
       title: e.querySelector('[data-testid="shop-item-title"]')?.textContent, desc: e.querySelector('[data-testid="shop-item-desc"]')?.textContent ?? '',
@@ -354,6 +384,12 @@ def shop_flow(t):
             and pub.eval("document.querySelectorAll('[data-testid=\"market-ask-go\"]').length") == len(got),
             f"at the address, no key in it: no pay link, Ask for it on each ({[x['title'] for x in got]})")
     t.check(no_hscroll(pub) and pub.csp_violations() == [], "the public page on a phone: no sideways scroll, no CSP violation")
+    first = served(t, address, "iphone")
+    t.check(first.eval("document.body.dataset.look") == "drive" and not first.exists("shop-item")
+            and moved(layout(first), layout(pub)) == [],
+            f"the public page as served, before any script, is in the app's look with every part where the app draws it "
+            f"({moved(layout(first), layout(pub))[:4]})")
+    t.shot(first, "shop-public-served-390", full_page=True)
     t.shot(pub, "shop-public-390", full_page=True)
     pub.eval(f"document.querySelector('[data-testid=\"shop-item\"][data-share=\"{sid}\"] [data-testid=\"market-ask-go\"]').click()")
     pub.wait("document.querySelector('[data-testid=\"market-ask\"]')?.dataset.state === 'waiting'", 60)
@@ -386,6 +422,12 @@ def shop_flow(t):
     t.check(sorted(titles) == ["Field recordings", "Zine no. 3"] and set(shops) == {f"/shop/{shop_id}"},
             f"the market lists the public shop's listings, each with its shop ({titles})")
     t.check(mk.eval("document.querySelectorAll('[data-testid=\"market-ask-go\"]').length") == 2, "each with Ask for it")
+    first = served(t, f"{t.origin}/market", "desktop")
+    t.check(first.eval("document.body.dataset.look") == "drive" and first.eval("document.querySelectorAll('#main .shop-item').length") == 2
+            and moved(layout(first), layout(mk)) == [],
+            f"the market as served, before any script, is in the app's look with every part where the app draws it "
+            f"({moved(layout(first), layout(mk))[:4]})")
+    t.shot(first, "market-served-1440", full_page=True)
     mk.fill("market-q", "recordings")
     mk.click("market-search-go")
     mk.wait("document.querySelectorAll('[data-testid=\"market-item\"]').length === 1", 30)

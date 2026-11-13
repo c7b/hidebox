@@ -415,6 +415,11 @@ a:focus-visible, .link-btn:focus-visible, summary:focus-visible { outline: none;
 /* The folder viewer: on the link page it takes the whole page; in Received it sits in a dialog. */
 .fv-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: var(--background); }
 @media (min-width: 768px) { .fv-top { padding-inline: 1.5rem; } }
+/* A page whose markup starts in the drive's look (app/shop.html, body[data-look="drive"]): the site's header and footer
+   it keeps for ghostLook stay out of sight, as driveLook hides them; its top bar holds both ways to a drive and
+   theme.js's data-has-drive shows the one that fits, as ownDrive() picks one. */
+[data-look="drive"] > header:not(.fv-top), [data-look="drive"] > footer { display: none; }
+:root[data-has-drive] .fv-top .own-make, :root:not([data-has-drive]) .fv-top .own-open { display: none; }
 .fv-page { display: grid; gap: 1.5rem; width: min(100%, 60rem); margin-inline: auto; padding: 1.5rem 1rem 4rem; min-width: 0; }
 @media (min-width: 768px) { .fv-page { padding: 2.5rem 1.5rem 4rem; } }
 .fv-page:focus { outline: none; }

@@ -11,6 +11,7 @@ Going private again takes a new key with every listing sealed again."""
 import json
 import os
 import re
+import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -344,6 +345,46 @@ class Page(ShopCase):
         self.assertNotIn(self.keys[self.d["id"]][1].hex(), body)
         self.assertNotIn(codec.b64u(self.keys[self.d["id"]][1]), body)      # the page itself never carries the key
 
+    def test_a_public_page_is_drawn_as_the_app_draws_it(self):
+        """The shop in <main> is ui/shop-page.js's markup in the app's words (the copy deck the release serves) and
+        icons, in the drive's look: the app's draw moves nothing (web/app/ui/tests/flows_shop.py measures it)."""
+        self.go_public()
+        _, _, body = self.raw("mila")
+        deck = json.loads((WEB / "app" / "i18n" / "en.json").read_text())
+        opening, main = re.search(r'(?s)(<main id="main"[^>]*>)(.*)</main>', body).groups()
+        self.assertEqual(opening, '<main id="main" class="fv-page shop-main" data-page-class="container a-main" tabindex="-1">')
+        self.assertIn('<body class="a-page" data-look="drive">', body)
+        e = shop_page.esc
+        badge = ('<span class="badge" data-variant="secondary"><svg class="icon" aria-hidden="true" focusable="false">'
+                 f'<use href="/shared/ui/icons.svg#i-store"></use></svg>{e(deck["shop.label"])}</span>')
+        self.assertIn(badge, main)
+        for key in ("shop.owner_wrote", "shop.how", "shop.no_key"):      # the market is off here: no Ask for it
+            self.assertIn(f">{shop_page.prose(deck[key])}</p>", main, key)
+        self.assertNotIn(e(deck["shop.ask"]), main)
+        self.assertIn(f'<h2 class="h4" id="shop-list-h">{deck["shop.count"]["one"].replace("{count}", "1")}</h2>', main)
+        self.assertIn('<span class="shop-item-icon" aria-hidden="true"><svg class="icon"', main)
+        self.assertRegex(main, r'<div class="shop-item-meta">File · About \d+ [KMG]?B</div>')
+        self.assertIn('<span class="shop-price">0.1 tTARI</span>', main)
+        self.assertNotIn("data-testid", main)          # what the tests find is the app's own drawing
+
+    def test_a_deck_without_a_word_the_page_needs_goes_out_unfilled(self):
+        self.go_public()
+        site = self.s.tmp / "deck-site"
+        (site / "app" / "i18n").mkdir(parents=True)
+        (site / "app" / "shop.html").write_text((WEB / "app" / "shop.html").read_text())
+        deck = json.loads((WEB / "app" / "i18n" / "en.json").read_text())
+        del deck["shop.owner_wrote"]
+        (site / "app" / "i18n" / "en.json").write_text(json.dumps(deck))
+        self.s.cfg.raw["site_dir"] = str(site)
+        shop_page._template.clear()
+        try:
+            status, headers, body = self.raw("mila")
+            self.assertEqual((status, headers["x-robots-tag"]), (200, "noindex, nofollow"))
+            self.assertNotIn("Mila", body)
+        finally:
+            self.s.cfg.raw["site_dir"] = str(WEB)
+            shop_page._template.clear()
+
     def test_one_address_per_public_shop(self):
         self.go_public()
         for ref in ("MILA", "Mila", self.made_id()):
@@ -385,6 +426,79 @@ class Page(ShopCase):
         self.assertEqual(headers["content-type"], "application/xml; charset=utf-8")
         self.assertIn(f"<loc>{self.s.cfg.origin}/shop/mila</loc>", xml)
         self.assertEqual(xml.count("<url>"), 1)
+
+
+class Words(unittest.TestCase):
+    """The app's words, sizes and prices, as the server writes them (lib/i18n.js, lib/network.js, lib/pay.js,
+    ui/drive-parts.js)."""
+    def test_the_deck_as_the_mainnet_says_it(self):
+        test, main = shop_page.words(str(WEB), "esmeralda"), shop_page.words(str(WEB), "mainnet")
+        raw = json.loads((WEB / "app" / "i18n" / "en.json").read_text())
+        self.assertEqual(test, raw)
+        self.assertEqual(shop_page.say(main, "testnet"), raw["testnet@mainnet"].replace("{brand}", "hidebox"))
+        self.assertEqual((shop_page.say(test, "earn.unit"), shop_page.say(main, "earn.unit")), ("tTARI", "TARI"))
+        self.assertFalse(any(k.endswith("@mainnet") for k in main))
+        self.assertFalse(any("tTARI" in json.dumps(v) for v in main.values()))
+        self.assertIsNone(shop_page.words(str(WEB / "nowhere"), "mainnet"))
+
+    def test_say_fills_and_counts_as_the_app_does(self):
+        deck = {"n": {"one": "{count} thing", "other": "{count} things"}, "b": "{brand} and {x}", "s": "{gone}"}
+        self.assertEqual([shop_page.say(deck, "n", count=c) for c in (0, 1, 2, 1200)],
+                         ["0 things", "1 thing", "2 things", "1,200 things"])
+        self.assertEqual(shop_page.say(deck, "b", x="<y>"), "hidebox and <y>")     # the caller escapes
+        self.assertEqual(shop_page.say(deck, "s"), "{gone}")
+        with self.assertRaises(shop_page.TemplateError):
+            shop_page.say(deck, "missing")
+
+    def test_on_the_mainnet_the_page_ends_as_the_app_draws_it(self):
+        """The network line under the list (and Report this shop on a shop's page), so the first frame is as tall as
+        the last; on the testnet the line depends on the browser's dates, and the app adds it."""
+        page = (WEB / "app" / "shop.html").read_text()
+        main, test = shop_page.words(str(WEB), "mainnet"), shop_page.words(str(WEB), "esmeralda")
+        line = shop_page.prose(shop_page.say(main, "testnet"))
+        out = shop_page.render_market(page, [], "https://hidebox.app", "TARI", main, "mainnet")
+        self.assertIn(f'</section><footer class="shop-foot"><p class="a-testnet">{line}</p></footer></div></main>', out)
+        self.assertNotIn("shop-foot", shop_page.render_market(page, [], "https://example.org", "tTARI", test, "esmeralda"))
+        row = {"title": "Mila", "bio": "", "username": "mila"}
+        out = shop_page.render_public(page, row, [], "https://hidebox.app", "TARI", main, True, "mainnet")
+        self.assertIn(f'<footer class="shop-foot"><p class="a-testnet">{line}</p><a class="link-plain small" '
+                      'href="/fine-print#link=https%3A%2F%2Fhidebox.app%2Fshop%2Fmila">Report this shop</a></footer>', out)
+
+    def test_the_icons_are_the_templates_whatever_the_owner_wrote(self):
+        page = (WEB / "app" / "shop.html").read_text()
+        deck = shop_page.words(str(WEB), "esmeralda")
+        row = {"title": "/shared/ui/icons.deadbeef.svg#x", "bio": "/shared/ui/icons.0badc0de.svg#y", "username": "mila"}
+        out = shop_page.render_public(page, row, [], "https://example.org", "tTARI", deck, True)
+        self.assertNotIn('href="/shared/ui/icons.deadbeef', out)
+        self.assertNotIn('href="/shared/ui/icons.0badc0de', out)
+        self.assertIn('<use href="/shared/ui/icons.svg#i-store"></use>', out)
+
+    def test_a_deck_word_that_isnt_text_leaves_the_page_unfilled(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as site:
+            (Path(site) / "app" / "i18n").mkdir(parents=True)
+            (Path(site) / "app" / "i18n" / "en.json").write_text('{"a": null, "b": "5 tTARI", "c": 3, "c@mainnet": "x"}')
+            deck = shop_page.words(site, "mainnet")
+        self.assertEqual(deck, {"a": None, "b": "5 TARI", "c": "x"})
+        with self.assertRaises(shop_page.TemplateError):
+            shop_page.say(deck, "a")
+
+    def test_a_paragraph_has_one_sentence_a_line_as_the_app_writes_it(self):
+        prose = shop_page.prose
+        self.assertEqual(prose("Each seller wrote their own words. The server doesn't check them."),
+                         "Each seller wrote their own words. <br>The server doesn&#x27;t check them.")
+        self.assertEqual(prose("One. “Two.” (Three?) four. Five! Six"), "One. <br>“Two.” <br>(Three?) four. <br>Five! <br>Six")
+        self.assertEqual(prose("v0.53.2 and e.g. this. <b>"), "v0.53.2 and e.g. this. &lt;b&gt;")
+        self.assertEqual(prose(""), "")
+
+    def test_sizes_and_prices(self):
+        mib = 1024 * 1024
+        self.assertEqual([shop_page.size_bucket(n) for n in (0, mib, mib + 1, 600 * mib, 99 * 1024 * mib)],
+                         [mib, mib, 5 * mib, 1024 * mib, 10240 * mib])
+        self.assertEqual([shop_page.format_bytes(n) for n in (0, 512, 1536, 1024 * 1023, mib, 5 * mib, 1024 * mib, 10240 * mib)],
+                         ["0 B", "512 B", "1.5 KB", "1,023 KB", "1 MB", "5 MB", "1 GB", "10 GB"])
+        self.assertEqual([shop_page.tari(n) for n in (100000, 1000000, 1234567, 1000, 999, "2500000")],
+                         ["0.1", "1", "1.234", "0.001", "0", "2.5"])
 
 
 del ShopCase

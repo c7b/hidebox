@@ -1,7 +1,8 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: MIT -->
-<!-- A drive's shop (/shop/, docs/shop.md): view.html with the shop's own preview card, the same for every shop, nothing
-     of the shop in it. Everything outside the card stays view.html's (web/site/tests/static_checks.py). -->
+<!-- A drive's shop (/shop/, docs/shop.md) and the market (/market): view.html with the shop's own preview card, the same
+     for every shop, nothing of the shop in it, and in the drive's look from the first frame. Everything else stays
+     view.html's (web/site/tests/static_checks.py). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -33,27 +34,31 @@
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/app/css/parts.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/app/css/app.css" integrity="{{SRI}}">
-<link rel="stylesheet" href="/app/css/look.css" integrity="{{SRI}}">
-<!-- A folder link switches the page to the drive's look (ui/folder-view.js driveLook) -->
-<link rel="stylesheet" href="/shared/ui/tokens.css" integrity="{{SRI}}" data-drive disabled>
-<link rel="stylesheet" href="/shared/ui/components.css" integrity="{{SRI}}" data-drive disabled>
-<link rel="stylesheet" href="/app/css/drive.css" integrity="{{SRI}}" data-drive disabled>
+<!-- A shop and the market are drawn in the drive's look (ui/folder-view.js driveLook), so this page starts in it: its
+     first frame is its last one's look. The link page's sheets stay, off, for ghostLook (ui/view.js, a page that isn't
+     here). -->
+<link rel="preload" href="/shared/fonts/geist/Geist-Latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/shared/tokens.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/shared/base.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/site/css/site.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/app/css/widget.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/app/css/parts.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/app/css/app.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/app/css/look.css" integrity="{{SRI}}" disabled>
+<link rel="stylesheet" href="/shared/ui/tokens.css" integrity="{{SRI}}" data-drive>
+<link rel="stylesheet" href="/shared/ui/components.css" integrity="{{SRI}}" data-drive>
+<link rel="stylesheet" href="/app/css/drive.css" integrity="{{SRI}}" data-drive>
 <!-- ux-feedback-1: the steps and the done moment, in both looks (data-both: driveLook and ghostLook leave it on) -->
 <link rel="stylesheet" href="/app/css/flow.css" integrity="{{SRI}}" data-both>
 <script src="/shared/theme.js" integrity="{{SRI}}"></script>
 <script type="module" src="/site/js/site.js" integrity="{{SRI}}"></script>
 <script type="module" src="/app/ui/view-page.js" integrity="{{SRI}}"></script>
 </head>
-<body class="a-page">
-<a class="skip-link" href="#main">Skip to the content</a>
+<body class="a-page" data-look="drive">
+<a class="skip sr-only" data-page-class="skip-link" href="#main">Skip to the content</a>
 <!--#include header-->
-<main id="main" class="container a-main" tabindex="-1"><p class="a-working mono" aria-hidden="true">…</p></main>
+<header class="fv-top"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-hidebox"/></svg></span><span class="brand-text"><svg class="wordmark" aria-hidden="true" focusable="false"><use href="/shared/ui/icons.svg#i-wordmark"/></svg><span class="sr-only">{{BRAND}}</span></span></a><a class="btn own-make" data-variant="outline" data-size="sm" href="/drive?make">Make your own drive</a><a class="btn own-open" data-variant="outline" data-size="sm" href="/drive">Open my drive</a></header>
+<main id="main" class="fv-page shop-main" data-page-class="container a-main" tabindex="-1"><p class="a-working mono" aria-hidden="true">…</p></main>
 <noscript><p class="container noscript">{{BRAND}} locks and opens files in this browser, so it needs JavaScript.</p></noscript>
 <!--#include footer-->
 </body>
