@@ -63,7 +63,12 @@ Two modes, the owner's choice (Private is the default):
   canonical address, OpenGraph and Twitter card text, structured data that says only what is true (a `CollectionPage`
   whose `ItemList` names the listings, no prices or offers claimed in a currency code we can't vouch for), the listings
   inside `<main>` for readers without JavaScript, and an entry in `/sitemap-shops.xml` (public shops with something for
-  sale). Its listings are also in the market (`/market`, [market.md](market.md)). **The shop key still never reaches
+  sale). Its listings are also in the market (`/market`, [market.md](market.md)). A public shop is in the market, the
+  sitemap and search engines only once it is *listed* (security pass, 2026-11-21: `shop.LISTED`): its drive is 7 days
+  old or has paid for space, and no report of the shop, or of a pay link it lists, waits for review (a report holds it
+  out at once; `mutis-admin shop-review`). Until then its page and its link work as they do for everyone, `noindex`;
+  the owner's page says when it joins. Its name, bio, titles and lines may not carry a term of a short list that only
+  advertises child sexual abuse material (`server/mutis/blocklist.py`; a neutral 422 `text_refused`). **The shop key still never reaches
   us**: a visitor with the shop's whole link buys at once, as from a private shop; a visitor at the bare address, or
   from the market, asks the seller's drive for a listing's key half, which the drive seals to that visitor alone.
   The listings in `<main>` are the app's own markup in the app's own words (the release's copy deck and icons), and

@@ -169,13 +169,19 @@ def render_units(lay: Layout, walletds: list[tuple[str, int]], systemd: Path | N
         text = text.replace("/home/drive/wallet/backup", lay.wallet_backups)
         text = _common(text, lay)
         if path.name == "mutis-backup-wallet.service":
-            # The L1 wallet's database is in WAL mode: reading it needs its -shm, so its directory is writable here.
-            text = re.sub(r"^ReadWritePaths=(.*)$", lambda m: f"ReadWritePaths={m.group(1)} -{l1_db}", text, count=1, flags=re.M)
+            # The walletd and L1 wallet databases are in WAL mode: SQLite opens one read-only only if it may create or
+            # update the -shm beside it, so their directories are writable here (with ProtectHome=read-only alone the
+            # mainnet walletd's copy failed every night, 2026-11-13 to 2026-11-21).
+            data = " ".join(f"-{lay.wallet_dir(n)}/{n}/data" for n, _ in walletds)
+            text = re.sub(r"^ReadWritePaths=(.*)$", lambda m: f"ReadWritePaths={m.group(1)} {data} -{l1_db}".replace("  ", " "),
+                          text, count=1, flags=re.M)
         if path.name == "mutis-chain.service":
             # Ordering only: the instance's walletds are enabled one by one (the network its config names).
             text = re.sub(r"^After=.*$", "After=network-online.target " + " ".join(walletd_units)
                           + f" {lay.unit('mutis-api')}.service", text, flags=re.M)
             text = re.sub(r"^Wants=.*$", "Wants=network-online.target", text, flags=re.M)
+        if path.name == "mutis-health.service":     # root's abuse queue, in the instance's own root-only folder
+            text = re.sub(r"^(ExecStartPost=\+)", f"Environment=MUTIS_ROOT_BACKUPS={lay.backups}\n\\1", text, count=1, flags=re.M)
         if path.name in ("mutis-backup.service", "mutis-backup-wallet.service"):
             text = re.sub(r"^(Environment=MUTIS_CONFIG=.*\n)?(ExecStartPre=|ExecStart=)", lambda m: backup_env + m.group(2),
                           text, count=1, flags=re.M)

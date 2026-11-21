@@ -16,14 +16,14 @@ EVENTS = frozenset({
     # API
     "api.start", "api.stop", "api.internal_error", "api.request_rejected", "api.connection_error", "api.shop_template",
     "api.offload_error", "api.offload_failed", "api.store_read_failed", "api.store_object_missing",
-    "api.offload_mismatch",
+    "api.offload_mismatch", "api.abuse_report", "api.overloaded",
     # chain worker
     "chain.start", "chain.stop", "chain.loop_error", "chain.walletd_down", "chain.walletd_up",
     "chain.indexer_error", "chain.mirror_error", "chain.sidecar_restart", "chain.sidecar_error",
     "chain.sidecar_hash_mismatch", "chain.job_failed", "chain.job_done", "chain.budget_50",
     "chain.budget_90", "chain.credit_freeze", "chain.reconcile_ok", "chain.canary_sealed",
     "chain.canary_failed", "chain.canary_verified", "chain.canary_recovered", "chain.canary_missed",
-    "chain.seal_checkpoint", "chain.seal_failed",
+    "chain.seal_checkpoint", "chain.seal_failed", "chain.seal_unfunded",
     "chain.config_missing", "chain.job_interrupted", "chain.reconcile_unknown", "chain.reconcile_mismatch",
     "chain.payment_not_ours", "chain.seller_bad_key", "chain.invoice_held", "chain.watch_selftest_failed",
     "chain.revenue_bad_key", "chain.walletd_wrong_network", "chain.sidecar_wrong_network",

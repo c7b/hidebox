@@ -102,5 +102,7 @@ def pow(ctx):
     body = ctx.req.json()
     purpose = get_enum(body, "purpose", tuple(pow_mod.PURPOSES))
     min_difficulty = get_int(body, "min_difficulty", 0, pow_mod.MAX_BITS, optional=True) or 0
+    # Harder while the purpose's shared limit is filling (api.POW_PRESSURE): issued at the bits its route will ask.
+    min_difficulty = max(min_difficulty, ctx.pow_floor(purpose))
     return json_response(200, ctx.app.pow.issue(purpose, ctx.ip64, ctx.now, min_difficulty))
 

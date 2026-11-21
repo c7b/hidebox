@@ -10,6 +10,10 @@ User=mutis
 Group=mutis
 Environment=MUTIS_CONFIG=/etc/mutis/mutis.toml
 ExecStart=/usr/bin/python3 -I /srv/mutis/app/current/deploy/scripts/healthcheck.py
+# Then, as root ("+"), the abuse queue (security pass, 2026-11-21): a takedown's quarantined file moves out of the data
+# directory into /var/backups/mutis/quarantine (root only, 30 days), and each new report gets a line in
+# /var/backups/mutis/abuse-queue.log (root only). It reads the list the healthcheck wrote, never the database.
+ExecStartPost=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py abuse-queue
 SyslogIdentifier=mutis-health
 TimeoutStartSec=120
 

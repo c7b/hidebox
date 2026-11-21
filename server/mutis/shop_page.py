@@ -324,7 +324,9 @@ def page(ctx, ref: str):
         return _page(ctx, text, NOINDEX)
     if ref != row["username"]:               # /shop/Alice, or a public shop's old /shop/<id>: one address per shop
         return Response(301, b"", {"Location": shop.path_of(row), "Cache-Control": "no-cache"})
-    if ctx.cfg["staging"]:
+    # Search engines see a public shop only once it is listed (shop.LISTED): a new drive's shop, or one a report names,
+    # answers by its link but is noindex and out of the sitemap and the market.
+    if ctx.cfg["staging"] or not shop.is_listed(ctx.db, row["id"], ctx.now):
         robots = NOINDEX
     else:
         robots = INDEX
@@ -418,17 +420,19 @@ def market_page(ctx):
 
 
 def sitemap(ctx):
-    """GET /sitemap-shops.xml (Caddy sends it here): every public shop with something for sale, newest change first.
+    """GET /sitemap-shops.xml (Caddy sends it here): every listed public shop (shop.LISTED) with something for sale,
+    newest change first.
     Empty on a staging rehearsal and while shops are off."""
     feats = ctx.features()
     urls = []
     if feats["shop"] and feats["pay_to_open"] and not ctx.cfg["staging"]:
         ctx.limit(("shopmap64", ctx.ip64, SITEMAP_PER_MINUTE, 60, 1))
         rows = ctx.db.execute("SELECT sh.username, sh.updated_at FROM shops sh WHERE sh.state = 'open' AND sh.mode = 'public' "
-                              "AND sh.username IS NOT NULL AND EXISTS (SELECT 1 FROM shop_listings l "
+                              f"AND sh.username IS NOT NULL AND {shop.LISTED} AND EXISTS (SELECT 1 FROM shop_listings l "
                               "JOIN shares s ON s.id = l.share_id JOIN paid_shares p ON p.share_id = l.share_id "
                               f"JOIN items i ON i.id = s.item_id WHERE l.shop_id = sh.id AND {shop.LIVE} AND p.paused = 0) "
-                              "ORDER BY sh.updated_at DESC LIMIT ?", (ctx.now, ctx.now, SITEMAP_MAX)).fetchall()
+                              "ORDER BY sh.updated_at DESC LIMIT ?",
+                              (shop.listed_day(ctx.now), ctx.now, ctx.now, SITEMAP_MAX)).fetchall()
         for row in rows:
             day = time.strftime("%Y-%m-%d", time.gmtime(row["updated_at"]))
             loc = esc(f"{ctx.cfg.origin}/shop/{quote(row['username'], safe='')}")

@@ -216,7 +216,8 @@ def address_problems(name: str, text: str) -> list[str]:
             ip = ipaddress.IPv6Address(m.group(0))
         except ValueError:
             continue
-        if ip.is_global and str(ip) not in OWN_ADDRESSES:
+        rest = ~int(ip) & (1 << 128) - 1        # a netmask (ffff:ffff:ffff:ffff::, an nft /64 key) is no host
+        if ip.is_global and str(ip) not in OWN_ADDRESSES and rest & (rest + 1) != 0:
             found.append(f"{name}: public address {ip}")
     return found
 

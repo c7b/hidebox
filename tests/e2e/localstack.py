@@ -47,7 +47,7 @@ def local_caddyfile(text: str, buffered: bool = True) -> str:
         ("reverse_proxy 127.0.0.1:8787", f"reverse_proxy 127.0.0.1:{API_PORT}"),
     ]
     if not buffered:
-        rewrites.append((re.search(r"\n\s*buffer_requests\n\s*max_buffer_size \S+", text).group(0), ""))
+        rewrites.append((re.search(r"\n\s*request_buffers \S+", text).group(0), ""))
     for old, new in rewrites:
         if old not in text:
             raise ValueError(f"the Caddyfile no longer contains {old!r}")

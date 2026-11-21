@@ -87,7 +87,7 @@ class System(unittest.TestCase):
         self.assertEqual(pay["prices_ut"], ["100000", "250000", "500000"])
         self.assertEqual((pay["fee_ut"], pay["buyer_views"], pay["buyer_window_s"], pay["claim_ttl_s"],
                           pay["late_grace_s"], pay["demo_max_ut"], pay["max_open_claims_per_share"]),
-                         ("30000", 3, 604800, 3600, 86400, "500000", 20))
+                         ("30000", 3, 604800, 1800, 86400, "500000", 20))
         self.assertIn("watch_address", pay)
         self.assertTrue(all(int(p) >= 3 * int(pay["fee_ut"]) for p in pay["prices_ut"]))   # C19: ≥ 3 fees
         for cls in ("anon", "probation", "locker", "paid"):

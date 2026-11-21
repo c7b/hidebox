@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
-# mutis on Caddy 2.6 (spec §15.2). Installed as /etc/caddy/Caddyfile by deploy/scripts/provision.sh.
+# mutis on Caddy 2.11, from Caddy's own Debian repository (deploy/scripts/caddy-upstream.sh; spec §15.2).
+# Installed as /etc/caddy/Caddyfile by deploy/scripts/provision.sh.
 # MUTIS_HOST comes from /etc/mutis/caddy.env, which provision.sh writes from public_origin in
 # /etc/mutis/mutis.toml. Headers and CSPs are spec §14.2, checked by tests/e2e/test_headers.py.
 {
@@ -56,8 +57,9 @@ http://{$MUTIS_HOST} {
 		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
 	}
 	# A deletion is applied when the response is written; kept apart so the headers above are set
-	# at once and survive error responses too.
+	# at once and survive error responses too. Via: Caddy 2.10 and later name themselves on every proxied answer.
 	header -Server
+	header -Via
 }
 
 # Pages and their scripts revalidate on every visit (ETags keep that cheap). A page cached by
@@ -195,12 +197,10 @@ http://{$MUTIS_HOST} {
 		# No answer of the API belongs in a search index; /config and /stats stay fetchable for crawlers that render
 		# the pages (robots.txt allows them).
 		header X-Robots-Tag "noindex, nofollow"
-		request_body {
-			max_size 5MB
-		}
-		# A body declared longer than that limit is refused here, in the API's own error shape
+		# A body declared longer than 5 MB is refused here, in the API's own error shape
 		# (http_util.ApiError), before a byte of it is read: Caddy's limit would otherwise fail
-		# mid-read inside the proxy and answer a bare 502.
+		# mid-read inside the proxy and answer a bare 502 (2.6), or its own empty 413 (2.11, which
+		# checks Content-Length at once: so the limit sits inside the handle below, after this one).
 		@too_large expression `{http.request.header.Content-Length} != "" && int({http.request.header.Content-Length}) > 5242880`
 		handle @too_large {
 			header Content-Type "application/json; charset=utf-8"
@@ -210,9 +210,11 @@ http://{$MUTIS_HOST} {
 		# Caddy reads a whole request body (5 MB at most) before the API sees it, so a client that
 		# uploads slowly holds a Caddy goroutine, never one of the API's threads.
 		handle {
+			request_body {
+				max_size 5MB
+			}
 			reverse_proxy 127.0.0.1:8787 {
-				buffer_requests
-				max_buffer_size 6MB
+				request_buffers 6MB
 				flush_interval -1
 				header_up X-Real-IP {remote_host}
 				header_up -X-Forwarded-For

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from . import (auth, budgets, codec, config, counts, db, indexer, items, jobs, logsafe, network, ootle_addr, packs,
                quota, shop, storage)
-from .chain_worker import notarize_manifest
+from .chain_worker import SEAL_MAX_FEE_UT, notarize_manifest
 from .walletd import Walletd
 
 FEATURES = ("drops", "relay_send", "direct_send", "demo_pay", "sponsor", "decoys", "kept", "seallog",
@@ -65,14 +65,78 @@ def cmd_takedown(cfg, conn, args) -> None:
             else:
                 item_id = args.id if conn.execute("SELECT 1 FROM items WHERE id = ?", (args.id,)).fetchone() else None
             found = item_id is not None
-            if found:
-                items.remove(conn, blobs, item_id, now)
+            if found:     # the blobs go to the quarantine first: root keeps them QUARANTINE_DAYS (backup.py abuse-queue)
+                items.remove(conn, blobs, item_id, now, quarantine=cfg.data_dir / "quarantine")
             where = ("item_id = ? OR share_id = ?", item_id or args.id, args.id)
         if found:
             conn.execute(f"UPDATE abuse_reports SET state = 'actioned', action_note = ? WHERE {where[0]}",
                          (args.note or "takedown", *where[1:]))
     print("removed" if found else "not found")
     if not found:
+        sys.exit(1)
+
+
+def cmd_suspend(cfg, conn, args) -> None:
+    """Suspend a drive (security pass, 2026-11-21): sign-in and every session refuse it (403, auth.resolve), and
+    everything it shows to others ends now: every active link of its files (`removed`; a pay link's waiting claims are
+    void), its shop (taken down: 410, out of the market) and the drops named with --drop (a drop isn't tied to its
+    drive here, by design: name the ones a report gave you). Its files stay, unreachable, until a takedown or
+    `unsuspend`. Paid packs and earnings are left as they are."""
+    now = codec.now()
+    with db.tx(conn):
+        row = conn.execute("SELECT state FROM identities WHERE id = ?", (args.id,)).fetchone()
+        if row is None:
+            print("not found")
+            sys.exit(1)
+        conn.execute("UPDATE identities SET state = 'suspended' WHERE id = ?", (args.id,))
+        conn.execute("DELETE FROM sessions WHERE identity_id = ?", (args.id,))
+        shares = [r[0] for r in conn.execute("SELECT s.id FROM shares s JOIN items i ON i.id = s.item_id "
+                                             "WHERE i.owner_id = ? AND s.state = 'active'", (args.id,))]
+        for share_id in shares:
+            items.end_share(conn, share_id, "removed", now)
+        own = shop.own_shop(conn, args.id)
+        if own is not None and own["state"] == "open":
+            shop.takedown(conn, own["id"], now)
+        drops = 0
+        for drop_id in args.drop or []:
+            drops += conn.execute("UPDATE drops SET state = 'removed', ended_day = ? WHERE id = ? AND state = 'active'",
+                                  (codec.day(now), drop_id)).rowcount
+            jobs.end_drop_deliveries(conn, drop_id, "drop_removed", now)
+    print(f"suspended: {len(shares)} links ended, shop {'removed' if own is not None else 'none'}, {drops} drops removed")
+
+
+def cmd_unsuspend(cfg, conn, args) -> None:
+    """Let a suspended drive sign in again. Its ended links and a removed shop stay ended."""
+    with db.tx(conn):
+        done = conn.execute("UPDATE identities SET state = 'active' WHERE id = ? AND state = 'suspended'",
+                            (args.id,)).rowcount == 1
+    print("active" if done else "not suspended")
+    if not done:
+        sys.exit(1)
+
+
+def cmd_shop_review(cfg, conn, args) -> None:
+    """A report held a shop out of the market and the sitemap (meta held_shops): `list` the held shops, or `clear` one
+    after review (its reports are marked rejected). `mutis-admin takedown shop` removes it instead."""
+    if args.action == "list":
+        for shop_id, since in sorted(shop.held_shops(conn).items(), key=lambda kv: kv[1]):
+            r = conn.execute("SELECT username, mode FROM shops WHERE id = ?", (shop_id,)).fetchone()
+            name = inert(r["username"] or shop_id) if r is not None else "(gone)"
+            print(f"{shop_id}  /shop/{name}  {r['mode'] if r is not None else '-':7}  held since "
+                  f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(int(since)))}")
+        return
+    if not args.id:
+        sys.exit("usage: mutis-admin shop-review clear -- <shop id or username>")
+    with db.tx(conn):
+        named = shop.by_ref(conn, args.id)
+        shop_id = named["id"] if named is not None else args.id
+        done = shop.release_hold(conn, shop_id)
+        if done:
+            conn.execute("UPDATE abuse_reports SET state = 'rejected', action_note = ? WHERE state = 'new' AND "
+                         "(shop_id = ? OR share_id IN (SELECT share_id FROM shop_listings WHERE shop_id = ?))",
+                         (args.note or "reviewed: kept", shop_id, shop_id))
+    print("cleared" if done else "not held")
+    if not done:
         sys.exit(1)
 
 
@@ -266,7 +330,7 @@ def cmd_notarize(cfg, conn, args) -> None:
     w = Walletd(cfg["ootle"]["walletd_url"])
     operator = w.account(cfg["ootle"]["operator_account"])["account"]["component_address"]
     tx_id = w.submit_manifest(notarize_manifest(args.sha256),
-                              {"account": operator, "log": cfg["ootle"]["seallog_component"]}, 1_000_000)
+                              {"account": operator, "log": cfg["ootle"]["seallog_component"]}, SEAL_MAX_FEE_UT)
     outcome = w.wait_result(tx_id, 120)
     print(json.dumps({"tx_id": tx_id, "committed": outcome["committed"]}))
 
@@ -297,6 +361,18 @@ def parser() -> argparse.ArgumentParser:
     t.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
     t.add_argument("--note")
     t.set_defaults(fn=cmd_takedown)
+    sp = sub.add_parser("suspend", usage="mutis-admin suspend [--drop DROP_ID ...] -- identity_id")
+    sp.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
+    sp.add_argument("--drop", action="append", help="a drop of this drive to remove too (drops aren't tied to drives)")
+    sp.set_defaults(fn=cmd_suspend)
+    us = sub.add_parser("unsuspend", usage="mutis-admin unsuspend -- identity_id")
+    us.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
+    us.set_defaults(fn=cmd_unsuspend)
+    sr = sub.add_parser("shop-review", usage="mutis-admin shop-review list | clear [--note NOTE] -- <shop id or username>")
+    sr.add_argument("action", choices=("list", "clear"))
+    sr.add_argument("id", nargs="?")
+    sr.add_argument("--note")
+    sr.set_defaults(fn=cmd_shop_review)
     rp = sub.add_parser("release-pack", usage="mutis-admin release-pack -- identity_id")
     rp.add_argument("id", help="put it after `--`: a base64url id may start with '-'")
     rp.set_defaults(fn=cmd_release_pack)

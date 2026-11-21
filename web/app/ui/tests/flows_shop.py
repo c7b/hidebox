@@ -368,6 +368,16 @@ def shop_flow(t):
             f"public: the whole link still buys at once, and the address is shown for the market ({a.value('shop-address')})")
     row = read(t, "SELECT mode, published_key FROM shops")[0]
     t.check(row == ("public", None), "public: our server holds no key")
+    # A new drive's public shop sells by its link but waits a week (or a paid pack) for the market, the sitemap and
+    # search engines (security pass, 2026-11-21: shop.LISTED). Its owner is told when.
+    a.wait_for("shop-not-listed", 20)
+    t.check("a week old" in a.text("shop-not-listed") or "joins the market" in a.text("shop-not-listed"),
+            f"a new drive's public shop says when it joins the market ({a.text('shop-not-listed')!r})")
+    with urllib.request.urlopen(address, timeout=30) as res:
+        t.check(res.headers.get("X-Robots-Tag") == "noindex, nofollow", "until then its page answers, noindex")
+    with urllib.request.urlopen(f"{t.origin}/api/v1/shops/sitemap.xml", timeout=30) as res:
+        t.check(f"<loc>{address}</loc>" not in res.read().decode(), "and it is not in the sitemap yet")
+    write(t, "UPDATE identities SET created_day = '2026-01-01' WHERE id = (SELECT identity_id FROM shops)")
     with urllib.request.urlopen(address, timeout=30) as res:
         robots, html = res.headers.get("X-Robots-Tag"), res.read().decode()
     t.check(robots == "index, follow" and '<meta name="robots" content="index, follow">' in html

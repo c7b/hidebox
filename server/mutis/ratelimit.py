@@ -42,9 +42,49 @@ class Limiter:
             if (name, key) in self._tat:
                 self._tat[(name, key)] = max(now, self._tat[(name, key)] - period / limit * cost)
 
+    def level(self, name: str, key, limit: float, period: float, now: float) -> float:
+        """How much of a rule's allowance is in use now, from 0 (all of it free) to 1 (none left)."""
+        with self._lock:
+            tat = self._tat.get((name, key), now)
+        return min(1.0, max(0.0, tat - now) / period) if limit > 0 else 1.0
+
     def clear(self) -> None:
         with self._lock:
             self._tat.clear()
+
+
+class OpenSlots:
+    """How many things one key holds open at once, each until its own end time (in memory; a restart forgets it, as
+    every limit here). Past `cap` keys the least recently used are forgotten."""
+
+    def __init__(self, cap: int):
+        self.cap = cap
+        self._lock = threading.Lock()
+        self._held: OrderedDict = OrderedDict()
+
+    def take(self, key, limit: int, until: float, now: float) -> bool:
+        """Hold one more for `key` until `until`, or False when it already holds `limit`."""
+        with self._lock:
+            held = [t for t in self._held.get(key, ()) if t > now]
+            if len(held) >= limit:
+                self._held[key] = held
+                return False
+            held.append(until)
+            self._held[key] = held
+            self._held.move_to_end(key)
+            while len(self._held) > self.cap:
+                self._held.popitem(last=False)
+            return True
+
+    def give_back(self, key, until: float) -> None:
+        with self._lock:
+            held = self._held.get(key)
+            if held and until in held:
+                held.remove(until)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._held.clear()
 
 
 class Recent:

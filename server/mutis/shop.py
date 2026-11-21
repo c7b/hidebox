@@ -19,16 +19,23 @@ are in the market (market.py); its key still never reaches us, so a visitor with
 seller's drive for a listing's key half instead (docs/market.md). Going private again keeps the key, which was never
 ours.
 
+A public shop answers at once by its link, but joins the market, the sitemap and search engines only when it is
+`listed` (security pass, 2026-11-21): its drive is LISTED_AGE_S old or has paid for space, and no report of the shop or
+of a pay link it lists waits for review (meta `held_shops`, {shop id: when}, set by POST /abuse, cleared by `mutis-admin
+shop-review`; kept in meta, not a column, so the schema doesn't change and a rollback stays possible).
+
 A listing shows while its pay link sells: the link active and not paused, our half of its key still here, its
 file or folder ready and outside the Trash. Pausing hides it; ending the link (stopped, deleted, the Trash, a
 takedown, its file leaving) deletes it (`end_for_share`, from items.end_share). Turning the shop off deletes the shop
 and its listings. Callers hold a BEGIN IMMEDIATE transaction around every function that writes.
 """
+import calendar
 import re
 import sqlite3
+import time
 from urllib.parse import urlsplit
 
-from . import codec
+from . import blocklist, codec, db
 from .http_util import PARAM_RE, ApiError, invalid
 
 MAX_LISTINGS = 50          # listings per shop
@@ -74,6 +81,7 @@ BRANDS = ("hidebox", "mutis")
 _LOOKALIKE_CHARS = str.maketrans({"0": "o", "1": "l", "i": "l", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b", "-": None})
 _LOOKALIKE_PAIRS = (("rn", "m"), ("vv", "w"), ("cl", "d"))
 HOLDS_PER_DRIVE = 3          # names a drive keeps held at once; an older hold lapses when it gives up another
+LISTED_AGE_S = 7 * 86400     # a drive this old (or one that paid for space) may be in the market and the sitemap
 
 
 def skeleton(name: str) -> str:
@@ -110,6 +118,8 @@ def username(body: dict, name: str = "username") -> str:
         raise invalid(name, "A hyphen goes between letters or digits, one at a time.")
     whole = skeleton(folded)
     parts = [skeleton(x) for x in folded.split("-")]
+    if blocklist.banned(value):
+        raise refused(name)
     if folded in RESERVED or whole in _RESERVED_SKELETONS or any(x in _IMPERSONATION_SKELETONS for x in parts) \
             or any(b in whole for b in _BRAND_SKELETONS):
         raise ApiError(422, "username_reserved", "That name is kept for the service. Pick another.",
@@ -193,6 +203,21 @@ def plain_text(body: dict, name: str, max_chars: int, required: bool, lines: int
     return "\n".join(line.strip() for line in value.split("\n"))
 
 
+def refused(name: str) -> ApiError:
+    """Public text with a term of blocklist.py: a neutral answer that names no term."""
+    return ApiError(422, "text_refused", "This text can't be used in a shop. Change it and try again.",
+                    details={"field": name})
+
+
+def public_text(body: dict, name: str, max_chars: int, required: bool, lines: int = 1) -> str:
+    """plain_text, for what a shop shows to everyone: its name, bio and each listing's title and line. 422
+    `text_refused` for a term of blocklist.py."""
+    value = plain_text(body, name, max_chars, required, lines)
+    if blocklist.banned(value):
+        raise refused(name)
+    return value
+
+
 def own_shop(conn: sqlite3.Connection, identity_id: str):
     return conn.execute("SELECT * FROM shops WHERE identity_id = ?", (identity_id,)).fetchone()
 
@@ -210,6 +235,68 @@ def end_for_share(conn: sqlite3.Connection, share_id: str) -> None:
 # the other tables: CROSS JOIN keeps SQLite's join order as written.
 LIVE = ("s.state = 'active' AND (s.expires_at IS NULL OR s.expires_at > ?) AND p.server_half IS NOT NULL "
          "AND i.state = 'ready' AND i.trashed_at IS NULL AND (i.expires_at IS NULL OR i.expires_at > ?)")
+
+
+# A public shop in the market, the sitemap and search engines (security pass, 2026-11-21): no report waits for its
+# review, and its drive is at least LISTED_AGE_S old (by its first UTC day) or has paid for space. `sh` is the shop's
+# alias; the one parameter is listed_day(now).
+LISTED = ("NOT EXISTS (SELECT 1 FROM meta m, json_each(m.value) h WHERE m.key = 'held_shops' AND h.key = sh.id) "
+          "AND EXISTS (SELECT 1 FROM identities d WHERE d.id = sh.identity_id AND "
+          "(d.created_day <= ? OR d.paid_until IS NOT NULL OR EXISTS (SELECT 1 FROM invoices v "
+          "WHERE v.identity_id = d.id AND v.status = 'credited')))")
+
+
+def listed_day(now: int) -> str:
+    """The last first-day a drive may have and be listed: LISTED_AGE_S before `now`, as a UTC day."""
+    return codec.day(now - LISTED_AGE_S)
+
+
+def is_listed(conn: sqlite3.Connection, shop_id: str, now: int) -> bool:
+    return conn.execute(f"SELECT 1 FROM shops sh WHERE sh.id = ? AND {LISTED}", (shop_id, listed_day(now))).fetchone() \
+        is not None
+
+
+def listed_from(conn: sqlite3.Connection, row, now: int) -> int | None:
+    """When the shop joins the market by its drive's age (UTC midnight of that day), for the owner's page; None once
+    it is listed, or while a report waits (that takes a review, not time)."""
+    if held_since(conn, row["id"]) is not None or is_listed(conn, row["id"], now):
+        return None
+    first = conn.execute("SELECT created_day FROM identities WHERE id = ?", (row["identity_id"],)).fetchone()
+    if first is None:
+        return None
+    return calendar.timegm(time.strptime(first[0], "%Y-%m-%d")) + LISTED_AGE_S
+
+
+HELD_MAX = 5000               # shops waiting for review at once; past it a report is still kept, the shop not held
+
+
+def held_shops(conn: sqlite3.Connection) -> dict:
+    held = db.get_meta_json(conn, "held_shops", {})
+    return held if isinstance(held, dict) else {}
+
+
+def held_since(conn: sqlite3.Connection, shop_id: str) -> int | None:
+    return held_shops(conn).get(shop_id)
+
+
+def hold(conn: sqlite3.Connection, shop_id: str | None, now: int) -> None:
+    """A report named this shop, or a pay link it lists: out of the market and the sitemap until it is reviewed.
+    In the caller's transaction."""
+    if not shop_id or conn.execute("SELECT 1 FROM shops WHERE id = ? AND state = 'open'", (shop_id,)).fetchone() is None:
+        return
+    held = held_shops(conn)
+    if shop_id not in held and len(held) < HELD_MAX:
+        held[shop_id] = now
+        db.set_meta(conn, "held_shops", held)
+
+
+def release_hold(conn: sqlite3.Connection, shop_id: str) -> bool:
+    """The operator reviewed the shop (or took it down): it may be listed again. In the caller's transaction."""
+    held = held_shops(conn)
+    if held.pop(shop_id, None) is None:
+        return False
+    db.set_meta(conn, "held_shops", held)
+    return True
 
 
 def listing_json(row, public: bool) -> dict:
@@ -261,6 +348,7 @@ def takedown(conn: sqlite3.Connection, shop_id: str, now: int) -> bool:
                          (now, shop_id)).rowcount == 1
     conn.execute("DELETE FROM shop_listings WHERE shop_id = ?", (shop_id,))
     conn.execute("DELETE FROM market_asks WHERE shop_id = ?", (shop_id,))
+    release_hold(conn, shop_id)              # removed: nothing left to review
     return found
 
 

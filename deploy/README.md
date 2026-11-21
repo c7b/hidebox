@@ -12,7 +12,10 @@ The scripts and the E2E tools take `--host`, else the `MUTIS_SSH_HOST` environme
 ```
 deploy/caddy/Caddyfile              TLS, the spec §14.2 headers and CSPs, routes, caching; no access log
 deploy/systemd/                     walletd, mutis-api, mutis-chain, timers (cleanup, backups, health, evidence)
-deploy/journald/mutis.conf          7-day journal
+deploy/journald/mutis.conf          7-day journal, at most 500 MB
+deploy/apt/                         Caddy's own Debian repository: its key (pinned by hash and fingerprint), source, pin
+deploy/host/                        host hardening: the per-source connection cap (nft), the sshd jail (fail2ban),
+                                    the upgrade timers and unattended point releases, needrestart's exceptions
 deploy/config/mutis.toml.example    /etc/mutis/mutis.toml (every key the server accepts)
 deploy/holding/                     the page served until the full site builds
 deploy/scripts/                     provision, deploy, activate-release, rollback, notarize-release,
@@ -77,7 +80,9 @@ the chain worker and its Node sidecar, wallet backups, evidence; in group `mutis
 (compiles and runs the headless browser; no sudo, no wallet, no data), `caddy`.
 
 Units: `srv-mutis-data.mount` (enabled; every unit that uses the database needs it), `srv-mutis-status.mount` (enabled), `walletd.service` (enabled),
-`caddy.service` (Debian's, plus `caddy.service.d/mutis.conf`, which gives Caddy mutis-api's sandbox),
+`caddy.service` (from Caddy's own repository at a pinned version, plus `caddy.service.d/mutis.conf`, which gives
+Caddy mutis-api's sandbox, and `restart-limits.conf`: back within a second if it dies, 1 GB of memory at most),
+`mutis-connlimit.service` (enabled; 100 open connections per source to 80/443),
 `mutis-backup.timer` and `mutis-backup-wallet.timer` (enabled), and, installed but left off until
 go-live ("Turning the app on"): `mutis-api`, `mutis-chain`, `mutis-cleanup.timer`, `mutis-health.timer`,
 `mutis-evidence.timer`.
@@ -89,7 +94,7 @@ tar -cf - deploy | ssh hidebox 'rm -rf /tmp/mutis-deploy && mkdir -m 711 /tmp/mu
 ssh hidebox 'sudo bash /tmp/mutis-deploy/deploy/scripts/provision.sh'
 ```
 
-It checks the Debian packages (it installs nothing; npm/npx must be absent, and so must pnpm and yarn:
+It checks the Debian packages (it installs none but Caddy's pinned release, below; npm/npx must be absent, and so must pnpm and yarn:
 Debian's `nodejs` ships `corepack`, which would fetch them from the registry on first use; nothing here
 calls it, and `privilege-check.sh` fails if a shim appears), creates the `mutis`, `drive` and `build`
 users where missing (the login that runs it with sudo is the operator, or `MUTIS_OPERATOR`) and the
@@ -98,12 +103,28 @@ keyring password into the credential store once (and skips walletd while it isn'
 `caddy.env` from `public_origin`, installs units and logging config (a copy of each file it replaces goes to
 `/var/backups/mutis/<name>.<UTC time>`), mounts the data directory noexec,nosuid,nodev, applies the kernel
 settings, opens 80/443, keeps logging off,
-adds whichever of the 5100, 18143 and 8787 guards is missing (ufw must be active), installs the
-Caddyfile (validated first; the admin API moves to a socket), moves walletd from tmux into its unit
+adds whichever of the 5100, 18143 and 8787 guards is missing (ufw must be active), installs `deploy/host/` (the
+connection cap, the sshd jail when fail2ban is there, the apt timers, needrestart's exceptions), moves Caddy to its
+own repository's pinned release (`caddy-upstream.sh`: the new binary validates the Caddyfile before the package goes
+in), installs the Caddyfile (validated first; the admin API moves to a socket), moves walletd from tmux into its unit
 once (backup, graceful stop, cold backup, start, same balances or stop), enables the backup timers,
 makes the receiver/robot keys if a release exists, names the running units whose definition changed
 (restart them to apply it; a new Caddy sandbox restarts Caddy itself), and ends with `privilege-check.sh`. A new server
 follows [`docs/self-host.md`](../docs/self-host.md), which also covers walletd's first start.
+
+## Caddy
+
+Caddy comes from Caddy's own Debian repository, at the version `deploy/scripts/caddy-upstream.sh` and
+`deploy/apt/caddy-upstream.pref` pin (2.11.9): Debian's 2.6.2 is built with Go 1.24.4, whose HTTP/2 server any client
+can crash (CVE-2026-97032), and trixie won't rebuild it. The repository's key is committed (`deploy/apt/`) and checked
+by its SHA-256 and fingerprint before it is installed; the pin lets nothing else come from that repository, and
+unattended upgrades never move Caddy. Every activation says so when the installed version isn't the pin.
+
+To move to another version: change both pins in one commit, then on the server `sudo bash …/caddy-upstream.sh setup`,
+`… validate /etc/caddy/Caddyfile` (the live configuration, every instance site included, against the new binary,
+unpacked into a scratch directory), and `… install`. When a new version refuses the live sites' syntax (2.6 → 2.11:
+`buffer_requests` and `max_buffer_size` became `request_buffers`), validate a copy with the sites already rewritten,
+put them in place (the running Caddy doesn't reread them), then install: the restart loads them with the new binary.
 
 ## Deploying
 
@@ -205,7 +226,10 @@ day key, which the privacy design rules out.
 | Task | Command |
 |---|---|
 | Health | `https://hidebox.app/status.json` (the checks `/status` labels: https, api, chain_worker with its verifier, walletd, sponsor_balance, mirror, canary, credits, disk, budgets); full detail `sudo cat /srv/mutis/data/health.json`; red checks log one CRIT line each (`journalctl -p crit -u mutis-health`) |
-| Takedown | `sudo mutis-admin takedown share|item|drop <id>`; `sudo mutis-admin reports --new` |
+| Takedown | `sudo mutis-admin takedown share|item|drop|shop <id>`; `sudo mutis-admin reports --new`. A file's ciphertext goes to root's `/var/backups/mutis/quarantine/` for 30 days first (the published exception), still encrypted with a key we never had |
+| Reports | each new report logs one CRIT line (`journalctl -p crit -u mutis-api`), is `abuse.new_reports` in `health.json` (never in `/status.json`), and gets a line in root's `/var/backups/mutis/abuse-queue.log` after the next healthcheck (when, id, category, what it names; never the reporter's words) |
+| A reported shop | a report of a shop, or of a pay link it lists, holds it out of the market and the sitemap at once (noindex; its link keeps working): `sudo mutis-admin shop-review list`, then `shop-review clear -- <shop>` (kept) or `takedown shop` |
+| Suspend a drive | `sudo mutis-admin suspend [--drop <id> ...] -- <drive id>`: sign-in refused, its links ended, its shop removed (and the drops named); `unsuspend` lets it sign in again, nothing ended comes back |
 | Packs "sold out" | paid space is capped at `packs.paid_cap_fraction` (40 %) of the pool, 30 % of it kept for judge passes (`server/mutis/packs.py`); `sudo mutis-admin packs` shows both slices and today's sales (read-only); end a test drive's pack with `sudo mutis-admin release-pack -- <drive id>` (never a visitor's). See "If someone games the packs" |
 | Freeze uploads | `sudo mutis-admin freeze all|free|none` |
 | Features, budgets | `sudo mutis-admin feature <name> on|off|clear` (at once for the app and for pages read with JavaScript; the built pages follow the TOML at the next deploy); `sudo mutis-admin budget show` |
@@ -244,6 +268,12 @@ packs are sold), `/api/v1/stats` `packs_sold_public` close to `packs_cap_public`
 5. A test drive's pack (an end-to-end run) can be ended with `release-pack`, which also frees its place
    under the day's ceiling; a visitor's pack is theirs, even a griefer's: packs are paid for, and the
    brakes, not refunds, are the answer.
+
+A public shop joins the market, the sitemap and search engines only once its drive is 7 days old or has paid for
+space (`shop.LISTED`); before that it sells by its own link. Open claims are capped per IPv6 /48 or IPv4 /24
+(`sales.MAX_OPEN_CLAIMS_48`), and the proof of work for claims and new drives gets 2 bits harder past half of their
+shared limit and 4 past three quarters (`api.POW_PRESSURE`). Past 256 requests in progress in all, the API answers 503
+with `Retry-After` (`api.IN_FLIGHT_ALL`; the health route still answers).
 
 `[brakes] exempt_addresses` lists the server's own public addresses (the end-to-end tests run there:
 `ip -br addr` on the server); nothing else belongs there.

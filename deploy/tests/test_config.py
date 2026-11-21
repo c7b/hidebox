@@ -186,7 +186,7 @@ class CaddyfileTest(unittest.TestCase):
         self.assertRegex(errors, r"^\s*root \* /srv/mutis/app/current/dist", "error pages come from the release")
         self.assertIn('header Cache-Control "no-store"', errors)
         self.assertRegex(self.text, r"(?s)http://\{\$MUTIS_HOST\} \{\s*header -Server\s*redir https://")
-        self.assertIn("buffer_requests", self.text)
+        self.assertIn("request_buffers 6MB", self.text)      # Caddy 2.11; 2.6's buffer_requests is gone
 
     def test_fingerprinted_files_are_kept_a_year(self):
         """docs/review/perf-1.md: names with a hash of their bytes (tools/assets.py, whose pattern the matcher repeats) are
@@ -292,12 +292,14 @@ class UnitsTest(unittest.TestCase):
                                  ["CAP_NET_BIND_SERVICE"] if path.name == "mutis.conf" else [])
 
     def test_root_runs_only_the_backup_prune(self):
-        """Claims review item 22: the one "+" (full privileges) step deletes root's database copies
-        before the backup; no other unit escalates."""
+        """Claims review item 22: the "+" (full privileges) steps delete root's database copies before the
+        backup and keep root's abuse queue; no other unit escalates."""
         for path in UNITS.glob("*.service"):
             lines = [line for line in path.read_text().splitlines() if "=+" in line]
-            expected = ["ExecStartPre=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py prune-root"] \
-                if path.name == "mutis-backup.service" else []
+            expected = {"mutis-backup.service": ["ExecStartPre=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py prune-root"],
+                        # and the abuse queue (2026-11-21): root's quarantine and report log, from a file, never the db
+                        "mutis-health.service": ["ExecStartPost=+/usr/bin/python3 -I /usr/local/lib/mutis/backup.py abuse-queue"],
+                        }.get(path.name, [])
             self.assertEqual(lines, expected, path.name)
 
     def test_units_that_use_the_data_directory_need_its_noexec_mount(self):

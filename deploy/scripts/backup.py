@@ -11,6 +11,11 @@
                             the operator playbooks leave under /var/backups/mutis (go-live and
                             pre-migrate copies) once they are KEEP_DAYS old; never a wallet tar, a
                             balance snapshot or a config copy
+  backup.py abuse-queue     as root (after each healthcheck, mutis-health.service): moves what a takedown put
+                            in data/quarantine/ into /var/backups/mutis/quarantine/ (root only, deleted after
+                            QUARANTINE_DAYS), and adds each new abuse report to /var/backups/mutis/abuse-queue.log
+                            (root only, one line a report: when, its id, category and what it names; never the
+                            reporter's words), so the operator learns of reports without the server sending anything
 
 Every copy is deleted once it is KEEP_DAYS old (the db_backup_days that /privacy and /how publish),
 mutis-admin migrate's pre-migrate copies included, and so are side files (-wal, -shm, .part) that
@@ -29,8 +34,10 @@ import argparse
 import datetime
 import json
 import os
+import re
 import shutil
 import sqlite3
+import stat
 import sys
 import tempfile
 import time
@@ -155,6 +162,100 @@ def prune_root(now: float | None = None, folder: Path = ROOT_BACKUPS) -> list[st
     return gone
 
 
+QUARANTINE_DAYS = 30   # a taken-down file's ciphertext, kept for the authorities a report may involve (fine-print)
+
+
+def _move_quarantine(source: Path, target: Path) -> list[str]:
+    """Each regular file directly in `source` (a folder mutis writes) into `target` (root only), then deleted there.
+    Root follows no name mutis chose: links and anything but a plain file are skipped, each file is opened with
+    O_NOFOLLOW relative to the folder's own descriptor, and its copy is made root's, 0600."""
+    moved = []
+    try:
+        dir_fd = os.open(source, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except (FileNotFoundError, NotADirectoryError):
+        return moved
+    try:
+        target.mkdir(mode=0o700, parents=True, exist_ok=True)
+        os.chmod(target, 0o700)
+        for entry in os.scandir(dir_fd):
+            name = entry.name
+            if not entry.is_file(follow_symlinks=False) or name.startswith(".") or "/" in name:
+                continue
+            fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=dir_fd)
+            try:
+                tmp = target / f".{name}.part"
+                with os.fdopen(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as out, \
+                        os.fdopen(os.dup(fd), "rb") as src:
+                    shutil.copyfileobj(src, out)
+                    out.flush()
+                    os.fsync(out.fileno())
+                os.replace(tmp, target / name)
+            finally:
+                os.close(fd)
+            os.unlink(name, dir_fd=dir_fd)
+            moved.append(name)
+    finally:
+        os.close(dir_fd)
+    return moved
+
+
+_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
+_CATEGORIES = ("csam", "malware", "phishing", "copyright", "harassment", "other")   # server/mutis/handlers/abuse.py
+
+
+def _new_reports(data: Path) -> list[dict]:
+    """data/abuse-new.json, which the healthcheck (as mutis) writes just before: root reads that one regular file,
+    never through a link, and never opens the database (a root-made -shm would lock the service out of it)."""
+    try:
+        fd = os.open(data / "abuse-new.json", os.O_RDONLY | os.O_NOFOLLOW)
+    except (FileNotFoundError, OSError):
+        return []
+    with os.fdopen(fd, "rb") as f:
+        if not stat.S_ISREG(os.fstat(f.fileno()).st_mode):
+            return []
+        try:
+            doc = json.loads(f.read(1 << 20))
+        except ValueError:
+            return []
+    reports = doc.get("reports") if isinstance(doc, dict) else None
+    return [r for r in reports if isinstance(r, dict)] if isinstance(reports, list) else []
+
+
+def abuse_queue(now: float | None = None, folder: Path = ROOT_BACKUPS) -> dict:
+    """The quarantine moved and pruned, and the new reports queued (see the module's doc)."""
+    now = time.time() if now is None else now
+    data = data_dir()
+    moved = _move_quarantine(data / "quarantine", folder / "quarantine")
+    pruned = 0
+    for path in (folder / "quarantine").glob("*.bin"):
+        if path.is_file() and now - path.stat().st_mtime >= QUARANTINE_DAYS * 86400 - SLACK_S:
+            path.unlink()
+            pruned += 1
+    log = folder / "abuse-queue.log"
+    seen = set()
+    if log.exists():
+        seen = {line.split(" ", 2)[1] for line in log.read_text().splitlines() if line.count(" ") >= 2}
+    lines = []
+    for r in _new_reports(data):
+        rid = r.get("id")
+        if not isinstance(rid, str) or not _ID.fullmatch(rid) or rid in seen:
+            continue
+        named = next(((k, v) for k in ("share_id", "drop_id", "shop_id")
+                      if isinstance(v := r.get(k), str) and _ID.fullmatch(v)), None)
+        target = f"{named[0][:-3]}={named[1]}" if named else "-"
+        created = r.get("created_at") if isinstance(r.get("created_at"), int) else 0
+        category = r.get("category") if r.get("category") in _CATEGORIES else "other"
+        lines.append(f"{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(created))} {rid} {category} {target} "
+                     f"key={'yes' if r.get('included_key') is True else 'no'}")
+        seen.add(rid)
+    if lines:
+        fd = os.open(log, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, "a") as f:
+            f.write("".join(line + "\n" for line in lines))
+        os.chmod(log, 0o600)
+    return {"quarantined": len(moved), "quarantine_pruned": pruned, "reports_queued": len(lines)}
+
+
 def check_copy(path: Path) -> dict:
     """Restore one backup into a scratch directory and prove it opens and is whole."""
     with tempfile.TemporaryDirectory(prefix="mutis-restore-") as scratch:
@@ -187,7 +288,7 @@ def restore_drill() -> list[dict]:
 def main() -> int:
     os.umask(0o007)   # SQLite's -wal/-shm files must stay writable for the other users of group mutis
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("what", choices=("db", "wallet", "restore-drill", "prune-root"))
+    p.add_argument("what", choices=("db", "wallet", "restore-drill", "prune-root", "abuse-queue"))
     args = p.parse_args()
     if args.what == "restore-drill":
         results = restore_drill()
@@ -195,6 +296,14 @@ def main() -> int:
         ok = bool(results) and all(r["integrity"] == "ok" and r["tables"] > 0 for r in results)
         print(f"restore-drill: {'PASS' if ok else 'FAIL'}")
         return 0 if ok else 1
+    if args.what == "abuse-queue":
+        if os.geteuid() != 0:
+            print("abuse-queue: run as root", file=sys.stderr)
+            return 1
+        os.umask(0o077)
+        done = abuse_queue()
+        print("abuse-queue: " + ", ".join(f"{k} {v}" for k, v in done.items()))
+        return 0
     if args.what == "prune-root":
         print(f"prune-root: deleted {', '.join(prune_root()) or 'nothing'}")
         return 0

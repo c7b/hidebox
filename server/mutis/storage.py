@@ -168,6 +168,19 @@ class Blobs:
     def exists(self, item_id: str) -> bool:
         return self.bin(item_id).exists()
 
+    def quarantine(self, item_id: str, folder: Path, now: int) -> bool:
+        """Move a finished blob into `folder` (made 0700) instead of deleting it: a takedown's evidence, which root
+        moves out of the data directory into its own folder (deploy/scripts/backup.py abuse-queue) and deletes after
+        its QUARANTINE_DAYS. One rename on the same file system; False when this disk has no finished copy."""
+        src = self.bin(item_id)
+        if not src.is_file() or src.is_symlink():
+            return False
+        folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
+        os.rename(src, folder / f"{stamp}-{item_id}.bin")
+        _fsync_dir(folder)
+        return True
+
     def unlink(self, item_id: str) -> None:
         for path in (self.bin(item_id), self.part(item_id)):
             try:

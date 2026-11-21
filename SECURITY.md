@@ -1,9 +1,11 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Security policy
 
-**hidebox** runs on the Tari™ Ootle **Esmeralda testnet**. tTARI has no monetary value, and the live site
-at <https://hidebox.app> is a contest entry run by one person. That bounds what a report
-can be worth, not how seriously it is read.
+**hidebox** runs on the Tari™ Ootle **mainnet** at <https://hidebox.app>, with real TARI: space packs, pay links
+and shop sales move money that has value. A copy of the October contest entry still runs on the Esmeralda testnet
+at <https://testnet.hidebox.app>, where tTARI is worth nothing. Both are run by one person. That bounds how fast a
+report can be acted on, not how seriously it is read: anything that can move or lock a visitor's TARI, or the
+service's, is treated as the most urgent kind of finding after a leaked secret.
 
 ## Report a vulnerability
 
@@ -39,10 +41,10 @@ against production, since the limits are documented and can be read in the sourc
 
 In scope: everything this repository ships and the live deployment that runs it: the browser code
 under `web/`, the API and chain worker under `server/`, the SealLog template under `template/`, and
-the deployment under `deploy/` (Caddy, systemd, the firewall, backups, the admin CLI).
+the deployment under `deploy/` (Caddy, systemd, the firewall, backups, the admin CLI), on both hosts above.
 
-Out of scope: the Tari network, its indexers and `tari_ootle_walletd` (report those to the Tari
-project), your own device and browser (extensions, malware, clipboard history), chat apps that
+Out of scope: the Tari network, its indexers, `tari_ootle_walletd` and the L1 wallet (report those to the Tari
+project), Caddy itself (to the Caddy project; we run its own pinned release, `deploy/scripts/caddy-upstream.sh`), your own device and browser (extensions, malware, clipboard history), chat apps that
 preview links, and findings that need the server's own keys or a copy of its database to matter
 (those are already in the threat model under "a compromised server").
 

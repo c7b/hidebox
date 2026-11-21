@@ -1,6 +1,39 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
+<!-- security 2026-11-21 -->
+## 2026-11-21: a security pass on abuse, the web server and the host
+
+Hardening for the mainnet site while the contest is judged. Nothing found lets anyone read another person's file or
+key, or spend the wallet. What changed: a brand-new drive's shop can't reach everyone at once, a report acts at once,
+the web server is no longer one any client can crash, and what was set by hand on the server is now in `deploy/`.
+
+- **New shops**: a public shop sells by its own link at once, but it joins the market, the sitemap and search engines
+  (it is `noindex` until then) only when its drive is 7 days old or has paid for space. The owner's page says when.
+- **Reports**: a report of a shop, or of a pay link it lists, holds that shop out of the market and the sitemap at
+  once, until the operator reviews it (`mutis-admin shop-review`). Each report is a critical journal line and a line
+  in a root-only queue on the server; `/status.json` no longer says that reports wait.
+- **A short blocklist**: a shop's name, bio, titles and lines may not carry terms that only advertise child sexual
+  abuse material (a neutral 422 `text_refused`).
+- **`mutis-admin suspend`**: sign-in refused, the drive's links ended, its shop removed. A file taken down after a
+  report keeps its ciphertext 30 days where only root can read it (the published exception), then goes.
+- **Limits**: at most 8 waiting claims per /48 or /24 across every link; 30 minutes to pay a claim (it was an hour);
+  harder proof of work for claims and new drives past half of their shared limit; past 256 requests in progress the
+  API answers 503 with `Retry-After`.
+- **SealLog on the mainnet**: checkpoints had failed since the operator account's public balance fell under the
+  1 TARI that each checkpoint's fee step locked (each costs about 0.006). The lock is now 0.05 TARI, the worker
+  says once when the balance can't cover it, and the healthcheck asks for a top-up.
+- **Caddy 2.11.9** from Caddy's own repository, pinned and signed (`deploy/scripts/caddy-upstream.sh`): Debian's 2.6.2
+  is built with a Go whose HTTP/2 server any client can crash. `request_buffers 6MB` replaces 2.6's two lines, and
+  the `Via` header that Caddy 2.10 and later add is removed like `Server`, and the 5 MB body limit sits after the
+  API-shaped 413 (2.11 checks `Content-Length` at once and would answer its own empty 413).
+- **The host in the repository** (`deploy/host/`, installed by `provision.sh`): the per-source connection cap on
+  80/443, the sshd jail, the upgrade timers and point releases, needrestart's exceptions for the wallets and chain
+  workers, Caddy's restart and memory limits, a 500 MB journal. An instance's wallet backup can read its walletd's WAL
+  database again (it had failed every night since 2026-11-13), and a deploy enables the instance's walletd.
+- **SECURITY.md** says the mainnet.
+<!-- /security 2026-11-21 -->
+
 <!-- market-flicker -->
 ## 2026-11-12: the market and a shop's page open without a flicker
 

@@ -144,8 +144,11 @@ class Units(unittest.TestCase):
         self.assertIn("Environment=MUTIS_WALLET_DBS=/home/drive-mainnet/wallet-mainnet/mainnet/data/wallet.sqlite:"
                       "/home/drive-mainnet/wallet-esmeralda/esmeralda/data/wallet.sqlite:l1wallet-mainnet="
                       "/home/drive-mainnet/l1wallet-mainnet/mainnet/data/wallet/db/console_wallet.db\n", wallet)
-        self.assertIn("ReadWritePaths=/home/drive-mainnet/wallet-backup -/home/drive-mainnet/l1wallet-mainnet/mainnet/data/wallet/db\n",
-                      wallet)
+        # WAL databases: their -shm must be writable for a read-only open (2026-11-21).
+        self.assertIn("ReadWritePaths=/home/drive-mainnet/wallet-backup -/home/drive-mainnet/wallet-mainnet/mainnet/data "
+                      "-/home/drive-mainnet/wallet-esmeralda/esmeralda/data "
+                      "-/home/drive-mainnet/l1wallet-mainnet/mainnet/data/wallet/db\n", wallet)
+        self.assertIn("ProtectHome=read-only\n", wallet)
         db = self.units["mutis-mainnet-backup.service"]
         self.assertIn("Environment=MUTIS_ROOT_BACKUPS=/var/backups/mutis-mainnet\n", db)
         self.assertEqual(db.count("Environment=MUTIS_CONFIG="), 1)

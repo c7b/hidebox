@@ -1148,3 +1148,25 @@ against `mutis-api --dev` 12/12, site 48 of 48, both builds OK (the app's pages 
 the other). The app's UI suite ran whole, its 76 scenarios ten at a time: 1,437 of 1,437 checks. Not run here:
 `sidecar_test.py` whole (Node 26; with that Node's flag name its self-test checks, the mainnet one among them, pass).
 Not deployed (the integrator's).
+
+## Security pass on abuse, the web server and the host (2026-11-21)
+
+Hardening of the mainnet site (hidebox.app) while the contest is judged: abuse controls that keep every feature open
+to a judge who makes a drive now, the web server's crash, a failing SealLog, and what had been set by hand on the
+server. Nothing found lets anyone read another person's file or key, or spend the wallet.
+
+| # | Finding | Who could do it | What changed | Regression test |
+|---|---|---|---|---|
+| 1 | A drive made a minute ago could put a public shop in the market, the sitemap and search engines at once (high) | anyone | A public shop is *listed* only when its drive is 7 days old or has paid, and no report of it waits (`shop.LISTED`); before that its link works, `noindex`, out of `/market` and `/sitemap-shops.xml`; the owner's page says when it joins | `server/tests/test_abuse_controls.py` NewShops |
+| 2 | A report changed nothing until the operator read it (high) | anyone with a bad shop | A report of a shop, or of a pay link it lists, holds the shop out of the market and the sitemap at once (meta `held_shops`, no schema change); `mutis-admin shop-review list`/`clear`; a takedown ends the hold | Holds |
+| 3 | A shop's public text could advertise child sexual abuse material in plain words (high) | anyone | `server/mutis/blocklist.py`: a short, folded list (case, accents, look-alike digits, separators); a neutral 422 `text_refused` on the name, bio, titles and lines, and on the address name | Blocklist, Refusals |
+| 4 | No way to stop a drive as a whole (medium) | an abuser | `mutis-admin suspend [--drop …] -- <drive>`: sessions deleted, sign-in refused (the `suspended` state the schema had), its links ended, its shop removed; `unsuspend` | Suspend |
+| 5 | `/status.json` said when reports waited (medium) | anyone, timing reports | `abuse.*` reasons only in `health.json`; each report logs one critical line, and root's queue (`backup.py abuse-queue`, after each healthcheck) gets one line a report, from a file the healthcheck writes, never the database | `deploy/tests/test_ops.py` PublicStatusTest, the abuse-queue test |
+| 6 | A takedown deleted the evidence a report may need (medium) | — | The ciphertext moves to a root-only quarantine for 30 days (said on `/fine-print`, `/made`, the drive's claim C5), then goes | the abuse-queue test |
+| 7 | A few networks could hold the deployment's 500 waiting claims without paying (medium) | anyone | 8 waiting claims per /48 or /24 across every link; 30 minutes to pay; proof of work 2 bits harder past half of the 500 and 4 past three quarters (and the same for new drives against the day's cap) | Claims |
+| 8 | Nothing bounded the API's threads in all (medium) | anyone with many networks | 256 requests in progress, then 503 `busy` with `Retry-After` (the health route still answers; one log line a minute) | InFlight |
+| 9 | Every SealLog checkpoint on the mainnet failed from 2026-11-21 (`chain.seal_failed` every 10 minutes) | — | The network refused them: `InsufficientFunds`, "insufficient revealed funds. Required: 1000000, Available: 999795". `pay_fee(1000000)` locks that much of the operator account's public balance for a step that costs about 5,900 µT. The lock is 50,000 µT; with less, the worker logs `chain.seal_unfunded` once a retry and makes no checkpoint; the healthcheck says `seal.fee_low` under 300,000 µT | `server/tests/test_seallog.py` |
+| 10 | Debian's Caddy 2.6.2 is built with Go 1.24.4, whose HTTP/2 server any client can crash (CVE-2026-97032) | anyone | Caddy 2.11.9 from Caddy's repository, key pinned by hash and fingerprint, only `caddy` at that version (`deploy/apt/`, `caddy-upstream.sh`, validated before install); `request_buffers`; `Via` removed | `deploy/tests/test_config.py`; D-01 on the throwaway stack and live |
+| 11 | Host hardening lived only on the server | — | `deploy/host/` and two drop-ins, installed by `provision.sh`; the operator's own address stays out of the repository (`sshd-local.local` on the server) | `deploy/tests` |
+| 12 | The mainnet instance's wallet backup failed every night since 2026-11-13 (a WAL database under `ProtectHome=read-only`) | — | The rendered unit may write its walletds' data directories (for the `-shm`); a deploy enables the instance's walletd | `deploy/tests/test_instance.py` |
+

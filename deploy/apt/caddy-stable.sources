@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT
+# Caddy's own Debian repository (https://caddyserver.com/docs/install#debian-ubuntu-raspbian), installed as
+# /etc/apt/sources.list.d/caddy-stable.sources by deploy/scripts/caddy-upstream.sh. Signed by the key beside this
+# file (fingerprint 65760C51EDEA2017CEA2CA15155B6D79CA56EA34); caddy-upstream.pref lets only `caddy`, at one version,
+# come from it.
+Types: deb
+URIs: https://dl.cloudsmith.io/public/caddy/stable/deb/debian
+Suites: any-version
+Components: main
+Signed-By: /usr/share/keyrings/caddy-stable-archive-keyring.asc

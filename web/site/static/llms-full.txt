@@ -335,7 +335,7 @@ We need your IP address to answer you, and we see it while you're connected. We 
 ### Every table in our database
 This is the complete list, from our schema. Each link also has a “What we know” page that prints its own rows.
 | Table | What it holds | How long
-| items | One row per stored file: a random id; the drive that owns it, if any; a hash of the uploader's manage token; whether it's a link or kept; its lane; its state; the clear 32-byte header (format, chunk count, a random salt); the encrypted name, type and size; for kept files, the file key locked to your drive; chunk count and padded size; the ciphertext's hash; the hour it arrived; when it expires and when it left; today's download volume. | The ciphertext is deleted within a minute of the exit. The row stays as a note, so we can tell a visitor why a link is gone.
+| items | One row per stored file: a random id; the drive that owns it, if any; a hash of the uploader's manage token; whether it's a link or kept; its lane; its state; the clear 32-byte header (format, chunk count, a random salt); the encrypted name, type and size; for kept files, the file key locked to your drive; chunk count and padded size; the ciphertext's hash; the hour it arrived; when it expires and when it left; today's download volume. | The ciphertext is deleted within a minute of the exit (a month after we remove it after a report). The row stays as a note, so we can tell a visitor why a link is gone.
 | chunks | The SHA-256 of each encrypted chunk. | With its file.
 | uploads | An upload in progress: its id, its file, its lane, the space reserved for it. | Until it finishes or expires (two hours).
 | shares | One row per link: its mode (link, link + password, password only); the file key wrapped by the link's secret; the SHA-256 of its access token and, for link + password, of its link proof; the password's stretching parameters (never the password); opens allowed and used; expiry; state; the hour it was made and when it ended; wrong-password counters; opens in the current hour; the minute of its first open, shown only to its owner. | The wrapped key and the hashes are erased at the exit; the rest stays as the note above.
@@ -354,7 +354,7 @@ This is the complete list, from our schema. Each link also has a “What we know
 | used_nonces | The SHA-256 of each spent anti-bot challenge, so it can't be reused. | Five minutes.
 | seal_leaves, seal_checkpoints | SealLog: hashes of stored files and exits, and the checkpoints written to the Ootle. | Permanent, like the chain.
 | judge_passes | The SHA-256 of each one-time pass we gave the Council, and its uses left. | For the contest. They hold nothing about a person.
-| meta | Server settings and counters, such as when the last file was locked and which file is our hourly test. | Overwritten as they change.
+| meta | Server settings and counters, such as when the last file was locked, which file is our hourly test, and which shops a report named, until we review them. | Overwritten as they change.
 | sellers | For paid links: a drive's sales address, the key that lets our payment checker see payments to it (sealed to keys only our chain worker holds), and how far the checker has read. | Empty until paid links are switched on.
 | paid_shares | One row per paid link: its price; our half of its key, which we erase when the link ends; its encrypted preview; how many views and how long a buyer gets; whether it is paused. | Empty until paid links are switched on.
 | shops | For a drive that turns on a shop: a random id, the address name its owner picked (and that name with look-alike letters merged, so no other shop can take one that reads the same), the name and bio its owner wrote to publish, private or public, the shop's key wrapped so only that drive opens it, and a hash of the token that reads a private shop. Never the shop's key, private or public. | Until its owner turns the shop off or deletes the drive. Empty until shops are switched on.
@@ -370,7 +370,7 @@ Our live numbers (/api/v1/stats) are public: the free quota; our disk's size and
 Our public endpoint /api/v1/stats/wall lists, for up to 24 recent files at least an hour old, a coarse size and an exit rule, only when at least 8 exist in the last week: never a name, an id or whether a file was opened. Someone who knows a file's size and rule may still recognise it there. Our hourly test file and our own test transactions are public too; never a visitor's.
 
 ### How long things last
-We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish. We never had the key, so any leftover bytes are noise.
+We delete the ciphertext from our disk within a minute of its exit. If the exit was a download, we wait for it to finish. A file we remove after a report is the one exception: we keep its scrambled bytes for a month, where only the server's administrator can read them, then delete them. We never had the key, so any leftover bytes are noise.
 Our database (never files) is backed up daily. It holds the rows listed above, including the wrapped key of every link still open when the copy was made; a wrapped key opens nothing without the link's secret. What we erase from the database is overwritten, but an older copy of it can sit in the database's write-ahead log until that space is reused, and in the backups until they're deleted.
 Our host (Hostinger) can take weekly snapshots of the whole server. We haven't switched them off, and we haven't yet confirmed in its panel how long it keeps them. A file that existed when one was taken stays in it, as ciphertext, until that snapshot is rotated out.
 Disks can't be securely wiped, so deleted ciphertext can linger in free blocks. Without the key it's noise.
@@ -423,7 +423,7 @@ Your drive opens with a key your browser makes; there is no email and no passwor
 A file leaves your drive when you delete it, when the trash is emptied, at the time you set with Delete it after, or after the last open of a link set to delete it from your drive. A link that ends on a file you keep only ends the link. When a file leaves, we delete the ciphertext within a minute (after a download in progress finishes).
 
 ### Removal
-We can remove any link, file or drop by its id, without seeing inside, when it's reported and we believe it breaks these terms, or when it's abusing limits. We usually disable first and ask questions later.
+We can remove any link, file or drop by its id, without seeing inside, when it's reported and we believe it breaks these terms, or when it's abusing limits. We usually disable first and ask questions later. A file we remove after a report is the one exception: we keep its scrambled bytes for a month, where only the server's administrator can read them, then delete them.
 
 ### What we can hand over
 If compelled by law, we can hand over what we have: ciphertext, the columns listed on our privacy page, and invoices. We can't hand over contents or keys, because we never have them.

@@ -4,6 +4,7 @@
 Callers hold a BEGIN IMMEDIATE transaction around every function that writes.
 """
 import sqlite3
+from pathlib import Path
 
 from . import codec, sales, seallog, shop, tree
 from .storage import Blobs
@@ -91,15 +92,19 @@ def unlink(conn: sqlite3.Connection, blobs: Blobs, item_id: str, final_state: st
         seallog.append(conn, "exit", seallog.exit_leaf(item_id, exit_hour))
 
 
-def remove(conn: sqlite3.Connection, blobs: Blobs, item_id: str, now: int) -> None:
+def remove(conn: sqlite3.Connection, blobs: Blobs, item_id: str, now: int, quarantine: Path | None = None) -> None:
     """Abuse takedown: end every link with reason `removed` and delete the blob at once. An item that
     already left by its rule is marked removed too (its exit receipt stays), so it leaves the wall.
-    A folder is removed with everything in it: a folder link shares its whole subtree."""
+    A folder is removed with everything in it: a folder link shares its whole subtree. With `quarantine`, each
+    finished blob is moved there first (mutis-admin takedown: the evidence a report may need, kept root-only for
+    QUARANTINE_DAYS by deploy/scripts/backup.py abuse-queue, still encrypted with a key we don't have)."""
     for row in tree.subtree(conn, item_id, ("uploading", "ready", "doomed")):
         for share in conn.execute("SELECT id FROM shares WHERE item_id = ? AND state = 'active'",
                                   (row["id"],)).fetchall():
             end_share(conn, share["id"], "removed", now)
         conn.execute("UPDATE tickets SET done = 1 WHERE item_id = ?", (row["id"],))
+        if quarantine is not None:
+            blobs.quarantine(row["id"], quarantine, now)
         unlink(conn, blobs, row["id"], "removed", now)
         conn.execute("UPDATE items SET state = 'removed' WHERE id = ? AND state = 'deleted'", (row["id"],))
 

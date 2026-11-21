@@ -92,7 +92,8 @@ class FakeWalletd(ThreadingHTTPServer):
                     "address": chain.addresses[name]}
         if method == "accounts.get_balances":
             name = self._name(p["account"])
-            return {"balances": [{"resource_address": "resource_" + TARI_HEX, "balance": "0",
+            revealed = getattr(chain, "revealed", {}).get(name, 1_000_000_000)   # the fee steps' public balance
+            return {"balances": [{"resource_address": "resource_" + TARI_HEX, "balance": str(revealed),
                                   "confidential_balance": str(chain.balances[name])}]}
         if method == "accounts.stealth_transfer":
             t = p["transfers"][0]

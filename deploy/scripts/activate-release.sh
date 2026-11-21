@@ -98,6 +98,19 @@ echo "switched current → releases/$id"
 
 trap 'echo "activate: failed after the switch; rolling back" >&2; bash "$dir/deploy/scripts/rollback.sh" --from-failed "$id"' ERR
 
+# The walletd of the network the config names is enabled, so a reboot brings it back with the units that need it (the
+# mainnet instance's was found disabled after one, 2026-11-21). Never started or restarted here: walletd's restarts
+# are planned (needrestart leaves it alone too).
+if [ -n "$MUTIS_INSTANCE" ]; then
+  network=$(python3 -I -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb")).get("network", "esmeralda"))' "$INST_CONFIG")
+  walletd_unit="mutis-$MUTIS_INSTANCE-walletd-$network.service"
+else
+  walletd_unit=walletd.service
+fi
+if [ -f "/etc/systemd/system/$walletd_unit" ] && ! systemctl is-enabled --quiet "$walletd_unit" 2>/dev/null; then
+  systemctl enable "$walletd_unit" >/dev/null 2>&1 && echo "enabled $walletd_unit"
+fi
+
 # MUTIS_KEEP_CHAIN=1 leaves the chain worker running on the release it started with (its in-memory
 # canary keys survive); the next deploy without it, or a migration above, brings it onto the new code.
 for unit in "$INST_API_UNIT" "$INST_CHAIN_UNIT"; do
@@ -135,8 +148,10 @@ if [ -z "$MUTIS_INSTANCE" ]; then
     cmp -s "$unit" "/etc/systemd/system/$(basename "$unit")" ||
       echo "notice: $(basename "$unit") differs from the installed unit; run deploy/scripts/provision.sh"
   done
-  cmp -s "$dir/deploy/systemd/caddy.service.d/mutis.conf" /etc/systemd/system/caddy.service.d/mutis.conf ||
-    echo "notice: caddy.service.d/mutis.conf differs from the installed drop-in; run deploy/scripts/provision.sh"
+  for dropin in "$dir"/deploy/systemd/caddy.service.d/*.conf; do
+    cmp -s "$dropin" "/etc/systemd/system/caddy.service.d/$(basename "$dropin")" ||
+      echo "notice: caddy.service.d/$(basename "$dropin") differs from the installed drop-in; run deploy/scripts/provision.sh"
+  done
 else
   rendered=$(mktemp -d)
   # shellcheck disable=SC2046
@@ -148,6 +163,9 @@ else
   done
   rm -rf "$rendered"
 fi
+
+bash "$dir/deploy/scripts/caddy-upstream.sh" status >/dev/null 2>&1 ||
+  echo "notice: $(bash "$dir/deploy/scripts/caddy-upstream.sh" status 2>&1 | tail -n 1); run deploy/scripts/provision.sh"
 
 if [ -f "$dir/sidecar/sidecar.mjs" ]; then
   network=$(python3 -I -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb")).get("network", "esmeralda"))' "$INST_CONFIG")

@@ -14,7 +14,7 @@ import sqlite3
 
 from . import codec
 from .http_util import invalid
-from .shop import LIVE, listing_json
+from .shop import LISTED, LIVE, listed_day, listing_json
 
 PAGE = 24                  # listings a page
 Q_MAX = 60                 # a search's characters
@@ -57,7 +57,9 @@ def parse_cursor(text):
     return int(m.group(1)), m.group(2)
 
 
-# A listing is in the market while it shows on its public shop: the shop public, open and named, its pay link selling.
+# A listing may be asked about while it shows on its public shop: the shop public, open and named, its pay link selling.
+# It is browsable in the market (search) only while its shop is also listed (shop.LISTED: no report waits, and its drive
+# is a week old or has paid), so a minute-old drive's shop sells by its own link but isn't shown to everyone.
 _IN_MARKET = (f"sh.mode = 'public' AND sh.state = 'open' AND sh.username IS NOT NULL AND {LIVE} AND p.paused = 0")
 _FROM = ("FROM shop_listings l JOIN shops sh ON sh.id = l.shop_id JOIN shares s ON s.id = l.share_id "
          "JOIN paid_shares p ON p.share_id = l.share_id JOIN items i ON i.id = s.item_id")
@@ -66,7 +68,7 @@ _FROM = ("FROM shop_listings l JOIN shops sh ON sh.id = l.shop_id JOIN shares s 
 def search(conn: sqlite3.Connection, words: list[str], kind: str | None, cursor, now: int) -> tuple[list, str | None]:
     """A page of what public shops sell now, newest first: each listing as its shop shows it, with the shop's name and
     address; and the cursor of the next page, or None."""
-    where, args = [_IN_MARKET], [now, now]
+    where, args = [_IN_MARKET, LISTED], [now, now, listed_day(now)]
     if kind:
         where.append("l.kind = ?")
         args.append(kind)

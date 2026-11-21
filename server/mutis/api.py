@@ -17,12 +17,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
-from . import auth, codec, config, db, logsafe, network, ootle_addr, storage
+from . import auth, codec, config, db, logsafe, network, ootle_addr, sales, storage
 from .http_util import HEADERS_MAX, ApiError, Request, Response, error_response
 from .indexer import Indexers
 from .ipkeys import IpKeys, client_ip
 from .pow import Pow, PowError
-from .ratelimit import DayCounts, Limiter, Recent
+from .handlers.auth import REGISTRATIONS_PER_DAY
+from .ratelimit import DayCounts, Limiter, OpenSlots, Recent
 from .router import ROUTER
 
 API_PREFIX = "/api/v1/"
@@ -32,6 +33,12 @@ DRAIN_MAX = 8 * 1024 * 1024       # an early error still reads a body this small
 MEMORY_CAP = 200_000              # entries in each in-memory table
 IN_FLIGHT_64 = 32                 # requests in progress per IPv6 /64 or IPv4 address (a browser uses about 6)
 IN_FLIGHT_48 = 128                # per IPv6 /48 or IPv4 /24
+IN_FLIGHT_ALL = 256               # in all: past it, 503 with Retry-After (the health route still answers)
+OVERLOAD_RETRY_S = 5
+# Proof of work grows harder as a shared limit fills (security pass, 2026-11-21): +2 bits from half of it, +4 from
+# three quarters, for the open claims (sales.MAX_OPEN_CLAIMS) and the day's new drives (auth.REGISTRATIONS_PER_DAY).
+POW_PRESSURE = ((0.75, 4), (0.5, 2))
+HEALTH_PATH = "/api/v1/health"
 
 
 # A shop's page: /shop/<username or id> (deploy/caddy/Caddyfile @shoppage, the same pattern).
@@ -46,15 +53,21 @@ class InFlight:
         self.count = 0
         self._per: dict[bytes, int] = {}
 
-    def acquire_slot(self, caps: tuple[tuple[bytes, int], ...]) -> bool:
-        """Count a request against each (network key, cap); False, counting nothing, when one is full."""
+    def take(self, caps: tuple[tuple[bytes, int], ...], total: int | None = None) -> str:
+        """Count a request against each (network key, cap) and, given `total`, against all requests in progress:
+        "ok"; or, counting nothing, "total" when everything in progress reaches `total`, "network" when a cap is full."""
         with self._cond:
+            if total is not None and self.count >= total:
+                return "total"
             if any(self._per.get(key, 0) >= cap for key, cap in caps):
-                return False
+                return "network"
             self.count += 1
             for key, _ in caps:
                 self._per[key] = self._per.get(key, 0) + 1
-            return True
+            return "ok"
+
+    def acquire_slot(self, caps: tuple[tuple[bytes, int], ...], total: int | None = None) -> bool:
+        return self.take(caps, total) == "ok"
 
     def release_slot(self, caps: tuple[tuple[bytes, int], ...]) -> None:
         with self._cond:
@@ -95,9 +108,11 @@ class App:
         self.pw_tries = Recent(MEMORY_CAP)       # (share id, ip64) → (wrong passwords today, last try)
         self.small_held = Recent(MEMORY_CAP)     # ip48 → {item id: SMALL-lane bytes it holds}
         self.daily = DayCounts(MEMORY_CAP)       # the daily brakes (drives, drive uploads, packs) per network
+        self.open_claims = OpenSlots(MEMORY_CAP)  # waiting claims per /48 (or /24), each until its time to pay ends
         self.exempt_nets = tuple(ipaddress.ip_network(a, strict=False) for a in cfg["brakes"]["exempt_addresses"])
         self.cache: dict = {}
         self.inflight = InFlight()
+        self.overload_logged = -60.0
         self._features = (0.0, {})
 
     def offloader(self, stop: threading.Event) -> None:
@@ -127,6 +142,7 @@ class App:
         self.pw_tries.clear()
         self.small_held.clear()
         self.daily.clear()
+        self.open_claims.clear()
 
     def exempt(self, ip_text: str) -> bool:
         """The server's own addresses (brakes.exempt_addresses) skip the per-network daily brakes."""
@@ -287,8 +303,21 @@ class Ctx:
         if not auth.spend_judge_use(self.db, code, self.now):
             raise _judge_refused()
 
+    def pow_floor(self, purpose: str) -> int:
+        """The fewest bits a `purpose` solution needs now, from how full its shared limit is (POW_PRESSURE); 0 when
+        nothing is under pressure. POST /pow issues challenges at it, so the app solves the harder one at once."""
+        if purpose == "claim":
+            level = sales.open_claims(self.db) / sales.MAX_OPEN_CLAIMS
+        elif purpose == "register":
+            level = self.app.limiter.level("reg_all", "all", REGISTRATIONS_PER_DAY, 86400, self.now)
+        else:
+            return 0
+        extra = next((bits for at, bits in POW_PRESSURE if level >= at), 0)
+        return self.app.pow.base(purpose) + extra if extra else 0
+
     def proof_of_work(self, purpose: str, body: dict, min_difficulty: int = 0, budgeted: bool = False) -> str | None:
         """Require a PoW solution for `purpose`, or a judge pass. Returns the pass code when one was used."""
+        min_difficulty = max(min_difficulty, self.pow_floor(purpose))
         code = self.judge()
         if code is not None:
             if not budgeted and not auth.skip_pow(self.db, code, self.now):
@@ -350,8 +379,15 @@ class Handler(BaseHTTPRequestHandler):
                       client_ip(self.client_address[0], self.headers.get("X-Real-IP")))
         ctx = Ctx(app, req, app.clock())
         caps = ((ctx.ip64, IN_FLIGHT_64), (ctx.ip48, IN_FLIGHT_48))
-        counted = app.inflight.acquire_slot(caps)
+        slot = app.inflight.take(caps, None if url.path == HEALTH_PATH else IN_FLIGHT_ALL)
+        counted = slot == "ok"
         try:
+            if slot == "total":
+                if time.monotonic() - app.overload_logged >= 60:      # one line a minute, not one per refusal
+                    app.overload_logged = time.monotonic()
+                    logsafe.event("api.overloaded", "warning")
+                raise ApiError(503, "busy", "We're very busy right now. Try again in a few seconds.",
+                               retry_after=OVERLOAD_RETRY_S)
             if not counted:
                 raise ApiError(429, "rate_limited", "Too many requests at once from your network. Try again shortly.",
                                retry_after=1)

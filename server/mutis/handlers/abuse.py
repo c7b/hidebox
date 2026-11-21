@@ -4,10 +4,15 @@
 
 The browser strips the link's key unless the reporter chose to include it; when it's included we
 keep it with the report so the operator can look at the content, and the report says so.
+
+A report of a shop, or of a pay link a shop lists, holds that shop out of the market and the sitemap at once, noindex,
+until the operator reviews it (shop.hold, `mutis-admin shop-review`); the shop's own link keeps working. Every report
+logs one critical line with no detail (`event=api.abuse_report`), and root copies the new ones into its own queue
+(deploy/scripts/backup.py abuse-queue), so the operator hears of them without the server sending anything anywhere.
 """
 from urllib.parse import urlsplit
 
-from .. import codec, db, shop
+from .. import codec, db, logsafe, shop
 from ..http_util import PARAM_RE, get_enum, get_str, invalid, json_response
 
 CATEGORIES = ("csam", "malware", "phishing", "copyright", "harassment", "other")
@@ -53,9 +58,16 @@ def report(ctx):
         item_id = row["item_id"] if row else None
     report_id = codec.report_id()
     with db.tx(ctx.db):
+        if share_id and shop_id is None:            # a pay link a shop lists: that shop waits for review too
+            listed = ctx.db.execute("SELECT shop_id FROM shop_listings WHERE share_id = ?", (share_id,)).fetchone()
+            held = listed["shop_id"] if listed is not None else None
+        else:
+            held = shop_id
+        shop.hold(ctx.db, held, ctx.now)
         ctx.db.execute("INSERT INTO abuse_reports(id, share_id, item_id, drop_id, shop_id, category, details, contact, "
                        "included_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                        (report_id, share_id, item_id, drop_id, shop_id, category, details, contact,
                         int(bool(fragment)), ctx.now))
+    logsafe.event("api.abuse_report", "critical")
     return json_response(201, {"report_id": report_id})
 

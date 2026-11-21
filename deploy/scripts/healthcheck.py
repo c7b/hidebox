@@ -39,6 +39,8 @@ RECONCILE_UNKNOWN_ALERT = 3     # hourly reconciles in a row without a verdict (
 BUDGET_ALERT = 90               # a daily budget slice at 90 % of its limit (meta.alerts)
 PACKS_MAX_S = 900               # meta.packs older than this (cleanup stopped) is ignored
 OFFLOAD_BEHIND_S = 3600         # a blob waiting this long for the remote store, or a deletion (meta.storage)
+SEAL_FEE_LOW_UT = 300_000       # the operator's revealed balance for checkpoint fees (chain_worker.SEAL_FEE_LOW_UT)
+PRIVATE_REASONS = ("abuse.",)   # in health.json only: /status.json says nothing about reports (security pass, 2026-11-21)
 
 
 def https_ok(origin: str) -> tuple[str, str]:
@@ -158,6 +160,9 @@ def attention(conn: sqlite3.Connection, now: int | None = None) -> list[str]:
     now = int(time.time()) if now is None else now
     reasons += pack_reasons(conn, now)
     reasons += storage_reasons(conn, now)
+    fee = ((meta(conn, "chain_status", {}) or {}).get("seal_fee_ut"))
+    if isinstance(fee, int) and fee < SEAL_FEE_LOW_UT:
+        reasons.append("seal.fee_low")      # top up the operator account's revealed balance (setup-accounts.md §4)
     if conn.execute("SELECT COUNT(*) FROM abuse_reports WHERE state = 'new'").fetchone()[0]:
         reasons.append("abuse.new_reports")
     return reasons
@@ -188,9 +193,18 @@ def evaluate(cfg: dict, conn: sqlite3.Connection | None, now: int, probes: dict)
 
 
 def public_subset(report: dict) -> dict:
-    return {"updated_at": report["checked_at"], "overall": report["overall"], "attention": report["attention"],
-            "reasons": report["reasons"], "phase": report["phase"],
+    reasons = [r for r in report["reasons"] if not r.startswith(PRIVATE_REASONS)]
+    return {"updated_at": report["checked_at"], "overall": report["overall"], "attention": bool(reasons),
+            "reasons": reasons, "phase": report["phase"],
             "checks": {name: c["state"] for name, c in report["checks"].items()}}
+
+
+def new_reports(conn: sqlite3.Connection) -> list[dict]:
+    """The abuse reports nobody has acted on, without the reporter's words or contact: for root's queue."""
+    rows = conn.execute("SELECT id, created_at, category, share_id, drop_id, shop_id, included_key FROM abuse_reports "
+                        "WHERE state = 'new' ORDER BY created_at LIMIT 1000").fetchall()
+    return [{"id": r[0], "created_at": r[1], "category": r[2], "share_id": r[3], "drop_id": r[4], "shop_id": r[5],
+             "included_key": bool(r[6])} for r in rows]
 
 
 def write_json(path: Path, doc: dict, mode: int) -> None:
@@ -222,6 +236,8 @@ def main() -> int:
         conn = None
     report = evaluate(cfg, conn, int(time.time()), {"https": https_ok, "api": api_ok, "disk": disk_check})
     write_json(data / "health.json", report, 0o640)
+    if conn is not None:     # root's abuse-queue (backup.py, right after this) reads it: root never opens the database
+        write_json(data / "abuse-new.json", {"reports": new_reports(conn)}, 0o600)
     write_json(data.parent / "status" / "status.json", public_subset(report), 0o644)
     for name, check in report["checks"].items():
         if check["state"] == RED:

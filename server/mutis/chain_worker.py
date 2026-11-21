@@ -41,7 +41,12 @@ EVIDENCE_PAY_HOUR_UTC = 12
 SCAN_BATCH = 2000
 STREAM_LIMIT = 100
 CANARY_LOG_MAX = 48
-SEAL_MAX_FEE_UT = 1_000_000
+# A checkpoint or a release's notarization costs about 6,000 µT (deploy/ootle/upgrade-0.50.md §1), and the fee step
+# locks this much of the operator account's revealed (public) balance for it; what isn't spent comes back. It was
+# 1,000,000: once that balance fell under it, every checkpoint was refused (InsufficientFunds) though about a TARI was
+# still there (2026-11-21). About 8 times the cost leaves room for a dearer step and spends the rest.
+SEAL_MAX_FEE_UT = 50_000
+SEAL_FEE_LOW_UT = 300_000        # under this, the healthcheck asks for a top-up (about 40 checkpoints left)
 UNCONFIRMED_ALERT_S = 600        # a proven payment no indexer confirms within 10 minutes is an anomaly (E-14)
 SUBMIT_WAIT_S = 5                # most transfers finalize in about a second (03 §9 T2); slower ones are polled
 POLL_WAIT_S = 1
@@ -860,9 +865,21 @@ class Worker:
         interval = self.cfg["seal_log"]["checkpoint_interval_s"]
         if now - last < interval and not (now - last >= SEAL_FORCE_GAP_S and self._force("seal")):
             return
+        o = self.cfg["ootle"]
+        # The fee step can only lock revealed funds: with too few, walletd accepts the transaction and the network
+        # refuses it. Said once, as a critical line and in the status, instead of a failed checkpoint (and its pad
+        # leaves) every SEAL_RETRY_S.
+        try:
+            revealed = self.walletd.revealed_balance_ut(o["operator_account"])
+        except WalletdError:
+            revealed = None                  # unknown: the submission below finds out, as before
+        self.status["seal_fee_ut"] = revealed
+        if revealed is not None and revealed < SEAL_MAX_FEE_UT:
+            logsafe.event("chain.seal_unfunded", "critical")
+            db.set_meta(self.conn, "seal_last_at", str(now - interval + SEAL_RETRY_S))
+            return
         with db.tx(self.conn):
             checkpoint = seallog.make_checkpoint(self.conn, now)
-        o = self.cfg["ootle"]
         try:
             operator = self.walletd.account(o["operator_account"])["account"]["component_address"]
             tx_id = self.walletd.submit_manifest(seal_manifest(checkpoint["root"].hex(), checkpoint["tree_size"]),
@@ -938,10 +955,10 @@ def root_event(events: list[dict], component: str) -> tuple[int, int] | None:
 
 
 def seal_manifest(root_hex: str, tree_size: int) -> str:
-    return ('fn fee_main() { let account = var!["account"]; account.pay_fee(1000000); }\n'
+    return (f'fn fee_main() {{ let account = var!["account"]; account.pay_fee({SEAL_MAX_FEE_UT}); }}\n'
             f'fn main() {{ let log = var!["log"]; log.append_root(hex_bytes!("{root_hex}"), {tree_size}u64); }}\n')
 
 
 def notarize_manifest(commitment_hex: str) -> str:
-    return ('fn fee_main() { let account = var!["account"]; account.pay_fee(1000000); }\n'
+    return (f'fn fee_main() {{ let account = var!["account"]; account.pay_fee({SEAL_MAX_FEE_UT}); }}\n'
             f'fn main() {{ let log = var!["log"]; log.notarize(hex_bytes!("{commitment_hex}")); }}\n')

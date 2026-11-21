@@ -32,11 +32,12 @@ from .payments import INDEXER_FAILOVER_AFTER, claim_ref, utxo_on_indexer
 PRICES_UT = (100_000, 250_000, 500_000)     # 0.1 / 0.25 / 0.5 tTARI: each at least three fees
 BUYER_VIEWS = 3                              # opens a paid claim gives
 BUYER_WINDOW_S = 7 * 86400                   # within this long after its release
-CLAIM_TTL_S = 3600                           # time to pay a claim
+CLAIM_TTL_S = 1800                           # time to pay a claim (an Ootle payment lands in seconds)
 LATE_GRACE_S = 86400                         # top-ups of an underpaid claim still count this long
 DEMO_MAX_UT = 500_000                        # our demo wallet pays at most this per claim (test money)
 MAX_OPEN_CLAIMS_PER_SHARE = 20
 MAX_OPEN_CLAIMS = 500                        # across every link: the worker's scanning stays bounded
+MAX_OPEN_CLAIMS_48 = 8                       # waiting claims one /48 (or IPv4 /24) may hold at once, across links
 SALES_PUT_PER_DAY = 10
 SELLERS_PER_TICK = 50
 SCAN_ROWS = 10_000                           # mirror rows one seller's scan reads per tick
@@ -53,6 +54,11 @@ def config_block(fee_ut: int, watch_address: str | None) -> dict:
             "buyer_window_s": BUYER_WINDOW_S, "claim_ttl_s": CLAIM_TTL_S, "late_grace_s": LATE_GRACE_S,
             "demo_max_ut": str(DEMO_MAX_UT), "watch_address": watch_address,
             "max_open_claims_per_share": MAX_OPEN_CLAIMS_PER_SHARE}
+
+
+def open_claims(conn: sqlite3.Connection) -> int:
+    """Claims waiting for money now, across every link (the MAX_OPEN_CLAIMS count)."""
+    return conn.execute(f"SELECT COUNT(*) FROM claims WHERE status IN ({_q(OPEN)})", OPEN).fetchone()[0]
 
 
 def watch_ref(address: str) -> bytes:

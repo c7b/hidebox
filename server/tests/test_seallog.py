@@ -217,6 +217,27 @@ class Receipts(unittest.TestCase):
         finally:
             s.close()
 
+    def test_too_little_revealed_for_the_fee_waits_without_a_failed_checkpoint(self):
+        """2026-11-21: pay_fee locks revealed funds only; with fewer than the lock, the network refused every checkpoint.
+        Now the worker says so (critical, and seal_fee_ut in its status for the healthcheck) and makes none."""
+        s = self.stack()
+        try:
+            operator = s.cfg["ootle"]["operator_account"]
+            s.chain.revealed = {operator: chain_worker.SEAL_MAX_FEE_UT - 1}
+            s.upload(1000)
+            with self.assertLogs("mutis", "CRITICAL") as logs:
+                s.worker.tick()
+            self.assertIn("event=chain.seal_unfunded", "\n".join(logs.output))
+            self.assertEqual(s.conn.execute("SELECT COUNT(*) FROM seal_checkpoints").fetchone()[0], 0)
+            self.assertEqual(s.worker.status["seal_fee_ut"], chain_worker.SEAL_MAX_FEE_UT - 1)
+            s.chain.revealed = {operator: 10 * chain_worker.SEAL_MAX_FEE_UT}
+            s.now += chain_worker.SEAL_RETRY_S
+            s.worker.tick()
+            self.assertEqual([r[0] for r in s.conn.execute("SELECT state FROM seal_checkpoints")], ["committed"])
+            self.assertIn(f"pay_fee({chain_worker.SEAL_MAX_FEE_UT})", chain_worker.seal_manifest("00", 1))
+        finally:
+            s.close()
+
     def test_off_means_no_receipts_at_all(self):
         """Review M2: while SealLog is off, nothing may promise a checkpoint that will never come."""
         s = self.stack(on=False)

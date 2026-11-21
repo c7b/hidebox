@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MIT
+# /etc/systemd/system/mutis-connlimit.service (provision.sh): the per-source connection cap on 80/443
+# (/etc/mutis-connlimit.nft), in its own nft table beside ufw.
+[Unit]
+Description=Per-source connection cap on 80/443 (own nft table beside ufw)
+After=ufw.service
+Before=caddy.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/mutis-connlimit.nft
+ExecStop=/usr/sbin/nft delete table inet mutis_guard
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# /etc/apt/preferences.d/caddy-upstream (deploy/scripts/caddy-upstream.sh). Nothing comes from Caddy's repository but
+# the `caddy` package, at the one version below: an upgrade of Caddy is a commit here (CADDY_VERSION in
+# caddy-upstream.sh too), validated against the live configuration before it is installed. Debian's caddy 2.6.2
+# (built with Go 1.24.4, whose HTTP/2 server any client can crash: CVE-2026-97032, not rebuilt for trixie) can't
+# come back over it: 1001 holds this version against any other (Debian has no 2.11.9; its backports have 2.11.2).
+Package: caddy
+Pin: version 2.11.9
+Pin-Priority: 1001
+
+Package: *
+Pin: origin dl.cloudsmith.io
+Pin-Priority: -1

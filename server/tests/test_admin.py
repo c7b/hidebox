@@ -294,7 +294,9 @@ class Admin(unittest.TestCase):
             self.assertTrue(auth.judge_pass_live(s.conn, code, ends - 1))
             self.assertFalse(auth.judge_pass_live(s.conn, code, ends))
         self.assertEqual([r[0] for r in s.conn.execute("SELECT uses_left FROM judge_passes")], [3, 3])
-        extend(f"{first}\n", time.strftime("%Y-%m-%d", time.gmtime(s.now + 40 * 86400)))   # earlier: kept as it was
+        # An earlier day (still to come, whatever today is): kept as it was.
+        earlier = min(ends - 2 * 86400, max(s.now, int(time.time())) + 40 * 86400)
+        extend(f"{first}\n", time.strftime("%Y-%m-%d", time.gmtime(earlier)))
         self.assertTrue(auth.judge_pass_live(s.conn, first, ends - 1))
 
     def test_budget_overrides_only_lower(self):

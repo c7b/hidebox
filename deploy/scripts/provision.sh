@@ -16,6 +16,7 @@ WALLET=/home/drive/wallet
 BACKUPS=/var/backups/mutis
 CREDENTIAL=/etc/mutis/credentials/walletd-keyring-pass
 OPERATOR=${MUTIS_OPERATOR:-${SUDO_USER:-}}
+# caddy comes from Caddy's own repository, pinned (caddy-upstream.sh, run by the Caddy step below): Debian's is only a start.
 PACKAGES=(caddy nodejs chromium fonttools python3-brotli woff2 ffmpeg)
 
 step() { printf '\n== %s\n' "$*"; }
@@ -39,7 +40,7 @@ install_kept() {
   fi
   install -m "$mode" -o root -g root "$src" "$dst"
   case $dst in
-    /etc/systemd/system/*.service.d/*) CHANGED_UNITS+=("$(basename "$(dirname "$dst")" .d)") ;;
+    /etc/systemd/system/*.d/*) CHANGED_UNITS+=("$(basename "$(dirname "$dst")" .d)") ;;
     /etc/systemd/system/*) CHANGED_UNITS+=("$(basename "$dst")") ;;
   esac
 }
@@ -49,7 +50,7 @@ install_kept() {
   die "run it with sudo from your own login, or set MUTIS_OPERATOR=<login>"
 
 check_packages() {
-  step "Debian packages (installed by the owner; this script installs nothing)"
+  step "Debian packages (installed by the owner; this script installs none but the pinned Caddy)"
   local missing=() p
   for p in "${PACKAGES[@]}"; do
     dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q 'install ok installed' || missing+=("$p")
@@ -127,9 +128,47 @@ install_files() {
   done
   install -d -m 0755 /etc/systemd/system/caddy.service.d /etc/systemd/journald.conf.d
   install_kept 0644 "$DEPLOY/systemd/caddy.service.d/mutis.conf" /etc/systemd/system/caddy.service.d/mutis.conf
+  install_kept 0644 "$DEPLOY/systemd/caddy.service.d/restart-limits.conf" /etc/systemd/system/caddy.service.d/restart-limits.conf
   if ! cmp -s "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf; then
     install_kept 0644 "$DEPLOY/journald/mutis.conf" /etc/systemd/journald.conf.d/mutis.conf
     systemctl restart systemd-journald
+  fi
+  systemctl daemon-reload
+  echo "ok"
+}
+
+host_files() {
+  step "host hardening (deploy/host/): connection cap, sshd jail, upgrade timers, needrestart"
+  local f
+  for f in apt-daily.timer.d/order.conf apt-daily-upgrade.timer.d/order.conf; do
+    install -d -m 0755 "/etc/systemd/system/$(dirname "$f")"
+    install_kept 0644 "$DEPLOY/host/systemd/$f" "/etc/systemd/system/$f"
+  done
+  install_kept 0644 "$DEPLOY/host/apt/52mutis-unattended-upgrades" /etc/apt/apt.conf.d/52mutis-unattended-upgrades
+  if command -v nft >/dev/null; then
+    install_kept 0644 "$DEPLOY/host/nftables/mutis-connlimit.nft" /etc/mutis-connlimit.nft
+    install_kept 0644 "$DEPLOY/host/systemd/mutis-connlimit.service" /etc/systemd/system/mutis-connlimit.service
+    systemctl daemon-reload
+    nft -c -f /etc/mutis-connlimit.nft || die "/etc/mutis-connlimit.nft does not load (nft -c -f)"
+    systemctl enable mutis-connlimit.service >/dev/null 2>&1
+    systemctl restart mutis-connlimit.service || die "mutis-connlimit.service failed (journalctl -u mutis-connlimit)"
+    echo "  connection cap: $(nft list table inet mutis_guard >/dev/null 2>&1 && echo loaded || echo missing)"
+  else
+    echo "  notice: nftables isn't installed; no per-source connection cap on 80/443"
+  fi
+  if [ -d /etc/fail2ban/jail.d ]; then
+    if ! cmp -s "$DEPLOY/host/fail2ban/sshd-local.conf" /etc/fail2ban/jail.d/sshd-local.conf; then
+      install_kept 0644 "$DEPLOY/host/fail2ban/sshd-local.conf" /etc/fail2ban/jail.d/sshd-local.conf
+      fail2ban-client -t >/dev/null || die "fail2ban's configuration does not test clean (fail2ban-client -t)"
+      systemctl reload-or-restart fail2ban
+    fi
+    echo "  fail2ban sshd jail: $(fail2ban-client status sshd >/dev/null 2>&1 && echo active || echo inactive)"
+  else
+    echo "  notice: fail2ban isn't installed; no sshd jail"
+  fi
+  if [ -d /etc/needrestart ]; then
+    install -d -m 0755 /etc/needrestart/conf.d
+    install_kept 0644 "$DEPLOY/host/needrestart/50-mutis.conf" /etc/needrestart/conf.d/50-mutis.conf
   fi
   systemctl daemon-reload
   echo "ok"
@@ -221,13 +260,22 @@ PY
 }
 
 caddy_site() {
-  step "Caddy"
+  step "Caddy (Caddy's own repository, pinned: deploy/scripts/caddy-upstream.sh)"
   [ -e /etc/caddy/Caddyfile.debian ] || cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.debian
-  (set -a && . /etc/mutis/caddy.env && caddy validate --config "$DEPLOY/caddy/Caddyfile" --adapter caddyfile >/dev/null 2>&1) ||
-    die "caddy validate failed: run it by hand to see why"
+  bash "$DEPLOY/scripts/caddy-upstream.sh" setup
+  local upgrade=0
+  bash "$DEPLOY/scripts/caddy-upstream.sh" status >/dev/null || upgrade=1
+  if [ "$upgrade" = 1 ]; then
+    # The new binary validates the Caddyfile first (it imports the live instance sites); the package goes in after it.
+    bash "$DEPLOY/scripts/caddy-upstream.sh" validate "$DEPLOY/caddy/Caddyfile"
+  else
+    (set -a && . /etc/mutis/caddy.env && caddy validate --config "$DEPLOY/caddy/Caddyfile" --adapter caddyfile >/dev/null 2>&1) ||
+      die "caddy validate failed: run it by hand to see why"
+  fi
   install_kept 0644 "$DEPLOY/caddy/Caddyfile" /etc/caddy/Caddyfile
+  [ "$upgrade" = 0 ] || bash "$DEPLOY/scripts/caddy-upstream.sh" install
   systemctl enable caddy >/dev/null 2>&1
-  if [ -S /run/caddy/admin.sock ] && [[ " ${CHANGED_UNITS[*]} " != *" caddy.service "* ]]; then
+  if [ -S /run/caddy/admin.sock ] && [ "$upgrade" = 0 ] && [[ " ${CHANGED_UNITS[*]} " != *" caddy.service "* ]]; then
     systemctl reload caddy
   else
     # The first switch from the TCP admin port to the socket, or a new sandbox in the drop-in.
@@ -328,6 +376,7 @@ check_packages
 users_and_dirs
 config_and_secrets
 install_files
+host_files
 data_mount
 status_mount
 kernel_settings

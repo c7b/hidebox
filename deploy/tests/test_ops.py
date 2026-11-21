@@ -126,6 +126,32 @@ class BackupTest(unittest.TestCase):
             self.assertTrue(path.exists(), path.name)
         self.assertEqual(backup.prune_root(folder=root), [], "a second run finds nothing")
 
+    def test_the_abuse_queue_moves_the_quarantine_and_lists_new_reports_once(self):
+        """Security pass 2026-11-21: a takedown's quarantined ciphertext leaves the data directory for root's folder
+        (deleted after QUARANTINE_DAYS); each new report gets one line, from the file the healthcheck wrote, with no
+        reporter's words; a link planted in the quarantine is never followed."""
+        root = Path(self.tmp.name) / "root"
+        q = self.data / "quarantine"
+        q.mkdir()
+        (q / "20261121T000000Z-item1.bin").write_bytes(b"cipher")
+        os.symlink("/etc/hostname", q / "planted.bin")
+        old = root / "quarantine" / "20261001T000000Z-old.bin"
+        old.parent.mkdir(parents=True)
+        old.write_bytes(b"x")
+        os.utime(old, (time.time() - 31 * 86400,) * 2)
+        reports = [{"id": "rep1", "created_at": 1795300000, "category": "csam", "shop_id": "shopA", "included_key": False},
+                   {"id": "bad id; rm", "category": "other"}, {"id": "rep2", "category": "nonsense", "share_id": "s1"}]
+        (self.data / "abuse-new.json").write_text(json.dumps({"reports": reports}))
+        done = backup.abuse_queue(folder=root)
+        self.assertEqual(done, {"quarantined": 1, "quarantine_pruned": 1, "reports_queued": 2})
+        self.assertEqual(sorted(p.name for p in (root / "quarantine").iterdir()), ["20261121T000000Z-item1.bin"])
+        self.assertTrue((q / "planted.bin").is_symlink(), "a link is skipped, not followed or moved")
+        log = (root / "abuse-queue.log").read_text().splitlines()
+        self.assertEqual([line.split()[1:] for line in log],
+                         [["rep1", "csam", "shop=shopA", "key=no"], ["rep2", "other", "share=s1", "key=no"]])
+        self.assertEqual(stat.S_IMODE((root / "abuse-queue.log").stat().st_mode), 0o600)
+        self.assertEqual(backup.abuse_queue(folder=root)["reports_queued"], 0, "each report is queued once")
+
     def test_never_more_than_keep_days_copies(self):
         for day in range(1, 10):
             self.aged(f"mutis-202610{day:02d}.sqlite3", 0.1 * (10 - day))
@@ -244,6 +270,16 @@ class HealthTest(unittest.TestCase):
     def test_phase(self):
         self.assertEqual(health.phase(int(time.mktime((2026, 11, 10, 23, 0, 0, 0, 0, 0))) - time.timezone, "2026-11-11"), "pre")
         self.assertEqual(health.phase(1_800_000_000, "2026-11-11"), "mainnet")
+
+
+class PublicStatusTest(unittest.TestCase):
+    def test_abuse_reasons_stay_out_of_status_json(self):
+        """Security pass 2026-11-21: /status.json says nothing about reports; health.json keeps them."""
+        report = {"checked_at": 1, "overall": "green", "attention": True, "reasons": ["abuse.new_reports"],
+                  "phase": "live", "checks": {}}
+        self.assertEqual((health.public_subset(report)["reasons"], health.public_subset(report)["attention"]), ([], False))
+        report["reasons"].append("packs.public_80")
+        self.assertEqual(health.public_subset(report)["reasons"], ["packs.public_80"])
 
 
 class StatusWritersTest(unittest.TestCase):

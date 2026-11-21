@@ -90,6 +90,12 @@ class Walletd:
         return sum(int(b.get("confidential_balance", "0")) for b in result.get("balances", [])
                    if b.get("resource_address") == TARI)
 
+    def revealed_balance_ut(self, name: str) -> int:
+        """The account's revealed (public) TARI, the only kind a manifest's `pay_fee` can lock."""
+        result = self.call("accounts.get_balances", {"account": {"Name": name}, "refresh": False})
+        return sum(int(b.get("balance") or "0") for b in result.get("balances", [])
+                   if b.get("resource_address") == TARI)
+
     def stealth_transfer(self, account: str, destination: str, amount_ut: int, memo: str | None,
                          max_fee_ut: int) -> str:
         """One stealth output (hidden amount and owner) with an optional Message memo. Returns the tx id."""

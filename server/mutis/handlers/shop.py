@@ -24,6 +24,10 @@ def _shop_json(conn, row, now: int) -> dict:
     return {"shop_id": row["id"], "path": shop.path_of(row), "username": row["username"], "mode": row["mode"],
             "title": row["title"], "bio": row["bio"], "key_wrap": codec.b64u(row["key_wrap"]),
             "has_token": row["token_hash"] is not None, "state": row["state"], "created_at": row["created_at"],
+            # In the market, the sitemap and search engines once public (shop.LISTED); `listed_from`: when its drive's
+            # age lets it in, if that is what it waits for; `held`: a report waits for review.
+            "listed": shop.is_listed(conn, row["id"], now), "listed_from": shop.listed_from(conn, row, now),
+            "held": shop.held_since(conn, row["id"]) is not None,
             "listings": shop.owner_listings(conn, row["id"], now) if row["state"] == "open" else []}
 
 
@@ -61,8 +65,8 @@ def put_mine(ctx):
     _on(ctx)
     identity = ctx.session()
     body = ctx.req.json()
-    title = shop.plain_text(body, "title", shop.TITLE_MAX, required=True)
-    bio = shop.plain_text(body, "bio", shop.BIO_MAX, required=False, lines=shop.BIO_LINES)
+    title = shop.public_text(body, "title", shop.TITLE_MAX, required=True)
+    bio = shop.public_text(body, "bio", shop.BIO_MAX, required=False, lines=shop.BIO_LINES)
     name = shop.username(body) if body.get("username") is not None else None
     mode = get_enum(body, "mode", MODES) if body.get("mode") is not None else None
     key_wrap = get_b64(body, "key_wrap", shop.KEY_WRAP_LEN, optional=True)
@@ -163,8 +167,8 @@ def put_listing(ctx, share_id: str):
     _on(ctx)
     identity = ctx.session()
     body = ctx.req.json()
-    title = shop.plain_text(body, "title", shop.ITEM_TITLE_MAX, required=True)
-    description = shop.plain_text(body, "description", shop.DESC_MAX, required=False)
+    title = shop.public_text(body, "title", shop.ITEM_TITLE_MAX, required=True)
+    description = shop.public_text(body, "description", shop.DESC_MAX, required=False)
     link_ct = get_b64(body, "link_ct", shop.LINK_CT_LEN)
     # The shop key the browser sealed with, named by its wrap: a tab that still holds a key the shop no longer has (it
     # went private, with a new key, elsewhere) must not list anything under the old one, which our server knew.

@@ -6,6 +6,7 @@ The buyer's routes (`/p/*`) never read a session, so a claim is never linked to 
 random id plus SHA-256 of a token only the buyer's browser holds (`X-Mutis-Claim`), never an IP.
 """
 import json
+from contextlib import contextmanager
 
 from .. import codec, db, jobs, ootle_addr, sales, tree
 from ..http_util import ApiError, Response, get_b64, invalid, json_response
@@ -189,6 +190,24 @@ def page(ctx, share_id: str):
         "seller": {"ready": seller is not None and seller["state"] == "ok"}, "testnet": ctx.cfg.net.testnet})
 
 
+@contextmanager
+def _open_slot(ctx, until: int):
+    """One of the sales.MAX_OPEN_CLAIMS_48 waiting claims a /48 (or /24) may hold at once, across every link, so a few
+    networks can't hold the deployment's MAX_OPEN_CLAIMS without paying (security pass, 2026-11-21). Given back when
+    the claim isn't made; the server's own addresses skip it."""
+    if ctx.exempt():
+        yield
+        return
+    if not ctx.app.open_claims.take(ctx.ip48, sales.MAX_OPEN_CLAIMS_48, until, ctx.now):
+        raise ApiError(429, "rate_limited", "Your network has many payments open. Finish one, or try again later.",
+                       retry_after=max(1, sales.CLAIM_TTL_S // 6))
+    try:
+        yield
+    except ApiError:
+        ctx.app.open_claims.give_back(ctx.ip48, until)
+        raise
+
+
 def create_claim(ctx, share_id: str):
     """A buyer's attempt: a reference to pay with, the address that carries it, and the time to pay."""
     ctx.require_feature("pay_to_open")
@@ -206,11 +225,11 @@ def create_claim(ctx, share_id: str):
     if not ctx.exempt():
         rules += (("claim_share64", (share_id, ctx.ip64), CLAIMS_PER_LINK_HOUR_64, 3600, 1),
                   ("claim_share48", (share_id, ctx.ip48), CLAIMS_PER_LINK_HOUR_48, 3600, 1))
-    with ctx.charged(*rules):
+    expires = ctx.now + sales.CLAIM_TTL_S
+    with ctx.charged(*rules), _open_slot(ctx, expires):
         ctx.proof_of_work("claim", body)
         claim_id = codec.claim_id()
         address = ootle_addr.with_pay_ref(seller["address"], claim_id.encode())
-        expires = ctx.now + sales.CLAIM_TTL_S
         open_ = sales.OPEN
         with db.tx(conn):
             here = conn.execute(f"SELECT COUNT(*) FROM claims WHERE share_id = ? AND status IN ({sales._q(open_)})",

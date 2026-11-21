@@ -5,7 +5,7 @@
 // from a row's menu): pick a file or folder that sells, or price one that doesn't yet (its pay link is made here, as
 // the share dialog makes it, with no name in its teaser), and type the title and line buyers see. Never the file's
 // name: the title starts empty. A pay link whose teaser shows its name says so before it is listed.
-import { t } from '../lib/i18n.js';
+import { formatDate, t } from '../lib/i18n.js';
 import { activeShares } from '../lib/drive.js';
 import { knownLinks, rememberLink, stopLink } from '../lib/links.js';
 import { closeModal, h, icon, init, openModal, toast } from './behaviors.js';
@@ -26,7 +26,7 @@ const itemOfShare = (drive, shareId) => [...drive.index.items.values()].find((it
 
 // The shop's own refusals, in its words; anything else as the drive says it (errors.js).
 const SHOP_ERRORS = { shop_full: 'shop.err.full', not_selling: 'shop.err.not_selling', shop_removed: 'shop.err.removed',
-  username_taken: 'shop.err.taken', username_reserved: 'shop.err.reserved', relist_needed: 'shop.err.relist', key_changed: 'shop.err.key_changed' };
+  username_taken: 'shop.err.taken', username_reserved: 'shop.err.reserved', text_refused: 'shop.err.refused', relist_needed: 'shop.err.relist', key_changed: 'shop.err.key_changed' };
 function problem(e) {
   const key = SHOP_ERRORS[e?.code];
   const said = key
@@ -211,8 +211,17 @@ function modeCard(drive, state) {
   };
   const status = pub && drive.cfg?.features?.market ? answeredLine() : null;
   return card('shop-mode-h', t('shop.mode_h'), t(pub ? 'shop.mode_public_d' : 'shop.mode_private_d'),
-    [h('span', { class: 'badge', 'data-variant': pub ? 'secondary' : 'outline', 'data-testid': 'shop-mode-now' }, icon(pub ? 'globe' : 'lock'), t(pub ? 'shop.mode_public' : 'shop.mode_private')), status],
+    [h('span', { class: 'badge', 'data-variant': pub ? 'secondary' : 'outline', 'data-testid': 'shop-mode-now' }, icon(pub ? 'globe' : 'lock'), t(pub ? 'shop.mode_public' : 'shop.mode_private')), status, pub ? notListed(state.shop) : null],
     button(t(pub ? 'shop.go_private' : 'shop.go_public'), { variant: 'outline', glyph: pub ? 'lock' : 'globe', testid: 'shop-mode-switch', onclick: open }), 'shop-mode-card');
+}
+
+// A public shop that isn't in the market and search engines yet (the server's shop.LISTED): its link works now; a new
+// drive's shop joins after a week, or once the drive has bought space; a reported one after our review.
+function notListed(shop) {
+  if (shop.listed !== false) return null;
+  if (shop.held) return alert({ glyph: 'info', title: t('shop.held'), testid: 'shop-held' });
+  const when = shop.listed_from ? formatDate(shop.listed_from * 1000, { month: 'short', day: 'numeric' }) : '';
+  return alert({ glyph: 'info', title: t(when ? 'shop.not_listed_until' : 'shop.not_listed', { day: when }), testid: 'shop-not-listed' });
 }
 
 // How many asks this page's drive answered, kept up to date while it shows.
